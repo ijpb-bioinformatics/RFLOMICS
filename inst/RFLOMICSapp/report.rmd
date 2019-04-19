@@ -1,0 +1,57 @@
+---
+title: "RFLOMICS report"
+output: pdf_document
+toc: true
+params:
+ Count.file: NA
+ QC.file: NA
+ nAxis: NA
+ FEdata: NA
+---
+
+
+# Input Files:
+
+```{r import}
+    print(params$Count.file)
+    print(params$QC.file)
+    print(params$FEdata)
+```
+
+
+# Load data
+
+```{r load, echo=TRUE, eval=TRUE}
+load(params$FEdata)
+```
+
+## Experimental design
+
+The experimental plan that was set up has `r FE@colDataStruc["n_dFac"]` parameters.
+
+
+```{r design}
+    lapply(FE@design@List.Factors,summary)
+```
+
+## Count matrix
+
+```{r count}
+head(assay(FE))
+```
+
+
+# QC
+
+## Design QC
+
+```{r QCdesign, warning=FALSE,message=FALSE}
+mvQCdesign(FE,axis=params$nAxis)
+```
+
+## data QC 
+
+```{r QCdata}
+mvQCdata(FE,axis=params$nAxis)
+```
+

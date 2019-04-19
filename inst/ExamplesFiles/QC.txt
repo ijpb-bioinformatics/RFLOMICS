@@ -1,0 +1,26 @@
+Mapped	ISize	rRNA	MM_0
+WT_control_rep1	93.65	200.93	9.2	90
+WT_control_rep2	79.89	214.95	12.43	80
+WT_control_rep3	85.51	127.98	1	87
+dbMT_control_rep1	88.88	237.74	12.71	80
+dbMT_control_rep2	84.12	250.51	5.91	80
+dbMT_control_rep3	83.83	178.77	6.6	80
+dbMT_treated_rep1	83.2	277.24	5.23	80
+dbMT_treated_rep2	80.36	187.78	10.87	80
+dbMT_treated_rep3	84.69	228.01	7.74	80
+oxMT_control_rep1	88.04	149.06	3.08	80
+oxMT_control_rep2	91.32	181.3	15.3	90
+oxMT_control_rep3	74.43	121.94	12.65	70
+oxMT_treated_rep1	78.93	269.51	14.12	70
+oxMT_treated_rep2	79.58	157.68	7.52	70
+oxMT_treated_rep3	90.78	197.28	12.24	90
+siMT_control_rep1	86.62	193.89	12.53	80
+siMT_control_rep2	85.09	156.84	9.85	80
+siMT_control_rep3	83.93	167.98	7.35	80
+siMT_treated_rep1	80.61	163.22	17.53	80
+siMT_treated_rep2	93.48	174.92	12.71	90
+siMT_treated_rep3	87.17	264.5	12.9	80
+WT_treated_rep1	80.79	262.57	9.02	80
+WT_treated_rep2	97.01	177.94	11.87	90
+WT_treated_rep3	84.7	310.08	5.15	80
+
