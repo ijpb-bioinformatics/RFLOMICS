@@ -1,5 +1,5 @@
 Package: RFLOMICS
-Title: Package to explore and analyzed an RNAseq experiment
+Title: Package to explore and analyze an RNAseq experiment
 Version: 0.0.0.9000
 Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
 Description: What the package does (one paragraph).
