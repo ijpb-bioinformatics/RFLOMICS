@@ -46,13 +46,17 @@ GetDesignFromNames <- function(samples_name){
 #' @examples
 #'
 GetModelFormulae <- function(Factors.Name,Factors.Type=NULL){
+
   formulae <- list()
   nFac <- length(Factors.Name)
-  for(i in 1:nFac){
-  formulae[[i]] <- update(as.formula(paste("~ ","(",paste(Factors.Name[1:i],collapse="+"),")^2")),new=~.)
+
+  getF <- function(x){
+    update(as.formula(paste("~ ","(",paste(x,collapse="+"),")^2")),new=~.)
   }
-  names(formulae) <- unlist(as.character(formulae,as.character))
-  return(formulae)
+  for(i in 1:nFac){
+  formulae[[i]] <- apply(combn(Factors.Name,i),2,getF)
+  }
+  return(unlist(formulae))
 }
 
 
