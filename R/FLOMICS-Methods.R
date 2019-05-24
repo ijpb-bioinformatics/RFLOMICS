@@ -177,10 +177,18 @@ setMethod(f="mvQCdesign",
             bigdf[[i]] <- bind_rows(df)
             }
             big <- dplyr::bind_rows(bigdf)
-            ggplot(big,aes(y=y,x=x,color=Levels))+
-              geom_bar(stat = "identity",position = position_dodge())+
-              facet_grid(as.factor(dfac)~Axis) +
-              labs(x = "Factors", y="Coordinates on the PCA axis")
+            out <- by(data = big, INDICES = big$dfac, FUN = function(m) {
+              m <- droplevels(m)
+              m <- ggplot(m,aes(y=y,x=x,color=Levels))+
+                geom_bar(stat = "identity",position = position_dodge(),aes(fill=Levels))+
+                facet_grid(as.factor(dfac)~Axis) +
+                labs(x = "Samples", y="Coordinates on \n the PCA axis")+
+                theme(axis.title.y = element_text(size = 5),
+                      axis.title.x=element_text(size = 5),
+                      axis.text.x=element_blank(),
+                      axis.ticks.x=element_blank())
+            })
+            do.call(grid.arrange, out)
           })
 
 

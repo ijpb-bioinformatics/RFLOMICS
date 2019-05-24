@@ -23,4 +23,5 @@ Imports:
     FactoMineR,
     dplyr,
     S4Vectors,
-    RColorBrewer
+    RColorBrewer,
+    gridExtra
