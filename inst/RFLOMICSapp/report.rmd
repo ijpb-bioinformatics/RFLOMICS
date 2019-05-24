@@ -13,9 +13,9 @@ params:
 # Input Files:
 
 ```{r import}
-    print(params$Count.file)
-    print(params$QC.file)
-    print(params$FEdata)
+print(params$Count.file)
+print(params$QC.file)
+print(params$FEdata)
 ```
 
 
@@ -27,12 +27,12 @@ load(params$FEdata)
 
 ## Experimental design
 
-The experimental plan that was set up has `r FE@colDataStruc["n_dFac"]` parameters.
-
+The experimental design that was set up has `r FE@colDataStruc["n_dFac"]` factors.
 
 ```{r design}
-    lapply(FE@design@List.Factors,summary)
+lapply(FE@design@List.Factors,summary)
 ```
+
 
 ## Count matrix
 

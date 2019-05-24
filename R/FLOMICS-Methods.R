@@ -1,26 +1,26 @@
 #' @title FlomicsExperiment Constructor
 #' @description
 #' Constructor method for the [\code{\link{FlomicsExperiment-class}}] Class.
-#' Create an object of class \code{\link{FlomicsExperiment}} from counts (rows=features, columns=design)
-#' @param counts numeric matrix or data.frame of read counts. The names of the columns
+#' Create an object of class \code{\link{FlomicsExperiment}} from abundance (rows=features, columns=design)
+#' @param abundances numeric matrix or data.frame of features abundance. The names of the columns
 #' must give the design experiments using the \code{_} separator (Ex: Fac1_rep1, Fac1_rep2) between
 #' factor modalities.
 #' @param QCmat An optionnal matrix giving statistics relatives to the quality check (QC) of
-#' the RNAseq experiment: library preparation, sequencing and reads alignments statistics.
+#' the experiment. (Ex: For RNAseq: library preparation, sequencing and reads alignments statistics.)
 #' @return An object of class [\code{\link{FlomicsExperiment-class}}]
 #' @name FlomicsExperiment-Constructor
 #' @rdname FlomicsExperiment-Constructor
 #' @export
 #' @importFrom SummarizedExperiment SummarizedExperiment
-FlomicsExperiment <- function(counts, QCmat=NULL, ...)
+FlomicsExperiment <- function(abundances, QCmat=NULL, ExperimentType="RNAseq", ...)
 {
   print("initialize from count matrix and QC matrix if it does exist")
 
   # Check the class of the count object
-  counts<-as.matrix(counts)
+  abundances<-as.matrix(abundances)
 
   # Get the sample names which contain the design
-  samples_name <- dimnames(counts)[[2]]
+  samples_name <- dimnames(abundances)[[2]]
 
   # Get the number of design factor and the factors from the names of the matrix count
   design <- GetDesignFromNames(samples_name)
@@ -37,7 +37,7 @@ FlomicsExperiment <- function(counts, QCmat=NULL, ...)
   if(! is.null(QCmat)){
   # Check that the names of the factor are the same in the two matrix
     try(if( sum(as.numeric(samples_name %in% row.names(QCmat))) != nrow(QCmat)){
-      stop("Counts matrix and QC matrix do not have the same design factors")
+      stop("abundances matrix and QC matrix do not have the same design factors")
     })
 
   # Get the number of QC factors
@@ -63,22 +63,80 @@ FlomicsExperiment <- function(counts, QCmat=NULL, ...)
 
   # instanciate the SummarizedExperiment object
    se <- SummarizedExperiment(assays=
-                                S4Vectors::SimpleList(counts=counts),
+                                S4Vectors::SimpleList(abundances=abundances),
                              colData=colData)
-  .FlomicsExperiment(se, colDataStruc=nb_dFac, design=ExperimentalDesign(dF.List=dF.List))
+  .FlomicsExperiment(se,
+                     ExperimentType=ExperimentType,
+                     design=ExperimentalDesign(dF.List=dF.List),
+                     colDataStruc=nb_dFac,
+                     LogFilter=list(),
+                     LogInput=list(),
+                     LogTransform=list(),
+                     Normalization=new("Normalization",
+                                       ExperimentType=ExperimentType),
+                     DiffAnalysis=new("DiffAnalysis")
+                     )
 }
 
 
+
+#' @title [\code{\link{ExpDesign-class}}] Class constructor
+#'
+#' @description
+#'
+#' @param dF.List A list of factor
+#'
+#' @return An object of class [\code{\link{ExpDesign-class}}]
+#' @name ExpDesign-Constructor
+#' @rdname ExpDesign-Constructor
+#' @export
 
 ExperimentalDesign <- function(dF.List){
 
   .ExpDesign(List.Factors=dF.List,
            Factors.Type=vector(),
-           Model.formula=formula(),
+           Model.formula=vector(),
            Contrasts.List=list())
   }
 
+#' @title [\code{\link{Normalization-class}}] Class constructor
+#'
+#' @description
+#'
+#' @param ExperimentType The type of experiment (either 'RNAseq' or 'Proteomic' or 'Metabolomic')
+#'
+#' @return An object of class [\code{\link{Normalization-class}}]
+#' @name ExpDesign-Constructor
+#' @rdname ExpDesign-Constructor
+#' @export
+#'
+setMethod("initialize",
+          signature(.Object="Normalization"),
+          function(.Object,ExperimentType){
+            .Object@Method = switch(ExperimentType,
+                                    "RNAseq"="TMM",
+                                    "Proteomic"="ProtNormMeth",
+                                    "Metabolomic"="MetaboNormMeth"
+                                    )
+            .Object@Norm.factors = vector()
+            return(.Object)
+          }
+)
 
+#' @title [\code{\link{DiffAnalysis-class}}] Class constructor
+#'
+#' @description
+#'
+#' @return An object of class [\code{\link{DiffAnalysis-class}}]
+#' @name DiffAnalysis-Constructor
+#' @rdname DiffAnalysis-Constructor
+#' @export
+DiffAnalysis <- function(){
+  .DiffAnalysis(
+    method="glmLRT",
+    ListOfDEResults=list(),
+    ListOfRawMethodResults=list()
+  )}
 
 
 #' @title Multivariate Quality Check
@@ -95,8 +153,8 @@ setMethod(f="mvQCdesign",
           signature="FlomicsExperiment",
           definition <- function(object,axis=3){
 
-            pseudo_counts <- log2(assay(object)+1)
-            resPCA <- FactoMineR::PCA(t(pseudo_counts),ncp = axis,graph=F)
+            pseudo_abundances <- log2(assay(object)+1)
+            resPCA <- FactoMineR::PCA(t(pseudo_abundances),ncp = axis,graph=F)
             cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
 
             n_dFac <- object@colDataStruc["n_dFac"]
@@ -113,7 +171,8 @@ setMethod(f="mvQCdesign",
               y=qc[o]
               Axis = rep(paste("PCA",j, "\n(Var=",round(resPCA$eig[j,2],1),")",sep=""),length(qc))
               Fac = Factor[o]
-              df[[j]] <- data.frame(y,col,Axis,dfac=names(object@colData)[1:n_dFac][i],Levels=Fac,x=1:length(y))
+              df[[j]] <- data.frame(y,col,Axis,dfac=names(object@colData)[1:n_dFac][i],
+                                    Levels=Fac,x=1:length(y))
             }
             bigdf[[i]] <- bind_rows(df)
             }
@@ -137,8 +196,8 @@ setMethod(f="mvQCdata",
           signature="FlomicsExperiment",
           definition <- function(object,axis=3){
 
-            pseudo_counts <- log2(assay(object)+1)
-            resPCA <- FactoMineR::PCA(t(pseudo_counts),ncp = axis,graph=F)
+            pseudo_abundances <- log2(assay(object)+1)
+            resPCA <- FactoMineR::PCA(t(pseudo_abundances),ncp = axis,graph=F)
             cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
 
             n_dFac <- object@colDataStruc["n_dFac"]
@@ -162,4 +221,6 @@ setMethod(f="mvQCdata",
               geom_bar(stat="identity",position=position_dodge(),width=0.7)+ylim(0,1)+
               labs(x = "Axis number", y="Cor(Coord_dFactor_PCA,QCparam)")
           })
+
+
 

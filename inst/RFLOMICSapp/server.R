@@ -9,7 +9,7 @@ shinyServer(function(input, output) {
   loadData <- function() {
 
     if(is.null(input$Count.Import.file)){
-      stop("A file with count is required as input")
+      stop("A file with count data is required as input")
     }
     else{
     count <- read.table(input$Count.Import.file$datapath,h=T,row.names = 1)
@@ -98,12 +98,19 @@ shinyServer(function(input, output) {
    }
 
 
-   CheckInputFacName <- reactive({
-     validate(
-       for(i in 1:FE@colDataStruc["n_dFac"]){
-       need(input[[paste0("dF.Name.dFac",i)]] != "", "Please enter a name for each factors")
+   CheckInputFacName <- function(){
+     for(i in 1:FE@colDataStruc["n_dFac"]){
+       if(input[[paste0("dF.Name.dFac",i)]]==""){
+         showModal(modalDialog(
+           title = "Error message",
+           "Empty factor are not allowed"
+         ))
        }
-     )})
+       validate({
+                 need(input[[paste0("dF.Name.dFac",i)]] != "",message="Set a name")
+                })
+     }
+   }
 
    #######
    # Part2
@@ -111,16 +118,15 @@ shinyServer(function(input, output) {
 
    # as soon as the "Valid design set up" button has been clicked
    #  => The updateDesignFactors function is called
-   #  => The items "View Data", "QualityCheck" and "Normalize" are printed
+   #  => The menu items "View Data", "QualityCheck" and "Normalize" are printed
    #  => The box to choose the "model formulae" is printed
 
 
   observeEvent(input$ValidF, {
 
-    cat("bef",names(FE@colData))
-    cat("button=",input$ValidF)
+    CheckInputFacName()
+
     updateDesignFactors()
-    cat("aft",names(FE@colData))
 
     output$ViewData <- renderMenu({
 
@@ -129,7 +135,7 @@ shinyServer(function(input, output) {
                            tabName = "dmatrix",
                            icon = icon('table')),
                menuSubItem("count matrix",
-                           tabName = "CountMatrix",
+                           tabName = "AbundanceMatrix",
                            icon = icon('table'))
       )
     })
@@ -187,13 +193,29 @@ shinyServer(function(input, output) {
    #######
 
    # as soon as the "valid model formulae" button has been clicked
-   #  => The contrasts have to be choosen
+   # => The model formulae is set and the interface to select the type of contrasts appear
+   # => The menu items Normalization appear
 
 
   observeEvent(input$ValidM, {
+    # => Set the model formulae
+    FE@design@Model.formula <- input$model.formulae
+
+    #  => The contrasts have to be choosen
     output$SetContrasts <- renderUI({
       infoBox( "Set Contrasts", icon = icon("line-chart"),width=6)
   })
+    output$Normalization<- renderMenu({
+      menuItem("Normalization check", tabName = "Norm",icon = icon('check-square'))
+    })
+    output$NormText <- renderText("Bon Courage")
+
+    # Boxplot Normalization
+
+    # PCAplot Normalization
+
+    # MAplot  Normalization
+
   })
 
 

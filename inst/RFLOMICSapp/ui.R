@@ -14,7 +14,8 @@ sidebar <- dashboardSidebar(
               menuItem("Import Data", tabName = "import",icon = icon('download')),
               menuItemOutput("ExpDesignItem"),
               menuItemOutput("ViewData"),
-              menuItemOutput("QualityCheck")
+              menuItemOutput("QualityCheck"),
+              menuItemOutput("Normalization")
   ),
   downloadButton("report", "Generate report")
 )
@@ -28,7 +29,7 @@ body <- dashboardBody(
                         "text/comma-separated-values,text/plain",
                         ".csv")
             ),
-            fileInput("Count.Import.file", "Import count matrix as .txt File",
+            fileInput("Count.Import.file", "Import matrix of features abundances as .txt File",
                       accept = c(
                         "text/csv",
                         "text/comma-separated-values,text/plain",
@@ -67,7 +68,7 @@ body <- dashboardBody(
     ),
     tabItem(tabName = "dmatrix", dataTableOutput("colData")
     ),
-    tabItem(tabName = "CountMatrix", dataTableOutput("CountMat")
+    tabItem(tabName = "AbundanceMatrix", dataTableOutput("CountMat")
     ),
     tabItem(tabName = "QC",
             numericInput(inputId = "nAxis", label="Number Of PCA axis", value=1,
@@ -78,7 +79,8 @@ body <- dashboardBody(
     ),
     tabItem(tabName = "QCdesign",
             plotOutput("QCdesign")
-    )
+    ),
+    tabItem(tabName = "Norm", textOutput("NormText"))
   )
 )
 

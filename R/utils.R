@@ -40,7 +40,7 @@ GetDesignFromNames <- function(samples_name){
 #' @param Factors.Name
 #' @param Factors.Type
 #'
-#' @return a formulae
+#' @return a named list of formulae
 #' @export
 #'
 #' @examples
@@ -53,12 +53,23 @@ GetModelFormulae <- function(Factors.Name,Factors.Type=NULL){
   getF <- function(x){
     update(as.formula(paste("~ ","(",paste(x,collapse="+"),")^2")),new=~.)
   }
+
   for(i in 1:nFac){
   formulae[[i]] <- apply(combn(Factors.Name,i),2,getF)
   }
+
   formulae <- unlist(formulae)
   names(formulae) <- unlist(as.character(formulae))
   return(formulae)
 }
 
+
+TMM.Normalization <- function(FE)
+  {
+  dge <- DGEList(counts=assay(FE))
+  dge <- calcNormFactors(dge,method="TMM")
+  nf <- dge$samples$norm.factors
+  names(nf)<-row.names(dge$samples)
+  return(nf)
+}
 
