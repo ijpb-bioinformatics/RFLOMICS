@@ -19,8 +19,10 @@ Imports:
     tibble,
     stringr,
     SummarizedExperiment,
+    data.table,
     methods,
     FactoMineR,
     dplyr,
     S4Vectors,
-    RColorBrewer
+    RColorBrewer,
+    gridExtra

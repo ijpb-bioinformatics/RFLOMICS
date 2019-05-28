@@ -64,12 +64,56 @@ GetModelFormulae <- function(Factors.Name,Factors.Type=NULL){
 }
 
 
-TMM.Normalization <- function(FE)
-  {
-  dge <- DGEList(counts=assay(FE))
+#' @title TMM.Normalization
+#'
+#' @param counts 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+TMM.Normalization <- function(counts){
+  dge <- DGEList(counts=counts)
   dge <- calcNormFactors(dge,method="TMM")
   nf <- dge$samples$norm.factors
   names(nf)<-row.names(dge$samples)
   return(nf)
+}
+
+
+#' @title colorPlot
+#'
+#' @param design 
+#' @param ColData 
+#' @param condition 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+colorPlot <- function(design, ColData, condition="samples"){
+  
+  getPalette <- colorRampPalette(brewer.pal(9, "Set1"))
+  
+    if(condition == "samples"){
+      
+      # combine only bio fact
+      
+      list.cond <- factor(row.names(ColData))
+    }
+    else{
+    
+      list.cond <- design@List.Factors[[condition]]
+    }
+      
+    len.cond  <- length(levels(list.cond))
+      
+    colors    <- getPalette(len.cond) 
+      
+    col <- colors[list.cond]
+      
+    names(col) <- row.names(ColData)
+    
+    return(col)
 }
 

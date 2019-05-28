@@ -9,6 +9,7 @@
 #' @slot LogFilter A list
 #' @slot LogInput  A list
 #' @slot LogTransform A list
+#' @slot PCAnorm A list
 #' @slot Normalization An object of class [\code{\link{Normalization}}]
 #' @slot DiffAnalysis An object of class [\code{\link{DiffAnalysis}}]
 #' @return FlomicsExperiment object
@@ -27,10 +28,12 @@
     design="ExpDesign",
     # colData Structure
     colDataStruc="vector",
-    # Pre-processing
+    # Pre-processing results
     LogFilter="list",
     LogInput="list",
     LogTransform="list",
+    # PCA results of normalized data
+    listPCA="list",
     # Normalization
     Normalization="Normalization",
     # DE

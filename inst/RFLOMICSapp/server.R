@@ -2,7 +2,7 @@
 library(shiny)
 
 # Define server logic required to draw a histogram
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
 
 # definition of the loadData function()
 
@@ -204,17 +204,77 @@ shinyServer(function(input, output) {
     #  => The contrasts have to be choosen
     output$SetContrasts <- renderUI({
       infoBox( "Set Contrasts", icon = icon("line-chart"),width=6)
-  })
+    })
     output$Normalization<- renderMenu({
       menuItem("Normalization check", tabName = "Norm",icon = icon('check-square'))
     })
-    output$NormText <- renderText("Bon Courage")
+    
+    #### Normalisation step
+    #palette=RColorBrewer::brewer.pal(dim(FE@colData)[1], "Set1")
+    
+    # dans les functions
+    FE <- RunNormalization(FE)
 
-    # Boxplot Normalization
+    # Boxplot check
+    output$norm.boxplot <- renderPlot( boxplotQCnorm(FE) )
+  
+    # compute PCA
+    
+    ## for unnormalised data
+    #pseudo <- log2(assay(FE)+1)
+    #resPCA_raw <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
+    
+    ## for normalised data
+    pseudo_norm <- log2(scale(assay(FE),center=FALSE,scale=FE@Normalization@Norm.factors)+1)
+    FE@listPCA[["norm"]] <- FactoMineR::PCA(t(pseudo_norm),ncp = 5,graph=F)
+    
+    ### PCA barplot coordinates
+    
+    output$condColor1 <- renderUI({
+      condition <- c("samples",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
+      radioButtons(inputId = 'condColorSelect1', 
+                   label = 'Condition :', 
+                   choices = condition,
+                   selected = "samples")
+    })
+  
+    output$norm.PCAbar <- renderPlot({
+      barplotPCAnorm(FE , condition=input$condColorSelect1)
+    })  
+ 
+    ### PCA point.plot coordinates
+    
+    # select axis to plot
+    observe({
+      x <- input$PC1
+      # Can also set the label and select items
+      choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
+      updateRadioButtons(session, "PC2",
+                         choices = choices[-as.numeric(x)],
+                         inline = TRUE)
+      })
+ 
+    output$condColor <- renderUI({
+      condition <- c("samples",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
+      radioButtons(inputId = 'condColorSelect', 
+                   label = 'Levels :', 
+                   choices = condition,
+                   selected = "samples")
+      })
+    
+    output$norm.PCAcoord <- renderPlot({
+      
+      PC1.value <- as.numeric(input$PC1)
+      PC2.value <- as.numeric(input$PC2)
+      
+      plotPCAnorm(FE, PCs=c(PC1.value, PC2.value), condition=input$condColorSelect) 
+      })
+    
+    
+    # MAplot  Normalization   
+    output$NormText <- renderText("MAplot : mean expression vs log fold change")
+    
 
-    # PCAplot Normalization
-
-    # MAplot  Normalization
 
   })
 

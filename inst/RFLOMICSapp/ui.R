@@ -80,7 +80,58 @@ body <- dashboardBody(
     tabItem(tabName = "QCdesign",
             plotOutput("QCdesign")
     ),
-    tabItem(tabName = "Norm", textOutput("NormText"))
+    tabItem(tabName = "Norm", 
+            
+            box(title = "Normalization", solidHeader = TRUE, status = "warning", width = 12,
+            
+                tabBox(
+                  # The id lets us use input$tabset1 on the server to find the current tab
+                  id = "tabset1", width = 12,
+                  tabPanel("boxplot", plotOutput("norm.boxplot")),
+                  tabPanel("PCA 1/2", 
+                           fluidRow(
+                             plotOutput("norm.PCAbar")
+                           ),
+                           tags$br(),
+                           tags$br(),
+                           fluidRow(
+                             column(width = 4,
+                                    uiOutput('condColor1')
+                             )
+                           )
+                           
+                           ),
+                  tabPanel("PCA 2/2",     
+
+                           fluidRow(
+                             plotOutput("norm.PCAcoord")
+                             ),
+                           tags$br(),
+                           tags$br(),
+                           fluidRow(
+                             column(width = 4,
+                                    uiOutput('condColor')
+                                    ),
+                             column(width = 4,
+                                    radioButtons(inputId = "PC1", 
+                                                 label = "Choice of PCs :", 
+                                                 choices = list("PC1" = 1, 
+                                                                "PC2" = 2, 
+                                                                "PC3" = 3),
+                                                 selected = 1, inline = TRUE),
+                                    radioButtons(inputId = "PC2", 
+                                                 label = "", 
+                                                 choices = list("PC1" = 1, 
+                                                                "PC2" = 2, 
+                                                                "PC3" = 3),
+                                                 selected = 2, inline = TRUE)
+                                    )
+                             )
+                           ),
+                  tabPanel("MA-plot", textOutput("NormText"))
+                )
+            )        
+    )
   )
 )
 
