@@ -323,8 +323,6 @@ setMethod(f= "plotPCAnorm",
                           mutate(samples=sample_names, tag=paste("2.Normalised data : ", object@Normalization@Method,  sep=""))
             
             score     <- rbind(score_raw, score_norm)
-
-            # boxplot
             
             ggplot(score, aes_string(x=PC1, y=PC2) ) + 
               geom_point(aes(color=samples), size=3) + facet_grid(.~tag) + 

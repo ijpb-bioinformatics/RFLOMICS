@@ -98,8 +98,8 @@ colorPlot <- function(design, ColData, condition="samples"){
     if(condition == "samples"){
       
       # combine only bio fact
-      
-      list.cond <- factor(row.names(ColData))
+      groups <- FE@design@List.Factors[FE@design@Factors.Type == "Bio"] %>% as.data.frame() %>% unite(col="groups", sep="_")
+      list.cond <- factor(groups$groups)
     }
     else{
     
@@ -116,4 +116,58 @@ colorPlot <- function(design, ColData, condition="samples"){
     
     return(col)
 }
+
+
+#' plotLibSize
+#'
+#' @param abundances 
+#' @param design 
+#' @param colData 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plotLibSize <- function(abundances){
+  
+  data <- colSums(abundances) %>% melt() %>% mutate(samples=colnames(abundances))
+  
+  ggplot(data) + geom_bar(aes(x=samples,y=value, fill=samples), stat="identity" ) +
+    xlab("") + ylab("") + 
+    theme(axis.text.x      = element_text(angle = 45, hjust = 1),
+          legend.position  = "none")
+          #axis.text.x     = element_blank(), 
+          #axis.ticks      = element_blank())
+          #legend.key.size = unit(0.3, "cm"))
+          #legend.text     = element_text(size=5)) +
+    
+    
+}
+
+
+#' plotDistr
+#'
+#' @param abundances 
+#' @param design 
+#' @param colData 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plotDistr <- function(abundances){
+  
+
+  pseudo_counts <- log2(abundances+1) %>% melt()
+  colnames(pseudo_counts) <- c("features", "samples", "value")
+  
+  ggplot(pseudo_counts) + 
+    geom_density(aes(value, color=samples) ) +
+    xlab("") + theme(legend.position='none')
+}
+
+
+
+
+
 

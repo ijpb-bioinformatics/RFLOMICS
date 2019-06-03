@@ -4,6 +4,7 @@ library(shiny)
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
 
+  
 # definition of the loadData function()
 
   loadData <- function() {
@@ -34,11 +35,19 @@ shinyServer(function(input, output, session) {
 
   observeEvent(input$load, {
 
-    loadData()
-
-    output$ExpDesignItem <- renderMenu({
-      menuItem("Experimental Design", tabName = "designExp",icon = icon('vials'))
+    # load data
+      loadData()
+    
+      ####### Filtering step ########
+ 
+      output$Filtering <- renderMenu({
+        menuItem("Filtering-Transfo", tabName = "Filtering", icon = icon("refresh"))
       })
+         
+      ####### Design ########
+      output$ExpDesignItem <- renderMenu({
+        menuItem("Experimental Design", tabName = "designExp",icon = icon('vials'))
+        })
 
       # Construct the form to set the reference factor level
       output$GetdFactorRef <- renderUI({
@@ -67,6 +76,33 @@ shinyServer(function(input, output, session) {
                         textInput(paste0("dF.Name.dFac", i), label=NULL , value = paste0("dFac",i), width = NULL,
                                   placeholder = NULL)
                     )})})
+      
+      
+      # summary of loaded data
+      output$SummaryAbundance <- renderTable(
+        data.frame(number=c(dim(assay(FE)), FE@colDataStruc[1]), row.names=c("Features", "Samples", "Factors")), 
+        rownames=TRUE, bordered = TRUE)
+      
+      if(!is.na(FE@colDataStruc[2])){
+        QC <- FE@colData[,(FE@colDataStruc[1]+1):(FE@colDataStruc[1]+ FE@colDataStruc[2])]
+        QC_summary <- colMeans(as.data.frame(QC))
+        QC_summary <- rbind(QC_summary, colMedians(as.matrix(QC)))
+        QC_summary <- rbind(QC_summary, colMaxs(as.matrix(QC)))
+        QC_summary <- rbind(QC_summary, colMins(as.matrix(QC))) %>% t
+        colnames(QC_summary) <- c("Means", "Medians", "Maxs", "Mins")
+        
+        output$SummaryQC        <- renderTable(QC_summary, rownames=TRUE, bordered = TRUE)
+      }
+      
+      # library size plot
+      output$LibSize <- renderPlot(
+        plotLibSize(assay(FE)), height = 300
+      )
+      # abundance distribution
+      output$CountDist <- renderPlot(
+        plotDistr(assay(FE)), height = 300
+        )
+      
       })
 
 
@@ -81,7 +117,7 @@ shinyServer(function(input, output, session) {
      # Get the Type and the name of the factors that the users enter in the form
      for(i in 1:FE@colDataStruc["n_dFac"]){
        dF.Type.dFac[i] <- input[[paste0("dF.Type.dFac",i)]]
-       dF.List.Name[i] <-input[[paste0("dF.Name.dFac",i)]]
+       dF.List.Name[i] <- input[[paste0("dF.Name.dFac",i)]]
      }
 
       List.Factors.new <- FE@design@List.Factors
@@ -128,52 +164,81 @@ shinyServer(function(input, output, session) {
 
     updateDesignFactors()
 
-    output$ViewData <- renderMenu({
-
-      menuItem("View Data", tabName = "Data",icon = icon('eye'), startExpanded = FALSE,
-               menuSubItem("design and QC matrix",
-                           tabName = "dmatrix",
-                           icon = icon('table')),
-               menuSubItem("count matrix",
-                           tabName = "AbundanceMatrix",
-                           icon = icon('table'))
-      )
-    })
-
-    output$QualityCheck <- renderMenu({
-      menuItem("Quality Check", tabName = "QC",icon = icon('check-square'),
-               menuSubItem("Explanations",
-                           tabName = "QC",
-                           icon = icon('info-circle')),
-               menuSubItem("Data",
-                           tabName = "QCdata",
-                           icon = icon('chart-bar')),
-               menuSubItem("Design",
-                           tabName = "QCdesign",
-                           icon = icon('chart-bar'))
-      )
-    })
-
-    output$colData <- renderDataTable({
-      return(as.data.frame(SummarizedExperiment::colData(FE)))
-    })
-
-    output$CountMat <- renderDataTable({
-      return((assay(FE)))
-    })
-
+    ########## Exploratory analysis ##########
+    output$Exploratory <- renderMenu({
+      
+      menuItem("Data Exploratory", tabName = "Exploratory", icon = icon('eye'), startExpanded = FALSE,
+               menuSubItem("Data", tabName = "ExploratoryData"),
+               menuSubItem("Bio. and tech. Variability", tabName = "ExploratoryQC")
+               )
+      })
+    
+    ## Run Normalisation
+    FE <- RunNormalization(FE)
+    
+    ## QCdesign
     output$QCdesign <- renderPlot(
-      mvQCdesign(FE,axis=input$nAxis)
-    )
+      mvQCdesign(FE,axis=input$nAxis))
 
+    ## QCdata
     output$QCdata <- renderPlot(
-      mvQCdata(FE,axis=input$nAxis)
-    )
+      mvQCdata(FE,axis=input$nAxis))
 
-    output$Normalize <- renderMenu({
-      menuItem("Normalize",
-               tabName = "Norm",badgeLabel = "new", badgeColor = "green")
+    ## Boxplot check
+    output$norm.boxplot <- renderPlot( 
+      boxplotQCnorm(FE))
+    
+    ## compute
+    pseudo_norm <- log2(scale(assay(FE),center=FALSE,scale=FE@Normalization@Norm.factors)+1)
+    FE@listPCA[["norm"]] <- FactoMineR::PCA(t(pseudo_norm),ncp = 5,graph=F)
+    
+    ### PCA barplot coordinates
+    
+    output$condColor1 <- renderUI({
+      condition <- c("samples",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
+      radioButtons(inputId = 'condColorSelect1', 
+                   label = 'Condition :', 
+                   choices = condition,
+                   selected = "samples")
     })
+    
+    output$norm.PCAbar <- renderPlot({
+      barplotPCAnorm(FE , condition=input$condColorSelect1)
+    })  
+    
+    ### PCA point.plot coordinates
+    
+    # select axis to plot
+    observe({
+      x <- input$PC1
+      # Can also set the label and select items
+      choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
+      updateRadioButtons(session, "PC2",
+                         choices = choices[-as.numeric(x)],
+                         inline = TRUE)
+    })
+    
+    output$condColor <- renderUI({
+      condition <- c("samples",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
+      radioButtons(inputId = 'condColorSelect', 
+                   label = 'Levels :', 
+                   choices = condition,
+                   selected = "samples")
+    })
+    
+    output$norm.PCAcoord <- renderPlot({
+      
+      PC1.value <- as.numeric(input$PC1)
+      PC2.value <- as.numeric(input$PC2)
+      
+      plotPCAnorm(FE, PCs=c(PC1.value, PC2.value), condition=input$condColorSelect) 
+    })
+    
+    
+    # MAplot  Normalization   
+    output$NormText <- renderText("MAplot : mean expression vs log fold change")
+    
+    
 
     # Construct the form to select the model
      output$SetModelFormula <- renderUI({
@@ -205,75 +270,6 @@ shinyServer(function(input, output, session) {
     output$SetContrasts <- renderUI({
       infoBox( "Set Contrasts", icon = icon("line-chart"),width=6)
     })
-    output$Normalization<- renderMenu({
-      menuItem("Normalization check", tabName = "Norm",icon = icon('check-square'))
-    })
-    
-    #### Normalisation step
-    #palette=RColorBrewer::brewer.pal(dim(FE@colData)[1], "Set1")
-    
-    # dans les functions
-    FE <- RunNormalization(FE)
-
-    # Boxplot check
-    output$norm.boxplot <- renderPlot( boxplotQCnorm(FE) )
-  
-    # compute PCA
-    
-    ## for unnormalised data
-    #pseudo <- log2(assay(FE)+1)
-    #resPCA_raw <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
-    
-    ## for normalised data
-    pseudo_norm <- log2(scale(assay(FE),center=FALSE,scale=FE@Normalization@Norm.factors)+1)
-    FE@listPCA[["norm"]] <- FactoMineR::PCA(t(pseudo_norm),ncp = 5,graph=F)
-    
-    ### PCA barplot coordinates
-    
-    output$condColor1 <- renderUI({
-      condition <- c("samples",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
-      radioButtons(inputId = 'condColorSelect1', 
-                   label = 'Condition :', 
-                   choices = condition,
-                   selected = "samples")
-    })
-  
-    output$norm.PCAbar <- renderPlot({
-      barplotPCAnorm(FE , condition=input$condColorSelect1)
-    })  
- 
-    ### PCA point.plot coordinates
-    
-    # select axis to plot
-    observe({
-      x <- input$PC1
-      # Can also set the label and select items
-      choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
-      updateRadioButtons(session, "PC2",
-                         choices = choices[-as.numeric(x)],
-                         inline = TRUE)
-      })
- 
-    output$condColor <- renderUI({
-      condition <- c("samples",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
-      radioButtons(inputId = 'condColorSelect', 
-                   label = 'Levels :', 
-                   choices = condition,
-                   selected = "samples")
-      })
-    
-    output$norm.PCAcoord <- renderPlot({
-      
-      PC1.value <- as.numeric(input$PC1)
-      PC2.value <- as.numeric(input$PC2)
-      
-      plotPCAnorm(FE, PCs=c(PC1.value, PC2.value), condition=input$condColorSelect) 
-      })
-    
-    
-    # MAplot  Normalization   
-    output$NormText <- renderText("MAplot : mean expression vs log fold change")
-    
 
 
   })
