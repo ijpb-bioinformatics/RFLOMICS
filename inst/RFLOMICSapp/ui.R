@@ -63,7 +63,7 @@ body <- dashboardBody(
             ),
     tabItem(
       tabName = "Filtering",
-      h5("Filtering step")
+      h5("Filtering step : ")
     ),
     tabItem(tabName = "designExp",
             h5("Select the level of reference fo each design factor"),
