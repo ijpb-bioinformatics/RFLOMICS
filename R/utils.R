@@ -72,11 +72,12 @@ GetModelFormulae <- function(Factors.Name,Factors.Type=NULL){
 #' @export
 #'
 #' @examples
-TMM.Normalization <- function(counts){
-  dge <- DGEList(counts=counts)
-  dge <- calcNormFactors(dge,method="TMM")
-  nf <- dge$samples$norm.factors
-  names(nf)<-row.names(dge$samples)
+TMM.Normalization <- function(counts, groups){
+  dge <- edgeR::DGEList(counts=counts, group=groups)
+  dge <- edgeR::calcNormFactors(dge,method="TMM")
+  #nf  <- dge$samples$norm.factors
+  #names(nf)<-row.names(dge$samples)
+  nf  <- dge$samples
   return(nf)
 }
 
@@ -98,7 +99,8 @@ colorPlot <- function(design, ColData, condition="samples"){
     if(condition == "samples"){
       
       # combine only bio fact
-      groups <- FE@design@List.Factors[FE@design@Factors.Type == "Bio"] %>% as.data.frame() %>% unite(col="groups", sep="_")
+      groups <- design@List.Factors[design@Factors.Type == "Bio"] %>% 
+        as.data.frame() %>% unite(col="groups", sep="_")
       list.cond <- factor(groups$groups)
     }
     else{
@@ -110,9 +112,10 @@ colorPlot <- function(design, ColData, condition="samples"){
       
     colors    <- getPalette(len.cond) 
       
-    col <- colors[list.cond]
-      
-    names(col) <- row.names(ColData)
+    #col <- colors[list.cond]
+    col <- colors[levels(list.cond)]
+    #names(col) <- row.names(ColData)
+    names(col) <- row.names(levels(list.cond))
     
     return(col)
 }
@@ -130,7 +133,7 @@ colorPlot <- function(design, ColData, condition="samples"){
 #' @examples
 plotLibSize <- function(abundances){
   
-  data <- colSums(abundances) %>% melt() %>% mutate(samples=colnames(abundances))
+  data <- colSums(abundances) %>% data.table::melt() %>% mutate(samples=colnames(abundances))
   
   ggplot(data) + geom_bar(aes(x=samples,y=value, fill=samples), stat="identity" ) +
     xlab("") + ylab("") + 
@@ -158,7 +161,7 @@ plotLibSize <- function(abundances){
 plotDistr <- function(abundances){
   
 
-  pseudo_counts <- log2(abundances+1) %>% melt()
+  pseudo_counts <- log2(abundances+1) %>% data.table::melt()
   colnames(pseudo_counts) <- c("features", "samples", "value")
   
   ggplot(pseudo_counts) + 

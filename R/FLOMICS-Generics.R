@@ -28,3 +28,8 @@ setGeneric(
   name="barplotPCAnorm",
   def = function( object, ... ){standardGeneric("barplotPCAnorm")}
 )
+
+setGeneric(
+  name="FilterLowAbundance",
+  def = function( object, ... ){standardGeneric("FilterLowAbundance")}
+)

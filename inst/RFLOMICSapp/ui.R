@@ -12,7 +12,6 @@ library(shinydashboard)
 sidebar <- dashboardSidebar(
   sidebarMenu(id="StateSave",
               menuItem("Import Data", tabName = "import",icon = icon('download')),
-              menuItemOutput("Filtering"),
               menuItemOutput("ExpDesignItem"),
               menuItemOutput("Exploratory")
   ),
@@ -61,10 +60,6 @@ body <- dashboardBody(
                     )
               )
             ),
-    tabItem(
-      tabName = "Filtering",
-      h5("Filtering step : ")
-    ),
     tabItem(tabName = "designExp",
             h5("Select the level of reference fo each design factor"),
             fluidRow(
@@ -94,39 +89,58 @@ body <- dashboardBody(
             )
     ),
     tabItem(tabName = "ExploratoryData", 
+            box( title = "Filtering" ,      solidHeader = TRUE, status = "warning", width = 6,
+                 numericInput(inputId = "FilterSeuil", 
+                              label="Seuil :", 
+                              value=10, 0, max=15, 1 )),
+            
+            box( title = "Normalization" , solidHeader = TRUE, status = "warning", width = 6, 
+                 selectInput(inputId  = "selectNormMethod", 
+                             label    = "Method :",
+                             choices  =  list("TMM (edgeR)" = "TMM"), 
+                             selected = "TMM")),
+            actionButton("Norm","Update"),
+            tags$br(),
+            tags$br(),
             box( status = "warning", width = 12,
-                 
-                 selectInput("select", label = "Data type",
-                             choices = list("Normelized data : TMM" = 1, 
-                                            "Unnormalized data" = 2), 
-                             selected = 1),
                  tabBox(
                    # The id lets us use input$tabset1 on the server to find the current tab
                    id = "ExplorAnalysis", width = 12,
+                   tabPanel("summary", 
+                            tableOutput('SummaryAbundance2'),
+                            textOutput("SummaryText")
+                            ),
                    tabPanel("boxplot", plotOutput("norm.boxplot")),
-                   tabPanel("QC Design", plotOutput("QCdesign"),
-                            numericInput(inputId = "nAxis", label="Number Of PCA axis", value=2, 1, max=5, 1 )
+                   tabPanel("QC Design", 
+                            selectInput("selectData", label = "Data :",
+                                        choices = list("Normelized data" = "norm", 
+                                                       "Unnormalized data" = "raw"), 
+                                        selected = "norm"),
+                            plotOutput("QCdesign")
+                            #numericInput(inputId = "nAxis", label="Number Of PCA axis", value=2, 1, max=5, 1),
                             ),
                    tabPanel("PCA",
-                            fluidRow( plotOutput("norm.PCAcoord")),
+                            selectInput("selectData2", label = "Data :",
+                                        choices = list("Normelized data" = "norm", 
+                                                       "Unnormalized data" = "raw"), 
+                                        selected = "norm"),
+
+                            fluidRow( plotOutput("norm.PCAcoord") ),
                             tags$br(),
                             tags$br(),
                             fluidRow(
-                              column(4, uiOutput('condColor')),
-                              column(width = 4,
-                                     radioButtons(inputId = "PC1", 
-                                                  label = "Choice of PCs :", 
-                                                  choices = list("PC1" = 1, 
-                                                                 "PC2" = 2, 
-                                                                 "PC3" = 3),
+                              column(width = 6, uiOutput('condColor')),
+                              column(width = 6,
+                                     radioButtons(inputId  = "PC1", 
+                                                  label    = "Choice of PCs :", 
+                                                  choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
                                                   selected = 1, inline = TRUE),
-                                     radioButtons(inputId = "PC2", 
-                                                  label = "", 
-                                                  choices = list("PC1" = 1, 
-                                                                 "PC2" = 2, 
-                                                                 "PC3" = 3),
-                                                  selected = 2, inline = TRUE)
-                                     )
+                                  
+                                     radioButtons(inputId  = "PC2", 
+                                                  label    = "", 
+                                                  choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
+                                                  selected = 2, inline = TRUE))
+                              
                               )
                             )
                    )

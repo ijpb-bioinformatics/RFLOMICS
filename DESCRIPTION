@@ -23,6 +23,7 @@ Imports:
     methods,
     FactoMineR,
     dplyr,
+    edgeR,
     S4Vectors,
     RColorBrewer,
     gridExtra

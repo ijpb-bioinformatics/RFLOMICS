@@ -135,9 +135,14 @@ Normalization <- function(ExperimentType){
 #' 
 setMethod(f="RunNormalization",
   signature="FlomicsExperiment",
-  definition <- function(object){
-      object@Normalization@Norm.factors = switch(object@Normalization@Method,
-                                                  "TMM"=TMM.Normalization(assay(object))
+  definition <- function(object, NormMethod=object@Normalization@Method){
+    
+      groups <- object@design@List.Factors[object@design@Factors.Type == "Bio"] %>% 
+                as.data.frame() %>% 
+                unite(col="groups", sep="_") 
+    
+      object@Normalization@Norm.factors = switch(NormMethod,
+                                                 "TMM"=TMM.Normalization(assay(object), groups$groups)
                                                  )
       return(object)
   }
@@ -173,10 +178,11 @@ DiffAnalysis <- function(){
 
 setMethod(f="mvQCdesign",
           signature="FlomicsExperiment",
-          definition <- function(object,axis=3){
+          definition <- function(object, data="norm", axis=5){
             
-            pseudo_abundances <- log2(assay(object)+1)
-            resPCA <- FactoMineR::PCA(t(pseudo_abundances),ncp = axis,graph=F)
+            #pseudo_abundances <- log2(assay(object)+1)
+            #resPCA <- FactoMineR::PCA(t(pseudo_abundances),ncp = axis,graph=F)
+            resPCA <- object@listPCA[[data]]
             cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
             
             n_dFac <- object@colDataStruc["n_dFac"]
@@ -212,6 +218,7 @@ setMethod(f="mvQCdesign",
             })
             do.call(grid.arrange, out)
           })
+
 
 #' @title multivariate QC data
 #'
@@ -266,27 +273,32 @@ setMethod(f= "boxplotQCnorm",
             
             # this function generate boxplot (abandance distribution) from raw data and normalized data
             
-            col <- colorPlot(object@design, object@colData, condition="samples")
-            
+            #col <- colorPlot(object@design, object@colData, condition="samples")
+            sample_names <- object@design@List.Factors %>% as.data.frame() %>% 
+                            unite(., col="samples", sep="_")
+            groups  <- object@design@List.Factors[object@design@Factors.Type == "Bio"] %>% as.data.frame() %>% 
+                       unite(col="groups", sep="_", remove = FALSE) %>% mutate(samples=sample_names$samples)
             
             # raw data
-            pseudo_abundances <- log2(assay(object)+1) %>%  melt() %>% mutate(tag="Unnormalised data")
-            
+            pseudo_raw <- log2(assay(object)+1) %>%  data.table::melt() %>% mutate(TAG = "1.Raw data")
+
             # normalized data
-            pseudo_normalised  <- log2(scale(assay(object),center=FALSE,scale=object@Normalization@Norm.factors)+1) %>% 
-                                  melt() %>% mutate(tag=paste("Normalized data : ",object@Normalization@Method, sep="")) 
-            
+            pseudo_norm  <- log2(scale(assay(object),center=FALSE,scale=object@Normalization@Norm.factors$norm.factors)+1) %>% 
+                                    data.table::melt() %>% mutate(TAG = "2.Normalized data")
+  
+            pseudo_tmp <- rbind(pseudo_raw, pseudo_norm)
             # merge  raw data & normalized data
-            pseudo <- rbind(pseudo_abundances, pseudo_normalised)
-            colnames(pseudo) <- c("features", "samples", "counts", "tag")
             
+            colnames(pseudo_tmp) <- c("features", "samples", "counts", "TAG")
+            
+            pseudo <- full_join(pseudo_tmp, groups, by="samples")
             
             # boxplot
-            ggplot(pseudo, aes(x=samples, y=counts)) + 
-              geom_boxplot(aes(fill=samples), color="black") + 
-              facet_grid(.~tag) + 
-              theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  
-              scale_fill_manual(values=col)
+            ggplot(pseudo, aes(x=samples, y=counts)) +
+              geom_boxplot(aes(fill=groups)) +
+              theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+              facet_grid(~TAG)
+              #scale_fill_manual(values=col)
             
           }
 )
@@ -304,35 +316,34 @@ setMethod(f= "boxplotQCnorm",
 #' @examples
 setMethod(f= "plotPCAnorm",
           signature = "FlomicsExperiment",
-          definition <- function(object, PCs=c(1,2), condition="samples"){
+          definition <- function(object, data="norm", PCs=c(1,2), condition="groups"){
 
-            groups  <- object@colData[,1:object@colDataStruc] %>% as.data.frame() %>% 
-                       mutate(samples=row.names(.)) 
-            
-            col <- colorPlot(object@design, object@colData, condition=condition)
-            
-                        
+            #
             PC1 <- paste("Dim.",PCs[1], sep="")
             PC2 <- paste("Dim.",PCs[2], sep="")
+                        
+            #col <- colorPlot(object@design, object@colData, condition=condition)
             
-            sample_names <- row.names(object@listPCA$norm$ind$coord)
+            #sample_names <- row.names(object@listPCA[[data]]$ind$coord)
             
-            score_raw  <- object@listPCA$raw$ind$coord[,  PCs] %>% as.data.frame() %>% 
-                          mutate(samples=sample_names, tag="1.Unnormalised data")
-            score_norm <- object@listPCA$norm$ind$coord[, PCs] %>% as.data.frame() %>% 
-                          mutate(samples=sample_names, tag=paste("2.Normalised data : ", object@Normalization@Method,  sep=""))
+            groups  <- object@design@List.Factors[object@design@Factors.Type == "Bio"] %>% as.data.frame() %>% 
+                       unite(col="groups", sep="_") 
+            factors <- object@design@List.Factors %>% as.data.frame() %>% 
+                       unite(., col="samples", sep="_", remove = FALSE) %>% mutate(groups = groups$groups)
             
-            score     <- rbind(score_raw, score_norm)
+            score_tmp <- object@listPCA[[data]]$ind$coord[, PCs] %>% as.data.frame() %>% mutate(samples=row.names(.))
+
+            score  <- full_join(score_tmp, factors, by="samples")
             
-            ggplot(score, aes_string(x=PC1, y=PC2) ) + 
-              geom_point(aes(color=samples), size=3) + facet_grid(.~tag) + 
-              xlab(paste(PC1, " (",round(object@listPCA$raw$eig[PCs,2][1], digit=3),"%)", sep="")) +
-              ylab(paste(PC2, " (",round(object@listPCA$raw$eig[PCs,2][1], digit=3),"%)", sep="")) +
+            ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  + 
+              geom_point( size=3) +
+              xlab(paste(PC1, " (",round(object@listPCA[[data]]$eig[PCs,2][1], digit=3),"%)", sep="")) +
+              ylab(paste(PC2, " (",round(object@listPCA[[data]]$eig[PCs,2][2], digit=3),"%)", sep="")) +
               geom_hline(yintercept=0, linetype="dashed", color = "red") +
               geom_vline(xintercept=0, linetype="dashed", color = "red") +
-              scale_color_manual(values=col) + 
               theme(strip.text.x = element_text(size=8, face="bold.italic"),
-                    strip.text.y = element_text(size=8, face="bold.italic"))
+                    strip.text.y = element_text(size=8, face="bold.italic")) #+
+              #scale_color_manual(values=col$colors)
             })
 
 
@@ -342,10 +353,11 @@ setMethod(f= "plotPCAnorm",
 #' @param FlomicsExperiment 
 #' @param condition 
 #' @param colors color palette
-#'
+#' 
 #' @return
 #' @export
-#'
+#' @exportMethod 
+#' 
 #' @examples
 setMethod(f= "barplotPCAnorm",
           signature = "FlomicsExperiment",
@@ -353,9 +365,9 @@ setMethod(f= "barplotPCAnorm",
             
             col <- colorPlot(object@design, object@colData, condition=condition)
             
-            score_raw  <- object@listPCA$raw$ind$coord  %>% melt %>% 
+            score_raw  <- object@listPCA$raw$ind$coord  %>% data.table::melt %>% 
                           mutate(tag="1.Unnormalised data")
-            score_norm <- object@listPCA$norm$ind$coord %>% melt %>% 
+            score_norm <- object@listPCA$norm$ind$coord %>% data.table::melt %>% 
                           mutate(tag=paste("2.Normalised data : ", object@Normalization@Method,  sep=""))
             
             score <- rbind(score_raw, score_norm)
@@ -367,3 +379,22 @@ setMethod(f= "barplotPCAnorm",
           })
 
 
+
+#' FilterLowAbundance
+#'
+#' @param FlomicsExperiment 
+#' @param threshold
+#'
+#' @return FlomicsExperiment
+#' @export
+#'
+#' @examples
+setMethod(f= "FilterLowAbundance",
+          signature = "FlomicsExperiment",
+          definition <- function(object, threshold){
+            
+            object <- object[rowSums(assay(object)) > threshold, ]
+            object@LogFilter <- data.frame(number=c(dim(assay(object)), object@colDataStruc[1]), 
+                                           row.names=c("Features", "Samples", "Factors")) 
+            return(object)
+          })

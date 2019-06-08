@@ -37,12 +37,6 @@ shinyServer(function(input, output, session) {
 
     # load data
       loadData()
-    
-      ####### Filtering step ########
- 
-      output$Filtering <- renderMenu({
-        menuItem("Filtering-Transfo", tabName = "Filtering", icon = icon("refresh"))
-      })
          
       ####### Design ########
       output$ExpDesignItem <- renderMenu({
@@ -164,6 +158,20 @@ shinyServer(function(input, output, session) {
 
     updateDesignFactors()
 
+    # Construct the form to select the model
+    output$SetModelFormula <- renderUI({
+      box(width=12,selectInput( "model.formulae",
+                                "Select a model formulae",
+                                choices = rev(names(GetModelFormulae(names(FE@design@List.Factors)))),
+                                selectize=FALSE,size=5))
+    })
+    output$validM <- renderUI({
+      actionButton("ValidM","Valid model choice")
+    }) 
+    
+    
+    
+    
     ########## Exploratory analysis ##########
     output$Exploratory <- renderMenu({
       
@@ -172,87 +180,85 @@ shinyServer(function(input, output, session) {
                menuSubItem("Bio. and tech. Variability", tabName = "ExploratoryQC")
                )
       })
-    
-    ## Run Normalisation
-    FE <- RunNormalization(FE)
-    
-    ## QCdesign
-    output$QCdesign <- renderPlot(
-      mvQCdesign(FE,axis=input$nAxis))
-
-    ## QCdata
-    output$QCdata <- renderPlot(
-      mvQCdata(FE,axis=input$nAxis))
-
-    ## Boxplot check
-    output$norm.boxplot <- renderPlot( 
-      boxplotQCnorm(FE))
-    
-    ## compute
-    pseudo_norm <- log2(scale(assay(FE),center=FALSE,scale=FE@Normalization@Norm.factors)+1)
-    FE@listPCA[["norm"]] <- FactoMineR::PCA(t(pseudo_norm),ncp = 5,graph=F)
-    
-    ### PCA barplot coordinates
-    
-    output$condColor1 <- renderUI({
-      condition <- c("samples",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
-      radioButtons(inputId = 'condColorSelect1', 
-                   label = 'Condition :', 
-                   choices = condition,
-                   selected = "samples")
-    })
-    
-    output$norm.PCAbar <- renderPlot({
-      barplotPCAnorm(FE , condition=input$condColorSelect1)
-    })  
-    
-    ### PCA point.plot coordinates
-    
-    # select axis to plot
-    observe({
-      x <- input$PC1
-      # Can also set the label and select items
-      choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
-      updateRadioButtons(session, "PC2",
-                         choices = choices[-as.numeric(x)],
-                         inline = TRUE)
-    })
-    
-    output$condColor <- renderUI({
-      condition <- c("samples",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
-      radioButtons(inputId = 'condColorSelect', 
-                   label = 'Levels :', 
-                   choices = condition,
-                   selected = "samples")
-    })
-    
-    output$norm.PCAcoord <- renderPlot({
-      
-      PC1.value <- as.numeric(input$PC1)
-      PC2.value <- as.numeric(input$PC2)
-      
-      plotPCAnorm(FE, PCs=c(PC1.value, PC2.value), condition=input$condColorSelect) 
-    })
-    
-    
-    # MAplot  Normalization   
-    output$NormText <- renderText("MAplot : mean expression vs log fold change")
-    
-    
-
-    # Construct the form to select the model
-     output$SetModelFormula <- renderUI({
-       box(width=12,selectInput( "model.formulae",
-                 "Select a model formulae",
-                 choices = rev(names(GetModelFormulae(names(FE@design@List.Factors)))),
-                  selectize=FALSE,size=5))
+     
    })
-     output$validM <- renderUI({
-     actionButton("ValidM","Valid model choice")
+
+   
+   observeEvent(list(input$FilterSeuil), {
+
+     ## Run Filtering
+     OldFeatureNbr <- length(FE@NAMES)
+     FE <- FilterLowAbundance(FE, input$FilterSeuil)
+     
+     NewFeatureNbr <- length(FE@NAMES)
+     
+     output$SummaryAbundance2 <- renderTable(
+       FE@LogFilter, rownames=TRUE, bordered = TRUE )
+     
+     output$SummaryText <- renderText(
+       paste("Result : ", OldFeatureNbr - NewFeatureNbr, " genes were filtred.", sep=""))
+     
+     ## Run Normalisation
+     FE <- RunNormalization(FE, input$selectNormMethod)
+     
+     ## QCdesign
+     output$QCdesign <- renderPlot(
+       mvQCdesign(FE,data=input$selectData, axis=5))
+     
+     ## QCdata
+     output$QCdata <- renderPlot(
+       mvQCdata(FE,axis=5))
+     
+     ## Boxplot check
+     output$norm.boxplot <- renderPlot( 
+       boxplotQCnorm(FE))
+     
+     ## compute PCA on normalized data
+     pseudo_norm <- log2(scale(assay(FE),center=FALSE,scale=FE@Normalization@Norm.factors$norm.factors)+1)
+     FE@listPCA[["norm"]] <- FactoMineR::PCA(t(pseudo_norm),ncp = 5,graph=F)
+     
+     ### PCA barplot coordinates
+     output$condColor1 <- renderUI({
+       condition <- c("groups",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
+       radioButtons(inputId = 'condColorSelect1', 
+                    label = 'Condition :', 
+                    choices = condition,
+                    selected = "groups")
      })
-    })
-
-
+     
+     ### PCA point.plot coordinates
+     
+     # select axis to plot
+     observe({
+       x <- input$PC1
+       # Can also set the label and select items
+       choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
+       updateRadioButtons(session, "PC2",
+                          choices = choices[-as.numeric(x)], 
+                          inline  = TRUE)
+     })
+     
+     output$condColor <- renderUI({
+       condition <- c("groups",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
+       radioButtons(inputId = 'condColorSelect', 
+                    label = 'Levels :', 
+                    choices = condition,
+                    selected = "groups")
+     })
+     
+     output$norm.PCAcoord <- renderPlot({
+       
+       PC1.value <- as.numeric(input$PC1)
+       PC2.value <- as.numeric(input$PC2)
+       
+       plotPCAnorm(FE, data=input$selectData2, PCs=c(PC1.value, PC2.value), condition=input$condColorSelect) 
+     })
+     
+     
+     # MAplot  Normalization   
+     output$NormText <- renderText(return(input$FilterSeuil))
+   })
+   
    #######
    # Part3
    #######
