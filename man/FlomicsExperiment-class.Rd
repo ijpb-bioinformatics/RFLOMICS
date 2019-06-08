@@ -16,5 +16,21 @@ This class extend the [\code{\link{SummarizedExperiment}}] class by adding a nam
 
 \describe{
 \item{\code{colDataStruc}}{giving the number of factor in the RNAseq design and the number of QC parameters.}
+
+\item{\code{ExperimentType}}{One of the following type of experiment: "RNAseq", "Proteomic","Metabolomic"}
+
+\item{\code{design}}{An object of class [\code{\link{ExpDesign}}]}
+
+\item{\code{LogFilter}}{A list}
+
+\item{\code{LogInput}}{A list}
+
+\item{\code{LogTransform}}{A list}
+
+\item{\code{PCAnorm}}{A list}
+
+\item{\code{Normalization}}{An object of class [\code{\link{Normalization}}]}
+
+\item{\code{DiffAnalysis}}{An object of class [\code{\link{DiffAnalysis}}]}
 }}
 

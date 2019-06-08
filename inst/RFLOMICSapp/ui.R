@@ -91,7 +91,7 @@ body <- dashboardBody(
     tabItem(tabName = "ExploratoryData", 
             box( title = "Filtering" ,      solidHeader = TRUE, status = "warning", width = 6,
                  numericInput(inputId = "FilterSeuil", 
-                              label="Seuil :", 
+                              label="Threshold :", 
                               value=10, 0, max=15, 1 )),
             
             box( title = "Normalization" , solidHeader = TRUE, status = "warning", width = 6, 

@@ -14,12 +14,12 @@ ExpDesign Class
 \section{Slots}{
 
 \describe{
-\item{\code{List.Factors}}{list.}
+\item{\code{List.Factors}}{A list of factor}
 
-\item{\code{Factors.Type}}{vector.}
+\item{\code{Factors.Type}}{Either 'Biological' or 'batch'}
 
-\item{\code{Model.formula}}{formula.}
+\item{\code{Model.formula}}{Modele formula.}
 
-\item{\code{Contrasts.List}}{list.}
+\item{\code{Contrasts.List}}{A list of contrasts.}
 }}
 
