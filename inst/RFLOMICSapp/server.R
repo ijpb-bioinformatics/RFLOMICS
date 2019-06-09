@@ -169,22 +169,18 @@ shinyServer(function(input, output, session) {
       actionButton("ValidM","Valid model choice")
     }) 
     
-    
-    
-    
     ########## Exploratory analysis ##########
     output$Exploratory <- renderMenu({
       
       menuItem("Data Exploratory", tabName = "Exploratory", icon = icon('eye'), startExpanded = FALSE,
                menuSubItem("Data", tabName = "ExploratoryData"),
-               menuSubItem("Bio. and tech. Variability", tabName = "ExploratoryQC")
-               )
+               menuSubItem("Bio. and tech. Variability", tabName = "ExploratoryQC"))
       })
-     
+
    })
 
    
-   observeEvent(list(input$FilterSeuil), {
+   observeEvent(input$Norm, {
 
      ## Run Filtering
      OldFeatureNbr <- length(FE@NAMES)

@@ -133,7 +133,7 @@ colorPlot <- function(design, ColData, condition="samples"){
 #' @examples
 plotLibSize <- function(abundances){
   
-  data <- colSums(abundances) %>% data.table::melt() %>% mutate(samples=colnames(abundances))
+  data <- colSums(abundances, na.rm = TRUE) %>% data.table::melt() %>% mutate(samples=colnames(abundances))
   
   ggplot(data) + geom_bar(aes(x=samples,y=value, fill=samples), stat="identity" ) +
     xlab("") + ylab("") + 

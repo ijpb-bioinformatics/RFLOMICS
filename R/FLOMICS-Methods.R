@@ -311,7 +311,7 @@ setMethod(f= "boxplotQCnorm",
 #' @param color color palette
 #'
 #' @return
-#' @exportMethod 
+#' @exportMethod plotPCAnorm
 #'
 #' @examples
 setMethod(f= "plotPCAnorm",
@@ -336,7 +336,8 @@ setMethod(f= "plotPCAnorm",
             score  <- full_join(score_tmp, factors, by="samples")
             
             ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  + 
-              geom_point( size=3) +
+              geom_point(size=3) + 
+              geom_text(aes(label=samples), size=3) +
               xlab(paste(PC1, " (",round(object@listPCA[[data]]$eig[PCs,2][1], digit=3),"%)", sep="")) +
               ylab(paste(PC2, " (",round(object@listPCA[[data]]$eig[PCs,2][2], digit=3),"%)", sep="")) +
               geom_hline(yintercept=0, linetype="dashed", color = "red") +
@@ -355,7 +356,6 @@ setMethod(f= "plotPCAnorm",
 #' @param colors color palette
 #' 
 #' @return
-#' @export
 #' @exportMethod 
 #' 
 #' @examples
@@ -386,15 +386,17 @@ setMethod(f= "barplotPCAnorm",
 #' @param threshold
 #'
 #' @return FlomicsExperiment
-#' @export
+#' @exportMethod FilterLowAbundance
 #'
 #' @examples
 setMethod(f= "FilterLowAbundance",
           signature = "FlomicsExperiment",
           definition <- function(object, threshold){
             
+            
             object <- object[rowSums(assay(object)) > threshold, ]
+            
             object@LogFilter <- data.frame(number=c(dim(assay(object)), object@colDataStruc[1]), 
-                                           row.names=c("Features", "Samples", "Factors")) 
+                                           row.names=c("Features", "Samples", "Factors"))
             return(object)
           })

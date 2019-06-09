@@ -13,7 +13,10 @@ sidebar <- dashboardSidebar(
   sidebarMenu(id="StateSave",
               menuItem("Import Data", tabName = "import",icon = icon('download')),
               menuItemOutput("ExpDesignItem"),
-              menuItemOutput("Exploratory")
+              menuItemOutput("Exploratory")# ,
+              #menuItemOutput("DiffAnalysis"),
+              #menuItemOutput("CoExpAnalysis"),
+              #menuItemOutput("Annotation")
   ),
   downloadButton("report", "Generate report")
 )
@@ -37,7 +40,10 @@ body <- dashboardBody(
                                  "text/csv",
                                  "text/comma-separated-values,text/plain",
                                  ".csv")
-                               )
+                               )#,
+                     #selectInput("DataType", label = "Data :",
+                     #                        choices = list("RNA-seq" = "RNAseq"), 
+                     #                        selected = "RNAseq")
                      )
             ),
             tags$br(),
@@ -113,7 +119,7 @@ body <- dashboardBody(
                    tabPanel("boxplot", plotOutput("norm.boxplot")),
                    tabPanel("QC Design", 
                             selectInput("selectData", label = "Data :",
-                                        choices = list("Normelized data" = "norm", 
+                                        choices = list("Normalized data" = "norm", 
                                                        "Unnormalized data" = "raw"), 
                                         selected = "norm"),
                             plotOutput("QCdesign")
@@ -150,7 +156,10 @@ body <- dashboardBody(
             box( status = "warning", width = 12,
                  tabPanel("QC Data",   plotOutput("QCdata"))
             )
-    )
+    ),
+    tabItem(tabName = "DiffAnalysis"),
+    tabItem(tabName = "CoExpAnalysis"),
+    tabItem(tabName = "Annotation")
   )
 )
 
