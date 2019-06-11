@@ -111,7 +111,7 @@ ExperimentalDesign <- function(dF.List){
 #' @export
 #'
 Normalization <- function(ExperimentType){
-  
+
   method=switch(ExperimentType,
                 "RNAseq"="TMM",
                 "Proteomic"="ProtNormMeth",
@@ -119,28 +119,28 @@ Normalization <- function(ExperimentType){
                 )
   .Normalization(Method=method,
                  Norm.factors=vector())
-  
+
 }
 
 
 
 #' @title RunNormalization
 #'
-#' @param FlomicsExperiment 
+#' @param FlomicsExperiment
 #'
 #' @return FlomicsExperiment
 #' @exportMethod RunNormalization
 #'
 #' @examples
-#' 
+#'
 setMethod(f="RunNormalization",
   signature="FlomicsExperiment",
   definition <- function(object, NormMethod=object@Normalization@Method){
-    
-      groups <- object@design@List.Factors[object@design@Factors.Type == "Bio"] %>% 
-                as.data.frame() %>% 
-                unite(col="groups", sep="_") 
-    
+
+      groups <- object@design@List.Factors[object@design@Factors.Type == "Bio"] %>%
+                as.data.frame() %>%
+                unite(col="groups", sep="_")
+
       object@Normalization@Norm.factors = switch(NormMethod,
                                                  "TMM"=TMM.Normalization(assay(object), groups$groups)
                                                  )
@@ -179,18 +179,18 @@ DiffAnalysis <- function(){
 setMethod(f="mvQCdesign",
           signature="FlomicsExperiment",
           definition <- function(object, data="norm", axis=5){
-            
+
             #pseudo_abundances <- log2(assay(object)+1)
             #resPCA <- FactoMineR::PCA(t(pseudo_abundances),ncp = axis,graph=F)
             resPCA <- object@listPCA[[data]]
             cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
-            
+
             n_dFac <- object@colDataStruc["n_dFac"]
-            
+
             bigdf <- list()
             for(i in 1:n_dFac){
               Factor <- object@colData[,i]
-              
+
               df <- list()
               for(j in 1:axis){
                 qc = as.vector(resPCA$ind$coord[,j])
@@ -270,45 +270,45 @@ setMethod(f="mvQCdata",
 setMethod(f= "boxplotQCnorm",
           signature = "FlomicsExperiment",
           definition <- function(object){
-            
+
             # this function generate boxplot (abandance distribution) from raw data and normalized data
-            
+
             #col <- colorPlot(object@design, object@colData, condition="samples")
-            sample_names <- object@design@List.Factors %>% as.data.frame() %>% 
+            sample_names <- object@design@List.Factors %>% as.data.frame() %>%
                             unite(., col="samples", sep="_")
-            groups  <- object@design@List.Factors[object@design@Factors.Type == "Bio"] %>% as.data.frame() %>% 
+            groups  <- object@design@List.Factors[object@design@Factors.Type == "Bio"] %>% as.data.frame() %>%
                        unite(col="groups", sep="_", remove = FALSE) %>% mutate(samples=sample_names$samples)
-            
+
             # raw data
             pseudo_raw <- log2(assay(object)+1) %>%  data.table::melt() %>% mutate(TAG = "1.Raw data")
 
             # normalized data
-            pseudo_norm  <- log2(scale(assay(object),center=FALSE,scale=object@Normalization@Norm.factors$norm.factors)+1) %>% 
+            pseudo_norm  <- log2(scale(assay(object),center=FALSE,scale=object@Normalization@Norm.factors$norm.factors)+1) %>%
                                     data.table::melt() %>% mutate(TAG = "2.Normalized data")
-  
+
             pseudo_tmp <- rbind(pseudo_raw, pseudo_norm)
             # merge  raw data & normalized data
-            
+
             colnames(pseudo_tmp) <- c("features", "samples", "counts", "TAG")
-            
+
             pseudo <- full_join(pseudo_tmp, groups, by="samples")
-            
+
             pseudo$samples <- factor(pseudo$samples, levels = unique(pseudo$samples))
-            
+
             # boxplot
             ggplot(pseudo, aes(x=samples, y=counts)) +
               geom_boxplot(aes(fill=groups)) +
               theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
               facet_grid(~TAG)
               #scale_fill_manual(values=col)
-            
+
           }
 )
 
 
 #' @title plotPCAnorm
 #'
-#' @param FlomicsExperiment 
+#' @param FlomicsExperiment
 #' @param condition
 #' @param color color palette
 #'
@@ -323,22 +323,22 @@ setMethod(f= "plotPCAnorm",
             #
             PC1 <- paste("Dim.",PCs[1], sep="")
             PC2 <- paste("Dim.",PCs[2], sep="")
-                        
+
             #col <- colorPlot(object@design, object@colData, condition=condition)
-            
+
             #sample_names <- row.names(object@listPCA[[data]]$ind$coord)
-            
-            groups  <- object@design@List.Factors[object@design@Factors.Type == "Bio"] %>% as.data.frame() %>% 
-                       unite(col="groups", sep="_") 
-            factors <- object@design@List.Factors %>% as.data.frame() %>% 
+
+            groups  <- object@design@List.Factors[object@design@Factors.Type == "Bio"] %>% as.data.frame() %>%
+                       unite(col="groups", sep="_")
+            factors <- object@design@List.Factors %>% as.data.frame() %>%
                        unite(., col="samples", sep="_", remove = FALSE) %>% mutate(groups = groups$groups)
-            
+
             score_tmp <- object@listPCA[[data]]$ind$coord[, PCs] %>% as.data.frame() %>% mutate(samples=row.names(.))
 
             score  <- full_join(score_tmp, factors, by="samples")
-            
-            ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  + 
-              geom_point(size=3) + 
+
+            ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
+              geom_point(size=3) +
               geom_text(aes(label=samples), size=3, vjust = 0) +
               xlab(paste(PC1, " (",round(object@listPCA[[data]]$eig[PCs,2][1], digit=3),"%)", sep="")) +
               ylab(paste(PC2, " (",round(object@listPCA[[data]]$eig[PCs,2][2], digit=3),"%)", sep="")) +
@@ -353,29 +353,30 @@ setMethod(f= "plotPCAnorm",
 
 #' @title barplotPCAnorm
 #'
-#' @param FlomicsExperiment 
-#' @param condition 
+#' @param FlomicsExperiment
+#' @param condition
 #' @param colors color palette
-#' 
+#'
 #' @return
 #' @exportMethod barplotPCAnorm
 #' 
+#'
 #' @examples
 setMethod(f= "barplotPCAnorm",
           signature = "FlomicsExperiment",
           definition <- function(object, condition="samples"){
-            
+
             col <- colorPlot(object@design, object@colData, condition=condition)
-            
-            score_raw  <- object@listPCA$raw$ind$coord  %>% data.table::melt %>% 
+
+            score_raw  <- object@listPCA$raw$ind$coord  %>% data.table::melt %>%
                           mutate(tag="1.Unnormalised data")
-            score_norm <- object@listPCA$norm$ind$coord %>% data.table::melt %>% 
+            score_norm <- object@listPCA$norm$ind$coord %>% data.table::melt %>%
                           mutate(tag=paste("2.Normalised data : ", object@Normalization@Method,  sep=""))
-            
+
             score <- rbind(score_raw, score_norm)
             colnames(score) <- c("samples", "PCs", "value", "tag")
 
-            ggplot(data=score, aes(x=PCs, y=value, fill=samples)) + 
+            ggplot(data=score, aes(x=PCs, y=value, fill=samples)) +
               geom_bar(stat="identity", position=position_dodge(), color="black") +
               facet_grid(tag~PCs, scale ="free", space = "free") + scale_fill_manual(values=col)
           })
@@ -384,7 +385,7 @@ setMethod(f= "barplotPCAnorm",
 
 #' FilterLowAbundance
 #'
-#' @param FlomicsExperiment 
+#' @param FlomicsExperiment
 #' @param threshold
 #'
 #' @return FlomicsExperiment
@@ -394,11 +395,11 @@ setMethod(f= "barplotPCAnorm",
 setMethod(f= "FilterLowAbundance",
           signature = "FlomicsExperiment",
           definition <- function(object, threshold){
-            
-            
+
+
             object <- object[rowSums(assay(object)) > threshold, ]
-            
-            object@LogFilter <- data.frame(number=c(dim(assay(object)), object@colDataStruc[1]), 
+
+            object@LogFilter <- data.frame(number=c(dim(assay(object)), object@colDataStruc[1]),
                                            row.names=c("Features", "Samples", "Factors"))
             return(object)
           })
