@@ -5,7 +5,6 @@ toc: true
 params:
  Count.file: NA
  QC.file: NA
- nAxis: NA
  FEdata: NA
 ---
 
@@ -46,12 +45,25 @@ head(assay(FE))
 ## Design QC
 
 ```{r QCdesign, warning=FALSE,message=FALSE}
-mvQCdesign(FE,axis=params$nAxis)
+mvQCdesign(FE, data="norm", axis=5)
 ```
 
 ## data QC 
 
 ```{r QCdata}
-mvQCdata(FE,axis=params$nAxis)
+mvQCdata(FE,axis=5)
+```
+
+# Normalization (TMM)
+
+## Boxplot
+
+```{r boxplot}
+boxplotQCnorm(FE)
+```
+
+## PCA
+```{r PCA}
+plotPCAnorm(FE, data="norm", PCs=c(1, 2), condition="groups") 
 ```
 

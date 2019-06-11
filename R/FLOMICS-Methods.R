@@ -358,7 +358,7 @@ setMethod(f= "plotPCAnorm",
 #' @param colors color palette
 #' 
 #' @return
-#' @exportMethod 
+#' @exportMethod barplotPCAnorm
 #' 
 #' @examples
 setMethod(f= "barplotPCAnorm",
