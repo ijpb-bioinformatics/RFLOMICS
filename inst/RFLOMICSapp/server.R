@@ -161,7 +161,7 @@ shinyServer(function(input, output, session) {
     output$SetModelFormula <- renderUI({
       box(width=12,selectInput( "model.formulae",
                                 "Select a model formulae",
-                                choices = rev(names(GetModelFormulae(Factors.Names=names(FE@design@List.Factors),Factors.Type=FE@design@Factors.Type))),
+                                choices = rev(names(GetModelFormulae(Factors.Name=names(FE@design@List.Factors),Factors.Type=FE@design@Factors.Type))),
                                 selectize=FALSE,size=5))
     })
     output$validM <- renderUI({
