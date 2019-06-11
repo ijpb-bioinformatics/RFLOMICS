@@ -5,20 +5,21 @@
 \alias{FlomicsExperiment}
 \title{FlomicsExperiment Constructor}
 \usage{
-FlomicsExperiment(counts, QCmat = NULL, ...)
+FlomicsExperiment(abundances, QCmat = NULL, ExperimentType = "RNAseq",
+  ...)
 }
 \arguments{
-\item{counts}{numeric matrix or data.frame of read counts. The names of the columns
+\item{abundances}{numeric matrix or data.frame of features abundance. The names of the columns
 must give the design experiments using the \code{_} separator (Ex: Fac1_rep1, Fac1_rep2) between
 factor modalities.}
 
 \item{QCmat}{An optionnal matrix giving statistics relatives to the quality check (QC) of
-the RNAseq experiment: library preparation, sequencing and reads alignments statistics.}
+the experiment. (Ex: For RNAseq: library preparation, sequencing and reads alignments statistics.)}
 }
 \value{
 An object of class [\code{\link{FlomicsExperiment-class}}]
 }
 \description{
 Constructor method for the [\code{\link{FlomicsExperiment-class}}] Class.
-Create an object of class \code{\link{FlomicsExperiment}} from counts (rows=features, columns=design)
+Create an object of class \code{\link{FlomicsExperiment}} from abundance (rows=features, columns=design)
 }

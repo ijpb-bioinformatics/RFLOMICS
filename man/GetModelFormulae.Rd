@@ -10,7 +10,7 @@ GetModelFormulae(Factors.Name, Factors.Type = NULL)
 \item{Factors.Type}{}
 }
 \value{
-a formulae
+a named list of formulae
 }
 \description{
 GetModelFormulae
