@@ -4,7 +4,7 @@ library(shiny)
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
 
-  
+
 # definition of the loadData function()
 
   loadData <- function() {
@@ -37,7 +37,7 @@ shinyServer(function(input, output, session) {
 
     # load data
       loadData()
-         
+
       ####### Design ########
       output$ExpDesignItem <- renderMenu({
         menuItem("Experimental Design", tabName = "designExp",icon = icon('vials'))
@@ -70,13 +70,13 @@ shinyServer(function(input, output, session) {
                         textInput(paste0("dF.Name.dFac", i), label=NULL , value = paste0("dFac",i), width = NULL,
                                   placeholder = NULL)
                     )})})
-      
-      
+
+
       # summary of loaded data
       output$SummaryAbundance <- renderTable(
-        data.frame(number=c(dim(assay(FE)), FE@colDataStruc[1]), row.names=c("Features", "Samples", "Factors")), 
+        data.frame(number=c(dim(assay(FE)), FE@colDataStruc[1]), row.names=c("Features", "Samples", "Factors")),
         rownames=TRUE, bordered = TRUE)
-      
+
       if(!is.na(FE@colDataStruc[2])){
         QC <- FE@colData[,(FE@colDataStruc[1]+1):(FE@colDataStruc[1]+ FE@colDataStruc[2])]
         QC_summary <- colMeans(as.data.frame(QC))
@@ -84,18 +84,18 @@ shinyServer(function(input, output, session) {
         QC_summary <- rbind(QC_summary, colMaxs(as.matrix(QC)))
         QC_summary <- rbind(QC_summary, colMins(as.matrix(QC))) %>% t
         colnames(QC_summary) <- c("Means", "Medians", "Maxs", "Mins")
-        
+
         output$SummaryQC        <- renderTable(QC_summary, rownames=TRUE, bordered = TRUE)
       }
-      
+
       # library size plot
       output$LibSize <- renderPlot(
         plotLibSize(assay(FE)), height = 300)
-      
+
       # abundance distribution
       output$CountDist <- renderPlot(
         plotDistr(assay(FE)), height = 300)
-      
+
       })
 
 
@@ -161,16 +161,16 @@ shinyServer(function(input, output, session) {
     output$SetModelFormula <- renderUI({
       box(width=12,selectInput( "model.formulae",
                                 "Select a model formulae",
-                                choices = rev(names(GetModelFormulae(names(FE@design@List.Factors)))),
+                                choices = rev(names(GetModelFormulae(Factors.Names=names(FE@design@List.Factors),Factors.Type=FE@design@Factors.Type))),
                                 selectize=FALSE,size=5))
     })
     output$validM <- renderUI({
       actionButton("ValidM","Valid model choice")
-    }) 
-    
+    })
+
     ########## Exploratory analysis ##########
     output$Exploratory <- renderMenu({
-      
+
       menuItem("Data Exploratory", tabName = "Exploratory", icon = icon('eye'), startExpanded = FALSE,
                menuSubItem("Data", tabName = "ExploratoryData"),
                menuSubItem("Bio. and tech. Variability", tabName = "ExploratoryQC"))
@@ -178,90 +178,90 @@ shinyServer(function(input, output, session) {
 
    })
 
-   
+
    observeEvent(input$Norm, {
 
      ## Run Filtering
      OldFeatureNbr <- length(FE@NAMES)
      FE <- FilterLowAbundance(FE, input$FilterSeuil)
      NewFeatureNbr <- length(FE@NAMES)
-     
+
      ## Run Normalisation
      FE <- RunNormalization(FE, input$selectNormMethod)
-     
+
      ## summay tabbox
      output$SummaryAbundance2 <- renderTable(
        FE@LogFilter, rownames=TRUE, bordered = TRUE )
-     
+
      output$SummaryText <- renderText(
        paste("Result : ", OldFeatureNbr - NewFeatureNbr, " genes were filtred.", sep=""))
-     
-     
-      
-     
+
+
+
+
      output$NormFact <- renderPlot({
-       
+
        plotNormFact(FE@Normalization@Norm.factors)
        })
-     
+
      ## QCdesign tabbox
      output$QCdesign <- renderPlot(
        mvQCdesign(FE,data=input$selectData, axis=5))
-     
+
      ## QCdata tabbox
      output$QCdata <- renderPlot(
        mvQCdata(FE,axis=5))
-     
+
      ## Boxplot check tabbox
-     output$norm.boxplot <- renderPlot( 
+     output$norm.boxplot <- renderPlot(
        boxplotQCnorm(FE))
-     
+
      ## compute PCA on normalized data
      pseudo_norm <- log2(scale(assay(FE),center=FALSE,scale=FE@Normalization@Norm.factors$norm.factors)+1)
      FE@listPCA[["norm"]] <- FactoMineR::PCA(t(pseudo_norm),ncp = 5,graph=F)
-     
+
      ### PCA barplot coordinates
      output$condColor1 <- renderUI({
        condition <- c("groups",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
-       radioButtons(inputId = 'condColorSelect1', 
-                    label = 'Condition :', 
+       radioButtons(inputId = 'condColorSelect1',
+                    label = 'Condition :',
                     choices = condition,
                     selected = "groups")
      })
-     
+
      ### PCA point.plot coordinates
-     
+
      # select axis to plot
      observe({
        x <- input$PC1
        # Can also set the label and select items
        choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
        updateRadioButtons(session, "PC2",
-                          choices = choices[-as.numeric(x)], 
+                          choices = choices[-as.numeric(x)],
                           inline  = TRUE)
      })
-     
+
      output$condColor <- renderUI({
        condition <- c("groups",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
-       radioButtons(inputId = 'condColorSelect', 
-                    label = 'Levels :', 
+       radioButtons(inputId = 'condColorSelect',
+                    label = 'Levels :',
                     choices = condition,
                     selected = "groups")
      })
-     
+
      output$norm.PCAcoord <- renderPlot({
-       
+
        PC1.value <- as.numeric(input$PC1)
        PC2.value <- as.numeric(input$PC2)
-       
-       plotPCAnorm(FE, data=input$selectData2, PCs=c(PC1.value, PC2.value), condition=input$condColorSelect) 
+
+       plotPCAnorm(FE, data=input$selectData2, PCs=c(PC1.value, PC2.value), condition=input$condColorSelect)
      })
-     
-     
-     # MAplot  Normalization   
+
+
+     # MAplot  Normalization
      output$NormText <- renderText(return(input$FilterSeuil))
    })
-   
+
    #######
    # Part3
    #######
