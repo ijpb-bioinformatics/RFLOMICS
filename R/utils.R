@@ -45,17 +45,21 @@ GetDesignFromNames <- function(samples_name){
 #'
 #' @examples
 #'
-GetModelFormulae <- function(Factors.Name,Factors.Type=NULL){
+GetModelFormulae <- function(Factors.Name,Factors.Type){
 
   formulae <- list()
-  nFac <- length(Factors.Name)
 
-  getF <- function(x){
-    update(as.formula(paste("~ ","(",paste(x,collapse="+"),")^2")),new=~.)
+  FacBio <- Factors.Name[which(Factors.Type == "Bio")]
+  FacBatch <- Factors.Name[which(Factors.Type == "batch")]
+
+  nFac <- length(FacBio)
+
+  getF <- function(x,FacBatch){
+    update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+","(",paste(x,collapse="+"),")^2")),new=~.)
   }
 
   for(i in 1:nFac){
-  formulae[[i]] <- apply(combn(Factors.Name,i),2,getF)
+  formulae[[i]] <- apply(combn(FacBio,i),2,getF,FacBatch=FacBatch)
   }
 
   formulae <- unlist(formulae)
@@ -66,7 +70,7 @@ GetModelFormulae <- function(Factors.Name,Factors.Type=NULL){
 
 #' @title TMM.Normalization
 #'
-#' @param counts 
+#' @param counts
 #'
 #' @return
 #' @export
@@ -84,65 +88,65 @@ TMM.Normalization <- function(counts, groups){
 
 #' @title colorPlot
 #'
-#' @param design 
-#' @param ColData 
-#' @param condition 
+#' @param design
+#' @param ColData
+#' @param condition
 #'
 #' @return
 #' @export
 #'
 #' @examples
 colorPlot <- function(design, ColData, condition="samples"){
-  
+
   getPalette <- colorRampPalette(brewer.pal(9, "Set1"))
-  
+
     if(condition == "samples"){
-      
+
       # combine only bio fact
-      groups <- design@List.Factors[design@Factors.Type == "Bio"] %>% 
+      groups <- design@List.Factors[design@Factors.Type == "Bio"] %>%
         as.data.frame() %>% unite(col="groups", sep="_")
       list.cond <- factor(groups$groups)
     }
     else{
-    
+
       list.cond <- design@List.Factors[[condition]]
     }
-      
+
     len.cond  <- length(levels(list.cond))
-      
-    colors    <- getPalette(len.cond) 
-      
+
+    colors    <- getPalette(len.cond)
+
     #col <- colors[list.cond]
     col <- colors[levels(list.cond)]
     #names(col) <- row.names(ColData)
     names(col) <- row.names(levels(list.cond))
-    
+
     return(col)
 }
 
 
 #' plotLibSize
 #'
-#' @param abundances 
-#' @param design 
-#' @param colData 
+#' @param abundances
+#' @param design
+#' @param colData
 #'
 #' @return
 #' @export
 #'
 #' @examples
 plotLibSize <- function(abundances){
-  
+
   samples     <- colnames(abundances)
   libSizeNorm <- data.frame ( value = colSums(abundances, na.rm = TRUE) , samples=samples)
-  
+
   libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
-  
+
   ggplot(libSizeNorm, aes(x=samples,y=value, fill=samples)) + geom_bar( stat="identity" ) +
-    xlab("") + ylab("Library Size") + 
+    xlab("") + ylab("Library Size") +
     theme(axis.text.x      = element_text(angle = 45, hjust = 1),
           legend.position  = "none")
-          #axis.text.x     = element_blank(), 
+          #axis.text.x     = element_blank(),
           #axis.ticks      = element_blank())
           #legend.key.size = unit(0.3, "cm"))
           #legend.text     = element_text(size=5)) +
@@ -151,21 +155,21 @@ plotLibSize <- function(abundances){
 
 #' plotDistr
 #'
-#' @param abundances 
-#' @param design 
-#' @param colData 
+#' @param abundances
+#' @param design
+#' @param colData
 #'
 #' @return
 #' @export
 #'
 #' @examples
 plotDistr <- function(abundances){
-  
+
 
   pseudo_counts <- log2(abundances+1) %>% data.table::melt()
   colnames(pseudo_counts) <- c("features", "samples", "value")
-  
-  ggplot(pseudo_counts) + 
+
+  ggplot(pseudo_counts) +
     geom_density(aes(value, color=samples) ) +
     xlab("") + theme(legend.position='none')
 }
@@ -175,19 +179,19 @@ plotDistr <- function(abundances){
 
 #' plotNormFact
 #'
-#' @param NormFactors 
+#' @param NormFactors
 #'
 #' @return
 #' @export
 #'
 #' @examples
 plotNormFact <- function(NormFactors){
-  
+
   NormFactors$group <- factor(NormFactors$group, levels = unique(NormFactors$group))
-  
-  ggplot(NormFactors, aes(x=row.names(NormFactors),y=norm.factors, color=group)) + 
+
+  ggplot(NormFactors, aes(x=row.names(NormFactors),y=norm.factors, color=group)) +
     geom_point() +
-    xlab("") + ylab("norm.factors") + 
+    xlab("") + ylab("norm.factors") +
     theme(axis.text.x      = element_text(angle = 45, hjust = 1),
           legend.position  = "none")
 }
