@@ -133,18 +133,19 @@ colorPlot <- function(design, ColData, condition="samples"){
 #' @examples
 plotLibSize <- function(abundances){
   
-  data <- colSums(abundances, na.rm = TRUE) %>% data.table::melt() %>% mutate(samples=colnames(abundances))
+  samples     <- colnames(abundances)
+  libSizeNorm <- data.frame ( value = colSums(abundances, na.rm = TRUE) , samples=samples)
   
-  ggplot(data) + geom_bar(aes(x=samples,y=value, fill=samples), stat="identity" ) +
-    xlab("") + ylab("") + 
+  libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
+  
+  ggplot(libSizeNorm, aes(x=samples,y=value, fill=samples)) + geom_bar( stat="identity" ) +
+    xlab("") + ylab("Library Size") + 
     theme(axis.text.x      = element_text(angle = 45, hjust = 1),
           legend.position  = "none")
           #axis.text.x     = element_blank(), 
           #axis.ticks      = element_blank())
           #legend.key.size = unit(0.3, "cm"))
           #legend.text     = element_text(size=5)) +
-    
-    
 }
 
 
@@ -172,5 +173,22 @@ plotDistr <- function(abundances){
 
 
 
-
+#' plotNormFact
+#'
+#' @param NormFactors 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plotNormFact <- function(NormFactors){
+  
+  NormFactors$group <- factor(NormFactors$group, levels = unique(NormFactors$group))
+  
+  ggplot(NormFactors, aes(x=row.names(NormFactors),y=norm.factors, color=group)) + 
+    geom_point() +
+    xlab("") + ylab("norm.factors") + 
+    theme(axis.text.x      = element_text(angle = 45, hjust = 1),
+          legend.position  = "none")
+}
 

@@ -40,10 +40,10 @@ body <- dashboardBody(
                                  "text/csv",
                                  "text/comma-separated-values,text/plain",
                                  ".csv")
-                               )#,
-                     #selectInput("DataType", label = "Data :",
-                     #                        choices = list("RNA-seq" = "RNAseq"), 
-                     #                        selected = "RNAseq")
+                               ),
+                     selectInput("ExperimentType", label = "Data :",
+                                             choices = list("RNA-seq" = "RNAseq"), 
+                                             selected = "RNAseq")
                      )
             ),
             tags$br(),
@@ -112,9 +112,18 @@ body <- dashboardBody(
                  tabBox(
                    # The id lets us use input$tabset1 on the server to find the current tab
                    id = "ExplorAnalysis", width = 12,
-                   tabPanel("summary", 
-                            tableOutput('SummaryAbundance2'),
-                            textOutput("SummaryText")
+                   tabPanel("summary",
+                            column(width=4,
+                                   tags$br(),
+                                   tags$br(),
+                                   tableOutput('SummaryAbundance2'),
+                                   textOutput("SummaryText")
+                                   ),
+                            column(width=8,
+                                   tags$br(),
+                                   tags$br(),
+                                   plotOutput("NormFact")
+                                   )
                             ),
                    tabPanel("boxplot", plotOutput("norm.boxplot")),
                    tabPanel("QC Design", 

@@ -293,6 +293,8 @@ setMethod(f= "boxplotQCnorm",
             
             pseudo <- full_join(pseudo_tmp, groups, by="samples")
             
+            pseudo$samples <- factor(pseudo$samples, levels = unique(pseudo$samples))
+            
             # boxplot
             ggplot(pseudo, aes(x=samples, y=counts)) +
               geom_boxplot(aes(fill=groups)) +
@@ -337,7 +339,7 @@ setMethod(f= "plotPCAnorm",
             
             ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  + 
               geom_point(size=3) + 
-              geom_text(aes(label=samples), size=3) +
+              geom_text(aes(label=samples), size=3, vjust = 0) +
               xlab(paste(PC1, " (",round(object@listPCA[[data]]$eig[PCs,2][1], digit=3),"%)", sep="")) +
               ylab(paste(PC2, " (",round(object@listPCA[[data]]$eig[PCs,2][2], digit=3),"%)", sep="")) +
               geom_hline(yintercept=0, linetype="dashed", color = "red") +

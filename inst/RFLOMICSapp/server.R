@@ -22,7 +22,7 @@ shinyServer(function(input, output, session) {
     else{
      QCmat <- read.table(input$QC.Import.file$datapath,h=T)
     }
-    FE <<- FlomicsExperiment(count,QCmat)
+    FE <<- FlomicsExperiment(count,QCmat, ExperimentType=input$ExperimentType)
 
   }
 
@@ -90,12 +90,11 @@ shinyServer(function(input, output, session) {
       
       # library size plot
       output$LibSize <- renderPlot(
-        plotLibSize(assay(FE)), height = 300
-      )
+        plotLibSize(assay(FE)), height = 300)
+      
       # abundance distribution
       output$CountDist <- renderPlot(
-        plotDistr(assay(FE)), height = 300
-        )
+        plotDistr(assay(FE)), height = 300)
       
       })
 
@@ -117,7 +116,7 @@ shinyServer(function(input, output, session) {
       List.Factors.new <- FE@design@List.Factors
 
       # Relevel the factor
-       for(i in 1:length(List.Factors.new)){
+     for(i in 1:length(List.Factors.new)){
          List.Factors.new[[i]] <- relevel(List.Factors.new[[i]],ref=input[[paste0("dF.RefLevel.dFac",i)]])
      }
      names(List.Factors.new) <- dF.List.Name
@@ -185,27 +184,35 @@ shinyServer(function(input, output, session) {
      ## Run Filtering
      OldFeatureNbr <- length(FE@NAMES)
      FE <- FilterLowAbundance(FE, input$FilterSeuil)
-     
      NewFeatureNbr <- length(FE@NAMES)
      
+     ## Run Normalisation
+     FE <- RunNormalization(FE, input$selectNormMethod)
+     
+     ## summay tabbox
      output$SummaryAbundance2 <- renderTable(
        FE@LogFilter, rownames=TRUE, bordered = TRUE )
      
      output$SummaryText <- renderText(
        paste("Result : ", OldFeatureNbr - NewFeatureNbr, " genes were filtred.", sep=""))
      
-     ## Run Normalisation
-     FE <- RunNormalization(FE, input$selectNormMethod)
      
-     ## QCdesign
+      
+     
+     output$NormFact <- renderPlot({
+       
+       plotNormFact(FE@Normalization@Norm.factors)
+       })
+     
+     ## QCdesign tabbox
      output$QCdesign <- renderPlot(
        mvQCdesign(FE,data=input$selectData, axis=5))
      
-     ## QCdata
+     ## QCdata tabbox
      output$QCdata <- renderPlot(
        mvQCdata(FE,axis=5))
      
-     ## Boxplot check
+     ## Boxplot check tabbox
      output$norm.boxplot <- renderPlot( 
        boxplotQCnorm(FE))
      
