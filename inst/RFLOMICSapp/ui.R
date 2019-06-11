@@ -13,9 +13,10 @@ sidebar <- dashboardSidebar(
   sidebarMenu(id="StateSave",
               menuItem("Import Data", tabName = "import",icon = icon('download')),
               menuItemOutput("ExpDesignItem"),
-              menuItemOutput("ViewData"),
-              menuItemOutput("QualityCheck"),
-              menuItemOutput("Normalization")
+              menuItemOutput("Exploratory")# ,
+              #menuItemOutput("DiffAnalysis"),
+              #menuItemOutput("CoExpAnalysis"),
+              #menuItemOutput("Annotation")
   ),
   downloadButton("report", "Generate report")
 )
@@ -23,21 +24,48 @@ sidebar <- dashboardSidebar(
 body <- dashboardBody(
   tabItems(
     tabItem(tabName = "import",
-            fileInput("QC.Import.file", "Import QC data as .txt File",
-                      accept = c(
-                        "text/csv",
-                        "text/comma-separated-values,text/plain",
-                        ".csv")
+            fluidRow(
+              column(6,
+                     fileInput("Count.Import.file", "Import matrix of features abundances as .txt File",
+                               accept = c(
+                                 "text/csv",
+                                 "text/comma-separated-values,text/plain",
+                                 ".csv")
+                               ),
+                     actionButton("load","load")
+                     ),
+              column(6,
+                     fileInput("QC.Import.file", "Import QC data as .txt File",
+                               accept = c(
+                                 "text/csv",
+                                 "text/comma-separated-values,text/plain",
+                                 ".csv")
+                               ),
+                     selectInput("ExperimentType", label = "Data :",
+                                             choices = list("RNA-seq" = "RNAseq"), 
+                                             selected = "RNAseq")
+                     )
             ),
-            fileInput("Count.Import.file", "Import matrix of features abundances as .txt File",
-                      accept = c(
-                        "text/csv",
-                        "text/comma-separated-values,text/plain",
-                        ".csv")
+            tags$br(),
+            tags$br(),
+            fluidRow(
+              column(6,
+                    # display report summary
+                    box(title = "Data Summary", solidHeader = TRUE, status = "warning", width = 12, tableOutput('SummaryAbundance'))
+                    ),
+              column(6,
+                    box(title = "QC Summary",   solidHeader = TRUE, status = "warning", width = 12, tableOutput('SummaryQC'))
+                    )
+              ),
+            fluidRow(
+              column(6,
+                    box(title = "Library size", solidHeader = TRUE, status = "warning", width = 12, height = NULL, plotOutput("LibSize", height = "400%"))
+                    ),
+              column(6,
+                    box(title = "Abundance Distribution", solidHeader = TRUE, status = "warning", width = 12, plotOutput("CountDist", height = "400%"))
+                    )
+              )
             ),
-            actionButton("load","load")
-            ),
-
     tabItem(tabName = "designExp",
             h5("Select the level of reference fo each design factor"),
             fluidRow(
@@ -66,72 +94,81 @@ body <- dashboardBody(
               uiOutput("SetContrasts")
             )
     ),
-    tabItem(tabName = "dmatrix", dataTableOutput("colData")
-    ),
-    tabItem(tabName = "AbundanceMatrix", dataTableOutput("CountMat")
-    ),
-    tabItem(tabName = "QC",
-            numericInput(inputId = "nAxis", label="Number Of PCA axis", value=1,
-                         1, max=5, 1)
-    ),
-    tabItem(tabName = "QCdata",
-            plotOutput("QCdata")
-    ),
-    tabItem(tabName = "QCdesign",
-            plotOutput("QCdesign")
-    ),
-    tabItem(tabName = "Norm", 
+    tabItem(tabName = "ExploratoryData", 
+            box( title = "Filtering" ,      solidHeader = TRUE, status = "warning", width = 6,
+                 numericInput(inputId = "FilterSeuil", 
+                              label="Threshold :", 
+                              value=10, 0, max=15, 1 )),
             
-            box(title = "Normalization", solidHeader = TRUE, status = "warning", width = 12,
-            
-                tabBox(
-                  # The id lets us use input$tabset1 on the server to find the current tab
-                  id = "tabset1", width = 12,
-                  tabPanel("boxplot", plotOutput("norm.boxplot")),
-                  tabPanel("PCA 1/2", 
-                           fluidRow(
-                             plotOutput("norm.PCAbar")
-                           ),
-                           tags$br(),
-                           tags$br(),
-                           fluidRow(
-                             column(width = 4,
-                                    uiOutput('condColor1')
-                             )
-                           )
-                           
-                           ),
-                  tabPanel("PCA 2/2",     
+            box( title = "Normalization" , solidHeader = TRUE, status = "warning", width = 6, 
+                 selectInput(inputId  = "selectNormMethod", 
+                             label    = "Method :",
+                             choices  =  list("TMM (edgeR)" = "TMM"), 
+                             selected = "TMM")),
+            actionButton("Norm","Update"),
+            tags$br(),
+            tags$br(),
+            box( status = "warning", width = 12,
+                 tabBox(
+                   # The id lets us use input$tabset1 on the server to find the current tab
+                   id = "ExplorAnalysis", width = 12,
+                   tabPanel("summary",
+                            column(width=4,
+                                   tags$br(),
+                                   tags$br(),
+                                   tableOutput('SummaryAbundance2'),
+                                   textOutput("SummaryText")
+                                   ),
+                            column(width=8,
+                                   tags$br(),
+                                   tags$br(),
+                                   plotOutput("NormFact")
+                                   )
+                            ),
+                   tabPanel("boxplot", plotOutput("norm.boxplot")),
+                   tabPanel("QC Design", 
+                            selectInput("selectData", label = "Data :",
+                                        choices = list("Normalized data" = "norm", 
+                                                       "Unnormalized data" = "raw"), 
+                                        selected = "norm"),
+                            plotOutput("QCdesign")
+                            #numericInput(inputId = "nAxis", label="Number Of PCA axis", value=2, 1, max=5, 1),
+                            ),
+                   tabPanel("PCA",
+                            selectInput("selectData2", label = "Data :",
+                                        choices = list("Normelized data" = "norm", 
+                                                       "Unnormalized data" = "raw"), 
+                                        selected = "norm"),
 
-                           fluidRow(
-                             plotOutput("norm.PCAcoord")
-                             ),
-                           tags$br(),
-                           tags$br(),
-                           fluidRow(
-                             column(width = 4,
-                                    uiOutput('condColor')
-                                    ),
-                             column(width = 4,
-                                    radioButtons(inputId = "PC1", 
-                                                 label = "Choice of PCs :", 
-                                                 choices = list("PC1" = 1, 
-                                                                "PC2" = 2, 
-                                                                "PC3" = 3),
-                                                 selected = 1, inline = TRUE),
-                                    radioButtons(inputId = "PC2", 
-                                                 label = "", 
-                                                 choices = list("PC1" = 1, 
-                                                                "PC2" = 2, 
-                                                                "PC3" = 3),
-                                                 selected = 2, inline = TRUE)
-                                    )
-                             )
-                           ),
-                  tabPanel("MA-plot", textOutput("NormText"))
-                )
-            )        
-    )
+                            fluidRow( plotOutput("norm.PCAcoord") ),
+                            tags$br(),
+                            tags$br(),
+                            fluidRow(
+                              column(width = 6, uiOutput('condColor')),
+                              column(width = 6,
+                                     radioButtons(inputId  = "PC1", 
+                                                  label    = "Choice of PCs :", 
+                                                  choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
+                                                  selected = 1, inline = TRUE),
+                                  
+                                     radioButtons(inputId  = "PC2", 
+                                                  label    = "", 
+                                                  choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
+                                                  selected = 2, inline = TRUE))
+                              
+                              )
+                            )
+                   )
+                 )
+            ),
+    tabItem(tabName = "ExploratoryQC", 
+            box( status = "warning", width = 12,
+                 tabPanel("QC Data",   plotOutput("QCdata"))
+            )
+    ),
+    tabItem(tabName = "DiffAnalysis"),
+    tabItem(tabName = "CoExpAnalysis"),
+    tabItem(tabName = "Annotation")
   )
 )
 

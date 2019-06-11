@@ -5,7 +5,8 @@
 \alias{mvQCdesign,FlomicsExperiment-method}
 \title{Multivariate Quality Check}
 \usage{
-\S4method{mvQCdesign}{FlomicsExperiment}(object, axis = 3)
+\S4method{mvQCdesign}{FlomicsExperiment}(object, data = "norm",
+  axis = 5)
 }
 \arguments{
 \item{axis}{The number of PCA axis}

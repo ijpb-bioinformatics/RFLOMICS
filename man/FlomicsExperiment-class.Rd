@@ -27,6 +27,11 @@ This class extend the [\code{\link{SummarizedExperiment}}] class by adding a nam
 
 \item{\code{LogTransform}}{A list}
 
+<<<<<<< HEAD
+=======
+\item{\code{PCAnorm}}{A list}
+
+>>>>>>> 06dec6db2d4d156ccea3307823da8868dadbbfa7
 \item{\code{Normalization}}{An object of class [\code{\link{Normalization}}]}
 
 \item{\code{DiffAnalysis}}{An object of class [\code{\link{DiffAnalysis}}]}
