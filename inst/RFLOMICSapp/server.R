@@ -188,6 +188,7 @@ shinyServer(function(input, output, session) {
 
      ## Run Normalisation
      FE <<- RunNormalization(FE, input$selectNormMethod)
+
      ## summay tabbox
      output$SummaryAbundance2 <- renderTable(
        FE@LogFilter, rownames=TRUE, bordered = TRUE )
@@ -195,10 +196,7 @@ shinyServer(function(input, output, session) {
      output$SummaryText <- renderText(
        paste("Result : ", OldFeatureNbr - NewFeatureNbr, " genes were filtred.", sep=""))
 
-
-
-
-
+     output$NormFact <- renderPlot({
        plotNormFact(FE@Normalization@Norm.factors)
        })
 
