@@ -359,6 +359,7 @@ setMethod(f= "plotPCAnorm",
 #'
 #' @return
 #' @exportMethod barplotPCAnorm
+#' 
 #'
 #' @examples
 setMethod(f= "barplotPCAnorm",

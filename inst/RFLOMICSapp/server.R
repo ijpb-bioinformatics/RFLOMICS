@@ -183,12 +183,11 @@ shinyServer(function(input, output, session) {
 
      ## Run Filtering
      OldFeatureNbr <- length(FE@NAMES)
-     FE <- FilterLowAbundance(FE, input$FilterSeuil)
+     FE <<- FilterLowAbundance(FE, input$FilterSeuil)
      NewFeatureNbr <- length(FE@NAMES)
 
      ## Run Normalisation
-     FE <- RunNormalization(FE, input$selectNormMethod)
-
+     FE <<- RunNormalization(FE, input$selectNormMethod)
      ## summay tabbox
      output$SummaryAbundance2 <- renderTable(
        FE@LogFilter, rownames=TRUE, bordered = TRUE )
@@ -199,10 +198,14 @@ shinyServer(function(input, output, session) {
 
 
 
-     output$NormFact <- renderPlot({
 
        plotNormFact(FE@Normalization@Norm.factors)
        })
+
+     ## compute PCA on normalized data
+     pseudo_norm <- log2(scale(assay(FE),center=FALSE,scale=FE@Normalization@Norm.factors$norm.factors)+1)
+     FE@listPCA[["norm"]] <<- FactoMineR::PCA(t(pseudo_norm),ncp = 5,graph=F)
+
 
      ## QCdesign tabbox
      output$QCdesign <- renderPlot(
@@ -305,7 +308,6 @@ shinyServer(function(input, output, session) {
       # Set up parameters to pass to Rmd document
       params <- list(Count.file = input$Count.Import.file,
                      QC.file = input$QC.Import.file,
-                     nAxis = input$nAxis,
                      FEdata=file.path(tempdir(), "FE.RData"))
 
       # Knit the document, passing in the `params` list, and eval it in a
