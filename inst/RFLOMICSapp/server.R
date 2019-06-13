@@ -182,55 +182,27 @@ shinyServer(function(input, output, session) {
    observeEvent(input$Norm, {
 
      ## Run Filtering
-     OldFeatureNbr <- length(FE@NAMES)
      FE <<- FilterLowAbundance(FE, input$FilterSeuil)
-     NewFeatureNbr <- length(FE@NAMES)
 
      ## Run Normalisation
      FE <<- RunNormalization(FE, input$selectNormMethod)
 
-     ## summay tabbox
+     ## summary tabbox
      output$SummaryAbundance2 <- renderTable(
-       FE@LogFilter, rownames=TRUE, bordered = TRUE )
+       FE@LogFilter$current, rownames=TRUE, bordered = TRUE )
 
      output$SummaryText <- renderText(
-       paste("Result : ", OldFeatureNbr - NewFeatureNbr, " genes were filtred.", sep=""))
-
-     output$NormFact <- renderPlot({
-       plotNormFact(FE@Normalization@Norm.factors)
-       })
-
-     ## compute PCA on normalized data
-     pseudo_norm <- log2(scale(assay(FE),center=FALSE,scale=FE@Normalization@Norm.factors$norm.factors)+1)
-     FE@listPCA[["norm"]] <<- FactoMineR::PCA(t(pseudo_norm),ncp = 5,graph=F)
-
-
-     ## QCdesign tabbox
-     output$QCdesign <- renderPlot(
-       mvQCdesign(FE,data=input$selectData, axis=5))
-
-     ## QCdata tabbox
-     output$QCdata <- renderPlot(
-       mvQCdata(FE,axis=5))
+       paste("Result : ", length(FE@LogFilter$feature_0), " genes were filtred.", sep=""))
 
      ## Boxplot check tabbox
      output$norm.boxplot <- renderPlot(
        boxplotQCnorm(FE))
-
+     
      ## compute PCA on normalized data
      pseudo_norm <- log2(scale(assay(FE),center=FALSE,scale=FE@Normalization@Norm.factors$norm.factors)+1)
-     FE@listPCA[["norm"]] <- FactoMineR::PCA(t(pseudo_norm),ncp = 5,graph=F)
+     FE@listPCA[["norm"]] <<- FactoMineR::PCA(t(pseudo_norm),ncp = 5,graph=F)
 
-     ### PCA barplot coordinates
-     output$condColor1 <- renderUI({
-       condition <- c("groups",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
-       radioButtons(inputId = 'condColorSelect1',
-                    label = 'Condition :',
-                    choices = condition,
-                    selected = "groups")
-     })
-
-     ### PCA point.plot coordinates
+     ### PCA plot
 
      # select axis to plot
      observe({
@@ -241,7 +213,8 @@ shinyServer(function(input, output, session) {
                           choices = choices[-as.numeric(x)],
                           inline  = TRUE)
      })
-
+    
+     # select factors for color plot
      output$condColor <- renderUI({
        condition <- c("groups",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
        radioButtons(inputId = 'condColorSelect',
@@ -250,6 +223,7 @@ shinyServer(function(input, output, session) {
                     selected = "groups")
      })
 
+     # PCA plot
      output$norm.PCAcoord <- renderPlot({
 
        PC1.value <- as.numeric(input$PC1)
@@ -258,9 +232,22 @@ shinyServer(function(input, output, session) {
        plotPCAnorm(FE, data=input$selectData2, PCs=c(PC1.value, PC2.value), condition=input$condColorSelect)
      })
 
-
-     # MAplot  Normalization
-     output$NormText <- renderText(return(input$FilterSeuil))
+     ## QCdesign tabbox
+     output$QCdesign <- renderPlot(
+       mvQCdesign(FE,data=input$selectData, axis=5))
+     
+     ## QCdata tabbox
+     output$QCdata <- renderPlot(
+       mvQCdata(FE,axis=5))
+     
+     output$DiffAnalysis <- renderMenu({
+          menuItem("Differential Analysis", tabName = "DiffAnalysis", icon = icon('not-equal'), startExpanded = FALSE)
+     })
+     
+     output$CoExpAnalysis <- renderMenu({
+          menuItem("Co-Expression Analysis", tabName = "CoExpAnalysis", icon = icon('project-diagram'), startExpanded = FALSE)
+     })
+     
    })
 
    #######
@@ -280,8 +267,7 @@ shinyServer(function(input, output, session) {
     output$SetContrasts <- renderUI({
       infoBox( "Set Contrasts", icon = icon("line-chart"),width=6)
     })
-
-
+    
   })
 
 

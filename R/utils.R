@@ -177,22 +177,3 @@ plotDistr <- function(abundances){
 
 
 
-#' plotNormFact
-#'
-#' @param NormFactors
-#'
-#' @return
-#' @export
-#'
-#' @examples
-plotNormFact <- function(NormFactors){
-
-  NormFactors$group <- factor(NormFactors$group, levels = unique(NormFactors$group))
-
-  ggplot(NormFactors, aes(x=row.names(NormFactors),y=norm.factors, color=group)) +
-    geom_point() +
-    xlab("") + ylab("norm.factors") +
-    theme(axis.text.x      = element_text(angle = 45, hjust = 1),
-          legend.position  = "none")
-}
-

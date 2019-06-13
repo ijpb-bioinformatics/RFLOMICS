@@ -13,11 +13,10 @@ sidebar <- dashboardSidebar(
   sidebarMenu(id="StateSave",
               menuItem("Import Data", tabName = "import",icon = icon('download')),
               menuItemOutput("ExpDesignItem"),
-              menuItemOutput("Exploratory")# ,
-              #menuItemOutput("DiffAnalysis"),
-              #menuItemOutput("CoExpAnalysis"),
-              #menuItemOutput("Annotation")
-  ),
+              menuItemOutput("Exploratory") ,
+              menuItemOutput("DiffAnalysis"),
+              menuItemOutput("CoExpAnalysis")
+              ),
   downloadButton("report", "Generate report")
 )
 
@@ -26,6 +25,7 @@ body <- dashboardBody(
     tabItem(tabName = "import",
             fluidRow(
               column(6,
+                     # matrix count/abundance input
                      fileInput("Count.Import.file", "Import matrix of features abundances as .txt File",
                                accept = c(
                                  "text/csv",
@@ -35,34 +35,42 @@ body <- dashboardBody(
                      actionButton("load","load")
                      ),
               column(6,
-                     fileInput("QC.Import.file", "Import QC data as .txt File",
+                     # metadata/QC bioinfo
+                     fileInput("QC.Import.file", "Import QC/metadata as .txt File",
                                accept = c(
                                  "text/csv",
                                  "text/comma-separated-values,text/plain",
                                  ".csv")
                                ),
                      selectInput("ExperimentType", label = "Data :",
-                                             choices = list("RNA-seq" = "RNAseq"), 
-                                             selected = "RNAseq")
+                                                 choices = list("RNA-seq" = "RNAseq"), 
+                                                selected = "RNAseq")
                      )
             ),
             tags$br(),
             tags$br(),
             fluidRow(
               column(6,
-                    # display report summary
-                    box(title = "Data Summary", solidHeader = TRUE, status = "warning", width = 12, tableOutput('SummaryAbundance'))
+                    # display matrix count summary
+                    box(title = "Data Summary", solidHeader = TRUE, status = "warning", width = 12, 
+                        tableOutput('SummaryAbundance'))
                     ),
               column(6,
-                    box(title = "QC Summary",   solidHeader = TRUE, status = "warning", width = 12, tableOutput('SummaryQC'))
+                    # display metadata count summary
+                    box(title = "QC/metadata Summary",   solidHeader = TRUE, status = "warning", width = 12, 
+                        tableOutput('SummaryQC'))
                     )
               ),
             fluidRow(
               column(6,
-                    box(title = "Library size", solidHeader = TRUE, status = "warning", width = 12, height = NULL, plotOutput("LibSize", height = "400%"))
+                    # library size plot
+                    box(title = "Library size", solidHeader = TRUE, status = "warning", width = 12, height = NULL, 
+                        plotOutput("LibSize", height = "400%"))
                     ),
               column(6,
-                    box(title = "Abundance Distribution", solidHeader = TRUE, status = "warning", width = 12, plotOutput("CountDist", height = "400%"))
+                     # count distribution plot
+                    box(title = "Abundance Distribution", solidHeader = TRUE, status = "warning", width = 12, 
+                        plotOutput("CountDist", height = "400%"))
                     )
               )
             ),
@@ -98,7 +106,7 @@ body <- dashboardBody(
             box( title = "Filtering" ,      solidHeader = TRUE, status = "warning", width = 6,
                  numericInput(inputId = "FilterSeuil", 
                               label="Threshold :", 
-                              value=10, 0, max=15, 1 )),
+                              value=0, 0, max=10, 1 )),
             
             box( title = "Normalization" , solidHeader = TRUE, status = "warning", width = 6, 
                  selectInput(inputId  = "selectNormMethod", 
@@ -112,6 +120,7 @@ body <- dashboardBody(
                  tabBox(
                    # The id lets us use input$tabset1 on the server to find the current tab
                    id = "ExplorAnalysis", width = 12,
+                   # summay table of filtering step
                    tabPanel("summary",
                             column(width=4,
                                    tags$br(),
@@ -126,14 +135,6 @@ body <- dashboardBody(
                                    )
                             ),
                    tabPanel("boxplot", plotOutput("norm.boxplot")),
-                   tabPanel("QC Design", 
-                            selectInput("selectData", label = "Data :",
-                                        choices = list("Normalized data" = "norm", 
-                                                       "Unnormalized data" = "raw"), 
-                                        selected = "norm"),
-                            plotOutput("QCdesign")
-                            #numericInput(inputId = "nAxis", label="Number Of PCA axis", value=2, 1, max=5, 1),
-                            ),
                    tabPanel("PCA",
                             selectInput("selectData2", label = "Data :",
                                         choices = list("Normelized data" = "norm", 
@@ -163,13 +164,20 @@ body <- dashboardBody(
             ),
     tabItem(tabName = "ExploratoryQC", 
             box( status = "warning", width = 12,
-                 tabPanel("QC Data",   plotOutput("QCdata"))
+                 selectInput("selectData", label = "Data :",
+                                           choices = list("Normalized data" = "norm", 
+                                                          "Unnormalized data" = "raw"), 
+                                           selected = "norm"),
+                 tabBox(
+                   id = "ExplorAnalysisQC", width = 12,
+                   tabPanel("QC Design",  plotOutput("QCdesign")),
+                   tabPanel("QC Data",    plotOutput("QCdata"))
+                 )
             )
     ),
     tabItem(tabName = "DiffAnalysis"),
-    tabItem(tabName = "CoExpAnalysis"),
-    tabItem(tabName = "Annotation")
-  )
+    tabItem(tabName = "CoExpAnalysis")
+    )
 )
 
 # Put them together into a dashboardPage

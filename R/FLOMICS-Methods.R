@@ -397,9 +397,16 @@ setMethod(f= "FilterLowAbundance",
           definition <- function(object, threshold){
 
 
-            object <- object[rowSums(assay(object)) > threshold, ]
+            feature_0 <- object[rowSums(assay(object)) <= threshold, ]@NAMES
+            
+            object    <- object[rowSums(assay(object)) > threshold, ]
+            
+            BioFact   <- names(object@design@List.Factors[object@design@Factors.Type == "Bio"])
+            
+            Replicat  <- levels(FE@design@List.Factors[FE@design@Factors.Type != "Bio"][[1]])
 
-            object@LogFilter <- data.frame(number=c(dim(assay(object)), object@colDataStruc[1]),
-                                           row.names=c("Features", "Samples", "Factors"))
+            object@LogFilter[["feature_0"]] <- feature_0
+            object@LogFilter[["current"]]   <- data.frame(number   =c(dim(assay(object)), length(BioFact), length(Replicat)), 
+                                                          row.names=c("Features", "Samples", "Bio Factors", "Replicats"))
             return(object)
           })
