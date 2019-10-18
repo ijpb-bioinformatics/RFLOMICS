@@ -9,20 +9,20 @@ shinyServer(function(input, output, session) {
 
   loadData <- function() {
 
-    if(is.null(input$Count.Import.file)){
+    if(is.null(input$RNAseq.Count.Import.file)){
       stop("A file with count data is required as input")
     }
     else{
-    count <- read.table(input$Count.Import.file$datapath,h=T,row.names = 1)
+    count <- read.table(input$RNAseq.Count.Import.file$datapath,h=T,row.names = 1)
     }
 
-    if(is.null(input$QC.Import.file)){
+    if(is.null(input$RNAseq.QC.Import.file)){
     QCmat <- NULL
     }
     else{
-     QCmat <- read.table(input$QC.Import.file$datapath,h=T)
+     QCmat <- read.table(input$RNAseq.QC.Import.file$datapath,h=T)
     }
-    FE <<- FlomicsExperiment(count,QCmat, ExperimentType=input$ExperimentType)
+    FE <<- FlomicsExperiment(count,QCmat, ExperimentType="RNAseq")
 
   }
 

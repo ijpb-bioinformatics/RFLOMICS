@@ -403,10 +403,13 @@ setMethod(f= "FilterLowAbundance",
             
             BioFact   <- names(object@design@List.Factors[object@design@Factors.Type == "Bio"])
             
-            Replicat  <- levels(FE@design@List.Factors[FE@design@Factors.Type != "Bio"][[1]])
+            #Replicat  <- levels(object@design@List.Factors[object@design@Factors.Type != "Bio"][[1]])
 
             object@LogFilter[["feature_0"]] <- feature_0
-            object@LogFilter[["current"]]   <- data.frame(number   =c(dim(assay(object)), length(BioFact), length(Replicat)), 
-                                                          row.names=c("Features", "Samples", "Bio Factors", "Replicats"))
+            #object@LogFilter[["current"]]   <- data.frame(number   =c(dim(assay(object)), length(BioFact), length(Replicat)), 
+            #                                              row.names=c("Features", "Samples", "Bio Factors", "Replicats"))
+            object@LogFilter[["current"]]   <- data.frame(number   =c(dim(assay(object)), length(BioFact)), 
+                                                          row.names=c("Features", "Samples", "Bio Factors"))
+            
             return(object)
           })

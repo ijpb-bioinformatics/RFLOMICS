@@ -25,28 +25,81 @@ body <- dashboardBody(
     tabItem(tabName = "import",
             fluidRow(
               column(6,
+                     
                      # matrix count/abundance input
-                     fileInput("Count.Import.file", "Import matrix of features abundances as .txt File",
+                     fileInput("Experimental.Design.file", "Import matrix of Experimental Design (txt)",
                                accept = c(
                                  "text/csv",
                                  "text/comma-separated-values,text/plain",
                                  ".csv")
-                               ),
-                     actionButton("load","load")
+                     )
+              )
+            ),
+            fluidRow(
+              column(6,
+                     
+                     # matrix count/abundance input
+                     fileInput("RNAseq.Count.Import.file", "RNAseq : Import matrix of gene counts (txt)",
+                               accept = c(
+                                 "text/csv",
+                                 "text/comma-separated-values,text/plain",
+                                 ".csv")
+                     )
+              ),
+              column(6,
+                     # metadata/QC bioinfo
+                     fileInput("RNAseq.QC.Import.file", "Import RNAseq QC/metadata (txt)",
+                               accept = c(
+                                 "text/csv",
+                                 "text/comma-separated-values,text/plain",
+                                 ".csv")
+                     )
+              )
+            ),
+            fluidRow(
+              column(6,
+                     
+                     # matrix count/abundance input
+                     fileInput("Prot.Count.Import.file", "Proteom : Import matrix of protein abundances (txt)",
+                               accept = c(
+                                 "text/csv",
+                                 "text/comma-separated-values,text/plain",
+                                 ".csv")
+                     )
+              ),
+              column(6,
+                     # metadata/QC bioinfo
+                     fileInput("prot.QC.Import.file", "Import prot QC/metadata as .txt File",
+                               accept = c(
+                                 "text/csv",
+                                 "text/comma-separated-values,text/plain",
+                                 ".csv")
+                     )
+              )
+            ),
+            fluidRow(
+              column(6,
+                     
+                     # matrix count/abundance input
+                     fileInput("meta.Count.Import.file", "Metabo : Import matrix of metabolite abundances (txt)",
+                               accept = c(
+                                 "text/csv",
+                                 "text/comma-separated-values,text/plain",
+                                 ".csv")
+                               )
                      ),
               column(6,
                      # metadata/QC bioinfo
-                     fileInput("QC.Import.file", "Import QC/metadata as .txt File",
+                     fileInput("meta.QC.Import.file", "Import meta QC/metadata as .txt File",
                                accept = c(
                                  "text/csv",
                                  "text/comma-separated-values,text/plain",
                                  ".csv")
-                               ),
-                     selectInput("ExperimentType", label = "Data :",
-                                                 choices = list("RNA-seq" = "RNAseq"), 
-                                                selected = "RNAseq")
+                               )
                      )
             ),
+            actionButton("load","load"),
+            
             tags$br(),
             tags$br(),
             fluidRow(
@@ -161,6 +214,7 @@ body <- dashboardBody(
                             )
                    )
                  )
+            
             ),
     tabItem(tabName = "ExploratoryQC", 
             box( status = "warning", width = 12,
