@@ -7,23 +7,97 @@ shinyServer(function(input, output, session) {
 
 # definition of the loadData function()
 
+  FlomicsSummarizedExpConstractor <- function(dataFile, qcFile){
+    
+    abundance <- read.table(dataFile$datapath, header = TRUE, row.names = 1)
+    
+    # RNAseq QC
+    if(is.null(qcFile)){
+      QCmat <- data.frame(primary = colnames(abundance),
+                          colname = colnames(abundance),
+                          stringsAsFactors = FALSE)
+    }
+    else{      
+      print("# ... metadata QC...")
+      QCmat <- read.table(qcFile$datapath, header = TRUE)
+      
+    }
+    se <- SummarizedExperiment(assays  = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
+                               colData = QCmat)
+    #se <- SummarizedExperiment(assays  = list(counts=counts), colData = QCmat)
+    return(se)
+  }
+  
+  
   loadData <- function() {
-
-    if(is.null(input$RNAseq.Count.Import.file)){
-      stop("A file with count data is required as input")
+    
+    # Experimental Design
+    if(is.null(input$Experimental.Design.file)){
+      stop("Experimental Design is required")
     }
     else{
-    count <- read.table(input$RNAseq.Count.Import.file$datapath,h=T,row.names = 1)
+      print("# 1- Load experimental design...")
+      ExpDesign <- read.table(input$Experimental.Design.file$datapath,h=T,row.names = 1)
     }
+    
+    # constract ExperimentalDesign
+    dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
+      as.factor(ExpDesign[[i]])
+    })
+    names(dF.List) <- names(ExpDesign)
+    Design <- ExperimentalDesign(dF.List=dF.List)
+    
+    # constract MultiArrayExperiment
+    listmap <- list() 
+    listExp <- list() 
+    
+    print("# 2- Load omic data...")
+    # constract se for RNAseq
+    if(! is.null(input$RNAseq.Count.Import.file)){
+      
+      print("# ...RNAseq data...")
+      listExp[["RNAseq"]] <- FlomicsSummarizedExpConstractor(input$RNAseq.Count.Import.file, input$RNAseq.QC.Import.file)
+      listmap[["RNAseq"]] <- data.frame(primary = as.vector(listExp[["RNAseq"]]@colData$primary),
+                                        colname = as.vector(listExp[["RNAseq"]]@colData$colname),
+                                        stringsAsFactors = FALSE)      
+    }
+    
+    # constract se for proteom 
+    if(! is.null(input$prot.abundances.Import.file)){
 
-    if(is.null(input$RNAseq.QC.Import.file)){
-    QCmat <- NULL
+      print("# ...proteome data...")
+      listExp[["proteome"]]   <- FlomicsSummarizedExpConstractor(input$prot.abundances.Import.file, input$prot.QC.Import.file)
+      listmap[["proteome"]]   <- data.frame(primary = listExp[["proteome"]]@colData$primary,
+                                            colname = listExp[["proteome"]]@colData$colname,
+                                            stringsAsFactors = FALSE)
     }
-    else{
-     QCmat <- read.table(input$RNAseq.QC.Import.file$datapath,h=T)
-    }
-    FE <<- FlomicsExperiment(count,QCmat, ExperimentType="RNAseq")
+    
+    # constract se for metabolome
+    if( ! is.null(input$metabo.abundances.Import.file)){
 
+      print("# ...metabolome data...")
+      listExp[["metabolome"]] <- FlomicsSummarizedExpConstractor(input$metabo.abundances.Import.file, input$metabo.QC.Import.file)
+      listmap[["metabolome"]] <- data.frame(primary = listExp[["metabolome"]]@colData$primary,
+                                            colname = listExp[["metabolome"]]@colData$colname,
+                                            stringsAsFactors = FALSE)
+    }
+    
+    # creat sampleMap slot
+    print("# ...sampleMap...")
+    dfmap   <- listToMap(listmap)
+    
+    print("# ...FlomicsMultiAssay...")
+    FlomicsMultiAssay <<- MultiAssayExperiment(experiments = listExp, 
+                                               colData     = ExpDesign, 
+                                               sampleMap   = dfmap,
+                                               metadata    = list(design = Design, 
+                                                                  colDataStruc = c(n_dFac = dim(ExpDesign)[2], 
+                                                                                            n_qcFac = 0)))
+
+    FE <<- FlomicsExperiment(assay(FlomicsMultiAssay@ExperimentList[[1]]), 
+                             data.frame(FlomicsMultiAssay@colData) , 
+                             ExperimentType="RNAseq")
+    
   }
 
   #######
@@ -40,34 +114,35 @@ shinyServer(function(input, output, session) {
 
       ####### Design ########
       output$ExpDesignItem <- renderMenu({
+      
         menuItem("Experimental Design", tabName = "designExp",icon = icon('vials'))
         })
 
       # Construct the form to set the reference factor level
       output$GetdFactorRef <- renderUI({
 
-                  lapply(1:FE@colDataStruc["n_dFac"], function(i) {
-                    box(width=3,
-                        selectInput(paste0("dF.RefLevel.dFac", i), paste0('dFac', i),
-                                    choices = levels(FE@colData[,paste0('dFac', i)]),
-                                    selectize=FALSE,
-                                    size=5)
-                    )})})
+        lapply(names(FlomicsMultiAssay@colData), function(i) {
+          box(width=3,
+              selectInput(paste0("dF.RefLevel.", i), i,
+                          choices = levels(FlomicsMultiAssay@colData[,i]),
+                          selectize=FALSE,
+                          size=5)
+          )})})
 
       # Construct the form to set the the type of the factor (either biological or batch)
       output$GetdFactorType <- renderUI({
-                  lapply(1:FE@colDataStruc["n_dFac"], function(i) {
-                    box(width=3,
-                        radioButtons(paste0("dF.Type.dFac", i), label=NULL , choices = c("Bio","batch"), selected = "Bio",
-                                     inline = FALSE, width = 2, choiceNames = NULL,
-                                     choiceValues = NULL)
-                    )})})
+          lapply(names(FlomicsMultiAssay@colData), function(i) {
+            box(width=3,
+                radioButtons(paste0("dF.Type.", i), label=NULL , choices = c("Bio","batch"), selected = "Bio",
+                             inline = FALSE, width = 2, choiceNames = NULL,
+                             choiceValues = NULL)
+            )})})
 
       # Construct the form to enter the name of the factor
       output$GetdFactorName <- renderUI({
-                  lapply(1:FE@colDataStruc["n_dFac"], function(i) {
+                  lapply(names(FlomicsMultiAssay@colData), function(i) {
                     box(width=3,
-                        textInput(paste0("dF.Name.dFac", i), label=NULL , value = paste0("dFac",i), width = NULL,
+                        textInput(paste0("dF.Name.", i), label=NULL , value = i, width = NULL,
                                   placeholder = NULL)
                     )})})
 
@@ -77,16 +152,16 @@ shinyServer(function(input, output, session) {
         data.frame(number=c(dim(assay(FE)), FE@colDataStruc[1]), row.names=c("Features", "Samples", "Factors")),
         rownames=TRUE, bordered = TRUE)
 
-      if(!is.na(FE@colDataStruc[2])){
-        QC <- FE@colData[,(FE@colDataStruc[1]+1):(FE@colDataStruc[1]+ FE@colDataStruc[2])]
-        QC_summary <- colMeans(as.data.frame(QC))
-        QC_summary <- rbind(QC_summary, colMedians(as.matrix(QC)))
-        QC_summary <- rbind(QC_summary, colMaxs(as.matrix(QC)))
-        QC_summary <- rbind(QC_summary, colMins(as.matrix(QC))) %>% t
-        colnames(QC_summary) <- c("Means", "Medians", "Maxs", "Mins")
-
-        output$SummaryQC        <- renderTable(QC_summary, rownames=TRUE, bordered = TRUE)
-      }
+      #if(!is.na(FE@colDataStruc[2])){
+      #  QC <- FE@colData[,(FE@colDataStruc[1]+1):(FE@colDataStruc[1]+ FE@colDataStruc[2])]
+      #  QC_summary <- colMeans(as.data.frame(QC))
+      #  QC_summary <- rbind(QC_summary, colMedians(as.matrix(QC)))
+      #  QC_summary <- rbind(QC_summary, colMaxs(as.matrix(QC)))
+      #  QC_summary <- rbind(QC_summary, colMins(as.matrix(QC))) %>% t
+      #  colnames(QC_summary) <- c("Means", "Medians", "Maxs", "Mins")
+      #
+      #  output$SummaryQC        <- renderTable(QC_summary, rownames=TRUE, bordered = TRUE)
+      #}
 
       # library size plot
       output$LibSize <- renderPlot(
@@ -106,37 +181,37 @@ shinyServer(function(input, output, session) {
 
      dF.Type.dFac<-vector()
      dF.List.Name<-vector()
-
+print ("...toto...")
      # Get the Type and the name of the factors that the users enter in the form
-     for(i in 1:FE@colDataStruc["n_dFac"]){
-       dF.Type.dFac[i] <- input[[paste0("dF.Type.dFac",i)]]
-       dF.List.Name[i] <- input[[paste0("dF.Name.dFac",i)]]
+     for(dFac in names(FlomicsMultiAssay@colData)){
+       dF.Type.dFac[dFac] <- input[[paste0("dF.Type.",dFac)]]
+       dF.List.Name[dFac] <- input[[paste0("dF.Name.",dFac)]]
      }
-
-      List.Factors.new <- FE@design@List.Factors
+print ("...toto1...")
+      List.Factors.new <- FlomicsMultiAssay@metadata$design@List.Factors
 
       # Relevel the factor
-     for(i in 1:length(List.Factors.new)){
-         List.Factors.new[[i]] <- relevel(List.Factors.new[[i]],ref=input[[paste0("dF.RefLevel.dFac",i)]])
+     for(dFac in names(List.Factors.new)){
+         List.Factors.new[[dFac]] <- relevel(List.Factors.new[[dFac]],ref=input[[paste0("dF.RefLevel.",dFac)]])
      }
      names(List.Factors.new) <- dF.List.Name
 
-     FE@design@List.Factors <<- List.Factors.new
-     FE@design@Factors.Type <<- dF.Type.dFac
-     names(FE@colData)[1:FE@colDataStruc["n_dFac"]] <<- dF.List.Name
+     FlomicsMultiAssay@metadata$design@List.Factors <<- List.Factors.new
+     FlomicsMultiAssay@metadata$design@Factors.Type <<- dF.Type.dFac
+     names(FlomicsMultiAssay@colData)[1:FlomicsMultiAssay@metadata$colDataStruc["n_dFac"]] <<- dF.List.Name
    }
 
 
    CheckInputFacName <- function(){
-     for(i in 1:FE@colDataStruc["n_dFac"]){
-       if(input[[paste0("dF.Name.dFac",i)]]==""){
+     for(dFac in names(FlomicsMultiAssay@colData)){
+       if(input[[paste0("dF.Name.",dFac)]]==""){
          showModal(modalDialog(
            title = "Error message",
            "Empty factor are not allowed"
          ))
        }
        validate({
-                 need(input[[paste0("dF.Name.dFac",i)]] != "",message="Set a name")
+                 need(input[[paste0("dF.Name.",dFac)]] != "",message="Set a name")
                 })
      }
    }
@@ -152,16 +227,20 @@ shinyServer(function(input, output, session) {
 
 
   observeEvent(input$ValidF, {
-
+    print ("# ...CheckInputFacName0...")
+    
     CheckInputFacName()
-
+    print ("# ...CheckInputFacName...")
+    
     updateDesignFactors()
-
+    print ("# ...updateDesignFactors...")
+    
     # Construct the form to select the model
     output$SetModelFormula <- renderUI({
       box(width=12,selectInput( "model.formulae",
                                 "Select a model formulae",
-                                choices = rev(names(GetModelFormulae(Factors.Name=names(FE@design@List.Factors),Factors.Type=FE@design@Factors.Type))),
+                                choices = rev(names(GetModelFormulae(Factors.Name=names(FlomicsMultiAssay@metadata$design@List.Factors),
+                                                                     Factors.Type=FlomicsMultiAssay@metadata$design@Factors.Type))),
                                 selectize=FALSE,size=5))
     })
     output$validM <- renderUI({

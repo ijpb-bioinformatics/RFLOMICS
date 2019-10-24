@@ -60,7 +60,7 @@ body <- dashboardBody(
               column(6,
                      
                      # matrix count/abundance input
-                     fileInput("Prot.Count.Import.file", "Proteom : Import matrix of protein abundances (txt)",
+                     fileInput("prot.abundances.Import.file", "Proteom : Import matrix of protein abundances (txt)",
                                accept = c(
                                  "text/csv",
                                  "text/comma-separated-values,text/plain",
@@ -81,7 +81,7 @@ body <- dashboardBody(
               column(6,
                      
                      # matrix count/abundance input
-                     fileInput("meta.Count.Import.file", "Metabo : Import matrix of metabolite abundances (txt)",
+                     fileInput("metabo.abundances.Import.file", "Metabo : Import matrix of metabolite abundances (txt)",
                                accept = c(
                                  "text/csv",
                                  "text/comma-separated-values,text/plain",
@@ -90,7 +90,7 @@ body <- dashboardBody(
                      ),
               column(6,
                      # metadata/QC bioinfo
-                     fileInput("meta.QC.Import.file", "Import meta QC/metadata as .txt File",
+                     fileInput("metabo.QC.Import.file", "Import meta QC/metadata as .txt File",
                                accept = c(
                                  "text/csv",
                                  "text/comma-separated-values,text/plain",
@@ -107,12 +107,12 @@ body <- dashboardBody(
                     # display matrix count summary
                     box(title = "Data Summary", solidHeader = TRUE, status = "warning", width = 12, 
                         tableOutput('SummaryAbundance'))
-                    ),
-              column(6,
-                    # display metadata count summary
-                    box(title = "QC/metadata Summary",   solidHeader = TRUE, status = "warning", width = 12, 
-                        tableOutput('SummaryQC'))
-                    )
+                    )#,
+              #column(6,
+              #      # display metadata count summary
+              #      box(title = "QC/metadata Summary",   solidHeader = TRUE, status = "warning", width = 12, 
+              #          tableOutput('SummaryQC'))
+              #)
               ),
             fluidRow(
               column(6,
