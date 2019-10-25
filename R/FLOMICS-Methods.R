@@ -1,98 +1,17 @@
-#' @title FlomicsExperiment Constructor
-#' @description
-#' Constructor method for the [\code{\link{FlomicsExperiment-class}}] Class.
-#' Create an object of class \code{\link{FlomicsExperiment}} from abundance (rows=features, columns=design)
-#' @param abundances numeric matrix or data.frame of features abundance. The names of the columns
-#' must give the design experiments using the \code{_} separator (Ex: Fac1_rep1, Fac1_rep2) between
-#' factor modalities.
-#' @param QCmat An optionnal matrix giving statistics relatives to the quality check (QC) of
-#' the experiment. (Ex: For RNAseq: library preparation, sequencing and reads alignments statistics.)
-#' @return An object of class [\code{\link{FlomicsExperiment-class}}]
-#' @name FlomicsExperiment-Constructor
-#' @rdname FlomicsExperiment-Constructor
-#' @export
-#' @importFrom SummarizedExperiment SummarizedExperiment
-FlomicsExperiment <- function(abundances, QCmat=NULL, ExperimentType="RNAseq", ...)
-{
-  print("initialize from count matrix and QC matrix if it does exist")
-
-  # Check the class of the count object
-  abundances<-as.matrix(abundances)
-
-  # Get the sample names which contain the design
-  samples_name <- dimnames(abundances)[[2]]
-
-  # Get the number of design factor and the factors from the names of the matrix count
-  design <- GetDesignFromNames(samples_name)
-
-  # Set a list of factor modalities
-  dF.List <- lapply(1:design$nb_dFac, function(i){
-    as.factor(design$tmpDesign[[i]])
-  })
-  names(dF.List) <- names(design$tmpDesign)
-
-  # Check if the Quality Check matrix does exist and if true test if the sample names are
-  # the same in the two input matrix
-
-  if(! is.null(QCmat)){
-  # Check that the names of the factor are the same in the two matrix
-    try(if( sum(as.numeric(samples_name %in% row.names(QCmat))) != nrow(QCmat)){
-      stop("abundances matrix and QC matrix do not have the same design factors")
-    })
-
-  # Get the number of QC factors
-  nb_qcFac <- dim(QCmat)[2]
-  names(nb_qcFac) <- "n_qcFac"
-
-  # Create a vector with the number of design and QC factors
-  nb_dFac <- c(design$nb_dFac, nb_qcFac)
-
-  # Get QC variables
-  tmpQC<-QCmat
-  names(tmpQC)<-paste("qc",names(QCmat),sep="")
-
-  # Create a colData object with the design factors and QC results vector
-  colData <- dplyr::bind_cols(design$tmpDesign,tmpQC)
-
-  }
-  else{
-    # If the QC matrix does not exist, just return the design factors in the colData object
-    colData <- design$tmpDesign
-    nb_dFac <- design$nb_dFac
-  }
-
-  # instanciate the SummarizedExperiment object
-   se <- SummarizedExperiment(assays=
-                                S4Vectors::SimpleList(abundances=abundances),
-                             colData=colData)
-  .FlomicsExperiment(se,
-                     ExperimentType=ExperimentType,
-                     design=ExperimentalDesign(dF.List=dF.List),
-                     colDataStruc=nb_dFac,
-                     LogFilter=list(),
-                     LogInput=list(),
-                     LogTransform=list(),
-                     listPCA=list("raw"=FactoMineR::PCA(t(log2(abundances+1)), ncp = 5, graph=F)),
-                     Normalization=Normalization(ExperimentType=ExperimentType),
-                     DiffAnalysis=new("DiffAnalysis")
-                     )
-}
-
-
-
 #' @title [\code{\link{ExpDesign-class}}] Class constructor
-#'
 #' @description
-#'
 #' @param dF.List A list of factor
-#'
 #' @return An object of class [\code{\link{ExpDesign-class}}]
 #' @name ExpDesign-Constructor
 #' @rdname ExpDesign-Constructor
 #' @export
+ExperimentalDesign <- function(ExpDesign){
 
-ExperimentalDesign <- function(dF.List){
-
+  dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
+    as.factor(ExpDesign[[i]])
+  })
+  names(dF.List) <- names(ExpDesign)
+  
   .ExpDesign(List.Factors=dF.List,
            Factors.Type=vector(),
            Model.formula=vector(),
@@ -100,50 +19,26 @@ ExperimentalDesign <- function(dF.List){
   }
 
 
-#' @title [\code{\link{Normalization-class}}] Class constructor
-#'
-#' @description
-#'
-#' @param ExperimentType The type of experiment (either 'RNAseq' or 'Proteomic' or 'Metabolomic')
-#' @return An object of class [\code{\link{Normalization-class}}]
-#' @name Normalization-Constructor
-#' @rdname Normalization-Constructor
-#' @export
-#'
-Normalization <- function(ExperimentType){
-
-  method=switch(ExperimentType,
-                "RNAseq"="TMM",
-                "Proteomic"="ProtNormMeth",
-                "Metabolomic"="MetaboNormMeth"
-                )
-  .Normalization(Method=method,
-                 Norm.factors=vector())
-
-}
-
-
 
 #' @title RunNormalization
-#'
-#' @param FlomicsExperiment
-#'
-#' @return FlomicsExperiment
+#' @param MultiAssayExperiment
+#' @param data omic data type
+#' @param NormMethod normalisation methode
+#' @return MultiAssayExperiment
 #' @exportMethod RunNormalization
-#'
 #' @examples
-#'
+#' 
 setMethod(f="RunNormalization",
-  signature="FlomicsExperiment",
-  definition <- function(object, NormMethod=object@Normalization@Method){
+  signature="MultiAssayExperiment",
+  definition <- function(object, data, NormMethod){
 
-      groups <- object@design@List.Factors[object@design@Factors.Type == "Bio"] %>%
-                as.data.frame() %>%
-                unite(col="groups", sep="_")
+      groups <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>%
+                as.data.frame() %>% unite(col="groups", sep="_")
 
-      object@Normalization@Norm.factors = switch(NormMethod,
-                                                 "TMM"=TMM.Normalization(assay(object), groups$groups)
-                                                 )
+      coefNorm  = switch(NormMethod,
+                        "TMM"=TMM.Normalization(assay(object[[data]]), groups$groups)
+                        )
+      object@ExperimentList[[data]]@metadata[["Normalization"]] <- list(methode = NormMethod, coefNorm = coefNorm)
       return(object)
   }
 )
@@ -168,7 +63,7 @@ DiffAnalysis <- function(){
 
 #' @title Multivariate Quality Check
 #'
-#' @param FlomicsExperiment an object of Class FlomicsExperiment
+#' @param MultiAssayExperiment an object of Class MultiAssayExperiment
 #' @param axis The number of PCA axis
 #'
 #' @exportMethod mvQCdesign
@@ -177,7 +72,7 @@ DiffAnalysis <- function(){
 
 
 setMethod(f="mvQCdesign",
-          signature="FlomicsExperiment",
+          signature="MultiAssayExperiment",
           definition <- function(object, data="norm", axis=5){
 
             #pseudo_abundances <- log2(assay(object)+1)
@@ -221,15 +116,14 @@ setMethod(f="mvQCdesign",
 
 
 #' @title multivariate QC data
-#'
-#' @param FlomicsExperiment an object of Class FlomicsExperiment
+#' @param MultiAssayExperiment an object of Class MultiAssayExperiment
 #' @param axis The number of PCA axis
 #'
 #' @exportMethod mvQCdata
 #' @rdname mvQCdata
 
 setMethod(f="mvQCdata",
-          signature="FlomicsExperiment",
+          signature="MultiAssayExperiment",
           definition <- function(object,axis=3){
 
             pseudo_abundances <- log2(assay(object)+1)
@@ -260,55 +154,44 @@ setMethod(f="mvQCdata",
 
 
 
-#' @title boxplotQCnorm
-#'
-#' @param FlomicsExperiment an object of Class FlomicsExperiment
-#'
-#' @exportMethod boxplotQCnorm
-#' @rdname boxplotQCnorm
-
-setMethod(f= "boxplotQCnorm",
-          signature = "FlomicsExperiment",
-          definition <- function(object){
+#' @title abundanceBoxplot
+#' @param MultiAssayExperiment an object of Class MultiAssayExperiment
+#' @param dataType omic data type
+#' @exportMethod abundanceBoxplot
+#' @rdname abundanceBoxplot
+#' 
+setMethod(f= "abundanceBoxplot",
+          signature = "MultiAssayExperiment",
+          definition <- function(object, dataType){
 
             # this function generate boxplot (abandance distribution) from raw data and normalized data
 
             #col <- colorPlot(object@design, object@colData, condition="samples")
-            sample_names <- object@design@List.Factors %>% as.data.frame() %>%
-                            unite(., col="samples", sep="_")
-            groups  <- object@design@List.Factors[object@design@Factors.Type == "Bio"] %>% as.data.frame() %>%
-                       unite(col="groups", sep="_", remove = FALSE) %>% mutate(samples=sample_names$samples)
-
-            # raw data
-            pseudo_raw <- log2(assay(object)+1) %>%  data.table::melt() %>% mutate(TAG = "1.Raw data")
+            sample_names <- row.names(object@colData)
+            
+            groups  <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>% as.data.frame() %>%
+                       unite(col="groups", sep="_", remove = FALSE) %>% mutate(samples=sample_names)
 
             # normalized data
-            pseudo_norm  <- log2(scale(assay(object),center=FALSE,scale=object@Normalization@Norm.factors$norm.factors)+1) %>%
-                                    data.table::melt() %>% mutate(TAG = "2.Normalized data")
+            pseudo  <- log2(scale(assay(object[[dataType]]), center=FALSE, 
+                                  scale=object[[dataType]]@metadata$Normalization$coefNorm$norm.factors)+1) %>% data.table::melt()
+    print(object[[dataType]]@metadata$Normalization$coefNorm)
+            colnames(pseudo) <- c("feature", "samples", "value")
+            pseudo_bis <- full_join(pseudo, groups, by="samples")
 
-            pseudo_tmp <- rbind(pseudo_raw, pseudo_norm)
-            # merge  raw data & normalized data
-
-            colnames(pseudo_tmp) <- c("features", "samples", "counts", "TAG")
-
-            pseudo <- full_join(pseudo_tmp, groups, by="samples")
-
-            pseudo$samples <- factor(pseudo$samples, levels = unique(pseudo$samples))
+            pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
 
             # boxplot
-            ggplot(pseudo, aes(x=samples, y=counts)) +
-              geom_boxplot(aes(fill=groups)) +
-              theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-              facet_grid(~TAG)
+            ggplot(pseudo_bis, aes(x=samples, y=value)) + geom_boxplot(aes(fill=groups)) +
+              theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
               #scale_fill_manual(values=col)
-
           }
 )
 
 
 #' @title plotPCAnorm
 #'
-#' @param FlomicsExperiment
+#' @param MultiAssayExperiment
 #' @param condition
 #' @param color color palette
 #'
@@ -317,7 +200,7 @@ setMethod(f= "boxplotQCnorm",
 #'
 #' @examples
 setMethod(f= "plotPCAnorm",
-          signature = "FlomicsExperiment",
+          signature = "MultiAssayExperiment",
           definition <- function(object, data="norm", PCs=c(1,2), condition="groups"){
 
             #
@@ -353,7 +236,7 @@ setMethod(f= "plotPCAnorm",
 
 #' @title barplotPCAnorm
 #'
-#' @param FlomicsExperiment
+#' @param MultiAssayExperiment
 #' @param condition
 #' @param colors color palette
 #'
@@ -363,7 +246,7 @@ setMethod(f= "plotPCAnorm",
 #'
 #' @examples
 setMethod(f= "barplotPCAnorm",
-          signature = "FlomicsExperiment",
+          signature = "MultiAssayExperiment",
           definition <- function(object, condition="samples"){
 
             col <- colorPlot(object@design, object@colData, condition=condition)
@@ -385,31 +268,28 @@ setMethod(f= "barplotPCAnorm",
 
 #' FilterLowAbundance
 #'
-#' @param FlomicsExperiment
+#' @param MultiAssayExperiment
 #' @param threshold
 #'
-#' @return FlomicsExperiment
+#' @return MultiAssayExperiment
 #' @exportMethod FilterLowAbundance
 #'
 #' @examples
 setMethod(f= "FilterLowAbundance",
-          signature = "FlomicsExperiment",
-          definition <- function(object, threshold){
+          signature = "MultiAssayExperiment",
+          definition <- function(object, data, threshold){
 
-
-            feature_0 <- object[rowSums(assay(object)) <= threshold, ]@NAMES
+            objectFilt <- object[[data]]
             
-            object    <- object[rowSums(assay(object)) > threshold, ]
+            feature_0  <- objectFilt[rowSums(assay(objectFilt)) <= threshold, ]@NAMES
             
-            BioFact   <- names(object@design@List.Factors[object@design@Factors.Type == "Bio"])
+            objectFilt <- objectFilt[rowSums(assay(objectFilt)) > threshold, ]
             
-            #Replicat  <- levels(object@design@List.Factors[object@design@Factors.Type != "Bio"][[1]])
-
-            object@LogFilter[["feature_0"]] <- feature_0
-            #object@LogFilter[["current"]]   <- data.frame(number   =c(dim(assay(object)), length(BioFact), length(Replicat)), 
-            #                                              row.names=c("Features", "Samples", "Bio Factors", "Replicats"))
-            object@LogFilter[["current"]]   <- data.frame(number   =c(dim(assay(object)), length(BioFact)), 
-                                                          row.names=c("Features", "Samples", "Bio Factors"))
+            objectFilt@metadata[["FilteredFeature"]] <-  feature_0
+            
+            object@ExperimentList[[paste0(data, ".filtred")]] <- objectFilt
             
             return(object)
           })
+
+

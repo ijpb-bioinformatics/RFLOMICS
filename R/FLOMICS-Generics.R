@@ -15,8 +15,8 @@ setGeneric(
 )
 
 setGeneric(
-  name="boxplotQCnorm",
-  def = function( object, ... ){standardGeneric("boxplotQCnorm")}
+  name="abundanceBoxplot",
+  def = function( object, ... ){standardGeneric("abundanceBoxplot")}
 )
 
 setGeneric(
