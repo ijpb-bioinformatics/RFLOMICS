@@ -11,38 +11,50 @@ ExperimentalDesign <- function(ExpDesign){
     as.factor(ExpDesign[[i]])
   })
   names(dF.List) <- names(ExpDesign)
-  
+
   .ExpDesign(List.Factors=dF.List,
            Factors.Type=vector(),
            Model.formula=vector(),
-           Contrasts.List=list())
+           Contrasts.List=data.frame(),
+           Contrasts.Coeff=data.frame(),
+           Contrasts.Sel=vector())
   }
 
 
 
-#' @title RunNormalization
+
+#' @title RunDiffAnalysis
 #' @param MultiAssayExperiment
 #' @param data omic data type
-#' @param NormMethod normalisation methode
+#' @param DiffMethod Differential analysis method
 #' @return MultiAssayExperiment
-#' @exportMethod RunNormalization
+#' @exportMethod RunDiffAnalysis
 #' @examples
-#' 
-setMethod(f="RunNormalization",
-  signature="MultiAssayExperiment",
-  definition <- function(object, data, NormMethod){
+#'
+setMethod(f="RunDiffAnalysis",
+          signature="MultiAssayExperiment",
+          definition <- function(object, data, FDR, DiffAnalysisMethod){
 
-      groups <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>%
-                as.data.frame() %>% unite(col="groups", sep="_")
+            #
 
-      coefNorm  = switch(NormMethod,
-                        "TMM"=TMM.Normalization(assay(object[[data]]), groups$groups)
-                        )
-      object@ExperimentList[[data]]@metadata[["Normalization"]] <- list(methode = NormMethod, coefNorm = coefNorm)
-      return(object)
-  }
+            ListOfDiffResults = switch(DiffAnalysisMethod,
+                               "edgeRglmfit"=edgeR.AnaDiff(object,data,FDR)
+            )
+
+            #
+            object@ExperimentList[[data]]@metadata[["AnaDiff"]] <- ListOfDiffResults
+
+            #
+            object@ExperimentList[[data]]@metadata[["AnaDiffDeg"]] <- lapply(ListOfDiffResults, function(x){
+              res<-topTags(x,10000)
+              DEGs<-res$table[res$table$FDR<=FDR,]
+              return(DEGs)
+            })
+            names(object@ExperimentList[[data]]@metadata[["AnaDiffDeg"]]) <- names(ListOfDiffResults)
+
+            return(object)
+          }
 )
-
 
 
 #' @title [\code{\link{DiffAnalysis-class}}] Class constructor
@@ -73,18 +85,16 @@ DiffAnalysis <- function(){
 
 setMethod(f="mvQCdesign",
           signature="MultiAssayExperiment",
-          definition <- function(object, data="norm", axis=5){
+          definition <- function(object, data, PCA=c("raw","norm"), axis=5){
 
-            #pseudo_abundances <- log2(assay(object)+1)
-            #resPCA <- FactoMineR::PCA(t(pseudo_abundances),ncp = axis,graph=F)
-            resPCA <- object@listPCA[[data]]
+            resPCA <- object[[data]]@metadata[["PCAlist"]][[PCA]]
             cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
 
-            n_dFac <- object@colDataStruc["n_dFac"]
+            n_dFac <-  object@metadata$colDataStruc["n_dFac"]
 
             bigdf <- list()
             for(i in 1:n_dFac){
-              Factor <- object@colData[,i]
+              Factor <-  object@colData[,i]
 
               df <- list()
               for(j in 1:axis){
@@ -124,21 +134,20 @@ setMethod(f="mvQCdesign",
 
 setMethod(f="mvQCdata",
           signature="MultiAssayExperiment",
-          definition <- function(object,axis=3){
+          definition <- function(object, data, PCA=c("raw","norm"),axis=3){
 
-            pseudo_abundances <- log2(assay(object)+1)
-            resPCA <- FactoMineR::PCA(t(pseudo_abundances),ncp = axis,graph=F)
+            resPCA <- object[[data]]@metadata[["PCAlist"]][[PCA]]
             cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
 
-            n_dFac <- object@colDataStruc["n_dFac"]
-            n_qcFac <- object@colDataStruc["n_qcFac"]
-            var <- names(object@colData[,(n_dFac+1):(n_dFac+n_qcFac)])
+            n_dFac <- object@metadata$colDataStruc["n_dFac"]
+            n_qcFac <- dim(object[[data]]@colData[,-c(1:2)])[2]
+            var <- names(object[[data]]@colData[,-c(1:2)])
 
             corA=list()
             VarAxis = list()
             for(i in 1:axis){
             corA[[i]] <- cor(resPCA$ind$coord[,i],
-                             as.data.frame(object@colData[,(n_dFac+1):(n_dFac+n_qcFac)]),
+                             as.data.frame(object[[data]]@colData[,-c(1:2)]),
                              method="spearman")
             VarAxis[[i]] <- paste("\n(Var=",round(resPCA$eig[i,2],1),")",sep="")
             }
@@ -159,7 +168,7 @@ setMethod(f="mvQCdata",
 #' @param dataType omic data type
 #' @exportMethod abundanceBoxplot
 #' @rdname abundanceBoxplot
-#' 
+#'
 setMethod(f= "abundanceBoxplot",
           signature = "MultiAssayExperiment",
           definition <- function(object, dataType){
@@ -168,12 +177,12 @@ setMethod(f= "abundanceBoxplot",
 
             #col <- colorPlot(object@design, object@colData, condition="samples")
             sample_names <- row.names(object@colData)
-            
+
             groups  <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>% as.data.frame() %>%
                        unite(col="groups", sep="_", remove = FALSE) %>% mutate(samples=sample_names)
 
             # normalized data
-            pseudo  <- log2(scale(assay(object[[dataType]]), center=FALSE, 
+            pseudo  <- log2(scale(assay(object[[dataType]]), center=FALSE,
                                   scale=object[[dataType]]@metadata$Normalization$coefNorm$norm.factors)+1) %>% data.table::melt()
     print(object[[dataType]]@metadata$Normalization$coefNorm)
             colnames(pseudo) <- c("feature", "samples", "value")
@@ -242,7 +251,7 @@ setMethod(f= "plotPCAnorm",
 #'
 #' @return
 #' @exportMethod barplotPCAnorm
-#' 
+#'
 #'
 #' @examples
 setMethod(f= "barplotPCAnorm",
@@ -280,16 +289,74 @@ setMethod(f= "FilterLowAbundance",
           definition <- function(object, data, threshold){
 
             objectFilt <- object[[data]]
-            
+
             feature_0  <- objectFilt[rowSums(assay(objectFilt)) <= threshold, ]@NAMES
-            
+
             objectFilt <- objectFilt[rowSums(assay(objectFilt)) > threshold, ]
-            
+
             objectFilt@metadata[["FilteredFeature"]] <-  feature_0
-            
+
             object@ExperimentList[[paste0(data, ".filtred")]] <- objectFilt
-            
+
             return(object)
           })
+
+
+
+
+#' @title RunNormalization
+#' @param MultiAssayExperiment
+#' @param data omic data type
+#' @param NormMethod normalisation methode
+#' @return MultiAssayExperiment
+#' @exportMethod RunNormalization
+#' @examples
+#'
+setMethod(f="RunNormalization",
+          signature="MultiAssayExperiment",
+          definition <- function(object, data, NormMethod){
+
+            groups <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>%
+              as.data.frame() %>% unite(col="groups", sep="_")
+
+            coefNorm  = switch(NormMethod,
+                               "TMM"=TMM.Normalization(assay(object[[data]]), groups$groups)
+            )
+            object@ExperimentList[[data]]@metadata[["Normalization"]] <- list(methode = NormMethod, coefNorm = coefNorm)
+            return(object)
+          }
+)
+
+
+
+#' @title RunPCA
+#' @param MultiAssayExperiment
+#' @param data omic data type
+#' @param data.norm norm or raw
+#' @return MultiAssayExperiment
+#' @exportMethod RunPCA
+#' @examples
+#'
+setMethod(f="RunPCA",
+          signature="MultiAssayExperiment",
+          definition <- function(object, data, data.norm){
+
+            if(data.norm=="raw"){
+            pseudo_norm <- log2(scale(assay(object[[data]]),
+                                      center=FALSE)+1)
+            }
+            else if(data.norm=="norm"){
+            pseudo_norm <- log2(scale(assay(object[[data]]),
+                                        center=FALSE,
+                                        scale=object[[data]]@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
+            }
+
+            pca <- FactoMineR::PCA(t(pseudo_norm),ncp = 5,graph=F)
+
+            object@ExperimentList[[data]]@metadata[["PCAlist"]][[data.norm]]<- pca
+
+            return(object)
+          }
+)
 
 

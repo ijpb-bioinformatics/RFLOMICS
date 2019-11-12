@@ -14,6 +14,13 @@ setGeneric(
   def = function( object, ... ){standardGeneric("RunNormalization")}
 )
 
+
+setGeneric(
+  name="RunDiffAnalysis",
+  def = function( object, ... ){standardGeneric("RunDiffAnalysis")}
+)
+
+
 setGeneric(
   name="abundanceBoxplot",
   def = function( object, ... ){standardGeneric("abundanceBoxplot")}
@@ -33,3 +40,9 @@ setGeneric(
   name="FilterLowAbundance",
   def = function( object, ... ){standardGeneric("FilterLowAbundance")}
 )
+
+setGeneric(
+  name="RunPCA",
+  def = function( object, ... ){standardGeneric("RunPCA")}
+)
+

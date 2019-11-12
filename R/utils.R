@@ -20,7 +20,7 @@ magrittr::`%>%`
 #'
 GetDesignFromNames <- function(samples_name){
 
-  # Get the number of design factor and the factors from the names of the matrix count
+  # Get the number of design factor and the factors from the names of the count matrix
   nb_dFac <- stringr::str_count(samples_name,pattern="_")+1
   # Test if the number of factor are the same for all sample names
   try(if(var(nb_dFac) != 0 ) stop("Column names do not have the same level of factor"))
@@ -68,6 +68,20 @@ GetModelFormulae <- function(Factors.Name,Factors.Type){
 }
 
 
+#' GetContrasts
+#'
+#' @param An object of class design
+#'
+#' @return An object of class design
+#' @export
+#'
+#' @examples
+#'
+GetContrasts <- function(design){
+  # function qui est en cours d'ecriture par Christine
+  data.frame()
+}
+
 #' @title TMM.Normalization
 #'
 #' @param counts
@@ -79,11 +93,45 @@ GetModelFormulae <- function(Factors.Name,Factors.Type){
 TMM.Normalization <- function(counts, groups){
   dge <- edgeR::DGEList(counts=counts, group=groups)
   dge <- edgeR::calcNormFactors(dge,method="TMM")
-  #nf  <- dge$samples$norm.factors
-  #names(nf)<-row.names(dge$samples)
   nf  <- dge$samples
   return(nf)
 }
+
+
+#' @title edgeR.AnaDiff
+#'
+#' @param counts
+#'
+#' @return
+#' @export
+#'
+#' @examples
+edgeR.AnaDiff <- function(object,data,FDR, clustermq=FALSE){
+
+  ListRes <-  lapply(object@metadata$design@Contrasts.Sel, function(x){
+    # retrieve the matrix design
+    model_matrix <- model.matrix(as.formula(object@metadata$design@Model.formula),
+                                 data=as.data.frame(object@metadata$design@List.Factors))
+
+    # Construct the DGE obect
+    dge <- edgeR::DGEList(counts=assay(object@ExperimentList[[data]]),
+                          group=object@ExperimentList[[data]]@metadata$Normalization$coefNorm$group,
+                          lib.size =object@ExperimentList[[data]]@metadata$Normalization$coefNorm$lib.size,
+                          norm.factors = object@ExperimentList[[data]]@metadata$Normalization$coefNorm$norm.factors)
+
+    # Run the model
+    dge <- estimateGLMCommonDisp(dge, design=model_matrix)
+    dge <- estimateGLMTrendedDisp(dge, design=model_matrix)
+    dge <- estimateGLMTagwiseDisp(dge, design=model_matrix)
+    fit.f<-glmFit(dge,design=model_matrix)
+    resglm <- glmLRT(fit.f, contrast = object@metadata$design@Contrasts.Coeff[,x])
+    return(resglm)
+  })
+
+  names(ListRes) <- object@metadata$design@Contrasts.Sel
+  return(ListRes)
+}
+
 
 
 #' @title colorPlot

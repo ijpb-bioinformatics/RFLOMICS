@@ -14,7 +14,9 @@
       List.Factors="list",
       Factors.Type="vector",
       Model.formula="vector",
-      Contrasts.List="list"
+      Contrasts.List="data.frame",
+      Contrasts.Coeff="data.frame",
+      Contrasts.Sel="vector"
   ))
 
 
