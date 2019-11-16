@@ -124,20 +124,24 @@ shinyServer(function(input, output, session) {
     }
   }
 
-  #######
-  # Part1
-  #######
+  ##########################################
+  # Part1 : load Experimental design
+  #########################################
 
   # as soon as the "load" button has been clicked
-  #  => the loadData function is called and the experimental design item is printed
+  #  => the loadExpDesign function is called and the experimental design item is printed
 
   observeEvent(input$loadExpDesign, {
 
     loadExpDesign()
-    ####### Design ########
-    output$ExpDesignItem <- renderMenu({
-
-      menuItem("Experimental Design", tabName = "designExp",icon = icon('vials'))
+    output$ExpDesignTable <- renderTable({
+      ExpDesign
+    }, rownames = TRUE  , bordered = TRUE)
+    
+    ####### Set up Design model ########
+    output$SetUpModel <- renderMenu({
+      
+      menuSubItem("Set Up", tabName = "SetUpModel",  selected = TRUE)
     })
 
     # Construct the form to set the reference factor level
@@ -193,15 +197,15 @@ shinyServer(function(input, output, session) {
 
     # Construct the form to select the model
     output$SetModelFormula <- renderUI({
-      box(width=12,selectInput( "model.formulae",
-                                "Select a model formulae",
-                                choices = rev(names(GetModelFormulae(Factors.Name=names(Design@List.Factors),
-                                                                     Factors.Type=Design@Factors.Type))),
-                                selectize=FALSE,size=5))
+      box(status = "warning", width = 12, title = "Select a model formulae",
+          selectInput( "model.formulae", "",
+                        choices = rev(names(GetModelFormulae(Factors.Name=names(Design@List.Factors),
+                                                             Factors.Type=Design@Factors.Type))),
+                        selectize=FALSE,size=5),
+          actionButton("validModelFormula","Valid model choice")
+      )
     })
-    output$validModelFormula<- renderUI({
-      actionButton("validModelFormula","Valid model choice")
-    })
+
 })
 
   #######
@@ -224,31 +228,34 @@ shinyServer(function(input, output, session) {
     #  => The contrasts have to be choosen
     output$SetContrasts <- renderUI({
       textOutput("2 by 2 contrasts")
-      box(size=3,
-          checkboxGroupInput("ListOfContrasts1", "Treatment effect for each Genotype",
-                             c("WT.Treated - WT.Control"="C1",
-                               "dbMT.Treated - dbMT.Control"="C2",
-                               "oxMT.Treated - oxMT.Control"="C3",
-                               "siMT.Treated - siMT.Control"="C4")),
+      box(width=12, status = "warning", size=3, title="Select a contrast(s)",
+        column(width = 8,
+          checkboxGroupInput("ListOfContrasts1", "treatment effect at each genotype",
+                             c("WT.treated - WT.control"="C1",
+                               "dbMT.treated - dbMT.control"="C2",
+                               "oxMT.treated - oxMT.control"="C3",
+                               "siMT.treated - siMT.control"="C4")),
 
-          checkboxGroupInput("ListOfContrasts2", "Genotype effect at each treatment",
-                             c("dbMT.Control - WT.Control"="C5",
-                               "siMT.Control - WT.Control"="C6",
-                               "oxMT.Control - WT.Control"="C7",
-                               "dbMT.Control - siMT.Control"="C8",
-                               "dbMT.Control - siMT.Control"="C9",
-                               "dbMT.Treated - WT.Treated"="C10",
-                               "siMT.Treated - WT.Treated"="C11",
-                               "oxMT.Treated - WT.Treated"="C12",
-                               "dbMT.Treated - siMT.Treated"="C13",
-                               "dbMT.Treated - siMT.Treated"="C14"
+          checkboxGroupInput("ListOfContrasts2", "genotype effect at each treatment",
+                             c("dbMT.control - WT.control"="C5",
+                               "siMT.control - WT.control"="C6",
+                               "oxMT.control - WT.control"="C7",
+                               "dbMT.control - siMT.control"="C8",
+                               "dbMT.control - siMT.control"="C9",
+                               "dbMT.treated - WT.treated"="C10",
+                               "siMT.treated - WT.treated"="C11",
+                               "oxMT.treated - WT.treated"="C12",
+                               "dbMT.treated - siMT.treated"="C13",
+                               "dbMT.treated - siMT.treated"="C14"
                              ))
+        ),
+        column(width=4, actionButton("validContrasts","Valid contrast(s) choice(s)"))
       )
       #infoBox( "Set Contrasts", icon = icon("line-chart"),width=6)
     })
-    output$validContrasts <- renderUI({
-      actionButton("validContrasts","Valid contrast(s) choice(s)")
-    })
+    #output$validContrasts <- renderUI({
+    #  actionButton("validContrasts","Valid contrast(s) choice(s)")
+    #})
 
   })
 
@@ -266,8 +273,15 @@ shinyServer(function(input, output, session) {
     Design@Contrasts.Sel <<- c(input$ListOfContrasts1,input$ListOfContrasts2)
 
     output$importData <- renderMenu({
-      menuItem("Load Data", tabName = "importData",icon = icon('vials'))
+      menuItem("Load Data", tabName = "importData",icon = icon('vials'), selected = TRUE)
     })
+    
+    ## activate next item
+    #newtab <- switch(input$StateSave,
+    #                 "SetUpModel" = "importData",
+    #                 "importData" = "SetUpModel"
+    #)
+    #updateTabItems(session, "StateSave", newtab)
 
   })
 
@@ -281,10 +295,11 @@ shinyServer(function(input, output, session) {
         for (omic in FlomicsMultiAssay@metadata$omicList){
           menu_list <- list(
             menu_list,
-            menuItem(paste0(omic, " Data Analysis"), tabName = paste0(omic,"DataAnalysis"), icon = icon('eye'), startExpanded = FALSE,
-                     menuSubItem("Data Exploratory", tabName = paste0(omic,"ExploratoryQC")),
+            menuItem(paste0(omic, " Data Analysis"),   tabName = paste0(omic,"DataAnalysis"), icon = icon('eye'), startExpanded = FALSE,
+                     menuSubItem("Data Exploratory",    tabName = paste0(omic,"ExploratoryQC")),
                      menuSubItem("Filter and Normalize", tabName = paste0(omic,"Normalization")),
-                     menuSubItem("Differential Analysis", tabName ="DiffAnalysis")
+                     menuSubItem("Differential Analysis", tabName = "DiffAnalysis"),
+                     menuSubItem("Co-expression Analysis", tabName = "CoExpression")
             ))
         }
         sidebarMenu(.list = menu_list)
@@ -299,10 +314,65 @@ shinyServer(function(input, output, session) {
     output$CountDist <- renderPlot(
       plotDistr(assay(FlomicsMultiAssay[["RNAseq"]])), height = 300)
 
-    FlomicsMultiAssay <<- RunPCA(FlomicsMultiAssay, data="RNAseq", data.norm="raw")
+    FlomicsMultiAssay <<- RunPCA(FlomicsMultiAssay, data="RNAseq", PCA="raw")
+    
+    ### PCA plot
 
-    ## QCdesign tabbox
-    output$QCdesign <- renderPlot(
+    output$PCA1axisRaw <- renderUI({
+      radioButtons(inputId  = "PC1raw",
+                   label    = "Choice of PCs :",
+                   choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
+                   selected = 1, inline = TRUE)
+    })
+    
+    output$PCA2axisRaw <- renderUI({    
+      radioButtons(inputId  = "PC2raw",
+                   label    = "",
+                   choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
+                   selected = 2, inline = TRUE)
+    })
+    
+    # select axis to plot
+    observeEvent(input$PC1raw, {
+      x <- input$PC1raw
+      # Can also set the label and select items
+      choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
+      updateRadioButtons(session, "PC2raw",
+                         choices = choices[-as.numeric(x)],
+                         inline  = TRUE)
+    })
+  
+    
+    # select axis to plot
+    #observe({
+    #  x <- input$PC1raw
+    #  # Can also set the label and select items
+    #  choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
+    #  updateRadioButtons(session, "PC2raw",
+    #                     choices = choices[-as.numeric(x)],
+    #                     inline  = TRUE)
+    #})
+    
+    # select factors for color plot
+    output$condColorRaw <- renderUI({
+      condition <- c("groups",names(FlomicsMultiAssay@colData))
+      radioButtons(inputId = 'condColorSelectRaw',
+                   label = 'Levels :',
+                   choices = condition,
+                   selected = "groups")
+    })
+    
+    # PCA plot
+    output$QCdesignPCARaw <- renderPlot({
+      
+      PC1.value <- as.numeric(input$PC1raw)
+      PC2.value <- as.numeric(input$PC2raw)
+      plotPCAnorm(FlomicsMultiAssay, data="RNAseq", PCA="raw", PCs=c(PC1.value, PC2.value), condition=input$condColorSelectRaw)
+      
+      })
+    
+    ## QCdesign distance plot
+    output$QCdesignPCA <- renderPlot(
       mvQCdesign(FlomicsMultiAssay,data="RNAseq",PCA="raw", axis=5))
 
     ## QCdata tabbox
@@ -318,16 +388,21 @@ shinyServer(function(input, output, session) {
        print("# ...FilterLowAbundance...")
        FlomicsMultiAssay <<- FilterLowAbundance(FlomicsMultiAssay, data="RNAseq", input$FilterSeuil)
 
-       output$SummaryAbundance <- renderTable({
-         ## summary
-         data.frame(number=c(dim(assay(FlomicsMultiAssay[["RNAseq.filtred"]])),
-                             FlomicsMultiAssay@metadata$colDataStruc[1],
-                             length(FlomicsMultiAssay[["RNAseq.filtred"]]@metadata$FilteredFeature)),
-                    row.names=c("Features", "Samples", "Factors", "FiltredFeature"))
+       #output$SummaryAbundance <- renderTable({
+      #   ## summary
+      #   data.frame(number=c(dim(assay(FlomicsMultiAssay[["RNAseq.filtred"]])),
+      #                       FlomicsMultiAssay@metadata$colDataStruc[1],
+      #                       length(FlomicsMultiAssay[["RNAseq.filtred"]]@metadata$FilteredFeature)),
+      #              row.names=c("Features", "Samples", "Factors", "FiltredFeature"))
 
          #FlomicsMultiAssay[["RNAseq.filtred"]]@metadata$Normalization$coefNorm["norm.factors"]
 
-       }, rownames=TRUE, bordered = TRUE)
+       #}, rownames=TRUE, bordered = TRUE)
+       
+       output$FilterResults <- renderPrint({
+         
+         paste0( length(FlomicsMultiAssay[["RNAseq.filtred"]]@metadata$FilteredFeature), " features filtered")
+       })
 
      })
 
@@ -345,52 +420,56 @@ shinyServer(function(input, output, session) {
        print("# ...runPCA...")
 
        ## compute PCA on filtred data
+       
+       FlomicsMultiAssay <<- RunPCA(FlomicsMultiAssay, data="RNAseq.filtred", PCA="norm")
+  
 
-       # FlomicsMultiAssay <<- RunPCA(FlomicsMultiAssay, data="RNAseq.filtred", data.norm="norm")
+       ### PCA plot
+       output$PC1axis <- renderUI({
+           radioButtons(inputId  = "PC1",
+                        label    = "Choice of PCs :",
+                        choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
+                        selected = 1, inline = TRUE)
+        })
+       
+        output$PC2axis <- renderUI({    
+           radioButtons(inputId  = "PC2",
+                        label    = "",
+                        choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
+                        selected = 2, inline = TRUE)
+        })
+       
+       # select axis to plot
+        observeEvent(input$PC1, {
+         x <- input$PC1
+         # Can also set the label and select items
+         choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
+         updateRadioButtons(session, "PC2",
+                            choices = choices[-as.numeric(x)],
+                            inline  = TRUE)
+       })
+  
+       # select factors for color plot
+       output$condColor <- renderUI({
+         condition <- c("groups",names(FlomicsMultiAssay@colData))
+         radioButtons(inputId = 'condColorSelect',
+                      label = 'Levels :',
+                      choices = condition,
+                      selected = "groups")
+       })
 
-     })
+       # PCA plot
+       output$norm.PCAcoord <- renderPlot({
+  
+         PC1.value <- as.numeric(input$PC1)
+         PC2.value <- as.numeric(input$PC2)
+  
+         plotPCAnorm(FlomicsMultiAssay, data="RNAseq.filtred", PCA="norm", PCs=c(PC1.value, PC2.value), condition=input$condColorSelect)
+         })
 
-#
-#     ### PCA plot
-#
-#     # select axis to plot
-#     observe({
-#       x <- input$PC1
-#       # Can also set the label and select items
-#       choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
-#       updateRadioButtons(session, "PC2",
-#                          choices = choices[-as.numeric(x)],
-#                          inline  = TRUE)
-#     })
-#
-#     # select factors for color plot
-#     output$condColor <- renderUI({
-#       condition <- c("groups",names(FE@colData[1:FE@colDataStruc["n_dFac"]]))
-#       radioButtons(inputId = 'condColorSelect',
-#                    label = 'Levels :',
-#                    choices = condition,
-#                    selected = "groups")
-#     })
-#
-#     # PCA plot
-#     output$norm.PCAcoord <- renderPlot({
-#
-#       PC1.value <- as.numeric(input$PC1)
-#       PC2.value <- as.numeric(input$PC2)
-#
-#       plotPCAnorm(FE, data=input$selectData2, PCs=c(PC1.value, PC2.value), condition=input$condColorSelect)
-#     })
-#
-
-#     output$DiffAnalysis <- renderMenu({
-#          menuItem("Differential Analysis", tabName = "DiffAnalysis", icon = icon('not-equal'), startExpanded = FALSE)
-#     })
-#
-#     output$CoExpAnalysis <- renderMenu({
-#          menuItem("Co-Expression Analysis", tabName = "CoExpAnalysis", icon = icon('project-diagram'), startExpanded = FALSE)
-#     })
-#
-
+       })
+       
+       
      observeEvent(input$runAnaDiff, {
 
       # Run the differential analysis for each contrast set
@@ -412,21 +491,23 @@ shinyServer(function(input, output, session) {
          lapply(FlomicsMultiAssay@metadata$design@Contrasts.Sel, function(i) {
            fluidRow(
             column(12,
-            box(verticalLayout(renderPlot(ggplot(data=FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]])+
-                                            geom_histogram(aes(x=PValue))),
-                               tags$br(),
-                               renderDataTable(round(FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]],5),
-                                               options = list(rownames = TRUE,pageLength = 10))),width=12,
-          # box(renderTable(FlomicsMultiAssay@metadata$design@Contrasts.List),width=10,
-               solidHeader = TRUE,
-               collapsible = TRUE,
-               collapsed = TRUE,
-               title = FlomicsMultiAssay@metadata$design@Contrasts.List[which(FlomicsMultiAssay@metadata$design@Contrasts.List$idContrast == i),]
-          )
-             ),
-          column(1,
-                 checkboxInput("checkContrasts",NULL,width=1)
-          )
+              box(
+                verticalLayout(
+                  renderPlot(ggplot(data=FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]])+
+                                              geom_histogram(aes(x=PValue))),
+                  tags$br(),
+                  renderDataTable(round(FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]],5),
+                                                 options = list(rownames = TRUE,pageLength = 10))),width=12,
+                 
+                solidHeader = TRUE,
+                collapsible = TRUE,
+                collapsed = TRUE,
+                title = FlomicsMultiAssay@metadata$design@Contrasts.List[which(FlomicsMultiAssay@metadata$design@Contrasts.List$idContrast == i),]
+                )
+              ),
+            column(1,
+                   checkboxInput("checkContrasts",NULL,width=1)
+            )
            )
 
            })})

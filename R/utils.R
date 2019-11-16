@@ -46,22 +46,27 @@ GetDesignFromNames <- function(samples_name){
 #' @examples
 #'
 GetModelFormulae <- function(Factors.Name,Factors.Type){
-
+  
   formulae <- list()
-
+  
   FacBio <- Factors.Name[which(Factors.Type == "Bio")]
   FacBatch <- Factors.Name[which(Factors.Type == "batch")]
-
+  
   nFac <- length(FacBio)
-
+  
   getF <- function(x,FacBatch){
     update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+","(",paste(x,collapse="+"),")^2")),new=~.)
   }
-
-  for(i in 1:nFac){
-  formulae[[i]] <- apply(combn(FacBio,i),2,getF,FacBatch=FacBatch)
+  getF2 <- function(x,FacBatch){
+    update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+",paste(x,collapse="+"))),new=~.)
   }
-
+  
+  for(i in 1:nFac){
+    formulae[[i]] <- apply(combn(FacBio,i),2,getF,FacBatch=FacBatch)
+  }
+  
+  formulae[[nFac+1]]<-apply(combn(FacBio,i),2,getF2,FacBatch=FacBatch)
+  
   formulae <- unlist(formulae)
   names(formulae) <- unlist(as.character(formulae))
   return(formulae)

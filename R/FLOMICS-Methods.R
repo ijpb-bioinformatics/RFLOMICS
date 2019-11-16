@@ -95,7 +95,7 @@ setMethod(f="mvQCdesign",
             bigdf <- list()
             for(i in 1:n_dFac){
               Factor <-  object@colData[,i]
-
+              nameFac <- names(object@colData)[i]
               df <- list()
               for(j in 1:axis){
                 qc = as.vector(resPCA$ind$coord[,j])
@@ -112,8 +112,9 @@ setMethod(f="mvQCdesign",
             big <- dplyr::bind_rows(bigdf)
             out <- by(data = big, INDICES = big$dfac, FUN = function(m) {
               m <- droplevels(m)
-              m <- ggplot(m,aes(y=y,x=x,color=Levels))+
-                geom_bar(stat = "identity",position = position_dodge(),aes(fill=Levels))+
+              names(m) <- c("y", "col", "Axis", "dfac", unique(m$dfac), "x")
+              m <- ggplot(m,aes(y=y,x=x),aes_string(color=unique(m$dfac)))+
+                geom_bar(stat = "identity",position = position_dodge(),aes_string(fill=unique(m$dfac)))+
                 facet_grid(as.factor(dfac)~Axis) +
                 labs(x = "Samples", y="Coordinates on \n the PCA axis")+
                 theme(axis.title.y = element_text(size = 5),
@@ -210,7 +211,7 @@ setMethod(f= "abundanceBoxplot",
 #' @examples
 setMethod(f= "plotPCAnorm",
           signature = "MultiAssayExperiment",
-          definition <- function(object, data="norm", PCs=c(1,2), condition="groups"){
+          definition <- function(object, data, PCA, PCs=c(1,2), condition="groups"){
 
             #
             PC1 <- paste("Dim.",PCs[1], sep="")
@@ -218,22 +219,26 @@ setMethod(f= "plotPCAnorm",
 
             #col <- colorPlot(object@design, object@colData, condition=condition)
 
-            #sample_names <- row.names(object@listPCA[[data]]$ind$coord)
+            #sample_names <- row.names(object@colData)
+            
+            groups    <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>% as.data.frame() %>%
+                         unite(col="groups", sep="_", remove = FALSE) #%>% mutate(samples=sample_names)
+            
+            
+            factors   <- object@metadata$design@List.Factors %>% as.data.frame() %>%
+                         unite(., col="samples", sep="_", remove = FALSE) %>% mutate(groups = groups$groups)
 
-            groups  <- object@design@List.Factors[object@design@Factors.Type == "Bio"] %>% as.data.frame() %>%
-                       unite(col="groups", sep="_")
-            factors <- object@design@List.Factors %>% as.data.frame() %>%
-                       unite(., col="samples", sep="_", remove = FALSE) %>% mutate(groups = groups$groups)
+            score     <- FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>% 
+                         mutate(samples=row.names(.)) %>% full_join(., factors, by="samples")
 
-            score_tmp <- object@listPCA[[data]]$ind$coord[, PCs] %>% as.data.frame() %>% mutate(samples=row.names(.))
-
-            score  <- full_join(score_tmp, factors, by="samples")
-
+            var1 <- round(FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digit=3)
+            var2 <- round(FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digit=3)
+            
             ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
               geom_point(size=3) +
               geom_text(aes(label=samples), size=3, vjust = 0) +
-              xlab(paste(PC1, " (",round(object@listPCA[[data]]$eig[PCs,2][1], digit=3),"%)", sep="")) +
-              ylab(paste(PC2, " (",round(object@listPCA[[data]]$eig[PCs,2][2], digit=3),"%)", sep="")) +
+              xlab(paste(PC1, " (",var1,"%)", sep="")) +
+              ylab(paste(PC2, " (",var2,"%)", sep="")) +
               geom_hline(yintercept=0, linetype="dashed", color = "red") +
               geom_vline(xintercept=0, linetype="dashed", color = "red") +
               theme(strip.text.x = element_text(size=8, face="bold.italic"),
@@ -332,28 +337,28 @@ setMethod(f="RunNormalization",
 #' @title RunPCA
 #' @param MultiAssayExperiment
 #' @param data omic data type
-#' @param data.norm norm or raw
+#' @param PCA norm or raw
 #' @return MultiAssayExperiment
 #' @exportMethod RunPCA
 #' @examples
 #'
 setMethod(f="RunPCA",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, data.norm){
+          definition <- function(object, data, PCA){
 
-            if(data.norm=="raw"){
-            pseudo_norm <- log2(scale(assay(object[[data]]),
+            if(PCA=="raw"){
+            pseudo <- log2(scale(assay(object[[data]]),
                                       center=FALSE)+1)
             }
-            else if(data.norm=="norm"){
-            pseudo_norm <- log2(scale(assay(object[[data]]),
+            else if(PCA=="norm"){
+            pseudo <- log2(scale(assay(object[[data]]),
                                         center=FALSE,
                                         scale=object[[data]]@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
             }
 
-            pca <- FactoMineR::PCA(t(pseudo_norm),ncp = 5,graph=F)
+            pca <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
 
-            object@ExperimentList[[data]]@metadata[["PCAlist"]][[data.norm]]<- pca
+            object@ExperimentList[[data]]@metadata[["PCAlist"]][[PCA]]<- pca
 
             return(object)
           }
