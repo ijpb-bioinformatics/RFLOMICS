@@ -113,22 +113,25 @@ TMM.Normalization <- function(counts, groups){
 #' @examples
 edgeR.AnaDiff <- function(object,data,FDR, clustermq=FALSE){
 
+  
+  # retrieve the matrix design
+  model_matrix <- model.matrix(as.formula(object@metadata$design@Model.formula),
+                               data=as.data.frame(object@metadata$design@List.Factors))
+  
+  # Construct the DGE obect
+  dge <- edgeR::DGEList(counts=assay(object@ExperimentList[[data]]),
+                        group=object@ExperimentList[[data]]@metadata$Normalization$coefNorm$group,
+                        lib.size =object@ExperimentList[[data]]@metadata$Normalization$coefNorm$lib.size,
+                        norm.factors = object@ExperimentList[[data]]@metadata$Normalization$coefNorm$norm.factors)
+  
+  # Run the model
+  dge <- estimateGLMCommonDisp(dge, design=model_matrix)
+  dge <- estimateGLMTrendedDisp(dge, design=model_matrix)
+  dge <- estimateGLMTagwiseDisp(dge, design=model_matrix)
+  fit.f<-glmFit(dge,design=model_matrix)
+  
   ListRes <-  lapply(object@metadata$design@Contrasts.Sel, function(x){
-    # retrieve the matrix design
-    model_matrix <- model.matrix(as.formula(object@metadata$design@Model.formula),
-                                 data=as.data.frame(object@metadata$design@List.Factors))
 
-    # Construct the DGE obect
-    dge <- edgeR::DGEList(counts=assay(object@ExperimentList[[data]]),
-                          group=object@ExperimentList[[data]]@metadata$Normalization$coefNorm$group,
-                          lib.size =object@ExperimentList[[data]]@metadata$Normalization$coefNorm$lib.size,
-                          norm.factors = object@ExperimentList[[data]]@metadata$Normalization$coefNorm$norm.factors)
-
-    # Run the model
-    dge <- estimateGLMCommonDisp(dge, design=model_matrix)
-    dge <- estimateGLMTrendedDisp(dge, design=model_matrix)
-    dge <- estimateGLMTagwiseDisp(dge, design=model_matrix)
-    fit.f<-glmFit(dge,design=model_matrix)
     resglm <- glmLRT(fit.f, contrast = object@metadata$design@Contrasts.Coeff[,x])
     return(resglm)
   })
@@ -224,7 +227,7 @@ plotDistr <- function(abundances){
 
   ggplot(pseudo_counts) +
     geom_density(aes(value, color=samples) ) +
-    xlab("") + theme(legend.position='none')
+    xlab("log2(feature abundances)") + theme(legend.position='none')
 }
 
 

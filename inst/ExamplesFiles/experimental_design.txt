@@ -1,4 +1,4 @@
-labels	treatment	genotype	replicat
+labels	genotype	treatment	replicat
 WT_control_rep1	WT	control	rep1
 WT_control_rep2	WT	control	rep2
 WT_control_rep3	WT	control	rep3

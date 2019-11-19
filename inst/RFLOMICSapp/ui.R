@@ -11,8 +11,8 @@ library(shinydashboard)
 
 sidebar <- dashboardSidebar(
   sidebarMenu(id="StateSave",
-              menuItem("Experimental Design", tabName = "ExpDesign", icon = icon("th"), startExpanded = TRUE,
-                       menuSubItem("Import",  tabName = "importExpDesign", selected = TRUE),
+              menuItem("Experimental Design", tabName = "ExpDesign", icon = icon('vials'), startExpanded = TRUE,
+                       menuSubItem("Import design",  tabName = "importExpDesign", selected = TRUE),
                        menuItemOutput("SetUpModel")
                        ),
               menuItemOutput("importData"),
@@ -32,38 +32,42 @@ sidebar <- dashboardSidebar(
 body <- dashboardBody(
 
   tabItems(
+   
     tabItem(tabName = "importExpDesign",
             fluidRow(
-              column(6,
-
-                     # matrix count/abundance input
-                     fileInput("Experimental.Design.file", "Import matrix of Experimental Design (txt)",
-                               accept = c(
-                                 "text/csv",
-                                 "text/comma-separated-values,text/plain",
-                                 ".csv")
-                     )
+              box(width = 8, status = "warning",
+            
+                column(width = 6,
+                 # matrix count/abundance input
+                 fileInput("Experimental.Design.file", "Import matrix of Experimental Design (txt)",
+                           accept = c(
+                             "text/csv",
+                             "text/comma-separated-values,text/plain",
+                             ".csv")
+                          ),
+                  actionButton("loadExpDesign","load")
+                )
+                  
               )
             ),
-            actionButton("loadExpDesign","load"),
             tags$br(),
             fluidRow(
-              tableOutput("ExpDesignTable")
+              uiOutput("ExpDesignTable")
             )
     ),
     tabItem(tabName = "SetUpModel",
       fluidRow(
         column(width= 12, 
           box(status = "warning", width = 12, height = NULL,    
-              h5("Select the level of reference fo each design factor"),
+              h4("Select the level of reference fo each design factor"),
               fluidRow(
                 uiOutput("GetdFactorRef")
               ),
-              h5("Select the type of the design factor"),
+              h4("Select the type of the design factor"),
               fluidRow(
                 uiOutput("GetdFactorType")
               ),
-              h5("Enter a name for each design factor"),
+              h4("Enter a name for each design factor"),
               fluidRow(
                 uiOutput("GetdFactorName")
               ),
@@ -176,12 +180,14 @@ body <- dashboardBody(
               )
             ),
             fluidRow(
-              box(title = "Exploratory of Biological and Technical variability", solidHeader = TRUE, width = 12, status = "warning", height = NULL,
+              box(title = "Exploratory of Biological and Technical variability", solidHeader = TRUE, width = 12, status = "warning",
                  tabBox( id = "ExplorAnalysisQC", width = 12,
     
-                   tabPanel("Quality check of experimental design",  
-
+                   tabPanel("Principal component analysis (1/2)",  
+                        tags$br(),
+                        tags$br(),
                         column(width = 2, 
+                            
                             fluidRow(uiOutput('condColorRaw')),
                             tags$br(),
                             fluidRow(uiOutput('PCA1axisRaw')),
@@ -202,7 +208,7 @@ body <- dashboardBody(
                         
                 
                       ),
-                   tabPanel("Quality check of experimental design",  plotOutput("QCdesignPCA")),
+                   tabPanel("Principal component analysis (2/2)",  plotOutput("QCdesignPCA")),
                    tabPanel("Quality check for technical issues",    plotOutput("QCdata"))
                  )
               )
@@ -228,21 +234,21 @@ body <- dashboardBody(
                   box( title = "Normalization" , solidHeader = TRUE, status = "warning", width = 12, 
                        selectInput(inputId  = "selectNormMethod",
                                    label    = "Method :",
-                                   choices  =  list("TMM (edgeR)" = "TMM"),
+                                   choices  =  list("TMM (edgeR)" = "TMM", "RLE (edgeR)" = "RLE", "upperquartile (edgeR)" = "upperquartile"),
                                    selected = "TMM"),
                        actionButton("RunNormalization","Run Normalisation")
                   )
                 )
               ),
               column(8,
-                 box(title = "Boxplot", solidHeader = TRUE, status = "warning", width = 14 ,  height = NULL,
+                 box(title = "Abundance distribution", solidHeader = TRUE, status = "warning", width = 14 ,  height = NULL,
                       plotOutput("norm.boxplot")
                  )
               )
             ),
             fluidRow(
 
-              box(title = "PCA", solidHeader = TRUE, status = "warning", width = 12 ,  height = NULL,
+              box(title = "Principal component analysis", solidHeader = TRUE, status = "warning", width = 12 ,  height = NULL,
                  
                    column(width = 2, 
                           fluidRow( uiOutput('condColor') ),
@@ -256,28 +262,39 @@ body <- dashboardBody(
     ),
    tabItem(tabName = "DiffAnalysis",
            fluidRow(
-             column(5,
-                 selectInput("AnaDiffMethod", label = "Method :",
-                             choices = list("glmfit (edgeR)"="edgeRglmfit",
-                                            "limma" = "limma"),
-                             selected = "edgeRglmfit")
+              box(width = 12, status = "warning",
+                 column(5,
+                     selectInput("AnaDiffMethod", label = "Method :",
+                                 choices = list("glmfit (edgeR)"="edgeRglmfit",
+                                                "limma" = "limma"),
+                                 selected = "edgeRglmfit")
+                 ),
+                 column(3,
+                        numericInput(inputId = "FDRSeuil",
+                                label="FDR :",
+                                value=0.05, 0, max=1, 0.01)
+                 ),
+                 #column(3,
+                 #        numericInput(inputId = "logFCSeuil",
+                 #                     label="logFC :",
+                 #                     value=2, 0, max=10, 0.5)
+                 #),
+                 column(5,
+                          actionButton("runAnaDiff","Run the differential analysis")
+                 )
+              )
            ),
-            column(3,
-                  numericInput(inputId = "FDRSeuil",
-                          label="FDR :",
-                          value=0.05, 0, max=1, 0.01)
-            ),
-           column(5,
-                  actionButton("runAnaDiff","Run the differential analysis")
-           )),
            tags$br(),
            tags$br(),
            fluidRow(
-             column(width = 8,
-             uiOutput("ContrastsResults")
-             )
+                uiOutput("ContrastsResults")
+           ),
+           fluidRow(
+                uiOutput("ResultsMerge")
            )
-    #tabItem(tabName = "CoExpAnalysis")
+    ),
+    tabItem(tabName = "CoExpression",
+            verbatimTextOutput("Asuivre")
     )
 ))
 

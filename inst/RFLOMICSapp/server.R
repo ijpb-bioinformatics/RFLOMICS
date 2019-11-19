@@ -52,8 +52,8 @@ shinyServer(function(input, output, session) {
     print("# 2- Load omic data...")
     listOmicsDataInput <- list()
     listOmicsDataInput[["RNAseq"]]     <- list(data = input$RNAseq.Count.Import.file,      QC = input$RNAseq.QC.Import.file)
-    listOmicsDataInput[["proteome"]]   <- list(data = input$prot.abundances.Import.file,   QC = input$prot.QC.Import.file)
-    listOmicsDataInput[["metabolome"]] <- list(data = input$metabo.abundances.Import.file, QC = input$metabo.QC.Import.file)
+    listOmicsDataInput[["proteomics"]]   <- list(data = input$prot.abundances.Import.file,   QC = input$prot.QC.Import.file)
+    listOmicsDataInput[["metabolomics"]] <- list(data = input$metabo.abundances.Import.file, QC = input$metabo.QC.Import.file)
 
     ### constract SummarisedExperiment object for each omic data
     listmap <- list()
@@ -134,14 +134,20 @@ shinyServer(function(input, output, session) {
   observeEvent(input$loadExpDesign, {
 
     loadExpDesign()
-    output$ExpDesignTable <- renderTable({
-      ExpDesign
-    }, rownames = TRUE  , bordered = TRUE)
+    
+    
+    output$ExpDesignTable <- renderUI({
+      
+        box(width = 8, status = "warning",
+            DT::renderDataTable(
+              datatable(ExpDesign), options = list(rownames = FALSE, pageLength = 10))
+        )
+    })
     
     ####### Set up Design model ########
     output$SetUpModel <- renderMenu({
       
-      menuSubItem("Set Up", tabName = "SetUpModel",  selected = TRUE)
+      menuSubItem("Design matrix", tabName = "SetUpModel",  selected = TRUE)
     })
 
     # Construct the form to set the reference factor level
@@ -197,7 +203,8 @@ shinyServer(function(input, output, session) {
 
     # Construct the form to select the model
     output$SetModelFormula <- renderUI({
-      box(status = "warning", width = 12, title = "Select a model formulae",
+      box(status = "warning", width = 12, 
+          h4("Select a model formulae"),
           selectInput( "model.formulae", "",
                         choices = rev(names(GetModelFormulae(Factors.Name=names(Design@List.Factors),
                                                              Factors.Type=Design@Factors.Type))),
@@ -228,7 +235,8 @@ shinyServer(function(input, output, session) {
     #  => The contrasts have to be choosen
     output$SetContrasts <- renderUI({
       textOutput("2 by 2 contrasts")
-      box(width=12, status = "warning", size=3, title="Select a contrast(s)",
+      box(width=12, status = "warning", size=3,
+        h4("Select a contrast(s)"),
         column(width = 8,
           checkboxGroupInput("ListOfContrasts1", "treatment effect at each genotype",
                              c("WT.treated - WT.control"="C1",
@@ -273,7 +281,7 @@ shinyServer(function(input, output, session) {
     Design@Contrasts.Sel <<- c(input$ListOfContrasts1,input$ListOfContrasts2)
 
     output$importData <- renderMenu({
-      menuItem("Load Data", tabName = "importData",icon = icon('vials'), selected = TRUE)
+      menuItem("Load Data", tabName = "importData",icon = icon('download'), selected = TRUE)
     })
     
     ## activate next item
@@ -295,7 +303,7 @@ shinyServer(function(input, output, session) {
         for (omic in FlomicsMultiAssay@metadata$omicList){
           menu_list <- list(
             menu_list,
-            menuItem(paste0(omic, " Data Analysis"),   tabName = paste0(omic,"DataAnalysis"), icon = icon('eye'), startExpanded = FALSE,
+            menuItem(paste0(omic, " Data Analysis"),   tabName = paste0(omic,"DataAnalysis"), icon = icon('chart-area'), startExpanded = FALSE,
                      menuSubItem("Data Exploratory",    tabName = paste0(omic,"ExploratoryQC")),
                      menuSubItem("Filter and Normalize", tabName = paste0(omic,"Normalization")),
                      menuSubItem("Differential Analysis", tabName = "DiffAnalysis"),
@@ -317,7 +325,6 @@ shinyServer(function(input, output, session) {
     FlomicsMultiAssay <<- RunPCA(FlomicsMultiAssay, data="RNAseq", PCA="raw")
     
     ### PCA plot
-
     output$PCA1axisRaw <- renderUI({
       radioButtons(inputId  = "PC1raw",
                    label    = "Choice of PCs :",
@@ -401,7 +408,8 @@ shinyServer(function(input, output, session) {
        
        output$FilterResults <- renderPrint({
          
-         paste0( length(FlomicsMultiAssay[["RNAseq.filtred"]]@metadata$FilteredFeature), " features filtered")
+         paste0( length(FlomicsMultiAssay[["RNAseq.filtred"]]@metadata$FilteredFeature), 
+                 " features filtered (from ", dim(FlomicsMultiAssay[["RNAseq"]])[1], ")")
        })
 
      })
@@ -485,32 +493,101 @@ shinyServer(function(input, output, session) {
                                              FDR=input$FDRSeuil ,
                                              DiffAnalysisMethod=input$AnaDiffMethod)
 
-
+       #data <- FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[1]]
+       #threshold <- data$FDR < padj.cutoff & abs(data$logFC) > lfc.cutoff
+       # significant is coded as TRUE, not sig as FALSE
+       #data$sig <- as.factor(abs(data$logFC) > 2 & data$FDR < 0.05)
+       #convert FDR to -log(FDR)
+       #data$negLogFDR <- -log10(data$FDR)
+       
+       #View(data_ordered)
+       #ggplot(data,aes(x=logCPM, y=logFC, color=sig)) +
+        # geom_point() +
+        # coord_cartesian() +
+        # ylab("log2 FC") +
+        # xlab("log2 CPM")
+       
+       
        output$ContrastsResults <- renderUI({
 
          lapply(FlomicsMultiAssay@metadata$design@Contrasts.Sel, function(i) {
            fluidRow(
-            column(12,
-              box(
-                verticalLayout(
-                  renderPlot(ggplot(data=FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]])+
-                                              geom_histogram(aes(x=PValue))),
-                  tags$br(),
-                  renderDataTable(round(FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]],5),
-                                                 options = list(rownames = TRUE,pageLength = 10))),width=12,
-                 
-                solidHeader = TRUE,
-                collapsible = TRUE,
-                collapsed = TRUE,
-                title = FlomicsMultiAssay@metadata$design@Contrasts.List[which(FlomicsMultiAssay@metadata$design@Contrasts.List$idContrast == i),]
-                )
+            column(10,
+              box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning",
+                  title = FlomicsMultiAssay@metadata$design@Contrasts.List[which(FlomicsMultiAssay@metadata$design@Contrasts.List$idContrast == i),],
+                  verticalLayout(
+                    renderPlot(ggplot(data=FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]])+
+                                                geom_histogram(aes(x=PValue), bins = 200)),
+                    #renderPlot({
+                    #  
+                    #  data <- FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]]
+                    #  # significant is coded as TRUE, not sig as FALSE
+                    #  data$sig <- as.factor(abs(data$logFC) > input$logFCSeuil & data$FDR < input$FDRSeuil)
+                    #  #convert FDR to -log(FDR)
+                    #  data$negLogFDR <- -log10(data$FDR)
+                    #  
+                    #  ggplot(data,aes(x=logCPM, y=logFC, color=sig)) +
+                    #   geom_point() +
+                    #   coord_cartesian() +
+                    #   ylab("log2 FC") +
+                    #   xlab("log2 CPM")
+                    #  
+                    #}),
+                    tags$br(),
+                    DT::renderDataTable(
+                      datatable(round(FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]][FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]]$FDR <= 0.05,],5),
+                                options = list(rownames = FALSE, pageLength = 10)))
+                    )
+                 )
               ),
-            column(1,
-                   checkboxInput("checkContrasts",NULL,width=1)
-            )
+            column(2, checkboxInput(inputId = "checkContrasts", label = "validate" ,value = TRUE , width=1))
            )
-
-           })})
+           })
+         
+         })
+       
+       # merge diff results
+       mat2venn <- list()
+       for(i in FlomicsMultiAssay@metadata$design@Contrasts.Sel) {
+         
+         mat2venn[[i]][["features"]] <-  row.names(FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]])
+         mat2venn[[i]][[i]] <- rep(1, dim(FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]])[1])
+         mat2venn[[i]] <- tbl_df(mat2venn[[i]]) 
+       }
+       mat2venn.df <- mat2venn %>% reduce(dplyr::full_join, by="features")
+       mat2venn.df[is.na(mat2venn.df)] <- 0      
+       
+       output$ResultsMerge <- renderUI({
+         fluidRow(
+           column(10,
+             box(width=12, solidHeader = TRUE, title = "Combine results", collapsible = TRUE, collapsed = TRUE, status = "warning",
+              column(width = 7,
+                 renderPlot({
+                   title(main = "snp")
+                   venn(mat2venn.df[,-1] , ilab=TRUE, zcolor = "style")
+                   })
+              ),
+              column(width = 5,
+                 radioButtons("choise", label="" , choices = c("union","intersect"), selected = "union",
+                              inline = FALSE, width = 2, choiceNames = NULL, choiceValues = "NULL"),
+                 actionButton("buttonValidMerge","Valid")
+              )
+             )
+           )
+         )
+       })
+     })
+     
+     ########################################
+     ##
+     ########################################
+     
+     observeEvent(input$buttonValidMerge, {
+       
+       output$Asuivre <- renderPrint({
+         
+         paste0("À suivre...")
+       })
      })
 
 # })

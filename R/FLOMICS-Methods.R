@@ -38,8 +38,8 @@ setMethod(f="RunDiffAnalysis",
             #
 
             ListOfDiffResults = switch(DiffAnalysisMethod,
-                               "edgeRglmfit"=edgeR.AnaDiff(object,data,FDR)
-            )
+                                     "edgeRglmfit"=edgeR.AnaDiff(object,data,FDR)
+                                )
 
             #
             object@ExperimentList[[data]]@metadata[["AnaDiff"]] <- ListOfDiffResults
@@ -47,7 +47,8 @@ setMethod(f="RunDiffAnalysis",
             #
             object@ExperimentList[[data]]@metadata[["AnaDiffDeg"]] <- lapply(ListOfDiffResults, function(x){
               res<-topTags(x,10000)
-              DEGs<-res$table[res$table$FDR<=FDR,]
+              #DEGs<-res$table[res$table$FDR<=FDR,]
+              DEGs<-res$table
               return(DEGs)
             })
             names(object@ExperimentList[[data]]@metadata[["AnaDiffDeg"]]) <- names(ListOfDiffResults)
