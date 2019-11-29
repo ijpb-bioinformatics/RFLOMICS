@@ -63,9 +63,10 @@ GetModelFormulae <- function(Factors.Name,Factors.Type){
   
   for(i in 1:nFac){
     formulae[[i]] <- apply(combn(FacBio,i),2,getF,FacBatch=FacBatch)
+    formulae[[nFac+1]]<-apply(combn(FacBio,i),2,getF2,FacBatch=FacBatch)
   }
   
-  formulae[[nFac+1]]<-apply(combn(FacBio,i),2,getF2,FacBatch=FacBatch)
+  
   
   formulae <- unlist(formulae)
   names(formulae) <- unlist(as.character(formulae))
