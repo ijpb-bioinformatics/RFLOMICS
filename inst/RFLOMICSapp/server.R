@@ -37,7 +37,7 @@ shinyServer(function(input, output, session) {
       stop("[ERROR] Experimental Design is required")
     }
 
-    print("# 1- Load experimental design...")
+    
     ExpDesign <<- read.table(input$Experimental.Design.file$datapath,header = TRUE,row.names = 1)
 
     # construct ExperimentalDesign object
@@ -49,7 +49,7 @@ shinyServer(function(input, output, session) {
   loadData <- function() {
 
     ### list of omic data
-    print("# 2- Load omic data...")
+    print("# 5- Load omic data...")
     listOmicsDataInput <- list()
     listOmicsDataInput[["RNAseq"]]     <- list(data = input$RNAseq.Count.Import.file,      QC = input$RNAseq.QC.Import.file)
     listOmicsDataInput[["proteomics"]]   <- list(data = input$prot.abundances.Import.file,   QC = input$prot.QC.Import.file)
@@ -89,11 +89,12 @@ shinyServer(function(input, output, session) {
 
     dF.Type.dFac<-vector()
     dF.List.Name<-vector()
-
+    
     # Get the Type and the name of the factors that the users enter in the form
     for(dFac in names(Design@List.Factors)){
       dF.Type.dFac[dFac] <- input[[paste0("dF.Type.",dFac)]]
       dF.List.Name[dFac] <- input[[paste0("dF.Name.",dFac)]]
+      
     }
 
     List.Factors.new <- Design@List.Factors
@@ -133,18 +134,19 @@ shinyServer(function(input, output, session) {
 
   observeEvent(input$loadExpDesign, {
 
+    print("# 1- Load experimental design...")
     loadExpDesign()
     
     
     output$ExpDesignTable <- renderUI({
       
         box(width = 8, status = "warning",
-            DT::renderDataTable(
-              datatable(ExpDesign), options = list(rownames = FALSE, pageLength = 10))
+            DT::renderDataTable( DT::datatable(ExpDesign) )
         )
     })
     
     ####### Set up Design model ########
+    
     output$SetUpModel <- renderMenu({
       
       menuSubItem("Design matrix", tabName = "SetUpModel",  selected = TRUE)
@@ -197,7 +199,7 @@ shinyServer(function(input, output, session) {
 
 
   observeEvent(input$ValidF, {
-
+    print("# 2- Set design model...")
     CheckInputFacName()
     updateDesignFactors()
 
@@ -212,7 +214,6 @@ shinyServer(function(input, output, session) {
           actionButton("validModelFormula","Valid model choice")
       )
     })
-
 })
 
   #######
@@ -225,42 +226,72 @@ shinyServer(function(input, output, session) {
 
 
   observeEvent(input$validModelFormula, {
+    print("# 3- Choice of statistical model...")
+    
     # => Set the model formulae
     Design@Model.formula <<- input$model.formulae
-
+    
+    # => Set Model design matrix
     # => Get and Display all the contrasts
-    Design@Contrasts.List <<- Contrasts.List.Bidon
-    Design@Contrasts.Coeff <<- Contrasts.Coeff.bidon
+    print(paste0("model :", Design@Model.formula))
+    Design <<- SetModelMatrix(Design)
+    
+    
+    # => Get and Display all the contrasts
+    # => 
+    #tmp <- apply (combn(colnames(A),2), 2, function(x) {
+    #  
+    #  paste(x, collapse=" - ")
+    #})
+    
+    
+   
+    
+    #Design@Contrasts.List <<- Contrasts.List.Bidon
+    #Design@Contrasts.Coeff <<- Contrasts.Coeff.bidon
 
     #  => The contrasts have to be choosen
     output$SetContrasts <- renderUI({
-      textOutput("2 by 2 contrasts")
+      #textOutput("2 by 2 contrasts")
       box(width=12, status = "warning", size=3,
-        h4("Select a contrast(s)"),
-        column(width = 8,
-          checkboxGroupInput("ListOfContrasts1", "treatment effect at each genotype",
-                             c("WT.treated - WT.control"="C1",
-                               "dbMT.treated - dbMT.control"="C2",
-                               "oxMT.treated - oxMT.control"="C3",
-                               "siMT.treated - siMT.control"="C4")),
-
-          checkboxGroupInput("ListOfContrasts2", "genotype effect at each treatment",
-                             c("dbMT.control - WT.control"="C5",
-                               "siMT.control - WT.control"="C6",
-                               "oxMT.control - WT.control"="C7",
-                               "dbMT.control - siMT.control"="C8",
-                               "dbMT.control - siMT.control"="C9",
-                               "dbMT.treated - WT.treated"="C10",
-                               "siMT.treated - WT.treated"="C11",
-                               "oxMT.treated - WT.treated"="C12",
-                               "dbMT.treated - siMT.treated"="C13",
-                               "dbMT.treated - siMT.treated"="C14"
-                             ))
-        ),
-        column(width=4, actionButton("validContrasts","Valid contrast(s) choice(s)"))
-      )
-      #infoBox( "Set Contrasts", icon = icon("line-chart"),width=6)
-    })
+      lapply(unique(Design@Contrasts.List$factors), function(i) {
+            vect <- as.vector(filter(Design@Contrasts.List, factors==i)[["idContrast"]])
+            names(vect) <- as.vector(filter(Design@Contrasts.List, factors==i)[["hypoth"]])
+            
+            checkboxGroupInput("ListOfContrasts1", paste0(i, " effect"), vect)
+        }),
+      
+        column(width=4, actionButton("validContrasts","Valid contrast(s) choice(s)")))
+      })
+    
+    #output$SetContrasts1 <- renderUI({
+    #  textOutput("2 by 2 contrasts")
+    #  box(width=12, status = "warning", size=3,
+    #    h4("Select a contrast(s)"),
+    #    column(width = 8,
+    #      checkboxGroupInput("ListOfContrasts1", "treatment effect at each genotype",
+    #                         c("WT.treated - WT.control"="C1",
+    #                           "dbMT.treated - dbMT.control"="C2",
+    #                           "oxMT.treated - oxMT.control"="C3",
+    #                           "siMT.treated - siMT.control"="C4")),
+    #
+    #      checkboxGroupInput("ListOfContrasts2", "genotype effect at each treatment",
+    #                         c("dbMT.control - WT.control"="C5",
+    #                           "siMT.control - WT.control"="C6",
+    #                           "oxMT.control - WT.control"="C7",
+    #                           "dbMT.control - siMT.control"="C8",
+    #                           "dbMT.control - siMT.control"="C9",
+    #                           "dbMT.treated - WT.treated"="C10",
+    #                           "siMT.treated - WT.treated"="C11",
+    #                           "oxMT.treated - WT.treated"="C12",
+    #                           "dbMT.treated - siMT.treated"="C13",
+    #                           "dbMT.treated - siMT.treated"="C14"
+    #                         ))
+    #    ),
+    #    column(width=4, actionButton("validContrasts","Valid contrast(s) choice(s)"))
+    #  )
+    #  #infoBox( "Set Contrasts", icon = icon("line-chart"),width=6)
+    #})
     #output$validContrasts <- renderUI({
     #  actionButton("validContrasts","Valid contrast(s) choice(s)")
     #})
@@ -277,8 +308,10 @@ shinyServer(function(input, output, session) {
   # =>
 
   observeEvent(input$validContrasts, {
-
-    Design@Contrasts.Sel <<- c(input$ListOfContrasts1,input$ListOfContrasts2)
+    print("# 4- Choice of contrasts...")
+    
+    
+    Design@Contrasts.Sel <<- c(input$ListOfContrasts1)
 
     output$importData <- renderMenu({
       menuItem("Load Data", tabName = "importData",icon = icon('download'), selected = TRUE)
@@ -514,7 +547,7 @@ shinyServer(function(input, output, session) {
            fluidRow(
             column(10,
               box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning",
-                  title = FlomicsMultiAssay@metadata$design@Contrasts.List[which(FlomicsMultiAssay@metadata$design@Contrasts.List$idContrast == i),],
+                  title = FlomicsMultiAssay@metadata$design@Contrasts.List[which(FlomicsMultiAssay@metadata$design@Contrasts.List$idContrast == i),][,c("idContrast", "hypoth")],
                   verticalLayout(
                     renderPlot(ggplot(data=FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]])+
                                                 geom_histogram(aes(x=PValue), bins = 200)),
@@ -535,7 +568,7 @@ shinyServer(function(input, output, session) {
                     #}),
                     tags$br(),
                     DT::renderDataTable(
-                      datatable(round(FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]][FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]]$FDR <= 0.05,],5),
+                      DT::datatable(round(FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]][FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]]$FDR <= 0.05,],5),
                                 options = list(rownames = FALSE, pageLength = 10)))
                     )
                  )
@@ -554,7 +587,7 @@ shinyServer(function(input, output, session) {
          mat2venn[[i]][[i]] <- rep(1, dim(FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]])[1])
          mat2venn[[i]] <- tbl_df(mat2venn[[i]]) 
        }
-       mat2venn.df <- mat2venn %>% reduce(dplyr::full_join, by="features")
+       mat2venn.df <- mat2venn %>% purrr::reduce(dplyr::full_join, by="features")
        mat2venn.df[is.na(mat2venn.df)] <- 0      
        
        output$ResultsMerge <- renderUI({
@@ -564,7 +597,7 @@ shinyServer(function(input, output, session) {
               column(width = 7,
                  renderPlot({
                    title(main = "snp")
-                   venn(mat2venn.df[,-1] , ilab=TRUE, zcolor = "style")
+                   ven::venn(mat2venn.df[,-1] , ilab=TRUE, zcolor = "style")
                    })
               ),
               column(width = 5,

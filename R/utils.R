@@ -47,8 +47,6 @@ GetDesignFromNames <- function(samples_name){
 #'
 GetModelFormulae <- function(Factors.Name,Factors.Type){
   
-  formulae <- list()
-  
   FacBio <- Factors.Name[which(Factors.Type == "Bio")]
   FacBatch <- Factors.Name[which(Factors.Type == "batch")]
   
@@ -61,15 +59,21 @@ GetModelFormulae <- function(Factors.Name,Factors.Type){
     update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+",paste(x,collapse="+"))),new=~.)
   }
   
+  formulae <- list()
   for(i in 1:nFac){
-    formulae[[i]] <- apply(combn(FacBio,i),2,getF,FacBatch=FacBatch)
-    formulae[[nFac+1]]<-apply(combn(FacBio,i),2,getF2,FacBatch=FacBatch)
+    
+    formulae <- c(formulae, apply(combn(FacBio,i),2,getF, FacBatch=FacBatch))
+    if(i !=1){
+      formulae <- c(formulae, apply(combn(FacBio,i),2,getF2, FacBatch=FacBatch))
+    }
+    #formulae[[i]]  <- apply(combn(FacBio,i),2,getF, FacBatch=FacBatch)
   }
-  
-  
-  
-  formulae <- unlist(formulae)
   names(formulae) <- unlist(as.character(formulae))
+  
+  #formulae[[nFac+1]]<- apply(combn(FacBio,i),2,getF2,FacBatch=FacBatch)
+  
+  #formulae <- unlist(formulae)
+  #names(formulae) <- unlist(as.character(formulae))
   return(formulae)
 }
 
@@ -230,7 +234,4 @@ plotDistr <- function(abundances){
     geom_density(aes(value, color=samples) ) +
     xlab("log2(feature abundances)") + theme(legend.position='none')
 }
-
-
-
 

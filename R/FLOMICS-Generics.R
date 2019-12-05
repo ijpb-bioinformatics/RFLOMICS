@@ -46,3 +46,7 @@ setGeneric(
   def = function( object, ... ){standardGeneric("RunPCA")}
 )
 
+setGeneric(
+  name="SetModelMatrix",
+  def = function( object, ... ){standardGeneric("SetModelMatrix")}
+)
