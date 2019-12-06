@@ -3,6 +3,7 @@
 #' @slot Factors.Type Either 'Biological' or 'batch'
 #' @slot Model.formula Modele formula.
 #' @slot Contrasts.List A list of contrasts.
+#' @slot Model.matrix .
 #' @return ExpDesign object
 #' @examples
 #' @name ExpDesign-class

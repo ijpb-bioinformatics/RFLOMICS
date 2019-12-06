@@ -32,7 +32,10 @@ sidebar <- dashboardSidebar(
 body <- dashboardBody(
 
   tabItems(
-   
+    
+    #### Import Exp design ####
+    ###########################
+    
     tabItem(tabName = "importExpDesign",
             fluidRow(
               box(width = 8, status = "warning",
@@ -55,6 +58,10 @@ body <- dashboardBody(
               uiOutput("ExpDesignTable")
             )
     ),
+    
+    #### Set Up statistical model & hypothesis ####
+    ###############################################
+    
     tabItem(tabName = "SetUpModel",
       fluidRow(
         column(width= 12, 
@@ -84,6 +91,9 @@ body <- dashboardBody(
 
       tags$br()
     ),
+    
+    #### Import data       ####
+    ###########################
     tabItem(tabName = "importData",
             fluidRow(
                 box(title = "RNAseq data", status = "warning", width = 12, height = NULL,
@@ -156,16 +166,13 @@ body <- dashboardBody(
                      )
                 )
               ),
-            actionButton("loadData","load")#,
-
-            #column(6,
-            #       # display metadata count summary
-            #       box(title = "QC/metadata Summary",   solidHeader = TRUE, status = "warning", width = 12,
-            #           tableOutput('SummaryQC'))
-            #)
+              actionButton("loadData","load")
 
             ),
-
+    
+    #### Data Exploratory & QC ####
+    ###############################
+    
     tabItem(tabName = "RNAseqExploratoryQC",
             fluidRow(
               box(title = "Raw Data Summary", solidHeader = TRUE, status = "warning", width = 12, height = NULL,
@@ -191,7 +198,10 @@ body <- dashboardBody(
                             fluidRow(uiOutput('condColorRaw')),
                             tags$br(),
                             fluidRow(uiOutput('PCA1axisRaw')),
-                            fluidRow(uiOutput('PCA2axisRaw'))
+                            fluidRow(uiOutput('PCA2axisRaw')),
+                            tags$br(),
+                            tags$br(),
+                            fluidRow(actionButton("screenshotPCA_QC","Screenshot"))
                             #fluidRow(
                             #  radioButtons(inputId  = "PC1raw",
                             #               label    = "Choice of PCs :",
@@ -254,7 +264,10 @@ body <- dashboardBody(
                           fluidRow( uiOutput('condColor') ),
                           tags$br(),
                           fluidRow( uiOutput('PC1axis')),
-                          fluidRow( uiOutput('PC2axis'))
+                          fluidRow( uiOutput('PC2axis')),
+                          tags$br(),
+                          tags$br(),
+                          fluidRow(actionButton("screenshotPCA_Norm","Screenshot"))
                           ),
                    column(width = 10, plotOutput("norm.PCAcoord"))
                 )

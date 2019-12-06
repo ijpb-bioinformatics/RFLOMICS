@@ -87,7 +87,7 @@ DiffAnalysis <- function(){
 
 setMethod(f="mvQCdesign",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, PCA=c("raw","norm"), axis=5){
+          definition <- function(object, data, PCA=c("raw","norm"), axis=5, pngDir){
 
             resPCA <- object[[data]]@metadata[["PCAlist"]][[PCA]]
             cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
@@ -124,8 +124,10 @@ setMethod(f="mvQCdesign",
                       axis.text.x=element_blank(),
                       axis.ticks.x=element_blank())
             })
-            do.call(grid.arrange, out)
-          })
+            p <- do.call(grid.arrange, out)
+            print(p)
+            ggsave(filename = "PCAdesignCoordRaw.png", path = pngDir, plot = p)
+})
 
 
 #' @title multivariate QC data
@@ -137,7 +139,7 @@ setMethod(f="mvQCdesign",
 
 setMethod(f="mvQCdata",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, PCA=c("raw","norm"),axis=3){
+          definition <- function(object, data, PCA=c("raw","norm"),axis=3, pngDir){
 
             resPCA <- object[[data]]@metadata[["PCAlist"]][[PCA]]
             cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
@@ -159,9 +161,13 @@ setMethod(f="mvQCdata",
                             "Spearman"= unlist(corA),
                             "Axis"=rep(paste(rep("Axis",axis),1:axis,VarAxis,sep=""), each=n_qcFac))
 
-            ggplot(df,aes(x=Axis, y=abs(Spearman),fill=QCparam))+
+            p <- ggplot(df,aes(x=Axis, y=abs(Spearman),fill=QCparam))+
               geom_bar(stat="identity",position=position_dodge(),width=0.7)+ylim(0,1)+
               labs(x = "Axis number", y="Cor(Coord_dFactor_PCA,QCparam)")
+            
+            print(p)
+            ggsave(filename = "PCAmetaCorrRaw.png", path = pngDir, plot = p)
+            
           })
 
 
@@ -174,7 +180,7 @@ setMethod(f="mvQCdata",
 #'
 setMethod(f= "abundanceBoxplot",
           signature = "MultiAssayExperiment",
-          definition <- function(object, dataType){
+          definition <- function(object, dataType, pngDir){
 
             # this function generate boxplot (abandance distribution) from raw data and normalized data
 
@@ -186,17 +192,19 @@ setMethod(f= "abundanceBoxplot",
 
             # normalized data
             pseudo  <- log2(scale(assay(object[[dataType]]), center=FALSE,
-                                  scale=object[[dataType]]@metadata$Normalization$coefNorm$norm.factors)+1) %>% data.table::melt()
-    print(object[[dataType]]@metadata$Normalization$coefNorm)
+                                  scale=object[[dataType]]@metadata$Normalization$coefNorm$norm.factors)+1) %>% reshape2::melt()
             colnames(pseudo) <- c("feature", "samples", "value")
             pseudo_bis <- full_join(pseudo, groups, by="samples")
 
             pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
 
             # boxplot
-            ggplot(pseudo_bis, aes(x=samples, y=value)) + geom_boxplot(aes(fill=groups)) +
+            p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + geom_boxplot(aes(fill=groups)) +
               theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
               #scale_fill_manual(values=col)
+            print(p)
+            ggsave(filename = "norm.boxplot.png", plot = p, path = pngDir)
+            
           }
 )
 
@@ -213,7 +221,7 @@ setMethod(f= "abundanceBoxplot",
 #' @examples
 setMethod(f= "plotPCAnorm",
           signature = "MultiAssayExperiment",
-          definition <- function(object, data, PCA, PCs=c(1,2), condition="groups"){
+          definition <- function(object, data, PCA, PCs=c(1,2), condition="groups", pngDir){
 
             #
             PC1 <- paste("Dim.",PCs[1], sep="")
@@ -236,7 +244,7 @@ setMethod(f= "plotPCAnorm",
             var1 <- round(FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digit=3)
             var2 <- round(FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digit=3)
             
-            ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
+            p <- ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
               geom_point(size=3) +
               geom_text(aes(label=samples), size=3, vjust = 0) +
               xlab(paste(PC1, " (",var1,"%)", sep="")) +
@@ -246,6 +254,10 @@ setMethod(f= "plotPCAnorm",
               theme(strip.text.x = element_text(size=8, face="bold.italic"),
                     strip.text.y = element_text(size=8, face="bold.italic")) #+
               #scale_color_manual(values=col$colors)
+            
+            print(p)
+            ggsave(filename = paste0("PCAdesign_" , data , "_PC", PCs[1], "-PC", PCs[2], "_", condition, ".png"), path = pngDir, plot = p)
+            
             })
 
 

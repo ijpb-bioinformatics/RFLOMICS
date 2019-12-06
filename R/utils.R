@@ -191,26 +191,28 @@ colorPlot <- function(design, ColData, condition="samples"){
 #' @param abundances
 #' @param design
 #' @param colData
-#'
+#' @param pngDir 
 #' @return
 #' @export
 #'
 #' @examples
-plotLibSize <- function(abundances){
+plotLibSize <- function(abundances, pngDir){
 
   samples     <- colnames(abundances)
   libSizeNorm <- data.frame ( value = colSums(abundances, na.rm = TRUE) , samples=samples)
 
   libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
 
-  ggplot(libSizeNorm, aes(x=samples,y=value, fill=samples)) + geom_bar( stat="identity" ) +
+  p <- ggplot(libSizeNorm, aes(x=samples,y=value, fill=samples)) + geom_bar( stat="identity" ) +
     xlab("") + ylab("Library Size") +
     theme(axis.text.x      = element_text(angle = 45, hjust = 1),
           legend.position  = "none")
           #axis.text.x     = element_blank(),
           #axis.ticks      = element_blank())
           #legend.key.size = unit(0.3, "cm"))
-          #legend.text     = element_text(size=5)) +
+          #legend.text     = element_text(size=5))
+  print(p)
+  ggsave(filename = "LibSize.png", path = pngDir, plot = p)
 }
 
 
@@ -219,19 +221,41 @@ plotLibSize <- function(abundances){
 #' @param abundances
 #' @param design
 #' @param colData
+#' @param pngDir omic data
+#' @return
+#' @export
+#'
+#' @examples
+plotDistr <- function(abundances, pngDir){
+
+
+  pseudo_counts <- log2(abundances+1) %>% reshape2::melt()
+  colnames(pseudo_counts) <- c("features", "samples", "value")
+
+  p <- ggplot(pseudo_counts) +
+    geom_density(aes(value, color=samples) ) +
+    xlab("log2(feature abundances)") + theme(legend.position='none')
+  print(p)
+  ggsave(filename = "CountDist.png", path = pngDir, plot = p)
+}
+
+
+
+
+#' pvalue.plot
+#'
+#' @param data 
+#' @param tag 
+#' @param pngDir 
 #'
 #' @return
 #' @export
 #'
 #' @examples
-plotDistr <- function(abundances){
+pvalue.plot <- function(data, tag , pngDir){
 
+  p <- ggplot(data=data) + geom_histogram(aes(x=PValue), bins = 200)
+  print(p)
+  ggsave(filename = paste0("PvalueDistribution_", tag, ".png" ), path = pngDir)
 
-  pseudo_counts <- log2(abundances+1) %>% data.table::melt()
-  colnames(pseudo_counts) <- c("features", "samples", "value")
-
-  ggplot(pseudo_counts) +
-    geom_density(aes(value, color=samples) ) +
-    xlab("log2(feature abundances)") + theme(legend.position='none')
 }
-

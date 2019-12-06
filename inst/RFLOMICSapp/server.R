@@ -51,7 +51,7 @@ shinyServer(function(input, output, session) {
     ### list of omic data
     print("# 5- Load omic data...")
     listOmicsDataInput <- list()
-    listOmicsDataInput[["RNAseq"]]     <- list(data = input$RNAseq.Count.Import.file,      QC = input$RNAseq.QC.Import.file)
+    listOmicsDataInput[["RNAseq"]]       <- list(data = input$RNAseq.Count.Import.file,      QC = input$RNAseq.QC.Import.file)
     listOmicsDataInput[["proteomics"]]   <- list(data = input$prot.abundances.Import.file,   QC = input$prot.QC.Import.file)
     listOmicsDataInput[["metabolomics"]] <- list(data = input$metabo.abundances.Import.file, QC = input$metabo.QC.Import.file)
 
@@ -82,7 +82,6 @@ shinyServer(function(input, output, session) {
                                                metadata    = list(design = Design,
                                                                   colDataStruc = c(n_dFac = dim(ExpDesign)[2], n_qcFac = 0),
                                                                   omicList = names(listExp)))
-    print("# ...FlomicsMultiAssay has been created...")
   }
 
   updateDesignFactors <- function(){
@@ -263,38 +262,6 @@ shinyServer(function(input, output, session) {
       
         column(width=4, actionButton("validContrasts","Valid contrast(s) choice(s)")))
       })
-    
-    #output$SetContrasts1 <- renderUI({
-    #  textOutput("2 by 2 contrasts")
-    #  box(width=12, status = "warning", size=3,
-    #    h4("Select a contrast(s)"),
-    #    column(width = 8,
-    #      checkboxGroupInput("ListOfContrasts1", "treatment effect at each genotype",
-    #                         c("WT.treated - WT.control"="C1",
-    #                           "dbMT.treated - dbMT.control"="C2",
-    #                           "oxMT.treated - oxMT.control"="C3",
-    #                           "siMT.treated - siMT.control"="C4")),
-    #
-    #      checkboxGroupInput("ListOfContrasts2", "genotype effect at each treatment",
-    #                         c("dbMT.control - WT.control"="C5",
-    #                           "siMT.control - WT.control"="C6",
-    #                           "oxMT.control - WT.control"="C7",
-    #                           "dbMT.control - siMT.control"="C8",
-    #                           "dbMT.control - siMT.control"="C9",
-    #                           "dbMT.treated - WT.treated"="C10",
-    #                           "siMT.treated - WT.treated"="C11",
-    #                           "oxMT.treated - WT.treated"="C12",
-    #                           "dbMT.treated - siMT.treated"="C13",
-    #                           "dbMT.treated - siMT.treated"="C14"
-    #                         ))
-    #    ),
-    #    column(width=4, actionButton("validContrasts","Valid contrast(s) choice(s)"))
-    #  )
-    #  #infoBox( "Set Contrasts", icon = icon("line-chart"),width=6)
-    #})
-    #output$validContrasts <- renderUI({
-    #  actionButton("validContrasts","Valid contrast(s) choice(s)")
-    #})
 
   })
 
@@ -334,6 +301,12 @@ shinyServer(function(input, output, session) {
       output$omics <- renderMenu({
         menu_list <- list()
         for (omic in FlomicsMultiAssay@metadata$omicList){
+          dir.create(file.path(tmpDir, omic))
+          dir.create(file.path(tmpDir, omic, "images"))
+          dir.create(file.path(tmpDir, omic, "tables"))
+          dir.create(file.path(tmpDir, omic, "RData"))
+          dir.create(file.path(tmpDir, omic, "tmp"))
+          
           menu_list <- list(
             menu_list,
             menuItem(paste0(omic, " Data Analysis"),   tabName = paste0(omic,"DataAnalysis"), icon = icon('chart-area'), startExpanded = FALSE,
@@ -345,16 +318,23 @@ shinyServer(function(input, output, session) {
         }
         sidebarMenu(.list = menu_list)
       })
+      
+
 
 
     # library size plot
-    output$LibSize <- renderPlot(
-      plotLibSize(assay(FlomicsMultiAssay[["RNAseq"]])), height = 300)
-
+    output$LibSize <- renderPlot(height = 300, {
+      
+      plotLibSize(abundances=assay(FlomicsMultiAssay[["RNAseq"]]), pngDir=file.path(tmpDir, "RNAseq/images"))
+      })
+      
     # abundance distribution
-    output$CountDist <- renderPlot(
-      plotDistr(assay(FlomicsMultiAssay[["RNAseq"]])), height = 300)
+    output$CountDist <- renderPlot(height = 300, {
+      
+      plotDistr(assay(FlomicsMultiAssay[["RNAseq"]]), pngDir=file.path(tmpDir, "RNAseq/images"))
+      })
 
+    # run PCA
     FlomicsMultiAssay <<- RunPCA(FlomicsMultiAssay, data="RNAseq", PCA="raw")
     
     ### PCA plot
@@ -406,20 +386,34 @@ shinyServer(function(input, output, session) {
     output$QCdesignPCARaw <- renderPlot({
       
       PC1.value <- as.numeric(input$PC1raw)
-      PC2.value <- as.numeric(input$PC2raw)
-      plotPCAnorm(FlomicsMultiAssay, data="RNAseq", PCA="raw", PCs=c(PC1.value, PC2.value), condition=input$condColorSelectRaw)
+      PC2.value <- as.numeric(input$PC2raw)   
+      plotPCAnorm(FlomicsMultiAssay, data="RNAseq", PCA="raw", PCs=c(PC1.value, PC2.value), condition=input$condColorSelectRaw, pngDir=file.path(tmpDir, "RNAseq/tmp"))
+      
+      })
+    
+    # save current PCA plot with fixed PC
+    observeEvent(input$screenshotPCA_QC, {
+    
+      PC1.value <- as.numeric(input$PC1raw)
+      PC2.value <- as.numeric(input$PC2raw) 
+
+      filename = paste0("PCAdesign_" , "RNAseq" , "_PC", PC1.value, "-PC", PC2.value, "_", input$condColorSelectRaw, ".png")
+      
+      file.copy(file.path(tmpDir, "RNAseq","tmp", filename), file.path(tmpDir, "RNAseq","images", filename), 
+                overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
       
       })
     
     ## QCdesign distance plot
-    output$QCdesignPCA <- renderPlot(
-      mvQCdesign(FlomicsMultiAssay,data="RNAseq",PCA="raw", axis=5))
+    output$QCdesignPCA <- renderPlot({
+      
+      mvQCdesign(FlomicsMultiAssay,data="RNAseq",PCA="raw", axis=5, pngDir=file.path(tmpDir, "RNAseq/images")) })
 
     ## QCdata tabbox
-    output$QCdata <- renderPlot(
-      mvQCdata(FlomicsMultiAssay,data="RNAseq",PCA="raw",axis=5))
-   })
+    output$QCdata <- renderPlot({
+      mvQCdata(FlomicsMultiAssay,data="RNAseq",PCA="raw",axis=5, pngDir=file.path(tmpDir, "RNAseq/images")) })
 
+  })
 
      # summary of loaded data
 
@@ -428,17 +422,6 @@ shinyServer(function(input, output, session) {
        print("# ...FilterLowAbundance...")
        FlomicsMultiAssay <<- FilterLowAbundance(FlomicsMultiAssay, data="RNAseq", input$FilterSeuil)
 
-       #output$SummaryAbundance <- renderTable({
-      #   ## summary
-      #   data.frame(number=c(dim(assay(FlomicsMultiAssay[["RNAseq.filtred"]])),
-      #                       FlomicsMultiAssay@metadata$colDataStruc[1],
-      #                       length(FlomicsMultiAssay[["RNAseq.filtred"]]@metadata$FilteredFeature)),
-      #              row.names=c("Features", "Samples", "Factors", "FiltredFeature"))
-
-         #FlomicsMultiAssay[["RNAseq.filtred"]]@metadata$Normalization$coefNorm["norm.factors"]
-
-       #}, rownames=TRUE, bordered = TRUE)
-       
        output$FilterResults <- renderPrint({
          
          paste0( length(FlomicsMultiAssay[["RNAseq.filtred"]]@metadata$FilteredFeature), 
@@ -450,20 +433,18 @@ shinyServer(function(input, output, session) {
        observeEvent(input$RunNormalization, {
 
        ## Run Normalisation
-       print("# ...RunNormalization...")
+       print("# 6- RNAseq normalization...")
        FlomicsMultiAssay <<- RunNormalization(FlomicsMultiAssay, data="RNAseq.filtred", input$selectNormMethod)
 
        ## Boxplot check tabbox
        output$norm.boxplot <- renderPlot({
-         abundanceBoxplot(FlomicsMultiAssay, dataType="RNAseq.filtred")
+         abundanceBoxplot(FlomicsMultiAssay, dataType="RNAseq.filtred", pngDir=file.path(tmpDir, "RNAseq/images"))
        })
 
        print("# ...runPCA...")
 
        ## compute PCA on filtred data
-       
        FlomicsMultiAssay <<- RunPCA(FlomicsMultiAssay, data="RNAseq.filtred", PCA="norm")
-  
 
        ### PCA plot
        output$PC1axis <- renderUI({
@@ -504,11 +485,22 @@ shinyServer(function(input, output, session) {
   
          PC1.value <- as.numeric(input$PC1)
          PC2.value <- as.numeric(input$PC2)
-  
-         plotPCAnorm(FlomicsMultiAssay, data="RNAseq.filtred", PCA="norm", PCs=c(PC1.value, PC2.value), condition=input$condColorSelect)
+         plotPCAnorm(FlomicsMultiAssay, data="RNAseq.filtred", PCA="norm", PCs=c(PC1.value, PC2.value), condition=input$condColorSelect, pngDir=file.path(tmpDir, "RNAseq/tmp"))
+         
          })
-
+       
+       observeEvent(input$screenshotPCA_Norm, {
+         PC1.value <- as.numeric(input$PC1)
+         PC2.value <- as.numeric(input$PC2)
+         
+         filename = paste0("PCAdesign_" , "RNAseq.filtred" , "_PC", PC1.value, "-PC", PC2.value, "_", input$condColorSelect, ".png")
+         
+         file.copy(file.path(tmpDir, "RNAseq","tmp", filename), file.path(tmpDir, "RNAseq","images", filename), 
+                   overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
        })
+       
+
+  })
        
        
      observeEvent(input$runAnaDiff, {
@@ -526,31 +518,30 @@ shinyServer(function(input, output, session) {
                                              FDR=input$FDRSeuil ,
                                              DiffAnalysisMethod=input$AnaDiffMethod)
 
-       #data <- FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[1]]
-       #threshold <- data$FDR < padj.cutoff & abs(data$logFC) > lfc.cutoff
-       # significant is coded as TRUE, not sig as FALSE
-       #data$sig <- as.factor(abs(data$logFC) > 2 & data$FDR < 0.05)
-       #convert FDR to -log(FDR)
-       #data$negLogFDR <- -log10(data$FDR)
-       
-       #View(data_ordered)
-       #ggplot(data,aes(x=logCPM, y=logFC, color=sig)) +
-        # geom_point() +
-        # coord_cartesian() +
-        # ylab("log2 FC") +
-        # xlab("log2 CPM")
-       
+
        
        output$ContrastsResults <- renderUI({
 
+         vect <- as.vector(FlomicsMultiAssay@metadata$design@Contrasts.List$hypoth)
+         names(vect) <- as.vector(FlomicsMultiAssay@metadata$design@Contrasts.List$idContrast)
+         
          lapply(FlomicsMultiAssay@metadata$design@Contrasts.Sel, function(i) {
+           
+           resTable <- FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]]
+           
            fluidRow(
             column(10,
-              box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning",
-                  title = FlomicsMultiAssay@metadata$design@Contrasts.List[which(FlomicsMultiAssay@metadata$design@Contrasts.List$idContrast == i),][,c("idContrast", "hypoth")],
+              box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", 
+                  title = paste0(i, " : ", vect[i]),
+                  
                   verticalLayout(
-                    renderPlot(ggplot(data=FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]])+
-                                                geom_histogram(aes(x=PValue), bins = 200)),
+                    
+                    ### pvalue plot ###
+                    renderPlot({
+                      
+                      pvalue.plot(data=FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]], 
+                                  tag=gsub(" ", "", vect[i]), pngDir=file.path(tmpDir, "RNAseq", "images"))
+                      }),
                     #renderPlot({
                     #  
                     #  data <- FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]]
@@ -567,9 +558,27 @@ shinyServer(function(input, output, session) {
                     #  
                     #}),
                     tags$br(),
-                    DT::renderDataTable(
-                      DT::datatable(round(FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]][FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]]$FDR <= 0.05,],5),
-                                options = list(rownames = FALSE, pageLength = 10)))
+                    DT::renderDataTable({
+                      
+                      DT::datatable(round(resTable[resTable$FDR <= input$FDRSeuil,],5), options = list(rownames = FALSE, pageLength = 10))
+                      })
+                    
+                    # Button
+                    #downloadButton("downloadData", "Download")
+                    
+                    # Downloadable csv of selected dataset ----
+                    #output$downloadData <- downloadHandler(
+                    #  filename = function() {
+                    #    paste(input$dataset, ".csv", sep = "")
+                    #  },
+                    #  content = function(file) {
+                    #    write.csv(datasetInput(), file, row.names = FALSE)
+                    #  }
+                    #)
+                    
+                    #write.csv(x = round(resTable[resTable$FDR <= input$FDRSeuil,],5), 
+                    #          file = paste0(tmpDir, "/tables/DEG_",i, "_",  gsub(" ", "", vect[i]), "_" ,input$FDRSeuil, "_", input$AnaDiffMethod, ".png" ))
+                    
                     )
                  )
               ),
@@ -578,6 +587,8 @@ shinyServer(function(input, output, session) {
            })
          
          })
+       
+       
        
        # merge diff results
        mat2venn <- list()
