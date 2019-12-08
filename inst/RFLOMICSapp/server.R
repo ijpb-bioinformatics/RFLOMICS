@@ -277,8 +277,9 @@ shinyServer(function(input, output, session) {
   observeEvent(input$validContrasts, {
     print("# 4- Choice of contrasts...")
     
-    
     Design@Contrasts.Sel <<- c(input$ListOfContrasts1)
+    
+    #step_tag <<- step_tag+1
 
     output$importData <- renderMenu({
       menuItem("Load Data", tabName = "importData",icon = icon('download'), selected = TRUE)
@@ -645,30 +646,31 @@ shinyServer(function(input, output, session) {
 
   output$report <- downloadHandler(
     # For PDF output, change this to "report.pdf"
-    filename = "report.pdf",
+    filename = "report.html",
     content = function(file) {
       # Copy the report file to a temporary directory before processing it, in
       # case we don't have write permissions to the current working dir (which
       # can happen when deployed).
-      tempReport <- file.path(tempdir(), "report.Rmd")
-      file.copy("report.Rmd", tempReport, overwrite = TRUE)
+      #tempReport <- file.path(tempdir(), "report.Rmd")
+      tempReport <-  "report.Rmd"
+      #file.copy("report.Rmd", tempReport, overwrite = TRUE)
 
       # TEST
       # save FE object in .Rdata and load it during report execution
       save(FlomicsMultiAssay,file=file.path(tempdir(), "FlomicsMultiAssay.RData"))
-
+      #save(FlomicsMultiAssay,file=file.path(tmpDir, "FlomicsMultiAssay.RData"))
+      
       # Set up parameters to pass to Rmd document
-      params <- list(Count.file = input$Count.Import.file,
-                     QC.file = input$QC.Import.file,
-                     FEdata=file.path(tempdir(), "FlomicsMultiAssay.RData"))
+      params <- list(   tag = step_tag,
+                     pngDir = tmpDir,
+                     FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"))
 
       # Knit the document, passing in the `params` list, and eval it in a
       # child of the global environment (this isolates the code in the document
       # from the code in this app).
       rmarkdown::render(tempReport, output_file = file,
                         params = params,
-                        envir = new.env(parent = globalenv())
-      )
+                        envir = new.env(parent = globalenv()))
     }
   )
 

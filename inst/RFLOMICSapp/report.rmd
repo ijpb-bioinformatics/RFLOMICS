@@ -1,41 +1,41 @@
 ---
 title: "RFLOMICS report"
-output: pdf_document
+output: html_document
 toc: true
 params:
- Count.file: NA
- QC.file: NA
- FEdata: NA
+  FEdata: NA
+  tag: NA
+  pngDir: NA
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(magrittr)
-library(dplyr)
-library(tidyr)
-library(purrr)
-library(MultiAssayExperiment)
 ```
 
 ```{r param}
-tmpDir="/Users/nbessoltane/rFlomics.report.tmp"
-tag = 1
+#tmpDir="/Users/nbessoltane/rFlomics.report.tmp"
+#tag = 1
 ```
 
 
 
 ```{r bis}
-#load(params$FEdata)
-load("~/rFlomics.report.tmp/FlomicsMultiAssay.RData")
+load(params$FEdata)
+tmpDir <- params$pngDir
+tag <- params$tag
+#load("~/rFlomics.report.tmp/FlomicsMultiAssay.RData")
+
 ```
 
 
-```{r test-main, child = 'ExpDesign.Rmd'}
+```{r ExpDesign, child = 'ExpDesign.Rmd'}
 ```
 
+
+
+`r if(tag < 1) {"\\begin{comment}"}`
 
 # Data load :
-`r if(tag < 1) {"\\begin{comment}"}`
 
 ```{r load data}
 FlomicsMultiAssay@metadata$omicList
@@ -43,7 +43,7 @@ FlomicsMultiAssay@metadata$omicList
 
 <!--- This is an HTML comment in Markdown -->
 
-```{r test-main, child = '01-RNAseq-Exploratory.Rmd'}
+```{r RNAseq Exp, child = '01-RNAseq-Exploratory.Rmd'}
 ```
 
 `r if(tag < 1) {"\\end{comment}"}`

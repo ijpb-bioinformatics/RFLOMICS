@@ -13,7 +13,7 @@ library(gridExtra)
 library(MultiAssayExperiment)
 library(reshape2)
 
-
+step_tag <- 0
 tmpDir <- "~/rFlomics.report.tmp"
 unlink(tmpDir, recursive=TRUE)
 
