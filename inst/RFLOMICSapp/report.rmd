@@ -8,62 +8,46 @@ params:
  FEdata: NA
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(MultiAssayExperiment)
+```
 
-# Input Files:
-
-```{r import}
-print(params$Count.file)
-print(params$QC.file)
-print(params$FEdata)
+```{r param}
+tmpDir="/Users/nbessoltane/rFlomics.report.tmp"
+tag = 1
 ```
 
 
-# Load data
 
-```{r load, echo=TRUE, eval=TRUE}
-load(params$FEdata)
-```
-
-## Experimental design
-
-The experimental design that was set up has `r FE@colDataStruc["n_dFac"]` factors.
-
-```{r design}
-lapply(FE@design@List.Factors,summary)
+```{r bis}
+#load(params$FEdata)
+load("~/rFlomics.report.tmp/FlomicsMultiAssay.RData")
 ```
 
 
-## Count matrix
-
-```{r count}
-head(assay(FE))
+```{r test-main, child = 'ExpDesign.Rmd'}
 ```
 
 
-# QC
+# Data load :
+`r if(tag < 1) {"\\begin{comment}"}`
 
-## Design QC
-
-```{r QCdesign, warning=FALSE,message=FALSE}
-mvQCdesign(FE, data="norm", axis=5)
+```{r load data}
+FlomicsMultiAssay@metadata$omicList
 ```
 
-## data QC 
+<!--- This is an HTML comment in Markdown -->
 
-```{r QCdata}
-mvQCdata(FE,axis=5)
+```{r test-main, child = '01-RNAseq-Exploratory.Rmd'}
 ```
 
-# Normalization (TMM)
+`r if(tag < 1) {"\\end{comment}"}`
 
-## Boxplot
 
-```{r boxplot}
-boxplotQCnorm(FE)
-```
 
-## PCA
-```{r PCA}
-plotPCAnorm(FE, data="norm", PCs=c(1, 2), condition="groups") 
-```
 
