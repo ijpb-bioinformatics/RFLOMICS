@@ -1,0 +1,50 @@
+
+
+# `r FlomicsMultiAssay@metadata$omicList[1]` data analysis
+
+## data Exploratory
+```{r 1st omic}
+assay(FlomicsMultiAssay[[1]])[1:5,1:5]
+```
+
+
+### Library size & count distribution
+
+```{r libSize , fig.show = "hold", out.width = "50%"}
+knitr::include_graphics(c(file.path(tmpDir, "RNAseq","images","LibSize.png"), 
+                          file.path(tmpDir, "RNAseq","images","CountDist.png")))
+```
+
+### Principal component analysis
+
+#### Design 
+```{r pca raw design 1 , fig.show = "hold", out.width = "50%"}
+knitr::include_graphics(list.files (path = file.path(tmpDir, "RNAseq","images"), 
+                                    pattern = "PCAdesign_RNAseq_", 
+                                    full.names = TRUE))
+```
+
+```{r pca raw design 2 , fig.show = "hold"}
+knitr::include_graphics(file.path(tmpDir, "RNAseq","images","PCAdesignCoordRaw.png"))
+```
+
+#### metadata
+```{r pca raw meta , fig.show = "hold"}
+knitr::include_graphics(file.path(tmpDir, "RNAseq","images","PCAmetaCorrRaw.png"))
+```
+
+## Filtering and Normalisation
+
+> Normalisation method : `r FlomicsMultiAssay[["RNAseq.filtred"]]@metadata$Normalization$methode`
+
+```{r boxplot , fig.show = "hold"}
+knitr::include_graphics(file.path(tmpDir, "RNAseq","images","norm.boxplot.png"))
+```
+
+
+```{r pca norm design , fig.show = "hold", out.width = "50%"}
+knitr::include_graphics(list.files (path = file.path(tmpDir, "RNAseq","images"), 
+                                    pattern = "PCAdesign_RNAseq.filtred_", 
+                                    full.names = TRUE))
+```
+

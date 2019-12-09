@@ -13,8 +13,8 @@ library(gridExtra)
 library(MultiAssayExperiment)
 library(reshape2)
 
-step_tag <- 0
-tmpDir <- "~/rFlomics.report.tmp"
+step_tag <- 4
+tmpDir <- "/Users/nbessoltane/rFlomics.report.tmp"
 unlink(tmpDir, recursive=TRUE)
 
 #if (file.exists(tmpDir)){

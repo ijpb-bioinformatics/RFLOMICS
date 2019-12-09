@@ -28,12 +28,37 @@ tag <- params$tag
 ```
 
 
-```{r ExpDesign, child = 'ExpDesign.Rmd'}
+
+# Experimental Design :
+
+```{r Design}
+FlomicsMultiAssay@colData
+```
+
+
+## Factors
+
+```{r factor}
+FlomicsMultiAssay@metadata$design@Factors.Type
+```
+
+## statistical model
+
+```{r model}
+FlomicsMultiAssay@metadata$design@Model.formula
+
+```
+
+## Hypothesis
+
+```{r contrast}
+filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast %in% FlomicsMultiAssay@metadata$design@Contrasts.Sel) %>% select(hypoth)
 ```
 
 
 
-`r if(tag < 1) {"\\begin{comment}"}`
+
+`r if(params$tag < 1) {"\\begin{comment}"}`
 
 # Data load :
 
@@ -46,7 +71,7 @@ FlomicsMultiAssay@metadata$omicList
 ```{r RNAseq Exp, child = '01-RNAseq-Exploratory.Rmd'}
 ```
 
-`r if(tag < 1) {"\\end{comment}"}`
+`r if(params$tag < 1) {"\\end{comment}"}`
 
 
 
