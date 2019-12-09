@@ -46,27 +46,27 @@ GetDesignFromNames <- function(samples_name){
 #' @examples
 #'
 GetModelFormulae <- function(Factors.Name,Factors.Type){
-  
+
   formulae <- list()
-  
+
   FacBio <- Factors.Name[which(Factors.Type == "Bio")]
   FacBatch <- Factors.Name[which(Factors.Type == "batch")]
-  
+
   nFac <- length(FacBio)
-  
+
   getF <- function(x,FacBatch){
     update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+","(",paste(x,collapse="+"),")^2")),new=~.)
   }
   getF2 <- function(x,FacBatch){
     update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+",paste(x,collapse="+"))),new=~.)
   }
-  
+
   for(i in 1:nFac){
     formulae[[i]] <- apply(combn(FacBio,i),2,getF,FacBatch=FacBatch)
   }
-  
+
   formulae[[nFac+1]]<-apply(combn(FacBio,i),2,getF2,FacBatch=FacBatch)
-  
+
   formulae <- unlist(formulae)
   names(formulae) <- unlist(as.character(formulae))
   return(formulae)
@@ -88,10 +88,10 @@ GetContrasts <- function(design){
 }
 
 #' @title TMM.Normalization
-#'
-#' @param counts
-#'
-#' @return
+#' Interface to the calcNormFactors functionof the edgeR package  with the choosen TMM parameters as the normalization method
+#' @param counts numeric matrix of read counts
+#' @param groups vector or factor giving the experimental group/condition for each sample/library.
+#' @return a data.frame with a row for each sample and columns group, lib.size and norm.factors containing the group labels, library sizes and normalization factors. Other columns can be optionally added to give more detailed sample information.
 #' @export
 #'
 #' @examples
@@ -105,37 +105,57 @@ TMM.Normalization <- function(counts, groups){
 
 #' @title edgeR.AnaDiff
 #'
-#' @param counts
-#'
-#' @return
+#' @param object an object of class [\code{\link{MultiAssayExperiment}]
+#' @param data Omic data type
+#' @param FDR The false discovery rate to apply
+#' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
+#' @return A list of object of class [\code{\link{DGELRT}]
 #' @export
 #'
 #' @examples
-edgeR.AnaDiff <- function(object,data,FDR, clustermq=FALSE){
+edgeR.AnaDiff <- function(object, data, FDR, clustermq){
 
-  
-  # retrieve the matrix design
+
+  # retrieve the design matrix
   model_matrix <- model.matrix(as.formula(object@metadata$design@Model.formula),
                                data=as.data.frame(object@metadata$design@List.Factors))
-  
+
   # Construct the DGE obect
   dge <- edgeR::DGEList(counts=assay(object@ExperimentList[[data]]),
                         group=object@ExperimentList[[data]]@metadata$Normalization$coefNorm$group,
                         lib.size =object@ExperimentList[[data]]@metadata$Normalization$coefNorm$lib.size,
                         norm.factors = object@ExperimentList[[data]]@metadata$Normalization$coefNorm$norm.factors)
-  
+
   # Run the model
-  dge <- estimateGLMCommonDisp(dge, design=model_matrix)
-  dge <- estimateGLMTrendedDisp(dge, design=model_matrix)
-  dge <- estimateGLMTagwiseDisp(dge, design=model_matrix)
-  fit.f<-glmFit(dge,design=model_matrix)
-  
-  ListRes <-  lapply(object@metadata$design@Contrasts.Sel, function(x){
+  dge <- edgeR::estimateGLMCommonDisp(dge, design=model_matrix)
+  dge <- edgeR::estimateGLMTrendedDisp(dge, design=model_matrix)
+  dge <- edgeR::estimateGLMTagwiseDisp(dge, design=model_matrix)
+  fit.f <- edgeR::glmFit(dge,design=model_matrix)
 
-    resglm <- glmLRT(fit.f, contrast = object@metadata$design@Contrasts.Coeff[,x])
-    return(resglm)
-  })
+  # test clustermq
 
+  if(clustermq == TRUE){
+
+ # Fonction to run on contrast per job
+ # y is the model, Contrasts are stored in a matrix, by columns
+
+  fx <- function(x){
+    edgeR::glmLRT(y, contrast = z[,x])
+  }
+
+  ListRes <- clustermq::Q(fx, x=1:length(object@metadata$design@Contrasts.Sel),
+    export=list(y=fit.f,z=object@metadata$design@Contrasts.Coeff),
+    n_jobs=length(object@metadata$design@Contrasts.Sel),pkgs="edgeR")
+  }
+
+  else{
+   ListRes <-  lapply(object@metadata$design@Contrasts.Sel, function(x){
+     resglm <- edgeR::glmLRT(fit.f, contrast = object@metadata$design@Contrasts.Coeff[,x])
+     return(resglm)
+   })
+  }
+
+  print(ListRes)
   names(ListRes) <- object@metadata$design@Contrasts.Sel
   return(ListRes)
 }

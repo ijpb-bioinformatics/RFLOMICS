@@ -1,12 +1,12 @@
 
 library(shiny)
 
-# Define server logic required to draw a histogram
+
 shinyServer(function(input, output, session) {
 
 
-# definition of the loadData function()
-# A corriger Constructor
+
+
   FlomicsSummarizedExpConstructor <- function(dataFile, qcFile){
 
     abundance <- read.table(dataFile$datapath, header = TRUE, row.names = 1)
@@ -45,6 +45,7 @@ shinyServer(function(input, output, session) {
 
   }
 
+  # definition of the loadData function()
 
   loadData <- function() {
 
@@ -134,19 +135,19 @@ shinyServer(function(input, output, session) {
   observeEvent(input$loadExpDesign, {
 
     loadExpDesign()
-    
-    
+
+
     output$ExpDesignTable <- renderUI({
-      
+
         box(width = 8, status = "warning",
             DT::renderDataTable(
               datatable(ExpDesign), options = list(rownames = FALSE, pageLength = 10))
         )
     })
-    
+
     ####### Set up Design model ########
     output$SetUpModel <- renderMenu({
-      
+
       menuSubItem("Design matrix", tabName = "SetUpModel",  selected = TRUE)
     })
 
@@ -186,15 +187,18 @@ shinyServer(function(input, output, session) {
   # This function update the design ob
 
 
-   #######
-   # Part2
-   #######
+  ##########################################
+  # Part2 : Define the Experimental design:
+  #         -> the level of ref for each factor
+  #         -> the formulae
+  #         -> the model
+  #         -> the contrasts
+  #########################################
 
-   # as soon as the "Valid design set up" button has been clicked
-   #  => The updateDesignFactors function is called
-   #  => The menu items "View Data", "QualityCheck" and "Normalize" are printed
-   #  => The box to choose the "model formulae" is printed
 
+   # as soon as the "Valid factor set up" button has been clicked
+   #  => The upvdateDesignFactors function is called
+   #  => The interface to select the model formulae appear
 
   observeEvent(input$ValidF, {
 
@@ -203,7 +207,7 @@ shinyServer(function(input, output, session) {
 
     # Construct the form to select the model
     output$SetModelFormula <- renderUI({
-      box(status = "warning", width = 12, 
+      box(status = "warning", width = 12,
           h4("Select a model formulae"),
           selectInput( "model.formulae", "",
                         choices = rev(names(GetModelFormulae(Factors.Name=names(Design@List.Factors),
@@ -215,14 +219,8 @@ shinyServer(function(input, output, session) {
 
 })
 
-  #######
-  # Part3
-  #######
-
   # as soon as the "valid model formulae" button has been clicked
-  # => The model formulae is set and the interface to select the type of contrasts appear
-  # => The menu items Normalization appear
-
+  # => The model formulae is set and the interface to select the contrasts appear
 
   observeEvent(input$validModelFormula, {
     # => Set the model formulae
@@ -269,12 +267,15 @@ shinyServer(function(input, output, session) {
 
 
   #######
-  # Part4
+  # Part3
+  #
+  # Load data
+  #
   #######
 
   # as soon as the "valid Contrasts" buttom has been clicked
-  # =>
-  # =>
+  # => The selected contrasts are saved
+  # => The load data item appear
 
   observeEvent(input$validContrasts, {
 
@@ -283,7 +284,7 @@ shinyServer(function(input, output, session) {
     output$importData <- renderMenu({
       menuItem("Load Data", tabName = "importData",icon = icon('download'), selected = TRUE)
     })
-    
+
     ## activate next item
     #newtab <- switch(input$StateSave,
     #                 "SetUpModel" = "importData",
@@ -314,6 +315,13 @@ shinyServer(function(input, output, session) {
       })
 
 
+      #######
+      # Part4
+      #
+      # Load data
+      #
+      #######
+
     # library size plot
     output$LibSize <- renderPlot(
       plotLibSize(assay(FlomicsMultiAssay[["RNAseq"]])), height = 300)
@@ -323,7 +331,7 @@ shinyServer(function(input, output, session) {
       plotDistr(assay(FlomicsMultiAssay[["RNAseq"]])), height = 300)
 
     FlomicsMultiAssay <<- RunPCA(FlomicsMultiAssay, data="RNAseq", PCA="raw")
-    
+
     ### PCA plot
     output$PCA1axisRaw <- renderUI({
       radioButtons(inputId  = "PC1raw",
@@ -331,14 +339,14 @@ shinyServer(function(input, output, session) {
                    choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
                    selected = 1, inline = TRUE)
     })
-    
-    output$PCA2axisRaw <- renderUI({    
+
+    output$PCA2axisRaw <- renderUI({
       radioButtons(inputId  = "PC2raw",
                    label    = "",
                    choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
                    selected = 2, inline = TRUE)
     })
-    
+
     # select axis to plot
     observeEvent(input$PC1raw, {
       x <- input$PC1raw
@@ -348,8 +356,8 @@ shinyServer(function(input, output, session) {
                          choices = choices[-as.numeric(x)],
                          inline  = TRUE)
     })
-  
-    
+
+
     # select axis to plot
     #observe({
     #  x <- input$PC1raw
@@ -359,7 +367,7 @@ shinyServer(function(input, output, session) {
     #                     choices = choices[-as.numeric(x)],
     #                     inline  = TRUE)
     #})
-    
+
     # select factors for color plot
     output$condColorRaw <- renderUI({
       condition <- c("groups",names(FlomicsMultiAssay@colData))
@@ -368,16 +376,17 @@ shinyServer(function(input, output, session) {
                    choices = condition,
                    selected = "groups")
     })
-    
+
     # PCA plot
     output$QCdesignPCARaw <- renderPlot({
-      
+
       PC1.value <- as.numeric(input$PC1raw)
       PC2.value <- as.numeric(input$PC2raw)
-      plotPCAnorm(FlomicsMultiAssay, data="RNAseq", PCA="raw", PCs=c(PC1.value, PC2.value), condition=input$condColorSelectRaw)
-      
+      plotPCAnorm(FlomicsMultiAssay, data="RNAseq", PCA="raw", PCs=c(PC1.value, PC2.value),
+                  condition=input$condColorSelectRaw)
+
       })
-    
+
     ## QCdesign distance plot
     output$QCdesignPCA <- renderPlot(
       mvQCdesign(FlomicsMultiAssay,data="RNAseq",PCA="raw", axis=5))
@@ -405,10 +414,10 @@ shinyServer(function(input, output, session) {
          #FlomicsMultiAssay[["RNAseq.filtred"]]@metadata$Normalization$coefNorm["norm.factors"]
 
        #}, rownames=TRUE, bordered = TRUE)
-       
+
        output$FilterResults <- renderPrint({
-         
-         paste0( length(FlomicsMultiAssay[["RNAseq.filtred"]]@metadata$FilteredFeature), 
+
+         paste0( length(FlomicsMultiAssay[["RNAseq.filtred"]]@metadata$FilteredFeature),
                  " features filtered (from ", dim(FlomicsMultiAssay[["RNAseq"]])[1], ")")
        })
 
@@ -428,9 +437,9 @@ shinyServer(function(input, output, session) {
        print("# ...runPCA...")
 
        ## compute PCA on filtred data
-       
+
        FlomicsMultiAssay <<- RunPCA(FlomicsMultiAssay, data="RNAseq.filtred", PCA="norm")
-  
+
 
        ### PCA plot
        output$PC1axis <- renderUI({
@@ -439,14 +448,14 @@ shinyServer(function(input, output, session) {
                         choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
                         selected = 1, inline = TRUE)
         })
-       
-        output$PC2axis <- renderUI({    
+
+        output$PC2axis <- renderUI({
            radioButtons(inputId  = "PC2",
                         label    = "",
                         choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
                         selected = 2, inline = TRUE)
         })
-       
+
        # select axis to plot
         observeEvent(input$PC1, {
          x <- input$PC1
@@ -456,7 +465,7 @@ shinyServer(function(input, output, session) {
                             choices = choices[-as.numeric(x)],
                             inline  = TRUE)
        })
-  
+
        # select factors for color plot
        output$condColor <- renderUI({
          condition <- c("groups",names(FlomicsMultiAssay@colData))
@@ -468,16 +477,19 @@ shinyServer(function(input, output, session) {
 
        # PCA plot
        output$norm.PCAcoord <- renderPlot({
-  
+
          PC1.value <- as.numeric(input$PC1)
          PC2.value <- as.numeric(input$PC2)
-  
-         plotPCAnorm(FlomicsMultiAssay, data="RNAseq.filtred", PCA="norm", PCs=c(PC1.value, PC2.value), condition=input$condColorSelect)
+
+         plotPCAnorm(FlomicsMultiAssay, data="RNAseq.filtred", PCA="norm", PCs=c(PC1.value, PC2.value),
+                     condition=input$condColorSelect)
          })
 
        })
-       
-       
+
+
+
+
      observeEvent(input$runAnaDiff, {
 
       # Run the differential analysis for each contrast set
@@ -491,7 +503,8 @@ shinyServer(function(input, output, session) {
        FlomicsMultiAssay <<- RunDiffAnalysis(FlomicsMultiAssay,
                                              data="RNAseq.filtred",
                                              FDR=input$FDRSeuil ,
-                                             DiffAnalysisMethod=input$AnaDiffMethod)
+                                             DiffAnalysisMethod=input$AnaDiffMethod,
+                                             clustermq=input$clustermq)
 
        #data <- FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[1]]
        #threshold <- data$FDR < padj.cutoff & abs(data$logFC) > lfc.cutoff
@@ -499,15 +512,15 @@ shinyServer(function(input, output, session) {
        #data$sig <- as.factor(abs(data$logFC) > 2 & data$FDR < 0.05)
        #convert FDR to -log(FDR)
        #data$negLogFDR <- -log10(data$FDR)
-       
+
        #View(data_ordered)
        #ggplot(data,aes(x=logCPM, y=logFC, color=sig)) +
         # geom_point() +
         # coord_cartesian() +
         # ylab("log2 FC") +
         # xlab("log2 CPM")
-       
-       
+
+
        output$ContrastsResults <- renderUI({
 
          lapply(FlomicsMultiAssay@metadata$design@Contrasts.Sel, function(i) {
@@ -519,19 +532,19 @@ shinyServer(function(input, output, session) {
                     renderPlot(ggplot(data=FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]])+
                                                 geom_histogram(aes(x=PValue), bins = 200)),
                     #renderPlot({
-                    #  
+                    #
                     #  data <- FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]]
                     #  # significant is coded as TRUE, not sig as FALSE
                     #  data$sig <- as.factor(abs(data$logFC) > input$logFCSeuil & data$FDR < input$FDRSeuil)
                     #  #convert FDR to -log(FDR)
                     #  data$negLogFDR <- -log10(data$FDR)
-                    #  
+                    #
                     #  ggplot(data,aes(x=logCPM, y=logFC, color=sig)) +
                     #   geom_point() +
                     #   coord_cartesian() +
                     #   ylab("log2 FC") +
                     #   xlab("log2 CPM")
-                    #  
+                    #
                     #}),
                     tags$br(),
                     DT::renderDataTable(
@@ -543,20 +556,20 @@ shinyServer(function(input, output, session) {
             column(2, checkboxInput(inputId = "checkContrasts", label = "validate" ,value = TRUE , width=1))
            )
            })
-         
+
          })
-       
+
        # merge diff results
        mat2venn <- list()
        for(i in FlomicsMultiAssay@metadata$design@Contrasts.Sel) {
-         
+
          mat2venn[[i]][["features"]] <-  row.names(FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]])
          mat2venn[[i]][[i]] <- rep(1, dim(FlomicsMultiAssay@ExperimentList[["RNAseq.filtred"]]@metadata[["AnaDiffDeg"]][[i]])[1])
-         mat2venn[[i]] <- tbl_df(mat2venn[[i]]) 
+         mat2venn[[i]] <- tbl_df(mat2venn[[i]])
        }
-       mat2venn.df <- mat2venn %>% reduce(dplyr::full_join, by="features")
-       mat2venn.df[is.na(mat2venn.df)] <- 0      
-       
+       mat2venn.df <- mat2venn %>% purrr::reduce(dplyr::full_join, by="features")
+       mat2venn.df[is.na(mat2venn.df)] <- 0
+
        output$ResultsMerge <- renderUI({
          fluidRow(
            column(10,
@@ -577,15 +590,15 @@ shinyServer(function(input, output, session) {
          )
        })
      })
-     
+
      ########################################
      ##
      ########################################
-     
+
      observeEvent(input$buttonValidMerge, {
-       
+
        output$Asuivre <- renderPrint({
-         
+
          paste0("À suivre...")
        })
      })
