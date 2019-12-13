@@ -21,28 +21,28 @@ ExperimentalDesign <- function(ExpDesign){
            Contrasts.Sel=vector())
   }
 
-
-
-
 #' @title RunDiffAnalysis
-#' @param MultiAssayExperiment
+#' @param An object of class [\code{\link{MultiAssayExperiment}]
 #' @param data omic data type
 #' @param DiffMethod Differential analysis method
+#' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
 #' @return MultiAssayExperiment
 #' @exportMethod RunDiffAnalysis
 #' @examples
 #'
 setMethod(f="RunDiffAnalysis",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, FDR, DiffAnalysisMethod){
+          definition <- function(object, data, FDR, DiffAnalysisMethod, clustermq){
 
-            #
+            # Run the Diff analysis and get the results as a list of object depending of the
 
-            ListOfDiffResults = switch(DiffAnalysisMethod,
-                                     "edgeRglmfit"=edgeR.AnaDiff(object,data,FDR)
+            ListOfDiffResults <- switch(DiffAnalysisMethod,
+                                     "edgeRglmfit"=edgeR.AnaDiff(object, data, FDR, clustermq)
                                 )
 
-            #
+            # The results of the methods have to be formated
+
+            # Set an AnaDiff object to
             object@ExperimentList[[data]]@metadata[["AnaDiff"]] <- ListOfDiffResults
 
             #
@@ -230,19 +230,20 @@ setMethod(f= "plotPCAnorm",
             #col <- colorPlot(object@design, object@colData, condition=condition)
 
             #sample_names <- row.names(object@colData)
-            
+
             groups    <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>% as.data.frame() %>%
                          unite(col="groups", sep="_", remove = FALSE) #%>% mutate(samples=sample_names)
-            
-            
+
+
             factors   <- object@metadata$design@List.Factors %>% as.data.frame() %>%
                          unite(., col="samples", sep="_", remove = FALSE) %>% mutate(groups = groups$groups)
 
-            score     <- FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>% 
+            score     <- FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
                          mutate(samples=row.names(.)) %>% full_join(., factors, by="samples")
 
             var1 <- round(FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digit=3)
             var2 <- round(FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digit=3)
+
             
             p <- ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
               geom_point(size=3) +

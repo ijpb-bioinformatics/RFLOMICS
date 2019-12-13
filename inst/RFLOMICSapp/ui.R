@@ -32,14 +32,18 @@ sidebar <- dashboardSidebar(
 body <- dashboardBody(
 
   tabItems(
+<<<<<<< HEAD
     
     #### Import Exp design ####
     ###########################
     
+=======
+
+>>>>>>> 80846efc66afab688a968b7cfd382cb97d70ad66
     tabItem(tabName = "importExpDesign",
             fluidRow(
               box(width = 8, status = "warning",
-            
+
                 column(width = 6,
                  # matrix count/abundance input
                  fileInput("Experimental.Design.file", "Import matrix of Experimental Design (txt)",
@@ -50,7 +54,7 @@ body <- dashboardBody(
                           ),
                   actionButton("loadExpDesign","load")
                 )
-                  
+
               )
             ),
             tags$br(),
@@ -64,8 +68,8 @@ body <- dashboardBody(
     
     tabItem(tabName = "SetUpModel",
       fluidRow(
-        column(width= 12, 
-          box(status = "warning", width = 12, height = NULL,    
+        column(width= 12,
+          box(status = "warning", width = 12, height = NULL,
               h4("Select the level of reference fo each design factor"),
               fluidRow(
                 uiOutput("GetdFactorRef")
@@ -106,7 +110,7 @@ body <- dashboardBody(
                                  "text/comma-separated-values,text/plain",
                                  ".csv")
                      )
-                  
+
                   ),
                   column(6,
                      # metadata/QC bioinfo
@@ -144,7 +148,7 @@ body <- dashboardBody(
             ),
             fluidRow(
               box(title = "Metabolomics data",  status = "warning", width = 12, height = NULL,
-                  
+
                 column(6,
 
                      # matrix count/abundance input
@@ -189,12 +193,12 @@ body <- dashboardBody(
             fluidRow(
               box(title = "Exploratory of Biological and Technical variability", solidHeader = TRUE, width = 12, status = "warning",
                  tabBox( id = "ExplorAnalysisQC", width = 12,
-    
-                   tabPanel("Principal component analysis (1/2)",  
+
+                   tabPanel("Principal component analysis (1/2)",
                         tags$br(),
                         tags$br(),
-                        column(width = 2, 
-                            
+                        column(width = 2,
+
                             fluidRow(uiOutput('condColorRaw')),
                             tags$br(),
                             fluidRow(uiOutput('PCA1axisRaw')),
@@ -207,7 +211,7 @@ body <- dashboardBody(
                             #               label    = "Choice of PCs :",
                             #               choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
                             #               selected = 1, inline = TRUE),
-                            #  
+                            #
                             #  radioButtons(inputId  = "PC2raw",
                             #               label    = "",
                             #               choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
@@ -215,8 +219,8 @@ body <- dashboardBody(
                             #  )
                         ),
                         column(width = 10,  plotOutput("QCdesignPCARaw"))
-                        
-                
+
+
                       ),
                    tabPanel("Principal component analysis (2/2)",  plotOutput("QCdesignPCA")),
                    tabPanel("Quality check for technical issues",    plotOutput("QCdata"))
@@ -229,19 +233,19 @@ body <- dashboardBody(
             ),
     tabItem(tabName = "RNAseqNormalization",
             fluidRow(
-              column(4, 
+              column(4,
                 fluidRow(
-                  box( title = "Low Abundance Filtering",  solidHeader = TRUE, status = "warning", width = 12,  
+                  box( title = "Low Abundance Filtering",  solidHeader = TRUE, status = "warning", width = 12,
                        numericInput(inputId = "FilterSeuil",
                                     label="Threshold :",
                                     value=0, 0, max=100, 1 ),
-                       
+
                        actionButton("RunFiltering","Run Filtering"),
                        verbatimTextOutput("FilterResults")
                   )
                 ),
                 fluidRow(
-                  box( title = "Normalization" , solidHeader = TRUE, status = "warning", width = 12, 
+                  box( title = "Normalization" , solidHeader = TRUE, status = "warning", width = 12,
                        selectInput(inputId  = "selectNormMethod",
                                    label    = "Method :",
                                    choices  =  list("TMM (edgeR)" = "TMM", "RLE (edgeR)" = "RLE", "upperquartile (edgeR)" = "upperquartile"),
@@ -259,8 +263,8 @@ body <- dashboardBody(
             fluidRow(
 
               box(title = "Principal component analysis", solidHeader = TRUE, status = "warning", width = 12 ,  height = NULL,
-                 
-                   column(width = 2, 
+
+                   column(width = 2,
                           fluidRow( uiOutput('condColor') ),
                           tags$br(),
                           fluidRow( uiOutput('PC1axis')),
@@ -287,11 +291,11 @@ body <- dashboardBody(
                                 label="FDR :",
                                 value=0.05, 0, max=1, 0.01)
                  ),
-                 #column(3,
-                 #        numericInput(inputId = "logFCSeuil",
-                 #                     label="logFC :",
-                 #                     value=2, 0, max=10, 0.5)
-                 #),
+                 column(3,
+                        selectInput(inputId = "clustermq",
+                                      label="send job to cluster",
+                                      choices = list("no"=FALSE,"genotoul"=TRUE))
+                 ),
                  column(5,
                           actionButton("runAnaDiff","Run the differential analysis")
                  )
