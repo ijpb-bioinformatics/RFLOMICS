@@ -15,6 +15,7 @@ ExperimentalDesign <- function(ExpDesign){
   .ExpDesign(List.Factors=dF.List,
            Factors.Type=vector(),
            Model.formula=vector(),
+           Model.matrix=vector(),
            Contrasts.List=data.frame(),
            Contrasts.Coeff=data.frame(),
            Contrasts.Sel=vector())
@@ -365,4 +366,84 @@ setMethod(f="RunPCA",
           }
 )
 
+
+
+#' @title SetModelMatrix
+#'
+#' @param ExpDesign 
+#'
+#' @return
+#' @exportMethod SetModelMatrix
+#'
+#' @examples
+setMethod(f="SetModelMatrix",
+          signature="ExpDesign",
+          definition <- function(object){
+            
+            #  => list of fact from model
+            Fact.list <- strsplit(gsub("[ ~]", "",object@Model.formula), split = "+", fixed = TRUE)[[1]]
+            Fact.list <- Fact.list[str_detect(Fact.list, pattern=":", negate = TRUE)]
+            
+            #  => list of fact bio
+            Fact.Bio  <- names(object@Factors.Type[which(object@Factors.Type == "Bio")])
+            
+            #  => factor vectors to set model.matrix `
+            #  * stock ref values
+            ref.list <- vector()
+            for (i in Fact.list) {
+              assign(i, object@List.Factors[[i]])
+              ref.list <- c(ref.list,levels(object@List.Factors[[i]])[1])
+            }
+            
+            #  => set model matrix
+            #  * change colnames
+            model.design.matrix <- stats::model.matrix(as.formula(object@Model.formula))
+            design.colnames <- colnames(model.design.matrix)
+            #  colnames
+            for (i in names(object@List.Factors)) {
+              design.colnames <- gsub(i, "", design.colnames)
+            }
+            design.colnames <- gsub(":", "_", design.colnames)
+            colnames(model.design.matrix) <- design.colnames
+            object@Model.matrix <- model.design.matrix
+
+            # => Get all the contrasts
+            contrasts <- list()
+            contrast.coef <- list()
+            contrasts.nbr <- 0
+            for(i in Fact.list[which(Fact.list %in% Fact.Bio)]){
+              
+              mat <- as.vector(unique(object@List.Factors[[i]])) %>% utils::combn(.,2)
+              
+              contrast.tmp <- list()
+              
+              contrast.tmp[["hypoth"]] <- apply (mat, 2, function(x) {
+                paste(x, collapse=" - ")
+              })
+              
+              contrast.tmp[["hypoth_tmp"]] <- contrast.tmp[["hypoth"]]
+              
+              for (ref in ref.list) {
+                contrast.tmp[["hypoth_tmp"]] <- gsub(paste(ref, "-"), "", contrast.tmp[["hypoth_tmp"]])
+                contrast.tmp[["hypoth_tmp"]] <- gsub(paste("-", ref), "", contrast.tmp[["hypoth_tmp"]])
+              }
+              
+              contrast.tmp[["idContrast"]] <- paste("C", (contrasts.nbr+1):(contrasts.nbr+length(contrast.tmp[["hypoth"]])), sep = "")
+              
+              contrasts.nbr <- contrasts.nbr+length(contrast.tmp[["hypoth"]])
+              contrasts[[i]] <- data.frame(contrast.tmp) %>% mutate(factors=i)
+                   
+              ## contrast coef
+              #contrast.coef[[i]] <- makeContrasts(contrasts = contrasts[[i]]$hypoth_tmp, levels = model.design.matrix) %>% as.data.frame()
+              #colnames(contrast.coef[[i]]) <- contrasts[[i]]$idContrast
+            }
+            object@Contrasts.List  <- contrasts %>% purrr::reduce(rbind)
+            
+            ## contrast coef
+            object@Contrasts.Coeff <- makeContrasts(contrasts = object@Contrasts.List$hypoth_tmp, levels = model.design.matrix) %>% as.data.frame()
+            colnames(object@Contrasts.Coeff) <- object@Contrasts.List$idContrast
+            
+            return(object)
+
+})
 
