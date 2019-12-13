@@ -651,8 +651,9 @@ shinyServer(function(input, output, session) {
       # Copy the report file to a temporary directory before processing it, in
       # case we don't have write permissions to the current working dir (which
       # can happen when deployed).
+      
+      tempReport <-  "report.Rmd" # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       #tempReport <- file.path(tempdir(), "report.Rmd")
-      tempReport <-  "report.Rmd"
       #file.copy("report.Rmd", tempReport, overwrite = TRUE)
 
       # TEST
