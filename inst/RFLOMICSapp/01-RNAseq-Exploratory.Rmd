@@ -51,7 +51,7 @@ knitr::include_graphics(list.files (path = file.path(tmpDir, "RNAseq","images"),
 ## Differential expression analysis 
 > comment faire une boucle à l'ext du chunk???
 
-```{r pca norm design , fig.show = "hold", out.width = "50%"}
+```{r analyse diff , fig.show = "hold", out.width = "50%"}
 knitr::include_graphics(list.files (path = file.path(tmpDir, "RNAseq","images"), 
                                     pattern = "PvalueDistribution_", 
                                     full.names = TRUE))
