@@ -32,14 +32,11 @@ sidebar <- dashboardSidebar(
 body <- dashboardBody(
 
   tabItems(
-<<<<<<< HEAD
     
     #### Import Exp design ####
     ###########################
     
-=======
 
->>>>>>> 80846efc66afab688a968b7cfd382cb97d70ad66
     tabItem(tabName = "importExpDesign",
             fluidRow(
               box(width = 8, status = "warning",
