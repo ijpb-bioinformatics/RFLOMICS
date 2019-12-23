@@ -1,10 +1,11 @@
 
 
-# `r FlomicsMultiAssay@metadata$omicList[1]` data analysis
+# `r names(FlomicsMultiAssay@metadata$omicList[1])` data analysis
 
 ## data Exploratory
 ```{r 1st omic}
 assay(FlomicsMultiAssay[[1]])[1:5,1:5]
+
 ```
 
 

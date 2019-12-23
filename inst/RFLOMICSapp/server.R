@@ -303,7 +303,7 @@ shinyServer(function(input, output, session) {
       ########## Item for each omics #############
       output$omics <- renderMenu({
         menu_list <- list()
-        for (omic in FlomicsMultiAssay@metadata$omicList){
+        for (omic in names(FlomicsMultiAssay@metadata$omicList)){
           dir.create(file.path(tmpDir, omic))
           dir.create(file.path(tmpDir, omic, "images"))
           dir.create(file.path(tmpDir, omic, "tables"))
@@ -658,14 +658,22 @@ shinyServer(function(input, output, session) {
 
       # TEST
       # save FE object in .Rdata and load it during report execution
-      save(FlomicsMultiAssay,file=file.path(tempdir(), "FlomicsMultiAssay.RData"))
-      #save(FlomicsMultiAssay,file=file.path(tmpDir, "FlomicsMultiAssay.RData"))
+      #save(FlomicsMultiAssay,file=file.path(tempdir(), "FlomicsMultiAssay.RData"))
+      save(FlomicsMultiAssay,file=file.path(tmpDir, "FlomicsMultiAssay.RData"))
+      
+      # Set up list of child report
+      child_doc <- lapply(names(FlomicsMultiAssay@metadata$omicList),function(x){ 
+        
+        return(paste0(x, ".Rmd"))
+      }) %>% unlist()
       
       # Set up parameters to pass to Rmd document
-      params <- list(   tag = step_tag,
-                     pngDir = tmpDir,
-                     FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"))
+      params <- list(child_doc = child_doc,
+                        pngDir = tmpDir,
+                        FEdata = file.path(tmpDir, "FlomicsMultiAssay.RData"))
 
+      #FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"))
+      
       # Knit the document, passing in the `params` list, and eval it in a
       # child of the global environment (this isolates the code in the document
       # from the code in this app).

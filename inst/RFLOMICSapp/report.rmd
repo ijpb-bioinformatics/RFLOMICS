@@ -10,20 +10,21 @@ params:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(MultiAssayExperiment)
 ```
 
+
 ```{r param}
-#tmpDir="/Users/nbessoltane/rFlomics.report.tmp"
-#tag = 1
+tmpDir <- "/Users/nbessoltane/rFlomics.report.tmp"
+child_doc <- c('RNAseq.Rmd','proteomics.Rmd')
 ```
 
 
 
 ```{r bis}
-load(params$FEdata)
-tmpDir <- params$pngDir
-tag <- params$tag
-#load("~/rFlomics.report.tmp/FlomicsMultiAssay.RData")
+#load(params$FEdata)
+#tmpDir <- params$pngDir
+load("~/rFlomics.report.tmp/FlomicsMultiAssay.RData")
 
 ```
 
@@ -51,14 +52,12 @@ FlomicsMultiAssay@metadata$design@Model.formula
 
 ## Hypothesis
 
-```{r contrast}
+```{r contrast, eval=FALSE, include=FALSE}
 filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast %in% FlomicsMultiAssay@metadata$design@Contrasts.Sel) %>% select(hypoth)
 ```
 
 
-
-
-`r if(params$tag < 1) {"\\begin{comment}"}`
+`r if(length(FlomicsMultiAssay@metadata$omicList) == 0) {"\\begin{comment}"}`
 
 # Data load :
 
@@ -66,12 +65,11 @@ filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast %in% Flomic
 FlomicsMultiAssay@metadata$omicList
 ```
 
-<!--- This is an HTML comment in Markdown -->
 
-```{r RNAseq Exp, child = '01-RNAseq-Exploratory.Rmd'}
+```{r analysis, child = child_doc}
 ```
 
-`r if(params$tag < 1) {"\\end{comment}"}`
+`r if(length(FlomicsMultiAssay@metadata$omicList) == 0) {"\\end{comment}"}`
 
 
 
