@@ -1,29 +1,40 @@
 ---
 title: "RFLOMICS report"
-output: html_document
-toc: true
-params:
-  FEdata: NA
-  tag: NA
+author: ---
+date: ---
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: true
+      smooth_scroll: true
+    number_sections: true
+    theme: united
+params: 
   pngDir: NA
+  FEdata: NA
 ---
 
-```{r setup, include=FALSE}
+
+```{r , include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
 
-```{r param}
-#tmpDir="/Users/nbessoltane/rFlomics.report.tmp"
-#tag = 1
 ```
 
 
+```{r toremove , include=FALSE}
+#library(MultiAssayExperiment)
+#tmpDir <- "/Users/nbessoltane/rFlomics.report.tmp"
+#load("~/rFlomics.report.tmp/FlomicsMultiAssay.RData")
 
-```{r bis}
+```
+
+
+
+```{r parameters, include=FALSE}
 load(params$FEdata)
 tmpDir <- params$pngDir
-tag <- params$tag
-#load("~/rFlomics.report.tmp/FlomicsMultiAssay.RData")
 
 ```
 
@@ -36,42 +47,55 @@ FlomicsMultiAssay@colData
 ```
 
 
-## Factors
+> Factors
 
 ```{r factor}
 FlomicsMultiAssay@metadata$design@Factors.Type
 ```
 
-## statistical model
+> statistical model
 
 ```{r model}
 FlomicsMultiAssay@metadata$design@Model.formula
 
 ```
 
-## Hypothesis
+> Hypothesis
 
 ```{r contrast}
 filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast %in% FlomicsMultiAssay@metadata$design@Contrasts.Sel) %>% select(hypoth)
 ```
 
 
+`r if(length(FlomicsMultiAssay@metadata$omicList) == 0) {"\\begin{comment}"}`
 
-
-`r if(params$tag < 1) {"\\begin{comment}"}`
-
-# Data load :
+# Data load
 
 ```{r load data}
 FlomicsMultiAssay@metadata$omicList
 ```
 
-<!--- This is an HTML comment in Markdown -->
 
-```{r RNAseq Exp, child = '01-RNAseq-Exploratory.Rmd'}
+```{r analysis}
+
+  out <- NULL
+  for (omictype in names(FlomicsMultiAssay@metadata$omicList)){ 
+    
+    child <- paste0(omictype, ".Rmd")
+
+    for (data in  FlomicsMultiAssay@metadata$omicList[[omictype]]){
+      
+      print(data)   
+      out <- c(out, knitr::knit_child(child, quiet=TRUE))  
+    }
+    
+  }
+
+knitr::asis_output(out)
+
 ```
 
-`r if(params$tag < 1) {"\\end{comment}"}`
+`r if(length(FlomicsMultiAssay@metadata$omicList) == 0) {"\\end{comment}"}`
 
 
 

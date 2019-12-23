@@ -77,12 +77,14 @@ shinyServer(function(input, output, session) {
 
     ### constract MultiArrayExperiment object for all omic data
     print("# ...FlomicsMultiAssay...")
+    omicList <- as.list(names(listExp))
+    names(omicList) <- names(listExp)
     FlomicsMultiAssay <<- MultiAssayExperiment(experiments = listExp,
                                                colData     = ExpDesign,
                                                sampleMap   = listToMap(listmap),
                                                metadata    = list(design = Design,
                                                                   colDataStruc = c(n_dFac = dim(ExpDesign)[2], n_qcFac = 0),
-                                                                  omicList = names(listExp)))
+                                                                  omicList = omicList))
   }
 
   updateDesignFactors <- function(){
@@ -301,7 +303,7 @@ shinyServer(function(input, output, session) {
       ########## Item for each omics #############
       output$omics <- renderMenu({
         menu_list <- list()
-        for (omic in FlomicsMultiAssay@metadata$omicList){
+        for (omic in names(FlomicsMultiAssay@metadata$omicList)){
           dir.create(file.path(tmpDir, omic))
           dir.create(file.path(tmpDir, omic, "images"))
           dir.create(file.path(tmpDir, omic, "tables"))
@@ -660,10 +662,11 @@ shinyServer(function(input, output, session) {
       #save(FlomicsMultiAssay,file=file.path(tmpDir, "FlomicsMultiAssay.RData"))
       
       # Set up parameters to pass to Rmd document
-      params <- list(   tag = step_tag,
-                     pngDir = tmpDir,
-                     FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"))
+      params <- list( FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"),
+                      pngDir = tmpDir)
 
+      #FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"))
+      
       # Knit the document, passing in the `params` list, and eval it in a
       # child of the global environment (this isolates the code in the document
       # from the code in this app).

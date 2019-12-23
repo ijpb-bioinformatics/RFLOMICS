@@ -1,0 +1,14 @@
+
+# Proteomics data analysis
+
+## data Exploratory
+
+> Raw abundance
+
+```{r raw data prot}
+
+print (data)
+assay(FlomicsMultiAssay[[data]])[1:5,1:5]
+
+```
+
