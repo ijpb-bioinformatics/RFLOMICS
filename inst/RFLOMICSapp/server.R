@@ -77,12 +77,14 @@ shinyServer(function(input, output, session) {
 
     ### constract MultiArrayExperiment object for all omic data
     print("# ...FlomicsMultiAssay...")
+    omicList <- as.list(names(listExp))
+    names(omicList) <- names(listExp)
     FlomicsMultiAssay <<- MultiAssayExperiment(experiments = listExp,
                                                colData     = ExpDesign,
                                                sampleMap   = listToMap(listmap),
                                                metadata    = list(design = Design,
                                                                   colDataStruc = c(n_dFac = dim(ExpDesign)[2], n_qcFac = 0),
-                                                                  omicList = names(listExp)))
+                                                                  omicList = omicList))
   }
 
   updateDesignFactors <- function(){
