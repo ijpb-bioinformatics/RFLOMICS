@@ -9,6 +9,9 @@ output:
     number_sections: yes
     toc: yes
     toc_depth: 6
+  pdf_document:
+    toc: yes
+    toc_depth: '6'
   html_document:
     df_print: paged
     toc: yes
@@ -106,7 +109,7 @@ The next session will present a development model with the associated command li
 - The master branche (Tagged version of the package)
 - The 'develop' branche (with the latest development)
 
-```{bash}
+```{bash eval=FALSE}
 # Create the branch and push 
 git checkout -B develop
 git push -u origin develop
@@ -122,7 +125,7 @@ For each new functionalities, one have to create a new branche, from the Develop
 This branch 'new_function' will be created in local. i.e, the commit will not be public.
 When the branch is stable, the branch will be merged  
 
-```{bash}
+```{bash eval=FALSE}
 
 # From your local git repository
 
