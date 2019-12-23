@@ -658,19 +658,12 @@ shinyServer(function(input, output, session) {
 
       # TEST
       # save FE object in .Rdata and load it during report execution
-      #save(FlomicsMultiAssay,file=file.path(tempdir(), "FlomicsMultiAssay.RData"))
-      save(FlomicsMultiAssay,file=file.path(tmpDir, "FlomicsMultiAssay.RData"))
-      
-      # Set up list of child report
-      child_doc <- lapply(names(FlomicsMultiAssay@metadata$omicList),function(x){ 
-        
-        return(paste0(x, ".Rmd"))
-      }) %>% unlist()
+      save(FlomicsMultiAssay,file=file.path(tempdir(), "FlomicsMultiAssay.RData"))
+      #save(FlomicsMultiAssay,file=file.path(tmpDir, "FlomicsMultiAssay.RData"))
       
       # Set up parameters to pass to Rmd document
-      params <- list(child_doc = child_doc,
-                        pngDir = tmpDir,
-                        FEdata = file.path(tmpDir, "FlomicsMultiAssay.RData"))
+      params <- list( FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"),
+                      pngDir = tmpDir)
 
       #FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"))
       

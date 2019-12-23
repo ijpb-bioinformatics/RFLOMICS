@@ -1,24 +1,30 @@
 
 
-# `r names(FlomicsMultiAssay@metadata$omicList[1])` data analysis
+# RNAseq data analysis
 
 ## data Exploratory
-```{r 1st omic}
-assay(FlomicsMultiAssay[[1]])[1:5,1:5]
+
+> Raw count
+
+```{r raw data rnaseq}
+#data <- paste0("RNAseq.",data)
+
+assay(FlomicsMultiAssay[[data]])[1:5,1:5]
 
 ```
 
 
-### Library size & count distribution
+> Library size & count distribution
 
 ```{r libSize , fig.show = "hold", out.width = "50%"}
 knitr::include_graphics(c(file.path(tmpDir, "RNAseq","images","LibSize.png"), 
                           file.path(tmpDir, "RNAseq","images","CountDist.png")))
 ```
 
-### Principal component analysis
+> Principal component analysis
 
-#### Design 
+>> Design 
+
 ```{r pca raw design 1 , fig.show = "hold", out.width = "50%"}
 knitr::include_graphics(list.files (path = file.path(tmpDir, "RNAseq","images"), 
                                     pattern = "PCAdesign_RNAseq_", 
@@ -29,7 +35,8 @@ knitr::include_graphics(list.files (path = file.path(tmpDir, "RNAseq","images"),
 knitr::include_graphics(file.path(tmpDir, "RNAseq","images","PCAdesignCoordRaw.png"))
 ```
 
-#### metadata
+>> metadata
+
 ```{r pca raw meta , fig.show = "hold"}
 knitr::include_graphics(file.path(tmpDir, "RNAseq","images","PCAmetaCorrRaw.png"))
 ```

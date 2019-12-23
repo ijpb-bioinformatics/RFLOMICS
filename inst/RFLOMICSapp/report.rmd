@@ -1,30 +1,40 @@
 ---
 title: "RFLOMICS report"
-output: html_document
-toc: true
-params:
-  FEdata: NA
-  tag: NA
+author: ---
+date: ---
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: true
+      smooth_scroll: true
+    number_sections: true
+    theme: united
+params: 
   pngDir: NA
+  FEdata: NA
 ---
 
-```{r setup, include=FALSE}
+
+```{r , include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(MultiAssayExperiment)
+
 ```
 
 
-```{r param}
-tmpDir <- "/Users/nbessoltane/rFlomics.report.tmp"
-child_doc <- c('RNAseq.Rmd','proteomics.Rmd')
+```{r toremove , include=FALSE}
+#library(MultiAssayExperiment)
+#tmpDir <- "/Users/nbessoltane/rFlomics.report.tmp"
+#load("~/rFlomics.report.tmp/FlomicsMultiAssay.RData")
+
 ```
 
 
 
-```{r bis}
-#load(params$FEdata)
-#tmpDir <- params$pngDir
-load("~/rFlomics.report.tmp/FlomicsMultiAssay.RData")
+```{r parameters, include=FALSE}
+load(params$FEdata)
+tmpDir <- params$pngDir
 
 ```
 
@@ -37,36 +47,52 @@ FlomicsMultiAssay@colData
 ```
 
 
-## Factors
+> Factors
 
 ```{r factor}
 FlomicsMultiAssay@metadata$design@Factors.Type
 ```
 
-## statistical model
+> statistical model
 
 ```{r model}
 FlomicsMultiAssay@metadata$design@Model.formula
 
 ```
 
-## Hypothesis
+> Hypothesis
 
-```{r contrast, eval=FALSE, include=FALSE}
+```{r contrast}
 filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast %in% FlomicsMultiAssay@metadata$design@Contrasts.Sel) %>% select(hypoth)
 ```
 
 
 `r if(length(FlomicsMultiAssay@metadata$omicList) == 0) {"\\begin{comment}"}`
 
-# Data load :
+# Data load
 
 ```{r load data}
 FlomicsMultiAssay@metadata$omicList
 ```
 
 
-```{r analysis, child = child_doc}
+```{r analysis}
+
+  out <- NULL
+  for (omictype in names(FlomicsMultiAssay@metadata$omicList)){ 
+    
+    child <- paste0(omictype, ".Rmd")
+
+    for (data in  FlomicsMultiAssay@metadata$omicList[[omictype]]){
+      
+      print(data)   
+      out <- c(out, knitr::knit_child(child, quiet=TRUE))  
+    }
+    
+  }
+
+knitr::asis_output(out)
+
 ```
 
 `r if(length(FlomicsMultiAssay@metadata$omicList) == 0) {"\\end{comment}"}`
