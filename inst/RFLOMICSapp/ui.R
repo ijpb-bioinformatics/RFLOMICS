@@ -11,18 +11,20 @@ library(shinydashboard)
 
 sidebar <- dashboardSidebar(
   sidebarMenu(id="StateSave",
-              menuItem("Experimental Design", tabName = "ExpDesign", icon = icon('vials'), startExpanded = TRUE,
+              menuItem("Experimental Design", tabName = "ExpDesign", icon = icon('vials'),  startExpanded=TRUE, 
                        menuSubItem("Import design",  tabName = "importExpDesign", selected = TRUE),
                        menuItemOutput("SetUpModel")
                        ),
               menuItemOutput("importData"),
+              uiOutput("dataList"),
               menuItemOutput("omics"),
+              menuItemOutput("DiffAnalysis"),
+              menuItemOutput("CoExpAnalysis")
               #menuItemOutput("RNAseq") ,
               #menuItemOutput("metabolome") ,
               #menuItemOutput("proteome"),
-              menuItemOutput("Exploratory"),
-              menuItemOutput("DiffAnalysis")
-              #menuItemOutput("CoExpAnalysis")
+              #menuItemOutput("Exploratory"),
+              
               ),
   tags$br(),
   tags$br(),
@@ -44,11 +46,7 @@ body <- dashboardBody(
                 column(width = 6,
                  # matrix count/abundance input
                  fileInput("Experimental.Design.file", "Import matrix of Experimental Design (txt)",
-                           accept = c(
-                             "text/csv",
-                             "text/comma-separated-values,text/plain",
-                             ".csv")
-                          ),
+                           accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                   actionButton("loadExpDesign","load")
                 )
 
@@ -96,80 +94,37 @@ body <- dashboardBody(
     #### Import data       ####
     ###########################
     tabItem(tabName = "importData",
-            fluidRow(
-                box(title = "RNAseq data", status = "warning", width = 12, height = NULL,
-                  column(6,
-
-                     # matrix count/abundance input
-                     fileInput("RNAseq.Count.Import.file", "matrix of gene counts as .txt file",
-                               accept = c(
-                                 "text/csv",
-                                 "text/comma-separated-values,text/plain",
-                                 ".csv")
-                     )
-
+            
+         box(title = "???", status = "warning", width = 12, height = NULL,
+             fluidRow(
+                  column(2,
+                         
+                         # omic type
+                         selectInput(inputId='omicType1', label='Omics', 
+                                     choices = c("None"="none", "RNAseq"="RNAseq", 
+                                                 "Proteomics"="proteomics", "Metabolomics"="Metabolomics"),
+                                     selected = "none")
+                         ),
+                  column(4,
+                         
+                         # matrix count/abundance input
+                         fileInput("data1", "omic count/abundance (Ex.)",
+                                   accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
+                         ),
+                  column(4,
+                         # metadata/QC bioinfo
+                         fileInput("metadataQC1", "QC or metadata (Ex.)",
+                                   accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
+                         )
+                  #,
+                  #column(2, actionButton("removeFactor1", "",
+                  #                       icon=icon("times", class = NULL, lib = "font-awesome")))
                   ),
-                  column(6,
-                     # metadata/QC bioinfo
-                     fileInput("RNAseq.QC.Import.file", "QC or metadata as .txt file",
-                               accept = c(
-                                 "text/csv",
-                                 "text/comma-separated-values,text/plain",
-                                 ".csv")
-                     )
-                  )
-                )
-            ),
-            fluidRow(
-              box(title = "Proteomics data",  status = "warning", width = 12, height = NULL,
-                column(6,
-
-                     # matrix count/abundance input
-                     fileInput("prot.abundances.Import.file", "matrix of protein abundances as .txt file",
-                               accept = c(
-                                 "text/csv",
-                                 "text/comma-separated-values,text/plain",
-                                 ".csv")
-                     )
-                ),
-                column(6,
-                     # metadata/QC bioinfo
-                     fileInput("prot.QC.Import.file", "QC or metadata as .txt File",
-                               accept = c(
-                                 "text/csv",
-                                 "text/comma-separated-values,text/plain",
-                                 ".csv")
-                              )
-                    )
-              )
-            ),
-            fluidRow(
-              box(title = "Metabolomics data",  status = "warning", width = 12, height = NULL,
-
-                column(6,
-
-                     # matrix count/abundance input
-                     fileInput("metabo.abundances.Import.file", "matrix of metabolite abundances as .txt file",
-                               accept = c(
-                                 "text/csv",
-                                 "text/comma-separated-values,text/plain",
-                                 ".csv")
-                               )
-                     ),
-                column(6,
-                     # metadata/QC bioinfo
-                     fileInput("metabo.QC.Import.file", "QC or metadata as .txt File",
-                               accept = c(
-                                 "text/csv",
-                                 "text/comma-separated-values,text/plain",
-                                 ".csv")
-                               )
-                     )
-                )
-              ),
-              actionButton("loadData","load")
-
-            ),
+             uiOutput("toAddData2"),
+             actionButton("addData","Add data")
+             ),
+         actionButton("loadData","load")
+         ),
     
     #### Data Exploratory & QC ####
     ###############################
@@ -237,7 +192,7 @@ body <- dashboardBody(
                                     label="Threshold :",
                                     value=0, 0, max=100, 1 ),
 
-                       actionButton("RunFiltering","Run Filtering"),
+                       #actionButton("RunFiltering","Run Filtering"),
                        verbatimTextOutput("FilterResults")
                   )
                 ),
@@ -247,9 +202,10 @@ body <- dashboardBody(
                                    label    = "Method :",
                                    choices  =  list("TMM (edgeR)" = "TMM", "RLE (edgeR)" = "RLE", "upperquartile (edgeR)" = "upperquartile"),
                                    selected = "TMM"),
-                       actionButton("RunNormalization","Run Normalisation")
+                       #actionButton("RunNormalization","Run Normalisation")
                   )
-                )
+                ),
+                actionButton("NormValid","Validate")
               ),
               column(8,
                  box(title = "Abundance distribution", solidHeader = TRUE, status = "warning", width = 14 ,  height = NULL,
@@ -271,41 +227,19 @@ body <- dashboardBody(
                           fluidRow(actionButton("screenshotPCA_Norm","Screenshot"))
                           ),
                    column(width = 10, plotOutput("norm.PCAcoord"))
-                )
-            )
-    ),
-   tabItem(tabName = "DiffAnalysis",
-           fluidRow(
-              box(width = 12, status = "warning",
-                 column(5,
-                     selectInput("AnaDiffMethod", label = "Method :",
-                                 choices = list("glmfit (edgeR)"="edgeRglmfit",
-                                                "limma" = "limma"),
-                                 selected = "edgeRglmfit")
-                 ),
-                 column(3,
-                        numericInput(inputId = "FDRSeuil",
-                                label="FDR :",
-                                value=0.05, 0, max=1, 0.01)
-                 ),
-                 column(3,
-                        selectInput(inputId = "clustermq",
-                                      label="send job to cluster",
-                                      choices = list("no"=FALSE,"genotoul"=TRUE))
-                 ),
-                 column(5,
-                          actionButton("runAnaDiff","Run the differential analysis")
-                 )
+                  )
               )
-           ),
+            ),
+    tabItem(tabName = "ProtExploratoryQC"),
+    tabItem(tabName = "ProtProcessing"),
+    tabItem(tabName = "MetaExploratoryQC"),
+    tabItem(tabName = "MetaProcessing"),
+    tabItem(tabName = "DiffAnalysis",
+           fluidRow( uiOutput("DiffParam")),
            tags$br(),
            tags$br(),
-           fluidRow(
-                uiOutput("ContrastsResults")
-           ),
-           fluidRow(
-                uiOutput("ResultsMerge")
-           )
+           fluidRow( uiOutput("ContrastsResults")),
+           fluidRow( uiOutput("ResultsMerge"))
     ),
     tabItem(tabName = "CoExpression",
             verbatimTextOutput("Asuivre")

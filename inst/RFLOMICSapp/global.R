@@ -17,6 +17,8 @@ step_tag <- 4
 tmpDir <- "/Users/nbessoltane/rFlomics.report.tmp"
 unlink(tmpDir, recursive=TRUE)
 
+SupportedOmics <- c("RNAseq", "proteomics", "metabolomics")
+
 #if (file.exists(tmpDir)){
   
 #} else {
