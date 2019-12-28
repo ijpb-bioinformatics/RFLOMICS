@@ -87,7 +87,7 @@ DiffAnalysis <- function(){
 
 setMethod(f="mvQCdesign",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, PCA=c("raw","norm"), axis=5, pngDir){
+          definition <- function(object, data, PCA=c("raw","norm"), axis=5, pngFile){
 
             resPCA <- object[[data]]@metadata[["PCAlist"]][[PCA]]
             cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
@@ -126,7 +126,7 @@ setMethod(f="mvQCdesign",
             })
             p <- do.call(grid.arrange, out)
             print(p)
-            ggsave(filename = "PCAdesignCoordRaw.png", path = pngDir, plot = p)
+            ggsave(filename = pngFile,  plot = p)
 })
 
 
@@ -139,7 +139,7 @@ setMethod(f="mvQCdesign",
 
 setMethod(f="mvQCdata",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, PCA=c("raw","norm"),axis=3, pngDir){
+          definition <- function(object, data, PCA=c("raw","norm"),axis=3, pngFile){
 
             resPCA <- object[[data]]@metadata[["PCAlist"]][[PCA]]
             cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
@@ -166,7 +166,7 @@ setMethod(f="mvQCdata",
               labs(x = "Axis number", y="Cor(Coord_dFactor_PCA,QCparam)")
             
             print(p)
-            ggsave(filename = "PCAmetaCorrRaw.png", path = pngDir, plot = p)
+            ggsave(filename = pngFile, plot = p)
             
           })
 
@@ -180,7 +180,7 @@ setMethod(f="mvQCdata",
 #'
 setMethod(f= "abundanceBoxplot",
           signature = "MultiAssayExperiment",
-          definition <- function(object, dataType, pngDir){
+          definition <- function(object, dataType, pngFile){
 
             # this function generate boxplot (abandance distribution) from raw data and normalized data
 
@@ -200,10 +200,12 @@ setMethod(f= "abundanceBoxplot",
 
             # boxplot
             p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + geom_boxplot(aes(fill=groups)) +
-              theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
+              theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +
+              xlab(paste0(dataType, " samples"))
+              
               #scale_fill_manual(values=col)
             print(p)
-            ggsave(filename = "norm.boxplot.png", plot = p, path = pngDir)
+            ggsave(filename = pngFile, plot = p)
             
           }
 )
@@ -221,7 +223,7 @@ setMethod(f= "abundanceBoxplot",
 #' @examples
 setMethod(f= "plotPCAnorm",
           signature = "MultiAssayExperiment",
-          definition <- function(object, data, PCA, PCs=c(1,2), condition="groups", pngDir){
+          definition <- function(object, data, PCA, PCs=c(1,2), condition="groups", pngFile){
 
             #
             PC1 <- paste("Dim.",PCs[1], sep="")
@@ -257,7 +259,7 @@ setMethod(f= "plotPCAnorm",
               #scale_color_manual(values=col$colors)
             
             print(p)
-            ggsave(filename = paste0("PCAdesign_" , data , "_PC", PCs[1], "-PC", PCs[2], "_", condition, ".png"), path = pngDir, plot = p)
+            ggsave(filename = pngFile,  plot = p)
             
             })
 

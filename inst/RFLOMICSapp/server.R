@@ -455,13 +455,13 @@ shinyServer(function(input, output, session) {
   #### library size plot #### 
   output$LibSize <- renderPlot(height = 300, {
     
-    plotLibSize(abundances=assay(FlomicsMultiAssay[[datasetInput()]]), pngDir=file.path(tmpDir, "RNAseq/images"))
+    plotLibSize(abundances=assay(FlomicsMultiAssay[[datasetInput()]]), dataName=datasetInput(), pngFile=file.path(tempdir(), paste0(datasetInput(),"_LibSize.png")))
     })
   
   #### abundance distribution #### 
   output$CountDist <- renderPlot(height = 300, {
     
-    plotDistr(assay(FlomicsMultiAssay[[datasetInput()]]), pngDir=file.path(tmpDir, "RNAseq/images"))
+    plotDistr(abundances=assay(FlomicsMultiAssay[[datasetInput()]]), dataName=datasetInput(), pngFile=file.path(tempdir(), paste0(datasetInput(),"_CountDist.png")))
     })
   
   #### PCA analysis ####
@@ -511,31 +511,34 @@ shinyServer(function(input, output, session) {
     PC1.value <- as.numeric(input$PC1raw)
     PC2.value <- as.numeric(input$PC2raw)   
     plotPCAnorm(FlomicsMultiAssay, data=datasetInput(), PCA="raw", PCs=c(PC1.value, PC2.value), 
-                condition=input$condColorSelectRaw, pngDir=file.path(tmpDir, "RNAseq/tmp"))
+                condition=input$condColorSelectRaw, 
+                file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".raw.tmp.png")))
     })
   
+
   # save current PCA plot with fixed axix & color
   observeEvent(input$screenshotPCA_QC, {
     
     PC1.value <- as.numeric(input$PC1raw)
     PC2.value <- as.numeric(input$PC2raw) 
     
-    filename = paste0("PCAdesign_" , datasetInput() , "_PC", PC1.value, "-PC", PC2.value, "_", input$condColorSelectRaw, ".png")
-    
-    file.copy(file.path(tmpDir, datasetInput(),"tmp", filename), file.path(tmpDir, datasetInput(),"images", filename), 
+    file.copy(file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".raw.tmp.png")), 
+              file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")), 
               overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
     })
   
   #### PCA analysis QCdesign ####
   output$QCdesignPCA <- renderPlot({
     
-    mvQCdesign(FlomicsMultiAssay,data=datasetInput(),PCA="raw", axis=5, pngDir=file.path(tmpDir, "RNAseq/images")) 
+    mvQCdesign(FlomicsMultiAssay,data=datasetInput(),PCA="raw", axis=5, 
+               file.path(tempdir(), paste0(datasetInput(),"_PCAdesignCoordRaw.png"))) 
     })
 
   #### PCA analysis QCdata ####
   output$QCdata <- renderPlot({
     
-    mvQCdata(FlomicsMultiAssay,data=datasetInput(),PCA="raw",axis=5, pngDir=file.path(tmpDir, "RNAseq/images")) 
+    mvQCdata(FlomicsMultiAssay,data=datasetInput(),PCA="raw",axis=5, 
+             file.path(tempdir(), paste0(datasetInput(),"_PCAmetaCorrRaw.png"))) 
     })
   
  
@@ -569,7 +572,8 @@ shinyServer(function(input, output, session) {
   ## Boxplot of distribution of normalized abundance 
   output$norm.boxplot <- renderPlot({
     FlomicsMultiAssay.rea()
-    abundanceBoxplot(FlomicsMultiAssay, dataType=paste0(datasetInput(),".filtred"), pngDir=file.path(tmpDir, "RNAseq/images"))
+    abundanceBoxplot(FlomicsMultiAssay, dataType=paste0(datasetInput(),".filtred"), 
+                     pngFile=file.path(tempdir(), paste0(datasetInput(),"_norm.boxplot.png")))
   })
   
     
@@ -615,8 +619,8 @@ shinyServer(function(input, output, session) {
     PC1.value <- as.numeric(input$PC1)
     PC2.value <- as.numeric(input$PC2)
     
-    plotPCAnorm(FlomicsMultiAssay.rea(), data=paste0(datasetInput(),".filtred"), PCA="norm", PCs=c(PC1.value, PC2.value), 
-               condition=input$condColorSelect, pngDir=file.path(tmpDir, "RNAseq/tmp"))
+    plotPCAnorm(FlomicsMultiAssay.rea(), data=paste0(datasetInput(),".filtred"), PCA="norm", PCs=c(PC1.value, PC2.value), condition=input$condColorSelect, 
+               file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".norm.tmp.png")))
     })
   
   # save current PCA plot with fixed axix & color
@@ -624,10 +628,9 @@ shinyServer(function(input, output, session) {
     PC1.value <- as.numeric(input$PC1)
     PC2.value <- as.numeric(input$PC2)
     
-    filename = paste0("PCAdesign_" , paste0(datasetInput(),".filtred") , "_PC", PC1.value, "-PC", PC2.value, "_", input$condColorSelect, ".png")
-    
-    file.copy(file.path(tmpDir, datasetInput(),"tmp", filename), file.path(tmpDir, datasetInput(),"images", filename), 
-             overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
+    file.copy(file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".norm.tmp.png")), 
+              file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".norm.png")), 
+              overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
     })
     
   
