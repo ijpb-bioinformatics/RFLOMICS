@@ -1,6 +1,6 @@
 
 library(shiny)
-
+rm(list = ls())
 
 shinyServer(function(input, output, session) {
 
@@ -34,56 +34,97 @@ shinyServer(function(input, output, session) {
   loadExpDesign <- function() {
 
     ### Experimental Design
+    #if(is.null(input$Experimental.Design.file)){
+    #  stop("[ERROR] Experimental Design is required")
+    #}
     if(is.null(input$Experimental.Design.file)){
-      stop("[ERROR] Experimental Design is required")
+      showModal(modalDialog(
+        title = "Error message",
+        "Experimental Design is required"
+      ))
     }
-
-
+    validate({
+      need(! is.null(input$Experimental.Design.file), message="Set a name")
+    })
+    
+    
     ExpDesign <<- read.table(input$Experimental.Design.file$datapath,header = TRUE,row.names = 1)
-
+    
     # construct ExperimentalDesign object
     Design <<- ExperimentalDesign(ExpDesign)
-
+    
   }
 
   # definition of the loadData function()
   loadData <- function() {
     
-    listOmicsDataInput <- list()
+    listOmicsDataInput <<- list()
+    
+    #### list of omic data laoded from interface
+    print("# 5- Load omic data...")
+    dataName.vec <- c()
+    for (k in 1:addDataNum){
+      
+      omicType <- input[[paste0("omicType", k)]]
+      
+      dataName <- paste0(omicType, ".", input[[paste0("DataName", k)]])
+      
+      dataName.vec <- c(dataName.vec, dataName)
+      
+      if(omicType != "none"){
+        
+        # check type of omics
+        if(is.null(input[[paste0('data', k)]])){
+          showModal(modalDialog( title = "Error message", "load omics counts/abundances matrix : dataset ", k ))
+        }
+        validate({
+          need(!is.null(input[[paste0('data', k)]]), message="error")
+        })
+        
+        # check duplicat dataset name
+        if(any(duplicated(dataName.vec)) == TRUE){
+          showModal(modalDialog( title = "Error message", "Dataset names must be unique : dataset ", (1:addDataNum)[duplicated(dataName.vec)] ))
+        }
+        validate({
+          need(any(duplicated(dataName.vec)) == FALSE, message="error")
+        })
+        
+
+        listOmicsDataInput[[omicType]][[dataName]] <<- list(data = input[[paste0("data", k)]], 
+                                                            QC   = input[[paste0("metadataQC", k)]],
+                                                            dataName = dataName,
+                                                            omicType = omicType)
+      }
+    } 
+    
+  }
+  
+  
+  FlomicsMultiAssayExperimentConstructor <- function(){
+    
     listmap <- list()
     listExp <- list()
     omicList<- list()
     
-    #### list of omic data laoded from interface
-    print("# 5- Load omic data...")
-    for (k in 1:addDataNum){
+    for (omicType in names(listOmicsDataInput)){
+    
+      for (dataName in names(listOmicsDataInput[[omicType]])){
       
-      omicType <- input[[paste0("omicType", k)]]
-      dataName <- paste0(omicType, ".", k)
-      #dataName <- omicType
-      
-      if(omicType != "none"){
-        
-        listOmicsDataInput[[dataName]] <- list(data = input[[paste0("data", k)]], 
-                                               QC   = input[[paste0("metadataQC", k)]])
-        
         ### build SummarisedExperiment object for each omic data
-        if(! is.null(listOmicsDataInput[[dataName]]$data)){
+        if(! is.null(listOmicsDataInput[[omicType]][[dataName]]$data)){
           
           omicList[[omicType]] <- c(omicList[[omicType]], dataName)
 
           print(paste0("# ...load ", dataName," data..."))
-          listExp[[dataName]] <- FlomicsSummarizedExpConstructor(listOmicsDataInput[[dataName]]$data, 
-                                                                 listOmicsDataInput[[dataName]]$QC)
+          listExp[[dataName]] <- FlomicsSummarizedExpConstructor(listOmicsDataInput[[omicType]][[dataName]]$data, 
+                                                                 listOmicsDataInput[[omicType]][[dataName]]$QC)
           listmap[[dataName]] <- data.frame(primary = as.vector(listExp[[dataName]]@colData$primary),
                                             colname = as.vector(listExp[[dataName]]@colData$colname),
                                             stringsAsFactors = FALSE)
+ 
         }
-        
-      }     
+      }
     }
-    
-
     
     # check data list
     if (is.null(listExp)){  stop("[ERROR] No data loaded !!!")  }
@@ -96,6 +137,7 @@ shinyServer(function(input, output, session) {
                                                metadata    = list(design = Design,
                                                                   colDataStruc = c(n_dFac = dim(ExpDesign)[2], n_qcFac = 0),
                                                                   omicList = omicList))
+
   }
 
   # Definition of the updateDesignFactors function()
@@ -141,8 +183,6 @@ shinyServer(function(input, output, session) {
   }
 
   
-  
-  
   ########################################################################
   ######################### MAIN #########################################
   
@@ -158,7 +198,7 @@ shinyServer(function(input, output, session) {
   # as soon as the "load" button has been clicked
   #  => the loadExpDesign function is called and the experimental design item is printed
   observeEvent(input$loadExpDesign, {
-
+    
     print("# 1- Load experimental design...")
     
     loadExpDesign()
@@ -290,8 +330,10 @@ shinyServer(function(input, output, session) {
   # => a new select/file Input was display
   # => 
   addDataNum <- 1
+  dataName.vec  <- c()
   observeEvent(input$addData, {
-
+    
+    # add input select for new data
     addDataNum <<- addDataNum + 1
     output[[paste("toAddData", addDataNum, sep="")]] <- renderUI({
       list(
@@ -312,6 +354,10 @@ shinyServer(function(input, output, session) {
                    # metadata/QC bioinfo
                    fileInput(inputId=paste0("metadataQC", addDataNum), "QC or metadata (Ex.)",
                              accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
+                   ),
+            column(2,
+                   # dataset Name
+                   textInput(inputId=paste0("DataName", addDataNum), label="Dataset name", value=as.character(addDataNum))
                    )
             ),
         uiOutput(paste("toAddData",addDataNum + 1,sep=""))
@@ -328,11 +374,15 @@ shinyServer(function(input, output, session) {
     
     ### load data
     loadData()
-
+    
+    ### load data
+    FlomicsMultiAssayExperimentConstructor()
+    
+    
     ##### data list
     choiceList <- FlomicsMultiAssay@metadata$omicList %>% purrr::reduce(c)
     output$dataList <- renderUI({
-      selectInput(inputId='datalist', label='Data :', 
+      selectInput(inputId='datalist', label='Dataset list :', 
                   choices = choiceList,
                   selected = choiceList[1])
       })
@@ -357,7 +407,7 @@ shinyServer(function(input, output, session) {
   #### Item for each omics ####
   observeEvent(input$datalist, {
     
-    omic <- na.exclude(str_extract(input$datalist, SupportedOmics))[[1]]
+    omic <- na.exclude(str_extract(datasetInput(), SupportedOmics))[[1]]
     
     output$omics <- renderMenu({
       menu_list <- list()

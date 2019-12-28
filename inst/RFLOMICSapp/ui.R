@@ -20,10 +20,6 @@ sidebar <- dashboardSidebar(
               menuItemOutput("omics"),
               menuItemOutput("DiffAnalysis"),
               menuItemOutput("CoExpAnalysis")
-              #menuItemOutput("RNAseq") ,
-              #menuItemOutput("metabolome") ,
-              #menuItemOutput("proteome"),
-              #menuItemOutput("Exploratory"),
               
               ),
   tags$br(),
@@ -69,14 +65,13 @@ body <- dashboardBody(
               fluidRow(
                 uiOutput("GetdFactorRef")
               ),
+              
               h4("Select the type of the design factor"),
-              fluidRow(
-                uiOutput("GetdFactorType")
-              ),
+              fluidRow( uiOutput("GetdFactorType") ),
+              
               h4("Enter a name for each design factor"),
-              fluidRow(
-                uiOutput("GetdFactorName")
-              ),
+              fluidRow( uiOutput("GetdFactorName") ),
+              
             actionButton("ValidF","Valid factor set up")
           )
         )
@@ -95,10 +90,10 @@ body <- dashboardBody(
     ###########################
     tabItem(tabName = "importData",
             
-         box(title = "???", status = "warning", width = 12, height = NULL,
+         box(title = "Load omic data", status = "warning", width = 12, height = NULL,
+             h5("[warning] dataset with omics (type == none) was igored..."),
              fluidRow(
                   column(2,
-                         
                          # omic type
                          selectInput(inputId='omicType1', label='Omics', 
                                      choices = c("None"="none", "RNAseq"="RNAseq", 
@@ -115,7 +110,12 @@ body <- dashboardBody(
                          # metadata/QC bioinfo
                          fileInput("metadataQC1", "QC or metadata (Ex.)",
                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
+                         ),
+                  column(2,
+                         # dataset Name
+                         textInput(inputId="DataName1", label="Dataset name", value="1")
                          )
+                  
                   #,
                   #column(2, actionButton("removeFactor1", "",
                   #                       icon=icon("times", class = NULL, lib = "font-awesome")))
@@ -132,14 +132,10 @@ body <- dashboardBody(
     tabItem(tabName = "RNAseqExploratoryQC",
             fluidRow(
               box(title = "Raw Data Summary", solidHeader = TRUE, status = "warning", width = 12, height = NULL,
-                column(6,
-                    # library size plot
-                    plotOutput("LibSize", height = "400%")
-                ),
-                column(6,
-                    # count distribution plot
-                     plotOutput("CountDist", height = "400%")
-                )
+                # library size plot
+                column(6, plotOutput("LibSize",   height = "400%")),
+                # count distribution plot
+                column(6, plotOutput("CountDist", height = "400%"))
               )
             ),
             fluidRow(
@@ -158,24 +154,12 @@ body <- dashboardBody(
                             tags$br(),
                             tags$br(),
                             fluidRow(actionButton("screenshotPCA_QC","Screenshot"))
-                            #fluidRow(
-                            #  radioButtons(inputId  = "PC1raw",
-                            #               label    = "Choice of PCs :",
-                            #               choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
-                            #               selected = 1, inline = TRUE),
-                            #
-                            #  radioButtons(inputId  = "PC2raw",
-                            #               label    = "",
-                            #               choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
-                            #               selected = 2, inline = TRUE)
-                            #  )
-                        ),
+                            ),
                         column(width = 10,  plotOutput("QCdesignPCARaw"))
 
-
                       ),
-                   tabPanel("Principal component analysis (2/2)",  plotOutput("QCdesignPCA")),
-                   tabPanel("Quality check for technical issues",    plotOutput("QCdata"))
+                   tabPanel("Principal component analysis (2/2)", plotOutput("QCdesignPCA")),
+                   tabPanel("Quality check for technical issues", plotOutput("QCdata"))
                  )
               )
               ),
