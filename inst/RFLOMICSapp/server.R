@@ -386,15 +386,6 @@ shinyServer(function(input, output, session) {
                   choices = choiceList,
                   selected = choiceList[1])
       })
-
-    # create tmp dir for png report
-    for (omic in names(FlomicsMultiAssay@metadata$omicList)){
-      dir.create(file.path(tmpDir, omic))
-      dir.create(file.path(tmpDir, omic, "images"))
-      dir.create(file.path(tmpDir, omic, "tables"))
-      dir.create(file.path(tmpDir, omic, "RData"))
-      dir.create(file.path(tmpDir, omic, "tmp"))
-      }
     
     })
 
@@ -512,7 +503,7 @@ shinyServer(function(input, output, session) {
     PC2.value <- as.numeric(input$PC2raw)   
     plotPCAnorm(FlomicsMultiAssay, data=datasetInput(), PCA="raw", PCs=c(PC1.value, PC2.value), 
                 condition=input$condColorSelectRaw, 
-                file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".raw.tmp.png")))
+                pngFile=file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")))
     })
   
 
@@ -522,8 +513,8 @@ shinyServer(function(input, output, session) {
     PC1.value <- as.numeric(input$PC1raw)
     PC2.value <- as.numeric(input$PC2raw) 
     
-    file.copy(file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".raw.tmp.png")), 
-              file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")), 
+    file.copy(file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")), 
+              file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_raw_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")), 
               overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
     })
   
@@ -531,14 +522,14 @@ shinyServer(function(input, output, session) {
   output$QCdesignPCA <- renderPlot({
     
     mvQCdesign(FlomicsMultiAssay,data=datasetInput(),PCA="raw", axis=5, 
-               file.path(tempdir(), paste0(datasetInput(),"_PCAdesignCoordRaw.png"))) 
+               pngFile=file.path(tempdir(), paste0(datasetInput(),"_PCAdesignCoordRaw.png"))) 
     })
 
   #### PCA analysis QCdata ####
   output$QCdata <- renderPlot({
     
     mvQCdata(FlomicsMultiAssay,data=datasetInput(),PCA="raw",axis=5, 
-             file.path(tempdir(), paste0(datasetInput(),"_PCAmetaCorrRaw.png"))) 
+             pngFile=file.path(tempdir(), paste0(datasetInput(),"_PCAmetaCorrRaw.png"))) 
     })
   
  
@@ -552,7 +543,7 @@ shinyServer(function(input, output, session) {
     
     #### Run Normalisation ####
     print("# 8- Abundance normalization...")
-    FlomicsMultiAssay <<- RunNormalization(  FlomicsMultiAssay, data=paste0(datasetInput(),".filtred"), input$selectNormMethod)
+    FlomicsMultiAssay <<- RunNormalization(FlomicsMultiAssay, data=paste0(datasetInput(),".filtred"), input$selectNormMethod)
     
     #### Run PCA for filtred & normalized data ####
     FlomicsMultiAssay <<- RunPCA(FlomicsMultiAssay, data=paste0(datasetInput(),".filtred"), PCA="norm")
@@ -620,7 +611,7 @@ shinyServer(function(input, output, session) {
     PC2.value <- as.numeric(input$PC2)
     
     plotPCAnorm(FlomicsMultiAssay.rea(), data=paste0(datasetInput(),".filtred"), PCA="norm", PCs=c(PC1.value, PC2.value), condition=input$condColorSelect, 
-               file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".norm.tmp.png")))
+               file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_norm_tmp_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")))
     })
   
   # save current PCA plot with fixed axix & color
@@ -628,8 +619,8 @@ shinyServer(function(input, output, session) {
     PC1.value <- as.numeric(input$PC1)
     PC2.value <- as.numeric(input$PC2)
     
-    file.copy(file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".norm.tmp.png")), 
-              file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".norm.png")), 
+    file.copy(file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_norm_tmp_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")), 
+              file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_norm_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")), 
               overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
     })
     
@@ -708,8 +699,9 @@ shinyServer(function(input, output, session) {
                     ### pvalue plot ###
                     renderPlot({
                       
-                      pvalue.plot(data=FlomicsMultiAssay@ExperimentList[[paste0(datasetInput(),".filtred")]]@metadata[["AnaDiffDeg"]][[i]], 
-                                  tag=gsub(" ", "", vect[i]), pngDir=file.path(tmpDir, datasetInput(), "images"))
+                      pvalue.plot(data    =FlomicsMultiAssay@ExperimentList[[paste0(datasetInput(),".filtred")]]@metadata[["AnaDiffDeg"]][[i]],
+                                  contrast=as.vector(filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast == i)$hypoth),
+                                  pngFile =file.path(tempdir(), paste0(datasetInput(), "_PvalueDistribution_", gsub(" ", "", vect[i]), ".png")))
                       }),
                       tags$br(),
                       DT::renderDataTable({
@@ -799,20 +791,18 @@ shinyServer(function(input, output, session) {
       # can happen when deployed).
       
       tempReport <-  "report.Rmd" # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      
       #tempReport <- file.path(tempdir(), "report.Rmd")
       #file.copy("report.Rmd", tempReport, overwrite = TRUE)
 
       # TEST
       # save FE object in .Rdata and load it during report execution
       save(FlomicsMultiAssay,file=file.path(tempdir(), "FlomicsMultiAssay.RData"))
-      #save(FlomicsMultiAssay,file=file.path(tmpDir, "FlomicsMultiAssay.RData"))
-      
+
       # Set up parameters to pass to Rmd document
       params <- list( FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"),
-                      pngDir = tmpDir)
+                      pngDir = tempdir())
 
-      #FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"))
-      
       # Knit the document, passing in the `params` list, and eval it in a
       # child of the global environment (this isolates the code in the document
       # from the code in this app).

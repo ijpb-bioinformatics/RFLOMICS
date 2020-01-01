@@ -78,7 +78,11 @@ DiffAnalysis <- function(){
 #' @title Multivariate Quality Check
 #'
 #' @param MultiAssayExperiment an object of Class MultiAssayExperiment
+#' @param data data name
 #' @param axis The number of PCA axis
+#' @param PCA pca axis to plot
+#' @param pngFile plot file name to save
+
 #'
 #' @exportMethod mvQCdesign
 #'
@@ -87,7 +91,7 @@ DiffAnalysis <- function(){
 
 setMethod(f="mvQCdesign",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, PCA=c("raw","norm"), axis=5, pngFile){
+          definition <- function(object, data, PCA=c("raw","norm"), axis=5, pngFile=NULL){
 
             resPCA <- object[[data]]@metadata[["PCAlist"]][[PCA]]
             cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
@@ -109,7 +113,7 @@ setMethod(f="mvQCdesign",
                 df[[j]] <- data.frame(y,col,Axis,dfac=names(object@colData)[1:n_dFac][i],
                                       Levels=Fac,x=1:length(y))
               }
-              bigdf[[i]] <- bind_rows(df)
+              bigdf[[i]] <- dplyr::bind_rows(df)
             }
             big <- dplyr::bind_rows(bigdf)
             out <- by(data = big, INDICES = big$dfac, FUN = function(m) {
@@ -126,20 +130,26 @@ setMethod(f="mvQCdesign",
             })
             p <- do.call(grid.arrange, out)
             print(p)
-            ggsave(filename = pngFile,  plot = p)
+            
+            if(! is.null(pngFile)){
+              ggsave(filename = pngFile,  plot = p)
+            }
 })
 
 
 #' @title multivariate QC data
 #' @param MultiAssayExperiment an object of Class MultiAssayExperiment
+#' @param data data name
 #' @param axis The number of PCA axis
+#' @param PCA pca axis to plot
+#' @param pngFile plot file name to save
 #'
 #' @exportMethod mvQCdata
 #' @rdname mvQCdata
 
 setMethod(f="mvQCdata",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, PCA=c("raw","norm"),axis=3, pngFile){
+          definition <- function(object, data, PCA=c("raw","norm"),axis=3, pngFile=NULL){
 
             resPCA <- object[[data]]@metadata[["PCAlist"]][[PCA]]
             cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
@@ -166,7 +176,10 @@ setMethod(f="mvQCdata",
               labs(x = "Axis number", y="Cor(Coord_dFactor_PCA,QCparam)")
             
             print(p)
-            ggsave(filename = pngFile, plot = p)
+            
+            if(! is.null(pngFile)){
+              ggsave(filename = pngFile, plot = p)
+            }
             
           })
 
@@ -175,12 +188,13 @@ setMethod(f="mvQCdata",
 #' @title abundanceBoxplot
 #' @param MultiAssayExperiment an object of Class MultiAssayExperiment
 #' @param dataType omic data type
+#' @param pngFile
 #' @exportMethod abundanceBoxplot
 #' @rdname abundanceBoxplot
 #'
 setMethod(f= "abundanceBoxplot",
           signature = "MultiAssayExperiment",
-          definition <- function(object, dataType, pngFile){
+          definition <- function(object, dataType, pngFile=NULL){
 
             # this function generate boxplot (abandance distribution) from raw data and normalized data
 
@@ -205,7 +219,10 @@ setMethod(f= "abundanceBoxplot",
               
               #scale_fill_manual(values=col)
             print(p)
-            ggsave(filename = pngFile, plot = p)
+            
+            if(! is.null(pngFile)){
+              ggsave(filename = pngFile, plot = p)
+            }
             
           }
 )

@@ -1,5 +1,5 @@
 
-# Proteomics data analysis
+# `r data` data analysis
 
 ## data Exploratory
 

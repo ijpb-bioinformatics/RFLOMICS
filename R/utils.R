@@ -216,14 +216,13 @@ colorPlot <- function(design, ColData, condition="samples"){
 #' plotLibSize
 #'
 #' @param abundances
-#' @param design
-#' @param colData
-#' @param pngDir 
-#' @return
+#' @param dataName
+#' @param pngFile 
+#' @return plot
 #' @export
 #'
 #' @examples
-plotLibSize <- function(abundances, dataName, pngFile){
+plotLibSize <- function(abundances, dataName, pngFile=NULL){
 
   samples     <- colnames(abundances)
   libSizeNorm <- data.frame ( value = colSums(abundances, na.rm = TRUE) , samples=samples)
@@ -239,7 +238,10 @@ plotLibSize <- function(abundances, dataName, pngFile){
           #legend.key.size = unit(0.3, "cm"))
           #legend.text     = element_text(size=5))
   print(p)
-  ggsave(filename = pngFile, plot = p)
+  
+  if (! is.null(pngFile)){
+    ggsave(filename = pngFile, plot = p)
+  }
 }
 
 
@@ -252,7 +254,7 @@ plotLibSize <- function(abundances, dataName, pngFile){
 #' @export
 #'
 #' @examples plotDistr(assay(MAE), "dataset1", "tmp/countDist.png")
-plotDistr <- function(abundances, dataName, pngFile){
+plotDistr <- function(abundances, dataName, pngFile=NULL){
 
   pseudo_counts <- log2(abundances+1) %>% reshape2::melt()
   colnames(pseudo_counts) <- c("features", "samples", "value")
@@ -262,7 +264,10 @@ plotDistr <- function(abundances, dataName, pngFile){
     xlab(paste0(dataName, " log2(feature abundances)")) + 
     theme(legend.position='none')
   print(p)
-  ggsave(filename = pngFile, plot = p)
+  
+  if (! is.null(pngFile)){
+    ggsave(filename = pngFile, plot = p)
+  }
 }
 
 
@@ -271,18 +276,20 @@ plotDistr <- function(abundances, dataName, pngFile){
 #' pvalue.plot
 #'
 #' @param data 
-#' @param tag 
-#' @param pngDir 
-#'
-#' @return
+#' @param contrast
+#' @param pngFile 
+#' @return plot
 #' @export
 #'
 #' @examples
-pvalue.plot <- function(data, tag , pngDir){
+pvalue.plot <- function(data, contrast, pngFile=NULL){
 
   p <- ggplot(data=data) + geom_histogram(aes(x=PValue), bins = 200)
   print(p)
-  ggsave(filename = paste0("PvalueDistribution_", tag, ".png" ), path = pngDir)
+  
+  if (! is.null(pngFile)){
+    ggsave(filename = pngFile, plot = p)
+  }
 
 }
 
