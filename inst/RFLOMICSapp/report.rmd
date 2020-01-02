@@ -23,24 +23,17 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r toremove , include=FALSE}
-#library(MultiAssayExperiment)
-#tmpDir <- "/Users/nbessoltane/rFlomics.report.tmp"
-#load("~/rFlomics.report.tmp/FlomicsMultiAssay.RData")
-
-```
-
-
-
 ```{r parameters, include=FALSE}
+
 load(params$FEdata)
-tmpDir <- params$pngDir
+pngDir <- params$pngDir
 
 ```
 
 
 
 # Experimental Design :
+> Coldata
 
 ```{r Design}
 FlomicsMultiAssay@colData
@@ -75,7 +68,6 @@ filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast %in% Flomic
 FlomicsMultiAssay@metadata$omicList
 ```
 
-
 ```{r analysis}
 
   out <- NULL
@@ -85,7 +77,7 @@ FlomicsMultiAssay@metadata$omicList
 
     for (data in  FlomicsMultiAssay@metadata$omicList[[omictype]]){
       
-      print(data)   
+      
       out <- c(out, knitr::knit_child(child, quiet=TRUE))  
     }
     

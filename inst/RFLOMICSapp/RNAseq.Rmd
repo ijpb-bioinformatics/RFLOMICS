@@ -1,12 +1,12 @@
 
 
-# RNAseq data analysis
+# `r data` data analysis
 
 ## data Exploratory
 
 > Raw count
 
-```{r raw data rnaseq}
+```{r }
 #data <- paste0("RNAseq.",data)
 
 assay(FlomicsMultiAssay[[data]])[1:5,1:5]
@@ -16,51 +16,81 @@ assay(FlomicsMultiAssay[[data]])[1:5,1:5]
 
 > Library size & count distribution
 
-```{r libSize , fig.show = "hold", out.width = "50%"}
-knitr::include_graphics(c(file.path(tmpDir, "RNAseq","images","LibSize.png"), 
-                          file.path(tmpDir, "RNAseq","images","CountDist.png")))
+```{r, fig.show = "hold", out.width = "50%"}
+#knitr::include_graphics(c(file.path(pngDir, paste0(data, "_LibSize.png")), 
+#                          file.path(pngDir, paste0(data, "_CountDist.png"))))
+
+plotLibSize(abundances= assay(FlomicsMultiAssay[[data]]), 
+            dataName  = data, 
+            pngFile   = NULL)
+
+plotDistr(abundances= assay(FlomicsMultiAssay[[data]]),
+          dataName  = data, 
+          pngFile   = NULL)
+
 ```
 
 > Principal component analysis
 
 >> Design 
 
-```{r pca raw design 1 , fig.show = "hold", out.width = "50%"}
-knitr::include_graphics(list.files (path = file.path(tmpDir, "RNAseq","images"), 
-                                    pattern = "PCAdesign_RNAseq_", 
+```{r , fig.show = "hold", out.width = "50%"}
+knitr::include_graphics(list.files (path = file.path(pngDir), 
+                                    pattern = paste0(data,"_PCAdesign_raw_PC"), 
                                     full.names = TRUE))
 ```
 
-```{r pca raw design 2 , fig.show = "hold"}
-knitr::include_graphics(file.path(tmpDir, "RNAseq","images","PCAdesignCoordRaw.png"))
+
+```{r , fig.show = "hold"}
+#knitr::include_graphics(file.path(pngDir, paste0(data, "_PCAdesignCoordRaw.png")))
+mvQCdesign(object = FlomicsMultiAssay,
+           data   = data, PCA="raw", axis=5, 
+           pngFile= NULL) 
 ```
 
 >> metadata
 
-```{r pca raw meta , fig.show = "hold"}
-knitr::include_graphics(file.path(tmpDir, "RNAseq","images","PCAmetaCorrRaw.png"))
+```{r , fig.show = "hold"}
+
+#knitr::include_graphics(file.path(pngDir, paste0(data, "_PCAmetaCorrRaw.png")))
+mvQCdata(object = FlomicsMultiAssay,
+         data   = data, PCA="raw", axis=5, 
+         pngFile= NULL) 
+
 ```
 
 ## Filtering and Normalisation
 
-> Normalisation method : `r FlomicsMultiAssay[["RNAseq.filtred"]]@metadata$Normalization$methode`
+> Normalisation method : `r FlomicsMultiAssay[[paste0(data, ".filtred")]]@metadata$Normalization$methode`
 
-```{r boxplot , fig.show = "hold"}
-knitr::include_graphics(file.path(tmpDir, "RNAseq","images","norm.boxplot.png"))
+```{r , fig.show = "hold"}
+#knitr::include_graphics(file.path(pngDir, paste0(data, "_norm.boxplot.png")))
+abundanceBoxplot(object  = FlomicsMultiAssay, 
+                 dataType= paste0(data,".filtred"), 
+                 pngFile = NULL)
+
 ```
 
 
-```{r pca norm design , fig.show = "hold", out.width = "50%"}
-knitr::include_graphics(list.files (path = file.path(tmpDir, "RNAseq","images"), 
-                                    pattern = "PCAdesign_RNAseq.filtred_", 
+```{r , fig.show = "hold", out.width = "50%"}
+knitr::include_graphics(list.files (path = file.path(pngDir), 
+                                    pattern = paste0(data,"_PCAdesign_norm_PC"), 
                                     full.names = TRUE))
+
 ```
 
 ## Differential expression analysis 
-> comment faire une boucle à l'ext du chunk???
 
-```{r analyse diff , fig.show = "hold", out.width = "50%"}
-knitr::include_graphics(list.files (path = file.path(tmpDir, "RNAseq","images"), 
-                                    pattern = "PvalueDistribution_", 
-                                    full.names = TRUE))
+```{r , fig.show = "hold", out.width = "50%"}
+#knitr::include_graphics(list.files (path = file.path(pngDir), 
+#                                    pattern = paste0(data, "_PvalueDistribution"), 
+#                                    full.names = TRUE))
+
+for (contrast  in  names(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["AnaDiffDeg"]])) {
+   pvalue.plot(data    = FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["AnaDiffDeg"]][[contrast]], 
+               contrast= as.vector(filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast == contrast)$hypoth),
+               pngFile = NULL) 
+}
+
+
 ```
