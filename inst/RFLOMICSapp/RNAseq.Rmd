@@ -40,6 +40,7 @@ knitr::include_graphics(list.files (path = file.path(pngDir),
                                     full.names = TRUE))
 ```
 
+
 ```{r , fig.show = "hold"}
 #knitr::include_graphics(file.path(pngDir, paste0(data, "_PCAdesignCoordRaw.png")))
 mvQCdesign(object = FlomicsMultiAssay,

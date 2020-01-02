@@ -23,16 +23,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r toremove , include=FALSE}
-
-
-#pngDir <- "/Users/nbessoltane/rFlomics.report.tmp"
-#load("/Users/nbessoltane/rFlomics.report.tmp/FlomicsMultiAssay.RData")
-
-```
-
-
-
 ```{r parameters, include=FALSE}
 
 load(params$FEdata)

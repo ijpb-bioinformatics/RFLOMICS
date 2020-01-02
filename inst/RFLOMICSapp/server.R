@@ -67,19 +67,28 @@ shinyServer(function(input, output, session) {
       
       omicType <- input[[paste0("omicType", k)]]
       
-      dataName <- paste0(omicType, ".", input[[paste0("DataName", k)]])
+      dataName <- paste0(omicType, ".", gsub("[[:space:]]", "", input[[paste0("DataName", k)]]))
       
       dataName.vec <- c(dataName.vec, dataName)
       
       if(omicType != "none"){
         
-        # check type of omics
+        # check omics data
         if(is.null(input[[paste0('data', k)]])){
-          showModal(modalDialog( title = "Error message", "load omics counts/abundances matrix : dataset ", k ))
+          showModal(modalDialog( title = "Error message", "omics counts/abundances matrix is required : dataset ", k ))
         }
         validate({
           need(!is.null(input[[paste0('data', k)]]), message="error")
         })
+        
+        # check presence of dataname
+        if(dataName == ""){
+          showModal(modalDialog( title = "Error message", "Dataset names is required : dataset ", k ))
+        }
+        validate({
+          need(dataName != "", message="error")
+        })
+        #gsub("[[:space:]]", "", x)
         
         # check duplicat dataset name
         if(any(duplicated(dataName.vec)) == TRUE){
@@ -88,7 +97,6 @@ shinyServer(function(input, output, session) {
         validate({
           need(any(duplicated(dataName.vec)) == FALSE, message="error")
         })
-        
 
         listOmicsDataInput[[omicType]][[dataName]] <<- list(data = input[[paste0("data", k)]], 
                                                             QC   = input[[paste0("metadataQC", k)]],
@@ -357,7 +365,7 @@ shinyServer(function(input, output, session) {
                    ),
             column(2,
                    # dataset Name
-                   textInput(inputId=paste0("DataName", addDataNum), label="Dataset name", value=as.character(addDataNum))
+                   textInput(inputId=paste0("DataName", addDataNum), label="Dataset name", value=paste0("set", as.character(addDataNum)))
                    )
             ),
         uiOutput(paste("toAddData",addDataNum + 1,sep=""))
@@ -508,6 +516,7 @@ shinyServer(function(input, output, session) {
   
 
   # save current PCA plot with fixed axix & color
+  ## screenShot
   observeEvent(input$screenshotPCA_QC, {
     
     PC1.value <- as.numeric(input$PC1raw)
@@ -615,6 +624,7 @@ shinyServer(function(input, output, session) {
     })
   
   # save current PCA plot with fixed axix & color
+  ## screenShot
   observeEvent(input$screenshotPCA_Norm, {
     PC1.value <- as.numeric(input$PC1)
     PC2.value <- as.numeric(input$PC2)

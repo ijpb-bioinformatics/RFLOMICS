@@ -113,7 +113,7 @@ body <- dashboardBody(
                          ),
                   column(2,
                          # dataset Name
-                         textInput(inputId="DataName1", label="Dataset name", value="1")
+                         textInput(inputId="DataName1", label="Dataset name", value="set1")
                          )
                   
                   #,
