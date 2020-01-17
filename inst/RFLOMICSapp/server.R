@@ -1,5 +1,10 @@
 
 library(shiny)
+source("DataExploratoryModules.R")
+source("NormalizationModules.R")
+source("DiffExpressionModules.R")
+source("CoExpressionModules.R")
+
 rm(list = ls())
 
 shinyServer(function(input, output, session) {
@@ -28,6 +33,8 @@ shinyServer(function(input, output, session) {
     #se <- SummarizedExperiment(assays  = list(counts=counts), colData = QCmat)
     return(se)
   }
+  
+  
 
 
 
@@ -101,7 +108,8 @@ shinyServer(function(input, output, session) {
         listOmicsDataInput[[omicType]][[dataName]] <<- list(data = input[[paste0("data", k)]], 
                                                             QC   = input[[paste0("metadataQC", k)]],
                                                             dataName = dataName,
-                                                            omicType = omicType)
+                                                            omicType = omicType,
+                                                            order    = k)
       }
     } 
     
@@ -121,7 +129,9 @@ shinyServer(function(input, output, session) {
         ### build SummarisedExperiment object for each omic data
         if(! is.null(listOmicsDataInput[[omicType]][[dataName]]$data)){
           
+          colnames <- c(names(omicList[[omicType]]), listOmicsDataInput[[omicType]][[dataName]]$order)
           omicList[[omicType]] <- c(omicList[[omicType]], dataName)
+          names(omicList[[omicType]]) <- colnames
 
           print(paste0("# ...load ", dataName," data..."))
           listExp[[dataName]] <- FlomicsSummarizedExpConstructor(listOmicsDataInput[[omicType]][[dataName]]$data, 
@@ -388,382 +398,91 @@ shinyServer(function(input, output, session) {
     
     
     ##### data list
-    choiceList <- FlomicsMultiAssay@metadata$omicList %>% purrr::reduce(c)
-    output$dataList <- renderUI({
-      selectInput(inputId='datalist', label='Dataset list :', 
-                  choices = choiceList,
-                  selected = choiceList[1])
-      })
+    #choiceList <- FlomicsMultiAssay@metadata$omicList %>% purrr::reduce(c)
+    #output$dataList <- renderUI({
+    #  selectInput(inputId='datalist', label='Dataset list :', 
+    #              choices = choiceList,
+    #              selected = as.character(choiceList[1]))
+    #  })
     
-    })
-
-  #### selected data ####
-  datasetInput <- reactive({
     
-    input$datalist
-    })
     
-  #### Item for each omics ####
-  observeEvent(input$datalist, {
-    
-    omic <- na.exclude(str_extract(datasetInput(), SupportedOmics))[[1]]
+    #### Item for each omics ####
+    #observeEvent(input$datalist, {
     
     output$omics <- renderMenu({
       menu_list <- list()
-
-      switch(omic ,
-             "RNAseq"={
-                 menu_list <- list(
-                   menu_list,
-                   menuItem(paste0(omic, " Data Exploratory"),     tabName = "RNAseqExploratoryQC", icon = icon('chart-area'), selected = TRUE),
-                   menuItem(paste0(omic, " Filter and Normalize"), tabName = "RNAseqNormalization", icon = icon('chart-area'), selected = FALSE)
-                   )
-               },
-             "proteomics"={
-                 menu_list <- list(
-                   menu_list,
-                   menuItem(paste0(omic, " Data Exploratory"), tabName = "ProtExploratoryQC", icon = icon('chart-area'), selected = TRUE),
-                   menuItem(paste0(omic, " Data Processing"),  tabName = "ProtProcessing", icon = icon('chart-area'), selected = FALSE)
-                   )
-               },
-             "metabolomics"={
-                 menu_list <- list(
-                   menu_list,
-                   menuItem(paste0(omic, " Data Exploratory"), tabName = "MetaExploratoryQC", icon = icon('chart-area'), selected = TRUE),
-                   menuItem(paste0(omic, " Data Processing"),  tabName = "MetaProcessing",    icon = icon('chart-area'), selected = FALSE)
-                   )
-               }
-             )
-      sidebarMenu(.list = menu_list)
-
-    })
-    
-    # run PCA with raw data
-    FlomicsMultiAssay <<-  RunPCA(FlomicsMultiAssay, data=datasetInput(), PCA="raw")
-    
-    # initialize ui contrastResults for new dataset
-    output$ContrastsResults <- renderUI({})
-    output$ResultsMerge     <- renderUI({})
-    #removeUI(selector = paste0("#ContrastsResults"))
-  })
-    
-  ##########################################
-  # Part3 : Data Exploratory
-  ##########################################
-  
-  #### library size plot #### 
-  output$LibSize <- renderPlot(height = 300, {
-    
-    plotLibSize(abundances=assay(FlomicsMultiAssay[[datasetInput()]]), dataName=datasetInput(), pngFile=file.path(tempdir(), paste0(datasetInput(),"_LibSize.png")))
-    })
-  
-  #### abundance distribution #### 
-  output$CountDist <- renderPlot(height = 300, {
-    
-    plotDistr(abundances=assay(FlomicsMultiAssay[[datasetInput()]]), dataName=datasetInput(), pngFile=file.path(tempdir(), paste0(datasetInput(),"_CountDist.png")))
-    })
-  
-  #### PCA analysis ####
-  # select PCA axis 1 for plot
-  output$PCA1axisRaw <- renderUI({
-    
-    radioButtons(inputId  = "PC1raw",
-                 label    = "Choice of PCs :",
-                 choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
-                 selected = 1, inline = TRUE)
-    })
-  
-  # select PCA axis 2 for plot
-  output$PCA2axisRaw <- renderUI({
-    
-    radioButtons(inputId  = "PC2raw",
-                 label    = "",
-                 choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
-                 selected = 2, inline = TRUE)
-    })
-  
-  # update/adapt PCA axis
-  observeEvent(input$PC1raw, {
-    
-    x <- input$PC1raw
-    # Can also set the label and select items
-    choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
-    updateRadioButtons(session, "PC2raw",
-                       choices = choices[-as.numeric(x)],
-                       inline  = TRUE)
-    })
-
-  
-  # select factors for color PCA plot
-  output$condColorRaw <- renderUI({
-    
-    condition <- c("groups",names(FlomicsMultiAssay@colData))
-    radioButtons(inputId = 'condColorSelectRaw',
-                 label = 'Levels :',
-                 choices = condition,
-                 selected = "groups")
-    })
-  
-  # run PCA plot
-  output$QCdesignPCARaw <- renderPlot({
-    
-    PC1.value <- as.numeric(input$PC1raw)
-    PC2.value <- as.numeric(input$PC2raw)   
-    plotPCAnorm(FlomicsMultiAssay, data=datasetInput(), PCA="raw", PCs=c(PC1.value, PC2.value), 
-                condition=input$condColorSelectRaw, 
-                pngFile=file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")))
-    })
-  
-
-  # save current PCA plot with fixed axix & color
-  ## screenShot
-  observeEvent(input$screenshotPCA_QC, {
-    
-    PC1.value <- as.numeric(input$PC1raw)
-    PC2.value <- as.numeric(input$PC2raw) 
-    
-    file.copy(file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")), 
-              file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_raw_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")), 
-              overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
-    })
-  
-  #### PCA analysis QCdesign ####
-  output$QCdesignPCA <- renderPlot({
-    
-    mvQCdesign(FlomicsMultiAssay,data=datasetInput(),PCA="raw", axis=5, 
-               pngFile=file.path(tempdir(), paste0(datasetInput(),"_PCAdesignCoordRaw.png"))) 
-    })
-
-  #### PCA analysis QCdata ####
-  output$QCdata <- renderPlot({
-    
-    mvQCdata(FlomicsMultiAssay,data=datasetInput(),PCA="raw",axis=5, 
-             pngFile=file.path(tempdir(), paste0(datasetInput(),"_PCAmetaCorrRaw.png"))) 
-    })
-  
- 
-  ##########################################
-  # Part4 : Data processing : filtering, Normalisation...
-  ##########################################
-  
-  FlomicsMultiAssay.rea <<- reactive({
-    #### Filter low abundance ####
-    FilterSeuil <- input$FilterSeuil
-    
-    #### Run Normalisation ####
-    print("# 8- Abundance normalization...")
-    FlomicsMultiAssay <<- RunNormalization(FlomicsMultiAssay, data=paste0(datasetInput(),".filtred"), input$selectNormMethod)
-    
-    #### Run PCA for filtred & normalized data ####
-    FlomicsMultiAssay <<- RunPCA(FlomicsMultiAssay, data=paste0(datasetInput(),".filtred"), PCA="norm")
-    
-    FlomicsMultiAssay
-    })
-  
-  
-  print("# 7- Low Abundance Filtering...")
-  output$FilterResults <- renderPrint({
-    
-    FlomicsMultiAssay <<- FilterLowAbundance(FlomicsMultiAssay, data=datasetInput(), input$FilterSeuil)
-    paste0( length(FlomicsMultiAssay[[paste0(datasetInput(),".filtred")]]@metadata$FilteredFeature),
-            " features filtered (from ", dim(FlomicsMultiAssay[[datasetInput()]])[1], ")")
-    })
-
-  ## Boxplot of distribution of normalized abundance 
-  output$norm.boxplot <- renderPlot({
-    FlomicsMultiAssay.rea()
-    abundanceBoxplot(FlomicsMultiAssay, dataType=paste0(datasetInput(),".filtred"), 
-                     pngFile=file.path(tempdir(), paste0(datasetInput(),"_norm.boxplot.png")))
-  })
-  
-    
-  #### PCA analysis ####
-  # select PCA axis 1 for plot
-  output$PC1axis <- renderUI({
-     radioButtons(inputId  = "PC1",
-                  label    = "Choice of PCs :",
-                  choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
-                  selected = 1, inline = TRUE)
-   })
-  
-  # select PCA axis 2 for plot
-  output$PC2axis <- renderUI({
-     radioButtons(inputId  = "PC2",
-                  label    = "",
-                  choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
-                  selected = 2, inline = TRUE)
-   })
-
-  # update/adapt PCA axis
-  observeEvent(input$PC1, {
-   x <- input$PC1
-   # Can also set the label and select items
-   choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
-   updateRadioButtons(session, "PC2",
-                      choices = choices[-as.numeric(x)],
-                      inline  = TRUE)
-   })
-
-  # select factors for color PCA plot
-  output$condColor <- renderUI({
-   condition <- c("groups",names(FlomicsMultiAssay@colData))
-   radioButtons(inputId = 'condColorSelect',
-                label = 'Levels :',
-                choices = condition,
-                selected = "groups")
-   })
-  
-  # PCA plot
-  output$norm.PCAcoord <- renderPlot({
-  
-    PC1.value <- as.numeric(input$PC1)
-    PC2.value <- as.numeric(input$PC2)
-    
-    plotPCAnorm(FlomicsMultiAssay.rea(), data=paste0(datasetInput(),".filtred"), PCA="norm", PCs=c(PC1.value, PC2.value), condition=input$condColorSelect, 
-               file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_norm_tmp_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")))
-    })
-  
-  # save current PCA plot with fixed axix & color
-  ## screenShot
-  observeEvent(input$screenshotPCA_Norm, {
-    PC1.value <- as.numeric(input$PC1)
-    PC2.value <- as.numeric(input$PC2)
-    
-    file.copy(file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_norm_tmp_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")), 
-              file.path(tempdir(), paste0(datasetInput(),"_PCAdesign_norm_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")), 
-              overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
-    })
-    
-  
-  ##########################################
-  # Part5 : Analysi Diff
-  ##########################################
-  
-  observeEvent(input$NormValid, {
-    
-    output$DiffAnalysis <- renderMenu({
-      menuItem("Differential Analysis", tabName = "DiffAnalysis",icon = icon('chart-area'), selected = FALSE)
-    })
-    output$ContrastsResults <- renderUI({})
-    
-  })
-  
-  output$DiffParam <- renderUI({
-    
-        box(title = datasetInput(), width = 12, status = "warning",
-            column(5,
-                   selectInput("AnaDiffMethod", label = "Method :",
-                               choices = list("glmfit (edgeR)"="edgeRglmfit",
-                                              "limma" = "limma"),
-                               selected = "edgeRglmfit")
-            ),
-            column(3,
-                   numericInput(inputId = "FDRSeuil",
-                                label="FDR :",
-                                value=0.05, 0, max=1, 0.01)
-            ),
-            column(3,
-                   selectInput(inputId = "clustermq",
-                               label="send job to cluster",
-                               choices = list("no"=FALSE,"genotoul"=TRUE))
-            ),
-            column(5,
-                   actionButton("runAnaDiff","Run the differential analysis")
-            )
-        )
-      
-    })
-  
-  
-  # Run the differential analysis for each contrast set
-  #   -> return a dynamic user interface with a collapsible box for each contrast
-  #         - Pvalue graph
-  #         - MAplot
-  #         - Table of the DE genes 
-  observeEvent(input$runAnaDiff, {
-    
-    print("# 9- Diff Analysis...") 
-  
-    # run diff analysis with select method
-    FlomicsMultiAssay <<- RunDiffAnalysis(FlomicsMultiAssay,
-                                          data=paste0(datasetInput(),".filtred"),
-                                          FDR =input$FDRSeuil ,
-                                          DiffAnalysisMethod=input$AnaDiffMethod,
-                                          clustermq=input$clustermq)
- 
-    output$ContrastsResults <- renderUI({
-    
-        vect <- as.vector(FlomicsMultiAssay@metadata$design@Contrasts.List$hypoth)
-        names(vect) <- as.vector(FlomicsMultiAssay@metadata$design@Contrasts.List$idContrast)
-       
-        lapply(FlomicsMultiAssay@metadata$design@Contrasts.Sel, function(i) {
-         
-          resTable <- FlomicsMultiAssay@ExperimentList[[paste0(datasetInput(),".filtred")]]@metadata[["AnaDiffDeg"]][[i]]
-          
-          fluidRow(
-            column(10,
-              box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = paste0(i, " : ", vect[i]),
-                  
-                  verticalLayout(
+      menu_list <- list(
+        menu_list,
+        sidebarMenu(id = "sbm",
                     
-                    ### pvalue plot ###
-                    renderPlot({
-                      
-                      pvalue.plot(data    =FlomicsMultiAssay@ExperimentList[[paste0(datasetInput(),".filtred")]]@metadata[["AnaDiffDeg"]][[i]],
-                                  contrast=as.vector(filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast == i)$hypoth),
-                                  pngFile =file.path(tempdir(), paste0(datasetInput(), "_PvalueDistribution_", gsub(" ", "", vect[i]), ".png")))
-                      }),
-                      tags$br(),
-                      DT::renderDataTable({
-                        
-                        DT::datatable(round(resTable[resTable$FDR <= input$FDRSeuil,],5), options = list(rownames = FALSE, pageLength = 10))
-                        })
-                  
-                      # Button
-                      #downloadButton("downloadData", "Download")
+            lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
+              
+              do.call(menuItem, c(text = paste0(omics, " Analysis"), tabName = paste0(omics, "Analysis"), 
+                                  
+                  lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+                    
+                    switch(omics ,
+                           "RNAseq"={
+                               menuSubItem(text = paste0(FlomicsMultiAssay@metadata$omicList[[omics]][[i]]), 
+                                        tabName = paste0("RNAseqAnalysis", i), icon = icon('chart-area'), selected = FALSE)
+                           },
+                           "proteomics"={
+                               #menuItem(paste0(omic, " Data Exploratory"), tabName = "ProtExploratoryQC", icon = icon('chart-area'), selected = TRUE),
+                               #menuItem(paste0(omic, " Data Processing"),  tabName = "ProtProcessing", icon = icon('chart-area'), selected = FALSE)
+                               #menuItem(paste0(omic, " AnalysisSteps"),  tabName = "proteomicsAnalysisSteps", icon = icon('chart-area'), selected = FALSE)
+                           },
+                           "metabolomics"={
+                               #menuItem(paste0(omic, " Data Exploratory"), tabName = "MetaExploratoryQC", icon = icon('chart-area'), selected = TRUE),
+                               #menuItem(paste0(omic, " Data Processing"),  tabName = "MetaProcessing",    icon = icon('chart-area'), selected = FALSE)
+                           }
                     )
-                  )
-              ),
-            column(2, checkboxInput(inputId = "checkContrasts", label = "validate" ,value = TRUE , width=1))
-            )
-          })
-      })
-
-
-    # merge diff results
-    mat2venn <- list()
-    for(i in FlomicsMultiAssay@metadata$design@Contrasts.Sel) {
+                  })
+              ))
+            })
+        )
+      )
+      sidebarMenu(.list = menu_list)
+    })
     
-      mat2venn[[i]][["features"]] <-  row.names(FlomicsMultiAssay@ExperimentList[[paste0(datasetInput(),".filtred")]]@metadata[["AnaDiffDeg"]][[i]])
-      mat2venn[[i]][[i]] <- rep(1, dim(FlomicsMultiAssay@ExperimentList[[paste0(datasetInput(),".filtred")]]@metadata[["AnaDiffDeg"]][[i]])[1])
-      mat2venn[[i]] <- tbl_df(mat2venn[[i]])
-      }
+    
+    ##########################################
+    # Part3 : Data Exploratory
+    ##########################################
+    lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
       
-    mat2venn.df <- mat2venn %>% purrr::reduce(dplyr::full_join, by="features")
+      lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+        
+        callModule(RNAseqDataExplorTab, i, FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+      })
+    })
     
-    mat2venn.df[is.na(mat2venn.df)] <- 0
-    
-    output$ResultsMerge <- renderUI({
-      fluidRow(
-       column(10,
-         box(width=12, solidHeader = TRUE, title = "Combine results", collapsible = TRUE, collapsed = TRUE, status = "warning",
-          column(width = 7,
-             renderPlot({
-               title(main = "snp")
-               ven::venn(mat2venn.df[,-1] , ilab=TRUE, zcolor = "style")
-               })
-             ),
-          column(width = 5,
-             radioButtons("choise", label="" , choices = c("union","intersect"), selected = "union",
-                          inline = FALSE, width = 2, choiceNames = NULL, choiceValues = NULL),
-             actionButton("buttonValidMerge","Valid")
-             )
-          )
-         )
-       )
+    ##########################################
+    # Part4 : Data processing : filtering, Normalisation...
+    ##########################################
+    lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
+      
+      lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+        
+        callModule(RNAseqDataNormTab, i, FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
       })
     })
 
+    ##########################################
+    # Part5 : Analysi Diff
+    ##########################################
+    lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
+      
+      lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+        
+        #callModule(DiffExpParam, i, FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+        
+        callModule(DiffExpAnalysis, i, FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+        
+      })
+    })
+  
+    })
 
   
   ##########################################
