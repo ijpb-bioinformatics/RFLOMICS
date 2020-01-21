@@ -22,6 +22,7 @@ GetDesignFromNames <- function(samples_name){
 
   # Get the number of design factor and the factors from the names of the count matrix
   nb_dFac <- stringr::str_count(samples_name,pattern="_")+1
+
   # Test if the number of factor are the same for all sample names
   try(if(var(nb_dFac) != 0 ) stop("Column names do not have the same level of factor"))
   nb_dFac <- nb_dFac[1]
@@ -47,7 +48,6 @@ GetDesignFromNames <- function(samples_name){
 #'
 GetModelFormulae <- function(Factors.Name,Factors.Type){
 
-
   formulae <- list()
 
   FacBio <- Factors.Name[which(Factors.Type == "Bio")]
@@ -68,36 +68,15 @@ GetModelFormulae <- function(Factors.Name,Factors.Type){
     if(i !=1){
       formulae <- c(formulae, apply(combn(FacBio,i),2,getF2, FacBatch=FacBatch))
     }
-    #formulae[[i]]  <- apply(combn(FacBio,i),2,getF, FacBatch=FacBatch)
+
   }
 
-  formulae[[nFac+1]]<-apply(combn(FacBio,i),2,getF2,FacBatch=FacBatch)
-
-  formulae <- unlist(formulae)
   names(formulae) <- unlist(as.character(formulae))
-
-  #formulae[[nFac+1]]<- apply(combn(FacBio,i),2,getF2,FacBatch=FacBatch)
-
-  #formulae <- unlist(formulae)
-  #names(formulae) <- unlist(as.character(formulae))
-
+  formulae <- formulae[order(nchar(names(formulae)),decreasing=TRUE)]
   return(formulae)
 }
 
 
-#' GetContrasts
-#'
-#' @param An object of class design
-#'
-#' @return An object of class design
-#' @export
-#'
-#' @examples
-#'
-GetContrasts <- function(design){
-  # function qui est en cours d'ecriture par Christine
-  data.frame()
-}
 
 #' @title TMM.Normalization
 #' Interface to the calcNormFactors functionof the edgeR package  with the choosen TMM parameters as the normalization method
@@ -217,7 +196,7 @@ colorPlot <- function(design, ColData, condition="samples"){
 #'
 #' @param abundances
 #' @param dataName
-#' @param pngFile 
+#' @param pngFile
 #' @return plot
 #' @export
 #'
@@ -230,7 +209,7 @@ plotLibSize <- function(abundances, dataName, pngFile=NULL){
   libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
 
   p <- ggplot(libSizeNorm, aes(x=samples,y=value, fill=samples)) + geom_bar( stat="identity" ) +
-    xlab(paste0(dataName, " samples")) + ylab("Library Size") + 
+    xlab(paste0(dataName, " samples")) + ylab("Library Size") +
     theme(axis.text.x      = element_text(angle = 45, hjust = 1),
           legend.position  = "none")
           #axis.text.x     = element_blank(),
@@ -238,7 +217,7 @@ plotLibSize <- function(abundances, dataName, pngFile=NULL){
           #legend.key.size = unit(0.3, "cm"))
           #legend.text     = element_text(size=5))
   print(p)
-  
+
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
   }
@@ -261,10 +240,10 @@ plotDistr <- function(abundances, dataName, pngFile=NULL){
 
   p <- ggplot(pseudo_counts) +
     geom_density(aes(value, color=samples) ) +
-    xlab(paste0(dataName, " log2(feature abundances)")) + 
+    xlab(paste0(dataName, " log2(feature abundances)")) +
     theme(legend.position='none')
   print(p)
-  
+
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
   }
@@ -275,9 +254,9 @@ plotDistr <- function(abundances, dataName, pngFile=NULL){
 
 #' pvalue.plot
 #'
-#' @param data 
+#' @param data
 #' @param contrast
-#' @param pngFile 
+#' @param pngFile
 #' @return plot
 #' @export
 #'
@@ -286,7 +265,7 @@ pvalue.plot <- function(data, contrast, pngFile=NULL){
 
   p <- ggplot(data=data) + geom_histogram(aes(x=PValue), bins = 200)
   print(p)
-  
+
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
   }
