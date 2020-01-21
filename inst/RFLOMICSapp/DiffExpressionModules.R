@@ -2,14 +2,14 @@
 
 
 DiffExpAnalysisUI <- function(id){
-  
+
   #name space for id
   ns <- NS(id)
-  
-  tagList(  
-    
+
+  tagList(
+
     ### parametres for Diff Analysis
-    fluidRow( 
+    fluidRow(
       #uiOutput(ns("DiffParam"))
       box(title = "", width = 12, status = "warning",
           column(5,
@@ -32,15 +32,15 @@ DiffExpAnalysisUI <- function(id){
                  actionButton(ns("runAnaDiff"),"Run the differential analysis")
           )
       )
-      
+
     ),
     tags$br(),
     tags$br(),
-    fluidRow( 
-      
+    fluidRow(
+
       uiOutput(ns("ContrastsResults"))
-      
-      
+
+
       )#,
     #fluidRow( uiOutput(ns("ResultsMerge")))
   )
@@ -49,15 +49,15 @@ DiffExpAnalysisUI <- function(id){
 
 
 DiffExpAnalysis <- function(input, output, session, dataset){
-  
- 
+
+
   # Run the differential analysis for each contrast set
   #   -> return a dynamic user interface with a collapsible box for each contrast
   #         - Pvalue graph
   #         - MAplot
-  #         - Table of the DE genes 
+  #         - Table of the DE genes
   observeEvent(input$runAnaDiff, {
-    
+
     print("# 9- Diff Analysis...")
 
     # run diff analysis with select method
@@ -67,7 +67,7 @@ DiffExpAnalysis <- function(input, output, session, dataset){
 
     output$ContrastsResults <- renderUI({
 
-      vect <- as.vector(FlomicsMultiAssay@metadata$design@Contrasts.List$hypoth)
+      vect <- as.vector(FlomicsMultiAssay@metadata$design@Contrasts.List$Hypothesis)
       names(vect) <- as.vector(FlomicsMultiAssay@metadata$design@Contrasts.List$idContrast)
 
       lapply(FlomicsMultiAssay@metadata$design@Contrasts.Sel, function(i) {
@@ -86,7 +86,7 @@ DiffExpAnalysis <- function(input, output, session, dataset){
                        renderPlot({
 
                          pvalue.plot(data    =FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata[["AnaDiffDeg"]][[i]],
-                                     contrast=as.vector(filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast == i)$hypoth),
+                                     contrast=as.vector(filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast == i)$Hypothesis),
                                      pngFile =file.path(tempdir(), paste0(dataset, "_PvalueDistribution_", gsub(" ", "", vect[i]), ".png")))
                        }),
                        tags$br(),
@@ -103,39 +103,39 @@ DiffExpAnalysis <- function(input, output, session, dataset){
         )
       })
     })
-    
+
   })
-  
+
 }
 
 
 
 # DiffExpMergeUI <- function(id){
-#   
+#
 #   #name space for id
 #   ns <- NS(id)
-#   
-#   tagList(  
+#
+#   tagList(
 #     fluidRow( uiOutput(ns("ResultsMerge")))
 #   )
 # }
-# 
-# 
+#
+#
 # DiffExpMerge <- function(input, output, session, dataset){
-#   
+#
 #   # merge diff results
 #   mat2venn <- list()
 #   for(i in FlomicsMultiAssay@metadata$design@Contrasts.Sel) {
-#     
+#
 #     mat2venn[[i]][["features"]] <-  row.names(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata[["AnaDiffDeg"]][[i]])
 #     mat2venn[[i]][[i]] <- rep(1, dim(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata[["AnaDiffDeg"]][[i]])[1])
 #     mat2venn[[i]] <- tbl_df(mat2venn[[i]])
 #   }
-#   
+#
 #   mat2venn.df <- mat2venn %>% purrr::reduce(dplyr::full_join, by="features")
-#   
+#
 #   mat2venn.df[is.na(mat2venn.df)] <- 0
-#   
+#
 #   output$ResultsMerge <- renderUI({
 #     fluidRow(
 #       column(10,
@@ -155,6 +155,6 @@ DiffExpAnalysis <- function(input, output, session, dataset){
 #       )
 #     )
 #   })
-#   
-#   
+#
+#
 # }

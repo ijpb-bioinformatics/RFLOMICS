@@ -12,7 +12,7 @@ shinyServer(function(input, output, session) {
 
   ############################################################
   ######################### FUNCTIONS ########################
-  
+
   FlomicsSummarizedExpConstructor <- function(dataFile, qcFile){
 
     abundance <- read.table(dataFile$datapath, header = TRUE, row.names = 1)
@@ -33,8 +33,8 @@ shinyServer(function(input, output, session) {
     #se <- SummarizedExperiment(assays  = list(counts=counts), colData = QCmat)
     return(se)
   }
-  
-  
+
+
 
 
 
@@ -53,33 +53,33 @@ shinyServer(function(input, output, session) {
     validate({
       need(! is.null(input$Experimental.Design.file), message="Set a name")
     })
-    
-    
+
+
     ExpDesign <<- read.table(input$Experimental.Design.file$datapath,header = TRUE,row.names = 1)
-    
+
     # construct ExperimentalDesign object
     Design <<- ExperimentalDesign(ExpDesign)
-    
+
   }
 
   # definition of the loadData function()
   loadData <- function() {
-    
+
     listOmicsDataInput <<- list()
-    
+
     #### list of omic data laoded from interface
     print("# 5- Load omic data...")
     dataName.vec <- c()
     for (k in 1:addDataNum){
-      
+
       omicType <- input[[paste0("omicType", k)]]
-      
+
       dataName <- paste0(omicType, ".", gsub("[[:space:]]", "", input[[paste0("DataName", k)]]))
-      
+
       dataName.vec <- c(dataName.vec, dataName)
-      
+
       if(omicType != "none"){
-        
+
         # check omics data
         if(is.null(input[[paste0('data', k)]])){
           showModal(modalDialog( title = "Error message", "omics counts/abundances matrix is required : dataset ", k ))
@@ -87,7 +87,7 @@ shinyServer(function(input, output, session) {
         validate({
           need(!is.null(input[[paste0('data', k)]]), message="error")
         })
-        
+
         # check presence of dataname
         if(dataName == ""){
           showModal(modalDialog( title = "Error message", "Dataset names is required : dataset ", k ))
@@ -96,7 +96,7 @@ shinyServer(function(input, output, session) {
           need(dataName != "", message="error")
         })
         #gsub("[[:space:]]", "", x)
-        
+
         # check duplicat dataset name
         if(any(duplicated(dataName.vec)) == TRUE){
           showModal(modalDialog( title = "Error message", "Dataset names must be unique : dataset ", (1:addDataNum)[duplicated(dataName.vec)] ))
@@ -105,45 +105,45 @@ shinyServer(function(input, output, session) {
           need(any(duplicated(dataName.vec)) == FALSE, message="error")
         })
 
-        listOmicsDataInput[[omicType]][[dataName]] <<- list(data = input[[paste0("data", k)]], 
+        listOmicsDataInput[[omicType]][[dataName]] <<- list(data = input[[paste0("data", k)]],
                                                             QC   = input[[paste0("metadataQC", k)]],
                                                             dataName = dataName,
                                                             omicType = omicType,
                                                             order    = k)
       }
-    } 
-    
+    }
+
   }
-  
-  
+
+
   FlomicsMultiAssayExperimentConstructor <- function(){
-    
+
     listmap <- list()
     listExp <- list()
     omicList<- list()
-    
+
     for (omicType in names(listOmicsDataInput)){
-    
+
       for (dataName in names(listOmicsDataInput[[omicType]])){
-      
+
         ### build SummarisedExperiment object for each omic data
         if(! is.null(listOmicsDataInput[[omicType]][[dataName]]$data)){
-          
+
           colnames <- c(names(omicList[[omicType]]), listOmicsDataInput[[omicType]][[dataName]]$order)
           omicList[[omicType]] <- c(omicList[[omicType]], dataName)
           names(omicList[[omicType]]) <- colnames
 
           print(paste0("# ...load ", dataName," data..."))
-          listExp[[dataName]] <- FlomicsSummarizedExpConstructor(listOmicsDataInput[[omicType]][[dataName]]$data, 
+          listExp[[dataName]] <- FlomicsSummarizedExpConstructor(listOmicsDataInput[[omicType]][[dataName]]$data,
                                                                  listOmicsDataInput[[omicType]][[dataName]]$QC)
           listmap[[dataName]] <- data.frame(primary = as.vector(listExp[[dataName]]@colData$primary),
                                             colname = as.vector(listExp[[dataName]]@colData$colname),
                                             stringsAsFactors = FALSE)
- 
+
         }
       }
     }
-    
+
     # check data list
     if (is.null(listExp)){  stop("[ERROR] No data loaded !!!")  }
 
@@ -200,10 +200,10 @@ shinyServer(function(input, output, session) {
     }
   }
 
-  
+
   ########################################################################
   ######################### MAIN #########################################
-  
+
   ##########################################
   # Part2 : Define the Experimental design:
   #         -> load experimental plan
@@ -216,9 +216,9 @@ shinyServer(function(input, output, session) {
   # as soon as the "load" button has been clicked
   #  => the loadExpDesign function is called and the experimental design item is printed
   observeEvent(input$loadExpDesign, {
-    
+
     print("# 1- Load experimental design...")
-    
+
     loadExpDesign()
 
     # display desgin table
@@ -228,18 +228,18 @@ shinyServer(function(input, output, session) {
             DT::renderDataTable( DT::datatable(ExpDesign) )
             )
       })
-    
+
     # display set up model Item
     output$SetUpModel <- renderMenu({
       menuSubItem("Design matrix", tabName = "SetUpModel",  selected = TRUE)
-      
+
       })
-    
+
     })
-  
-  
+
+
   ####### Set up Design model ########
-  
+
   # Construct the form to set the reference factor level
   output$GetdFactorRef <- renderUI({
 
@@ -298,7 +298,7 @@ shinyServer(function(input, output, session) {
   # as soon as the "valid model formulae" button has been clicked
   # => The model formulae is set and the interface to select the contrasts appear
   observeEvent(input$validModelFormula, {
-    
+
     print("# 3- Choice of statistical model...")
 
     # => Set the model formulae
@@ -307,7 +307,7 @@ shinyServer(function(input, output, session) {
     # => Set Model design matrix
     # => Get and Display all the contrasts
     print(paste0("#    model :", Design@Model.formula))
-    Design <<- SetModelMatrix(Design)
+    Design <<- SetModelMatrixAndContrasts(Design)
 
 
     #  => The contrasts have to be choosen
@@ -316,41 +316,44 @@ shinyServer(function(input, output, session) {
       box(width=12, status = "warning", size=3,
       lapply(unique(Design@Contrasts.List$factors), function(i) {
             vect <- as.vector(filter(Design@Contrasts.List, factors==i)[["idContrast"]])
-            names(vect) <- as.vector(filter(Design@Contrasts.List, factors==i)[["hypoth"]])
+            names(vect) <- as.vector(filter(Design@Contrasts.List, factors==i)[["Hypothesis"]])
 
-            checkboxGroupInput("ListOfContrasts1", paste0(i, " effect"), vect)
+            checkboxGroupInput(paste0("ListOfContrasts",i), i, vect)
         }),
-
         column(width=4, actionButton("validContrasts","Valid contrast(s) choice(s)")))
       })
     })
-  
-  
+
+
   # as soon as the "valid Contrasts" buttom has been clicked
   # => The selected contrasts are saved
   # => The load data item appear
   observeEvent(input$validContrasts, {
 
-    Design@Contrasts.Sel <<- c(input$ListOfContrasts1)
-    
+    tmp <- vector()
+    Design@Contrasts.Sel <<- unlist(lapply(unique(Design@Contrasts.List$factors), function(i) {
+      tmp<-c(tmp,input[[paste0("ListOfContrasts",i)]])
+      return(tmp)
+    }))
+
     output$importData <- renderMenu({
       menuItem("Load Data", tabName = "importData",icon = icon('download'), selected = TRUE)
       })
     })
- 
-  
-  
+
+
+
   ##########################################
   # Part2 : load data
   ##########################################
-  
+
   # as soon as the "add data" buttom has been clicked
   # => a new select/file Input was display
-  # => 
+  # =>
   addDataNum <- 1
   dataName.vec  <- c()
   observeEvent(input$addData, {
-    
+
     # add input select for new data
     addDataNum <<- addDataNum + 1
     output[[paste("toAddData", addDataNum, sep="")]] <- renderUI({
@@ -358,8 +361,8 @@ shinyServer(function(input, output, session) {
         fluidRow(
             column(2,
                    # omic type
-                   selectInput(inputId=paste0('omicType', addDataNum), label='Omics', 
-                               choices = c("None"="none", "RNAseq"="RNAseq", 
+                   selectInput(inputId=paste0('omicType', addDataNum), label='Omics',
+                               choices = c("None"="none", "RNAseq"="RNAseq",
                                            "Proteomics"="proteomics", "Metabolomics"="metabolomics"),
                                selected = "none")
                    ),
@@ -382,49 +385,49 @@ shinyServer(function(input, output, session) {
         )
       })
     })
-  
-  
+
+
 
   # as soon as the "load data" buttom has been clicked
   # => selected input(s) are loaded with loadData() function
   # => create tmp dir for png report
   observeEvent(input$loadData, {
-    
+
     ### load data
     loadData()
-    
+
     ### load data
     FlomicsMultiAssayExperimentConstructor()
-    
-    
+
+
     ##### data list
     #choiceList <- FlomicsMultiAssay@metadata$omicList %>% purrr::reduce(c)
     #output$dataList <- renderUI({
-    #  selectInput(inputId='datalist', label='Dataset list :', 
+    #  selectInput(inputId='datalist', label='Dataset list :',
     #              choices = choiceList,
     #              selected = as.character(choiceList[1]))
     #  })
-    
-    
-    
+
+
+
     #### Item for each omics ####
     #observeEvent(input$datalist, {
-    
+
     output$omics <- renderMenu({
       menu_list <- list()
       menu_list <- list(
         menu_list,
         sidebarMenu(id = "sbm",
-                    
+
             lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
-              
-              do.call(menuItem, c(text = paste0(omics, " Analysis"), tabName = paste0(omics, "Analysis"), 
-                                  
+
+              do.call(menuItem, c(text = paste0(omics, " Analysis"), tabName = paste0(omics, "Analysis"),
+
                   lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
-                    
+
                     switch(omics ,
                            "RNAseq"={
-                               menuSubItem(text = paste0(FlomicsMultiAssay@metadata$omicList[[omics]][[i]]), 
+                               menuSubItem(text = paste0(FlomicsMultiAssay@metadata$omicList[[omics]][[i]]),
                                         tabName = paste0("RNAseqAnalysis", i), icon = icon('chart-area'), selected = FALSE)
                            },
                            "proteomics"={
@@ -444,26 +447,26 @@ shinyServer(function(input, output, session) {
       )
       sidebarMenu(.list = menu_list)
     })
-    
-    
+
+
     ##########################################
     # Part3 : Data Exploratory
     ##########################################
     lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
-      
+
       lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
-        
+
         callModule(RNAseqDataExplorTab, i, FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
       })
     })
-    
+
     ##########################################
     # Part4 : Data processing : filtering, Normalisation...
     ##########################################
     lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
-      
+
       lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
-        
+
         callModule(RNAseqDataNormTab, i, FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
       })
     })
@@ -472,32 +475,32 @@ shinyServer(function(input, output, session) {
     # Part5 : Analysi Diff
     ##########################################
     lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
-      
+
       lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
-        
+
         #callModule(DiffExpParam, i, FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
-        
+
         callModule(DiffExpAnalysis, i, FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
-        
+
       })
     })
-  
+
     })
 
-  
+
   ##########################################
   # Part6 : Co-Expression Analysis
   ##########################################
-  
+
   observeEvent(input$buttonValidMerge, {
-  
+
     output$CoExpression <- renderMenu({
       menuItem("Co-expression Analysis", tabName = "CoExpression",icon = icon('chart-area'), selected = FALSE)
     })
-    
-    
+
+
    output$Asuivre <- renderPrint({
-  
+
      paste0("À suivre...")
    })
   })
@@ -518,9 +521,9 @@ shinyServer(function(input, output, session) {
       # Copy the report file to a temporary directory before processing it, in
       # case we don't have write permissions to the current working dir (which
       # can happen when deployed).
-      
+
       tempReport <-  "report.Rmd" # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      
+
       #tempReport <- file.path(tempdir(), "report.Rmd")
       #file.copy("report.Rmd", tempReport, overwrite = TRUE)
 

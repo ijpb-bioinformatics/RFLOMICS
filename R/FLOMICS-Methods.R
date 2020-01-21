@@ -130,7 +130,7 @@ setMethod(f="mvQCdesign",
             })
             p <- do.call(grid.arrange, out)
             print(p)
-            
+
             if(! is.null(pngFile)){
               ggsave(filename = pngFile,  plot = p)
             }
@@ -174,13 +174,13 @@ setMethod(f="mvQCdata",
             p <- ggplot(df,aes(x=Axis, y=abs(Spearman),fill=QCparam))+
               geom_bar(stat="identity",position=position_dodge(),width=0.7)+ylim(0,1)+
               labs(x = "Axis number", y="Cor(Coord_dFactor_PCA,QCparam)")
-            
+
             print(p)
-            
+
             if(! is.null(pngFile)){
               ggsave(filename = pngFile, plot = p)
             }
-            
+
           })
 
 
@@ -216,14 +216,14 @@ setMethod(f= "abundanceBoxplot",
             p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + geom_boxplot(aes(fill=groups)) +
               theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +
               xlab(paste0(dataType, " samples"))
-              
+
               #scale_fill_manual(values=col)
             print(p)
-            
+
             if(! is.null(pngFile)){
               ggsave(filename = pngFile, plot = p)
             }
-            
+
           }
 )
 
@@ -263,7 +263,7 @@ setMethod(f= "plotPCAnorm",
             var1 <- round(FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digit=3)
             var2 <- round(FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digit=3)
 
-            
+
             p <- ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
               geom_point(size=3) +
               geom_text(aes(label=samples), size=3, vjust = 0) +
@@ -274,10 +274,10 @@ setMethod(f= "plotPCAnorm",
               theme(strip.text.x = element_text(size=8, face="bold.italic"),
                     strip.text.y = element_text(size=8, face="bold.italic")) #+
               #scale_color_manual(values=col$colors)
-            
+
             print(p)
             ggsave(filename = pngFile,  plot = p)
-            
+
             })
 
 
@@ -400,82 +400,314 @@ setMethod(f="RunPCA",
 
 
 
-#' @title SetModelMatrix
-#'
-#' @param ExpDesign 
+#' @title SetModelMatrixAndContrasts
+#' Adapted Function from DicoExpress
+#' @param ExpDesign
 #'
 #' @return
-#' @exportMethod SetModelMatrix
+#' @exportMethod SetModelMatrixAndContrasts
 #'
 #' @examples
-setMethod(f="SetModelMatrix",
+#' @examples
+#'
+setMethod(f="SetModelMatrixAndContrasts",
           signature="ExpDesign",
           definition <- function(object){
-            
-            #  => list of fact from model
-            Fact.list <- strsplit(gsub("[ ~]", "",object@Model.formula), split = "+", fixed = TRUE)[[1]]
-            Fact.list <- Fact.list[str_detect(Fact.list, pattern=":", negate = TRUE)]
-            
-            #  => list of fact bio
-            Fact.Bio  <- names(object@Factors.Type[which(object@Factors.Type == "Bio")])
-            
-            #  => factor vectors to set model.matrix `
-            #  * stock ref values
-            ref.list <- vector()
-            for (i in Fact.list) {
-              assign(i, object@List.Factors[[i]])
-              ref.list <- c(ref.list,levels(object@List.Factors[[i]])[1])
-            }
-            
-            #  => set model matrix
-            #  * change colnames
-            model.design.matrix <- stats::model.matrix(as.formula(object@Model.formula))
-            design.colnames <- colnames(model.design.matrix)
-            #  colnames
-            for (i in names(object@List.Factors)) {
-              design.colnames <- gsub(i, "", design.colnames)
-            }
-            design.colnames <- gsub(":", "_", design.colnames)
-            colnames(model.design.matrix) <- design.colnames
-            object@Model.matrix <- model.design.matrix
 
-            # => Get all the contrasts
-            contrasts <- list()
-            contrast.coef <- list()
-            contrasts.nbr <- 0
-            for(i in Fact.list[which(Fact.list %in% Fact.Bio)]){
-              
-              mat <- as.vector(unique(object@List.Factors[[i]])) %>% utils::combn(.,2)
-              
-              contrast.tmp <- list()
-              
-              contrast.tmp[["hypoth"]] <- apply (mat, 2, function(x) {
-                paste(x, collapse=" - ")
-              })
-              
-              contrast.tmp[["hypoth_tmp"]] <- contrast.tmp[["hypoth"]]
-              
-              for (ref in ref.list) {
-                contrast.tmp[["hypoth_tmp"]] <- gsub(paste(ref, "-"), "", contrast.tmp[["hypoth_tmp"]])
-                contrast.tmp[["hypoth_tmp"]] <- gsub(paste("-", ref), "", contrast.tmp[["hypoth_tmp"]])
-              }
-              
-              contrast.tmp[["idContrast"]] <- paste("C", (contrasts.nbr+1):(contrasts.nbr+length(contrast.tmp[["hypoth"]])), sep = "")
-              
-              contrasts.nbr <- contrasts.nbr+length(contrast.tmp[["hypoth"]])
-              contrasts[[i]] <- data.frame(contrast.tmp) %>% mutate(factors=i)
-                   
-              ## contrast coef
-              #contrast.coef[[i]] <- makeContrasts(contrasts = contrasts[[i]]$hypoth_tmp, levels = model.design.matrix) %>% as.data.frame()
-              #colnames(contrast.coef[[i]]) <- contrasts[[i]]$idContrast
-            }
-            object@Contrasts.List  <- contrasts %>% purrr::reduce(rbind)
-            
-            ## contrast coef
-            object@Contrasts.Coeff <- makeContrasts(contrasts = object@Contrasts.List$hypoth_tmp, levels = model.design.matrix) %>% as.data.frame()
-            colnames(object@Contrasts.Coeff) <- object@Contrasts.List$idContrast
-            
-            return(object)
+  #  => list of all the biological factor
 
+  Factors.Name <- names(object@List.Factors)
+
+  BioFactors <- Factors.Name[which(object@Factors.Type == "Bio")]
+  BatchFactors <- Factors.Name[which(object@Factors.Type == "batch")]
+
+  NbBioFactors <- length(BioFactors)
+  NbBatchFactors <- length(BatchFactors)
+
+  # => get the model matrix from the formula
+  glm_model <- model.matrix(as.formula(object@Model.formula[[1]]),data=as.data.frame( object@List.Factors))
+  object@Model.matrix <- glm_model
+
+  #  => list of biological and batch factor from model
+  Fact.list <- strsplit(gsub("[ ~]", "",object@Model.formula), split = "+", fixed = TRUE)[[1]]
+
+  BioFactors.formula <- BioFactors[which(BioFactors %in% Fact.list)]
+  BatchFactors.formula <- BatchFactors[which(BatchFactors %in% Fact.list)]
+
+  # => Is there any interaction ?
+
+  if(length(grep(":",object@Model.formula))==1){
+    Interaction <- TRUE
+  }else{
+    Interaction <- FALSE
+  }
+
+  NbBioFactors.formula <- length(BioFactors.formula)
+  NbBatchFactors.formula <- length(BatchFactors.formula)
+
+  ## Contrasts
+  FacBio <- 1:(NbBioFactors.formula)
+  coeff.name = colnames(glm_model)
+  nl = unlist(lapply(object@List.Factors[BioFactors.formula], function(x)
+    length(levels(x))))
+  nl1 <- levels(object@List.Factors[[BioFactors.formula[1]]])
+  contrast.names <- as.character("")
+
+  ## Number of biological factor == 1
+  if (NbBioFactors.formula == 1) {
+    if ( Interaction == TRUE){
+      cat("\n#############################################################\n We can not write Interactions with a single biological factor\n#############################################################\n")
+    }
+    contrast.factor1 <- matrix(0, ncol = length(coeff.name), nrow = 1)
+    for (h in 1:(length(nl1) - 1))
+    {
+      for (i in (h + 1):length(nl1))
+      {
+        f2 <- paste(BioFactors.formula[1], nl1[i], sep = "")
+        contrast.definition <- rep(0, length(coeff.name))
+        f1 <- paste(BioFactors.formula[1], nl1[h], sep = "")
+        if (h != 1)
+        {
+          contrast.definition[which(f1 == coeff.name)] = 1
+        }
+        contrast.definition[which(f2 == coeff.name)] = (-1)
+        contrast.factor1 = rbind(contrast.factor1, contrast.definition)
+        contrast.names = c(contrast.names, paste0("[", nl1[h], "-", nl1[i], "]"))
+      }
+    }
+    contrast.matrix <- contrast.factor1
+
+    nbcontrast.type <- dim(contrast.factor1)[1]
+    contrast.explanation <- c("effect of biological factor 1")
+
+    colnames(contrast.matrix) = coeff.name
+    rownames(contrast.matrix) = contrast.names
+  }
+
+  ## Number of biological factor == 2
+  if (NbBioFactors.formula == 2) {
+    if (Interaction == FALSE) {
+      ## Factor 1
+      contrast.factor1 <- matrix(0, ncol = length(coeff.name), nrow = 1)
+      for (h in 1:(length(nl1) - 1))
+      {
+        for (i in (h + 1):length(nl1))
+        {
+          f2 <- paste(BioFactors.formula[1], nl1[i], sep = "")
+          contrast.definition <- rep(0, length(coeff.name))
+          f1 <- paste(BioFactors.formula[1], nl1[h], sep = "")
+          if (h != 1)
+          {
+            contrast.definition[which(f1 == coeff.name)] = 1
+          }
+          contrast.definition[which(f2 == coeff.name)] = (-1)
+          contrast.factor1 = rbind(contrast.factor1, contrast.definition)
+          contrast.names = c(contrast.names, paste0("[", nl1[h], "-", nl1[i], "]"))
+        }
+      }
+      ## Factor 2
+      nl2 <- levels(object@List.Factors[BioFactors.formula[2]][[1]])
+      contrast.factor2 <- matrix(0, ncol = length(coeff.name), nrow = 1)
+      for (j in 1:(length(nl2) - 1))
+      {
+        for (k in (j + 1):length(nl2))
+        {
+          f2 <- paste(BioFactors.formula[2], nl2[k], sep = "")
+          contrast.definition <- rep(0, length(coeff.name))
+          f1 <- paste(BioFactors.formula[2], nl2[j], sep = "")
+          if (j != 1)
+          {
+            contrast.definition[which(f1 == coeff.name)] = 1
+          }
+          contrast.definition[which(f2 == coeff.name)] = (-1)
+          contrast.factor2 = rbind(contrast.factor2, contrast.definition)
+          contrast.names = c(contrast.names, paste0("[", nl2[j], "-", nl2[k], "]"))
+        }
+      }
+      contrast.matrix <- unique(rbind(contrast.factor1, contrast.factor2))
+
+      nbcontrast.type <- c(dim(contrast.factor1)[1],dim(contrast.factor2)[1])
+      contrast.explanation <- c("effect of biological factor 1","effect of biological factor 2")
+
+      colnames(contrast.matrix) = coeff.name
+      rownames(contrast.matrix) = contrast.names
+    }
+
+    if ( Interaction == TRUE){
+      nl2 <- levels(object@List.Factors[BioFactors.formula[2]][[1]])
+      ## Interaction effect between the two biological factors
+      contrast.Interaction<-matrix(0,ncol=length(coeff.name),nrow=1)
+      for (h in 1:(length(nl1)-1))
+      {
+        f1<-paste(BioFactors.formula[1],nl1[h],sep="")
+        for (i in (h+1):length(nl1))
+        {
+          f2<-paste(BioFactors.formula[1],nl1[i],sep="")
+
+          for(j in 1:(length(nl2)-1))
+          {
+            g1<-paste(BioFactors.formula[2],nl2[j],sep="")
+            for (k in (j+1):length(nl2))
+            {
+              g2<-paste(BioFactors.formula[2],nl2[k],sep="")
+              contrast.definition<-rep(0,length(coeff.name))
+              contrast.definition[grep(paste(f1,g1,sep=":"),coeff.name)]=
+                ifelse(is.element(paste(f1,g1,sep=":"),coeff.name),-1,0)
+              contrast.definition[grep(paste(f1,g2,sep=":"),coeff.name)]=
+                ifelse(is.element(paste(f1,g2,sep=":"),coeff.name),1,0)
+              contrast.definition[grep(paste(f2,g1,sep=":"),coeff.name)]=
+                ifelse(is.element(paste(f2,g1,sep=":"),coeff.name),1,0)
+              contrast.definition[grep(paste(f2,g2,sep=":"),coeff.name)]=
+                ifelse(is.element(paste(f2,g2,sep=":"),coeff.name),-1,0)
+              contrast.Interaction=rbind(contrast.Interaction,contrast.definition)
+              contrast.names=c(contrast.names,paste0("[",nl1[h],"_",nl2[j],"-",nl1[h],"_",nl2[k],"]-[",nl1[i],"_",nl2[j],"-",nl1[i],"_",nl2[k],"]"))
+            }
+          }
+        }
+      }
+      colnames(contrast.Interaction)=coeff.name
+      rownames(contrast.Interaction)=contrast.names
+
+      ## effect of biological factor 1 averaged on biological factor 2
+      contrast.factor1<-matrix(0,ncol=length(coeff.name),nrow=1)
+      contrast.names <- as.character("")
+      for (h in 1:(length(nl1)-1))
+      {
+        for (i in (h+1):length(nl1))
+        {
+          f2<-paste(BioFactors.formula[1],nl1[i],sep="")
+          contrast.definition<-rep(0,length(coeff.name))
+          f1<-paste(BioFactors.formula[1],nl1[h],sep="")
+          if(h!=1)
+          {
+            contrast.definition[which(f1==coeff.name)]=1
+            contrast.definition[grep(paste0(f1,":"),coeff.name)]=(1/nl[2])
+          }
+          contrast.definition[which(f2==coeff.name)]=(-1)
+          contrast.definition[grep(paste0(f2,":"),coeff.name)]=(-1/nl[2])
+          contrast.factor1=rbind(contrast.factor1,contrast.definition)
+          contrast.names=c(contrast.names,paste0("[",nl1[h],"-",nl1[i],"]"))
+        }
+      }
+
+      colnames(contrast.factor1)=coeff.name
+      rownames(contrast.factor1)=contrast.names
+
+
+      ## effect of biological factor 2 averaged on biological factor 1
+      contrast.factor2<-matrix(0,ncol=length(coeff.name),nrow=1)
+      contrast.names <- as.character("")
+      for (j in 1:(nl[2]-1))
+      {
+        for (k in (j+1):nl[2])
+        {
+          contrast.definition<-rep(0,length(coeff.name))
+          g1<-paste(BioFactors.formula[2],nl2[j],sep="")
+          if(j!=1)
+          {
+            contrast.definition[which(g1==coeff.name)]=1
+            contrast.definition[grep(paste0(":",g1),coeff.name)]=(1/nl[1])
+          }
+          g2<-paste(BioFactors.formula[2],nl2[k],sep="")
+          contrast.definition[which(g2==coeff.name)]=(-1)
+          contrast.definition[grep(paste0(":",g2),coeff.name)]=(-1/nl[1])
+          contrast.factor2=rbind(contrast.factor2,contrast.definition)
+          contrast.names=c(contrast.names,paste0("[",nl2[j],"-",nl2[k],"]"))
+        }
+      }
+
+      colnames(contrast.factor2)=coeff.name
+      rownames(contrast.factor2)=contrast.names
+
+
+      ## effect of biological factor 2 given one level of biological factor 1
+      contrast.factor2sachant1<-matrix(0,ncol=length(coeff.name),nrow=1)
+      contrast.names <- as.character("")
+      for (h in 1:nl[1])
+      {
+        h1<-paste(BioFactors.formula[1],nl1[h],sep="")
+        for (j in 1:(nl[2]-1))
+        {
+          for (k in (j+1):nl[2])
+          {
+            contrast.definition<-rep(0,length(coeff.name))
+            g1<-paste(BioFactors.formula[2],nl2[j],sep="")
+            if(j!=1)
+            {
+              contrast.definition[which(g1==coeff.name)]=1
+              if(h!=1)
+                contrast.definition[grep(paste0(h1,":",g1),coeff.name)]=1
+            }
+            g2<-paste(BioFactors.formula[2],nl2[k],sep="")
+            contrast.definition[which(g2==coeff.name)]=-1
+            if(h!=1)
+              contrast.definition[grep(paste0(h1,":",g2),coeff.name)]=-1
+            contrast.factor2sachant1=rbind(contrast.factor2sachant1,contrast.definition)
+            contrast.names=c(contrast.names,paste0("[",nl1[h],"_",nl2[j],"-",nl1[h],"_",nl2[k],"]"))
+          }
+        }
+      }
+      colnames(contrast.factor2sachant1)=coeff.name
+      rownames(contrast.factor2sachant1)=contrast.names
+
+      ## effect of biological factor 1 given one level of biological factor 2
+      contrast.factor1sachant2<-matrix(0,ncol=length(coeff.name),nrow=1)
+      contrast.names <- as.character("")
+      for (h in 1:nl[2])
+      {
+        h1<-paste(BioFactors.formula[2],nl2[h],sep="")
+        for (j in 1:(nl[1]-1))
+        {
+          for (k in (j+1):nl[1])
+          {
+            contrast.definition<-rep(0,length(coeff.name))
+            g1<-paste(BioFactors.formula[1],nl1[j],sep="")
+            if(j!=1)
+            {
+              contrast.definition[which(g1==coeff.name)]=1
+              if(h!=1)
+                contrast.definition[grep(paste0(g1,":",h1),coeff.name)]=1
+            }
+            g2<-paste(BioFactors.formula[1],nl1[k],sep="")
+            contrast.definition[which(g2==coeff.name)]=(-1)
+            if(h!=1)
+              contrast.definition[grep(paste0(g2,":",h1),coeff.name)]=(-1)
+            contrast.factor1sachant2=rbind(contrast.factor1sachant2,contrast.definition)
+            contrast.names=c(contrast.names,paste0("[",nl2[h],"_",nl1[j],"-",nl2[h],"_",nl1[k],"]"))
+          }
+        }
+      }
+      colnames(contrast.factor1sachant2)=coeff.name
+      rownames(contrast.factor1sachant2)=contrast.names
+
+      contrast.matrix <- unique(rbind(contrast.factor1, contrast.factor2, contrast.factor1sachant2, contrast.factor2sachant1, contrast.Interaction ))
+      nbcontrast.type <- unlist(lapply(list(contrast.factor1, contrast.factor2, contrast.factor1sachant2, contrast.factor2sachant1, contrast.Interaction ),
+                                       function(x){dim(x)[1]}))
+      contrast.explanation <- c("effect of biological factor 1 averaged on biological factor 2" , "effect of biological factor 2 averaged on biological factor 1",
+                                "effect of biological factor 2 given one level of biological factor 1", "effect of biological factor 1 given one level of biological factor 2",
+                                "Interaction effect between the two biological factors")
+    }
+  }
+  if(nrow(contrast.matrix)==2){
+    contrast.matrix <- t(as.data.frame(contrast.matrix[-1,]))
+    rownames(contrast.matrix) <- contrast.names[2]
+  } else {contrast.matrix <- contrast.matrix[-1,]}
+
+
+  Contrasts_Names <- data.frame(row.names(contrast.matrix))
+  colnames(Contrasts_Names) <- c("Contrasts_Names")
+
+
+  Contrasts.List <- data.frame("Hypothesis"= row.names(contrast.matrix),
+                               "idContrast"=paste("C",1:dim(contrast.matrix)[1],sep=""),
+                               "factors"=rep(contrast.explanation,times=nbcontrast.type-1))
+
+  Contrasts.Coeff <-  as.data.frame(t(contrast.matrix))
+  names(Contrasts.Coeff) <- Contrasts.List$idContrast
+
+  object@Contrasts.List <- Contrasts.List
+  object@Contrasts.Coeff <- Contrasts.Coeff
+
+  return(object)
 })
 
