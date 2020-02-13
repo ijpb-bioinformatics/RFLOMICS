@@ -25,10 +25,10 @@ RNAseqDataExplorTabUI <- function(id){
                            tags$br(),
                            column(width = 2,
                                   
-                                  fluidRow(uiOutput(ns('condColorRaw'))),
+                                  fluidRow(
+                                    RadioButtonsConditionUI(ns("rawData"))),
                                   tags$br(),
-                                  fluidRow(uiOutput(ns('PCA1axisRaw'))),
-                                  fluidRow(uiOutput(ns('PCA2axisRaw'))),
+                                  UpdateRadioButtonsUI(ns("rawData")),
                                   tags$br(),
                                   tags$br(),
                                   fluidRow(actionButton(ns("screenshotPCA_QC"),"Screenshot"))
@@ -62,54 +62,22 @@ RNAseqDataExplorTab <- function(input, output, session, dataset){
   })
   
   #### PCA analysis ####
-  # select PCA axis 1 for plot
-  output$PCA1axisRaw <- renderUI({
-    
-    radioButtons(inputId  = "PC1raw",
-                 label    = "Choice of PCs :",
-                 choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
-                 selected = 1, inline = TRUE)
-  })
-  
-  # select PCA axis 2 for plot
-  output$PCA2axisRaw <- renderUI({
-    
-    radioButtons(inputId  = "PC2raw",
-                 label    = "",
-                 choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
-                 selected = 2, inline = TRUE)
-  })
-  
+  # select PCA axis for plot
   # update/adapt PCA axis
-  observeEvent(input$PC1raw, {
-    
-    x <- input$PC1raw
-    # Can also set the label and select items
-    choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
-    updateRadioButtons(session, "PC2raw",
-                       choices = choices[-as.numeric(x)],
-                       inline  = TRUE)
-  })
-  
+  callModule(UpdateRadioButtons, "rawData")
   
   # select factors for color PCA plot
-  output$condColorRaw <- renderUI({
-    
-    condition <- c("groups",names(FlomicsMultiAssay@colData))
-    radioButtons(inputId = 'condColorSelectRaw',
-                 label = 'Levels :',
-                 choices = condition,
-                 selected = "groups")
-  })
+  callModule(RadioButtonsCondition, "rawData")
   
   # run PCA plot
   output$QCdesignPCARaw <- renderPlot({
     FlomicsMultiAssay <<-  RunPCA(FlomicsMultiAssay, data=dataset, PCA="raw")
-    PC1.value <- as.numeric(input$PC1raw)
-    PC2.value <- as.numeric(input$PC2raw)   
-    plotPCAnorm(FlomicsMultiAssay, data=dataset, PCA="raw", PCs=c(PC1.value, PC2.value), 
-                condition=input$condColorSelectRaw, 
-                pngFile=file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")))
+    PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
+    PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])   
+    condGroup <- input$`rawData-condColorSelect`[1]
+    
+    plotPCAnorm(FlomicsMultiAssay, data=dataset, PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup, 
+                pngFile=file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")))
   })
   
   
@@ -117,11 +85,12 @@ RNAseqDataExplorTab <- function(input, output, session, dataset){
   ## screenShot
   observeEvent(input$screenshotPCA_QC, {
     
-    PC1.value <- as.numeric(input$PC1raw)
-    PC2.value <- as.numeric(input$PC2raw) 
+    PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
+    PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])   
+    condGroup <- input$`rawData-condColorSelect`[1]
     
-    file.copy(file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")), 
-              file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_PC", PC1.value,"_PC", PC2.value, "_", input$condColorSelectRaw, ".png")), 
+    file.copy(file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")), 
+              file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")), 
               overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
   })
   
@@ -140,3 +109,4 @@ RNAseqDataExplorTab <- function(input, output, session, dataset){
   })
   
 }
+

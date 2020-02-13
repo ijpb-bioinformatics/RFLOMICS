@@ -1,9 +1,9 @@
 
 library(shiny)
-source("DataExploratoryModules.R")
-source("NormalizationModules.R")
-source("DiffExpressionModules.R")
-source("CoExpressionModules.R")
+# source("DataExploratoryModules.R")
+# source("NormalizationModules.R")
+# source("DiffExpressionModules.R")
+# source("CoExpressionModules.R")
 
 rm(list = ls())
 
