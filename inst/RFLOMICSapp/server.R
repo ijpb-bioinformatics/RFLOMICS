@@ -26,7 +26,6 @@ shinyServer(function(input, output, session) {
     else{
       print("# ... metadata QC...")
       QCmat <- read.table(qcFile$datapath, header = TRUE)
-
     }
     se <- SummarizedExperiment(assays  = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
                                colData = QCmat)
@@ -139,7 +138,6 @@ shinyServer(function(input, output, session) {
           listmap[[dataName]] <- data.frame(primary = as.vector(listExp[[dataName]]@colData$primary),
                                             colname = as.vector(listExp[[dataName]]@colData$colname),
                                             stringsAsFactors = FALSE)
- 
         }
       }
     }
@@ -155,7 +153,6 @@ shinyServer(function(input, output, session) {
                                                metadata    = list(design = Design,
                                                                   colDataStruc = c(n_dFac = dim(ExpDesign)[2], n_qcFac = 0),
                                                                   omicList = omicList))
-
   }
 
   # Definition of the updateDesignFactors function()
@@ -234,8 +231,6 @@ shinyServer(function(input, output, session) {
       menuSubItem("Design matrix", tabName = "SetUpModel",  selected = TRUE)
       
       })
-    
-    })
   
   
   ####### Set up Design model ########
@@ -274,6 +269,8 @@ shinyServer(function(input, output, session) {
       })
     })
 
+  })
+  
   # as soon as the "Valid factor set up" button has been clicked
   #  => The upvdateDesignFactors function is called
   #  => The interface to select the model formulae appear
