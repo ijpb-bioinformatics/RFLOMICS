@@ -198,7 +198,14 @@ setMethod(f= "abundanceBoxplot",
 
             # this function generate boxplot (abandance distribution) from raw data and normalized data
 
-            #col <- colorPlot(object@design, object@colData, condition="samples")
+            groups    <- unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]),
+                               col="groups", sep="_", remove = TRUE)$groups
+            conditions<- object@colData %>% as.data.frame() %>% mutate(samples=row.names(.), groups=groups)
+            
+            score     <- object[[data]]@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
+                         mutate(samples=row.names(.)) %>% full_join(., conditions, by="samples")
+            
+            
             sample_names <- row.names(object@colData)
 
             groups  <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>% as.data.frame() %>%
@@ -349,11 +356,10 @@ setMethod(f="RunNormalization",
           signature="MultiAssayExperiment",
           definition <- function(object, data, NormMethod){
 
-            groups <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>%
-              as.data.frame() %>% unite(col="groups", sep="_")
+            groups <- unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_")$groups
 
             coefNorm  = switch(NormMethod,
-                               "TMM"=TMM.Normalization(assay(object[[data]]), groups$groups)
+                               "TMM"=TMM.Normalization(assay(object[[data]]), groups)
             )
             object@ExperimentList[[data]]@metadata[["Normalization"]] <- list(methode = NormMethod, coefNorm = coefNorm)
             return(object)

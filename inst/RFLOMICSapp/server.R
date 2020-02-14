@@ -32,10 +32,6 @@ shinyServer(function(input, output, session) {
     #se <- SummarizedExperiment(assays  = list(counts=counts), colData = QCmat)
     return(se)
   }
-  
-  
-
-
 
   loadExpDesign <- function() {
 
@@ -315,7 +311,8 @@ shinyServer(function(input, output, session) {
             vect <- as.vector(filter(Design@Contrasts.List, factors==i)[["idContrast"]])
             names(vect) <- as.vector(filter(Design@Contrasts.List, factors==i)[["hypoth"]])
 
-            checkboxGroupInput("ListOfContrasts1", paste0(i, " effect"), vect)
+            #checkboxGroupInput("ListOfContrasts1", paste0(i, " effect"), vect)
+            checkboxGroupInput(paste0("ListOfContrasts",i), i, vect)
         }),
 
         column(width=4, actionButton("validContrasts","Valid contrast(s) choice(s)")))
@@ -328,7 +325,14 @@ shinyServer(function(input, output, session) {
   # => The load data item appear
   observeEvent(input$validContrasts, {
 
-    Design@Contrasts.Sel <<- c(input$ListOfContrasts1)
+    #Design@Contrasts.Sel <<- c(input$ListOfContrasts1)
+    
+    tmp <- vector()
+    Design@Contrasts.Sel <<- unlist(lapply(unique(Design@Contrasts.List$factors), function(i) {
+      tmp<-c(tmp,input[[paste0("ListOfContrasts",i)]])
+      return(tmp)
+    }))
+    
     
     output$importData <- renderMenu({
       menuItem("Load Data", tabName = "importData",icon = icon('download'), selected = TRUE)
