@@ -198,13 +198,6 @@ setMethod(f= "abundanceBoxplot",
 
             # this function generate boxplot (abandance distribution) from raw data and normalized data
 
-            groups    <- unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]),
-                               col="groups", sep="_", remove = TRUE)$groups
-            conditions<- object@colData %>% as.data.frame() %>% mutate(samples=row.names(.), groups=groups)
-            
-            score     <- object[[data]]@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
-                         mutate(samples=row.names(.)) %>% full_join(., conditions, by="samples")
-            
             
             sample_names <- row.names(object@colData)
 

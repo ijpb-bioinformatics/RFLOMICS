@@ -52,7 +52,7 @@ RNAseqDataNormTabUI <- function(id){
                       #actionButton("RunNormalization","Run Normalisation")
                  )
                ),
-               actionButton(ns("NormValid"),"Validate")
+               actionButton(ns("normUpdate"),"Update")
         ),
         column(8,
                box(title = "Abundance distribution", solidHeader = TRUE, status = "warning", width = 14 ,  height = NULL,
@@ -79,40 +79,47 @@ RNAseqDataNormTabUI <- function(id){
   )
 }
 
+RunFilterNormPCAfunction <- function(dataset, FilterSeuil, NormMethod){
+  #### Filter low abundance ####
+  print("# 7- Low Abundance Filtering...")
+  FlomicsMultiAssay <- FilterLowAbundance(FlomicsMultiAssay, data=dataset, FilterSeuil)
+
+  #### Run Normalisation ####
+  print("# 8- Abundance normalization...")
+  FlomicsMultiAssay <- RunNormalization(FlomicsMultiAssay, data=paste0(dataset,".filtred"), NormMethod)
+
+  #### Run PCA for filtred & normalized data ####
+  FlomicsMultiAssay <- RunPCA(FlomicsMultiAssay, data=paste0(dataset,".filtred"), PCA="norm")
+
+  return(FlomicsMultiAssay)
+}
 
 RNAseqDataNormTab <- function(input, output, session, dataset){
- 
-  FlomicsMultiAssay.rea <<- reactive({
-    #### Filter low abundance ####
-    FilterSeuil <- input$FilterSeuil
-    
-    #### Run Normalisation ####
-    print("# 8- Abundance normalization...")
-    FlomicsMultiAssay <<- RunNormalization(FlomicsMultiAssay, data=paste0(dataset,".filtred"), input$selectNormMethod)
-    
-    #### Run PCA for filtred & normalized data ####
-    FlomicsMultiAssay <<- RunPCA(FlomicsMultiAssay, data=paste0(dataset,".filtred"), PCA="norm")
-    
-    FlomicsMultiAssay
-  })
   
+  # FlomicsMultiAssay.rea <<- reactive({
+  #   #### Filter low abundance ####
+  #   print("# 7- Low Abundance Filtering...")
+  #   FlomicsMultiAssay <<- FilterLowAbundance(FlomicsMultiAssay, data=dataset, FilterSeuil)
+  # 
+  #   #### Run Normalisation ####
+  #   print("# 8- Abundance normalization...")
+  #   FlomicsMultiAssay <<- RunNormalization(FlomicsMultiAssay, data=paste0(dataset,".filtred"), NormMethod)
+  # 
+  #   #### Run PCA for filtred & normalized data ####
+  #   FlomicsMultiAssay <<- RunPCA(FlomicsMultiAssay, data=paste0(dataset,".filtred"), PCA="norm")
+  # 
+  #   FlomicsMultiAssay
+  # })
   
-  print("# 7- Low Abundance Filtering...")
-  output$FilterResults <- renderPrint({
-    
-    FlomicsMultiAssay <<- FilterLowAbundance(FlomicsMultiAssay, data=dataset, input$FilterSeuil)
-    paste0( length(FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$FilteredFeature),
-            " features filtered (from ", dim(FlomicsMultiAssay[[dataset]])[1], ")")
-  })
+  FlomicsMultiAssay <<- RunFilterNormPCAfunction (dataset, FilterSeuil=0 , NormMethod="TMM")
   
   ## Boxplot of distribution of normalized abundance 
   output$norm.boxplot <- renderPlot({
-    FlomicsMultiAssay.rea()
     abundanceBoxplot(FlomicsMultiAssay, dataType=paste0(dataset,".filtred"), 
                      pngFile=file.path(tempdir(), paste0(dataset,"_norm.boxplot.png")))
-  })
+  })  
   
-  
+
   #### PCA analysis ####
   # select PCA axis for plot
   # update/adapt PCA axis
@@ -121,6 +128,7 @@ RNAseqDataNormTab <- function(input, output, session, dataset){
   # select factors for color PCA plot
   callModule(RadioButtonsCondition, "normData")
   
+  
   # PCA plot
   output$norm.PCAcoord <- renderPlot({
     
@@ -128,21 +136,55 @@ RNAseqDataNormTab <- function(input, output, session, dataset){
     PC2.value <- as.numeric(input$`normData-Secondaxis`[1])   
     condGroup <- input$`normData-condColorSelect`[1]
     
-    plotPCAnorm(FlomicsMultiAssay.rea(), data=paste0(dataset,".filtred"), PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup, 
-                pngFile=file.path(tempdir(), paste0(dataset,".filtred","_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")))
-   })
+    plotPCAnorm(FlomicsMultiAssay, data=paste0(dataset,".filtred"), PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup, 
+                pngFile=file.path(tempdir(), paste0(dataset,".filtred","_PCAdesign_norm_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")))
+  })
+    
+  observeEvent(input$normUpdate, {
+    
+    FilterSeuil <- input$FilterSeuil
+    NormMethod  <- input$selectNormMethod
+    
+    
+    FlomicsMultiAssay <<- RunFilterNormPCAfunction (dataset, FilterSeuil , NormMethod)
+    
+    output$FilterResults <- renderPrint({
+  
+      paste0( length(FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$FilteredFeature),
+              " features filtered (from ", dim(FlomicsMultiAssay[[dataset]])[1], ")")
+    })
+    
+    ## Boxplot of distribution of normalized abundance 
+    output$norm.boxplot <- renderPlot({
+      abundanceBoxplot(FlomicsMultiAssay, dataType=paste0(dataset,".filtred"), 
+                       pngFile=file.path(tempdir(), paste0(dataset,"_norm.boxplot.png")))
+    })
+    
+    
+    # PCA plot
+    output$norm.PCAcoord <- renderPlot({
+      
+      PC1.value <- as.numeric(input$`normData-Firstaxis`[1])
+      PC2.value <- as.numeric(input$`normData-Secondaxis`[1])   
+      condGroup <- input$`normData-condColorSelect`[1]
+      
+      plotPCAnorm(FlomicsMultiAssay, data=paste0(dataset,".filtred"), PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup, 
+                  pngFile=file.path(tempdir(), paste0(dataset,".filtred","_PCAdesign_norm_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")))
+    })
+  })
+  
   
   # save current PCA plot with fixed axix & color
   ## screenShot
   observeEvent(input$screenshotPCA_Norm, {
     PC1.value <- as.numeric(input$`normData-Firstaxis`[1])
-    PC2.value <- as.numeric(input$`normData-Secondaxis`[1])   
+    PC2.value <- as.numeric(input$`normData-Secondaxis`[1])
     condGroup <- input$`normData-condColorSelect`[1]
     
     file.copy(file.path(tempdir(), paste0(dataset,".filtred","_PCAdesign_norm_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")), 
               file.path(tempdir(), paste0(dataset,".filtred","_PCAdesign_norm_PC",     PC1.value,"_PC", PC2.value, "_", condGroup, ".png")), 
               overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
-  })
+    })
   
 }
 
