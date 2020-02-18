@@ -198,7 +198,7 @@ setMethod(f= "abundanceBoxplot",
 
             # this function generate boxplot (abandance distribution) from raw data and normalized data
 
-            #col <- colorPlot(object@design, object@colData, condition="samples")
+            
             sample_names <- row.names(object@colData)
 
             groups  <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>% as.data.frame() %>%
@@ -246,22 +246,15 @@ setMethod(f= "plotPCAnorm",
             PC1 <- paste("Dim.",PCs[1], sep="")
             PC2 <- paste("Dim.",PCs[2], sep="")
 
-            #col <- colorPlot(object@design, object@colData, condition=condition)
+            groups    <- unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]),
+                               col="groups", sep="_", remove = TRUE)$groups
+            conditions<- object@colData %>% as.data.frame() %>% mutate(samples=row.names(.), groups=groups)
 
-            #sample_names <- row.names(object@colData)
+            score     <- object[[data]]@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
+                         mutate(samples=row.names(.)) %>% full_join(., conditions, by="samples")
 
-            groups    <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>% as.data.frame() %>%
-                         unite(col="groups", sep="_", remove = FALSE) #%>% mutate(samples=sample_names)
-
-
-            factors   <- object@metadata$design@List.Factors %>% as.data.frame() %>%
-                         unite(., col="samples", sep="_", remove = FALSE) %>% mutate(groups = groups$groups)
-
-            score     <- FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
-                         mutate(samples=row.names(.)) %>% full_join(., factors, by="samples")
-
-            var1 <- round(FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digit=3)
-            var2 <- round(FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digit=3)
+            var1 <- round(object[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digit=3)
+            var2 <- round(object[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digit=3)
 
             
             p <- ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
@@ -276,8 +269,9 @@ setMethod(f= "plotPCAnorm",
               #scale_color_manual(values=col$colors)
             
             print(p)
-            ggsave(filename = pngFile,  plot = p)
-            
+            if(! is.null(pngFile)){
+              ggsave(filename = pngFile, plot = p)
+            }
             })
 
 
@@ -355,11 +349,10 @@ setMethod(f="RunNormalization",
           signature="MultiAssayExperiment",
           definition <- function(object, data, NormMethod){
 
-            groups <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>%
-              as.data.frame() %>% unite(col="groups", sep="_")
+            groups <- unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_")$groups
 
             coefNorm  = switch(NormMethod,
-                               "TMM"=TMM.Normalization(assay(object[[data]]), groups$groups)
+                               "TMM"=TMM.Normalization(assay(object[[data]]), groups)
             )
             object@ExperimentList[[data]]@metadata[["Normalization"]] <- list(methode = NormMethod, coefNorm = coefNorm)
             return(object)

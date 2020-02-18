@@ -5,6 +5,9 @@
 \alias{DiffAnalysis-class}
 \alias{.DiffAnalysis}
 \title{DiffAnalysis class}
+\value{
+
+}
 \description{
 Store the results of a differential analysis
 }

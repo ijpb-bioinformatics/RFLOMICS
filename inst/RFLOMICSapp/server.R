@@ -1,9 +1,9 @@
 
 library(shiny)
-source("DataExploratoryModules.R")
-source("NormalizationModules.R")
-source("DiffExpressionModules.R")
-source("CoExpressionModules.R")
+# source("DataExploratoryModules.R")
+# source("NormalizationModules.R")
+# source("DiffExpressionModules.R")
+# source("CoExpressionModules.R")
 
 rm(list = ls())
 
@@ -26,17 +26,12 @@ shinyServer(function(input, output, session) {
     else{
       print("# ... metadata QC...")
       QCmat <- read.table(qcFile$datapath, header = TRUE)
-
     }
     se <- SummarizedExperiment(assays  = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
                                colData = QCmat)
     #se <- SummarizedExperiment(assays  = list(counts=counts), colData = QCmat)
     return(se)
   }
-  
-  
-
-
 
   loadExpDesign <- function() {
 
@@ -139,7 +134,6 @@ shinyServer(function(input, output, session) {
           listmap[[dataName]] <- data.frame(primary = as.vector(listExp[[dataName]]@colData$primary),
                                             colname = as.vector(listExp[[dataName]]@colData$colname),
                                             stringsAsFactors = FALSE)
- 
         }
       }
     }
@@ -155,7 +149,6 @@ shinyServer(function(input, output, session) {
                                                metadata    = list(design = Design,
                                                                   colDataStruc = c(n_dFac = dim(ExpDesign)[2], n_qcFac = 0),
                                                                   omicList = omicList))
-
   }
 
   # Definition of the updateDesignFactors function()
@@ -234,8 +227,6 @@ shinyServer(function(input, output, session) {
       menuSubItem("Design matrix", tabName = "SetUpModel",  selected = TRUE)
       
       })
-    
-    })
   
   
   ####### Set up Design model ########
@@ -274,6 +265,8 @@ shinyServer(function(input, output, session) {
       })
     })
 
+  })
+  
   # as soon as the "Valid factor set up" button has been clicked
   #  => The upvdateDesignFactors function is called
   #  => The interface to select the model formulae appear
@@ -318,7 +311,8 @@ shinyServer(function(input, output, session) {
             vect <- as.vector(filter(Design@Contrasts.List, factors==i)[["idContrast"]])
             names(vect) <- as.vector(filter(Design@Contrasts.List, factors==i)[["hypoth"]])
 
-            checkboxGroupInput("ListOfContrasts1", paste0(i, " effect"), vect)
+            #checkboxGroupInput("ListOfContrasts1", paste0(i, " effect"), vect)
+            checkboxGroupInput(paste0("ListOfContrasts",i), i, vect)
         }),
 
         column(width=4, actionButton("validContrasts","Valid contrast(s) choice(s)")))
@@ -331,7 +325,14 @@ shinyServer(function(input, output, session) {
   # => The load data item appear
   observeEvent(input$validContrasts, {
 
-    Design@Contrasts.Sel <<- c(input$ListOfContrasts1)
+    #Design@Contrasts.Sel <<- c(input$ListOfContrasts1)
+    
+    tmp <- vector()
+    Design@Contrasts.Sel <<- unlist(lapply(unique(Design@Contrasts.List$factors), function(i) {
+      tmp<-c(tmp,input[[paste0("ListOfContrasts",i)]])
+      return(tmp)
+    }))
+    
     
     output$importData <- renderMenu({
       menuItem("Load Data", tabName = "importData",icon = icon('download'), selected = TRUE)

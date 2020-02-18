@@ -8,10 +8,11 @@
 #
 
 library(shinydashboard)
-source("DataExploratoryModules.R")
-source("NormalizationModules.R")
-source("DiffExpressionModules.R")
-source("CoExpressionModules.R")
+# source("DataExploratoryModules.R")
+# source("NormalizationModules.R")
+# source("DiffExpressionModules.R")
+# source("CoExpressionModules.R")
+# source("commonModules.R")
 
 sidebar <- dashboardSidebar(
   sidebarMenu(id="StateSave",
