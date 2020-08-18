@@ -1,0 +1,7 @@
+sample_id genotype repeat
+WT_rep1_exp1 63A rep1
+WT_rep2_exp1 63A rep2
+WT_rep3_exp1 63A rep3
+sge1_rep1_exp1 sge1 rep1
+sge1_rep2_exp1 sge1 rep2
+sge1_rep3_exp1 sge1 rep3

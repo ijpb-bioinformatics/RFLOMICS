@@ -78,7 +78,11 @@ DiffAnalysis <- function(){
 #' @title Multivariate Quality Check
 #'
 #' @param MultiAssayExperiment an object of Class MultiAssayExperiment
+#' @param data data name
 #' @param axis The number of PCA axis
+#' @param PCA pca axis to plot
+#' @param pngFile plot file name to save
+
 #'
 #' @exportMethod mvQCdesign
 #'
@@ -87,7 +91,7 @@ DiffAnalysis <- function(){
 
 setMethod(f="mvQCdesign",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, PCA=c("raw","norm"), axis=5, pngDir){
+          definition <- function(object, data, PCA=c("raw","norm"), axis=5, pngFile=NULL){
 
             resPCA <- object[[data]]@metadata[["PCAlist"]][[PCA]]
             cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
@@ -109,7 +113,7 @@ setMethod(f="mvQCdesign",
                 df[[j]] <- data.frame(y,col,Axis,dfac=names(object@colData)[1:n_dFac][i],
                                       Levels=Fac,x=1:length(y))
               }
-              bigdf[[i]] <- bind_rows(df)
+              bigdf[[i]] <- dplyr::bind_rows(df)
             }
             big <- dplyr::bind_rows(bigdf)
             out <- by(data = big, INDICES = big$dfac, FUN = function(m) {
@@ -126,20 +130,26 @@ setMethod(f="mvQCdesign",
             })
             p <- do.call(grid.arrange, out)
             print(p)
-            ggsave(filename = "PCAdesignCoordRaw.png", path = pngDir, plot = p)
+            
+            if(! is.null(pngFile)){
+              ggsave(filename = pngFile,  plot = p)
+            }
 })
 
 
 #' @title multivariate QC data
 #' @param MultiAssayExperiment an object of Class MultiAssayExperiment
+#' @param data data name
 #' @param axis The number of PCA axis
+#' @param PCA pca axis to plot
+#' @param pngFile plot file name to save
 #'
 #' @exportMethod mvQCdata
 #' @rdname mvQCdata
 
 setMethod(f="mvQCdata",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, PCA=c("raw","norm"),axis=3, pngDir){
+          definition <- function(object, data, PCA=c("raw","norm"),axis=3, pngFile=NULL){
 
             resPCA <- object[[data]]@metadata[["PCAlist"]][[PCA]]
             cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
@@ -166,7 +176,10 @@ setMethod(f="mvQCdata",
               labs(x = "Axis number", y="Cor(Coord_dFactor_PCA,QCparam)")
             
             print(p)
-            ggsave(filename = "PCAmetaCorrRaw.png", path = pngDir, plot = p)
+            
+            if(! is.null(pngFile)){
+              ggsave(filename = pngFile, plot = p)
+            }
             
           })
 
@@ -175,16 +188,17 @@ setMethod(f="mvQCdata",
 #' @title abundanceBoxplot
 #' @param MultiAssayExperiment an object of Class MultiAssayExperiment
 #' @param dataType omic data type
+#' @param pngFile
 #' @exportMethod abundanceBoxplot
 #' @rdname abundanceBoxplot
 #'
 setMethod(f= "abundanceBoxplot",
           signature = "MultiAssayExperiment",
-          definition <- function(object, dataType, pngDir){
+          definition <- function(object, dataType, pngFile=NULL){
 
             # this function generate boxplot (abandance distribution) from raw data and normalized data
 
-            #col <- colorPlot(object@design, object@colData, condition="samples")
+            
             sample_names <- row.names(object@colData)
 
             groups  <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>% as.data.frame() %>%
@@ -200,10 +214,15 @@ setMethod(f= "abundanceBoxplot",
 
             # boxplot
             p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + geom_boxplot(aes(fill=groups)) +
-              theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
+              theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +
+              xlab(paste0(dataType, " samples"))
+              
               #scale_fill_manual(values=col)
             print(p)
-            ggsave(filename = "norm.boxplot.png", plot = p, path = pngDir)
+            
+            if(! is.null(pngFile)){
+              ggsave(filename = pngFile, plot = p)
+            }
             
           }
 )
@@ -221,28 +240,21 @@ setMethod(f= "abundanceBoxplot",
 #' @examples
 setMethod(f= "plotPCAnorm",
           signature = "MultiAssayExperiment",
-          definition <- function(object, data, PCA, PCs=c(1,2), condition="groups", pngDir){
+          definition <- function(object, data, PCA, PCs=c(1,2), condition="groups", pngFile){
 
             #
             PC1 <- paste("Dim.",PCs[1], sep="")
             PC2 <- paste("Dim.",PCs[2], sep="")
 
-            #col <- colorPlot(object@design, object@colData, condition=condition)
+            groups    <- unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]),
+                               col="groups", sep="_", remove = TRUE)$groups
+            conditions<- object@colData %>% as.data.frame() %>% mutate(samples=row.names(.), groups=groups)
 
-            #sample_names <- row.names(object@colData)
+            score     <- object[[data]]@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
+                         mutate(samples=row.names(.)) %>% full_join(., conditions, by="samples")
 
-            groups    <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>% as.data.frame() %>%
-                         unite(col="groups", sep="_", remove = FALSE) #%>% mutate(samples=sample_names)
-
-
-            factors   <- object@metadata$design@List.Factors %>% as.data.frame() %>%
-                         unite(., col="samples", sep="_", remove = FALSE) %>% mutate(groups = groups$groups)
-
-            score     <- FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
-                         mutate(samples=row.names(.)) %>% full_join(., factors, by="samples")
-
-            var1 <- round(FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digit=3)
-            var2 <- round(FlomicsMultiAssay[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digit=3)
+            var1 <- round(object[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digit=3)
+            var2 <- round(object[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digit=3)
 
             
             p <- ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
@@ -257,8 +269,9 @@ setMethod(f= "plotPCAnorm",
               #scale_color_manual(values=col$colors)
             
             print(p)
-            ggsave(filename = paste0("PCAdesign_" , data , "_PC", PCs[1], "-PC", PCs[2], "_", condition, ".png"), path = pngDir, plot = p)
-            
+            if(! is.null(pngFile)){
+              ggsave(filename = pngFile, plot = p)
+            }
             })
 
 
@@ -336,11 +349,10 @@ setMethod(f="RunNormalization",
           signature="MultiAssayExperiment",
           definition <- function(object, data, NormMethod){
 
-            groups <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>%
-              as.data.frame() %>% unite(col="groups", sep="_")
+            groups <- unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_")$groups
 
             coefNorm  = switch(NormMethod,
-                               "TMM"=TMM.Normalization(assay(object[[data]]), groups$groups)
+                               "TMM"=TMM.Normalization(assay(object[[data]]), groups)
             )
             object@ExperimentList[[data]]@metadata[["Normalization"]] <- list(methode = NormMethod, coefNorm = coefNorm)
             return(object)

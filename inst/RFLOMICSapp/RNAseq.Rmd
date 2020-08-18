@@ -1,0 +1,96 @@
+
+
+# `r data` data analysis
+
+## data Exploratory
+
+> Raw count
+
+```{r }
+#data <- paste0("RNAseq.",data)
+
+assay(FlomicsMultiAssay[[data]])[1:5,1:5]
+
+```
+
+
+> Library size & count distribution
+
+```{r, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+#knitr::include_graphics(c(file.path(pngDir, paste0(data, "_LibSize.png")), 
+#                          file.path(pngDir, paste0(data, "_CountDist.png"))))
+
+plotLibSize(abundances= assay(FlomicsMultiAssay[[data]]), 
+            dataName  = data, 
+            pngFile   = NULL)
+
+plotDistr(abundances= assay(FlomicsMultiAssay[[data]]),
+          dataName  = data, 
+          pngFile   = NULL)
+
+```
+
+> Principal component analysis
+
+>> Design 
+
+```{r , message=FALSE, warning=FALSE, fig.show = "hold", out.width = "50%"}
+knitr::include_graphics(list.files (path = file.path(pngDir), 
+                                    pattern = paste0(data,"_PCAdesign_raw_PC"), 
+                                    full.names = TRUE))
+```
+
+
+```{r , message=FALSE, warning=FALSE, fig.show = "hold"}
+#knitr::include_graphics(file.path(pngDir, paste0(data, "_PCAdesignCoordRaw.png")))
+mvQCdesign(object = FlomicsMultiAssay,
+           data   = data, PCA="raw", axis=5, 
+           pngFile= NULL) 
+```
+
+>> metadata
+
+```{r , message=FALSE, warning=FALSE, fig.show = "hold"}
+
+#knitr::include_graphics(file.path(pngDir, paste0(data, "_PCAmetaCorrRaw.png")))
+mvQCdata(object = FlomicsMultiAssay,
+         data   = data, PCA="raw", axis=5, 
+         pngFile= NULL) 
+
+```
+
+## Filtering and Normalisation
+
+> Normalisation method : `r FlomicsMultiAssay[[paste0(data, ".filtred")]]@metadata$Normalization$methode`
+
+```{r ,message=FALSE, warning=FALSE,  fig.show = "hold"}
+#knitr::include_graphics(file.path(pngDir, paste0(data, "_norm.boxplot.png")))
+abundanceBoxplot(object  = FlomicsMultiAssay, 
+                 dataType= paste0(data,".filtred"), 
+                 pngFile = NULL)
+
+```
+
+
+```{r ,message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "50%"}
+knitr::include_graphics(list.files (path = file.path(pngDir), 
+                                    pattern = paste0(data,"_PCAdesign_norm_PC"), 
+                                    full.names = TRUE))
+
+```
+
+## Differential expression analysis 
+
+```{r ,message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "50%"}
+#knitr::include_graphics(list.files (path = file.path(pngDir), 
+#                                    pattern = paste0(data, "_PvalueDistribution"), 
+#                                    full.names = TRUE))
+
+for (contrast  in  names(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["AnaDiffDeg"]])) {
+   pvalue.plot(data    = FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["AnaDiffDeg"]][[contrast]], 
+               contrast= as.vector(filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast == contrast)$hypoth),
+               pngFile = NULL) 
+}
+
+
+```

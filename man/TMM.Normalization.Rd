@@ -2,13 +2,20 @@
 % Please edit documentation in R/utils.R
 \name{TMM.Normalization}
 \alias{TMM.Normalization}
-\title{TMM.Normalization}
+\title{TMM.Normalization
+Interface to the calcNormFactors functionof the edgeR package  with the choosen TMM parameters as the normalization method}
 \usage{
 TMM.Normalization(counts, groups)
 }
 \arguments{
-\item{counts}{}
+\item{counts}{numeric matrix of read counts}
+
+\item{groups}{vector or factor giving the experimental group/condition for each sample/library.}
+}
+\value{
+a data.frame with a row for each sample and columns group, lib.size and norm.factors containing the group labels, library sizes and normalization factors. Other columns can be optionally added to give more detailed sample information.
 }
 \description{
 TMM.Normalization
+Interface to the calcNormFactors functionof the edgeR package  with the choosen TMM parameters as the normalization method
 }

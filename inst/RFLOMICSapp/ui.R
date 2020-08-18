@@ -8,30 +8,36 @@
 #
 
 library(shinydashboard)
+# source("DataExploratoryModules.R")
+# source("NormalizationModules.R")
+# source("DiffExpressionModules.R")
+# source("CoExpressionModules.R")
+# source("commonModules.R")
 
 sidebar <- dashboardSidebar(
   sidebarMenu(id="StateSave",
-              menuItem("Experimental Design", tabName = "ExpDesign", icon = icon('vials'), startExpanded = TRUE,
+              menuItem("Experimental Design", tabName = "ExpDesign", icon = icon('vials'),  startExpanded=TRUE, 
                        menuSubItem("Import design",  tabName = "importExpDesign", selected = TRUE),
                        menuItemOutput("SetUpModel")
                        ),
               menuItemOutput("importData"),
+              #uiOutput("dataList"),
               menuItemOutput("omics"),
-              #menuItemOutput("RNAseq") ,
-              #menuItemOutput("metabolome") ,
-              #menuItemOutput("proteome"),
-              menuItemOutput("Exploratory"),
-              menuItemOutput("DiffAnalysis")
-              #menuItemOutput("CoExpAnalysis")
+              menuItemOutput("Integration")
+              
               ),
   tags$br(),
   tags$br(),
   downloadButton("report", "Generate report")
 )
 
-body <- dashboardBody(
+body <- dashboardBody({
 
-  tabItems(
+  items <- c( 
+    
+    list(
+  
+  #tabItems(
     
     #### Import Exp design ####
     ###########################
@@ -44,11 +50,7 @@ body <- dashboardBody(
                 column(width = 6,
                  # matrix count/abundance input
                  fileInput("Experimental.Design.file", "Import matrix of Experimental Design (txt)",
-                           accept = c(
-                             "text/csv",
-                             "text/comma-separated-values,text/plain",
-                             ".csv")
-                          ),
+                           accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                   actionButton("loadExpDesign","load")
                 )
 
@@ -71,14 +73,13 @@ body <- dashboardBody(
               fluidRow(
                 uiOutput("GetdFactorRef")
               ),
+              
               h4("Select the type of the design factor"),
-              fluidRow(
-                uiOutput("GetdFactorType")
-              ),
+              fluidRow( uiOutput("GetdFactorType") ),
+              
               h4("Enter a name for each design factor"),
-              fluidRow(
-                uiOutput("GetdFactorName")
-              ),
+              fluidRow( uiOutput("GetdFactorName") ),
+              
             actionButton("ValidF","Valid factor set up")
           )
         )
@@ -96,221 +97,126 @@ body <- dashboardBody(
     #### Import data       ####
     ###########################
     tabItem(tabName = "importData",
-            fluidRow(
-                box(title = "RNAseq data", status = "warning", width = 12, height = NULL,
-                  column(6,
-
-                     # matrix count/abundance input
-                     fileInput("RNAseq.Count.Import.file", "matrix of gene counts as .txt file",
-                               accept = c(
-                                 "text/csv",
-                                 "text/comma-separated-values,text/plain",
-                                 ".csv")
-                     )
-
+            
+         box(title = "Load omic data", status = "warning", width = 12, height = NULL,
+             h5("[warning] dataset with omics (type == none) was igored..."),
+             fluidRow(
+                  column(2,
+                         # omic type
+                         selectInput(inputId='omicType1', label='Omics', 
+                                     choices = c("None"="none", "RNAseq"="RNAseq", 
+                                                 "Proteomics"="proteomics", "Metabolomics"="Metabolomics"),
+                                     selected = "none")
+                         ),
+                  column(4,
+                         
+                         # matrix count/abundance input
+                         fileInput("data1", "omic count/abundance (Ex.)",
+                                   accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
+                         ),
+                  column(4,
+                         # metadata/QC bioinfo
+                         fileInput("metadataQC1", "QC or metadata (Ex.)",
+                                   accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
+                         ),
+                  column(2,
+                         # dataset Name
+                         textInput(inputId="DataName1", label="Dataset name", value="set1")
+                         )
+                  
+                  #,
+                  #column(2, actionButton("removeFactor1", "",
+                  #                       icon=icon("times", class = NULL, lib = "font-awesome")))
                   ),
-                  column(6,
-                     # metadata/QC bioinfo
-                     fileInput("RNAseq.QC.Import.file", "QC or metadata as .txt file",
-                               accept = c(
-                                 "text/csv",
-                                 "text/comma-separated-values,text/plain",
-                                 ".csv")
-                     )
-                  )
-                )
-            ),
-            fluidRow(
-              box(title = "Proteomics data",  status = "warning", width = 12, height = NULL,
-                column(6,
-
-                     # matrix count/abundance input
-                     fileInput("prot.abundances.Import.file", "matrix of protein abundances as .txt file",
-                               accept = c(
-                                 "text/csv",
-                                 "text/comma-separated-values,text/plain",
-                                 ".csv")
-                     )
-                ),
-                column(6,
-                     # metadata/QC bioinfo
-                     fileInput("prot.QC.Import.file", "QC or metadata as .txt File",
-                               accept = c(
-                                 "text/csv",
-                                 "text/comma-separated-values,text/plain",
-                                 ".csv")
-                              )
-                    )
-              )
-            ),
-            fluidRow(
-              box(title = "Metabolomics data",  status = "warning", width = 12, height = NULL,
-
-                column(6,
-
-                     # matrix count/abundance input
-                     fileInput("metabo.abundances.Import.file", "matrix of metabolite abundances as .txt file",
-                               accept = c(
-                                 "text/csv",
-                                 "text/comma-separated-values,text/plain",
-                                 ".csv")
-                               )
-                     ),
-                column(6,
-                     # metadata/QC bioinfo
-                     fileInput("metabo.QC.Import.file", "QC or metadata as .txt File",
-                               accept = c(
-                                 "text/csv",
-                                 "text/comma-separated-values,text/plain",
-                                 ".csv")
-                               )
-                     )
-                )
-              ),
-              actionButton("loadData","load")
-
-            ),
+             uiOutput("toAddData2"),
+             actionButton("addData","Add data")
+             ),
+         actionButton("loadData","load")
+         )),
     
-    #### Data Exploratory & QC ####
+    #### RNAseq Analysis  ####
     ###############################
-    
-    tabItem(tabName = "RNAseqExploratoryQC",
-            fluidRow(
-              box(title = "Raw Data Summary", solidHeader = TRUE, status = "warning", width = 12, height = NULL,
-                column(6,
-                    # library size plot
-                    plotOutput("LibSize", height = "400%")
-                ),
-                column(6,
-                    # count distribution plot
-                     plotOutput("CountDist", height = "400%")
-                )
-              )
-            ),
-            fluidRow(
-              box(title = "Exploratory of Biological and Technical variability", solidHeader = TRUE, width = 12, status = "warning",
-                 tabBox( id = "ExplorAnalysisQC", width = 12,
-
-                   tabPanel("Principal component analysis (1/2)",
-                        tags$br(),
-                        tags$br(),
-                        column(width = 2,
-
-                            fluidRow(uiOutput('condColorRaw')),
-                            tags$br(),
-                            fluidRow(uiOutput('PCA1axisRaw')),
-                            fluidRow(uiOutput('PCA2axisRaw')),
-                            tags$br(),
-                            tags$br(),
-                            fluidRow(actionButton("screenshotPCA_QC","Screenshot"))
-                            #fluidRow(
-                            #  radioButtons(inputId  = "PC1raw",
-                            #               label    = "Choice of PCs :",
-                            #               choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
-                            #               selected = 1, inline = TRUE),
-                            #
-                            #  radioButtons(inputId  = "PC2raw",
-                            #               label    = "",
-                            #               choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
-                            #               selected = 2, inline = TRUE)
-                            #  )
-                        ),
-                        column(width = 10,  plotOutput("QCdesignPCARaw"))
-
-
-                      ),
-                   tabPanel("Principal component analysis (2/2)",  plotOutput("QCdesignPCA")),
-                   tabPanel("Quality check for technical issues",    plotOutput("QCdata"))
-                 )
-              )
+    lapply(1:10, function(i){ 
+      tabItem(tabName = paste0("RNAseqAnalysis", i),
+            tabsetPanel(
+              
+              #### Data Exploratory & QC ####
+              ###############################
+              tabPanel("Data Exploratory",
+                       tags$br(),
+                       tags$br(),
+                       
+                       RNAseqDataExplorTabUI(paste0("RNAseq",i))
+                       
+                       ),
+              
+              #### Data Filter & Normalisation  ####
+              ######################################
+              tabPanel("Filter & Normalization",
+                       tags$br(),
+                       tags$br(),
+                       RNAseqDataNormTabUI(paste0("RNAseq",i))
+                       ),
+              #### Diff analysis  ####
+              ######################################
+              tabPanel("Diff Gene Expression",
+                       tags$br(),
+                       tags$br(),
+                       DiffExpAnalysisUI(paste0("RNAseq",i))
+                       ),
+              #### Co-expression analysis  ####
+              ######################################
+              tabPanel("Gene CoExpression", 
+                       #verbatimTextOutput("Asuivre")
               ),
-            tags$br(),
-            tags$br()
-
-            ),
-    tabItem(tabName = "RNAseqNormalization",
-            fluidRow(
-              column(4,
-                fluidRow(
-                  box( title = "Low Abundance Filtering",  solidHeader = TRUE, status = "warning", width = 12,
-                       numericInput(inputId = "FilterSeuil",
-                                    label="Threshold :",
-                                    value=0, 0, max=100, 1 ),
-
-                       actionButton("RunFiltering","Run Filtering"),
-                       verbatimTextOutput("FilterResults")
-                  )
-                ),
-                fluidRow(
-                  box( title = "Normalization" , solidHeader = TRUE, status = "warning", width = 12,
-                       selectInput(inputId  = "selectNormMethod",
-                                   label    = "Method :",
-                                   choices  =  list("TMM (edgeR)" = "TMM", "RLE (edgeR)" = "RLE", "upperquartile (edgeR)" = "upperquartile"),
-                                   selected = "TMM"),
-                       actionButton("RunNormalization","Run Normalisation")
-                  )
-                )
-              ),
-              column(8,
-                 box(title = "Abundance distribution", solidHeader = TRUE, status = "warning", width = 14 ,  height = NULL,
-                      plotOutput("norm.boxplot")
-                 )
+              tabPanel("Annotation Enrichment", 
+                       #verbatimTextOutput("Asuivre")
               )
-            ),
-            fluidRow(
-
-              box(title = "Principal component analysis", solidHeader = TRUE, status = "warning", width = 12 ,  height = NULL,
-
-                   column(width = 2,
-                          fluidRow( uiOutput('condColor') ),
-                          tags$br(),
-                          fluidRow( uiOutput('PC1axis')),
-                          fluidRow( uiOutput('PC2axis')),
-                          tags$br(),
-                          tags$br(),
-                          fluidRow(actionButton("screenshotPCA_Norm","Screenshot"))
-                          ),
-                   column(width = 10, plotOutput("norm.PCAcoord"))
-                )
+              
             )
-    ),
-   tabItem(tabName = "DiffAnalysis",
-           fluidRow(
-              box(width = 12, status = "warning",
-                 column(5,
-                     selectInput("AnaDiffMethod", label = "Method :",
-                                 choices = list("glmfit (edgeR)"="edgeRglmfit",
-                                                "limma" = "limma"),
-                                 selected = "edgeRglmfit")
-                 ),
-                 column(3,
-                        numericInput(inputId = "FDRSeuil",
-                                label="FDR :",
-                                value=0.05, 0, max=1, 0.01)
-                 ),
-                 column(3,
-                        selectInput(inputId = "clustermq",
-                                      label="send job to cluster",
-                                      choices = list("no"=FALSE,"genotoul"=TRUE))
-                 ),
-                 column(5,
-                          actionButton("runAnaDiff","Run the differential analysis")
-                 )
-              )
-           ),
-           tags$br(),
-           tags$br(),
-           fluidRow(
-                uiOutput("ContrastsResults")
-           ),
-           fluidRow(
-                uiOutput("ResultsMerge")
-           )
-    ),
-    tabItem(tabName = "CoExpression",
-            verbatimTextOutput("Asuivre")
     )
-))
+      
+  }),
+  
+  #### Proteome Analysis  #######
+  ###############################
+  lapply(1:10, function(j){ 
+    
+    tabItem(tabName = paste0("ProtAnalysis", j),
+            tabsetPanel(
+              
+              #### Data Exploratory & QC ####
+              ###############################
+              tabPanel("Data Exploratory",
+                       tags$br(),
+                       tags$br(),
+                       
+                       ProtMetaDataExplorTabUI(paste0("proteomics",j))
+              )
+            )
+          )
+    }),
+  #### metabolome Analysis  #######
+  ###############################
+  lapply(1:10, function(i){ 
+    
+    tabItem(tabName = paste0("MetaAnalysis", i),
+            tabsetPanel(
+              
+              #### Data Exploratory & QC ####
+              ###############################
+              tabPanel("Data Exploratory",
+                       tags$br(),
+                       tags$br(),
+                       
+                       ProtMetaDataExplorTabUI(paste0("metabolomics",i))
+              )
+            )
+    )
+  })
+ )
+do.call(tabItems, items)
+})
 
 # Put them together into a dashboardPage
 dashboardPage(

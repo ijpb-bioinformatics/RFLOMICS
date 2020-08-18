@@ -21,5 +21,7 @@ ExpDesign Class
 \item{\code{Model.formula}}{Modele formula.}
 
 \item{\code{Contrasts.List}}{A list of contrasts.}
+
+\item{\code{Model.matrix}}{.}
 }}
 

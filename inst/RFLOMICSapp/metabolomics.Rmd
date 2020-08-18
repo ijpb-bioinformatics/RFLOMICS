@@ -1,0 +1,25 @@
+
+# `r data` data analysis
+
+## data Exploratory
+
+> Raw abundance
+
+```{r raw data prot}
+
+print (data)
+assay(FlomicsMultiAssay[[data]])[1:5,1:5]
+
+```
+
+> Library size & count distribution
+
+```{r, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+#knitr::include_graphics(c(file.path(pngDir, paste0(data, "_LibSize.png")), 
+#                          file.path(pngDir, paste0(data, "_CountDist.png"))))
+
+plotDistr(abundances= assay(FlomicsMultiAssay[[data]]),
+          dataName  = data, 
+          pngFile   = NULL)
+
+```

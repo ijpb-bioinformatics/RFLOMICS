@@ -12,15 +12,12 @@ library(ggplot2)
 library(gridExtra)
 library(MultiAssayExperiment)
 library(reshape2)
+source("DataExploratoryModules.R")
+source("NormalizationModules.R")
+source("DiffExpressionModules.R")
+source("CoExpressionModules.R")
+source("commonModules.R")
 
-step_tag <- 4
-tmpDir <- "/Users/nbessoltane/rFlomics.report.tmp"
-unlink(tmpDir, recursive=TRUE)
 
-#if (file.exists(tmpDir)){
-  
-#} else {
-  dir.create(tmpDir)
-  #dir.create(file.path(tmpDir, "tmp"))
-#}
 
+SupportedOmics <- c("RNAseq", "proteomics", "metabolomics")

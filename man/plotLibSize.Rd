@@ -4,14 +4,13 @@
 \alias{plotLibSize}
 \title{plotLibSize}
 \usage{
-plotLibSize(abundances)
+plotLibSize(abundances, dataName, pngFile = NULL)
 }
 \arguments{
-\item{abundances}{}
-
-\item{design}{}
-
-\item{colData}{}
+\item{pngFile}{}
+}
+\value{
+plot
 }
 \description{
 plotLibSize

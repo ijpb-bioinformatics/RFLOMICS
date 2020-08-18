@@ -7,11 +7,10 @@
 colorPlot(design, ColData, condition = "samples")
 }
 \arguments{
-\item{design}{}
-
-\item{ColData}{}
-
 \item{condition}{}
+}
+\value{
+
 }
 \description{
 colorPlot

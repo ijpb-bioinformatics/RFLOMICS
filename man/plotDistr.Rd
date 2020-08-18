@@ -4,15 +4,21 @@
 \alias{plotDistr}
 \title{plotDistr}
 \usage{
-plotDistr(abundances)
+plotDistr(abundances, dataName, pngFile = NULL)
 }
 \arguments{
-\item{abundances}{}
+\item{abundances}{matrix or dataframe of feature/gene abundances/counts}
 
-\item{design}{}
+\item{dataName}{name of dataset}
 
-\item{colData}{}
+\item{pngFile}{png file name}
+}
+\value{
+plot
 }
 \description{
 plotDistr
+}
+\examples{
+plotDistr(assay(MAE), "dataset1", "tmp/countDist.png")
 }
