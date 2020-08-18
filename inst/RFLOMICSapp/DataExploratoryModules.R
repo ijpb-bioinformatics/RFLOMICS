@@ -110,3 +110,105 @@ RNAseqDataExplorTab <- function(input, output, session, dataset){
   
 }
 
+
+
+
+ProtMetaDataExplorTabUI <- function(id){
+
+  #name space for id
+  ns <- NS(id)
+  tagList(
+    fluidRow(
+      box(title = "Raw Data Summary", solidHeader = TRUE, status = "warning", width = 12, height = NULL,
+          # count distribution plot
+          column(6, plotOutput(ns("CountDistbis"), height = "400%"))
+      )
+    )
+    ,
+    fluidRow(
+      box(title = "Exploratory of Biological and Technical variability", solidHeader = TRUE, width = 12, status = "warning",
+          tabBox( id = "ExplorAnalysisQC", width = 12,
+
+                  tabPanel("Principal component analysis (1/2)",
+                           tags$br(),
+                           tags$br(),
+                           column(width = 2,
+
+                                  fluidRow(
+                                    RadioButtonsConditionUI(ns("rawDatabis"))),
+                                  tags$br(),
+                                  UpdateRadioButtonsUI(ns("rawDatabis")),
+                                  tags$br(),
+                                  tags$br(),
+                                  fluidRow(actionButton(ns("screenshotPCA_QCbis"),"Screenshot"))
+                           ),
+                           column(width = 10,  plotOutput(ns("QCdesignPCARawbis")))
+
+                  ),
+                  tabPanel("Principal component analysis (2/2)", plotOutput(ns("QCdesignPCAbis"))),
+                  tabPanel("Quality check for technical issues", plotOutput(ns("QCdatabis")))
+          )
+      )
+    )
+  )
+}
+
+
+
+ProtMetaDataExplorTab <- function(input, output, session, dataset){
+
+  #### abundance distribution ####
+  output$CountDistbis <- renderPlot(height = 300, {
+
+    plotDistr(abundances=assay(FlomicsMultiAssay[[dataset]]), dataName=dataset, pngFile=file.path(tempdir(), paste0(dataset,"_CountDist.png")))
+  })
+
+  #### PCA analysis ####
+  # select PCA axis for plot
+  # update/adapt PCA axis
+  callModule(UpdateRadioButtons, "rawDatabis")
+
+  # select factors for color PCA plot
+  callModule(RadioButtonsCondition, "rawDatabis")
+
+  # run PCA plot
+  output$QCdesignPCARawbis <- renderPlot({
+    FlomicsMultiAssay <<-  RunPCA(FlomicsMultiAssay, data=dataset, PCA="raw")
+    PC1.value <- as.numeric(input$`rawDatabis-Firstaxis`[1])
+    PC2.value <- as.numeric(input$`rawDatabis-Secondaxis`[1])
+    condGroup <- input$`rawDatabis-condColorSelect`[1]
+
+    plotPCAnorm(FlomicsMultiAssay, data=dataset, PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup,
+                pngFile=file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")))
+  })
+
+
+  # save current PCA plot with fixed axix & color
+  ## screenShot
+  observeEvent(input$screenshotPCA_QCbis, {
+
+    PC1.value <- as.numeric(input$`rawDatabis-Firstaxis`[1])
+    PC2.value <- as.numeric(input$`rawDatabis-Secondaxis`[1])
+    condGroup <- input$`rawDatabis-condColorSelect`[1]
+
+    file.copy(file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")),
+              file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")),
+              overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
+  })
+
+  #### PCA analysis QCdesign ####
+  output$QCdesignPCAbis <- renderPlot({
+
+    mvQCdesign(FlomicsMultiAssay,data=dataset,PCA="raw", axis=5,
+               pngFile=file.path(tempdir(), paste0(dataset,"_PCAdesignCoordRaw.png")))
+  })
+
+  #### PCA analysis QCdata ####
+  output$QCdatabis <- renderPlot({
+
+    mvQCdata(FlomicsMultiAssay,data=dataset,PCA="raw",axis=5,
+             pngFile=file.path(tempdir(), paste0(dataset,"_PCAmetaCorrRaw.png")))
+  })
+
+}
+

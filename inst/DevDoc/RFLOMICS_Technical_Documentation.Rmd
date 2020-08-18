@@ -27,8 +27,24 @@ geometry: margin=1cm
 
 1. Install or update R
 2. Install or update Rstudio
-3. Install or update latex (ex : http://www.tug.org/mactex)
-4. Install or update git (https://git-scm.com/downloads)
+3. Install packages (tidyr, dplyr, stringr, magrittR, tibble, FactoMineR, RColorBrewer, shiny, shinydashboard, ggplot2, rmarkdown)
+```{rinstall1, eval=FALSE}
+install.packages("tidyr", "dplyr", "stringr", "magrittR", "tibble", "FactoMineR", "RColorBrewer", "shiny", "shinydashboard", "ggplot2", "rmarkdown", "edgeR")
+install.packages(c("FactoMineR", "shiny", "clustermq", "shinydashboard"))
+
+```
+
+4. Install Bioconductor and install S4Vectors and SummarizedExperiment packages
+```{r install2, eval=FALSE}
+if (!requireNamespace("BiocManager"))
+    install.packages("BiocManager")
+BiocManager::install()
+
+BiocManager::install(c("edgeR","S4Vectors", "MultiAssayExperiment"))
+```
+5. Install or update latex (ex : http://www.tug.org/mactex)
+6. Install or update git (https://git-scm.com/downloads)
+
 
 ### Git configuration
 
@@ -111,12 +127,12 @@ The next session will present a development model with the associated command li
 
 ```{bash eval=FALSE}
 # Create the branch and push 
-git checkout -B develop
-git push -u origin develop
+#git checkout -B develop
+#git push -u origin develop
 
 # Commit changes to this branche and push them
-git commit -m "" 
-git push -u origin develop
+#git commit -m "" 
+#git push -u origin develop
 
 ```
 
@@ -130,22 +146,22 @@ When the branch is stable, the branch will be merged
 # From your local git repository
 
 # 1) Switch to th develop branche
-git checkout develop
+#git checkout develop
 
 # 2) Create a new feature branche from the develop branche and swith to it
-git checkout -b new_feature develop
+#git checkout -b new_feature develop
 
 # 3) Commit your changes but never push to the remote
-git commit -m "" 
+#git commit -m "" 
 
 # 4) When the new functionalitie is ok then merge to develop. You have to switch to develop then merge.
 # The --no-ff option allow to group together all the commits that come from the new_feature branch 
-git checkout develop
-git merge --no-ff new_feature
+#git checkout develop
+#git merge --no-ff new_feature
 
 # 5) Then you can push the changes to develop. The commit done localy on the new_feature branche will
 # be accessible but not the branche itself (allow a more readable repository).  
-git push -u origin develop
+#git push -u origin develop
 
 # 6) Optionaly, you can delete the local new_feature branche
 ```

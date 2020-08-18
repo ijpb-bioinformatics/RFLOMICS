@@ -64,11 +64,11 @@ filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast %in% Flomic
 
 # Data load
 
-```{r load data}
+```{r load data, echo=FALSE}
 FlomicsMultiAssay@metadata$omicList
 ```
 
-```{r analysis}
+```{r analysis, message=FALSE, warning=FALSE, echo=FALSE}
 
   out <- NULL
   for (omictype in names(FlomicsMultiAssay@metadata$omicList)){ 

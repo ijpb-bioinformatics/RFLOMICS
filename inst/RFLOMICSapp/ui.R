@@ -23,8 +23,7 @@ sidebar <- dashboardSidebar(
               menuItemOutput("importData"),
               #uiOutput("dataList"),
               menuItemOutput("omics"),
-              menuItemOutput("DiffAnalysis"),
-              menuItemOutput("CoExpAnalysis")
+              menuItemOutput("Integration")
               
               ),
   tags$br(),
@@ -147,7 +146,7 @@ body <- dashboardBody({
                        tags$br(),
                        tags$br(),
                        
-                       RNAseqDataExplorTabUI(i)
+                       RNAseqDataExplorTabUI(paste0("RNAseq",i))
                        
                        ),
               
@@ -156,14 +155,14 @@ body <- dashboardBody({
               tabPanel("Filter & Normalization",
                        tags$br(),
                        tags$br(),
-                       RNAseqDataNormTabUI(i)
+                       RNAseqDataNormTabUI(paste0("RNAseq",i))
                        ),
               #### Diff analysis  ####
               ######################################
               tabPanel("Diff Gene Expression",
                        tags$br(),
                        tags$br(),
-                       DiffExpAnalysisUI(i)
+                       DiffExpAnalysisUI(paste0("RNAseq",i))
                        ),
               #### Co-expression analysis  ####
               ######################################
@@ -176,21 +175,45 @@ body <- dashboardBody({
               
             )
     )
+      
+  }),
+  
+  #### Proteome Analysis  #######
+  ###############################
+  lapply(1:10, function(j){ 
+    
+    tabItem(tabName = paste0("ProtAnalysis", j),
+            tabsetPanel(
+              
+              #### Data Exploratory & QC ####
+              ###############################
+              tabPanel("Data Exploratory",
+                       tags$br(),
+                       tags$br(),
+                       
+                       ProtMetaDataExplorTabUI(paste0("proteomics",j))
+              )
+            )
+          )
+    }),
+  #### metabolome Analysis  #######
+  ###############################
+  lapply(1:10, function(i){ 
+    
+    tabItem(tabName = paste0("MetaAnalysis", i),
+            tabsetPanel(
+              
+              #### Data Exploratory & QC ####
+              ###############################
+              tabPanel("Data Exploratory",
+                       tags$br(),
+                       tags$br(),
+                       
+                       ProtMetaDataExplorTabUI(paste0("metabolomics",i))
+              )
+            )
+    )
   })
-    #### RNAseq Analysis  ####
-    ###############################
-    #tabItem(tabName = "proteomicsAnalysisSteps",
-    #        tabsetPanel(
-    #          
-    #          #### Data Exploratory & QC ####
-    #          ###############################
-    #          
-    #          tabPanel("ProtExploratoryQC"),
-    #          tabPanel("ProtProcessing"),
-    #          tabPanel("CoExpression"),
-    #          tabPanel("Annotation")
-    #        )
-    #)
  )
 do.call(tabItems, items)
 })

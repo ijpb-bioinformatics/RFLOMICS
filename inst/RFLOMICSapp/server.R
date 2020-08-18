@@ -421,24 +421,32 @@ shinyServer(function(input, output, session) {
               
               do.call(menuItem, c(text = paste0(omics, " Analysis"), tabName = paste0(omics, "Analysis"), 
                                   
-                  lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+                  #lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
                     
                     switch(omics ,
                            "RNAseq"={
+                             lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
                                menuSubItem(text = paste0(FlomicsMultiAssay@metadata$omicList[[omics]][[i]]), 
                                         tabName = paste0("RNAseqAnalysis", i), icon = icon('chart-area'), selected = FALSE)
+                             })
+                            
                            },
                            "proteomics"={
-                               #menuItem(paste0(omic, " Data Exploratory"), tabName = "ProtExploratoryQC", icon = icon('chart-area'), selected = TRUE),
-                               #menuItem(paste0(omic, " Data Processing"),  tabName = "ProtProcessing", icon = icon('chart-area'), selected = FALSE)
-                               #menuItem(paste0(omic, " AnalysisSteps"),  tabName = "proteomicsAnalysisSteps", icon = icon('chart-area'), selected = FALSE)
+                             lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+                               menuSubItem(text = paste0(FlomicsMultiAssay@metadata$omicList[[omics]][[i]]), 
+                                         tabName = paste0("ProtAnalysis", i), icon = icon('chart-area'), selected = FALSE)
+                             })
                            },
                            "metabolomics"={
+                             lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+                               menuSubItem(text = paste0(FlomicsMultiAssay@metadata$omicList[[omics]][[i]]), 
+                                         tabName = paste0("MetaAnalysis", i), icon = icon('chart-area'), selected = FALSE)
+                             })
                                #menuItem(paste0(omic, " Data Exploratory"), tabName = "MetaExploratoryQC", icon = icon('chart-area'), selected = TRUE),
                                #menuItem(paste0(omic, " Data Processing"),  tabName = "MetaProcessing",    icon = icon('chart-area'), selected = FALSE)
                            }
                     )
-                  })
+                  #})
               ))
             })
         )
@@ -452,10 +460,31 @@ shinyServer(function(input, output, session) {
     ##########################################
     lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
       
-      lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+      switch(omics ,
+             "RNAseq"={
+                 lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+                    
+                   callModule(RNAseqDataExplorTab, paste0("RNAseq",i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+                  })
+             },
+             "proteomics"={
+                 lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+                   
+                   callModule(ProtMetaDataExplorTab, paste0("proteomics",i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+                 })             
+             },
+             "metabolomics"={
+                 lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+                   
+                   callModule(ProtMetaDataExplorTab, paste0("metabolomics",i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+                 })
+              }
+      )
+      
+      #lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
         
-        callModule(RNAseqDataExplorTab, i, FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
-      })
+        
+      #})
     })
     
     ##########################################
@@ -463,10 +492,12 @@ shinyServer(function(input, output, session) {
     ##########################################
     lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
       
-      lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+      #lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+      for(i in names(FlomicsMultiAssay@metadata$omicList[[omics]])){
         
-        callModule(RNAseqDataNormTab, i, FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
-      })
+        callModule(RNAseqDataNormTab, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+      }
+      #})
     })
 
     ##########################################
@@ -478,7 +509,7 @@ shinyServer(function(input, output, session) {
         
         #callModule(DiffExpParam, i, FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
         
-        callModule(DiffExpAnalysis, i, FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+        callModule(DiffExpAnalysis, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
         
       })
     })
