@@ -272,9 +272,44 @@ shinyServer(function(input, output, session) {
   #  => The interface to select the model formulae appear
   observeEvent(input$ValidF, {
     print("# 2- Set design model...")
+    
+    # 
     CheckInputFacName()
     updateDesignFactors()
+    
+    #### check experimental design : experimental design must be a complete and balanced experimental design
+    message <- CheckExpDesignCompleteness(List.Factor.Bio = Design@List.Factors[Design@Factors.Type == "Bio"])
+    
+    output$messageCompleteness <- renderText({
+      
+      # switch pour message complet 
+      switch(message ,
+             "true"       = { print("The experimental design is complete and balanced.") },
+             "false"      = { print("ERROR : The experimental design is not complete.") },
+             "true_false" = { print("WARNING : The experimental design is complete but not balanced.") }
+      )
 
+    })
+    
+    # if design incomplete
+    if(message == "false"){
+      showModal(modalDialog(
+        title = "Error message",
+        "Error : Experimental design is incompleted"
+      ))
+    }
+    
+    # if design complete by not balanced
+    if(message == "true_false"){
+      showModal(modalDialog(
+        title = "Warning message",
+        "Warning : Experimental design is completed but not balanced."
+      ))
+    }
+    validate({
+      need(message != "false" ,message="Error")
+    })
+    
     # Construct the form to select the model
     output$SetModelFormula <- renderUI({
       box(status = "warning", width = 12,

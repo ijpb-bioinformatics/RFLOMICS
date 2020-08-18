@@ -295,4 +295,30 @@ pvalue.plot <- function(data, contrast, pngFile=NULL){
 
 
 
+#' CheckExpDesignCompleteness
+#'
+#' @param List.Factor.Bio 
+#' @param 
+#' @param 
+#' @return string
+#' @export
+#'
+#' @examples
+CheckExpDesignCompleteness <- function(List.Factor.Bio){
+  
+  # possible groups from all bio factors
+  group       <- List.Factor.Bio %>% as.data.frame() %>% expand.grid() %>% unique() %>% tidyr::unite("groups",sep="_")
+  
+  # nbr of condition groups in Exp design
+  group_count <- List.Factor.Bio %>% as.data.frame() %>% unite(col="groups", sep="_") %>% group_by(groups) %>% dplyr::count(.)
+  
+  # merge 
+  group_check <- full_join(group, group_count, by="groups")
+  
+  # check
+  message <- if_else(NA %in% group_check$n , "false", if_else(length(unique(group_check$n)) == 1, "true", "true_false"))
+  
+  return(message)
+}
+
 

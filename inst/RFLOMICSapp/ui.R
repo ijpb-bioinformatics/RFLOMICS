@@ -85,6 +85,10 @@ body <- dashboardBody({
         )
       ),
       fluidRow(
+            column(width= 12, 
+                   box(status = "warning", width = 12, textOutput("messageCompleteness")))
+      ),
+      fluidRow(
             column(width= 12, uiOutput("SetModelFormula"))
       ),
       fluidRow(
