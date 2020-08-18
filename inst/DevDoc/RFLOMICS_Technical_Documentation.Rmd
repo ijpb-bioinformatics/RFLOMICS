@@ -29,7 +29,7 @@ geometry: margin=1cm
 2. Install or update Rstudio
 3. Install packages (tidyr, dplyr, stringr, magrittR, tibble, FactoMineR, RColorBrewer, shiny, shinydashboard, ggplot2, rmarkdown)
 ```{rinstall1, eval=FALSE}
-install.packages("tidyr", "dplyr", "stringr", "magrittR", "tibble", "FactoMineR", "RColorBrewer", "shiny", "shinydashboard", "ggplot2", "rmarkdown", "edgeR")
+#install.packages("tidyr", "dplyr", "stringr", "magrittR", "tibble", "FactoMineR", "RColorBrewer", "shiny", "shinydashboard", "ggplot2", "rmarkdown")
 install.packages(c("FactoMineR", "shiny", "clustermq", "shinydashboard"))
 
 ```
