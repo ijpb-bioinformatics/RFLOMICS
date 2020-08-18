@@ -5,7 +5,7 @@
 \alias{ExperimentalDesign}
 \title{[\code{\link{ExpDesign-class}}] Class constructor}
 \usage{
-ExperimentalDesign(dF.List)
+ExperimentalDesign(ExpDesign)
 }
 \arguments{
 \item{dF.List}{A list of factor}
@@ -14,5 +14,5 @@ ExperimentalDesign(dF.List)
 An object of class [\code{\link{ExpDesign-class}}]
 }
 \description{
-
+[\code{\link{ExpDesign-class}}] Class constructor
 }
