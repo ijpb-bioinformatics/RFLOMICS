@@ -8,6 +8,7 @@
 #
 
 library(shinydashboard)
+#library(shinyjs)
 # source("DataExploratoryModules.R")
 # source("NormalizationModules.R")
 # source("DiffExpressionModules.R")
@@ -15,6 +16,7 @@ library(shinydashboard)
 # source("commonModules.R")
 
 sidebar <- dashboardSidebar(
+  
   sidebarMenu(id="StateSave",
               menuItem("Experimental Design", tabName = "ExpDesign", icon = icon('vials'),  startExpanded=TRUE, 
                        menuSubItem("Import design",  tabName = "importExpDesign", selected = TRUE),
@@ -32,7 +34,10 @@ sidebar <- dashboardSidebar(
 )
 
 body <- dashboardBody({
-
+  #shinyjs::useShinyjs()
+  #id = "body"
+  
+  
   items <- c( 
     
     list(
@@ -44,10 +49,12 @@ body <- dashboardBody({
     
 
     tabItem(tabName = "importExpDesign",
+            
+            ### import Design file
             fluidRow(
-              box(width = 8, status = "warning",
+              box(width = 12, status = "warning",
 
-                column(width = 6,
+                column(width = 8,
                  # matrix count/abundance input
                  fileInput("Experimental.Design.file", "Import matrix of Experimental Design (txt)",
                            accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
@@ -57,9 +64,28 @@ body <- dashboardBody({
               )
             ),
             tags$br(),
+            
+            ### table visualisation
             fluidRow(
               uiOutput("ExpDesignTable")
-            )
+            ),
+            tags$br(),
+            
+            ### level
+            fluidRow(
+              uiOutput("GetdFactorRef")
+            ),
+            tags$br(),
+            
+            ### completeness
+            fluidRow(
+              uiOutput("Completeness")
+              # column(width= 12, 
+              #        box( status = "warning", width = 12, 
+              #             textOutput("messageCompleteness"),
+              #             plotOutput("CompletenessPlot")))
+            ),
+            tags$br(),
     ),
     
     #### Set Up statistical model & hypothesis ####
@@ -67,26 +93,10 @@ body <- dashboardBody({
     
     tabItem(tabName = "SetUpModel",
       fluidRow(
-        column(width= 12,
-          box(status = "warning", width = 12, height = NULL,
-              h4("Select the level of reference fo each design factor"),
-              fluidRow(
-                uiOutput("GetdFactorRef")
-              ),
-              
-              h4("Select the type of the design factor"),
-              fluidRow( uiOutput("GetdFactorType") ),
-              
-              h4("Enter a name for each design factor"),
-              fluidRow( uiOutput("GetdFactorName") ),
-              
-            actionButton("ValidF","Valid factor set up")
-          )
-        )
+
       ),
       fluidRow(
-            column(width= 12, 
-                   box(status = "warning", width = 12, textOutput("messageCompleteness")))
+            
       ),
       fluidRow(
             column(width= 12, uiOutput("SetModelFormula"))

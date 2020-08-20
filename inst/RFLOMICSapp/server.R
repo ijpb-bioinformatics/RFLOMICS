@@ -212,6 +212,8 @@ shinyServer(function(input, output, session) {
     
     print("# 1- Load experimental design...")
     
+    #shinyjs::reset("SetUpModel")
+    #resetForm(SetUpModel)
     loadExpDesign()
 
     # display desgin table
@@ -219,52 +221,50 @@ shinyServer(function(input, output, session) {
 
         box(width = 8, status = "warning",
             DT::renderDataTable( DT::datatable(ExpDesign) )
-            )
+          )
       })
-    
-    # display set up model Item
-    output$SetUpModel <- renderMenu({
-      menuSubItem("Design matrix", tabName = "SetUpModel",  selected = TRUE)
-      
-      })
-  
   
   ####### Set up Design model ########
-  
-  # Construct the form to set the reference factor level
   output$GetdFactorRef <- renderUI({
 
-    lapply(names(Design@List.Factors), function(i) {
-      box(width=3,
-          selectInput(paste0("dF.RefLevel.", i), i,
-                      choices = levels(Design@List.Factors[[i]]),
-                      selectize=FALSE,
-                      size=5)
-          )
-      })
-    })
+    box(status = "warning", width = 12, height = NULL,
+        
+       # Construct the form to set the reference factor level
+       h4("Select the level of reference fo each design factor"),
+       fluidRow(
+         lapply(names(Design@List.Factors), function(i) {
+           box(width=3,
+               selectInput(paste0("dF.RefLevel.", i), i,
+                           choices = levels(Design@List.Factors[[i]]),
+                           selectize=FALSE,
+                           size=5))})
+       ),
+       
+       # Construct the form to set the type of the factor (either biological or batch)
+       h4("Select the type of the design factor"),
+       fluidRow( 
+         lapply(names(Design@List.Factors), function(i) {
+           box(width=3,
+               radioButtons(paste0("dF.Type.", i), label=NULL , choices = c("Bio","batch"), selected = "Bio",
+                            inline = FALSE, width = 2, choiceNames = NULL,
+                            choiceValues = NULL))})
+         
+       ),
+       
+       # Construct the form to enter the name of the factor
+       h4("Enter a name for each design factor"),
+       fluidRow( 
+         lapply(names(Design@List.Factors), function(i) {
+           box(width=3,
+               textInput(paste0("dF.Name.", i), label=NULL , value = i, width = NULL,
+                         placeholder = NULL))})
+         
+       ),
 
-  # Construct the form to set the type of the factor (either biological or batch)
-  output$GetdFactorType <- renderUI({
-    lapply(names(Design@List.Factors), function(i) {
-      box(width=3,
-          radioButtons(paste0("dF.Type.", i), label=NULL , choices = c("Bio","batch"), selected = "Bio",
-                       inline = FALSE, width = 2, choiceNames = NULL,
-                       choiceValues = NULL)
-          )
-      })
+       actionButton("ValidF","Valid factor set up")
+     )
+    
     })
-
-  # Construct the form to enter the name of the factor
-  output$GetdFactorName <- renderUI({
-    lapply(names(Design@List.Factors), function(i) {
-      box(width=3,
-          textInput(paste0("dF.Name.", i), label=NULL , value = i, width = NULL,
-                    placeholder = NULL)
-          )
-      })
-    })
-
   })
   
   # as soon as the "Valid factor set up" button has been clicked
@@ -276,38 +276,52 @@ shinyServer(function(input, output, session) {
     # 
     CheckInputFacName()
     updateDesignFactors()
-    
-    #### check experimental design : experimental design must be a complete and balanced experimental design
-    message <- CheckExpDesignCompleteness(List.Factor.Bio = Design@List.Factors[Design@Factors.Type == "Bio"])
-    
-    output$messageCompleteness <- renderText({
-      
-      # switch pour message complet 
-      switch(message ,
-             "true"       = { print("The experimental design is complete and balanced.") },
-             "false"      = { print("ERROR : The experimental design is not complete.") },
-             "true_false" = { print("WARNING : The experimental design is complete but not balanced.") }
-      )
 
+    #### check experimental design : experimental design must be a complete and balanced.
+    completeCheckRes <- CheckExpDesignCompleteness(Design)
+    
+    output$Completeness <- renderUI({
+      
+      column(width= 12, 
+              box( status = "warning", width = 12, 
+      
+                  # print message
+                  renderText( completeCheckRes[["message"]][2] ),
+                  
+                  # plot of count per condition
+                  renderPlot( plotExperimentalDesign(completeCheckRes[["count"]] ))
+                  
+              ) 
+      )
     })
     
-    # if design incomplete
-    if(message == "false"){
+    
+    ## error/warning message
+    if(completeCheckRes[["message"]][1] == "false"){
       showModal(modalDialog(
         title = "Error message",
-        "Error : Experimental design is incompleted"
+        completeCheckRes[["message"]][2]
       ))
     }
     
-    # if design complete by not balanced
-    if(message == "true_false"){
+    if(completeCheckRes[["message"]][1] == "warning"){
       showModal(modalDialog(
         title = "Warning message",
-        "Warning : Experimental design is completed but not balanced."
+        completeCheckRes[["message"]][2]
       ))
     }
+    
+  
+    ## continue only if message is true or warning
     validate({
-      need(message != "false" ,message="Error")
+      need(completeCheckRes[["message"]][1] != "false" ,message="ok")
+    })
+    
+    
+    # display set up model Item
+    output$SetUpModel <- renderMenu({
+      menuSubItem("Design matrix", tabName = "SetUpModel",  selected = TRUE)
+      
     })
     
     # Construct the form to select the model

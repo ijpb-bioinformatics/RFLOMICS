@@ -295,30 +295,175 @@ pvalue.plot <- function(data, contrast, pngFile=NULL){
 
 
 
-#' CheckExpDesignCompleteness
+
+
+
+
+#' Plot the balance of data in an experimental design
+#' 
+#' This function provides easy visualization of the balance of data in a data set given a specified experimental design. This function is useful for identifying 
+#' missing data and other issues. The core of this function is from the function ezDesign in the package ez.
+#' 
+#' @param counts : the number of data in each cell of the design 
+#' @param cell_border_size : Numeric value specifying the size of the border seperating cells (0 specifies no border)
 #'
-#' @param List.Factor.Bio 
+#' @return A printable/modifiable ggplot2 object.
+#' @export
+#'
+#' @author Christine Paysant-Le Roux
+plotExperimentalDesign <- function(counts, cell_border_size = 10){
+  if (names(counts)[ncol(counts)] != "Count"){
+    stop("the last column of the input data frame must be labelled Count")
+  }
+  if(ncol(counts) == 5){
+    x <- names(counts)[1]
+    y <- names(counts)[2]
+    row <- names(counts)[3]
+    col <- names(counts)[4]
+  } else if(ncol(counts) == 4){
+    x <- names(counts)[1]
+    y <- names(counts)[2]
+    row <- names(counts)[3]
+    col <- NULL
+  } else if(ncol(counts) == 3){
+    x <- names(counts)[1]
+    y <- names(counts)[2]
+    row <- NULL
+    col <- NULL
+  } else if(ncol(counts) == 2){
+    x <- NULL
+    y <- names(counts)[1]
+    row <- NULL
+    col <- NULL
+  } else {
+    stop("data frame with less than 2 columns")
+  }
+  # rename two first column names of counts with x and y 
+  if(!is.null(x)){
+    x_lab <- names(counts)[names(counts)==x]
+    names(counts)[names(counts)==x] <- 'x'
+  } else {
+    x_lab <- ""
+    counts$x <- rep(1, nrow(counts))
+  }
+  
+  y_lab = names(counts)[names(counts)==y]
+  names(counts)[names(counts)==y] <- 'y'
+  # get the levels of one factor
+  getFactorLevels <- function(counts, factorVar){
+    if(!is.numeric(counts[[factorVar]])){
+      counts[[factorVar]] = factor(counts[[factorVar]])
+      x_vals = as.character(levels(counts[[factorVar]]))
+    }else{
+      x_vals = as.character(sort(unique(counts[[factorVar]])))
+    }
+    return(x_vals)
+  }
+  x_vals <- getFactorLevels(counts, "x")
+  # recode factor with integer (1 for the first level, 2 for the second level, etc)
+  counts$x = as.numeric(factor(counts$x))
+  y_vals <- getFactorLevels(counts, "y")
+  counts$y = as.numeric(factor(counts$y))
+  # cell border size
+  if(length(unique(counts$y))>length(unique(counts$x))){
+    cell_border_size = cell_border_size/length(unique(counts$y))
+  }else{
+    cell_border_size = cell_border_size/length(unique(counts$x))
+  }
+  # for row or col (for faceting)
+  # replace colname with variable name and each level with the paste of the factor name, =, the factor level
+  replaceRowOrColIntoCounts <- function(counts, facetingVariable, newColumnName){
+    if(!is.factor(counts[,names(counts)== facetingVariable])){
+      counts[,names(counts) == facetingVariable] = factor(counts[,names(counts) == facetingVariable])
+    }
+    levels(counts[,names(counts) == facetingVariable]) = paste(
+      names(counts)[names(counts) == facetingVariable]
+      , levels(counts[,names(counts) == facetingVariable])
+      , sep = ' = '
+    )
+    names(counts)[names(counts) == facetingVariable] = newColumnName
+    return(counts)
+  }
+  
+  if(!is.null(row)){
+    counts <- replaceRowOrColIntoCounts (counts, row, "row")
+  }
+  if(!is.null(col)){
+    counts <- replaceRowOrColIntoCounts (counts, col, "col")
+  }
+  # calculate parameters for geom_rect
+  # xmin - (required) left edge of rectangle
+  # xmax - (required) right edge of rectangle
+  # ymin - (required) bottom edge of rectangle
+  # ymax - (required) top edge of rectangle 
+  counts$ymin = counts$y-.5
+  counts$ymax = counts$y+.5
+  counts$xmin = counts$x-.5
+  counts$xmax = counts$x+.5
+  
+  counts$Count <- as.factor(counts$Count)
+  
+  library(ggplot2)
+  p <- ggplot2::ggplot( data = counts, aes_string(ymin = 'ymin', ymax = 'ymax', xmin = 'xmin', xmax = 'xmax' , fill = 'Count')) + geom_rect() + labs(x=x_lab,y=y_lab)
+  p <- p + theme(
+    panel.grid.major = element_blank()
+    , panel.grid.minor = element_blank()
+    , legend.background = element_rect(colour='transparent',fill='transparent')
+  )
+  if(cell_border_size>0){
+    p = p + geom_rect(
+      size = cell_border_size
+      , colour = 'grey90'
+      , show.legend = FALSE
+    )
+  }
+  p = p + scale_x_continuous(
+    breaks = sort(unique(counts$x))
+    , labels = x_vals
+  )
+  p = p + scale_y_continuous(
+    breaks = sort(unique(counts$y))
+    , labels = y_vals
+  )
+  if(!is.null(row)){
+    if(!is.null(col)){
+      p = p + facet_grid(row~col)
+    }
+    else{
+      p = p + facet_grid(row~.)
+    }
+  }else{
+    if(!is.null(col)){
+      p = p + facet_grid(.~col)
+    }
+  }
+  return(p)
+}
+
+
+
+
+#' SummarizeExpDesignInput
+#'
+#' @param ExpDesign data.frame 
 #' @param 
 #' @param 
-#' @return string
+#' @return conditSumm data.frame
 #' @export
 #'
 #' @examples
-CheckExpDesignCompleteness <- function(List.Factor.Bio){
+SummarizeExpDesignInput <- function(ExpDesign){
   
-  # possible groups from all bio factors
-  group       <- List.Factor.Bio %>% as.data.frame() %>% expand.grid() %>% unique() %>% tidyr::unite("groups",sep="_")
+  condit_list <- lapply(colnames(ExpDesign[,-1]), function(x){
+    conditCount <- table(as.data.frame(ExpDesign)[,x])
+    paste(names(conditCount), conditCount, sep=" x ") %>% paste(., collapse =" ; ")
+    })
   
-  # nbr of condition groups in Exp design
-  group_count <- List.Factor.Bio %>% as.data.frame() %>% unite(col="groups", sep="_") %>% group_by(groups) %>% dplyr::count(.)
+  #names(condit_list) <- colnames(ExpDesign[,-1])
+  conditSumm <- data.frame("Factors"    = colnames(ExpDesign[,-1]),
+                           "Conditions" = condit_list %>% unlist ,
+                           "Comments"   = lapply(colnames(ExpDesign[,-1]), function(x){if_else(length(unique(table(as.data.frame(ExpDesign)[,x]))) == 1, "OK", "WARNING") }) %>% unlist)
   
-  # merge 
-  group_check <- full_join(group, group_count, by="groups")
-  
-  # check
-  message <- if_else(NA %in% group_check$n , "false", if_else(length(unique(group_check$n)) == 1, "true", "true_false"))
-  
-  return(message)
+  return(conditSumm)
 }
-
 

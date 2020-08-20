@@ -50,3 +50,9 @@ setGeneric(
   name="SetModelMatrix",
   def = function( object, ... ){standardGeneric("SetModelMatrix")}
 )
+
+setGeneric(
+  name="CheckExpDesignCompleteness",
+  def = function( object, ... ){standardGeneric("CheckExpDesignCompleteness")}
+)
+

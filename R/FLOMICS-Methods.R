@@ -472,3 +472,64 @@ setMethod(f="SetModelMatrix",
 
 })
 
+
+
+
+#' @title CheckExpDesignCompleteness
+#'
+#' @param ExpDesign 
+#' @return list
+#' @exportMethod CheckExpDesignCompleteness
+#'
+#' @examples
+setMethod(f="CheckExpDesignCompleteness",
+            signature="ExpDesign",
+            definition <- function(object){
+  
+  # output list
+  output <- list()
+  
+  # check presence of bio factors
+  if (! "Bio" %in% object@Factors.Type){
+    
+    message <- "noBio"
+    
+    group_count  <- object@List.Factors[object@Factors.Type == "batch"] %>% as.data.frame() %>% table() %>% as.data.frame()
+    names(group_count)[names(group_count) == "Freq"] <- "Count"
+    output[["count"]]   <- group_count
+    
+  }else{
+    
+    # count occurence of bio conditions
+    group_count  <- object@List.Factors[object@Factors.Type == "Bio"] %>% as.data.frame() %>% table() %>% as.data.frame()
+    names(group_count)[names(group_count) == "Freq"] <- "Count"
+    
+    output[["count"]]   <- group_count
+    
+    # check presence of relicat / batch
+    # check if design is complete
+    # check if design is balanced
+    # check nbr of replicats
+    message <- if_else(! "batch" %in% object@Factors.Type , "noBatch",
+                       if_else(0 %in% group_count$Count ,   "noCompl", 
+                               if_else(length(unique(group_count$Count)) != 1, "noBalan", 
+                                       if_else(group_count$Count[1] < 3, "lowRep", "true"))))
+  }
+  
+  
+  # switch pour message complet 
+  output[["message"]] <- switch(message ,
+         "true"       = { c("true",    "The experimental design is complete and balanced.") },
+         "lowRep"     = { c("warning", "WARNING : 3 biological replicates are needed.") },
+         "noCompl"      = { c("false",   "ERROR : The experimental design is not complete.") },
+         "noBalan"    = { c("warning", "WARNING : The experimental design is complete but not balanced.") },
+         
+         "noBio"      = { c("false",   "ERROR : no bio factor !") },
+         "noBatch"    = { c("false",   "ERROR : no replicat") }
+         )
+  
+  
+  return(output)
+})
+
+
