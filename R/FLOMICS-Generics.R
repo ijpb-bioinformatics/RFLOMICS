@@ -56,3 +56,13 @@ setGeneric(
   def = function( object, ... ){standardGeneric("CheckExpDesignCompleteness")}
 )
 
+setGeneric(
+  name="getExpressionContrast",
+  def = function( object, ... ){standardGeneric("getExpressionContrast")}
+)
+
+
+setGeneric(
+  name="getContrastMatrix",
+  def = function( object, ... ){standardGeneric("getContrastMatrix")}
+)

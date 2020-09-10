@@ -165,11 +165,12 @@ shinyServer(function(input, output, session) {
 
     }
 
-    List.Factors.new <- Design@List.Factors
+    List.Factors.new <- Design@List.Factors 
 
     # Relevel the factor
     for(dFac in names(List.Factors.new)){
-      List.Factors.new[[dFac]] <- relevel(List.Factors.new[[dFac]],ref=input[[paste0("dF.RefLevel.",dFac)]])
+      tmp <- paste(dFac, List.Factors.new[[dFac]], sep="") %>% as.factor()
+      List.Factors.new[[dFac]] <- relevel(tmp, ref=paste(dFac,input[[paste0("dF.RefLevel.",dFac)]], sep=""))
     }
     names(List.Factors.new) <- dF.List.Name
 
@@ -291,8 +292,8 @@ shinyServer(function(input, output, session) {
                   # plot of count per condition
                   renderPlot( plotExperimentalDesign(completeCheckRes[["count"]] ))
                   
-              ) 
-      )
+              )
+        )
     })
     
     
@@ -345,23 +346,31 @@ shinyServer(function(input, output, session) {
 
     # => Set the model formulae
     Design@Model.formula <<- input$model.formulae
-
+    print(paste0("#    model :", Design@Model.formula))
+    
+    # => get list of expression contrast (hypothesis)
+    Design <<- getExpressionContrast(Design)
+    
+    
     # => Set Model design matrix
     # => Get and Display all the contrasts
-    print(paste0("#    model :", Design@Model.formula))
-    Design <<- SetModelMatrix(Design)
-
+    
+    
 
     #  => The contrasts have to be choosen
     output$SetContrasts <- renderUI({
       #textOutput("2 by 2 contrasts")
       box(width=12, status = "warning", size=3,
-      lapply(unique(Design@Contrasts.List$factors), function(i) {
-            vect <- as.vector(filter(Design@Contrasts.List, factors==i)[["idContrast"]])
-            names(vect) <- as.vector(filter(Design@Contrasts.List, factors==i)[["hypoth"]])
+          
+      lapply(names(Design@Contrasts.List), function(contrastType) {
+        
+            vect        <- as.vector(Design@Contrasts.List[[contrastType]]$contrast)
+            names(vect) <- as.vector(Design@Contrasts.List[[contrastType]]$contrastName)
 
             #checkboxGroupInput("ListOfContrasts1", paste0(i, " effect"), vect)
-            checkboxGroupInput(paste0("ListOfContrasts",i), i, vect)
+            box(
+              checkboxGroupInput(paste0("ContrastType",contrastType), paste0("Contrast type : ", contrastType), vect)
+            )
         }),
 
         column(width=4, actionButton("validContrasts","Valid contrast(s) choice(s)")))
@@ -374,15 +383,44 @@ shinyServer(function(input, output, session) {
   # => The load data item appear
   observeEvent(input$validContrasts, {
 
-    #Design@Contrasts.Sel <<- c(input$ListOfContrasts1)
+    # get list of selected contrast data frames with expression, name and type 
+    contrastList <- list()
+    contrastList <- lapply(names(Design@Contrasts.List), function(contrastType) {
+        
+        #contrastList<-input[[paste0("ContrastType",contrastType)]]
+        tmp <- Design@Contrasts.List[[contrastType]] %>% 
+          dplyr::filter(contrast %in% input[[paste0("ContrastType",contrastType)]]) %>% 
+          dplyr::select(contrast, contrastName, type, groupComparison)
+        return(tmp)
+    })
+    Design@Contrasts.Sel <<- contrastList %>% purrr::reduce(rbind)
     
-    tmp <- vector()
-    Design@Contrasts.Sel <<- unlist(lapply(unique(Design@Contrasts.List$factors), function(i) {
-      tmp<-c(tmp,input[[paste0("ListOfContrasts",i)]])
-      return(tmp)
-    }))
+    # check if user has selected the contrasts to test
+    if(dim(Design@Contrasts.Sel)[1] == 0){
+      
+      showModal(modalDialog(
+        title = "Error message",
+        "Please select the hypotheses to test."
+      ))
+    }
+    
+    ## continue only if message is true
+    validate({
+      need(dim(Design@Contrasts.Sel)[1] != 0, message="ok")
+    })
     
     
+    # define all the coefficients of selected contrasts and return a contrast matrix with contrast sample name and associated coefficients
+    Design <<- getContrastMatrix(Design)
+    
+    output$contrastVec <- renderPrint({
+      
+      Design@Contrasts.Coeff
+    })
+   
+    
+    
+    # 
     output$importData <- renderMenu({
       menuItem("Load Data", tabName = "importData",icon = icon('download'), selected = TRUE)
       })

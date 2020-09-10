@@ -64,38 +64,33 @@ DiffExpAnalysis <- function(input, output, session, dataset){
     FlomicsMultiAssay <<- RunDiffAnalysis(FlomicsMultiAssay, data=paste0(dataset,".filtred"),
                                           FDR =input$FDRSeuil , DiffAnalysisMethod=input$AnaDiffMethod,
                                           clustermq=input$clustermq)
-
+    
     output$ContrastsResults <- renderUI({
-
-      vect <- as.vector(FlomicsMultiAssay@metadata$design@Contrasts.List$hypoth)
-      names(vect) <- as.vector(FlomicsMultiAssay@metadata$design@Contrasts.List$idContrast)
-
-      lapply(FlomicsMultiAssay@metadata$design@Contrasts.Sel, function(i) {
-
-        resTable <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata[["AnaDiffDeg"]][[i]]
-
-
+      
+      lapply(1:length(FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrast), function(i) {
+        
+        vect        <- unlist(FlomicsMultiAssay@metadata$design@Contrasts.Sel[i,])
+        resTable <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata[["AnaDiffDeg"]][[vect["contrast"]]]
 
         fluidRow(
           column(10,
-                 box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = paste0(i, " : ", vect[i]),
+                 box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = paste0("Hypothesis : ", vect["contrastName"]),
 
                      verticalLayout(
-
+                       
                        ### pvalue plot ###
                        renderPlot({
-
-                         pvalue.plot(data    =FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata[["AnaDiffDeg"]][[i]],
-                                     contrast=as.vector(filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast == i)$hypoth),
-                                     pngFile =file.path(tempdir(), paste0(dataset, "_PvalueDistribution_", gsub(" ", "", vect[i]), ".png")))
+                         
+                         pvalue.plot(data    =resTable,
+                                     contrast=vect["contrastName"],
+                                     pngFile =file.path(tempdir(), paste0(dataset, "_PvalueDistribution_", gsub(" ", "", vect["contrastName"]), ".png")))
                        }),
                        tags$br(),
                        DT::renderDataTable({
-
+                         
                          DT::datatable(round(resTable[resTable$FDR <= input$FDRSeuil,],5),
                                        options = list(rownames = FALSE, pageLength = 10))
                        })
-
                      )
                  )
           ),
@@ -103,7 +98,6 @@ DiffExpAnalysis <- function(input, output, session, dataset){
         )
       })
     })
-    
   })
   
 }

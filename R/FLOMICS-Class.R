@@ -12,13 +12,15 @@
 .ExpDesign <- setClass(
   Class="ExpDesign",
   representation=representation(
+      ExpDesign="data.frame",
       List.Factors="list",
       Factors.Type="vector",
       Model.formula="vector",
       Model.matrix="vector",
-      Contrasts.List="data.frame",
-      Contrasts.Coeff="data.frame",
-      Contrasts.Sel="vector"
+      Contrasts.List="list",
+      Contrasts.Sel="data.frame",
+      Contrasts.Coeff="data.frame"
+      
   ))
 
 

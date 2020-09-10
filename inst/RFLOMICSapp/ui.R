@@ -93,18 +93,11 @@ body <- dashboardBody({
     
     tabItem(tabName = "SetUpModel",
       fluidRow(
-
-      ),
-      fluidRow(
-            
-      ),
-      fluidRow(
             column(width= 12, uiOutput("SetModelFormula"))
       ),
       fluidRow(
             column(width= 12, uiOutput("SetContrasts"))
       ),
-
       tags$br()
     ),
     

@@ -6,6 +6,7 @@ library(tibble)
 library(dplyr)
 library(tidyr)
 library(stringr)
+library(data.table)
 library(SummarizedExperiment)
 library(FactoMineR)
 library(ggplot2)
@@ -17,7 +18,6 @@ source("NormalizationModules.R")
 source("DiffExpressionModules.R")
 source("CoExpressionModules.R")
 source("commonModules.R")
-
 
 
 SupportedOmics <- c("RNAseq", "proteomics", "metabolomics")
