@@ -521,7 +521,7 @@ setMethod(f="CheckExpDesignCompleteness",
   output[["message"]] <- switch(message ,
          "true"       = { c("true",    "The experimental design is complete and balanced.") },
          "lowRep"     = { c("warning", "WARNING : 3 biological replicates are needed.") },
-         "noCompl"      = { c("false",   "ERROR : The experimental design is not complete.") },
+         "noCompl"    = { c("false",   "ERROR : The experimental design is not complete.") },
          "noBalan"    = { c("warning", "WARNING : The experimental design is complete but not balanced.") },
          
          "noBio"      = { c("false",   "ERROR : no bio factor !") },
@@ -562,10 +562,10 @@ setMethod(f="getExpressionContrast",
   
   FactorBioInDesign <- intersect(names(object@Factors.Type[object@Factors.Type == "Bio"]), labelsIntoDesign)
   
-  BioFactors <- object@List.Factors[FactorBioInDesign]
+  #BioFactors <- object@List.Factors[FactorBioInDesign]
   
-  treatmentFactorsList <- lapply(names(BioFactors), function(x){levels(BioFactors[[x]])})
-  names(treatmentFactorsList) <- names(BioFactors)
+  treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(object@List.Factors[[x]]), sep="")})
+  names(treatmentFactorsList) <- FactorBioInDesign
             
   interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
   # define all simple contrasts pairwise comparisons
@@ -626,18 +626,19 @@ setMethod(f="getContrastMatrix",
   # bio factor list in formulat 
   labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
   FactorBioInDesign <- intersect(names(object@Factors.Type[object@Factors.Type == "Bio"]), labelsIntoDesign)
-  BioFactors <- object@List.Factors[FactorBioInDesign]  
   
-  treatmentFactorsList <- lapply(names(BioFactors), function(x){levels(BioFactors[[x]])})
-            
+  #BioFactors <- object@List.Factors[FactorBioInDesign]
+  
+  treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(object@List.Factors[[x]]), sep="")})
+  names(treatmentFactorsList) <- FactorBioInDesign
+  
   treatmentCondenv <- new.env()
   
   interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
   isThreeOrderInteraction <- any(attr(terms.formula(modelFormula),"order") == 3)
   
   # get model matrix
-  #modelMatrix <- stats::model.matrix(modelFormula, data = object@List.Factors %>% as.data.frame())
-  modelMatrix <- stats::model.matrix(modelFormula, data = sampleData)
+  modelMatrix <- stats::model.matrix(modelFormula, data = object@List.Factors %>% as.data.frame())
   colnames(modelMatrix)[colnames(modelMatrix) == "(Intercept)"] <- "Intercept"
   # assign treatment conditions(group) to boolean vectors according to the design model matrix
   #treatmentCondenv <- new.env()

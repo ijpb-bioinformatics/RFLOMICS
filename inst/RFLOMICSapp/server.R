@@ -157,31 +157,37 @@ shinyServer(function(input, output, session) {
 
     dF.Type.dFac<-vector()
     dF.List.Name<-vector()
+    
+    old.names <- names(Design@ExpDesign)
+    current.names <- names(Design@List.Factors)
 
     # Get the Type and the name of the factors that the users enter in the form
-    for(dFac in names(Design@List.Factors)){
+    for(dFac in old.names){
+      
       dF.Type.dFac[dFac] <- input[[paste0("dF.Type.",dFac)]]
       dF.List.Name[dFac] <- input[[paste0("dF.Name.",dFac)]]
-
     }
 
-    List.Factors.new <- Design@List.Factors 
+    List.Factors.new <- Design@List.Factors
 
     # Relevel the factor
-    for(dFac in names(List.Factors.new)){
-      tmp <- paste(dFac, List.Factors.new[[dFac]], sep="") %>% as.factor()
-      List.Factors.new[[dFac]] <- relevel(tmp, ref=paste(dFac,input[[paste0("dF.RefLevel.",dFac)]], sep=""))
+    for(dFac.n in 1:length(old.names)){
+      
+      tmp <- List.Factors.new[[current.names[dFac.n]]] %>% as.factor()
+      List.Factors.new[[current.names[dFac.n]]] <- relevel(tmp, ref=input[[paste0("dF.RefLevel.",old.names[dFac.n])]])
     }
     names(List.Factors.new) <- dF.List.Name
+    names(dF.Type.dFac)     <- dF.List.Name
 
     Design@List.Factors <<- List.Factors.new
     Design@Factors.Type <<- dF.Type.dFac
-    names(Design@List.Factors)[1:length(Design@List.Factors)] <<- dF.List.Name
+    #names(Design@List.Factors)[1:length(Design@List.Factors)] <<- dF.List.Name
   }
 
 
   CheckInputFacName <- function(){
-    for(dFac in names(Design@List.Factors)){
+    # check if empty
+    for(dFac in names(Design@ExpDesign)){
       if(input[[paste0("dF.Name.",dFac)]]==""){
         showModal(modalDialog(
           title = "Error message",
@@ -252,15 +258,15 @@ shinyServer(function(input, output, session) {
          
        ),
        
-       # Construct the form to enter the name of the factor
-       h4("Enter a name for each design factor"),
-       fluidRow( 
-         lapply(names(Design@List.Factors), function(i) {
-           box(width=3,
-               textInput(paste0("dF.Name.", i), label=NULL , value = i, width = NULL,
-                         placeholder = NULL))})
-         
-       ),
+        # Construct the form to enter the name of the factor
+        h4("Enter a name for each design factor"),
+        fluidRow( 
+          lapply(names(Design@ExpDesign), function(i) {
+            box(width=3,
+                textInput(paste0("dF.Name.", i), label=NULL , value = i, width = NULL,
+                          placeholder = NULL))})
+          
+        ),
 
        actionButton("ValidF","Valid factor set up")
      )
@@ -356,7 +362,6 @@ shinyServer(function(input, output, session) {
     # => Get and Display all the contrasts
     
     
-
     #  => The contrasts have to be choosen
     output$SetContrasts <- renderUI({
       #textOutput("2 by 2 contrasts")
