@@ -60,7 +60,6 @@ body <- dashboardBody({
                            accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                   actionButton("loadExpDesign","load")
                 )
-
               )
             ),
             tags$br(),
@@ -80,10 +79,6 @@ body <- dashboardBody({
             ### completeness
             fluidRow(
               uiOutput("Completeness")
-              # column(width= 12, 
-              #        box( status = "warning", width = 12, 
-              #             textOutput("messageCompleteness"),
-              #             plotOutput("CompletenessPlot")))
             ),
             tags$br(),
     ),
@@ -97,6 +92,9 @@ body <- dashboardBody({
       ),
       fluidRow(
             column(width= 12, uiOutput("SetContrasts"))
+      ),
+      fluidRow(
+            column(width= 12, verbatimTextOutput("printContrast"))
       ),
       tags$br()
     ),

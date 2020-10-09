@@ -186,18 +186,42 @@ shinyServer(function(input, output, session) {
 
 
   CheckInputFacName <- function(){
-    # check if empty
+    
+    FactNameList <- vector()
+    
     for(dFac in names(Design@ExpDesign)){
+      
+      # check if factor names are not empty
       if(input[[paste0("dF.Name.",dFac)]]==""){
         showModal(modalDialog(
           title = "Error message",
-          "Empty factor are not allowed"
+          "Empty name factor are not allowed"
         ))
       }
+
       validate({
         need(input[[paste0("dF.Name.",dFac)]] != "",message="Set a name")
       })
+      
+      # check if factor names are unique
+      # list of implemented name from interface
+      FactNameList <- c(FactNameList, input[[paste0("dF.Name.",dFac)]])
+      print ("@@@@@@@@@@@@@@")
+      print(FactNameList)
     }
+    
+    # check if factor names are unique
+    # check
+    if(length(names(Design@ExpDesign)) != length(unique(FactNameList))){
+      showModal(modalDialog(
+        title = "Error message",
+        "Factor names must be unique"
+      ))
+    }
+    validate({
+      need(length(names(Design@ExpDesign)) == length(unique(FactNameList)), message="Set a name")
+    })
+    
   }
 
   
@@ -380,6 +404,8 @@ shinyServer(function(input, output, session) {
 
         column(width=4, actionButton("validContrasts","Valid contrast(s) choice(s)")))
       })
+    
+      
     })
   
   
@@ -418,11 +444,10 @@ shinyServer(function(input, output, session) {
     # define all the coefficients of selected contrasts and return a contrast matrix with contrast sample name and associated coefficients
     Design <<- getContrastMatrix(Design)
     
-    output$contrastVec <- renderPrint({
-      
+    output$printContrast <- renderPrint({
+
       Design@Contrasts.Coeff
     })
-   
     
     
     # 
