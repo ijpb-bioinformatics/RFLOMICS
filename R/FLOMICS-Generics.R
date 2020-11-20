@@ -50,3 +50,19 @@ setGeneric(
   name="SetModelMatrix",
   def = function( object, ... ){standardGeneric("SetModelMatrix")}
 )
+
+setGeneric(
+  name="CheckExpDesignCompleteness",
+  def = function( object, ... ){standardGeneric("CheckExpDesignCompleteness")}
+)
+
+setGeneric(
+  name="getExpressionContrast",
+  def = function( object, ... ){standardGeneric("getExpressionContrast")}
+)
+
+
+setGeneric(
+  name="getContrastMatrix",
+  def = function( object, ... ){standardGeneric("getContrastMatrix")}
+)

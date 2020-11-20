@@ -157,40 +157,71 @@ shinyServer(function(input, output, session) {
 
     dF.Type.dFac<-vector()
     dF.List.Name<-vector()
+    
+    old.names <- names(Design@ExpDesign)
+    current.names <- names(Design@List.Factors)
 
     # Get the Type and the name of the factors that the users enter in the form
-    for(dFac in names(Design@List.Factors)){
+    for(dFac in old.names){
+      
       dF.Type.dFac[dFac] <- input[[paste0("dF.Type.",dFac)]]
       dF.List.Name[dFac] <- input[[paste0("dF.Name.",dFac)]]
-
     }
 
     List.Factors.new <- Design@List.Factors
 
     # Relevel the factor
-    for(dFac in names(List.Factors.new)){
-      List.Factors.new[[dFac]] <- relevel(List.Factors.new[[dFac]],ref=input[[paste0("dF.RefLevel.",dFac)]])
+    for(dFac.n in 1:length(old.names)){
+      
+      tmp <- List.Factors.new[[current.names[dFac.n]]] %>% as.factor()
+      List.Factors.new[[current.names[dFac.n]]] <- relevel(tmp, ref=input[[paste0("dF.RefLevel.",old.names[dFac.n])]])
     }
     names(List.Factors.new) <- dF.List.Name
+    names(dF.Type.dFac)     <- dF.List.Name
 
     Design@List.Factors <<- List.Factors.new
     Design@Factors.Type <<- dF.Type.dFac
-    names(Design@List.Factors)[1:length(Design@List.Factors)] <<- dF.List.Name
+    #names(Design@List.Factors)[1:length(Design@List.Factors)] <<- dF.List.Name
   }
 
 
   CheckInputFacName <- function(){
-    for(dFac in names(Design@List.Factors)){
+    
+    FactNameList <- vector()
+    
+    for(dFac in names(Design@ExpDesign)){
+      
+      # check if factor names are not empty
       if(input[[paste0("dF.Name.",dFac)]]==""){
         showModal(modalDialog(
           title = "Error message",
-          "Empty factor are not allowed"
+          "Empty name factor are not allowed"
         ))
       }
+
       validate({
         need(input[[paste0("dF.Name.",dFac)]] != "",message="Set a name")
       })
+      
+      # check if factor names are unique
+      # list of implemented name from interface
+      FactNameList <- c(FactNameList, input[[paste0("dF.Name.",dFac)]])
+      print ("@@@@@@@@@@@@@@")
+      print(FactNameList)
     }
+    
+    # check if factor names are unique
+    # check
+    if(length(names(Design@ExpDesign)) != length(unique(FactNameList))){
+      showModal(modalDialog(
+        title = "Error message",
+        "Factor names must be unique"
+      ))
+    }
+    validate({
+      need(length(names(Design@ExpDesign)) == length(unique(FactNameList)), message="Set a name")
+    })
+    
   }
 
   
@@ -212,6 +243,8 @@ shinyServer(function(input, output, session) {
     
     print("# 1- Load experimental design...")
     
+    #shinyjs::reset("SetUpModel")
+    #resetForm(SetUpModel)
     loadExpDesign()
 
     # display desgin table
@@ -219,52 +252,50 @@ shinyServer(function(input, output, session) {
 
         box(width = 8, status = "warning",
             DT::renderDataTable( DT::datatable(ExpDesign) )
-            )
+          )
       })
-    
-    # display set up model Item
-    output$SetUpModel <- renderMenu({
-      menuSubItem("Design matrix", tabName = "SetUpModel",  selected = TRUE)
-      
-      })
-  
   
   ####### Set up Design model ########
-  
-  # Construct the form to set the reference factor level
   output$GetdFactorRef <- renderUI({
 
-    lapply(names(Design@List.Factors), function(i) {
-      box(width=3,
-          selectInput(paste0("dF.RefLevel.", i), i,
-                      choices = levels(Design@List.Factors[[i]]),
-                      selectize=FALSE,
-                      size=5)
-          )
-      })
-    })
+    box(status = "warning", width = 12, height = NULL,
+        
+       # Construct the form to set the reference factor level
+       h4("Select the level of reference fo each design factor"),
+       fluidRow(
+         lapply(names(Design@List.Factors), function(i) {
+           box(width=3,
+               selectInput(paste0("dF.RefLevel.", i), i,
+                           choices = levels(Design@List.Factors[[i]]),
+                           selectize=FALSE,
+                           size=5))})
+       ),
+       
+       # Construct the form to set the type of the factor (either biological or batch)
+       h4("Select the type of the design factor"),
+       fluidRow( 
+         lapply(names(Design@List.Factors), function(i) {
+           box(width=3,
+               radioButtons(paste0("dF.Type.", i), label=NULL , choices = c("Bio","batch"), selected = "Bio",
+                            inline = FALSE, width = 2, choiceNames = NULL,
+                            choiceValues = NULL))})
+         
+       ),
+       
+        # Construct the form to enter the name of the factor
+        h4("Enter a name for each design factor"),
+        fluidRow( 
+          lapply(names(Design@ExpDesign), function(i) {
+            box(width=3,
+                textInput(paste0("dF.Name.", i), label=NULL , value = i, width = NULL,
+                          placeholder = NULL))})
+          
+        ),
 
-  # Construct the form to set the type of the factor (either biological or batch)
-  output$GetdFactorType <- renderUI({
-    lapply(names(Design@List.Factors), function(i) {
-      box(width=3,
-          radioButtons(paste0("dF.Type.", i), label=NULL , choices = c("Bio","batch"), selected = "Bio",
-                       inline = FALSE, width = 2, choiceNames = NULL,
-                       choiceValues = NULL)
-          )
-      })
+       actionButton("ValidF","Valid factor set up")
+     )
+    
     })
-
-  # Construct the form to enter the name of the factor
-  output$GetdFactorName <- renderUI({
-    lapply(names(Design@List.Factors), function(i) {
-      box(width=3,
-          textInput(paste0("dF.Name.", i), label=NULL , value = i, width = NULL,
-                    placeholder = NULL)
-          )
-      })
-    })
-
   })
   
   # as soon as the "Valid factor set up" button has been clicked
@@ -272,9 +303,58 @@ shinyServer(function(input, output, session) {
   #  => The interface to select the model formulae appear
   observeEvent(input$ValidF, {
     print("# 2- Set design model...")
+    
+    # 
     CheckInputFacName()
     updateDesignFactors()
 
+    #### check experimental design : experimental design must be a complete and balanced.
+    completeCheckRes <- CheckExpDesignCompleteness(Design)
+    
+    output$Completeness <- renderUI({
+      
+      column(width= 12, 
+              box( status = "warning", width = 12, 
+      
+                  # print message
+                  renderText( completeCheckRes[["message"]][2] ),
+                  
+                  # plot of count per condition
+                  renderPlot( plotExperimentalDesign(completeCheckRes[["count"]] ))
+                  
+              )
+        )
+    })
+    
+    
+    ## error/warning message
+    if(completeCheckRes[["message"]][1] == "false"){
+      showModal(modalDialog(
+        title = "Error message",
+        completeCheckRes[["message"]][2]
+      ))
+    }
+    
+    if(completeCheckRes[["message"]][1] == "warning"){
+      showModal(modalDialog(
+        title = "Warning message",
+        completeCheckRes[["message"]][2]
+      ))
+    }
+    
+  
+    ## continue only if message is true or warning
+    validate({
+      need(completeCheckRes[["message"]][1] != "false" ,message="ok")
+    })
+    
+    
+    # display set up model Item
+    output$SetUpModel <- renderMenu({
+      menuSubItem("Design matrix", tabName = "SetUpModel",  selected = TRUE)
+      
+    })
+    
     # Construct the form to select the model
     output$SetModelFormula <- renderUI({
       box(status = "warning", width = 12,
@@ -296,27 +376,36 @@ shinyServer(function(input, output, session) {
 
     # => Set the model formulae
     Design@Model.formula <<- input$model.formulae
-
+    print(paste0("#    model :", Design@Model.formula))
+    
+    # => get list of expression contrast (hypothesis)
+    Design <<- getExpressionContrast(Design)
+    
+    
     # => Set Model design matrix
     # => Get and Display all the contrasts
-    print(paste0("#    model :", Design@Model.formula))
-    Design <<- SetModelMatrix(Design)
-
-
+    
+    
     #  => The contrasts have to be choosen
     output$SetContrasts <- renderUI({
       #textOutput("2 by 2 contrasts")
       box(width=12, status = "warning", size=3,
-      lapply(unique(Design@Contrasts.List$factors), function(i) {
-            vect <- as.vector(filter(Design@Contrasts.List, factors==i)[["idContrast"]])
-            names(vect) <- as.vector(filter(Design@Contrasts.List, factors==i)[["hypoth"]])
+          
+      lapply(names(Design@Contrasts.List), function(contrastType) {
+        
+            vect        <- as.vector(Design@Contrasts.List[[contrastType]]$contrast)
+            names(vect) <- as.vector(Design@Contrasts.List[[contrastType]]$contrastName)
 
             #checkboxGroupInput("ListOfContrasts1", paste0(i, " effect"), vect)
-            checkboxGroupInput(paste0("ListOfContrasts",i), i, vect)
+            box(
+              checkboxGroupInput(paste0("ContrastType",contrastType), paste0("Contrast type : ", contrastType), vect)
+            )
         }),
 
         column(width=4, actionButton("validContrasts","Valid contrast(s) choice(s)")))
       })
+    
+      
     })
   
   
@@ -325,15 +414,43 @@ shinyServer(function(input, output, session) {
   # => The load data item appear
   observeEvent(input$validContrasts, {
 
-    #Design@Contrasts.Sel <<- c(input$ListOfContrasts1)
+    # get list of selected contrast data frames with expression, name and type 
+    contrastList <- list()
+    contrastList <- lapply(names(Design@Contrasts.List), function(contrastType) {
+        
+        #contrastList<-input[[paste0("ContrastType",contrastType)]]
+        tmp <- Design@Contrasts.List[[contrastType]] %>% 
+          dplyr::filter(contrast %in% input[[paste0("ContrastType",contrastType)]]) %>% 
+          dplyr::select(contrast, contrastName, type, groupComparison)
+        return(tmp)
+    })
+    Design@Contrasts.Sel <<- contrastList %>% purrr::reduce(rbind)
     
-    tmp <- vector()
-    Design@Contrasts.Sel <<- unlist(lapply(unique(Design@Contrasts.List$factors), function(i) {
-      tmp<-c(tmp,input[[paste0("ListOfContrasts",i)]])
-      return(tmp)
-    }))
+    # check if user has selected the contrasts to test
+    if(dim(Design@Contrasts.Sel)[1] == 0){
+      
+      showModal(modalDialog(
+        title = "Error message",
+        "Please select the hypotheses to test."
+      ))
+    }
+    
+    ## continue only if message is true
+    validate({
+      need(dim(Design@Contrasts.Sel)[1] != 0, message="ok")
+    })
     
     
+    # define all the coefficients of selected contrasts and return a contrast matrix with contrast sample name and associated coefficients
+    Design <<- getContrastMatrix(Design)
+    
+    output$printContrast <- renderPrint({
+
+      Design@Contrasts.Coeff
+    })
+    
+    
+    # 
     output$importData <- renderMenu({
       menuItem("Load Data", tabName = "importData",icon = icon('download'), selected = TRUE)
       })

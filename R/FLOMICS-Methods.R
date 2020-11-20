@@ -12,13 +12,16 @@ ExperimentalDesign <- function(ExpDesign){
   })
   names(dF.List) <- names(ExpDesign)
 
-  .ExpDesign(List.Factors=dF.List,
+  .ExpDesign(
+           ExpDesign=ExpDesign,
+           List.Factors=dF.List,
            Factors.Type=vector(),
            Model.formula=vector(),
            Model.matrix=vector(),
-           Contrasts.List=data.frame(),
-           Contrasts.Coeff=data.frame(),
-           Contrasts.Sel=vector())
+           Contrasts.List=list(),
+           Contrasts.Sel=data.frame(),
+           Contrasts.Coeff=data.frame())
+           
   }
 
 #' @title RunDiffAnalysis
@@ -87,8 +90,6 @@ DiffAnalysis <- function(){
 #' @exportMethod mvQCdesign
 #'
 #' @rdname mvQCdesign
-
-
 setMethod(f="mvQCdesign",
           signature="MultiAssayExperiment",
           definition <- function(object, data, PCA=c("raw","norm"), axis=5, pngFile=NULL){
@@ -146,7 +147,6 @@ setMethod(f="mvQCdesign",
 #'
 #' @exportMethod mvQCdata
 #' @rdname mvQCdata
-
 setMethod(f="mvQCdata",
           signature="MultiAssayExperiment",
           definition <- function(object, data, PCA=c("raw","norm"),axis=3, pngFile=NULL){
@@ -471,4 +471,217 @@ setMethod(f="SetModelMatrix",
             return(object)
 
 })
+
+
+
+
+#' @title CheckExpDesignCompleteness
+#'
+#' @param ExpDesign 
+#' @return list
+#' @exportMethod CheckExpDesignCompleteness
+#'
+#' @examples
+setMethod(f="CheckExpDesignCompleteness",
+            signature="ExpDesign",
+            definition <- function(object){
+  
+  # output list
+  output <- list()
+  
+  # check presence of bio factors
+  if (! "Bio" %in% object@Factors.Type){
+    
+    message <- "noBio"
+    
+    group_count  <- object@List.Factors[object@Factors.Type == "batch"] %>% as.data.frame() %>% table() %>% as.data.frame()
+    names(group_count)[names(group_count) == "Freq"] <- "Count"
+    output[["count"]]   <- group_count
+    
+  }else{
+    
+    # count occurence of bio conditions
+    group_count  <- object@List.Factors[object@Factors.Type == "Bio"] %>% as.data.frame() %>% table() %>% as.data.frame()
+    names(group_count)[names(group_count) == "Freq"] <- "Count"
+    
+    output[["count"]]   <- group_count
+    
+    # check presence of relicat / batch
+    # check if design is complete
+    # check if design is balanced
+    # check nbr of replicats
+    message <- if_else(! "batch" %in% object@Factors.Type , "noBatch",
+                       if_else(0 %in% group_count$Count ,   "noCompl", 
+                               if_else(length(unique(group_count$Count)) != 1, "noBalan", 
+                                       if_else(group_count$Count[1] < 3, "lowRep", "true"))))
+  }
+  
+  
+  # switch pour message complet 
+  output[["message"]] <- switch(message ,
+         "true"       = { c("true",    "The experimental design is complete and balanced.") },
+         "lowRep"     = { c("warning", "WARNING : 3 biological replicates are needed.") },
+         "noCompl"    = { c("false",   "ERROR : The experimental design is not complete.") },
+         "noBalan"    = { c("warning", "WARNING : The experimental design is complete but not balanced.") },
+         
+         "noBio"      = { c("false",   "ERROR : no bio factor !") },
+         "noBatch"    = { c("false",   "ERROR : no replicat") }
+         )
+  
+  
+  return(output)
+})
+
+
+
+######################################### Contrasts ############################################
+
+
+
+#' @title getExpressionContrast
+#' get simple, pairwise comparison and averaged expression contrast data frames, offer to the user the possibility to select for each type of contrast
+#' the contrast he want to keep and bind the selected expression contrast data frames 
+#'
+#' @param ExpDesign 
+#'
+#' @return ExpDesign
+#' @exportMethod getExpressionContrast
+#'
+#' @examples
+#' @author Christine Paysant-Le Roux
+#'
+setMethod(f="getExpressionContrast",
+          signature="ExpDesign",
+          definition <- function(object){
+
+  # model formula
+  modelFormula <- formula(object@Model.formula)
+  
+  # bio factor list in formulat 
+  labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
+  
+  FactorBioInDesign <- intersect(names(object@Factors.Type[object@Factors.Type == "Bio"]), labelsIntoDesign)
+  
+  #BioFactors <- object@List.Factors[FactorBioInDesign]
+  
+  treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(object@List.Factors[[x]]), sep="")})
+  names(treatmentFactorsList) <- FactorBioInDesign
+            
+  interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
+  # define all simple contrasts pairwise comparisons
+  allSimpleContrast_df <- defineAllSimpleContrasts(treatmentFactorsList)
+  listOfContrastsDF <- list(simple = allSimpleContrast_df)
+  
+  # define all simples contrast means
+  # exists("allSimpleContrast_df", inherits = FALSE)
+  if(length(treatmentFactorsList) != 1){
+    allAveragedContrasts_df <- define_averaged_contrasts (allSimpleContrast_df)
+    listOfContrastsDF[["averaged"]] <- allAveragedContrasts_df
+  }
+  
+  # define all interaction contrasts
+  if(length(treatmentFactorsList) != 1){
+    if(interactionPresent){
+      labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
+      labelOrder <- attr(terms.formula(modelFormula), "order")
+      twoWayInteractionInDesign <- labelsIntoDesign[which(labelOrder==2)]
+      groupInteractionToKeep <- gsub(":", " vs ", twoWayInteractionInDesign)
+      allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList, groupInteractionToKeep)
+      
+      listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
+    }
+    #allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList)
+    #listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
+  }
+  # choose the contrasts and rbind data frames of contrasts
+  #selectedContrasts <- returnSelectedContrasts(listOfContrastsDF)
+  
+  # replace interactive selection of contrasts by return all contrasts -> shiny
+  object@Contrasts.List  <- listOfContrastsDF
+  object@Contrasts.Coeff <- data.frame()
+  object@Contrasts.Sel   <- data.frame()
+  
+  return(object)
+})
+
+
+#' @title getContrastMatrix
+#' define contrast matrix or contrast list with contrast name and contrast coefficients
+#'
+#' @param ExpDesign
+#'
+#' @return ExpDesign
+#' @exportMethod getContrastMatrix
+#'
+#' @author Christine Paysant-Le Roux
+setMethod(f="getContrastMatrix",
+          signature="ExpDesign",
+          definition <- function(object){
+            
+            
+  sampleData <-  object@ExpDesign         
+  selectedContrasts <- object@Contrasts.Sel$contrast
+  
+  modelFormula <- formula(object@Model.formula)
+  # bio factor list in formulat 
+  labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
+  FactorBioInDesign <- intersect(names(object@Factors.Type[object@Factors.Type == "Bio"]), labelsIntoDesign)
+  
+  #BioFactors <- object@List.Factors[FactorBioInDesign]
+  
+  treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(object@List.Factors[[x]]), sep="")})
+  names(treatmentFactorsList) <- FactorBioInDesign
+  
+  treatmentCondenv <- new.env()
+  
+  interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
+  isThreeOrderInteraction <- any(attr(terms.formula(modelFormula),"order") == 3)
+  
+  # get model matrix
+  modelMatrix <- stats::model.matrix(modelFormula, data = object@List.Factors %>% as.data.frame())
+  colnames(modelMatrix)[colnames(modelMatrix) == "(Intercept)"] <- "Intercept"
+  # assign treatment conditions(group) to boolean vectors according to the design model matrix
+  #treatmentCondenv <- new.env()
+  assignVectorToGroups(treatmentFactorsList = treatmentFactorsList, modelMatrix = modelMatrix, interactionPresent = interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction, treatmentCondenv = treatmentCondenv)
+  # get the coefficient vector associated with each selected contrast
+  # contrast <- allSimpleContrast_df$contrast[1]
+  colnamesGLMdesign <- colnames(modelMatrix)
+  
+  
+  #coefficientsMatrix <- sapply(selectedContrasts$contrast, function(x) returnContrastCoefficients(x, colnamesGLMdesign, treatmentCondenv = treatmentCondenv))
+  coefficientsMatrix <- sapply(selectedContrasts, function(x) returnContrastCoefficients(x, colnamesGLMdesign, treatmentCondenv = treatmentCondenv))
+  
+  #coefficientsMatrix <- MASS::as.fractions(coefficientsMatrix)
+  colnames(coefficientsMatrix) <- selectedContrasts
+
+  rownames(coefficientsMatrix) <- colnamesGLMdesign 
+  contrastMatrix <- as.data.frame(t(coefficientsMatrix))
+  #contrastMatrix <- as_tibble(t(coefficientsMatrix)) %>%
+    #dplyr::mutate(contrast = selectedContrasts, .before = "Intercept") %>%
+    #dplyr::mutate(type = selectedContrasts$type, .after = "contrast")
+  #contrastMatrix <- MASS::as.fractions(contrastMatrix)
+  #contrastMatrix
+  # contrastList <- as.list(as.data.frame(coefficientsMatrix))
+  
+  object@Contrasts.Coeff <- contrastMatrix
+  return(object)
+})
+
+#coefmatrices <- sapply(unique(names(coefvectors)),
+#                       function(n) as.matrix(as.data.frame(coefvectors[names(coefvectors)==n])),
+#                       simplify=FALSE, USE.NAMES=TRUE)
+
+#Contrasts = list(D1vsD2          = c(1,  1, -1, -1,  0),
+#                 C1vsC2          = c(1, -1,  1, -1,  0),
+#                 InteractionDC   = c(1, -1, -1,  1,  0),
+#                 C1vsC2forD1only = c(1, -1,  0,  0,  0),
+#                 C1vsC2forD2only = c(0,  0,  1, -1,  0),
+#                 TreatsvsControl = c(1,  1,  1,  1, -4),
+#                 T1vsC           = c(1,  0,  0,  0, -1),
+#                 T2vsC           = c(0,  1,  0,  0, -1),
+#                 T3vsC           = c(0,  0,  1,  0, -1),
+#                 T4vsC           = c(0,  0,  0,  1, -1))
+
+# contrast From emmeans v1.3.5 by Russell Lenth 16th Percentile Contrasts and linear functions of EMMs
+# coef returns a data.frame containing the object's grid, along with columns named c.1, c.2, ... containing the contrast coefficients. 
 
