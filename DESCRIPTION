@@ -20,6 +20,7 @@ Imports:
     stringr,
     purrr,
     SummarizedExperiment,
+    MultiAssayExperiment,
     data.table,
     methods,
     FactoMineR,

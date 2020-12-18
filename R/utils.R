@@ -119,13 +119,12 @@ TMM.Normalization <- function(counts, groups){
 #'
 #' @param object an object of class [\code{\link{MultiAssayExperiment}]
 #' @param data Omic data type
-#' @param FDR The false discovery rate to apply
 #' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
 #' @return A list of object of class [\code{\link{DGELRT}]
 #' @export
 #'
 #' @examples
-edgeR.AnaDiff <- function(object, data, FDR, clustermq){
+edgeR.AnaDiff <- function(object, data, clustermq){
   
   # retrieve the design matrix
   model_matrix <- model.matrix(as.formula(object@metadata$design@Model.formula),
@@ -138,9 +137,13 @@ edgeR.AnaDiff <- function(object, data, FDR, clustermq){
                         norm.factors = object@ExperimentList[[data]]@metadata$Normalization$coefNorm$norm.factors)
 
   # Run the model
+  print("[cmd] dge <- edgeR::estimateGLMCommonDisp(dge, design=model_matrix)")
   dge <- edgeR::estimateGLMCommonDisp(dge, design=model_matrix)
+  print("[cmd] dge <- edgeR::estimateGLMTrendedDisp(dge, design=model_matrix)")
   dge <- edgeR::estimateGLMTrendedDisp(dge, design=model_matrix)
+  print("[cmd] dge <- edgeR::estimateGLMTagwiseDisp(dge, design=model_matrix)")
   dge <- edgeR::estimateGLMTagwiseDisp(dge, design=model_matrix)
+  print("[cmd] fit.f <- edgeR::glmFit(dge,design=model_matrix)")
   fit.f <- edgeR::glmFit(dge,design=model_matrix)
 
   # test clustermq
@@ -162,13 +165,13 @@ edgeR.AnaDiff <- function(object, data, FDR, clustermq){
   else{
     
      ListRes <-  lapply(object@metadata$design@Contrasts.Sel$contrast, function(x){
-       resglm <- edgeR::glmLRT(fit.f, contrast = unlist(object@metadata$design@Contrasts.Coeff[x,]))
-       return(resglm)
+       print(edgeR::glmLRT(fit.f, contrast = unlist(object@metadata$design@Contrasts.Coeff[x,])))
+       edgeR::glmLRT(fit.f, contrast = unlist(object@metadata$design@Contrasts.Coeff[x,]))
+       
      })
   }
 
-  print(ListRes)
-  names(ListRes) <- object@metadata$design@Contrasts.Sel$contrast
+  names(ListRes) <- object@metadata$design@Contrasts.Sel$contrastName
   return(ListRes)
 }
 
