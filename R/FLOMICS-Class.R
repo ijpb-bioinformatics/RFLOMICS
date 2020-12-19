@@ -23,6 +23,7 @@
       
   ))
 
+setClass("MultiAssayExperiment")
 
 #' @title DiffAnalysis class
 #' @description  Store the results of a differential analysis

@@ -127,7 +127,7 @@ shinyServer(function(input, output, session) {
           colnames <- c(names(omicList[[omicType]]), listOmicsDataInput[[omicType]][[dataName]]$order)
           omicList[[omicType]] <- c(omicList[[omicType]], dataName)
           names(omicList[[omicType]]) <- colnames
-
+          
           print(paste0("# ...load ", dataName," data..."))
           listExp[[dataName]] <- FlomicsSummarizedExpConstructor(listOmicsDataInput[[omicType]][[dataName]]$data, 
                                                                  listOmicsDataInput[[omicType]][[dataName]]$QC)
@@ -424,7 +424,7 @@ shinyServer(function(input, output, session) {
           dplyr::select(contrast, contrastName, type, groupComparison)
         return(tmp)
     })
-    Design@Contrasts.Sel <<- contrastList %>% purrr::reduce(rbind)
+    Design@Contrasts.Sel <<- contrastList %>% purrr::reduce(rbind) %>% dplyr::mutate(tag = paste("H", 1:dim(.)[1], sep=""))
     
     # check if user has selected the contrasts to test
     if(dim(Design@Contrasts.Sel)[1] == 0){
@@ -620,38 +620,50 @@ shinyServer(function(input, output, session) {
     ##########################################
     # Part5 : Analysi Diff
     ##########################################
+    
+    inputDiff <- list()
     lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
       
       lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
         
         #callModule(DiffExpParam, i, FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
-        
-        callModule(DiffExpAnalysis, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+        inputDiff[[paste0(omics, i)]] <<- callModule(DiffExpAnalysis, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
         
       })
     })
   
-    })
-
-  
   ##########################################
   # Part6 : Co-Expression Analysis
   ##########################################
-  
-  observeEvent(input$buttonValidMerge, {
-  
-    output$CoExpression <- renderMenu({
-      menuItem("Co-expression Analysis", tabName = "CoExpression",icon = icon('chart-area'), selected = FALSE)
+    lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
+      
+      lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+        
+        observeEvent(inputDiff[[paste0(omics, i)]]$runAnaDiff, {
+          
+          callModule(CoSeqAnalysis, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+        })
+      })
     })
-    
-    
-   output$Asuivre <- renderPrint({
   
-     paste0("À suivre...")
-   })
-  })
+  
+  
+  
+  # observeEvent(input$buttonValidMerge, {
+  # 
+  #   output$CoExpression <- renderMenu({
+  #     menuItem("Co-expression Analysis", tabName = "CoExpression",icon = icon('chart-area'), selected = FALSE)
+  #   })
+  #   
+  #   
+  #  output$Asuivre <- renderPrint({
+  # 
+  #    paste0("À suivre...")
+  #  })
+  # })
 
 # })
+  })
 
 
 

@@ -36,13 +36,8 @@ DiffExpAnalysisUI <- function(id){
     ),
     tags$br(),
     tags$br(),
-    fluidRow( 
-      
-      uiOutput(ns("ContrastsResults"))
-      
-      
-      )#,
-    #fluidRow( uiOutput(ns("ResultsMerge")))
+    fluidRow( uiOutput(ns("ContrastsResults"))),
+    fluidRow( uiOutput(ns("ResultsMerge")))
   )
 }
 
@@ -55,7 +50,8 @@ DiffExpAnalysis <- function(input, output, session, dataset){
   #   -> return a dynamic user interface with a collapsible box for each contrast
   #         - Pvalue graph
   #         - MAplot
-  #         - Table of the DE genes 
+  #         - Table of the DE genes
+  #   -> combine data : union or intersection
   observeEvent(input$runAnaDiff, {
     
     print("# 9- Diff Analysis...")
@@ -65,16 +61,17 @@ DiffExpAnalysis <- function(input, output, session, dataset){
                                           FDR =input$FDRSeuil , DiffAnalysisMethod=input$AnaDiffMethod,
                                           clustermq=input$clustermq)
     
+    
     output$ContrastsResults <- renderUI({
       
       lapply(1:length(FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrast), function(i) {
         
-        vect        <- unlist(FlomicsMultiAssay@metadata$design@Contrasts.Sel[i,])
-        resTable <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata[["AnaDiffDeg"]][[vect["contrast"]]]
+        vect     <- unlist(FlomicsMultiAssay@metadata$design@Contrasts.Sel[i,])
+        resTable <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata[["AnaDiffDeg"]][[vect["contrastName"]]]
 
         fluidRow(
           column(10,
-                 box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = paste0("Hypothesis : ", vect["contrastName"]),
+                 box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = paste0("H", i, " : ", vect["contrastName"], sep=""),
 
                      verticalLayout(
                        
@@ -86,11 +83,13 @@ DiffExpAnalysis <- function(input, output, session, dataset){
                                      pngFile =file.path(tempdir(), paste0(dataset, "_PvalueDistribution_", gsub(" ", "", vect["contrastName"]), ".png")))
                        }),
                        tags$br(),
+                       ### DEG result table ###
                        DT::renderDataTable({
                          
                          DT::datatable(round(resTable[resTable$FDR <= input$FDRSeuil,],5),
                                        options = list(rownames = FALSE, pageLength = 10))
                        })
+                       
                      )
                  )
           ),
@@ -98,8 +97,24 @@ DiffExpAnalysis <- function(input, output, session, dataset){
         )
       })
     })
+
+    ### intersection
+    output$ResultsMerge <- renderUI({
+      fluidRow(
+        column(10,
+        box(width=12,  status = "warning", 
+
+            renderPlot({
+              DEG_mat <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata[["AnaDiffDeg.mat"]]
+              UpSetR::upset(DEG_mat, sets = (names(DEG_mat[,-1])))
+            })
+          )
+        )
+      )
+    })
   })
   
+  return(input)
 }
 
 

@@ -172,6 +172,9 @@ body <- dashboardBody({
               #### Co-expression analysis  ####
               ######################################
               tabPanel("Gene CoExpression", 
+                       tags$br(),
+                       tags$br(),
+                       CoSeqAnalysisUI(paste0("RNAseq",i))
                        #verbatimTextOutput("Asuivre")
               ),
               tabPanel("Annotation Enrichment", 
