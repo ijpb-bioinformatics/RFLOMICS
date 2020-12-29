@@ -165,7 +165,7 @@ edgeR.AnaDiff <- function(object, data, clustermq){
   else{
     
      ListRes <-  lapply(object@metadata$design@Contrasts.Sel$contrast, function(x){
-       print(edgeR::glmLRT(fit.f, contrast = unlist(object@metadata$design@Contrasts.Coeff[x,])))
+
        edgeR::glmLRT(fit.f, contrast = unlist(object@metadata$design@Contrasts.Coeff[x,]))
        
      })
@@ -882,4 +882,96 @@ renameModelMatrixColumns <- function(sampleData, modelFormula) {
   colNamesFrom <- make.names(do.call(c,lapply(predictorVars, function(v) paste0(v,levels(data[[v]])[-1]))))
   colNamesTo <- make.names(do.call(c,lapply(predictorVars, function(v) paste0(v,"_",levels(data[[v]])[-1],"_vs_",levels(data[[v]])[1]))))
   data.frame(from=colNamesFrom,to=colNamesTo,stringsAsFactors=FALSE)
+}
+
+
+####################################### CO-EXPRESSION ##############################
+
+#' return gene list
+#'
+#' @param matrix
+#' @param colnames
+#' @param mergeType
+#' @return list of genes
+#' @export
+#' @examples
+getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1], mergeType="union"){
+  
+  if (length(colnames) == 0 ){ return(NULL) }
+  
+  matrix_sum <- matrix %>% dplyr::mutate(sum = dplyr::select(., all_of(colnames)) %>% rowSums(.))
+  
+  DEG_list <- switch(mergeType,
+                     
+         "union"={        dplyr::filter(matrix_sum, sum != 0)[1] },
+         "intersection"={ dplyr::filter(matrix_sum, sum == length(colnames))[1] }
+  )
+  
+  if (length(DEG_list$DEG) == 0 ){ return(NULL) }
+  
+  return(DEG_list$DEG)
+}
+
+
+#' @title run Coseq for co-expression analysis
+#' @param counts matrix
+#' @param K
+#' @param iter
+#' @param model 
+#' @param transformation
+#' @param parallel 
+#' @param meanFilterCutoff 
+#' @param normFactors 
+#' @return coseqResults
+#' @export 
+runCoseq <- function(counts, K, iter = 10, model="Normal", transformation="arcsin", parallel=TRUE, meanFilterCutoff=50, normFactors="TMM"){
+            
+  
+  
+            coseq.res <- coseq::coseq(counts, K=K, iter=iter, model=model, transformation=transformation,
+                                      parallel=parallel, meanFilterCutoff=meanFilterCutoff, normFactors=normFactors)
+            
+            # Results.1 <- list()
+            # Results.1_min_icl <- list()
+            # 
+            # for (a in 1:iter){
+            #   Results.1[[a]] <- coseq(counts, K=K, model=model, transformation=transformation, 
+            #                           parallel=parallel, meanFilterCutoff=meanFilterCutoff, normFactors=normFactors)
+            #  
+            #   Results.1_min_icl[[a]] <- min(metadata(Results.1[[a]])$ICL,na.rm=TRUE)
+            # }
+            # 
+            # coseq.res <- Results.1[[which.min(Results.1_min_icl)]]
+            
+            return(coseq.res)
+          }
+
+
+
+#' @title profile boxplot per cluster
+#' @param coseq.res coseq object
+#' @param selectedCluster cluster num
+#' @param conds condition matrix
+#' @return 
+#' @export 
+coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
+  
+  nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
+  
+  y_profiles <- list()
+  for (i in 1:nb_cluster){
+    y_profiles[[i]] <- coseq.res@y_profiles[coseq.res@allResults[[nb_cluster-1]][,i] != 0,] %>% 
+      data.frame() %>% reshape2::melt() %>%  dplyr::rename(samples = variable) %>% 
+      full_join(conds , by = "samples") %>% dplyr::mutate(cluster = i)
+  }
+  y_profiles.gg <-  y_profiles %>% purrr::reduce(rbind)
+  y_profiles.gg$groups <- factor(y_profiles.gg$groups, levels = unique(conds$groups))
+  y_profiles.gg$samples <- factor(y_profiles.gg$samples, levels = unique(conds$samples))
+  
+  p <- ggplot(data = dplyr::filter(y_profiles.gg, cluster == selectedCluster)) +
+    geom_boxplot(aes(x=samples, y=value, fill = groups), outlier.size = 0.3) + facet_wrap(~cluster) +
+    theme(axis.text.x=element_blank())
+    #theme(axis.text.x=element_text(angle=90, hjust=1))
+
+  print(p)
 }

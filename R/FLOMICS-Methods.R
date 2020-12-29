@@ -699,3 +699,7 @@ setMethod(f="getContrastMatrix",
 # contrast From emmeans v1.3.5 by Russell Lenth 16th Percentile Contrasts and linear functions of EMMs
 # coef returns a data.frame containing the object's grid, along with columns named c.1, c.2, ... containing the contrast coefficients. 
 
+
+
+
+################################### CO-EXPRESSION #############################
