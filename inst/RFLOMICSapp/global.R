@@ -1,6 +1,7 @@
 # Packages
 
 library(magrittr)
+library(coseq)
 library(edgeR)
 library(tibble)
 library(dplyr)
