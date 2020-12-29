@@ -51,11 +51,11 @@ CoSeqAnalysisUI <- function(id){
         ),
         box(title = "run", solidHeader = TRUE, status = "warning", width = 14,
           column(6,
-             selectInput(inputId = ns("clustermq-coseq"), label="send job to cluster", choices = list("no"=FALSE,"genotoul"=TRUE))),
+             selectInput(inputId = ns("clustermq-coseq"), label="Cluster", choices = list("no"=FALSE,"genotoul"=TRUE))),
           column(5,
+             tags$br(),
              actionButton(ns("runCoSeq"),"Run clustering"))
           )
-        )
       ),
       column(8,
         box(title = "run clustering", status = "warning", solidHeader = TRUE, width = 14,
@@ -69,13 +69,8 @@ CoSeqAnalysisUI <- function(id){
             tabPanel("probapost_boxplots",  plotOutput(ns("probapost_boxplots"))),
             tabPanel("probapost_barplots",  plotOutput(ns("probapost_barplots"))),
             tabPanel("probapost_histogram", plotOutput(ns("probapost_histogram"))),
-            tabPanel("boxplots_bis", 
-                     uiOutput(ns("selectClusters"))
-                     )
-          )
-        )
-      )
-    )
+            tabPanel("boxplots_bis",        uiOutput(ns("selectClusters"))))))
+   )
   )
 }
 
