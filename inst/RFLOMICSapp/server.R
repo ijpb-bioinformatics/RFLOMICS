@@ -9,7 +9,6 @@ rm(list = ls())
 
 shinyServer(function(input, output, session) {
 
-
   ############################################################
   ######################### FUNCTIONS ########################
   
@@ -645,9 +644,21 @@ shinyServer(function(input, output, session) {
         })
       })
     })
+    ##########################################
+    # Part7 : Enrichment Analysis
+    ##########################################
+    lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
+
+      lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+
+        observeEvent(inputDiff[[paste0(omics, i)]]$runAnaDiff, {
+
+          callModule(AnnotationEnrichment, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+        })
+      })
+    })
   
-  
-  
+    
   
   # observeEvent(input$buttonValidMerge, {
   # 

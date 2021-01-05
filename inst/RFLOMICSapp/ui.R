@@ -176,9 +176,13 @@ body <- dashboardBody({
                        tags$br(),
                        CoSeqAnalysisUI(paste0("RNAseq",i))
                        #verbatimTextOutput("Asuivre")
-              ),
-              tabPanel("Annotation Enrichment", 
-                       #verbatimTextOutput("Asuivre")
+                       ),
+              #### enrichment analysis  ####
+              ######################################
+              tabPanel("Annotation Enrichment",
+                       tags$br(),
+                       tags$br(),
+                       AnnotationEnrichmentUI(paste0("RNAseq",i))
               )
               
             )

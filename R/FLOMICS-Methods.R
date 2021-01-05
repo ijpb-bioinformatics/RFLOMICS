@@ -703,3 +703,34 @@ setMethod(f="getContrastMatrix",
 
 
 ################################### CO-EXPRESSION #############################
+
+
+################################### ANNOTATION #############################
+
+#' @title runAnnotationEnrichment
+#' @param object MultiAssayExperiment
+#' @param data dataset name
+#' @param alpha 
+#' @param probaMethod 
+#' @param annotation gene annotation
+#' @param geneLists gene list 
+#' @return MultiAssayExperiment
+#' @exportMethod runAnnotationEnrichment
+#'
+setMethod(f="runAnnotationEnrichment",
+          signature="MultiAssayExperiment",
+          definition <- function(object, data, annotation, geneLists, alpha = 0.01, probaMethod = "hypergeometric"){
+             
+            for(geneList in names(geneLists)){
+              
+              Results <- switch(probaMethod,
+                   "hypergeometric"=EnrichmentHyperG(annotation, geneLists[[geneList]], alpha = 0.01)
+              )
+                
+              
+              object@ExperimentList[[data]]$metadata$AnnotEnrich[[geneList]] <- Results
+            }
+            
+            return(object)
+
+          })

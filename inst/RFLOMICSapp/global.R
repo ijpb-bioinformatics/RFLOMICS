@@ -1,5 +1,6 @@
 # Packages
 
+library(DT)
 library(magrittr)
 library(coseq)
 library(edgeR)
@@ -9,15 +10,16 @@ library(tidyr)
 library(stringr)
 library(data.table)
 library(SummarizedExperiment)
-library(FactoMineR)
-library(ggplot2)
 library(gridExtra)
 library(MultiAssayExperiment)
+library(FactoMineR)
+library(ggplot2)
 library(reshape2)
 source("DataExploratoryModules.R")
 source("NormalizationModules.R")
 source("DiffExpressionModules.R")
 source("CoExpressionModules.R")
+source("AnnotationEnrichment.R")
 source("commonModules.R")
 
 
