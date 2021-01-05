@@ -66,3 +66,8 @@ setGeneric(
   name="getContrastMatrix",
   def = function( object, ... ){standardGeneric("getContrastMatrix")}
 )
+
+setGeneric(
+  name="runAnnotationEnrichment",
+  def = function( object, ... ){standardGeneric("runAnnotationEnrichment")}
+)
