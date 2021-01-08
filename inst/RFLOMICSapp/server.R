@@ -1,9 +1,7 @@
 
 library(shiny)
-# source("DataExploratoryModules.R")
-# source("NormalizationModules.R")
-# source("DiffExpressionModules.R")
-# source("CoExpressionModules.R")
+library(shinyWidgets)
+
 
 rm(list = ls())
 

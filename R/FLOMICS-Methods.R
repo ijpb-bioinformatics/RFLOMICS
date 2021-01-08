@@ -322,6 +322,7 @@ setMethod(f= "barplotPCAnorm",
 
 
 
+
 #' FilterLowAbundance
 #'
 #' @param MultiAssayExperiment
@@ -333,21 +334,42 @@ setMethod(f= "barplotPCAnorm",
 #' @examples
 setMethod(f= "FilterLowAbundance",
           signature = "MultiAssayExperiment",
-          definition <- function(object, data, threshold){
-
+          definition <- function(object, data, Filter_Strategy = "NbConditions", CPM_Cutoff = 5){
+            
             objectFilt <- object[[data]]
-
-            feature_0  <- objectFilt[rowSums(assay(objectFilt)) <= threshold, ]@NAMES
-
-            objectFilt <- objectFilt[rowSums(assay(objectFilt)) > threshold, ]
-
-            objectFilt@metadata[["FilteredFeature"]] <-  feature_0
-
-            object@ExperimentList[[paste0(data, ".filtred")]] <- objectFilt
-
+            
+            ## nbr of genes with 0 count
+            genes_flt0  <- objectFilt[rowSums(assay(objectFilt)) <= 0, ]@NAMES
+            
+            ## remove 0 count 
+            objectFilt <- objectFilt[rowSums(assay(objectFilt))  > 0, ]
+            
+           
+            
+            
+            ## filter cpm
+            NbReplicate <- table(unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_"))
+            NbConditions <- unique(unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_"))$groups %>% length()
+            
+            switch(Filter_Strategy,
+                   "NbConditions" = { keep <- rowSums(cpm(assay(objectFilt)) >= CPM_Cutoff) >=  NbConditions },
+                   "NbReplicates" = { keep <- rowSums(cpm(assay(objectFilt)) >= CPM_Cutoff) >=  min(NbReplicate) },
+                   "filterByExpr" = { dge  <- edgeR::DGEList(counts = assay(objectFilt), genes = rownames(assay(objectFilt)))
+                                      #keep <- filterByExpr(dge, GLM_Model) 
+                                      keep <- filterByExpr(dge)
+                                      }
+                   )
+            
+            ## nbr of genes filtered
+            genes_flt1  <- objectFilt[!keep]@NAMES
+            
+            objectFilt@metadata[["FilteredFeature"]] <-  c(genes_flt0, genes_flt1)
+            
+            object@ExperimentList[[paste0(data, ".filtred")]] <- objectFilt[keep]
+            
             return(object)
-          })
 
+          })
 
 
 

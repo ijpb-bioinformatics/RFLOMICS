@@ -32,14 +32,18 @@ RNAseqDataNormTabUI <- function(id){
   tagList(
   
       fluidRow(
-        column(4,
+        column(3,
                fluidRow(
-                 box( title = "Low Abundance Filtering",  solidHeader = TRUE, status = "warning", width = 12,
-                      numericInput(inputId = ns("FilterSeuil"),
-                                   label="Threshold :",
-                                   value=0, 0, max=100, 1 ),
+                 box( title = "Low count Filtering",  solidHeader = TRUE, status = "warning", width = 12,
                       
-                      #actionButton("RunFiltering","Run Filtering"),
+                      radioGroupButtons(inputId = ns("Filter_Strategy"), direction = "vertical", 
+                                        label = "Filtering stategy (CPM) :", choices = c("NbConditions",  "NbReplicates"), 
+                                        justified = FALSE, selected = "NbConditions"),
+                      
+                      numericInput(inputId = ns("FilterSeuil"),
+                                   label="CMP cutoff :",
+                                   value=1, min = 1, max=50, step = 1 ),
+                      
                       verbatimTextOutput(ns("FilterResults"))
                  )
                ),
@@ -49,12 +53,11 @@ RNAseqDataNormTabUI <- function(id){
                                   label    = "Method :",
                                   choices  =  list("TMM (edgeR)" = "TMM", "RLE (edgeR)" = "RLE", "upperquartile (edgeR)" = "upperquartile"),
                                   selected = "TMM"),
-                      #actionButton("RunNormalization","Run Normalisation")
                  )
                ),
                actionButton(ns("normUpdate"),"Update")
         ),
-        column(8,
+        column(9,
                box(title = "Abundance distribution", solidHeader = TRUE, status = "warning", width = 14 ,  height = NULL,
                    plotOutput(ns("norm.boxplot"))
                )
@@ -79,21 +82,6 @@ RNAseqDataNormTabUI <- function(id){
   )
 }
 
-RunFilterNormPCAfunction <- function(dataset, FilterSeuil, NormMethod){
-  #### Filter low abundance ####
-  print("# 7- Low Abundance Filtering...")
-  FlomicsMultiAssay <- FilterLowAbundance(FlomicsMultiAssay, data=dataset, FilterSeuil)
-
-  #### Run Normalisation ####
-  print("# 8- Abundance normalization...")
-  FlomicsMultiAssay <- RunNormalization(FlomicsMultiAssay, data=paste0(dataset,".filtred"), NormMethod)
-
-  #### Run PCA for filtred & normalized data ####
-  FlomicsMultiAssay <- RunPCA(FlomicsMultiAssay, data=paste0(dataset,".filtred"), PCA="norm")
-
-  return(FlomicsMultiAssay)
-}
-
 RNAseqDataNormTab <- function(input, output, session, dataset){
   
   # FlomicsMultiAssay.rea <<- reactive({
@@ -111,7 +99,7 @@ RNAseqDataNormTab <- function(input, output, session, dataset){
   #   FlomicsMultiAssay
   # })
   
-  FlomicsMultiAssay <<- RunFilterNormPCAfunction (dataset, FilterSeuil=0 , NormMethod="TMM")
+  FlomicsMultiAssay <<- RunFilterNormPCAfunction (dataset, Filter_Strategy = "NbConditions", CPM_Cutoff = 1, NormMethod="TMM")
   
   ## Boxplot of distribution of normalized abundance 
   output$norm.boxplot <- renderPlot({
@@ -146,7 +134,8 @@ RNAseqDataNormTab <- function(input, output, session, dataset){
     NormMethod  <- input$selectNormMethod
     
     
-    FlomicsMultiAssay <<- RunFilterNormPCAfunction (dataset, FilterSeuil , NormMethod)
+    FlomicsMultiAssay <<- RunFilterNormPCAfunction (dataset = dataset, Filter_Strategy = input$Filter_Strategy, 
+                                                    CPM_Cutoff = input$FilterSeuil , NormMethod = input$selectNormMethod)
     
     output$FilterResults <- renderPrint({
   
@@ -189,4 +178,19 @@ RNAseqDataNormTab <- function(input, output, session, dataset){
 }
 
 
+############## functions ###############
+RunFilterNormPCAfunction <- function(dataset, Filter_Strategy = "NbConditions", CPM_Cutoff = 1, NormMethod){
+  #### Filter low abundance ####
+  print("# 7- Low Abundance Filtering...")
+  FlomicsMultiAssay <- FilterLowAbundance(FlomicsMultiAssay, data=dataset, Filter_Strategy, CPM_Cutoff)
+  
+  #### Run Normalisation ####
+  print("# 8- Abundance normalization...")
+  FlomicsMultiAssay <- RunNormalization(FlomicsMultiAssay, data=paste0(dataset,".filtred"), NormMethod)
+  
+  #### Run PCA for filtred & normalized data ####
+  FlomicsMultiAssay <- RunPCA(FlomicsMultiAssay, data=paste0(dataset,".filtred"), PCA="norm")
+  
+  return(FlomicsMultiAssay)
+}
 
