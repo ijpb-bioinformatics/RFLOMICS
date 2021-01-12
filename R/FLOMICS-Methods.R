@@ -727,6 +727,40 @@ setMethod(f="getContrastMatrix",
 ################################### CO-EXPRESSION #############################
 
 
+#' @title runCoExpression
+#' @param object MultiAssayExperiment
+#' @param data dataset name
+#' @param tools  
+#' @param geneList 
+#' @param K list of number of clusters
+#' @param iter gene list 
+#' @param model
+#' @param transformation
+#' @param normFactors
+#' @return MultiAssayExperiment
+#' @exportMethod runCoExpression
+#'
+setMethod(f="runCoExpression",
+          signature="MultiAssayExperiment",
+          definition <- function(object, data, tools = "coseq", geneList, K, iter=5 , model="normal", transformation="arcsin", normFactors="TMM"){
+            
+            counts = assay(object@ExperimentList[[data]])[geneList,] 
+            
+            switch (tools,
+              "coseq" = {
+                  coseq.res <- runCoseq(counts, K=K, iter=iter, model=model, transformation=transformation, normFactors=normFactors)
+                  object@ExperimentList[[data]]@metadata[["CoExpResults"]][["coseqResults"]] <- coseq.res
+                  
+                  clusters <- lapply(1:length(table(clusters(coseq.res))), function(i){ names(clusters(res)[clusters(res) == i])})
+                  object@ExperimentList[[data]]@metadata[["CoExpResults"]][["clusters"]] <- clusters
+                  names(object@ExperimentList[[data]]@metadata[["CoExpResults"]][["clusters"]]) <- paste("cluster", 1:length(table(clusters(coseq.res))), sep = ".")
+                
+                }
+            )
+              
+      return(object)
+})
+
 ################################### ANNOTATION #############################
 
 #' @title runAnnotationEnrichment
@@ -756,3 +790,7 @@ setMethod(f="runAnnotationEnrichment",
             return(object)
 
           })
+
+
+
+

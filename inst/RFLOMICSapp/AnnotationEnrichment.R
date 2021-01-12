@@ -12,21 +12,21 @@ AnnotationEnrichmentUI <- function(id){
       
       box(title = span(tagList(icon("cogs"), "")), solidHeader = FALSE, status = "warning", width = 12, 
 
-        ## choice of probability
-        column(2, 
-               selectInput(ns("EnrichMethod"), label = "Probability :", 
-                              choices = list("Hypergeometric"="hypergeometric"),selected = "hypergeometric"),
-               actionButton(ns("runEnrich"),"Run")),
-        
-        ## alpha threshold
-        column(2, numericInput(inputId = ns("Alpha_Enrichment"), label="P-value :", value=0.01 , min = 0, max=0.1, step = 0.01)),
+        ## gene lists
+        column(4, uiOutput(ns("selectGeneListtoAnnot"))),
         
         ## file with annotation (geneID, Term, Name, Domain/source)
         column(3, fileInput(inputId = ns("annotationFile"), label = "Annotation file :", 
-                             accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
+                            accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
         
-        ## gene lists
-        column(4, uiOutput(ns("selectDEGtoAnnot"))),
+        ## choice of probability
+        column(2, 
+               selectInput(ns("EnrichMethod"), label = "Test :", 
+                           choices = list("Hypergeometric"="hypergeometric"),selected = "hypergeometric")),
+        
+        ## alpha threshold
+        column(2, numericInput(inputId = ns("Alpha_Enrichment"), label="P-value :", value=0.01 , min = 0, max=0.1, step = 0.01),
+                  actionButton(ns("runEnrich"),"Run"))
         
       )
     ),
@@ -38,10 +38,10 @@ AnnotationEnrichmentUI <- function(id){
 
 AnnotationEnrichment <- function(input, output, session, dataset){
   
-  output$selectDEGtoAnnot <- renderUI({
+  output$selectGeneListtoAnnot <- renderUI({
     
-    ListNames <- FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName
-    
+    ListNames.diff <- FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName
+    ListNames.coseq <- names(FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata[["CoExpResults"]][["clusters"]])
     
     # multiInput(
     #   inputId = session$ns("GeneList.diff"),
@@ -49,30 +49,27 @@ AnnotationEnrichment <- function(input, output, session, dataset){
     #   choiceNames = ListNames,
     #   choiceValues = ListNames
     # )
-    
-    pickerInput(
-      inputId = session$ns("GeneList.diff"),
-      label = "Select DEG(s) :", 
-      choices = ListNames,
-      options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-      multiple = TRUE, selected = ListNames
+    list(
+      pickerInput(
+        inputId = session$ns("GeneList.diff"),
+        label = "Select DEG lists:", 
+        choices = ListNames.diff,
+        options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+        multiple = TRUE, selected = ListNames.diff
+      ),
+      
+      pickerInput(
+        inputId = session$ns("GeneList.coseq"), label = "Select Clusters :",
+        choices = ListNames.coseq, multiple = TRUE, selected = ListNames.coseq,
+        options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+        
+      )
     )
+    
+    
 
   })
   
-  
-  # output$selectClusterstoAnnot <- renderUI({
-  #   
-  #   #ListNames <- list of genes per cluster
-  #   
-  #   pickerInput(
-  #     inputId = session$ns("GeneList.coseq"), label = "Select Cluster(s) :", 
-  #     choices = ListNames, multiple = TRUE, selected = ListNames,
-  #     options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
-  #     
-  #   )
-  #   
-  # })
   
   
   
@@ -88,14 +85,23 @@ AnnotationEnrichment <- function(input, output, session, dataset){
 
     ## list of gene list to annotate
     geneLists <- list()
-    geneLists <- lapply(input$GeneList.diff, function(listname){
+    geneLists.diff <- list()
+    geneLists.diff <- lapply(input$GeneList.diff, function(listname){
 
-       #tibble(geneID = row.names(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$AnaDiffDeg[[listname]]))
        row.names(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$AnaDiffDeg[[listname]])
       
     })
-    names(geneLists) <- input$GeneList.diff
+    names(geneLists.diff) <- input$GeneList.diff
     
+    geneLists.coseq <- list()
+    geneLists.coseq <- lapply(input$GeneList.coseq, function(listname){
+      
+      FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata[["CoExpResults"]][["clusters"]][[listname]]
+      
+    })
+    names(geneLists.coseq) <- input$GeneList.coseq
+    
+    geneLists <- c(geneLists.diff, geneLists.coseq)
     
     ## run annotation
     FlomicsMultiAssay <<- runAnnotationEnrichment(FlomicsMultiAssay, data = paste0(dataset,".filtred"), 

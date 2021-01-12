@@ -919,17 +919,15 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
 #' @param iter
 #' @param model 
 #' @param transformation
-#' @param parallel 
-#' @param meanFilterCutoff 
 #' @param normFactors 
 #' @return coseqResults
 #' @export 
-runCoseq <- function(counts, K, iter = 10, model="Normal", transformation="arcsin", parallel=TRUE, meanFilterCutoff=50, normFactors="TMM"){
+runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="arcsin",  normFactors="TMM"){
             
   
   
             coseq.res <- coseq::coseq(counts, K=K, iter=iter, model=model, transformation=transformation,
-                                      parallel=parallel, meanFilterCutoff=meanFilterCutoff, normFactors=normFactors)
+                                      parallel=TRUE, meanFilterCutoff=50, normFactors=normFactors, seed=12345)
             
             # Results.1 <- list()
             # Results.1_min_icl <- list()
