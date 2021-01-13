@@ -24,7 +24,7 @@ CoSeqAnalysisUI <- function(id){
               )
             )
           ),
-        box(title = "parameters", solidHeader = TRUE, status = "warning", width = 14,
+        box(title = span(tagList(icon("cogs"), "   CoSeq")), solidHeader = TRUE, status = "warning", width = 14,
             
           column(6,
             selectInput(ns("methode"), label = "Method :", 
@@ -83,41 +83,45 @@ CoSeqAnalysis <- function(input, output, session, dataset){
   # Select lists of DEG to co-expression analysis 
   output$selectDEGtoCoExp <- renderUI({
 
-    checkboxGroupInput(inputId = session$ns("select"), label = "Select DEG to Coseq :",
-                       choiceNames  = FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
-                       choiceValues = FlomicsMultiAssay@metadata$design@Contrasts.Sel$tag,
-                       selected     = FlomicsMultiAssay@metadata$design@Contrasts.Sel$tag)
+    ListNames.diff <- FlomicsMultiAssay@metadata$design@Contrasts.Sel$tag
+    names(ListNames.diff) <- FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName
+    
+    pickerInput(
+      inputId = session$ns("select"),
+      label = "Select DEG lists:", 
+      choices = ListNames.diff,
+      options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+      multiple = TRUE, selected = ListNames.diff
+    )
+    
+    # checkboxGroupInput(inputId = session$ns("select"), label = "Select DEG to Coseq :",
+    #                    choiceNames  = FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
+    #                    choiceValues = FlomicsMultiAssay@metadata$design@Contrasts.Sel$tag,
+    #                    selected     = FlomicsMultiAssay@metadata$design@Contrasts.Sel$tag)
 
   })
   
-  # get list of DEG to process 
-  # from union or intersection
-  
-  
-  
-  #observeEvent(input$select, {
-    
-  #})
-  
+
   
   #run coseq when button is clicked
   observeEvent(input$runCoSeq, {
    
     progress <- shiny::Progress$new()
-    progress$set(message = "Making plot", value = 0)
+    progress$set(message = "Run coseq", value = 0)
     on.exit(progress$close())
     
-    progress$inc(0, detail = paste("Doing part ", 0,"%", sep=""))
+    # run coseq
+    progress$inc(1/10, detail = paste("Doing part ", 10,"%", sep=""))
     
+    # get list of DEG to process 
+    # from union or intersection
     DEG_list <- getDEGlist_for_coseqAnalysis(matrix    = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata[["AnaDiffDeg.mat"]], 
                                              colnames  = input$select, 
                                              mergeType = input$unionInter)
     
     output$mergeValue <- renderText({ print(paste(length(DEG_list), "genes", sep =" ")) })
     
-    # run coseq
-    progress$inc(1/4, detail = paste("Doing part ", 0,"%", sep=""))
- 
+    progress$inc(3/4, detail = paste("Doing part ", 75,"%", sep=""))
     # FlomicsMultiAssay <- runCoseq(counts = assay(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])[DEG_list,] , 
     #                       K=input$minK:input$maxK, iter = input$iter,
     #                       model  = input$methode, transformation=input$transfo, 
@@ -135,6 +139,8 @@ CoSeqAnalysis <- function(input, output, session, dataset){
     groups    <- unite(as.data.frame(FlomicsMultiAssay@colData[FlomicsMultiAssay@metadata$design@Factors.Type == "Bio"]), 
                        col="groups", sep="_", remove = TRUE) %>% dplyr::mutate(samples = rownames(.)) %>%
                  dplyr::arrange(factor(samples, levels = names(coseq.res@y_profiles)))
+    
+    progress$inc(3/4, detail = paste("Doing part ", 75,"%", sep=""))
     plot.coseq.res <- coseq::plot(coseq.res, conds = groups$groups)
     
     output$logLike  <- renderPlot({ plot.coseq.res$logLike }) 

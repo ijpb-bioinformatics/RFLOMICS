@@ -52,7 +52,7 @@ body <- dashboardBody({
             
             ### import Design file
             fluidRow(
-              box(width = 12, status = "warning",
+              box(width = 9, status = "warning",
 
                 column(width = 8,
                  # matrix count/abundance input
@@ -93,9 +93,9 @@ body <- dashboardBody({
       fluidRow(
             column(width= 12, uiOutput("SetContrasts"))
       ),
-      fluidRow(
-            column(width= 12, verbatimTextOutput("printContrast"))
-      ),
+      # fluidRow(
+      #       column(width= 12, verbatimTextOutput("printContrast"))
+      # ),
       tags$br()
     ),
     
@@ -104,7 +104,7 @@ body <- dashboardBody({
     tabItem(tabName = "importData",
             
          box(title = "Load omic data", status = "warning", width = 12, height = NULL,
-             h5("[warning] dataset with omics (type == none) was igored..."),
+             #h5("[warning] dataset with omics (type == none) was igored..."),
              fluidRow(
                   column(2,
                          # omic type
@@ -116,7 +116,7 @@ body <- dashboardBody({
                   column(4,
                          
                          # matrix count/abundance input
-                         fileInput("data1", "omic count/abundance (Ex.)",
+                         fileInput("data1", "omics count/abundance (Ex.)",
                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
                          ),
                   column(4,

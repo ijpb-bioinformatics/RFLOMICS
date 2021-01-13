@@ -1029,8 +1029,8 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
   #                Pvalue_under=phyper(x,m,n,k,lower.tail=TRUE))       
   
   res= dplyr::full_join(Urn_Success, Trial_Success, by = c("Term", "Name", "Domain")) %>% 
-       dplyr::mutate(Urn_percentage_Success   = signif(100*Urn_Success/Urn_effective, 3), 
-                     Trial_percentage_Success = signif(100*Trial_Success/Trial_effective, 3), 
+       dplyr::mutate(Urn_percentage_Success   = signif(100*Urn_Success/Urn_effective, 3), Urn_effective = Urn_effective,
+                     Trial_percentage_Success = signif(100*Trial_Success/Trial_effective, 3), Trial_effective = Trial_effective, 
                      Pvalue_over  = phyper(Trial_Success-1,Urn_Success, (Urn_effective-Urn_Success),Trial_effective,lower.tail=FALSE), 
                      Pvalue_under = phyper(Trial_Success,  Urn_Success, (Urn_effective-Urn_Success),Trial_effective,lower.tail=TRUE))
   

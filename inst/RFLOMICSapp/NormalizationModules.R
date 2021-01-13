@@ -36,12 +36,13 @@ RNAseqDataNormTabUI <- function(id){
                fluidRow(
                  box( title = "Low count Filtering",  solidHeader = TRUE, status = "warning", width = 12,
                       
-                      radioGroupButtons(inputId = ns("Filter_Strategy"), direction = "vertical", 
-                                        label = "Filtering stategy (CPM) :", choices = c("NbConditions",  "NbReplicates"), 
+                      radioGroupButtons(inputId = ns("Filter_Strategy"), direction = "horizontal", 
+                                        label = "Filtering stategy (CPM) :", 
+                                        choices = c("NbConditions" = "NbConditions",  "NbReplicates" = "NbReplicates"), 
                                         justified = FALSE, selected = "NbConditions"),
                       
                       numericInput(inputId = ns("FilterSeuil"),
-                                   label="CMP cutoff :",
+                                   label="CPM cutoff :",
                                    value=1, min = 1, max=50, step = 1 ),
                       
                       verbatimTextOutput(ns("FilterResults"))
@@ -58,7 +59,7 @@ RNAseqDataNormTabUI <- function(id){
                actionButton(ns("normUpdate"),"Update")
         ),
         column(9,
-               box(title = "Abundance distribution", solidHeader = TRUE, status = "warning", width = 14 ,  height = NULL,
+               box(title = "Read count distribution", solidHeader = TRUE, status = "warning", width = 14 ,  height = NULL,
                    plotOutput(ns("norm.boxplot"))
                )
         )

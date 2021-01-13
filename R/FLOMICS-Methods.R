@@ -751,7 +751,9 @@ setMethod(f="runCoExpression",
                   coseq.res <- runCoseq(counts, K=K, iter=iter, model=model, transformation=transformation, normFactors=normFactors)
                   object@ExperimentList[[data]]@metadata[["CoExpResults"]][["coseqResults"]] <- coseq.res
                   
-                  clusters <- lapply(1:length(table(clusters(coseq.res))), function(i){ names(clusters(res)[clusters(res) == i])})
+                  clusters <- lapply(1:length(table(clusters(coseq.res))), function(i){ 
+                    names(clusters(coseq.res)[clusters(coseq.res) == i])
+                    })
                   object@ExperimentList[[data]]@metadata[["CoExpResults"]][["clusters"]] <- clusters
                   names(object@ExperimentList[[data]]@metadata[["CoExpResults"]][["clusters"]]) <- paste("cluster", 1:length(table(clusters(coseq.res))), sep = ".")
                 

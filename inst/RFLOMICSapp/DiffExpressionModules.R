@@ -11,7 +11,7 @@ DiffExpAnalysisUI <- function(id){
     ### parametres for Diff Analysis
     fluidRow( 
       #uiOutput(ns("DiffParam"))
-      box(title = "", width = 12, status = "warning",
+      box(title = span(tagList(icon("cogs"), "   edgeR")), width = 12, status = "warning",
           column(5,
                  selectInput(ns("AnaDiffMethod"), label = "Method :",
                              choices = list("glmfit (edgeR)"="edgeRglmfit",
@@ -56,11 +56,17 @@ DiffExpAnalysis <- function(input, output, session, dataset){
     
     print("# 9- Diff Analysis...")
 
+    progress <- shiny::Progress$new()
+    progress$set(message = "Run Diff", value = 0)
+    on.exit(progress$close())
+    
     # run diff analysis with select method
+    progress$inc(1/10, detail = paste("Doing part ", 10,"%", sep=""))
     FlomicsMultiAssay <<- RunDiffAnalysis(FlomicsMultiAssay, data=paste0(dataset,".filtred"),
                                           FDR =input$FDRSeuil , DiffAnalysisMethod=input$AnaDiffMethod,
                                           clustermq=input$clustermq)
     
+    progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep=""))
     
     output$ContrastsResults <- renderUI({
       
@@ -92,11 +98,12 @@ DiffExpAnalysis <- function(input, output, session, dataset){
                        
                      )
                  )
-          ),
-          column(2, checkboxInput(inputId = "checkContrasts", label = "validate" ,value = TRUE , width=1))
+          )
         )
       })
     })
+    progress$inc(3/4, detail = paste("Doing part ", 75,"%", sep=""))
+    
 
     ### intersection
     output$ResultsMerge <- renderUI({
@@ -112,6 +119,7 @@ DiffExpAnalysis <- function(input, output, session, dataset){
         )
       )
     })
+    progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
   })
   
   return(input)

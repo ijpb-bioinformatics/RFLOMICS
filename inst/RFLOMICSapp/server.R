@@ -1,6 +1,5 @@
 
 library(shiny)
-library(shinyWidgets)
 
 
 rm(list = ls())
@@ -60,7 +59,7 @@ shinyServer(function(input, output, session) {
     listOmicsDataInput <<- list()
     
     #### list of omic data laoded from interface
-    print("# 5- Load omic data...")
+    print("# 5- Load omics data...")
     dataName.vec <- c()
     for (k in 1:addDataNum){
       
@@ -247,7 +246,7 @@ shinyServer(function(input, output, session) {
     # display desgin table
     output$ExpDesignTable <- renderUI({
 
-        box(width = 8, status = "warning",
+        box(width = 9, status = "warning",
             DT::renderDataTable( DT::datatable(ExpDesign) )
           )
       })
@@ -255,7 +254,7 @@ shinyServer(function(input, output, session) {
   ####### Set up Design model ########
   output$GetdFactorRef <- renderUI({
 
-    box(status = "warning", width = 12, height = NULL,
+    box(status = "warning", width = 9, height = NULL,
         
        # Construct the form to set the reference factor level
        h4("Select the level of reference fo each design factor"),
@@ -310,17 +309,16 @@ shinyServer(function(input, output, session) {
     
     output$Completeness <- renderUI({
       
-      column(width= 12, 
-              box( status = "warning", width = 12, 
-      
-                  # print message
-                  renderText( completeCheckRes[["message"]][2] ),
-                  
-                  # plot of count per condition
-                  renderPlot( plotExperimentalDesign(completeCheckRes[["count"]] ))
-                  
-              )
+        box( status = "warning", width = 9, 
+
+            # print message
+            renderText( completeCheckRes[["message"]][2] ),
+            
+            # plot of count per condition
+            renderPlot( plotExperimentalDesign(completeCheckRes[["count"]] ))
+            
         )
+        
     })
     
     
@@ -348,7 +346,7 @@ shinyServer(function(input, output, session) {
     
     # display set up model Item
     output$SetUpModel <- renderMenu({
-      menuSubItem("Design matrix", tabName = "SetUpModel",  selected = TRUE)
+      menuSubItem("Statistical model", tabName = "SetUpModel",  selected = TRUE)
       
     })
     
@@ -441,10 +439,10 @@ shinyServer(function(input, output, session) {
     # define all the coefficients of selected contrasts and return a contrast matrix with contrast sample name and associated coefficients
     Design <<- getContrastMatrix(Design)
     
-    output$printContrast <- renderPrint({
-
-      Design@Contrasts.Coeff
-    })
+    # output$printContrast <- renderPrint({
+    # 
+    #   Design@Contrasts.Coeff
+    # })
     
     
     # 
@@ -480,12 +478,12 @@ shinyServer(function(input, output, session) {
                    ),
             column(4,
                    # matrix count/abundance input
-                   fileInput(inputId=paste0("data", addDataNum), "omic count/abundance (Ex.)",
+                   fileInput(inputId=paste0("data", addDataNum), "Feature count/abundance (txt)",
                              accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
                    ),
             column(4,
                    # metadata/QC bioinfo
-                   fileInput(inputId=paste0("metadataQC", addDataNum), "QC or metadata (Ex.)",
+                   fileInput(inputId=paste0("metadataQC", addDataNum), "QC or metadata (txt)",
                              accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
                    ),
             column(2,
