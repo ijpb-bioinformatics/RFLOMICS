@@ -4,31 +4,32 @@ library(shiny)
 
 rm(list = ls())
 
+FlomicsSummarizedExpConstructor <- function(dataFile, qcFile){
+  
+  abundance <- read.table(dataFile$datapath, header = TRUE, row.names = 1)
+  
+  # RNAseq QC
+  if(!is.null(qcFile)){
+    print("# ... metadata QC...")
+    QCmat <- read.table(qcFile$datapath, header = TRUE)
+    
+  }
+  else{
+    QCmat <- data.frame(primary = colnames(abundance),
+                        colname = colnames(abundance),
+                        stringsAsFactors = FALSE)
+  }
+  se <- SummarizedExperiment(assays  = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
+                             colData = QCmat)
+  #se <- SummarizedExperiment(assays  = list(counts=counts), colData = QCmat)
+  return(se)
+}
+
 shinyServer(function(input, output, session) {
 
   ############################################################
   ######################### FUNCTIONS ########################
   
-  FlomicsSummarizedExpConstructor <- function(dataFile, qcFile){
-
-    abundance <- read.table(dataFile$datapath, header = TRUE, row.names = 1)
-
-    # RNAseq QC
-    if(is.null(qcFile)){
-      QCmat <- data.frame(primary = colnames(abundance),
-                          colname = colnames(abundance),
-                          stringsAsFactors = FALSE)
-    }
-    else{
-      print("# ... metadata QC...")
-      QCmat <- read.table(qcFile$datapath, header = TRUE)
-    }
-    se <- SummarizedExperiment(assays  = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
-                               colData = QCmat)
-    #se <- SummarizedExperiment(assays  = list(counts=counts), colData = QCmat)
-    return(se)
-  }
-
   loadExpDesign <- function() {
 
     ### Experimental Design
@@ -104,10 +105,12 @@ shinyServer(function(input, output, session) {
       }
     } 
     
+    return(listOmicsDataInput)
+    
   }
   
   
-  FlomicsMultiAssayExperimentConstructor <- function(){
+  FlomicsMultiAssayExperimentConstructor <- function(listOmicsDataInput = listOmicsDataInput){
     
     listmap <- list()
     listExp <- list()
@@ -504,10 +507,10 @@ shinyServer(function(input, output, session) {
   observeEvent(input$loadData, {
     
     ### load data
-    loadData()
+    listOmicsDataInput <-loadData()
     
     ### load data
-    FlomicsMultiAssayExperimentConstructor()
+    FlomicsMultiAssayExperimentConstructor(listOmicsDataInput = listOmicsDataInput)
     
     
     ##### data list

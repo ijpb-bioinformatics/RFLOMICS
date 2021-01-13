@@ -43,7 +43,7 @@ RNAseqDataNormTabUI <- function(id){
                       
                       numericInput(inputId = ns("FilterSeuil"),
                                    label="CPM cutoff :",
-                                   value=1, min = 1, max=50, step = 1 ),
+                                   value=5, min = 1, max=50, step = 1 ),
                       
                       verbatimTextOutput(ns("FilterResults"))
                  )
