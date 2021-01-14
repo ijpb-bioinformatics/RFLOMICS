@@ -36,7 +36,7 @@ ExperimentalDesign <- function(ExpDesign){
 #'
 setMethod(f="RunDiffAnalysis",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, FDR, DiffAnalysisMethod, clustermq){
+          definition <- function(object, data, FDR = 0.05, DiffAnalysisMethod, clustermq){
 
             # Run the Diff analysis and get the results as a list of object depending of the
 

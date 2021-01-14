@@ -298,6 +298,26 @@ pvalue.plot <- function(data, contrast, pngFile=NULL){
 
 
 
+#' MA.plot
+#'
+#' @param data 
+#' @param pngFile 
+#' @param FDRcutoff 
+#' @return plot
+#' @export
+#'
+#' @examples
+MA.plot <- function(data, FDRcutoff=0.05, pngFile=NULL){
+  
+  p <- ggplot(data=data, aes(x = logCPM, y=logFC, col=FDR < FDRcutoff)) + geom_point(alpha=0.4, size = 0.8) + 
+    scale_colour_manual(values=c("black","red"))
+  print(p)
+  
+  if (! is.null(pngFile)){
+    ggsave(filename = pngFile, plot = p)
+  }
+  
+}
 
 
 
