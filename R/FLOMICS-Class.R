@@ -11,17 +11,16 @@
 #' @exportClass ExpDesign
 .ExpDesign <- setClass(
   Class="ExpDesign",
-  representation=representation(
-      ExpDesign="data.frame",
-      List.Factors="list",
-      Factors.Type="vector",
-      Model.formula="vector",
-      Model.matrix="vector",
-      Contrasts.List="list",
-      Contrasts.Sel="data.frame",
-      Contrasts.Coeff="data.frame"
-      
-  ))
+  slots=c(ExpDesign="data.frame",
+          List.Factors="list",
+          Factors.Type="vector",
+          Model.formula="vector",
+          Model.matrix="vector",
+          Contrasts.List="list",
+          Contrasts.Sel="data.frame",
+          Contrasts.Coeff="data.frame")
+  
+  )
 
 setClass("MultiAssayExperiment")
 

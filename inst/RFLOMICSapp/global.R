@@ -22,6 +22,7 @@ source("DiffExpressionModules.R")
 source("CoExpressionModules.R")
 source("AnnotationEnrichment.R")
 source("commonModules.R")
-
+source("ExperimentalDesignModule.R")
+source("LoadOmicsDataModules.R")
 
 SupportedOmics <- c("RNAseq", "proteomics", "metabolomics")

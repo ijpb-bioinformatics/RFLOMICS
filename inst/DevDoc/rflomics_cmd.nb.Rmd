@@ -1,0 +1,43 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r inpu}
+
+ExpDesign.file <- "/Users/nbessoltane/Documents/INRA/IJPB/PROJETs/IJPB-Bioinfo/FLOMICs/R-Flomics/rflomics/inst/ExamplesFiles/ecoseed/condition.txt"
+
+dF.List.ref <- c("rep1","Medium", "DS")
+dF.Type.dFac <- c("batch", "bio", "bio")
+
+
+
+```
+
+```{r load exp design}
+
+ExpDesign.tbl <- read.table(file = ExpDesign.file, header = TRUE,row.names = 1)
+
+# besoin de rajouter des ckeck dans la fonction
+Design <- ExpDesign.constructor(ExpDesign = ExpDesign.tbl, refList = dF.List.ref, typeList = dF.Type.dFac)
+
+completeCheckRes <- CheckExpDesignCompleteness(Design)
+
+plotExperimentalDesign(completeCheckRes[["count"]] )
+
+GetModelFormulae(Factors.Name=names(Design@List.Factors), Factors.Type=Design@Factors.Type)
+
+Design <- getExpressionContrast(object = Design, model.formula = "~Repeat + temperature + imbibition + temperature:imbibition")
+Design@Contrasts.List
+
+vec <- c("(temperatureMedium_imbibitionDS - temperatureLow_imbibitionDS)", "(temperatureLow_imbibitionDS - temperatureElevated_imbibitionDS)")
+Design <- getContrastMatrix(Design, contrastList = vec )
+
+
+
+```
+
+
+

@@ -1,27 +1,36 @@
 #' @title [\code{\link{ExpDesign-class}}] Class constructor
 #' @description
-#' @param dF.List A list of factor
+#' @param ExpDesign data.frame with experimental design
+#' @param refList vector with factor ref
+#' @param typeList vector with type of factor
 #' @return An object of class [\code{\link{ExpDesign-class}}]
 #' @name ExpDesign-Constructor
 #' @rdname ExpDesign-Constructor
 #' @export
-ExperimentalDesign <- function(ExpDesign){
+ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 
+  # List.Factors
   dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
-    as.factor(ExpDesign[[i]])
+    
+    relevel(as.factor(ExpDesign[[i]]), ref=refList[[i]])
   })
   names(dF.List) <- names(ExpDesign)
 
-  .ExpDesign(
-           ExpDesign=ExpDesign,
-           List.Factors=dF.List,
-           Factors.Type=vector(),
-           Model.formula=vector(),
-           Model.matrix=vector(),
-           Contrasts.List=list(),
-           Contrasts.Sel=data.frame(),
-           Contrasts.Coeff=data.frame())
+  # Factors.Type
+  names(typeList) <- names(ExpDesign)
+  
+  
+  Design = new(Class = "ExpDesign",
+               ExpDesign=ExpDesign,
+               List.Factors=dF.List,
+               Factors.Type=typeList,
+               Model.formula=vector(),
+               Model.matrix=vector(),
+               Contrasts.List=list(),
+               Contrasts.Sel=data.frame(),
+               Contrasts.Coeff=data.frame())
            
+  return(Design)
   }
 
 #' @title RunDiffAnalysis
@@ -579,6 +588,7 @@ setMethod(f="CheckExpDesignCompleteness",
 #' the contrast he want to keep and bind the selected expression contrast data frames 
 #'
 #' @param ExpDesign 
+#' @param model.formula 
 #'
 #' @return ExpDesign
 #' @exportMethod getExpressionContrast
@@ -588,10 +598,13 @@ setMethod(f="CheckExpDesignCompleteness",
 #'
 setMethod(f="getExpressionContrast",
           signature="ExpDesign",
-          definition <- function(object){
+          definition <- function(object, model.formula){
 
   # model formula
-  modelFormula <- formula(object@Model.formula)
+  modelFormula <- formula(model.formula)
+  
+  #Design@Model.formula <- formula(model.formula)
+  object@Model.formula <- model.formula
   
   # bio factor list in formulat 
   labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
@@ -645,14 +658,23 @@ setMethod(f="getExpressionContrast",
 #' define contrast matrix or contrast list with contrast name and contrast coefficients
 #'
 #' @param ExpDesign
-#'
+#' @param contrastList
 #' @return ExpDesign
 #' @exportMethod getContrastMatrix
 #'
 #' @author Christine Paysant-Le Roux
 setMethod(f="getContrastMatrix",
           signature="ExpDesign",
-          definition <- function(object){
+          definition <- function(object, contrastList){
+            
+  contrast.sel.list <- list()
+  contrast.sel.list <- lapply(names(Design@Contrasts.List), function(contrastType) {
+  
+    tmp <- object@Contrasts.List[[contrastType]] %>% dplyr::filter(contrast %in% contrastList) %>%
+                    dplyr::select(contrast, contrastName, type, groupComparison)
+    return(tmp)
+  })
+  object@Contrasts.Sel <- contrast.sel.list %>% purrr::reduce(rbind) %>% dplyr::mutate(tag = paste("H", 1:dim(.)[1], sep=""))
             
             
   sampleData <-  object@ExpDesign         

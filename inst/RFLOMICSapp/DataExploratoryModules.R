@@ -36,8 +36,8 @@ RNAseqDataExplorTabUI <- function(id){
                            column(width = 10,  plotOutput(ns("QCdesignPCARaw")))
                            
                   ),
-                  tabPanel("Principal component analysis (2/2)", plotOutput(ns("QCdesignPCA"))),
-                  tabPanel("Quality check for technical issues", plotOutput(ns("QCdata")))
+                  tabPanel("Principal component analysis (2/2)", plotOutput(ns("QCdesignPCA")))#,
+                  #tabPanel("Quality check for technical issues", plotOutput(ns("QCdata")))
           )
       )
     )

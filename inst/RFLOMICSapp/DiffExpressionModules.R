@@ -14,8 +14,7 @@ DiffExpAnalysisUI <- function(id){
       box(title = span(tagList(icon("cogs"), "   edgeR")), width = 12, status = "warning",
           column(5,
                  selectInput(ns("AnaDiffMethod"), label = "Method :",
-                             choices = list("glmfit (edgeR)"="edgeRglmfit",
-                                            "limma" = "limma"),
+                             choices = list("glmfit (edgeR)"="edgeRglmfit"),
                              selected = "edgeRglmfit")
           ),
           column(3,
@@ -73,21 +72,34 @@ DiffExpAnalysis <- function(input, output, session, dataset){
       lapply(1:length(FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrast), function(i) {
         
         vect     <- unlist(FlomicsMultiAssay@metadata$design@Contrasts.Sel[i,])
+        res      <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata[["AnaDiff"]][[vect["contrastName"]]]
         resTable <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata[["AnaDiffDeg"]][[vect["contrastName"]]]
 
         fluidRow(
           column(10,
                  box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = paste0("H", i, " : ", vect["contrastName"], sep=""),
 
+                     
+                     column(6,
+                            ### MAplot
+                         renderPlot({
+                           res.FDR <-topTags(res, n = dim(res)[1])
+                           MA.plot(data = res.FDR$table, FDRcutoff = input$FDRSeuil,
+                                   pngFile =file.path(tempdir(), paste0(dataset, "_MAplot_", gsub(" ", "", vect["contrastName"]), ".png")))
+                         })
+                     ),
+                     column(6,
+                            ### pvalue plot ###
+                            renderPlot({
+                              
+                              pvalue.plot(data    =resTable,
+                                          contrast=vect["contrastName"],
+                                          pngFile =file.path(tempdir(), paste0(dataset, "_PvalueDistribution_", gsub(" ", "", vect["contrastName"]), ".png")))
+                            })
+                     ),
                      verticalLayout(
                        
-                       ### pvalue plot ###
-                       renderPlot({
-                         
-                         pvalue.plot(data    =resTable,
-                                     contrast=vect["contrastName"],
-                                     pngFile =file.path(tempdir(), paste0(dataset, "_PvalueDistribution_", gsub(" ", "", vect["contrastName"]), ".png")))
-                       }),
+                       
                        tags$br(),
                        ### DEG result table ###
                        DT::renderDataTable({

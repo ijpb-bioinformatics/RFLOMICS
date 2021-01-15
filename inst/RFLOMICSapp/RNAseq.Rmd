@@ -1,5 +1,4 @@
 
-
 # `r data`  analysis
 
 ## data Exploratory
@@ -40,14 +39,14 @@ plotDistr(abundances= assay(FlomicsMultiAssay[[data]]),
 > Principal component analysis
 
 
-```{r ,  message=FALSE, warning=FALSE, fig.show = "hold", out.width = "50%"}
+```{r , echo=FALSE , message=FALSE, warning=FALSE, fig.show = "hold", out.width = "50%"}
 knitr::include_graphics(list.files (path = file.path(pngDir), 
                                     pattern = paste0(data,"_PCAdesign_raw_PC"), 
                                     full.names = TRUE))
 ```
 
 
-```{r ,  fig.show="hold", message=FALSE, warning=FALSE, cho=FALSE}
+```{r , echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE, cho=FALSE}
 #, paged.print=FALSE
 #knitr::include_graphics(file.path(pngDir, paste0(data, "_PCAdesignCoordRaw.png")))
 mvQCdesign(object = FlomicsMultiAssay,
@@ -77,30 +76,41 @@ abundanceBoxplot(object  = FlomicsMultiAssay,
 
 ```
 
+> Principal component analysis
 
-```{r , echo=FALSE,message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "50%"}
-knitr::include_graphics(list.files (path = file.path(pngDir), 
-                                    pattern = paste0(data,"_PCAdesign_norm_PC"), 
+```{r , echo=FALSE ,message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "50%"}
+
+knitr::include_graphics(list.files (path = file.path(pngDir),
+                                    pattern = paste0(data,".filtred_PCAdesign_norm_PC"),
                                     full.names = TRUE))
 
 ```
 
 ## Differential expression analysis 
 
-```{r ,echo=FALSE,message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "50%"}
+```{r ,echo=FALSE, message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "50%"}
 #knitr::include_graphics(list.files (path = file.path(pngDir), 
 #                                    pattern = paste0(data, "_PvalueDistribution"), 
 #                                    full.names = TRUE))
 
 for (contrast  in  names(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["AnaDiffDeg"]])) {
     
-   print(paste("#", contrast))
+   print(paste("@", contrast))
   
-   #print(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["AnaDiffDeg"]][[contrast]] %>% knitr::kable())
+   print(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["AnaDiffDeg"]][[contrast]][1:10,])
   
+   res     <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["AnaDiff"]][[contrast]]
+   res.FDR <- topTags(res, n = dim(res)[1])
+   p <- MA.plot(data = res.FDR$table, FDRcutoff = 0.05, pngFile = NULL) 
+   
+   print(p)
+   
    p <- pvalue.plot(data    = FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["AnaDiffDeg"]][[contrast]], 
                contrast= as.vector(filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast == contrast)$hypoth),
                pngFile = NULL) 
+   
+   
+   
    print(p)
 }
 

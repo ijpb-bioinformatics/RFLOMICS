@@ -57,14 +57,10 @@ CoSeqAnalysisUI <- function(id){
             tabPanel("ICL",      plotOutput(ns("ICL"))),
             tabPanel("profiles", plotOutput(ns("profiles"))),
             tabPanel("boxplots", plotOutput(ns("boxplots"))),
+            tabPanel("boxplots_bis", uiOutput(ns("selectClusters"))),
             tabPanel("probapost_boxplots",  plotOutput(ns("probapost_boxplots"))),
             tabPanel("probapost_barplots",  plotOutput(ns("probapost_barplots"))),
-            tabPanel("probapost_histogram", plotOutput(ns("probapost_histogram"))),
-            tabPanel("boxplots_bis", 
-                     uiOutput(ns("selectClusters"))#,
-                     #plotOutput(ns("boxplots_bis"))
-                     
-                     )
+            tabPanel("probapost_histogram", plotOutput(ns("probapost_histogram")))
           )
         )
       )#,
@@ -121,7 +117,7 @@ CoSeqAnalysis <- function(input, output, session, dataset){
     
     output$mergeValue <- renderText({ print(paste(length(DEG_list), "genes", sep =" ")) })
     
-    progress$inc(3/4, detail = paste("Doing part ", 75,"%", sep=""))
+    
     # FlomicsMultiAssay <- runCoseq(counts = assay(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])[DEG_list,] , 
     #                       K=input$minK:input$maxK, iter = input$iter,
     #                       model  = input$methode, transformation=input$transfo, 
@@ -131,9 +127,9 @@ CoSeqAnalysis <- function(input, output, session, dataset){
                                   K=input$minK:input$maxK, iter = input$iter, model  = input$methode, 
                                   transformation=input$transfo, normFactors="TMM")
     
-    
-    
     progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep=""))
+    
+    
     
     coseq.res <- FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata[["CoExpResults"]][["coseqResults"]]
     groups    <- unite(as.data.frame(FlomicsMultiAssay@colData[FlomicsMultiAssay@metadata$design@Factors.Type == "Bio"]), 

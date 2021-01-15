@@ -3,7 +3,7 @@
 export("%>%")
 export(DiffAnalysis)
 export(EnrichmentHyperG)
-export(ExperimentalDesign)
+export(ExpDesign.constructor)
 export(GetContrasts)
 export(GetDesignFromNames)
 export(GetModelFormulae)

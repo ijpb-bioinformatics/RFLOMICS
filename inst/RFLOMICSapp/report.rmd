@@ -56,16 +56,14 @@ FlomicsMultiAssay@metadata$design@Model.formula
 > Selected hypothesis
 
 ```{r contrast, echo=FALSE, message=TRUE, warning=TRUE}
-FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName %>% knitr::kable()
+
+FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName 
+
 ```
 
 
 `r if(length(FlomicsMultiAssay@metadata$omicList) == 0) {"\\begin{comment}"}`
 
-```{r load data, eval=FALSE, message=TRUE, warning=TRUE, include=FALSE}
-# Omics data
-#FlomicsMultiAssay@metadata$omicList %>% unlist() %>% knitr::kable()
-```
 
 ```{r analysis, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
 
