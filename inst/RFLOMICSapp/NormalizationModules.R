@@ -100,7 +100,7 @@ RNAseqDataNormTab <- function(input, output, session, dataset){
   #   FlomicsMultiAssay
   # })
   
-  FlomicsMultiAssay <<- RunFilterNormPCAfunction (dataset, Filter_Strategy = "NbConditions", CPM_Cutoff = 1, NormMethod="TMM")
+  FlomicsMultiAssay <<- RunFilterNormPCAfunction (FlomicsMultiAssay, dataset, Filter_Strategy = "NbConditions", CPM_Cutoff = 1, NormMethod="TMM")
   
   ## Boxplot of distribution of normalized abundance 
   output$norm.boxplot <- renderPlot({
@@ -135,7 +135,7 @@ RNAseqDataNormTab <- function(input, output, session, dataset){
     NormMethod  <- input$selectNormMethod
     
     
-    FlomicsMultiAssay <<- RunFilterNormPCAfunction (dataset = dataset, Filter_Strategy = input$Filter_Strategy, 
+    FlomicsMultiAssay <<- RunFilterNormPCAfunction (FlomicsMultiAssay, dataset = dataset, Filter_Strategy = input$Filter_Strategy, 
                                                     CPM_Cutoff = input$FilterSeuil , NormMethod = input$selectNormMethod)
     
     output$FilterResults <- renderPrint({
@@ -180,7 +180,7 @@ RNAseqDataNormTab <- function(input, output, session, dataset){
 
 
 ############## functions ###############
-RunFilterNormPCAfunction <- function(dataset, Filter_Strategy = "NbConditions", CPM_Cutoff = 1, NormMethod){
+RunFilterNormPCAfunction <- function(FlomicsMultiAssay, dataset, Filter_Strategy = "NbConditions", CPM_Cutoff = 1, NormMethod){
   #### Filter low abundance ####
   print("# 7- Low Abundance Filtering...")
   FlomicsMultiAssay <- FilterLowAbundance(FlomicsMultiAssay, data=dataset, Filter_Strategy, CPM_Cutoff)

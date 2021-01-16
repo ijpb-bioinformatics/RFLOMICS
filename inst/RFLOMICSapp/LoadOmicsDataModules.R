@@ -87,7 +87,7 @@ LoadOmicsData <- function(input, output, session){
       })
     })
 
-
+  ListOfmaeSlots <- list()
     # as soon as the "load data" buttom has been clicked
     # => selected input(s) are loaded with loadData() function
     # => create tmp dir for png report
@@ -112,9 +112,9 @@ LoadOmicsData <- function(input, output, session){
         dataFile <- input[[paste0("data", k)]]
         qcFile   <- input[[paste0("metadataQC", k)]]
         
-        colnames <- c(colnames(omicList[[omicType]]), k)
+        colnames <- c(names(omicList[[omicType]]), k)
         omicList[[omicType]] <- c(omicList[[omicType]] ,dataName)
-        colnames(omicList[[omicType]]) <- colnames
+        names(omicList[[omicType]]) <- colnames
         #names(omicList[[omicType]][length(omicList[[omicType]])+1]) <- k
         
         if(omicType != "none"){
@@ -163,8 +163,8 @@ LoadOmicsData <- function(input, output, session){
                                             stringsAsFactors = FALSE)
         }
       }
-      
-      
+
+
       FlomicsMultiAssay <<- MultiAssayExperiment(experiments = SummarizedExperimentList,
                                                  colData     = Design@ExpDesign,
                                                  sampleMap   = listToMap(listmap),
@@ -174,7 +174,6 @@ LoadOmicsData <- function(input, output, session){
       
     })
 
-  
   return(input)
   
 }

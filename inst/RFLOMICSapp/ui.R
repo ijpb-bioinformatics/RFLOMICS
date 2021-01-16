@@ -18,12 +18,12 @@ library(shinydashboard)
 sidebar <- dashboardSidebar(
   
   sidebarMenu(id="StateSave",
-              menuItem("Experimental Design", tabName = "ExpDesign", icon = icon('vials'),  startExpanded=TRUE, 
-                       menuSubItem("Import design",  tabName = "importExpDesign", selected = TRUE),
+              menuItem("Presentation", tabName = "coverPage", icon = icon('dna'), startExpanded=TRUE, selected = TRUE),
+              menuItem("Experimental Design", tabName = "ExpDesign", icon = icon('vials'), 
+                       menuSubItem("Import design",  tabName = "importExpDesign"),
                        menuItemOutput("SetUpModelMenu")
                        ),
               menuItemOutput("importData"),
-              #uiOutput("dataList"),
               menuItemOutput("omics"),
               menuItemOutput("Integration")
               
@@ -34,16 +34,18 @@ sidebar <- dashboardSidebar(
 )
 
 body <- dashboardBody({
-  #shinyjs::useShinyjs()
-  #id = "body"
-  
-  
+
   items <- c( 
     
     list(
   
-      #tabItems(
+        #### Cover Page        ####
+        ###########################
         
+        tabItem(tabName = "coverPage",
+                verbatimTextOutput("print")
+              ),
+      
         #### Import Exp design ####
         ###########################
         
@@ -51,7 +53,6 @@ body <- dashboardBody({
         tabItem(tabName = "importExpDesign",
                 
               ExperimentalDesignUI("Exp"),
-              verbatimTextOutput("print")
         ),
         
         #### Set Up statistical model & hypothesis ####

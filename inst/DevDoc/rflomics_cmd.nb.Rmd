@@ -12,6 +12,9 @@ ExpDesign.file <- "/Users/nbessoltane/Documents/INRA/IJPB/PROJETs/IJPB-Bioinfo/F
 dF.List.ref <- c("rep1","Medium", "DS")
 dF.Type.dFac <- c("batch", "bio", "bio")
 
+RNAseq.set1.file <- ""
+RNAseq.set1.file.names <- ""
+
 
 
 ```
