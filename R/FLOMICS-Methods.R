@@ -801,15 +801,15 @@ setMethod(f="runAnnotationEnrichment",
           signature="MultiAssayExperiment",
           definition <- function(object, data, annotation, geneLists, alpha = 0.01, probaMethod = "hypergeometric"){
              
+            Results <- list()
+            
             for(geneList in names(geneLists)){
               
-              Results <- switch(probaMethod,
+              Results[[geneList]] <- switch(probaMethod,
                    "hypergeometric"=EnrichmentHyperG(annotation, geneLists[[geneList]], alpha = 0.01)
-              )
-                
-              
-              object@ExperimentList[[data]]$metadata$AnnotEnrich[[geneList]] <- Results
+                   )
             }
+            object@ExperimentList[[data]]$metadata$AnnotEnrich <- Results
             
             return(object)
 
