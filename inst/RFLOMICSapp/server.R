@@ -19,19 +19,31 @@ shinyServer(function(input, output, session) {
     ##########################################
     # Part1 : Set GLM model
     ##########################################
+    # load design and check 
     inputExp <- callModule(ExperimentalDesign, "Exp")
-   
+    
     # display set up model Item
     observeEvent(inputExp$ValidF, {
+      
+      #continue only if message is true or warning
+      validate({
+        need(validate.status == 0 ,message="ok")
+      })
       
       output$SetUpModelMenu <- renderMenu({
         menuSubItem("Statistical model", tabName = "SetUpModel",  selected = TRUE)
       })
     })
     
+    # set GLM model and select list of contrast to test
     inputModel <- callModule(GLM_model, "model")
-  
+    
     observeEvent(inputModel$validContrasts, {
+      
+      #continue only if message is true
+      validate({
+        need(validate.status == 0 ,message="ok")
+      })
       
       output$importData <- renderMenu({
         menuItem("Load Data", tabName = "importData",icon = icon('download'), selected = TRUE)
@@ -45,6 +57,11 @@ shinyServer(function(input, output, session) {
     inputData <- callModule(LoadOmicsData, "data")
     
     observeEvent(inputData$loadData, {
+      
+      #continue only if message is true
+      validate({
+        need(validate.status == 0 ,message="ok")
+      })
     
           #### Item for each omics #####
           output$omics <- renderMenu({
@@ -88,6 +105,7 @@ shinyServer(function(input, output, session) {
               )
             sidebarMenu(.list = menu_list)
             })
+          
     
     ##########################################
     # Part3 : Data Exploratory

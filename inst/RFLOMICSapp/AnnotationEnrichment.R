@@ -75,14 +75,30 @@ AnnotationEnrichment <- function(input, output, session, dataset){
   
   observeEvent(input$runEnrich, {
     
-    print("# 11- Enrichment Analysis...")
-
-    # open annot file
+    # check list of genes
+    if(length(c(input$GeneList.diff, input$GeneList.coseq )) == 0){
+      
+      showModal(modalDialog( title = "Error message", "Please select at least 1 gene list."))
+    }
+    validate({ 
+      need(length(c(input$GeneList.diff, input$GeneList.coseq )) != 0, message="Please select at least 1 gene list") 
+    })
+    
+    # check annotation file
+    if(is.null(input$annotationFile$datapath)){
+      
+      showModal(modalDialog( title = "Error message", "need annotation file."))
+    }
+    validate({ 
+      need(!is.null(input$annotationFile$datapath), message="need annotation file") 
+    })
+    
     annotation <- fread(file = input$annotationFile$datapath, sep="\t", header = TRUE)
     colnames(annotation) <- c("geneID", "Term", "Name", "Domain")
     
-    print(colnames(annotation))
-
+    
+    print("# 11- Enrichment Analysis...")
+    
     ## list of gene list to annotate
     geneLists <- list()
     geneLists.diff <- list()

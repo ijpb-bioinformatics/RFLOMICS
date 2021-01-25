@@ -95,13 +95,23 @@ CoSeqAnalysis <- function(input, output, session, dataset){
     #                    choiceValues = FlomicsMultiAssay@metadata$design@Contrasts.Sel$tag,
     #                    selected     = FlomicsMultiAssay@metadata$design@Contrasts.Sel$tag)
 
+    
   })
   
-
   
   #run coseq when button is clicked
-  observeEvent(input$runCoSeq, {
-   
+  observeEvent(input$runCoSeq, { 
+    
+    if(length(input$select) == 0){
+      
+      showModal(modalDialog( title = "Error message", "Please select at least 1 DEG list."))
+      #validate.status <<- 1
+    }
+    validate({ 
+      need(length(input$select) != 0, message="Please select at least 1 DEG list") 
+    })
+    
+    
     progress <- shiny::Progress$new()
     progress$set(message = "Run coseq", value = 0)
     on.exit(progress$close())

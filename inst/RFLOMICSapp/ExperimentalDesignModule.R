@@ -60,7 +60,7 @@ ExperimentalDesign <- function(input, output, session){
         }
         validate({ need(! is.null(input$Experimental.Design.file), message="Set a name") })
         
-        ExpDesign.tbl <<- read.table(input$Experimental.Design.file$datapath,header = TRUE,row.names = 1)
+        ExpDesign.tbl <<- read.table(input$Experimental.Design.file$datapath,header = TRUE,row.names = 1, sep = )
         
         # display desgin table
         output$ExpDesignTable <- renderUI({
@@ -69,8 +69,6 @@ ExperimentalDesign <- function(input, output, session){
               DT::renderDataTable( DT::datatable(ExpDesign.tbl) )
           )
         })
-
-        
         
         ####### Set up Design model ########
         output$GetdFactorRef <- renderUI({
@@ -110,6 +108,7 @@ ExperimentalDesign <- function(input, output, session){
   # as soon as the "Valid factor set up" button has been clicked
   #  => The upvdateDesignFactors function is called
   #  => The interface to select the model formulae appear
+  validate.status <<- 0
   observeEvent(input$ValidF, {
     print("# 2- Set design model...")
 
@@ -118,16 +117,15 @@ ExperimentalDesign <- function(input, output, session){
     dF.List.Name<-vector()
     dF.List.ref <-vector()
     
-    validate.status <- 0
+    validate.status <<- 0
     for(dFac in names(ExpDesign.tbl)){
       
       # check if factor names are not empty
       if(input[[paste0("dF.Name.",dFac)]]==""){
         
         showModal(modalDialog( title = "Error message", "Empty name factor are not allowed" ))
-        validate.status <- 1
+        validate.status <<- 1
       }
-      
       # list of names of factors
       dF.List.Name[dFac] <- input[[paste0("dF.Name.",dFac)]]
       # list of type of factors (bio or batch)
@@ -137,12 +135,16 @@ ExperimentalDesign <- function(input, output, session){
       
     }
     
+    validate({
+      need(validate.status == 0, message="")
+    })
+        
     # check if factor names are unique
     if(length(names(ExpDesign.tbl)) != length(unique(dF.List.Name))){
       showModal(modalDialog( title = "Error message", "Factor names must be unique" ))
-      validate.status <- 1
+      validate.status <<- 1
     }
-    
+
     validate({
       need(validate.status == 0, message="")
     })
@@ -152,8 +154,6 @@ ExperimentalDesign <- function(input, output, session){
     Design <<- ExpDesign.constructor(ExpDesign = ExpDesign.tbl, refList = dF.List.ref, typeList = dF.Type.dFac)
     
     
-    #updateDesignFactors()
-
     #### check experimental design : experimental design must be a complete and balanced.
     completeCheckRes <- CheckExpDesignCompleteness(Design)
 
@@ -173,23 +173,23 @@ ExperimentalDesign <- function(input, output, session){
     ## error/warning message
     if(completeCheckRes[["message"]][1] == "false"){
       showModal(modalDialog(title = "Error message", completeCheckRes[["message"]][2]))
-      validate.status <- 1
+      validate.status <<- 1
     }
 
     if(completeCheckRes[["message"]][1] == "warning"){
       showModal(modalDialog( title = "Warning message", completeCheckRes[["message"]][2] ))
-      validate.status <- 1
     }
 
 
-    ## continue only if message is true or warning
+    # continue only if message is true or warning
     validate({
       need(validate.status == 0 ,message="ok")
     })
-
+    
   })
-  
+
   return(input)
+  
 
 }
 
@@ -206,12 +206,12 @@ GLM_modelUI <- function(id){
     fluidRow(
       column(width= 12, uiOutput(ns("SetContrasts")))
     ),
-    # fluidRow(
-    #       column(width= 12, verbatimTextOutput("printContrast"))
-    # ),
+    fluidRow(
+      column(width= 12, verbatimTextOutput(ns("printContrast")))
+    ),
     tags$br()
   )
-  }
+}
 
 
 GLM_model <- function(input, output, session){
@@ -272,6 +272,7 @@ GLM_model <- function(input, output, session){
       # => The load data item appear
       observeEvent(input$validContrasts, {
     
+        validate.status <<- 0
         # get list of selected contrast data frames with expression, name and type
         # contrastList <- list()
         # 
@@ -298,6 +299,7 @@ GLM_model <- function(input, output, session){
         if(length(contrast.sel.vec) == 0){
     
           showModal(modalDialog( title = "Error message", "Please select the hypotheses to test."))
+          validate.status <<- 1
         }
         
         ## continue only if message is true
@@ -309,12 +311,16 @@ GLM_model <- function(input, output, session){
         # define all the coefficients of selected contrasts and return a contrast matrix with contrast sample name and associated coefficients
         Design <<- getContrastMatrix(Design, contrastList = contrast.sel.vec)
     
-        # output$printContrast <- renderPrint({
-        #
-        #   Design@Contrasts.Coeff
-        # })
-    
+        output$printContrast <- renderPrint({
+          
+          #Design@Contrasts.Coeff
+          A <- Design@Contrasts.Coeff
+          row.names(A) <- NULL
+          print(A)
+        })
       })
+      
+
     return(input)
   }
 

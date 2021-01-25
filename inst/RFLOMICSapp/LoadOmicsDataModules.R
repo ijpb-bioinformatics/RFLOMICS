@@ -54,7 +54,7 @@ LoadOmicsData <- function(input, output, session){
   addDataNum <- 1
   dataName.vec  <- c()
   observeEvent(input$addData, {
-
+    
     # add input select for new data
     addDataNum <<- addDataNum + 1
     output[[paste("toAddData", addDataNum, sep="")]] <- renderUI({
@@ -103,7 +103,7 @@ LoadOmicsData <- function(input, output, session){
       listmap <- list()
       
       #### list of omic data laoded from interface
-      validate.status <- 0
+      validate.status <<- 0
       dataName.vec <- c()
       for (k in 1:addDataNum){
         
@@ -122,19 +122,19 @@ LoadOmicsData <- function(input, output, session){
           # check omics data
           if(is.null(dataFile)){
             showModal(modalDialog( title = "Error message", "omics counts/abundances matrix is required : dataset ", k ))
-            validate.status <- 1
+            validate.status <<- 1
           }
           
           # check presence of dataname
           if(dataName == ""){
             showModal(modalDialog( title = "Error message", "Dataset names is required : dataset ", k ))
-            validate.status <- 1
+            validate.status <<- 1
           }
           
           # check duplicat dataset name
           if(any(duplicated(omicList[[omicType]])) == TRUE){
             showModal(modalDialog( title = "Error message", "Dataset names must be unique : dataset ", (1:addDataNum)[duplicated(dataName.vec)] ))
-            validate.status <- 1
+            validate.status <<- 1
           }
           
           validate({
