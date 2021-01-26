@@ -1,0 +1,18 @@
+Proteomics Data Analysis:
+ProteoSign: an end-user online differential proteomics statistical analysis platform (NAR, 2017)
+
+1) Get Protein intensities (MassChroqR)
+2) Remove noisy Proteins (MassChroqR)
+
+3) Log2-transform the protein intensities and perform quantile normalization across replicates and conditions via the normalizeBetweenArrays function, which is available from the LIMMA R library as part of Bioconductor
+
+normalizeBetweenArrays(object, method="quantile")
+
+4) Fit a linear model for each protein via the lmFit function (LIMMA) taking into account the estimated correlation (calculated via the duplicate Correlation function) (LIMMA) between technical replicates, if any.
+
+fit <- lmFit(M,design=design)
+
+5) Compute the contrasts from the model fit and summary statistics via the contrasts.fit and eBayes functions(LIMMA).
+
+fit2 <- contrasts.fit(fit,contrast.matrix)
+fit2 <- eBayes(fit2)
