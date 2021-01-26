@@ -4,7 +4,7 @@
 \alias{GetModelFormulae}
 \title{GetModelFormulae}
 \usage{
-GetModelFormulae(Factors.Name, Factors.Type = NULL)
+GetModelFormulae(Factors.Name, Factors.Type)
 }
 \arguments{
 \item{Factors.Type}{}
