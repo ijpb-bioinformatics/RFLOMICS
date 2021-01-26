@@ -37,6 +37,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 #' @param An object of class [\code{\link{MultiAssayExperiment}]
 #' @param data omic data type
 #' @param DiffMethod Differential analysis method
+#' @param contrastList list of contrast to test
 #' @param FDR FDR threshold
 #' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
 #' @return MultiAssayExperiment
@@ -45,40 +46,44 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 #'
 setMethod(f="RunDiffAnalysis",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, FDR = 0.05, DiffAnalysisMethod, clustermq){
+          definition <- function(object, data, FDR = 0.05, contrastList, DiffAnalysisMethod, clustermq){
 
+            object@ExperimentList[[data]]@metadata$DiffExpAna <- list()
+            
+            Contrasts.Sel <- dplyr::filter(object@metadata$design@Contrasts.Sel, contrastName %in% contrastList)
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["FDR"]]       <- FDR
+            
             # Run the Diff analysis and get the results as a list of object depending of the
-
             ListOfDiffResults <- switch(DiffAnalysisMethod,
                                      "edgeRglmfit"=edgeR.AnaDiff(object, data, clustermq)
-                                )
-
-            # The results of the methods have to be formated
+                                     )
 
             # Set an AnaDiff object to
-            object@ExperimentList[[data]]@metadata[["AnaDiff"]] <- ListOfDiffResults
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["DGELRT"]] <- ListOfDiffResults
 
             #
-            object@ExperimentList[[data]]@metadata[["AnaDiffDeg"]] <- lapply(ListOfDiffResults, function(x){
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]] <- lapply(ListOfDiffResults, function(x){
               
               res<-topTags(x, n = dim(x)[1])
               DEGs<- res$table[res$table$FDR <= FDR,]
               #DEGs<-res$table
               return(DEGs)
             })
-            names(object@ExperimentList[[data]]@metadata[["AnaDiffDeg"]]) <- names(ListOfDiffResults)
+            names(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]]) <- names(ListOfDiffResults)
 
             ## merge results in bin matrix
-            DEG_list <- lapply(1:length(object@ExperimentList[[data]]@metadata[["AnaDiffDeg"]]), function(x){
+            DEG_list <- lapply(1:length(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]]), function(x){
               
-              res <- object@ExperimentList[[data]]@metadata[["AnaDiffDeg"]][[x]]
+              res <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]][[x]]
               tmp <- data.frame(DEG = rownames(res), bin = rep(1,length(rownames(res))))
               colnames(tmp) <- c("DEG", paste("H", x, sep=""))
               return(tmp)
             })
-            names(DEG_list) <- names(object@ExperimentList[[data]]@metadata[["AnaDiffDeg"]])
+            names(DEG_list) <- names(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]])
             
-            object@ExperimentList[[data]]@metadata[["AnaDiffDeg.mat"]] <- DEG_list %>% purrr::reduce(full_join, by="DEG") %>% 
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["mergeDGE"]] <- DEG_list %>% purrr::reduce(full_join, by="DEG") %>% 
               mutate_at(.vars = 2:(length(DEG_list)+1), .funs = function(x){if_else(is.na(x), 0, 1)}) %>% data.table()
             
             return(object)

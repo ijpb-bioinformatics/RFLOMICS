@@ -146,8 +146,11 @@ edgeR.AnaDiff <- function(object, data, clustermq){
   print("[cmd] fit.f <- edgeR::glmFit(dge,design=model_matrix)")
   fit.f <- edgeR::glmFit(dge,design=model_matrix)
 
+  
+  # selected contrast 
+  Contrasts.Sel <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["contrasts"]]
+  
   # test clustermq
-
   if(clustermq == TRUE){
 
      # Fonction to run on contrast per job
@@ -157,21 +160,21 @@ edgeR.AnaDiff <- function(object, data, clustermq){
         edgeR::glmLRT(y, contrast = unlist(z[x,]))
       }
     
-      ListRes <- clustermq::Q(fx, x=1:length(object@metadata$design@Contrasts.Sel$contrast),
-        export=list(y=fit.f,z=object@metadata$design@Contrasts.Coeff),
-        n_jobs=length(object@metadata$design@Contrasts.Sel$contrast),pkgs="edgeR")
+      ListRes <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
+                              export=list(y=fit.f,z=object@metadata$design@Contrasts.Coeff),
+                              n_jobs=length(Contrasts.Sel$contrast),pkgs="edgeR")
       
   }
   else{
     
-     ListRes <-  lapply(object@metadata$design@Contrasts.Sel$contrast, function(x){
+     ListRes <-  lapply(Contrasts.Sel$contrast, function(x){
 
        edgeR::glmLRT(fit.f, contrast = unlist(object@metadata$design@Contrasts.Coeff[x,]))
        
      })
   }
 
-  names(ListRes) <- object@metadata$design@Contrasts.Sel$contrastName
+  names(ListRes) <- Contrasts.Sel$contrastName
   return(ListRes)
 }
 

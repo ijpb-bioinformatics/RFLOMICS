@@ -12,22 +12,27 @@ shinyServer(function(input, output, session) {
     ######################### MAIN #########################################
 
     ##########################################
-    # Part0 : Cover page
+    # Part0 : presentation page
     ##########################################
+    # à faire
     output$print <- renderPrint({ "HELLO" })
   
     ##########################################
     # Part1 : Set GLM model
     ##########################################
-    # load design and check 
+    # load design 
+    # set reference 
+    # set type of factor (bio/batch)
+    # check design (complete and balanced)
     inputExp <- callModule(ExperimentalDesign, "Exp")
     
     # display set up model Item
+    # if no error message
     observeEvent(inputExp$ValidF, {
       
       #continue only if message is true or warning
       validate({
-        need(validate.status == 0 ,message="ok")
+        need(validate.status == 0 ,message="set design step failed")
       })
       
       output$SetUpModelMenu <- renderMenu({
@@ -35,14 +40,17 @@ shinyServer(function(input, output, session) {
       })
     })
     
-    # set GLM model and select list of contrast to test
+    # set GLM model 
+    # and select list of contrast to test
     inputModel <- callModule(GLM_model, "model")
     
+    # display load data Item
+    # if no error message
     observeEvent(inputModel$validContrasts, {
       
       #continue only if message is true
       validate({
-        need(validate.status == 0 ,message="ok")
+        need(validate.status == 0 ,message="select model and contrast step failed")
       })
       
       output$importData <- renderMenu({
@@ -50,12 +58,18 @@ shinyServer(function(input, output, session) {
       })
     })
     
+    
     ##########################################
     # Part2 : load data
     ##########################################
     
+    # load omics data
     inputData <- callModule(LoadOmicsData, "data")
     
+    # display omics Item
+    # for each omics data type
+    # and for each dataser
+    # if no error message
     observeEvent(inputData$loadData, {
       
       #continue only if message is true
@@ -93,9 +107,7 @@ shinyServer(function(input, output, session) {
                                    lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
                                      menuSubItem(text = paste0(FlomicsMultiAssay@metadata$omicList[[omics]][[i]]),
                                                  tabName = paste0("MetaAnalysis", i), icon = icon('chart-area'), selected = FALSE)
-                                   })
-                                   #menuItem(paste0(omic, " Data Exploratory"), tabName = "MetaExploratoryQC", icon = icon('chart-area'), selected = TRUE),
-                                   #menuItem(paste0(omic, " Data Processing"),  tabName = "MetaProcessing",    icon = icon('chart-area'), selected = FALSE)
+                                    })
                                   }
                                  )
                           )
@@ -139,12 +151,12 @@ shinyServer(function(input, output, session) {
     ##########################################
     lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
 
-      #lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
-      for(i in names(FlomicsMultiAssay@metadata$omicList[[omics]])){
+      lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+      #for(i in names(FlomicsMultiAssay@metadata$omicList[[omics]])){
 
         callModule(RNAseqDataNormTab, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
-      }
-      #})
+      #}
+      })
     })
 
     ##########################################
@@ -156,7 +168,6 @@ shinyServer(function(input, output, session) {
 
       lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
 
-        #callModule(DiffExpParam, i, FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
         inputDiff[[paste0(omics, i)]] <<- callModule(DiffExpAnalysis, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
 
       })

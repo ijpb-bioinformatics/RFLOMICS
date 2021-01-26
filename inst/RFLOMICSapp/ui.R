@@ -18,19 +18,19 @@ library(shinydashboard)
 sidebar <- dashboardSidebar(
   
   sidebarMenu(id="StateSave",
-              menuItem("Presentation", tabName = "coverPage", icon = icon('dna'), startExpanded=TRUE, selected = TRUE),
-              menuItem("Experimental Design", tabName = "ExpDesign", icon = icon('vials'), 
-                       menuSubItem("Import design",  tabName = "importExpDesign"),
-                       menuItemOutput("SetUpModelMenu")
+              menuItem(text = "Presentation", tabName = "coverPage", icon = icon('dna'), startExpanded=TRUE, selected = TRUE),
+              menuItem(text = "Experimental Design", tabName = "ExpDesign", icon = icon('vials'), 
+                       menuSubItem(text = "Import design",  tabName = "importExpDesign"),
+                       menuItemOutput(outputId = "SetUpModelMenu")
                        ),
-              menuItemOutput("importData"),
-              menuItemOutput("omics"),
-              menuItemOutput("Integration")
+              menuItemOutput(outputId = "importData"),
+              menuItemOutput(outputId = "omics"),
+              menuItemOutput(outputId = "Integration")
               
               ),
   tags$br(),
   tags$br(),
-  downloadButton("report", "Generate report")
+  downloadButton(outputId = "report", label = "Generate report")
 )
 
 body <- dashboardBody({
