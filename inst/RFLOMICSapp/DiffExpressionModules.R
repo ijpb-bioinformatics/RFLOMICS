@@ -74,19 +74,22 @@ DiffExpAnalysis <- function(input, output, session, dataset){
     })
     
     print(paste("# 9- Diff Analysis...", dataset))
-
+    
+    #---- progress bar ----#    
     progress <- shiny::Progress$new()
     progress$set(message = "Run Diff", value = 0)
     on.exit(progress$close())
-    
-    # run diff analysis with select method
     progress$inc(1/10, detail = paste("Doing part ", 10,"%", sep=""))
+    #----------------------#
+
+    # run diff analysis with select method
     FlomicsMultiAssay <<- RunDiffAnalysis(FlomicsMultiAssay, data=paste0(dataset,".filtred"), 
                                           contrastList = input$contrastList, FDR =input$FDRSeuil, 
                                           DiffAnalysisMethod=input$AnaDiffMethod,
                                           clustermq=input$clustermq)
-    
+    #---- progress bar ----#    
     progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep=""))
+    #----------------------#
     
     Contrasts.Sel <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["contrasts"]]
     
@@ -137,8 +140,10 @@ DiffExpAnalysis <- function(input, output, session, dataset){
         )
       })
     })
-    progress$inc(3/4, detail = paste("Doing part ", 75,"%", sep=""))
     
+    #---- progress bar ----#    
+    progress$inc(3/4, detail = paste("Doing part ", 75,"%", sep=""))
+    #----------------------#
 
     ### intersection
     DEG_mat <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDGE"]]
@@ -160,8 +165,9 @@ DiffExpAnalysis <- function(input, output, session, dataset){
               }
         })
     
-
-    progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
+      #---- progress bar ----#    
+      progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
+      #----------------------#
   })
   
   return(input)

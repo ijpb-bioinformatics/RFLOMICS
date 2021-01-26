@@ -19,11 +19,15 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
   # Factors.Type
   names(typeList) <- names(ExpDesign)
   
+  # groups
+  groups <- tidyr::unite(as.data.frame(ExpDesign[typeList == "Bio"]), col="groups", sep="_", remove = TRUE) %>% 
+            dplyr::mutate(samples = rownames(.))
   
   Design = new(Class = "ExpDesign",
                ExpDesign=ExpDesign,
                List.Factors=dF.List,
                Factors.Type=typeList,
+               Groups=groups,
                Model.formula=vector(),
                Model.matrix=vector(),
                Contrasts.List=list(),
@@ -48,7 +52,7 @@ setMethod(f="RunDiffAnalysis",
           signature="MultiAssayExperiment",
           definition <- function(object, data, FDR = 0.05, contrastList, DiffAnalysisMethod, clustermq){
 
-            object@ExperimentList[[data]]@metadata$DiffExpAna <- list()
+            object@ExperimentList[[data]]@metadata$DiffExpAnal <- list()
             
             Contrasts.Sel <- dplyr::filter(object@metadata$design@Contrasts.Sel, contrastName %in% contrastList)
             object@ExperimentList[[data]]@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
@@ -771,19 +775,34 @@ setMethod(f="runCoExpression",
           signature="MultiAssayExperiment",
           definition <- function(object, data, tools = "coseq", geneList, K, iter=5 , model="normal", transformation="arcsin", normFactors="TMM"){
             
+            object@ExperimentList[[data]]@metadata$CoExpAnal <- list()
+            object@ExperimentList[[data]]@metadata$CoExpAnal[["model"]]            <- model
+            object@ExperimentList[[data]]@metadata$CoExpAnal[["transformation"]]   <- transformation
+            object@ExperimentList[[data]]@metadata$CoExpAnal[["normFactors"]]      <- normFactors
+            object@ExperimentList[[data]]@metadata$CoExpAnal[["meanFilterCutoff"]] <- 50
+            
             counts = assay(object@ExperimentList[[data]])[geneList,] 
             
             switch (tools,
               "coseq" = {
                   coseq.res <- runCoseq(counts, K=K, iter=iter, model=model, transformation=transformation, normFactors=normFactors)
-                  object@ExperimentList[[data]]@metadata[["CoExpResults"]][["coseqResults"]] <- coseq.res
+                  object@ExperimentList[[data]]@metadata$CoExpAnal[["coseqResults"]] <- coseq.res
                   
+                  # list of genes per cluster
                   clusters <- lapply(1:length(table(clusters(coseq.res))), function(i){ 
                     names(clusters(coseq.res)[clusters(coseq.res) == i])
                     })
-                  object@ExperimentList[[data]]@metadata[["CoExpResults"]][["clusters"]] <- clusters
-                  names(object@ExperimentList[[data]]@metadata[["CoExpResults"]][["clusters"]]) <- paste("cluster", 1:length(table(clusters(coseq.res))), sep = ".")
+                  object@ExperimentList[[data]]@metadata$CoExpAnal[["clusters"]] <- clusters
+                  names(object@ExperimentList[[data]]@metadata$CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(clusters(coseq.res))), sep = ".")
+                  
+                  # nbr of cluster
+                  nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
+                  object@ExperimentList[[data]]@metadata$CoExpAnal[["cluster.nb"]] <- nb_cluster
                 
+                  # plot
+                  plot.coseq.res <- coseq::plot(coseq.res, conds = FlomicsMultiAssay@metadata$design@Groups$groups)
+                  object@ExperimentList[[data]]@metadata$CoExpAnal[["plots"]] <- plot.coseq.res
+                  
                 }
             )
               
