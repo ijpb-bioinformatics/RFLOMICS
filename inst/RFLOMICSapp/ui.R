@@ -8,12 +8,6 @@
 #
 
 library(shinydashboard)
-#library(shinyjs)
-# source("DataExploratoryModules.R")
-# source("NormalizationModules.R")
-# source("DiffExpressionModules.R")
-# source("CoExpressionModules.R")
-# source("commonModules.R")
 
 sidebar <- dashboardSidebar(
   

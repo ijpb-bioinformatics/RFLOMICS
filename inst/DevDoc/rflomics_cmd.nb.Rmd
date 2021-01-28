@@ -3,8 +3,28 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+# Input
+```{r inpu}
+# sample plan
+ExpDesign.file <- "/Users/nbessoltane/Documents/INRA/IJPB/PROJETs/IJPB-Bioinfo/FLOMICs/R-Flomics/rflomics/inst/ExamplesFiles/ecoseed/condition.txt"
 
+# RNAseq
+RNAseq.set1.file <- "/Users/nbessoltane/Documents/INRA/IJPB/PROJETs/IJPB-Bioinfo/FLOMICs/R-Flomics/rflomics/inst/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"
+RNAseq.set1.file.names <- "set1"
 
+# Prot
+prot.set2.file <- "/Users/nbessoltane/Documents/INRA/IJPB/PROJETs/IJPB-Bioinfo/FLOMICs/R-Flomics/rflomics/inst/ExamplesFiles/ecoseed/proteome_ecoseed.txt"
+prot.set2.file.names <- "set2"
+
+# Prot
+meta.set3.file <- "/Users/nbessoltane/Documents/INRA/IJPB/PROJETs/IJPB-Bioinfo/FLOMICs/R-Flomics/rflomics/inst/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"
+meta.set3.file.names <- "set3"
+
+```
+
+# Set Design
+
+## input 
 ```{r inpu}
 
 ExpDesign.file <- "/Users/nbessoltane/Documents/INRA/IJPB/PROJETs/IJPB-Bioinfo/FLOMICs/R-Flomics/rflomics/inst/ExamplesFiles/ecoseed/condition.txt"
@@ -43,4 +63,24 @@ Design <- getContrastMatrix(Design, contrastList = vec )
 ```
 
 
+```{r diff analysis}
+
+contrasts = c("(genotypedbMT - genotypeWT) in mean","(genotypeoxMT - genotypeWT) in mean")
+
+# RNAseq.set1.filtred ou RNAseq.set1
+FlomicsMultiAssay <- RunDiffAnalysis(FlomicsMultiAssay, data="RNAseq.set1.filtred", contrastList = contrasts , 
+                                     FDR = 0.05, DiffAnalysisMethod="edgeRglmfit", clustermq=NULL)
+
+
+
+```
+
+```{r coexp}
+
+DEG_list <- getDEGlist_for_coseqAnalysis(matrix=FlomicsMultiAssay@ExperimentList[["RNAseq.set1.filtred"]]@metadata$DiffExpAnal[["mergeDGE"]], colnames  = c("H1", "H2"), mergeType = "union")
+
+FlomicsMultiAssay <- runCoExpression(FlomicsMultiAssay, data = "RNAseq.set1.filtred", "coseq", DEG_list, 
+                                          K=2:20, iter = 5, model  = "normal", transformation="arcsin", normFactors="TMM")
+
+```
 

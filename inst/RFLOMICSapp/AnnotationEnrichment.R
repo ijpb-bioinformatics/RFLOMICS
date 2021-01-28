@@ -40,8 +40,10 @@ AnnotationEnrichment <- function(input, output, session, dataset){
   
   output$selectGeneListtoAnnot <- renderUI({
     
-    ListNames.diff <- FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName
-    ListNames.coseq <- names(FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata[["CoExpResults"]][["clusters"]])
+    ListNames.diff <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["contrasts"]]$contrastName
+    ListNames.coseq <- names(FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata$CoExpAnal[["clusters"]])
+    
+    
     
     # multiInput(
     #   inputId = session$ns("GeneList.diff"),
@@ -94,14 +96,14 @@ AnnotationEnrichment <- function(input, output, session, dataset){
     colnames(annotation) <- c("geneID", "Term", "Name", "Domain")
     
     
-    print("# 11- Enrichment Analysis...")
+    print(paste("# 11- Enrichment Analysis...", dataset))
     
     ## list of gene list to annotate
     geneLists <- list()
     geneLists.diff <- list()
     geneLists.diff <- lapply(input$GeneList.diff, function(listname){
 
-       row.names(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$AnaDiffDeg[[listname]])
+       row.names(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["TopDGE"]][[listname]])
       
     })
     names(geneLists.diff) <- input$GeneList.diff
@@ -109,7 +111,7 @@ AnnotationEnrichment <- function(input, output, session, dataset){
     geneLists.coseq <- list()
     geneLists.coseq <- lapply(input$GeneList.coseq, function(listname){
       
-      FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata[["CoExpResults"]][["clusters"]][[listname]]
+      FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata[["CoExpAnal"]][["clusters"]][[listname]]
       
     })
     names(geneLists.coseq) <- input$GeneList.coseq
@@ -117,16 +119,17 @@ AnnotationEnrichment <- function(input, output, session, dataset){
     geneLists <- c(geneLists.diff, geneLists.coseq)
     
     ## run annotation
-    FlomicsMultiAssay <<- runAnnotationEnrichment(FlomicsMultiAssay, data = paste0(dataset,".filtred"), 
-                                                  annotation, geneLists, alpha = input$Alpha_Enrichment, probaMethod = input$EnrichMethod)
+    FlomicsMultiAssay <<- runAnnotationEnrichment(FlomicsMultiAssay, data = paste0(dataset,".filtred"),
+                                                  annotation= annotation, geneLists=geneLists, 
+                                                  alpha = input$Alpha_Enrichment, probaMethod = input$EnrichMethod)
 
     ## print results
     output$AnnotEnrichResults <- renderUI({
 
       # foreach gene list selected (contrast)
-      lapply(names(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]$metadata$AnnotEnrich), function(listname) {
+      lapply(names(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]$metadata$EnrichAnal[["results"]]), function(listname) {
 
-        data <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]$metadata$AnnotEnrich[[listname]][["Over_Under_Results"]]
+        data <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]$metadata$EnrichAnal[["results"]][[listname]][["Over_Under_Results"]]
         
         fluidRow(
           column(12, 

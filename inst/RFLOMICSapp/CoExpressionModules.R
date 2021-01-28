@@ -119,9 +119,9 @@ CoSeqAnalysis <- function(input, output, session, dataset){
     #----------------------#
     
     # run coseq   
-    FlomicsMultiAssay <<- runCoExpression(FlomicsMultiAssay, data = paste0(dataset,".filtred"), "coseq", DEG_list(), 
+    FlomicsMultiAssay <<- runCoExpression(FlomicsMultiAssay, data = paste0(dataset,".filtred"), tools="coseq", geneList=DEG_list(), 
                                           K=input$minK:input$maxK, iter = input$iter, model  = input$model, 
-                                          transformation=input$transfo, normFactors="TMM")
+                                          transformation=input$transfo, normFactors="TMM", nameList=input$select, merge=input$unionInter)
 
     #---- progress bar ----#    
     progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep=""))
@@ -146,12 +146,11 @@ CoSeqAnalysis <- function(input, output, session, dataset){
       
       nb_cluster <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["cluster.nb"]]
       coseq.res  <- FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata$CoExpAnal[["coseqResults"]]
-      groups     <- FlomicsMultiAssay@metadata$design@Groups %>% dplyr::arrange(factor(samples, levels = names(coseq.res@y_profiles)))
-      
+
       fluidRow(
         
         ## plot selected cluster(s)
-        renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, groups) }),
+        renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, FlomicsMultiAssay@metadata$design@Groups) }),
         
         ## select cluster to plot
         checkboxGroupInput(inputId = session$ns("selectCluster"), label = "Select cluster(s) :",

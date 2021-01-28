@@ -978,7 +978,7 @@ runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="a
 coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
   
   nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
-  
+  groups <- conds %>% dplyr::arrange(factor(samples, levels = names(coseq.res@y_profiles)))
   y_profiles <- list()
   for (i in 1:nb_cluster){
     y_profiles[[i]] <- coseq.res@y_profiles[coseq.res@allResults[[nb_cluster-1]][,i] != 0,] %>% 

@@ -773,13 +773,16 @@ setMethod(f="getContrastMatrix",
 #'
 setMethod(f="runCoExpression",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, tools = "coseq", geneList, K, iter=5 , model="normal", transformation="arcsin", normFactors="TMM"){
+          definition <- function(object, data, tools = "coseq", geneList, K, iter=5 , model="normal", 
+                                 transformation="arcsin", normFactors="TMM", nameList, merge="union"){
             
             object@ExperimentList[[data]]@metadata$CoExpAnal <- list()
             object@ExperimentList[[data]]@metadata$CoExpAnal[["model"]]            <- model
             object@ExperimentList[[data]]@metadata$CoExpAnal[["transformation"]]   <- transformation
             object@ExperimentList[[data]]@metadata$CoExpAnal[["normFactors"]]      <- normFactors
             object@ExperimentList[[data]]@metadata$CoExpAnal[["meanFilterCutoff"]] <- 50
+            object@ExperimentList[[data]]@metadata$CoExpAnal[["gene.list.names"]]  <- nameList
+            object@ExperimentList[[data]]@metadata$CoExpAnal[["merge.type"]]       <- merge
             
             counts = assay(object@ExperimentList[[data]])[geneList,] 
             
@@ -825,6 +828,13 @@ setMethod(f="runAnnotationEnrichment",
           signature="MultiAssayExperiment",
           definition <- function(object, data, annotation, geneLists, alpha = 0.01, probaMethod = "hypergeometric"){
              
+            object@ExperimentList[[data]]$metadata$EnrichAnal <- list()
+            
+            object@ExperimentList[[data]]$metadata$EnrichAnal[["gene.list.names"]] <- names(geneLists)
+            object@ExperimentList[[data]]$metadata$EnrichAnal[["alpha"]]           <- alpha
+            object@ExperimentList[[data]]$metadata$EnrichAnal[["proba.test"]]      <- probaMethod
+            
+            
             Results <- list()
             
             for(geneList in names(geneLists)){
@@ -833,7 +843,7 @@ setMethod(f="runAnnotationEnrichment",
                    "hypergeometric"=EnrichmentHyperG(annotation, geneLists[[geneList]], alpha = 0.01)
                    )
             }
-            object@ExperimentList[[data]]$metadata$AnnotEnrich <- Results
+            object@ExperimentList[[data]]$metadata$EnrichAnal[["results"]] <- Results
             
             return(object)
 
