@@ -8,136 +8,62 @@
 #
 
 library(shinydashboard)
-#library(shinyjs)
-# source("DataExploratoryModules.R")
-# source("NormalizationModules.R")
-# source("DiffExpressionModules.R")
-# source("CoExpressionModules.R")
-# source("commonModules.R")
 
 sidebar <- dashboardSidebar(
   
   sidebarMenu(id="StateSave",
-              menuItem("Experimental Design", tabName = "ExpDesign", icon = icon('vials'),  startExpanded=TRUE, 
-                       menuSubItem("Import design",  tabName = "importExpDesign", selected = TRUE),
-                       menuItemOutput("SetUpModel")
+              menuItem(text = "Presentation", tabName = "coverPage", icon = icon('dna'), startExpanded=TRUE, selected = TRUE),
+              menuItem(text = "Experimental Design", tabName = "ExpDesign", icon = icon('vials'), 
+                       menuSubItem(text = "Import design",  tabName = "importExpDesign"),
+                       menuItemOutput(outputId = "SetUpModelMenu")
                        ),
-              menuItemOutput("importData"),
-              #uiOutput("dataList"),
-              menuItemOutput("omics"),
-              menuItemOutput("Integration")
+              menuItemOutput(outputId = "importData"),
+              menuItemOutput(outputId = "omics"),
+              menuItemOutput(outputId = "Integration")
               
               ),
   tags$br(),
   tags$br(),
-  downloadButton("report", "Generate report")
+  downloadButton(outputId = "report", label = "Generate report")
 )
 
 body <- dashboardBody({
-  #shinyjs::useShinyjs()
-  #id = "body"
-  
-  
+
   items <- c( 
     
     list(
   
-  #tabItems(
+        #### Cover Page        ####
+        ###########################
+        
+        tabItem(tabName = "coverPage",
+                verbatimTextOutput("print")
+              ),
+      
+        #### Import Exp design ####
+        ###########################
+        
     
-    #### Import Exp design ####
-    ###########################
-    
-
-    tabItem(tabName = "importExpDesign",
-            
-            ### import Design file
-            fluidRow(
-              box(width = 12, status = "warning",
-
-                column(width = 8,
-                 # matrix count/abundance input
-                 fileInput("Experimental.Design.file", "Import matrix of Experimental Design (txt)",
-                           accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
-                  actionButton("loadExpDesign","load")
-                )
-              )
-            ),
-            tags$br(),
-            
-            ### table visualisation
-            fluidRow(
-              uiOutput("ExpDesignTable")
-            ),
-            tags$br(),
-            
-            ### level
-            fluidRow(
-              uiOutput("GetdFactorRef")
-            ),
-            tags$br(),
-            
-            ### completeness
-            fluidRow(
-              uiOutput("Completeness")
-            ),
-            tags$br(),
+        tabItem(tabName = "importExpDesign",
+                
+              ExperimentalDesignUI("Exp"),
+        ),
+        
+        #### Set Up statistical model & hypothesis ####
+        ###############################################
+        
+        tabItem(tabName = "SetUpModel",
+              
+                GLM_modelUI("model")
+        ),
+        
+        #### Import data       ####
+        ###########################
+        tabItem(tabName = "importData",
+                
+             LoadOmicsDataUI("data")
+        )
     ),
-    
-    #### Set Up statistical model & hypothesis ####
-    ###############################################
-    
-    tabItem(tabName = "SetUpModel",
-      fluidRow(
-            column(width= 12, uiOutput("SetModelFormula"))
-      ),
-      fluidRow(
-            column(width= 12, uiOutput("SetContrasts"))
-      ),
-      fluidRow(
-            column(width= 12, verbatimTextOutput("printContrast"))
-      ),
-      tags$br()
-    ),
-    
-    #### Import data       ####
-    ###########################
-    tabItem(tabName = "importData",
-            
-         box(title = "Load omic data", status = "warning", width = 12, height = NULL,
-             h5("[warning] dataset with omics (type == none) was igored..."),
-             fluidRow(
-                  column(2,
-                         # omic type
-                         selectInput(inputId='omicType1', label='Omics', 
-                                     choices = c("None"="none", "RNAseq"="RNAseq", 
-                                                 "Proteomics"="proteomics", "Metabolomics"="Metabolomics"),
-                                     selected = "none")
-                         ),
-                  column(4,
-                         
-                         # matrix count/abundance input
-                         fileInput("data1", "omic count/abundance (Ex.)",
-                                   accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
-                         ),
-                  column(4,
-                         # metadata/QC bioinfo
-                         fileInput("metadataQC1", "QC or metadata (Ex.)",
-                                   accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
-                         ),
-                  column(2,
-                         # dataset Name
-                         textInput(inputId="DataName1", label="Dataset name", value="set1")
-                         )
-                  
-                  #,
-                  #column(2, actionButton("removeFactor1", "",
-                  #                       icon=icon("times", class = NULL, lib = "font-awesome")))
-                  ),
-             uiOutput("toAddData2"),
-             actionButton("addData","Add data")
-             ),
-         actionButton("loadData","load")
-         )),
     
     #### RNAseq Analysis  ####
     ###############################

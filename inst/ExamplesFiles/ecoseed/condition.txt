@@ -1,4 +1,4 @@
-sample	repeat	temperature	imbibition
+sample	Repeat	temperature	imbibition
 Elevated_LI_1	rep1	Elevated	LI
 Elevated_LI_3	rep3	Elevated	LI
 Elevated_LI_2	rep2	Elevated	LI

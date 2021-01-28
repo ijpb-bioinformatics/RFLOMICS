@@ -1,7 +1,7 @@
 ---
 title: "RFLOMICS report"
-author: ---
-date: ---
+author: "nadia.bessoltane@inra.fr"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
   html_document:
     toc: true
@@ -35,40 +35,37 @@ pngDir <- params$pngDir
 # Experimental Design :
 > Coldata
 
-```{r Design}
+```{r Design, echo=FALSE, message=TRUE, warning=TRUE}
 FlomicsMultiAssay@colData
 ```
 
 
-> Factors
+> Factor type
 
-```{r factor}
+```{r factor, echo=FALSE, message=TRUE, warning=TRUE}
 FlomicsMultiAssay@metadata$design@Factors.Type
 ```
 
-> statistical model
+> Statistical model
 
-```{r model}
+```{r model, echo=FALSE, message=TRUE, warning=TRUE}
 FlomicsMultiAssay@metadata$design@Model.formula
 
 ```
 
-> Hypothesis
+> Selected hypothesis
 
-```{r contrast}
-filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast %in% FlomicsMultiAssay@metadata$design@Contrasts.Sel) %>% select(hypoth)
+```{r contrast, echo=FALSE, message=TRUE, warning=TRUE}
+
+FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName 
+
 ```
 
 
 `r if(length(FlomicsMultiAssay@metadata$omicList) == 0) {"\\begin{comment}"}`
 
-# Data load
 
-```{r load data, echo=FALSE}
-FlomicsMultiAssay@metadata$omicList
-```
-
-```{r analysis, message=FALSE, warning=FALSE, echo=FALSE}
+```{r analysis, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
 
   out <- NULL
   for (omictype in names(FlomicsMultiAssay@metadata$omicList)){ 

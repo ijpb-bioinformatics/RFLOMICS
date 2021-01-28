@@ -71,3 +71,8 @@ setGeneric(
   name="runAnnotationEnrichment",
   def = function( object, ... ){standardGeneric("runAnnotationEnrichment")}
 )
+
+setGeneric(
+  name="runCoExpression",
+  def = function( object, ... ){standardGeneric("runCoExpression")}
+)

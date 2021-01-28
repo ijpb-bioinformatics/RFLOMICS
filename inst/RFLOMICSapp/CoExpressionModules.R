@@ -24,38 +24,29 @@ CoSeqAnalysisUI <- function(id){
               )
             )
           ),
-        box(title = "parameters", solidHeader = TRUE, status = "warning", width = 14,
+        box(title = span(tagList(icon("cogs"), "   CoSeq")), solidHeader = TRUE, status = "warning", width = 14,
             
-          # fluidRow(
-          #   selectInput(ns("methode"), label = "Method :", choices = list("normal"="normal"), selected = "normal"),
-          #   numericInput(inputId = ns("minK"), label="min K :", value=2 , 2, max=25, 1)
-          #   ),
-          # fluidRow(
-          #   selectInput(ns("transfo"), label = "Transformation :", choices = list("arcsin"="arcsin"), selected = "arcsin"),
-          #   numericInput(inputId = ns("maxK"), label="max K :", value=20, 5, max=30, 1)
-          #   ),
-          # fluidRow(
-          #   selectInput(ns("norm"), label = "normFactors :", choices = list("TMM"="TMM"), selected = "TMM"),
-          #   numericInput(inputId = ns("iter"), label="iteration :", value=5, 5, max=30, 1)
-          #   )
           column(6,
-             selectInput(ns("methode"), label = "Method:",         choices = list("normal"="normal"), selected = "normal"),
-             selectInput(ns("transfo"), label = "Transformation:", choices = list("arcsin"="arcsin"), selected = "arcsin"),
-             selectInput(ns("norm"),    label = "normFactors:",    choices = list("TMM"="TMM"),       selected = "TMM")
+            selectInput(ns("model"), label = "model :", 
+                        choices = list("normal"="normal"), selected = "normal"),
+            selectInput(ns("transfo"), label = "Transformation :", 
+                        choices = list("arcsin"="arcsin"), selected = "arcsin"),
+            selectInput(ns("norm"), label = "normFactors :", 
+                        choices = list("TMM"="TMM"), selected = "TMM")
           ),
-          column(5,
-             numericInput(inputId = ns("minK"), label="min K:",     value=2 , 2, max=25, 1),
-             numericInput(inputId = ns("maxK"), label="max K:",     value=20, 5, max=30, 1),
-             numericInput(inputId = ns("iter"), label="iteration:", value=5,  5, max=30, 1)
+          column(6, 
+                 numericInput(inputId = ns("minK"), label="min K :", value=2 , 2, max=25, 1),
+                 numericInput(inputId = ns("maxK"), label="max K :", value=20, 5, max=30, 1),
+                 numericInput(inputId = ns("iter"), label="iteration :", value=5, 5, max=30, 1)
           )
         ),
         box(title = "run", solidHeader = TRUE, status = "warning", width = 14,
           column(6,
-             selectInput(inputId = ns("clustermq-coseq"), label="Cluster", choices = list("no"=FALSE,"genotoul"=TRUE))),
-          column(5,
-             tags$br(),
-             actionButton(ns("runCoSeq"),"Run clustering"))
-          )
+            selectInput(inputId = ns("clustermq-coseq"), label="send job to cluster", 
+                        choices = list("no"=FALSE,"genotoul"=TRUE))
+          ),
+          column(6, actionButton(ns("runCoSeq"),"Run clustering"))
+        )
       ),
       column(8,
         box(title = "run clustering", status = "warning", solidHeader = TRUE, width = 14,
@@ -66,83 +57,78 @@ CoSeqAnalysisUI <- function(id){
             tabPanel("ICL",      plotOutput(ns("ICL"))),
             tabPanel("profiles", plotOutput(ns("profiles"))),
             tabPanel("boxplots", plotOutput(ns("boxplots"))),
+            tabPanel("boxplots_bis", uiOutput(ns("selectClusters"))),
             tabPanel("probapost_boxplots",  plotOutput(ns("probapost_boxplots"))),
             tabPanel("probapost_barplots",  plotOutput(ns("probapost_barplots"))),
-            tabPanel("probapost_histogram", plotOutput(ns("probapost_histogram"))),
-            tabPanel("boxplots_bis",        uiOutput(ns("selectClusters"))))))
-   )
+            tabPanel("probapost_histogram", plotOutput(ns("probapost_histogram")))
+          )
+        )
+      )
+    )
   )
 }
 
 CoSeqAnalysis <- function(input, output, session, dataset){
  
-  # get coseq parameters
-  # 
-  # Select lists of DEG to co-expression analysis 
+
+  # Select lists of DGE to co-expression analysis 
   output$selectDEGtoCoExp <- renderUI({
 
-    checkboxGroupInput(inputId = session$ns("select"), label = "Select DEG to Coseq :",
-                       choiceNames  = FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
-                       choiceValues = FlomicsMultiAssay@metadata$design@Contrasts.Sel$tag,
-                       selected     = FlomicsMultiAssay@metadata$design@Contrasts.Sel$tag)
-
+    ListNames.diff        <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["contrasts"]]$tag
+    names(ListNames.diff) <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["contrasts"]]$contrastName
+    
+    pickerInput(
+      inputId = session$ns("select"),
+      label = "Select DEG lists:", 
+      choices = ListNames.diff,
+      options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+      multiple = TRUE, selected = ListNames.diff
+    )
   })
   
-  # get list of DEG to process 
+  
+  # get list of DGE to process 
   # from union or intersection
-  DEG_list <- reactive({  
-    getDEGlist_for_coseqAnalysis(matrix    = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata[["AnaDiffDeg.mat"]], 
-                                 colnames  = input$select, 
-                                 mergeType = input$unionInter)
-    })
+  DEG_list <- reactive({getDEGlist_for_coseqAnalysis(matrix    = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDGE"]], 
+                                           colnames  = input$select, 
+                                           mergeType = input$unionInter)})
   
-  # nbr of selected genes
-  output$mergeValue <- renderText({ 
+  output$mergeValue <- renderText({ print(paste(length(DEG_list()), "genes", sep =" ")) })
+  
+  # run coexpression analysis
+  # coseq
+  observeEvent(input$runCoSeq, { 
     
-    if (is.null(DEG_list())){ "Warning : 0 genes" }
-    else{ paste(length(DEG_list()), "genes", sep =" ") }
+    # check if no selected DGE list
+    if(length(input$select) == 0){
+      
+      showModal(modalDialog( title = "Error message", "Please select at least 1 DEG list."))
+    }
+    validate({ 
+      need(length(input$select) != 0, message="Please select at least 1 DEG list") 
     })
-  
-  #run coseq when button is clicked
-  observeEvent(input$runCoSeq, {
-   
+    
+    
+    print(paste("# 10- Co-expression analysis... ", dataset))
+    
+    #---- progress bar ----#
     progress <- shiny::Progress$new()
-    progress$set(message = "Making plot", value = 0)
+    progress$set(message = "Run coseq", value = 0)
     on.exit(progress$close())
+    progress$inc(1/10, detail = paste("Doing part ", 10,"%", sep=""))
+    #----------------------#
     
-    progress$inc(0, detail = paste("Doing part ", 0,"%", sep=""))
-    
-    # run coseq
-    progress$inc(1/4, detail = paste("Doing part ", 0,"%", sep=""))
- 
-    
-    #coseq.res <- reactive({
-      if(is.null(DEG_list())){
-        showModal(modalDialog(  title = "Error message", "Please select a data set"))
-      }
-      validate(
-        need(!is.null(DEG_list()), "")
-      )
-     
-    # run coseq function
-      coseq.res <- runCoseq(counts = assay(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])[DEG_list(),] , 
-                          K=input$minK:input$maxK, iter = input$iter,
-                          model  = input$methode, transformation=input$transfo, 
-                          parallel=TRUE, meanFilterCutoff=50, normFactors="TMM")
-    
-    
-    
-    
-   # })
-    
-    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".coseq")]] <<- coseq.res
-    
+    # run coseq   
+    FlomicsMultiAssay <<- runCoExpression(FlomicsMultiAssay, data = paste0(dataset,".filtred"), tools="coseq", geneList=DEG_list(), 
+                                          K=input$minK:input$maxK, iter = input$iter, model  = input$model, 
+                                          transformation=input$transfo, normFactors="TMM", nameList=input$select, merge=input$unionInter)
+
+    #---- progress bar ----#    
     progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep=""))
+    #----------------------#
     
-    groups    <- unite(as.data.frame(FlomicsMultiAssay@colData[FlomicsMultiAssay@metadata$design@Factors.Type == "Bio"]), 
-                       col="groups", sep="_", remove = TRUE) %>% dplyr::mutate(samples = rownames(.)) %>%
-                 dplyr::arrange(factor(samples, levels = names(coseq.res@y_profiles)))
-    plot.coseq.res <- coseq::plot(coseq.res, conds = groups$groups)
+    # print coseq plots
+    plot.coseq.res <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["plots"]]
     
     output$logLike  <- renderPlot({ plot.coseq.res$logLike }) 
     output$ICL      <- renderPlot({ plot.coseq.res$ICL }) 
@@ -152,15 +138,19 @@ CoSeqAnalysis <- function(input, output, session, dataset){
     output$probapost_barplots  <- renderPlot({ plot.coseq.res$probapost_barplots }) 
     output$probapost_histogram <- renderPlot({ plot.coseq.res$probapost_histogram }) 
     
+    #---- progress bar ----#    
+    progress$inc(3/4, detail = paste("Doing part ", 75,"%", sep=""))
+    #----------------------# 
     
     output$selectClusters <- renderUI({
       
-      nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
-      
+      nb_cluster <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["cluster.nb"]]
+      coseq.res  <- FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata$CoExpAnal[["coseqResults"]]
+
       fluidRow(
         
         ## plot selected cluster(s)
-        renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, groups) }),
+        renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, FlomicsMultiAssay@metadata$design@Groups) }),
         
         ## select cluster to plot
         checkboxGroupInput(inputId = session$ns("selectCluster"), label = "Select cluster(s) :",
@@ -168,7 +158,9 @@ CoSeqAnalysis <- function(input, output, session, dataset){
       )
     })
     
+    #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
+    #----------------------# 
     
   })
 }

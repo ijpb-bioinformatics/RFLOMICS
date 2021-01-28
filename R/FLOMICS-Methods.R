@@ -1,33 +1,47 @@
 #' @title [\code{\link{ExpDesign-class}}] Class constructor
 #' @description
-#' @param dF.List A list of factor
+#' @param ExpDesign data.frame with experimental design
+#' @param refList vector with factor ref
+#' @param typeList vector with type of factor
 #' @return An object of class [\code{\link{ExpDesign-class}}]
 #' @name ExpDesign-Constructor
 #' @rdname ExpDesign-Constructor
 #' @export
-ExperimentalDesign <- function(ExpDesign){
+ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 
+  # List.Factors
   dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
-    as.factor(ExpDesign[[i]])
+    
+    relevel(as.factor(ExpDesign[[i]]), ref=refList[[i]])
   })
   names(dF.List) <- names(ExpDesign)
 
-  .ExpDesign(
-           ExpDesign=ExpDesign,
-           List.Factors=dF.List,
-           Factors.Type=vector(),
-           Model.formula=vector(),
-           Model.matrix=vector(),
-           Contrasts.List=list(),
-           Contrasts.Sel=data.frame(),
-           Contrasts.Coeff=data.frame())
+  # Factors.Type
+  names(typeList) <- names(ExpDesign)
+  
+  # groups
+  groups <- tidyr::unite(as.data.frame(ExpDesign[typeList == "Bio"]), col="groups", sep="_", remove = TRUE) %>% 
+            dplyr::mutate(samples = rownames(.))
+  
+  Design = new(Class = "ExpDesign",
+               ExpDesign=ExpDesign,
+               List.Factors=dF.List,
+               Factors.Type=typeList,
+               Groups=groups,
+               Model.formula=vector(),
+               Model.matrix=vector(),
+               Contrasts.List=list(),
+               Contrasts.Sel=data.frame(),
+               Contrasts.Coeff=data.frame())
            
+  return(Design)
   }
 
 #' @title RunDiffAnalysis
 #' @param An object of class [\code{\link{MultiAssayExperiment}]
 #' @param data omic data type
 #' @param DiffMethod Differential analysis method
+#' @param contrastList list of contrast to test
 #' @param FDR FDR threshold
 #' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
 #' @return MultiAssayExperiment
@@ -36,40 +50,44 @@ ExperimentalDesign <- function(ExpDesign){
 #'
 setMethod(f="RunDiffAnalysis",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, FDR, DiffAnalysisMethod, clustermq){
+          definition <- function(object, data, FDR = 0.05, contrastList, DiffAnalysisMethod, clustermq){
 
+            object@ExperimentList[[data]]@metadata$DiffExpAnal <- list()
+            
+            Contrasts.Sel <- dplyr::filter(object@metadata$design@Contrasts.Sel, contrastName %in% contrastList)
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["FDR"]]       <- FDR
+            
             # Run the Diff analysis and get the results as a list of object depending of the
-
             ListOfDiffResults <- switch(DiffAnalysisMethod,
                                      "edgeRglmfit"=edgeR.AnaDiff(object, data, clustermq)
-                                )
-
-            # The results of the methods have to be formated
+                                     )
 
             # Set an AnaDiff object to
-            object@ExperimentList[[data]]@metadata[["AnaDiff"]] <- ListOfDiffResults
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["DGELRT"]] <- ListOfDiffResults
 
             #
-            object@ExperimentList[[data]]@metadata[["AnaDiffDeg"]] <- lapply(ListOfDiffResults, function(x){
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]] <- lapply(ListOfDiffResults, function(x){
               
               res<-topTags(x, n = dim(x)[1])
               DEGs<- res$table[res$table$FDR <= FDR,]
               #DEGs<-res$table
               return(DEGs)
             })
-            names(object@ExperimentList[[data]]@metadata[["AnaDiffDeg"]]) <- names(ListOfDiffResults)
+            names(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]]) <- names(ListOfDiffResults)
 
             ## merge results in bin matrix
-            DEG_list <- lapply(1:length(object@ExperimentList[[data]]@metadata[["AnaDiffDeg"]]), function(x){
+            DEG_list <- lapply(1:length(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]]), function(x){
               
-              res <- object@ExperimentList[[data]]@metadata[["AnaDiffDeg"]][[x]]
+              res <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]][[x]]
               tmp <- data.frame(DEG = rownames(res), bin = rep(1,length(rownames(res))))
               colnames(tmp) <- c("DEG", paste("H", x, sep=""))
               return(tmp)
             })
-            names(DEG_list) <- names(object@ExperimentList[[data]]@metadata[["AnaDiffDeg"]])
+            names(DEG_list) <- names(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]])
             
-            object@ExperimentList[[data]]@metadata[["AnaDiffDeg.mat"]] <- DEG_list %>% purrr::reduce(full_join, by="DEG") %>% 
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["mergeDGE"]] <- DEG_list %>% purrr::reduce(full_join, by="DEG") %>% 
               mutate_at(.vars = 2:(length(DEG_list)+1), .funs = function(x){if_else(is.na(x), 0, 1)}) %>% data.table()
             
             return(object)
@@ -322,6 +340,7 @@ setMethod(f= "barplotPCAnorm",
 
 
 
+
 #' FilterLowAbundance
 #'
 #' @param MultiAssayExperiment
@@ -333,21 +352,42 @@ setMethod(f= "barplotPCAnorm",
 #' @examples
 setMethod(f= "FilterLowAbundance",
           signature = "MultiAssayExperiment",
-          definition <- function(object, data, threshold){
-
+          definition <- function(object, data, Filter_Strategy = "NbConditions", CPM_Cutoff = 5){
+            
             objectFilt <- object[[data]]
-
-            feature_0  <- objectFilt[rowSums(assay(objectFilt)) <= threshold, ]@NAMES
-
-            objectFilt <- objectFilt[rowSums(assay(objectFilt)) > threshold, ]
-
-            objectFilt@metadata[["FilteredFeature"]] <-  feature_0
-
-            object@ExperimentList[[paste0(data, ".filtred")]] <- objectFilt
-
+            
+            ## nbr of genes with 0 count
+            genes_flt0  <- objectFilt[rowSums(assay(objectFilt)) <= 0, ]@NAMES
+            
+            ## remove 0 count 
+            objectFilt <- objectFilt[rowSums(assay(objectFilt))  > 0, ]
+            
+           
+            
+            
+            ## filter cpm
+            NbReplicate <- table(unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_"))
+            NbConditions <- unique(unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_"))$groups %>% length()
+            
+            switch(Filter_Strategy,
+                   "NbConditions" = { keep <- rowSums(cpm(assay(objectFilt)) >= CPM_Cutoff) >=  NbConditions },
+                   "NbReplicates" = { keep <- rowSums(cpm(assay(objectFilt)) >= CPM_Cutoff) >=  min(NbReplicate) },
+                   "filterByExpr" = { dge  <- edgeR::DGEList(counts = assay(objectFilt), genes = rownames(assay(objectFilt)))
+                                      #keep <- filterByExpr(dge, GLM_Model) 
+                                      keep <- filterByExpr(dge)
+                                      }
+                   )
+            
+            ## nbr of genes filtered
+            genes_flt1  <- objectFilt[!keep]@NAMES
+            
+            objectFilt@metadata[["FilteredFeature"]] <-  c(genes_flt0, genes_flt1)
+            
+            object@ExperimentList[[paste0(data, ".filtred")]] <- objectFilt[keep]
+            
             return(object)
-          })
 
+          })
 
 
 
@@ -557,6 +597,7 @@ setMethod(f="CheckExpDesignCompleteness",
 #' the contrast he want to keep and bind the selected expression contrast data frames 
 #'
 #' @param ExpDesign 
+#' @param model.formula 
 #'
 #' @return ExpDesign
 #' @exportMethod getExpressionContrast
@@ -566,10 +607,13 @@ setMethod(f="CheckExpDesignCompleteness",
 #'
 setMethod(f="getExpressionContrast",
           signature="ExpDesign",
-          definition <- function(object){
+          definition <- function(object, model.formula){
 
   # model formula
-  modelFormula <- formula(object@Model.formula)
+  modelFormula <- formula(model.formula)
+  
+  #Design@Model.formula <- formula(model.formula)
+  object@Model.formula <- model.formula
   
   # bio factor list in formulat 
   labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
@@ -623,14 +667,23 @@ setMethod(f="getExpressionContrast",
 #' define contrast matrix or contrast list with contrast name and contrast coefficients
 #'
 #' @param ExpDesign
-#'
+#' @param contrastList
 #' @return ExpDesign
 #' @exportMethod getContrastMatrix
 #'
 #' @author Christine Paysant-Le Roux
 setMethod(f="getContrastMatrix",
           signature="ExpDesign",
-          definition <- function(object){
+          definition <- function(object, contrastList){
+            
+  contrast.sel.list <- list()
+  contrast.sel.list <- lapply(names(Design@Contrasts.List), function(contrastType) {
+  
+    tmp <- object@Contrasts.List[[contrastType]] %>% dplyr::filter(contrast %in% contrastList) %>%
+                    dplyr::select(contrast, contrastName, type, groupComparison)
+    return(tmp)
+  })
+  object@Contrasts.Sel <- contrast.sel.list %>% purrr::reduce(rbind) %>% dplyr::mutate(tag = paste("H", 1:dim(.)[1], sep=""))
             
             
   sampleData <-  object@ExpDesign         
@@ -705,6 +758,60 @@ setMethod(f="getContrastMatrix",
 ################################### CO-EXPRESSION #############################
 
 
+#' @title runCoExpression
+#' @param object MultiAssayExperiment
+#' @param data dataset name
+#' @param tools  
+#' @param geneList 
+#' @param K list of number of clusters
+#' @param iter gene list 
+#' @param model
+#' @param transformation
+#' @param normFactors
+#' @return MultiAssayExperiment
+#' @exportMethod runCoExpression
+#'
+setMethod(f="runCoExpression",
+          signature="MultiAssayExperiment",
+          definition <- function(object, data, tools = "coseq", geneList, K, iter=5 , model="normal", 
+                                 transformation="arcsin", normFactors="TMM", nameList, merge="union"){
+            
+            object@ExperimentList[[data]]@metadata$CoExpAnal <- list()
+            object@ExperimentList[[data]]@metadata$CoExpAnal[["model"]]            <- model
+            object@ExperimentList[[data]]@metadata$CoExpAnal[["transformation"]]   <- transformation
+            object@ExperimentList[[data]]@metadata$CoExpAnal[["normFactors"]]      <- normFactors
+            object@ExperimentList[[data]]@metadata$CoExpAnal[["meanFilterCutoff"]] <- 50
+            object@ExperimentList[[data]]@metadata$CoExpAnal[["gene.list.names"]]  <- nameList
+            object@ExperimentList[[data]]@metadata$CoExpAnal[["merge.type"]]       <- merge
+            
+            counts = assay(object@ExperimentList[[data]])[geneList,] 
+            
+            switch (tools,
+              "coseq" = {
+                  coseq.res <- runCoseq(counts, K=K, iter=iter, model=model, transformation=transformation, normFactors=normFactors)
+                  object@ExperimentList[[data]]@metadata$CoExpAnal[["coseqResults"]] <- coseq.res
+                  
+                  # list of genes per cluster
+                  clusters <- lapply(1:length(table(clusters(coseq.res))), function(i){ 
+                    names(clusters(coseq.res)[clusters(coseq.res) == i])
+                    })
+                  object@ExperimentList[[data]]@metadata$CoExpAnal[["clusters"]] <- clusters
+                  names(object@ExperimentList[[data]]@metadata$CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(clusters(coseq.res))), sep = ".")
+                  
+                  # nbr of cluster
+                  nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
+                  object@ExperimentList[[data]]@metadata$CoExpAnal[["cluster.nb"]] <- nb_cluster
+                
+                  # plot
+                  plot.coseq.res <- coseq::plot(coseq.res, conds = FlomicsMultiAssay@metadata$design@Groups$groups)
+                  object@ExperimentList[[data]]@metadata$CoExpAnal[["plots"]] <- plot.coseq.res
+                  
+                }
+            )
+              
+      return(object)
+})
+
 ################################### ANNOTATION #############################
 
 #' @title runAnnotationEnrichment
@@ -721,16 +828,27 @@ setMethod(f="runAnnotationEnrichment",
           signature="MultiAssayExperiment",
           definition <- function(object, data, annotation, geneLists, alpha = 0.01, probaMethod = "hypergeometric"){
              
+            object@ExperimentList[[data]]$metadata$EnrichAnal <- list()
+            
+            object@ExperimentList[[data]]$metadata$EnrichAnal[["gene.list.names"]] <- names(geneLists)
+            object@ExperimentList[[data]]$metadata$EnrichAnal[["alpha"]]           <- alpha
+            object@ExperimentList[[data]]$metadata$EnrichAnal[["proba.test"]]      <- probaMethod
+            
+            
+            Results <- list()
+            
             for(geneList in names(geneLists)){
               
-              Results <- switch(probaMethod,
+              Results[[geneList]] <- switch(probaMethod,
                    "hypergeometric"=EnrichmentHyperG(annotation, geneLists[[geneList]], alpha = 0.01)
-              )
-                
-              
-              object@ExperimentList[[data]]$metadata$AnnotEnrich[[geneList]] <- Results
+                   )
             }
+            object@ExperimentList[[data]]$metadata$EnrichAnal[["results"]] <- Results
             
             return(object)
 
           })
+
+
+
+

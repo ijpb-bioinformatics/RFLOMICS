@@ -146,8 +146,11 @@ edgeR.AnaDiff <- function(object, data, clustermq){
   print("[cmd] fit.f <- edgeR::glmFit(dge,design=model_matrix)")
   fit.f <- edgeR::glmFit(dge,design=model_matrix)
 
+  
+  # selected contrast 
+  Contrasts.Sel <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["contrasts"]]
+  
   # test clustermq
-
   if(clustermq == TRUE){
 
      # Fonction to run on contrast per job
@@ -157,21 +160,21 @@ edgeR.AnaDiff <- function(object, data, clustermq){
         edgeR::glmLRT(y, contrast = unlist(z[x,]))
       }
     
-      ListRes <- clustermq::Q(fx, x=1:length(object@metadata$design@Contrasts.Sel$contrast),
-        export=list(y=fit.f,z=object@metadata$design@Contrasts.Coeff),
-        n_jobs=length(object@metadata$design@Contrasts.Sel$contrast),pkgs="edgeR")
+      ListRes <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
+                              export=list(y=fit.f,z=object@metadata$design@Contrasts.Coeff),
+                              n_jobs=length(Contrasts.Sel$contrast),pkgs="edgeR")
       
   }
   else{
     
-     ListRes <-  lapply(object@metadata$design@Contrasts.Sel$contrast, function(x){
+     ListRes <-  lapply(Contrasts.Sel$contrast, function(x){
 
        edgeR::glmLRT(fit.f, contrast = unlist(object@metadata$design@Contrasts.Coeff[x,]))
        
      })
   }
 
-  names(ListRes) <- object@metadata$design@Contrasts.Sel$contrastName
+  names(ListRes) <- Contrasts.Sel$contrastName
   return(ListRes)
 }
 
@@ -298,6 +301,26 @@ pvalue.plot <- function(data, contrast, pngFile=NULL){
 
 
 
+#' MA.plot
+#'
+#' @param data 
+#' @param pngFile 
+#' @param FDRcutoff 
+#' @return plot
+#' @export
+#'
+#' @examples
+MA.plot <- function(data, FDRcutoff=0.05, pngFile=NULL){
+  
+  p <- ggplot(data=data, aes(x = logCPM, y=logFC, col=FDR < FDRcutoff)) + geom_point(alpha=0.4, size = 0.8) + 
+    scale_colour_manual(values=c("black","red"))
+  print(p)
+  
+  if (! is.null(pngFile)){
+    ggsave(filename = pngFile, plot = p)
+  }
+  
+}
 
 
 
@@ -919,17 +942,15 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
 #' @param iter
 #' @param model 
 #' @param transformation
-#' @param parallel 
-#' @param meanFilterCutoff 
 #' @param normFactors 
 #' @return coseqResults
 #' @export 
-runCoseq <- function(counts, K, iter = 10, model="Normal", transformation="arcsin", parallel=TRUE, meanFilterCutoff=50, normFactors="TMM"){
+runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="arcsin",  normFactors="TMM"){
             
   
   
             coseq.res <- coseq::coseq(counts, K=K, iter=iter, model=model, transformation=transformation,
-                                      parallel=parallel, meanFilterCutoff=meanFilterCutoff, normFactors=normFactors)
+                                      parallel=TRUE, meanFilterCutoff=50, normFactors=normFactors, seed=12345)
             
             # Results.1 <- list()
             # Results.1_min_icl <- list()
@@ -957,7 +978,7 @@ runCoseq <- function(counts, K, iter = 10, model="Normal", transformation="arcsi
 coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
   
   nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
-  
+  groups <- conds %>% dplyr::arrange(factor(samples, levels = names(coseq.res@y_profiles)))
   y_profiles <- list()
   for (i in 1:nb_cluster){
     y_profiles[[i]] <- coseq.res@y_profiles[coseq.res@allResults[[nb_cluster-1]][,i] != 0,] %>% 
@@ -1031,8 +1052,8 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
   #                Pvalue_under=phyper(x,m,n,k,lower.tail=TRUE))       
   
   res= dplyr::full_join(Urn_Success, Trial_Success, by = c("Term", "Name", "Domain")) %>% 
-       dplyr::mutate(Urn_percentage_Success   = signif(100*Urn_Success/Urn_effective, 3), 
-                     Trial_percentage_Success = signif(100*Trial_Success/Trial_effective, 3), 
+       dplyr::mutate(Urn_percentage_Success   = signif(100*Urn_Success/Urn_effective, 3), Urn_effective = Urn_effective,
+                     Trial_percentage_Success = signif(100*Trial_Success/Trial_effective, 3), Trial_effective = Trial_effective, 
                      Pvalue_over  = phyper(Trial_Success-1,Urn_Success, (Urn_effective-Urn_Success),Trial_effective,lower.tail=FALSE), 
                      Pvalue_under = phyper(Trial_Success,  Urn_Success, (Urn_effective-Urn_Success),Trial_effective,lower.tail=TRUE))
   

@@ -1,9 +1,12 @@
 #' @title ExpDesign Class
 #' @slot List.Factors A list of factor
 #' @slot Factors.Type Either 'Biological' or 'batch'
+#' @slot Groups design groups
 #' @slot Model.formula Modele formula.
+#' @slot Model.matrix GLM model
 #' @slot Contrasts.List A list of contrasts.
-#' @slot Model.matrix .
+#' @slot Contrasts.Sel selected contrast
+#' @slot Contrasts.Coeff contrast vector
 #' @return ExpDesign object
 #' @examples
 #' @name ExpDesign-class
@@ -11,17 +14,16 @@
 #' @exportClass ExpDesign
 .ExpDesign <- setClass(
   Class="ExpDesign",
-  representation=representation(
-      ExpDesign="data.frame",
-      List.Factors="list",
-      Factors.Type="vector",
-      Model.formula="vector",
-      Model.matrix="vector",
-      Contrasts.List="list",
-      Contrasts.Sel="data.frame",
-      Contrasts.Coeff="data.frame"
-      
-  ))
+  slots=c(ExpDesign="data.frame",
+          List.Factors="list",
+          Factors.Type="vector",
+          Groups="data.frame",
+          Model.formula="vector",
+          Model.matrix="vector",
+          Contrasts.List="list",
+          Contrasts.Sel="data.frame",
+          Contrasts.Coeff="data.frame")
+  )
 
 setClass("MultiAssayExperiment")
 
