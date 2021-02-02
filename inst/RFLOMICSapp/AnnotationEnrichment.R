@@ -98,31 +98,31 @@ AnnotationEnrichment <- function(input, output, session, dataset){
     
     print(paste("# 11- Enrichment Analysis...", dataset))
     
-    ## list of gene list to annotate
-    geneLists <- list()
-    geneLists.diff <- list()
-    geneLists.diff <- lapply(input$GeneList.diff, function(listname){
-
-       row.names(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["TopDGE"]][[listname]])
-      
-    })
-    names(geneLists.diff) <- input$GeneList.diff
-    
-    geneLists.coseq <- list()
-    geneLists.coseq <- lapply(input$GeneList.coseq, function(listname){
-      
-      FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata[["CoExpAnal"]][["clusters"]][[listname]]
-      
-    })
-    names(geneLists.coseq) <- input$GeneList.coseq
-    
-    geneLists <- c(geneLists.diff, geneLists.coseq)
+    # ## list of gene list to annotate
+    # geneLists <- list()
+    # geneLists.diff <- list()
+    # geneLists.diff <- lapply(input$GeneList.diff, function(listname){
+    # 
+    #    row.names(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["TopDGE"]][[listname]])
+    #   
+    # })
+    # names(geneLists.diff) <- input$GeneList.diff
+    # 
+    # geneLists.coseq <- list()
+    # geneLists.coseq <- lapply(input$GeneList.coseq, function(listname){
+    #   
+    #   FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata[["CoExpAnal"]][["clusters"]][[listname]]
+    #   
+    # })
+    # names(geneLists.coseq) <- input$GeneList.coseq
+    # 
+    # geneLists <- c(geneLists.diff, geneLists.coseq)
     
     ## run annotation
-    FlomicsMultiAssay <<- runAnnotationEnrichment(FlomicsMultiAssay, data = paste0(dataset,".filtred"),
-                                                  annotation= annotation, geneLists=geneLists, 
+    FlomicsMultiAssay <<- runAnnotationEnrichment(FlomicsMultiAssay, data = paste0(dataset,".filtred"), annotation= annotation, 
+                                                  DiffListNames=input$GeneList.diff, CoExpListNames=input$GeneList.coseq, 
                                                   alpha = input$Alpha_Enrichment, probaMethod = input$EnrichMethod)
-
+    
     ## print results
     output$AnnotEnrichResults <- renderUI({
 

@@ -91,51 +91,40 @@ DiffExpAnalysis <- function(input, output, session, dataset){
     progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep=""))
     #----------------------#
     
-    Contrasts.Sel <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["contrasts"]]
+    metadata <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata
     
     output$ContrastsResults <- renderUI({
+
+      Contrasts.Sel <- metadata$DiffExpAnal[["contrasts"]]
       
       lapply(1:length(Contrasts.Sel$contrast), function(i) {
         
         vect     <- unlist(Contrasts.Sel[i,])
-        res      <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["DGELRT"]][[vect["contrastName"]]]
-        resTable <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["TopDGE"]][[vect["contrastName"]]]
-
+        res      <- metadata$DiffExpAnal[["DGELRT"]][[vect["contrastName"]]]
+        
+        diff.plots <- DiffAnal.plot(FlomicsMultiAssay, data=paste0(dataset,".filtred"), hypothesis=vect["contrastName"])
+        
         fluidRow(
           column(10,
-                 box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = paste0(vect["tag"], " : ", vect["contrastName"], sep=""),
-
-                     
-                     column(6,
-                            ### MAplot
-                         renderPlot({
-                           res.FDR <-topTags(res, n = dim(res)[1])
-                           MA.plot(data = res.FDR$table, FDRcutoff = input$FDRSeuil,
-                                   pngFile =file.path(tempdir(), paste0(dataset, "_MAplot_", gsub(" ", "", vect["contrastName"]), ".png")))
-                         })
-                     ),
-                     column(6,
-                            ### pvalue plot ###
-                            renderPlot({
-                              
-                              pvalue.plot(data    =resTable,
-                                          contrast=vect["contrastName"],
-                                          pngFile =file.path(tempdir(), paste0(dataset, "_PvalueDistribution_", gsub(" ", "", vect["contrastName"]), ".png")))
-                            })
-                     ),
-                     verticalLayout(
-                       
-                       
-                       tags$br(),
-                       ### DEG result table ###
-                       DT::renderDataTable({
-                         
-                         DT::datatable(round(resTable[resTable$FDR <= input$FDRSeuil,],5),
-                                       options = list(rownames = FALSE, pageLength = 10))
-                       })
-                       
-                     )
-                 )
+             box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = paste0(vect["tag"], " : ", vect["contrastName"], sep=""),
+                 
+               ### MAplot
+               column(6, renderPlot({ diff.plots$MA.plot }) ),
+               
+               ### pvalue plot ###
+               column(6, renderPlot({ diff.plots$Pvalue.hist }) ),
+               
+               ### DEG result table ###
+               verticalLayout(
+                 
+                 tags$br(),
+                 ### DEG result table ###
+                 DT::renderDataTable({ 
+                   resTable <- metadata$DiffExpAnal[["TopDGE"]][[vect["contrastName"]]]
+                   DT::datatable(round(resTable[resTable$FDR <= input$FDRSeuil,],5), options = list(rownames = FALSE, pageLength = 10)) 
+                })
+               )
+             )
           )
         )
       })
@@ -146,24 +135,20 @@ DiffExpAnalysis <- function(input, output, session, dataset){
     #----------------------#
 
     ### intersection
-    DEG_mat <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDGE"]]
+    DEG_mat <- metadata$DiffExpAnal[["mergeDGE"]]
 
-      output$ResultsMerge <- renderUI({
-              if (ncol(DEG_mat) > 2){ 
-                    fluidRow(
-                      column(10,
-                             box(width=12,  status = "warning", 
-                                 
-                                 renderPlot({ UpSetR::upset(DEG_mat, sets = (names(DEG_mat[,-1]))) })
-                                 )
-                             )
-                      )
-              }else{
-                fluidRow(
-                  
-                )
-              }
-        })
+    output$ResultsMerge <- renderUI({
+      if (ncol(DEG_mat) > 2){ 
+          fluidRow(
+            column(10,
+               box(width=12,  status = "warning", 
+                   
+                   renderPlot({ UpSetR::upset(DEG_mat, sets = (names(DEG_mat[,-1]))) })
+                   )
+               )
+          )
+        }
+      })
     
       #---- progress bar ----#    
       progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))

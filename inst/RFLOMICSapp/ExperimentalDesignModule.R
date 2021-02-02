@@ -60,7 +60,7 @@ ExperimentalDesign <- function(input, output, session){
         }
         validate({ need(! is.null(input$Experimental.Design.file), message="Set a name") })
         
-        ExpDesign.tbl <<- read.table(input$Experimental.Design.file$datapath,header = TRUE,row.names = 1, sep = )
+        ExpDesign.tbl <<- read.table(input$Experimental.Design.file$datapath,header = TRUE,row.names = 1, sep = "\t")
         
         # display desgin table
         output$ExpDesignTable <- renderUI({
@@ -151,6 +151,10 @@ ExperimentalDesign <- function(input, output, session){
     
     ## construct ExperimentalDesign object
     names(ExpDesign.tbl) <- dF.List.Name
+    
+    print(head(ExpDesign.tbl))
+    print(dF.List.ref)
+    print(dF.Type.dFac)
     Design <<- ExpDesign.constructor(ExpDesign = ExpDesign.tbl, refList = dF.List.ref, typeList = dF.Type.dFac)
     
     
@@ -273,19 +277,7 @@ GLM_model <- function(input, output, session){
       observeEvent(input$validContrasts, {
     
         validate.status <<- 0
-        # get list of selected contrast data frames with expression, name and type
-        # contrastList <- list()
-        # 
-        # contrastList <- lapply(names(Design@Contrasts.List), function(contrastType) {
-        # 
-        #     #contrastList<-input[[paste0("ContrastType",contrastType)]]
-        #     tmp <- Design@Contrasts.List[[contrastType]] %>%
-        #       dplyr::filter(contrast %in% input[[paste0("ContrastType",contrastType)]]) %>%
-        #       dplyr::select(contrast, contrastName, type, groupComparison)
-        #     return(tmp)
-        # })
-        # Design@Contrasts.Sel <<- contrastList %>% purrr::reduce(rbind) %>% dplyr::mutate(tag = paste("H", 1:dim(.)[1], sep=""))
-    
+       
         #get list of selected contrast data frames with expression, name and type
         contrastList <- list()
         contrastList <- lapply(names(Design@Contrasts.List), function(contrastType) {
@@ -311,6 +303,7 @@ GLM_model <- function(input, output, session){
         # define all the coefficients of selected contrasts and return a contrast matrix with contrast sample name and associated coefficients
         Design <<- getContrastMatrix(Design, contrastList = contrast.sel.vec)
     
+        # à supprimer à la fin du dev 
         output$printContrast <- renderPrint({
           
           #Design@Contrasts.Coeff

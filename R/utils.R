@@ -124,14 +124,14 @@ TMM.Normalization <- function(counts, groups){
 #' @export
 #'
 #' @examples
-edgeR.AnaDiff <- function(object, data, clustermq){
+edgeR.AnaDiff <- function(object, data, clustermq = FALSE){
   
   # retrieve the design matrix
   model_matrix <- model.matrix(as.formula(object@metadata$design@Model.formula),
                                data=as.data.frame(object@metadata$design@List.Factors))
 
   # Construct the DGE obect
-  dge <- edgeR::DGEList(counts=assay(object@ExperimentList[[data]]),
+  dge <- edgeR::DGEList(counts=MultiAssayExperiment::assay(object@ExperimentList[[data]]),
                         group=object@ExperimentList[[data]]@metadata$Normalization$coefNorm$group,
                         lib.size =object@ExperimentList[[data]]@metadata$Normalization$coefNorm$lib.size,
                         norm.factors = object@ExperimentList[[data]]@metadata$Normalization$coefNorm$norm.factors)
@@ -198,7 +198,7 @@ colorPlot <- function(design, ColData, condition="samples"){
 
       # combine only bio fact
       groups <- design@List.Factors[design@Factors.Type == "Bio"] %>%
-        as.data.frame() %>% unite(col="groups", sep="_")
+        as.data.frame() %>% tidyr::unite(col="groups", sep="_")
       list.cond <- factor(groups$groups)
     }
     else{
@@ -282,21 +282,21 @@ plotDistr <- function(abundances, dataName, pngFile=NULL){
 #' pvalue.plot
 #'
 #' @param data 
-#' @param contrast
 #' @param pngFile 
 #' @return plot
 #' @export
 #'
 #' @examples
-pvalue.plot <- function(data, contrast, pngFile=NULL){
+pvalue.plot <- function(data, pngFile=NULL){
 
   p <- ggplot(data=data) + geom_histogram(aes(x=PValue), bins = 200)
-  print(p)
+ 
   
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
   }
-
+  
+  return(p)
 }
 
 
@@ -314,13 +314,16 @@ MA.plot <- function(data, FDRcutoff=0.05, pngFile=NULL){
   
   p <- ggplot(data=data, aes(x = logCPM, y=logFC, col=FDR < FDRcutoff)) + geom_point(alpha=0.4, size = 0.8) + 
     scale_colour_manual(values=c("black","red"))
-  print(p)
+  
   
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
   }
   
+  return(p)
 }
+
+
 
 
 
@@ -559,7 +562,7 @@ define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
   
   nameColumnContrast <- paste0("contrastPart", j)
   nameColumnComparison <- paste0("comparisonPart", j)
-  setnames(df_comparisonPart, c("contrastPart", "comparisonPart"), c(nameColumnContrast, nameColumnComparison))
+  data.table::setnames(df_comparisonPart, c("contrastPart", "comparisonPart"), c(nameColumnContrast, nameColumnComparison))
   return(df_comparisonPart)
 }
 #' compute a data table with all pairwise comparisons of one factor
@@ -604,7 +607,7 @@ simpleContrastForOneFactor <- function (treatmentFactorsList, i){
   colnamesToDelete <- c("contrastPart2", "comparisonPart2", "contrastPart1", "comparisonPart1")
   
   #df_simpleContrasts_factor[, (colnamesToDelete) := NULL]
-  #setcolorder(df_simpleContrasts_factor, c(names(df_simpleContrasts_factor)[2:length(names(df_simpleContrasts_factor))], names(df_simpleContrasts_factor)[1]))
+  #data.table::setcolorder(df_simpleContrasts_factor, c(names(df_simpleContrasts_factor)[2:length(names(df_simpleContrasts_factor))], names(df_simpleContrasts_factor)[1]))
   df_simpleContrasts_factor <- df_simpleContrasts_factor %>% dplyr::select(-all_of(colnamesToDelete)) %>%
     dplyr::select("contrast", "groupComparison", "contrastName", "type", "fixFactor")
   
@@ -625,7 +628,7 @@ simpleContrastForOneFactor <- function (treatmentFactorsList, i){
 defineAllSimpleContrasts <- function(treatmentFactorsList){
   # create a data table with 5 columns
   # empty data table
-  allSimpleContrast_df <- data.table(contrast = character(), groupComparison = factor(), contrastName = character(), type = character(), fixFactor = factor())
+  allSimpleContrast_df <- data.table::data.table(contrast = character(), groupComparison = factor(), contrastName = character(), type = character(), fixFactor = factor())
   # create each data frame and rbind it to the allSimpleContrast_df
   for(i in seq_along(treatmentFactorsList)){
     dataTableToCreate <- simpleContrastForOneFactor(treatmentFactorsList, i)
@@ -647,16 +650,16 @@ defineAllSimpleContrasts <- function(treatmentFactorsList){
 define_averaged_contrasts <- function(allSimpleContrast_df){
   #allAveragedContrasts_df <- allSimpleContrast_df[, list(contrast = paste0(paste0(paste0("(", paste(contrast, collapse=" + ")),")/"),.N), meanIn = paste(fixFactor, collapse=" + ")), by = groupComparison]
   #allAveragedContrasts_df[, type :="mean"]
-  allAveragedContrasts_df <- allSimpleContrast_df %>% group_by(groupComparison) %>% dplyr::add_tally() %>% 
+  allAveragedContrasts_df <- allSimpleContrast_df %>% dplyr::group_by(groupComparison) %>% dplyr::add_tally() %>% 
     dplyr::mutate(contrast= paste0(paste0("(", paste(contrast, collapse=" + ")),")/", n), 
            meanIn  = paste(fixFactor, collapse=" + "),
            type    = "mean") %>% 
-    dplyr::select(-contrastName, -fixFactor, -n) %>% unique() %>% data.table()
+    dplyr::select(-contrastName, -fixFactor, -n) %>% unique() %>% data.table::data.table()
 
   #allAveragedContrasts_df[, contrastName := paste(groupComparison, "mean", sep = " in ")]
   allAveragedContrasts_df <- allAveragedContrasts_df %>% dplyr::mutate(contrastName = paste(groupComparison, "mean", sep = " in "))
   
-  setcolorder(allAveragedContrasts_df, c("contrast", "groupComparison", "contrastName", "type", "meanIn"))
+  data.table::setcolorder(allAveragedContrasts_df, c("contrast", "groupComparison", "contrastName", "type", "meanIn"))
   #  allAveragedContrasts_df <- allSimpleContrast_df[, list(meanIn = paste(fixFactor, collapse=" + ")), by = groupComparison]
   return(allAveragedContrasts_df[])
 }
@@ -725,7 +728,7 @@ define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, 
   nameFixFactor <- paste0("fixFactor", k)
   namePartFixFactor <- paste0("fixPart", k)
   nameOutsideGroup <- paste0("outsideGroup", k)
-  setnames(df_comparisonPart, c("contrastPart", "comparisonPart", "fixFactor", "fixPart", "outsideGroup"),
+  data.table::setnames(df_comparisonPart, c("contrastPart", "comparisonPart", "fixFactor", "fixPart", "outsideGroup"),
            c(nameColumnContrast, nameColumnComparison, nameFixFactor, namePartFixFactor, nameOutsideGroup))
   return(df_comparisonPart)
 }
@@ -765,7 +768,7 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
   #df_interactionContrasts[, (colnamesToDelete) := NULL]
   df_interactionContrasts <- df_interactionContrasts %>% dplyr::select(-all_of(colnamesToDelete))
     
-  setnames(df_interactionContrasts, "outsideGroup4", "outsideGroup")
+  data.table::setnames(df_interactionContrasts, "outsideGroup4", "outsideGroup")
   #df_interactionContrasts[,groupInteraction := paste0(names(treatmentFactorsList)[i], " vs ", names(treatmentFactorsList)[j])]
   df_interactionContrasts <- df_interactionContrasts %>% dplyr::mutate(groupInteraction = paste0(names(treatmentFactorsList)[i], " vs ", names(treatmentFactorsList)[j]))
 }
@@ -781,7 +784,7 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
 #' @examples
 #' @author Christine Paysant-Le Roux
 defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteractionToKeep = NULL){
-  allInteractionsContrasts_df <- data.table(contrast = character(), groupComparison = factor(), groupInteraction = character(),
+  allInteractionsContrasts_df <- data.table::data.table(contrast = character(), groupComparison = factor(), groupInteraction = character(),
                                             outsideGroup = character(),contrastName = character(), type = character())
   # combn(names(treatmentFactorsList),2)
   cat(paste("\ntreatment factors names:\n"))
@@ -983,7 +986,7 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
   for (i in 1:nb_cluster){
     y_profiles[[i]] <- coseq.res@y_profiles[coseq.res@allResults[[nb_cluster-1]][,i] != 0,] %>% 
       data.frame() %>% reshape2::melt() %>%  dplyr::rename(samples = variable) %>% 
-      full_join(conds , by = "samples") %>% dplyr::mutate(cluster = i)
+      dplyr::full_join(conds , by = "samples") %>% dplyr::mutate(cluster = i)
   }
   y_profiles.gg <-  y_profiles %>% purrr::reduce(rbind)
   y_profiles.gg$groups <- factor(y_profiles.gg$groups, levels = unique(conds$groups))
@@ -1023,7 +1026,7 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
   # x=table(factor(trial[,2],levels=rownames(m)))
   
   ## success in the urn /  For each annotation term, number of annotated genes in the Reference file
-  Urn_Success <- annotation %>% dplyr::group_by(Term, Name, Domain) %>% count(name = "Urn_Success")
+  Urn_Success <- annotation %>% dplyr::group_by(Term, Name, Domain) %>% dplyr::count(name = "Urn_Success")
   
   ## size of reference / nbr of genes in Ref file
   Urn_effective <- length(unique(annotation$geneID))
@@ -1036,7 +1039,7 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
   Trial_effective <- length(unique(trial$geneID))
   
   ## trial success /  For each annotation term, number of annotated genes in the gene list file
-  Trial_Success <- trial %>% dplyr::group_by(Term, Name, Domain) %>% count(name = "Trial_Success")
+  Trial_Success <- trial %>% dplyr::group_by(Term, Name, Domain) %>% dplyr::count(name = "Trial_Success")
             
   
   ## Result files

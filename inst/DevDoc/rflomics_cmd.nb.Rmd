@@ -1,86 +1,272 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 # Input
-```{r inpu}
-# sample plan
+```{r input }
+# Experimental Design file
 ExpDesign.file <- "/Users/nbessoltane/Documents/INRA/IJPB/PROJETs/IJPB-Bioinfo/FLOMICs/R-Flomics/rflomics/inst/ExamplesFiles/ecoseed/condition.txt"
 
-# RNAseq
+# RNAseq data
 RNAseq.set1.file <- "/Users/nbessoltane/Documents/INRA/IJPB/PROJETs/IJPB-Bioinfo/FLOMICs/R-Flomics/rflomics/inst/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"
-RNAseq.set1.file.names <- "set1"
+RNAseq.names <- "RNAseq.set1"
 
-# Prot
+# Proteome data
 prot.set2.file <- "/Users/nbessoltane/Documents/INRA/IJPB/PROJETs/IJPB-Bioinfo/FLOMICs/R-Flomics/rflomics/inst/ExamplesFiles/ecoseed/proteome_ecoseed.txt"
-prot.set2.file.names <- "set2"
+prot.names <- "proteomics.set2"
 
-# Prot
+# Metabolome data
 meta.set3.file <- "/Users/nbessoltane/Documents/INRA/IJPB/PROJETs/IJPB-Bioinfo/FLOMICs/R-Flomics/rflomics/inst/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"
-meta.set3.file.names <- "set3"
+meta.names <- "metabolomics.set3"
+
+# annotation file
+annotationFile <- "/Users/nbessoltane/Documents/INRA/IJPB/PROJETs/IJPB-Bioinfo/FLOMICs/R-Flomics/rflomics/inst/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt"
+
+
 
 ```
 
-# Set Design
+```{r linrary, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(MultiAssayExperiment)
+library(RFLOMICS)
+```
 
-## input 
-```{r inpu}
 
-ExpDesign.file <- "/Users/nbessoltane/Documents/INRA/IJPB/PROJETs/IJPB-Bioinfo/FLOMICs/R-Flomics/rflomics/inst/ExamplesFiles/ecoseed/condition.txt"
+# Set up GLM model 
+```{r exp design }
+
+ExpDesign.tbl <- read.table(file = ExpDesign.file, header = TRUE,row.names = 1, sep="\t")
+head(ExpDesign.tbl)
+ExpDesign.summary <- lapply(names(as.list(ExpDesign.tbl)), function(x){unique(as.list(ExpDesign.tbl)[[x]])})
+names(ExpDesign.summary) <- names(ExpDesign.tbl)
+ExpDesign.summary
+
+```
+selectionner la ref et le type des facteurs
+```{r ref factor}
 
 dF.List.ref <- c("rep1","Medium", "DS")
-dF.Type.dFac <- c("batch", "bio", "bio")
-
-RNAseq.set1.file <- ""
-RNAseq.set1.file.names <- ""
-
-
-
-```
-
-```{r load exp design}
-
-ExpDesign.tbl <- read.table(file = ExpDesign.file, header = TRUE,row.names = 1)
+names(dF.List.ref) <- names(ExpDesign.tbl)
+dF.Type.dFac <- c("batch", "Bio", "Bio")
+names(dF.Type.dFac) <- names(ExpDesign.tbl)
 
 # besoin de rajouter des ckeck dans la fonction
 Design <- ExpDesign.constructor(ExpDesign = ExpDesign.tbl, refList = dF.List.ref, typeList = dF.Type.dFac)
 
-completeCheckRes <- CheckExpDesignCompleteness(Design)
+```
 
+## faire un check
+```{r check}
+
+completeCheckRes <- CheckExpDesignCompleteness(Design)
 plotExperimentalDesign(completeCheckRes[["count"]] )
 
-GetModelFormulae(Factors.Name=names(Design@List.Factors), Factors.Type=Design@Factors.Type)
+```
+## GLM model
+```{r GLM_model}
 
-Design <- getExpressionContrast(object = Design, model.formula = "~Repeat + temperature + imbibition + temperature:imbibition")
+GetModelFormulae(Factors.Name=names(Design@List.Factors), Factors.Type=Design@Factors.Type) 
+
+GLM_model <- "~Repeat + temperature + imbibition + temperature:imbibition"
+
+```
+## possible hypothesis to test
+```{r contrast}
+
+Design <- getExpressionContrast(object = Design, model.formula = GLM_model)
 Design@Contrasts.List
 
-vec <- c("(temperatureMedium_imbibitionDS - temperatureLow_imbibitionDS)", "(temperatureLow_imbibitionDS - temperatureElevated_imbibitionDS)")
-Design <- getContrastMatrix(Design, contrastList = vec )
+contrast.sel <- c("(temperatureMedium_imbibitionDS - temperatureLow_imbibitionDS)", "(temperatureLow_imbibitionDS - temperatureElevated_imbibitionDS)")
 
+Design <- getContrastMatrix(Design, contrastList = contrast.sel )
+Design@Contrasts.Coeff
+```
+
+# Load data
+```{r load data}
+
+inputs <- list()
+inputs[[RNAseq.names]][["dataFile"]] <- RNAseq.set1.file
+inputs[[RNAseq.names]][["omicType"]]  <- "RNAseq"
+inputs[[RNAseq.names]][["Qmat"]]      <- NULL
+inputs[[prot.names]][["dataFile"]]   <- prot.set2.file
+inputs[[prot.names]][["omicType"]]    <- "proteomics"
+inputs[[prot.names]][["Qmat"]]        <- NULL
+inputs[[meta.names]][["dataFile"]]   <- meta.set3.file
+inputs[[meta.names]][["omicType"]]    <- "metabolomics"
+inputs[[meta.names]][["Qmat"]]        <- NULL
+
+FlomicsMultiAssay <- FlomicsMultiAssay.constructor(inputs = inputs, Design=Design)
+
+```
+
+# RNAseq.set1
+## Explore data
+
+```{r explore data, out.width = "50%"}
+
+    dataset <- "RNAseq.set1"
+
+    #RNAseq.set1.SE <- FlomicsMultiAssay[[dataset]]
+    #plotLibSize(abundances=assay(RNAseq.set1.SE), dataName=dataset, pngFile=NULL)
+    #plotDistr(  abundances=assay(RNAseq.set1.SE), dataName=dataset, pngFile=NULL)
+
+    plotLibSize(abundances=assay(FlomicsMultiAssay[[dataset]]), dataName=dataset, pngFile=NULL)
+
+    plotDistr(abundances=assay(FlomicsMultiAssay[[dataset]]), dataName=dataset, pngFile=NULL)
+
+```
+
+PCA 
+```{r pca raw}
+
+    
+    FlomicsMultiAssay <-  RunPCA(FlomicsMultiAssay, data=dataset, PCA="raw")
+
+    #RNAseq.set1.SE <- FlomicsMultiAssay[[dataset]]
+    #plotPCAnorm(RNAseq.set1.SE, PCs=c(1, 2), condition="temperature",  pngFile=NULL)
+    #mvQCdesign( RNAseq.set1.SE, axis=5, pngFile=NULL) 
+
+    plotPCAnorm(FlomicsMultiAssay, data=dataset, PCA="raw", PCs=c(1, 2), condition="temperature",  pngFile=NULL)
+    
+    mvQCdesign(FlomicsMultiAssay,data=dataset,PCA="raw", axis=5, pngFile=NULL) 
+
+```
+
+
+## Low Abundance Filtering & normalization
+
+```{r filter & normalisation , out.width = "50%"}
+
+  FlomicsMultiAssay <- FilterLowAbundance(FlomicsMultiAssay, data=dataset, Filter_Strategy = "NbConditions", CPM_Cutoff = 1)
+  
+  #### Run Normalisation ####
+  FlomicsMultiAssay <- RunNormalization(FlomicsMultiAssay, data=paste0(dataset,".filtred"), NormMethod="TMM")
+  
+  abundanceBoxplot(FlomicsMultiAssay, dataType=paste0(dataset,".filtred"), pngFile=NULL)
+  abundanceBoxplot(FlomicsMultiAssay, dataType=dataset, pngFile=NULL)
+  
+  #### Run PCA for filtred & normalized data ####
+  FlomicsMultiAssay <- RunPCA(FlomicsMultiAssay, data=paste0(dataset,".filtred"), PCA="norm")
+  plotPCAnorm(FlomicsMultiAssay, data=paste0(dataset,".filtred"), PCA="norm", PCs=c(1, 2), condition="temperature", pngFile=NULL)
 
 
 ```
 
 
+
+## analyse diff
 ```{r diff analysis}
 
-contrasts = c("(genotypedbMT - genotypeWT) in mean","(genotypeoxMT - genotypeWT) in mean")
+Design@Contrasts.Sel
 
+FDR = 0.05
 # RNAseq.set1.filtred ou RNAseq.set1
-FlomicsMultiAssay <- RunDiffAnalysis(FlomicsMultiAssay, data="RNAseq.set1.filtred", contrastList = contrasts , 
-                                     FDR = 0.05, DiffAnalysisMethod="edgeRglmfit", clustermq=NULL)
-
-
+FlomicsMultiAssay <- RunDiffAnalysis(FlomicsMultiAssay, data="RNAseq.set1.filtred", contrastList = Design@Contrasts.Sel$contrastName, FDR = FDR, DiffAnalysisMethod="edgeRglmfit")
 
 ```
 
-```{r coexp}
+```{r, out.width = "50%"}
+
+  Contrasts.Sel <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["contrasts"]]
+  
+
+  for(i in 1:length(Contrasts.Sel$contrast)){
+    
+    vect <- unlist(Contrasts.Sel[i,])
+    
+    diff.plots <- DiffAnal.plot(FlomicsMultiAssay, data="RNAseq.set1.filtred", hypothesis=vect["contrastName"])
+    
+    print(diff.plots$MA.plot)
+    print(diff.plots$Pvalue.hist)
+    
+    resTable <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["TopDGE"]][[vect["contrastName"]]]
+    DT::datatable(round(resTable[resTable$FDR <= FDR,],5),  options = list(rownames = FALSE, pageLength = 10))
+    
+  }
+  
+```
+
+merge
+
+```{r}
+  
+  
+  DEG_mat <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDGE"]]
+  
+  if (ncol(DEG_mat) > 2){ 
+    upset <- UpSetR::upset(DEG_mat, sets = (names(DEG_mat[,-1])))
+    print(upset)
+  }
+  
+  
+```
+
+
+
+```{r coexp, out.width = "50%"}
+
+hypothesis <- FlomicsMultiAssay@ExperimentList[["RNAseq.set1.filtred"]]@metadata$DiffExpAnal[["contrasts"]]
 
 DEG_list <- getDEGlist_for_coseqAnalysis(matrix=FlomicsMultiAssay@ExperimentList[["RNAseq.set1.filtred"]]@metadata$DiffExpAnal[["mergeDGE"]], colnames  = c("H1", "H2"), mergeType = "union")
 
-FlomicsMultiAssay <- runCoExpression(FlomicsMultiAssay, data = "RNAseq.set1.filtred", "coseq", DEG_list, 
-                                          K=2:20, iter = 5, model  = "normal", transformation="arcsin", normFactors="TMM")
+print(length(DEG_list))
+
+contrastNames = c("(temperatureLow_imbibitionDS - temperatureElevated_imbibitionDS)","")
+FlomicsMultiAssay <- runCoExpression(FlomicsMultiAssay, data = "RNAseq.set1.filtred", tools = "coseq", geneList = DEG_list, 
+                                     K=2:20, iter = 5, model  = "normal", transformation="arcsin", normFactors="TMM", 
+                                     nameList=hypothesis, merge="union")
+
+
+plot.coseq.res <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["plots"]]
+    
+    plot.coseq.res$logLike 
+    plot.coseq.res$ICL 
+    plot.coseq.res$profiles 
+    plot.coseq.res$boxplots 
+    plot.coseq.res$probapost_boxplots
+    plot.coseq.res$probapost_barplots
+    plot.coseq.res$probapost_histogram
 
 ```
+
+```{r annotation, out.width = "50%"}
+alpha <-  0.05
+probaMethod <- "hypergeometric"
+
+# select list of genes to annotate
+## diff lists
+FlomicsMultiAssay@ExperimentList[["RNAseq.set1.filtred"]]@metadata$DiffExpAnal[["contrasts"]]
+
+# select list of genes to annotate
+## coseq clusters
+names(FlomicsMultiAssay@ExperimentList[["RNAseq.set1.filtred"]]@metadata$CoExpAnal[["clusters"]])
+
+DiffListNames  <- FlomicsMultiAssay@ExperimentList[["RNAseq.set1.filtred"]]@metadata$DiffExpAnal[["contrasts"]]$contrastName
+CoExpListNames <- c("cluster.1", "cluster.2")
+
+annotation <- data.table::fread(file = annotationFile, sep="\t", header = TRUE)
+colnames(annotation) <- c("geneID", "Term", "Name", "Domain")
+
+FlomicsMultiAssay <- runAnnotationEnrichment(FlomicsMultiAssay, data = paste0(dataset,".filtred"), annotation= annotation, DiffListNames=DiffListNames, CoExpListNames=CoExpListNames, alpha = alpha, probaMethod = probaMethod)
+
+```
+
+```{r, out.width = "50%"}
+for(listname in names(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]$metadata$EnrichAnal[["results"]])) {
+
+  print(listname)
+  data <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]$metadata$EnrichAnal[["results"]][[listname]][["Over_Under_Results"]]
+  pvalue.enrichment.plot(data, "overrepresented", index = "all", pngFile=NULL)
+  
+  DT::datatable(dplyr::filter(data, Decision == "overrepresented"), options = list(rownames = FALSE, pageLength = 5, lengthMenu = c(5,10, 15, 20), scrollX = T))
+        
+}
+```
+
+
+
 

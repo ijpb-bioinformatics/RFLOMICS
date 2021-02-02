@@ -97,6 +97,7 @@ LoadOmicsData <- function(input, output, session){
       ####
       print("# 5- Load omics data...")
       
+      inputs <- list()
     
       SummarizedExperimentList <- list()
       omicList<- list()
@@ -107,23 +108,13 @@ LoadOmicsData <- function(input, output, session){
       dataName.vec <- c()
       for (k in 1:addDataNum){
         
-        omicType <- input[[paste0("omicType", k)]]
-        dataName <- paste0(omicType, ".", gsub("[[:space:]]", "", input[[paste0("DataName", k)]]))
-        dataFile <- input[[paste0("data", k)]]
-        qcFile   <- input[[paste0("metadataQC", k)]]
         
-        colnames <- c(names(omicList[[omicType]]), k)
-        omicList[[omicType]] <- c(omicList[[omicType]] ,dataName)
-        names(omicList[[omicType]]) <- colnames
-        #names(omicList[[omicType]][length(omicList[[omicType]])+1]) <- k
         
-        if(omicType != "none"){
+        if(input[[paste0("omicType", k)]] != "none"){
           
-          # check omics data
-          if(is.null(dataFile)){
-            showModal(modalDialog( title = "Error message", "omics counts/abundances matrix is required : dataset ", k ))
-            validate.status <<- 1
-          }
+          omicType <- input[[paste0("omicType", k)]]
+          
+          dataName <- paste0(omicType, ".", gsub("[[:space:]]", "", input[[paste0("DataName", k)]]))
           
           # check presence of dataname
           if(dataName == ""){
@@ -137,40 +128,62 @@ LoadOmicsData <- function(input, output, session){
             validate.status <<- 1
           }
           
+          
+          inputs[[dataName]][["omicType"]] <- omicType  ####
+          
+          dataFile <- input[[paste0("data", k)]]
+          inputs[[dataName]][["dataFile"]] <- input[[paste0("data", k)]]$datapath ####
+          
+          # check omics data
+          if(is.null(dataFile)){
+            showModal(modalDialog( title = "Error message", "omics counts/abundances matrix is required : dataset ", k ))
+            validate.status <<- 1
+          }
+          
+          qcFile   <- input[[paste0("metadataQC", k)]]
+          inputs[[dataName]][["qcFile"]] <- input[[paste0("metadataQC", k)]]$datapath ####
+          
+          # colnames <- c(names(omicList[[omicType]]), k)
+          # omicList[[omicType]] <- c(omicList[[omicType]] ,dataName)
+          # names(omicList[[omicType]]) <- colnames
+
           validate({
             need(validate.status == 0, message="error")
           })
           
-          ## construct SummarizedExperiment for each data
-          abundance <- read.table(dataFile$datapath, header = TRUE, row.names = 1)
-      
-          if(!is.null(qcFile)){
-            print("# ... metadata QC...")
-            QCmat <- read.table(qcFile$datapath, header = TRUE)
-          }
-          else{
-            QCmat <- data.frame(primary = colnames(abundance),
-                                colname = colnames(abundance),
-                                stringsAsFactors = FALSE)
-          }
           
-          SummarizedExperimentList[[dataName]] <- SummarizedExperiment(assays  = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
-                                                                       colData = QCmat)
           
-          # metadata for sampleMap for MultiAssayExperiment
-          listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
-                                            colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
-                                            stringsAsFactors = FALSE)
+          # ## construct SummarizedExperiment for each data
+          # abundance <- read.table(dataFile$datapath, header = TRUE, row.names = 1)
+          # 
+          # if(!is.null(qcFile)){
+          #   print("# ... metadata QC...")
+          #   QCmat <- read.table(qcFile$datapath, header = TRUE)
+          # }
+          # else{
+          #   QCmat <- data.frame(primary = colnames(abundance),
+          #                       colname = colnames(abundance),
+          #                       stringsAsFactors = FALSE)
+          # }
+          # 
+          # SummarizedExperimentList[[dataName]] <- SummarizedExperiment(assays  = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
+          #                                                              colData = QCmat)
+          # 
+          # # metadata for sampleMap for MultiAssayExperiment
+          # listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
+          #                                   colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
+          #                                   stringsAsFactors = FALSE)
         }
       }
-
-
-      FlomicsMultiAssay <<- MultiAssayExperiment(experiments = SummarizedExperimentList,
-                                                 colData     = Design@ExpDesign,
-                                                 sampleMap   = listToMap(listmap),
-                                                 metadata    = list(design = Design,
-                                                                    colDataStruc = c(n_dFac = dim(Design@ExpDesign)[2], n_qcFac = 0),
-                                                                    omicList = omicList))
+      
+      FlomicsMultiAssay <<- FlomicsMultiAssay.constructor(inputs = inputs, Design=Design)
+      
+      # FlomicsMultiAssay <<- MultiAssayExperiment(experiments = SummarizedExperimentList,
+      #                                            colData     = Design@ExpDesign,
+      #                                            sampleMap   = listToMap(listmap),
+      #                                            metadata    = list(design = Design,
+      #                                                               colDataStruc = c(n_dFac = dim(Design@ExpDesign)[2], n_qcFac = 0),
+      #                                                               omicList = omicList))
       
     })
 
