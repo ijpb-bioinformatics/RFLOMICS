@@ -1,6 +1,7 @@
 
 library(shiny)
-
+library(shinydashboard)
+library(shinyFiles)
 
 rm(list = ls())
 
@@ -16,6 +17,12 @@ shinyServer(function(input, output, session) {
     ##########################################
     # à faire
     output$print <- renderPrint({ "HELLO" })
+
+    # # dir
+    # shinyDirChoose(input = input, id = 'dir0', roots = c(home = '~'))
+    # output$filepaths <- renderPrint({parseDirPath(roots = c(home = '~'), selection = input$dir0)})
+
+
 
     ##########################################
     # Part1 : Set GLM model
@@ -208,36 +215,42 @@ shinyServer(function(input, output, session) {
     # Part8 : RMD REPORT
     ##########################################
 
-  # output$report <- downloadHandler(
-  #   # For PDF output, change this to "report.pdf"
-  #   filename = "report.html",
-  #   content = function(file) {
-  #     # Copy the report file to a temporary directory before processing it, in
-  #     # case we don't have write permissions to the current working dir (which
-  #     # can happen when deployed).
-  #
-  #     tempReport <-  "report.Rmd" # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  #
-  #     #tempReport <- file.path(tempdir(), "report.Rmd")
-  #     #file.copy("report.Rmd", tempReport, overwrite = TRUE)
-  #
-  #     # TEST
-  #     # save FE object in .Rdata and load it during report execution
-  #     save(FlomicsMultiAssay,file=file.path(tempdir(), "FlomicsMultiAssay.RData"))
-  #
-  #     # Set up parameters to pass to Rmd document
-  #     params <- list( FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"),
-  #                     pngDir = tempdir())
-  #
-  #     print(tempdir())
-  #     # Knit the document, passing in the `params` list, and eval it in a
-  #     # child of the global environment (this isolates the code in the document
-  #     # from the code in this app).
-  #     rmarkdown::render(tempReport, output_file = file,
-  #                       params = params,
-  #                       envir = new.env(parent = globalenv()))
-  #   }
-  # )
+
+  output$report <- downloadHandler(
+    # For PDF output, change this to "report.pdf"
+    filename = "report.html",
+    content = function(file) {
+      # Copy the report file to a temporary directory before processing it, in
+      # case we don't have write permissions to the current working dir (which
+      # can happen when deployed).
+
+      tempReport <-  "report.Rmd" # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      #tempReport <- file.path(tempdir(), "report.Rmd")
+      #file.copy("report.Rmd", tempReport, overwrite = TRUE)
+
+      # TEST
+      # save FE object in .Rdata and load it during report execution
+      save(FlomicsMultiAssay,file=file.path(tempdir(), "FlomicsMultiAssay.RData"))
+
+      # Set up parameters to pass to Rmd document
+      params <- list( FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"),
+                      pngDir = tempdir())
+
+      print(tempdir())
+      # Knit the document, passing in the `params` list, and eval it in a
+      # child of the global environment (this isolates the code in the document
+      # from the code in this app).
+      rmarkdown::render(tempReport, output_file = file,
+                        params = params,
+                        envir = new.env(parent = globalenv()))
+
+      # rmarkdown::render(tempReport, output_file = file,
+      #                   params = list( FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"),
+      #                                  pngDir = tempdir()),
+      #                   envir = new.env(parent = globalenv()))
+    }
+  )
 
     # # Automatically bookmark every time an input changes
     # observe({

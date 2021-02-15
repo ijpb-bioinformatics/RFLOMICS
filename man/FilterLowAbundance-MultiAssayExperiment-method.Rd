@@ -4,7 +4,12 @@
 \alias{FilterLowAbundance,MultiAssayExperiment-method}
 \title{FilterLowAbundance}
 \usage{
-\S4method{FilterLowAbundance}{MultiAssayExperiment}(object, data, threshold)
+\S4method{FilterLowAbundance}{MultiAssayExperiment}(
+  object,
+  data,
+  Filter_Strategy = "NbConditions",
+  CPM_Cutoff = 5
+)
 }
 \arguments{
 \item{threshold}{}

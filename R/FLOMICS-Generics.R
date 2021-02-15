@@ -76,3 +76,8 @@ setGeneric(
   name="runCoExpression",
   def = function( object, ... ){standardGeneric("runCoExpression")}
 )
+
+setGeneric(
+  name="DiffAnal.plot",
+  def = function( object, ... ){standardGeneric("DiffAnal.plot")}
+)

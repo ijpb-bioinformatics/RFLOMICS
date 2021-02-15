@@ -8,6 +8,7 @@
 #' @slot Model.matrix The associated matrix
 #' @slot Contrasts.List A list of contrasts.
 #' @slot Contrasts.Sel selected contrast
+#' @slot projectName
 #' @slot Contrasts.Coeff contrast vector
 #' @return ExpDesign object
 #' @examples
@@ -17,6 +18,7 @@
 .ExpDesign <- setClass(
   Class="ExpDesign",
   slots=c(ExpDesign="data.frame",
+          projectName="character",
           List.Factors="list",
           Factors.Type="vector",
           Groups="data.frame",
