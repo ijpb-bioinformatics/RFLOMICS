@@ -85,21 +85,6 @@ RNAseqDataNormTabUI <- function(id){
 
 RNAseqDataNormTab <- function(input, output, session, dataset){
   
-  # FlomicsMultiAssay.rea <<- reactive({
-  #   #### Filter low abundance ####
-  #   print("# 7- Low Abundance Filtering...")
-  #   FlomicsMultiAssay <<- FilterLowAbundance(FlomicsMultiAssay, data=dataset, FilterSeuil)
-  # 
-  #   #### Run Normalisation ####
-  #   print("# 8- Abundance normalization...")
-  #   FlomicsMultiAssay <<- RunNormalization(FlomicsMultiAssay, data=paste0(dataset,".filtred"), NormMethod)
-  # 
-  #   #### Run PCA for filtred & normalized data ####
-  #   FlomicsMultiAssay <<- RunPCA(FlomicsMultiAssay, data=paste0(dataset,".filtred"), PCA="norm")
-  # 
-  #   FlomicsMultiAssay
-  # })
-  
   FlomicsMultiAssay <<- RunFilterNormPCAfunction (FlomicsMultiAssay, dataset, Filter_Strategy = "NbConditions", CPM_Cutoff = 1, NormMethod="TMM")
   
   ## Boxplot of distribution of normalized abundance 
