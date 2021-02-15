@@ -26,3 +26,6 @@ source("ExperimentalDesignModule.R")
 source("LoadOmicsDataModules.R")
 
 SupportedOmics <- c("RNAseq", "proteomics", "metabolomics")
+
+#enableBookmarking(store = "server")
+
