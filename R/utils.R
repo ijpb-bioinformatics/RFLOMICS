@@ -37,18 +37,38 @@ GetDesignFromNames <- function(samples_name){
 
 #' GetModelFormulae
 #'
-#' @param Factors.Name
-#' @param Factors.Type
+#' From a vector of character giving the name of the factors of an omics experiment,
+#' and their type of effect: biological or batch, it returns all models formulae
+#' that can be formulated in association with this factors. Batch effect factors do
+#' not appear in interaction terms with biological factor. Model formulae stop in
+#' second order interaction.
 #'
-#' @return a named list of formulae
+#' @param Factors.Name a vector of character giving the name of the factors
+#' @param Factors.Type a vector of character giving the type of effect for the factor ("Bio" or "batch")
+#'
+#' @return a named list of object of class formula
 #' @export
 #'
 #' @examples
 #'
+#' GetModelFormulae(Factors.Name=c("Genotype","Temperature"),Factors.Type=c("Bio","Bio"))
+#' GetModelFormulae(Factors.Name=c("Genotype","Temperature","Replicat"),Factors.Type=c("Bio","Bio","batch"))
+#' GetModelFormulae(Factors.Name=c("Genotype","Temperature","Environment"),Factors.Type=c("Bio","Bio","Bio"))
+#' GetModelFormulae(Factors.Name=c("Genotype","Temperature","Environment","Replicat"),Factors.Type=c("Bio","Bio","Bio","batch"))
+#'
+#'
 GetModelFormulae <- function(Factors.Name,Factors.Type){
 
-
+  # Initialize
   formulae <- list()
+
+  # Verify that Type are in the list of two that are possible
+
+  if(! all(Factors.Type %in% c("Bio", "batch"))) stop("Factors.Type must be either Bio or batch !")
+
+  #  Verify that the length of the two vectors are the same and that they are not null
+
+  if(! (length(Factors.Name) == length(Factors.Type) && ! is.null(Factors.Name))) stop("Factors.Type and Factors.Name do not have the same length or one of them is null")
 
   FacBio <- Factors.Name[which(Factors.Type == "Bio")]
   FacBatch <- Factors.Name[which(Factors.Type == "batch")]
@@ -68,39 +88,22 @@ GetModelFormulae <- function(Factors.Name,Factors.Type){
     if(i !=1){
       formulae <- c(formulae, apply(combn(FacBio,i),2,getF2, FacBatch=FacBatch))
     }
-    #formulae[[i]]  <- apply(combn(FacBio,i),2,getF, FacBatch=FacBatch)
   }
-
-  #formulae[[nFac+1]]<-apply(combn(FacBio,i),2,getF2,FacBatch=FacBatch)
 
   formulae <- unlist(formulae)
   names(formulae) <- unlist(as.character(formulae))
 
-  #formulae[[nFac+1]]<- apply(combn(FacBio,i),2,getF2,FacBatch=FacBatch)
+  # Sort formulae
 
-  #formulae <- unlist(formulae)
-  #names(formulae) <- unlist(as.character(formulae))
+  formulae <- formulae[order(unlist(lapply(names(formulae),nchar)),decreasing=TRUE)]
 
   return(formulae)
 }
 
 
-#' GetContrasts
-#'
-#' @param An object of class design
-#'
-#' @return An object of class design
-#' @export
-#'
-#' @examples
-#'
-GetContrasts <- function(design){
-  # function qui est en cours d'ecriture par Christine
-  data.frame()
-}
 
 #' @title TMM.Normalization
-#' Interface to the calcNormFactors functionof the edgeR package  with the choosen TMM parameters as the normalization method
+#' Interface to the calcNormFactors function of the edgeR package  with the choosen TMM parameters as the normalization method
 #' @param counts numeric matrix of read counts
 #' @param groups vector or factor giving the experimental group/condition for each sample/library.
 #' @return a data.frame with a row for each sample and columns group, lib.size and norm.factors containing the group labels, library sizes and normalization factors. Other columns can be optionally added to give more detailed sample information.
@@ -150,31 +153,31 @@ edgeR.AnaDiff <- function(object, data, clustermq = FALSE){
   print("[cmd] fit.f <- edgeR::glmFit(dge,design=model_matrix)")
   fit.f <- edgeR::glmFit(dge,design=model_matrix)
 
-  
-  # selected contrast 
+
+  # selected contrast
   Contrasts.Sel <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["contrasts"]]
-  
+
   # test clustermq
   if(clustermq == TRUE){
 
      # Fonction to run on contrast per job
      # y is the model, Contrasts are stored in a matrix, by columns
-    
+
       fx <- function(x){
         edgeR::glmLRT(y, contrast = unlist(z[x,]))
       }
-    
+
       ListRes <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
                               export=list(y=fit.f,z=object@metadata$design@Contrasts.Coeff),
                               n_jobs=length(Contrasts.Sel$contrast),pkgs="edgeR")
-      
+
   }
   else{
-    
+
      ListRes <-  lapply(Contrasts.Sel$contrast, function(x){
 
        edgeR::glmLRT(fit.f, contrast = unlist(object@metadata$design@Contrasts.Coeff[x,]))
-       
+
      })
   }
 
@@ -229,7 +232,7 @@ colorPlot <- function(design, ColData, condition="samples"){
 #'
 #' @param abundances
 #' @param dataName
-#' @param pngFile 
+#' @param pngFile
 #' @return plot
 #' @export
 #' @importFrom ggplot2 ggplot geom_bar xlab ylab element_text 
@@ -245,7 +248,7 @@ plotLibSize <- function(abundances, dataName, pngFile=NULL){
   libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
 
   p <- ggplot(libSizeNorm, aes(x=samples,y=value, fill=samples)) + geom_bar( stat="identity" ) +
-    xlab(paste0(dataName, " samples")) + ylab("Library Size") + 
+    xlab(paste0(dataName, " samples")) + ylab("Library Size") +
     theme(axis.text.x      = element_text(angle = 45, hjust = 1),
           legend.position  = "none")
           #axis.text.x     = element_blank(),
@@ -253,7 +256,7 @@ plotLibSize <- function(abundances, dataName, pngFile=NULL){
           #legend.key.size = unit(0.3, "cm"))
           #legend.text     = element_text(size=5))
   print(p)
-  
+
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
   }
@@ -279,10 +282,10 @@ plotDistr <- function(abundances, dataName, pngFile=NULL){
 
   p <- ggplot2::ggplot(pseudo_counts) +
     geom_density(aes(value, color=samples) ) +
-    xlab(paste0(dataName, " log2(feature abundances)")) + 
+    xlab(paste0(dataName, " log2(feature abundances)")) +
     theme(legend.position='none')
   print(p)
-  
+
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
   }
@@ -305,7 +308,6 @@ pvalue.plot <- function(data, pngFile=NULL){
   
   p <- ggplot2::ggplot(data=data) + geom_histogram(aes(x=PValue), bins = 200)
  
-  
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
   }
@@ -346,11 +348,11 @@ MA.plot <- function(data, FDRcutoff=0.05, pngFile=NULL){
 
 
 #' Plot the balance of data in an experimental design
-#' 
-#' This function provides easy visualization of the balance of data in a data set given a specified experimental design. This function is useful for identifying 
+#'
+#' This function provides easy visualization of the balance of data in a data set given a specified experimental design. This function is useful for identifying
 #' missing data and other issues. The core of this function is from the function ezDesign in the package ez.
-#' 
-#' @param counts : the number of data in each cell of the design 
+#'
+#' @param counts : the number of data in each cell of the design
 #' @param cell_border_size : Numeric value specifying the size of the border seperating cells (0 specifies no border)
 #'
 #' @return A printable/modifiable ggplot2 object.
@@ -385,7 +387,7 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10){
   } else {
     stop("data frame with less than 2 columns")
   }
-  # rename two first column names of counts with x and y 
+  # rename two first column names of counts with x and y
   if(!is.null(x)){
     x_lab <- names(counts)[names(counts)==x]
     names(counts)[names(counts)==x] <- 'x'
@@ -393,7 +395,7 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10){
     x_lab <- ""
     counts$x <- rep(1, nrow(counts))
   }
-  
+
   y_lab = names(counts)[names(counts)==y]
   names(counts)[names(counts)==y] <- 'y'
   # get the levels of one factor
@@ -431,7 +433,7 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10){
     names(counts)[names(counts) == facetingVariable] = newColumnName
     return(counts)
   }
-  
+
   if(!is.null(row)){
     counts <- replaceRowOrColIntoCounts (counts, row, "row")
   }
@@ -442,14 +444,14 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10){
   # xmin - (required) left edge of rectangle
   # xmax - (required) right edge of rectangle
   # ymin - (required) bottom edge of rectangle
-  # ymax - (required) top edge of rectangle 
+  # ymax - (required) top edge of rectangle
   counts$ymin = counts$y-.5
   counts$ymax = counts$y+.5
   counts$xmin = counts$x-.5
   counts$xmax = counts$x+.5
-  
+
   counts$Count <- as.factor(counts$Count)
-  
+
   p <- ggplot2::ggplot( data = counts, aes_string(ymin = 'ymin', ymax = 'ymax', xmin = 'xmin', xmax = 'xmax' , fill = 'Count')) + geom_rect() + labs(x=x_lab,y=y_lab)
   p <- p + theme(
     panel.grid.major = element_blank()
@@ -485,8 +487,6 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10){
   }
   return(p)
 }
-
-
 
 
 
@@ -531,17 +531,17 @@ define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
   comparisonPart[[i]] <- vectorFromCombn
   df_comparisonPart <- expand.grid(comparisonPart)
   data.table::setDT(df_comparisonPart)
-  
+
   # paste all the column of the data table
   #df_comparisonPart[, contrastPart := do.call(paste, c(.SD, sep = "_")), .SDcols = names(df_comparisonPart)]
-  df_comparisonPart <- df_comparisonPart %>% tidyr::unite(contrastPart, sep="_", remove=F) 
-  
+  df_comparisonPart <- df_comparisonPart %>% tidyr::unite(contrastPart, sep="_", remove=F)
+
   #colnameFactor_i <- names(df_comparisonPart)[i]
   colnameFactor_i <- names(treatmentFactorsList)[i]
-  
+
   #df_comparisonPart[, comparisonPart := df_comparisonPart[[colnameFactor_i]]]
   df_comparisonPart <- df_comparisonPart %>% dplyr::mutate(comparisonPart = df_comparisonPart[[colnameFactor_i]])
-  
+
   if(length(names(treatmentFactorsList)) != 1){
     colnamesToKeep <- setdiff(names(df_comparisonPart),c("contrastPart", "comparisonPart", colnameFactor_i))
     #df_comparisonPart[, fixFactor := do.call(paste, c(.SD, sep = "_")), .SDcols = colnamesToKeep]
@@ -549,12 +549,12 @@ define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
   }else{
     df_comparisonPart <- df_comparisonPart %>% dplyr::mutate(fixFactor= NA)
   }
-  
-  
+
+
   colnamesToDelete <- names(treatmentFactorsList)
   #df_comparisonPart[, (colnamesToDelete) := NULL]
   df_comparisonPart <- df_comparisonPart %>% dplyr::select(-all_of(colnamesToDelete))
-  
+
   nameColumnContrast <- paste0("contrastPart", j)
   nameColumnComparison <- paste0("comparisonPart", j)
   data.table::setnames(df_comparisonPart, c("contrastPart", "comparisonPart"), c(nameColumnContrast, nameColumnComparison))
@@ -582,40 +582,40 @@ simpleContrastForOneFactor <- function (treatmentFactorsList, i){
   df_FirstComparisonPart <- define_partOfSimpleContrast_df(treatmentFactorsList,i,2)
   #df_FirstComparisonPart[,fixFactor := NULL]
   df_FirstComparisonPart <- df_FirstComparisonPart %>% dplyr::select(-fixFactor)
-  
+
   df_SecondComparisonPart <- define_partOfSimpleContrast_df(treatmentFactorsList,i,1)
   df_simpleContrasts_factor <- cbind(df_FirstComparisonPart, df_SecondComparisonPart)
-  
+
   #df_simpleContrasts_factor[, contrast := paste0("(", contrastPart2, " - ", contrastPart1, ")")]
   #df_simpleContrasts_factor[, groupComparison := paste0("(", comparisonPart2, " - ", comparisonPart1, ")")]
-  
-  df_simpleContrasts_factor <- df_simpleContrasts_factor %>% 
+
+  df_simpleContrasts_factor <- df_simpleContrasts_factor %>%
     dplyr::mutate(contrast        = paste0("(", contrastPart2,   " - ", contrastPart1, ")"),
                   groupComparison = paste0("(", comparisonPart2, " - ", comparisonPart1, ")"))
-  
-  
+
+
   # case where fixFactor column is empty (NA inside)
   emptycolFixFactor <- unique(is.na(df_simpleContrasts_factor$fixFactor))
   if(emptycolFixFactor){
     #df_simpleContrasts_factor[, contrastName := groupComparison]
     df_simpleContrasts_factor <- df_simpleContrasts_factor %>% dplyr::mutate(contrastName = groupComparison)
-    
+
   } else {
     #df_simpleContrasts_factor[, contrastName := paste0(groupComparison, " in ", fixFactor )]
     df_simpleContrasts_factor <- df_simpleContrasts_factor %>% dplyr::mutate(contrastName = paste0(groupComparison, " in ", fixFactor ))
   }
   #df_simpleContrasts_factor[, type := "simple"]
   df_simpleContrasts_factor <- df_simpleContrasts_factor %>% dplyr::mutate(type = "simple")
-  
+
   colnamesToDelete <- c("contrastPart2", "comparisonPart2", "contrastPart1", "comparisonPart1")
-  
+
   #df_simpleContrasts_factor[, (colnamesToDelete) := NULL]
   #data.table::setcolorder(df_simpleContrasts_factor, c(names(df_simpleContrasts_factor)[2:length(names(df_simpleContrasts_factor))], names(df_simpleContrasts_factor)[1]))
   df_simpleContrasts_factor <- df_simpleContrasts_factor %>% dplyr::select(-all_of(colnamesToDelete)) %>%
     dplyr::select("contrast", "groupComparison", "contrastName", "type", "fixFactor")
-  
-  
-  
+
+
+
   return(df_simpleContrasts_factor)
 }
 
@@ -666,6 +666,7 @@ define_averaged_contrasts <- function(allSimpleContrast_df){
   allAveragedContrasts_df <- allAveragedContrasts_df %>% dplyr::mutate(contrastName = paste(groupComparison, "mean", sep = " in "))
   
   data.table::setcolorder(allAveragedContrasts_df, c("contrast", "groupComparison", "contrastName", "type", "meanIn"))
+
   #  allAveragedContrasts_df <- allSimpleContrast_df[, list(meanIn = paste(fixFactor, collapse=" + ")), by = groupComparison]
   return(allAveragedContrasts_df[])
 }
@@ -700,39 +701,39 @@ define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, 
   #df_comparisonPart[, contrastPart := do.call(paste, c(.SD, sep = "_")), .SDcols = names(df_comparisonPart)]
   df_comparisonPart <- df_comparisonPart %>% tidyr::unite(contrastPart_bis, names(df_comparisonPart), sep="_", remove=F) %>%
     dplyr::mutate(contrastPart = contrastPart_bis) %>% dplyr::select(-contrastPart_bis)
-  
+
   colnameFactor_i <- names(df_comparisonPart)[i]
   colnameFactor_j <- names(df_comparisonPart)[j]
-  
+
   #data.table::setDT(df_comparisonPart)
   #df_comparisonPart[, comparisonPart := df_comparisonPart[[colnameFactor_i]]]
   #df_comparisonPart[, fixPart := df_comparisonPart[[colnameFactor_j]]]
-  df_comparisonPart <- df_comparisonPart %>% 
+  df_comparisonPart <- df_comparisonPart %>%
     dplyr::mutate(comparisonPart = df_comparisonPart[[colnameFactor_i]]) %>%
     dplyr::mutate(fixPart        = df_comparisonPart[[colnameFactor_j]])
-  
-  
+
+
   colnamesToKeep <- setdiff(names(treatmentFactorsList),c(colnameFactor_i, colnameFactor_j))
   #df_comparisonPart[, outsideGroup := do.call(paste, c(.SD, sep = "_")), .SDcols = colnamesToKeep]
   if(length(colnamesToKeep)){
-    
-    df_comparisonPart <- df_comparisonPart %>% tidyr::unite(outsideGroup_bis, all_of(colnamesToKeep), sep="_", remove=F) %>% 
+
+    df_comparisonPart <- df_comparisonPart %>% tidyr::unite(outsideGroup_bis, all_of(colnamesToKeep), sep="_", remove=F) %>%
       dplyr::mutate(outsideGroup = outsideGroup_bis) %>% dplyr::select(-outsideGroup_bis)
   }else{
-    
+
     df_comparisonPart <- df_comparisonPart %>% dplyr::mutate(outsideGroup = NA)
   }
-  
+
   colnamesToKeep <- setdiff(names(df_comparisonPart),c("contrastPart", "comparisonPart", "fixPart", "outsideGroup", colnameFactor_i))
   #df_comparisonPart[, fixFactor := do.call(paste, c(.SD, sep = "_")), .SDcols = colnamesToKeep]
-  df_comparisonPart <- df_comparisonPart %>% tidyr::unite(fixFactor_bis, all_of(colnamesToKeep), sep="_", remove=F) %>% 
+  df_comparisonPart <- df_comparisonPart %>% tidyr::unite(fixFactor_bis, all_of(colnamesToKeep), sep="_", remove=F) %>%
     dplyr::mutate(fixFactor = fixFactor_bis) %>% dplyr::select(-fixFactor_bis)
-  
+
   colnamesToDelete <- names(treatmentFactorsList)
   #df_comparisonPart[, (colnamesToDelete) := NULL]
   df_comparisonPart <- df_comparisonPart %>% dplyr::select(-all_of(colnamesToDelete))
-  
-  
+
+
   nameColumnContrast <- paste0("contrastPart", k)
   nameColumnComparison <- paste0("comparisonPart", k)
   nameFixFactor <- paste0("fixFactor", k)
@@ -769,11 +770,11 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
   #df_interactionContrasts[, groupComparison := paste0("(", comparisonPart1, " - ", comparisonPart2, ")", " vs ", "(", fixPart1, " - ", fixPart3, ")")]
   #df_interactionContrasts[, contrastName := paste0("(", comparisonPart1, " - ", comparisonPart2, ")", " in ", fixFactor1, " - ", "(", comparisonPart3, " - ", comparisonPart4, ")", " in ", fixFactor3 )]
   #df_interactionContrasts[, type := "interaction"]
-  df_interactionContrasts <- df_interactionContrasts %>% dplyr::mutate(contrast = paste0("(", "(", contrastPart1, " - ", contrastPart2, ")"," - ", 
+  df_interactionContrasts <- df_interactionContrasts %>% dplyr::mutate(contrast = paste0("(", "(", contrastPart1, " - ", contrastPart2, ")"," - ",
                                                                                               "(", contrastPart3, " - ", contrastPart4, ")", ")"),
-                                                                       groupComparison = paste0("(", comparisonPart1, " - ", comparisonPart2, ")", " vs ", 
+                                                                       groupComparison = paste0("(", comparisonPart1, " - ", comparisonPart2, ")", " vs ",
                                                                                                 "(", fixPart1, " - ", fixPart3, ")"),
-                                                                       contrastName  = paste0("(", comparisonPart1, " - ", comparisonPart2, ")", " in ", fixFactor1, " - ", 
+                                                                       contrastName  = paste0("(", comparisonPart1, " - ", comparisonPart2, ")", " in ", fixFactor1, " - ",
                                                                                               "(", comparisonPart3, " - ", comparisonPart4, ")", " in ", fixFactor3 ),
                                                                        type = "interaction")
 
@@ -783,8 +784,10 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
                         "contrastPart4", "comparisonPart4", "fixFactor4", "fixPart4")
   #df_interactionContrasts[, (colnamesToDelete) := NULL]
   df_interactionContrasts <- df_interactionContrasts %>% dplyr::select(-all_of(colnamesToDelete))
+
     
   data.table::setnames(df_interactionContrasts, "outsideGroup4", "outsideGroup")
+
   #df_interactionContrasts[,groupInteraction := paste0(names(treatmentFactorsList)[i], " vs ", names(treatmentFactorsList)[j])]
   df_interactionContrasts <- df_interactionContrasts %>% dplyr::mutate(groupInteraction = paste0(names(treatmentFactorsList)[i], " vs ", names(treatmentFactorsList)[j]))
 }
@@ -844,14 +847,14 @@ defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteraction
 computeGroupVector <- function(treatmentGroups, colnamesMatrixDesign, interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction) {
   vectorLength <- length(colnamesMatrixDesign)
   groupVector <- rep(0, vectorLength)
-  if(interactionPresent){ 
+  if(interactionPresent){
     simples <- unique(unlist(strsplit(treatmentGroups, "_")))
     order2interaction <- combn(simples,2, FUN=paste, collapse=':')
     toMatchList <- c(simples, order2interaction)
     if(isThreeOrderInteraction){
       order3interaction <- combn(simples,3, FUN=paste, collapse=':')
       toMatchList <- c(toMatchList, order3interaction)
-    } 
+    }
     toMatchList <- paste("^", toMatchList, "$", sep = "")
     #grepl return TRUE for each matched pattern
     pos <- grepl(paste(toMatchList, collapse = "|"), x= colnamesMatrixDesign)
@@ -901,7 +904,7 @@ assignVectorToGroups <- function(treatmentFactorsList = treatmentFactorsList, mo
 #' @param contrast
 #' @param colnamesGLMdesign
 #' @param treatmentCondenv: the environment to use
-#' 
+#'
 #' @return
 #' @export
 #' @examples
@@ -929,19 +932,19 @@ returnContrastCoefficients <- function(contrast, colnamesGLMdesign, treatmentCon
 #' @export
 #' @examples
 getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1], mergeType="union"){
-  
+
   if (length(colnames) == 0 ){ return(NULL) }
-  
+
   matrix_sum <- matrix %>% dplyr::mutate(sum = dplyr::select(., all_of(colnames)) %>% rowSums(.))
-  
+
   DEG_list <- switch(mergeType,
-                     
+
          "union"={        dplyr::filter(matrix_sum, sum != 0)[1] },
          "intersection"={ dplyr::filter(matrix_sum, sum == length(colnames))[1] }
   )
-  
+
   if (length(DEG_list$DEG) == 0 ){ return(NULL) }
-  
+
   return(DEG_list$DEG)
 }
 
@@ -950,30 +953,30 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
 #' @param counts matrix
 #' @param K
 #' @param iter
-#' @param model 
+#' @param model
 #' @param transformation
-#' @param normFactors 
+#' @param normFactors
 #' @return coseqResults
-#' @export 
+#' @export
 runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="arcsin",  normFactors="TMM"){
-            
-  
-  
+
+
+
             coseq.res <- coseq::coseq(counts, K=K, iter=iter, model=model, transformation=transformation,
                                       parallel=TRUE, meanFilterCutoff=50, normFactors=normFactors, seed=12345)
-            
+
             # Results.1 <- list()
             # Results.1_min_icl <- list()
-            # 
+            #
             # for (a in 1:iter){
-            #   Results.1[[a]] <- coseq(counts, K=K, model=model, transformation=transformation, 
+            #   Results.1[[a]] <- coseq(counts, K=K, model=model, transformation=transformation,
             #                           parallel=parallel, meanFilterCutoff=meanFilterCutoff, normFactors=normFactors)
-            #  
+            #
             #   Results.1_min_icl[[a]] <- min(metadata(Results.1[[a]])$ICL,na.rm=TRUE)
             # }
-            # 
+            #
             # coseq.res <- Results.1[[which.min(Results.1_min_icl)]]
-            
+
             return(coseq.res)
           }
 
@@ -990,10 +993,12 @@ runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="a
 coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
   
   samples <- variable <- value <- cluster <- NULL
+
   nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
   groups <- conds %>% dplyr::arrange(factor(samples, levels = names(coseq.res@y_profiles)))
   y_profiles <- list()
   for (i in 1:nb_cluster){
+
     y_profiles[[i]] <- coseq.res@y_profiles[coseq.res@allResults[[nb_cluster-1]][,i] != 0,] %>% 
       data.frame() %>% reshape2::melt() %>%  dplyr::rename(samples = variable) %>% 
       dplyr::full_join(conds , by = "samples") %>% dplyr::mutate(cluster = i)
@@ -1001,8 +1006,10 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
   y_profiles.gg <-  y_profiles %>% purrr::reduce(rbind)
   y_profiles.gg$groups <- factor(y_profiles.gg$groups, levels = unique(conds$groups))
   y_profiles.gg$samples <- factor(y_profiles.gg$samples, levels = unique(conds$samples))
+
   
   p <- ggplot2::ggplot(data = dplyr::filter(y_profiles.gg, cluster == selectedCluster)) +
+
     geom_boxplot(aes(x=samples, y=value, fill = groups), outlier.size = 0.3) + facet_wrap(~cluster) +
     theme(axis.text.x=element_blank())
     #theme(axis.text.x=element_text(angle=90, hjust=1))
@@ -1015,9 +1022,9 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
 ################################### ANNOTATION #############################
 
 #' @title EnrichmentHyperG
-#' @param alpha 
+#' @param alpha
 #' @param annotation gene annotation
-#' @param geneList gene list 
+#' @param geneList gene list
 #' @return list
 #' @export
 #'
@@ -1026,34 +1033,35 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
     
   Term <- Name <- Domain <- geneID <- NULL
   Pvalue_over <- Pvalue_under <- Decision <- NULL
+
   # ## success in the urn /  For each annotation term, number of annotated genes in the Reference file
   # m=table(Reference[,2])
   # ## failures in the urn / For each annotation term, number of not annotated genes in the Reference file
   # n=length(unique(Reference[,1]))-m
-  # 
+  #
   # trial<-merge(Gene_List,Reference)
   # ## trial effective / number of genes in the gene list
   # k=length(unique(trial[,1]))
   # ## trial success /  For each annotation term, number of annotated genes in the gene list file
   # x=table(factor(trial[,2],levels=rownames(m)))
-  
+
   ## success in the urn /  For each annotation term, number of annotated genes in the Reference file
+
   Urn_Success <- annotation %>% dplyr::group_by(Term, Name, Domain) %>% dplyr::count(name = "Urn_Success")
   
   ## size of reference / nbr of genes in Ref file
   Urn_effective <- length(unique(annotation$geneID))
-  
-  ## 
+
+  ##
   #trial<-merge(geneList,annotation)
   trial <- dplyr::filter(annotation , geneID %in% geneList)
-  
+
   ## trial effective / number of genes in the gene list
   Trial_effective <- length(unique(trial$geneID))
-  
+
   ## trial success /  For each annotation term, number of annotated genes in the gene list file
   Trial_Success <- trial %>% dplyr::group_by(Term, Name, Domain) %>% dplyr::count(name = "Trial_Success")
             
-  
   ## Result files
   res=NaN
   # Term=rownames(m)
@@ -1062,16 +1070,17 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
   # x=as.numeric(x)
   # res=data.frame(Term,Urn_Success=m,Urn_Failures=n,Trial_Success=x,Trial_effective=k,
   #                Urn_percentage_Success=signif(100*m/(m+n),3),
-  #                Trial_percentage_Success=signif(100*x/k,3), 
+  #                Trial_percentage_Success=signif(100*x/k,3),
   #                Pvalue_over=phyper(x-1,m,n,k,lower.tail=FALSE),
-  #                Pvalue_under=phyper(x,m,n,k,lower.tail=TRUE))       
-  
-  res= dplyr::full_join(Urn_Success, Trial_Success, by = c("Term", "Name", "Domain")) %>% 
+  #                Pvalue_under=phyper(x,m,n,k,lower.tail=TRUE))
+
+  res= dplyr::full_join(Urn_Success, Trial_Success, by = c("Term", "Name", "Domain")) %>%
        dplyr::mutate(Urn_percentage_Success   = signif(100*Urn_Success/Urn_effective, 3), Urn_effective = Urn_effective,
+
                      Trial_percentage_Success = signif(100*Trial_Success/Trial_effective, 3), Trial_effective = Trial_effective, 
                      Pvalue_over  = stats::phyper(Trial_Success-1,Urn_Success, (Urn_effective-Urn_Success),Trial_effective,lower.tail=FALSE), 
                      Pvalue_under = stats::phyper(Trial_Success,  Urn_Success, (Urn_effective-Urn_Success),Trial_effective,lower.tail=TRUE))
-  
+
   # res_over_under <-NULL
   # index=which(res$Pvalue_over<Alpha)
   # if(length(index)!=0)
@@ -1081,7 +1090,7 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
   #   colnames(res_over)[10] <- c("Decision")
   #   res_over_under <- res_over
   # }
-  # 
+  #
   # index=which(res$Pvalue_under<Alpha)
   # if(length(index)!=0)
   # {
@@ -1090,27 +1099,27 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
   #   colnames(res_under)[10] <- c("Decision")
   #   res_over_under <- rbind(res_over_under,res_under)
   # }
-  
+
   res_over_under <- NULL
-  res_over_under <- res %>% dplyr::mutate(Decision = dplyr::if_else(Pvalue_over <alpha, "overrepresented", 
+  res_over_under <- res %>% dplyr::mutate(Decision = dplyr::if_else(Pvalue_over <alpha, "overrepresented",
                                                      dplyr::if_else(Pvalue_under<alpha, "underrepresented", NULL))) %>%
                             dplyr::filter(!is.na(Decision))
-  
-  Results <- list("All_results"   = res, "Over_Under_Results" = res_over_under, 
+
+  Results <- list("All_results"   = res, "Over_Under_Results" = res_over_under,
                   "Urn_effective" = Urn_effective, "Trial_effective" = Trial_effective)
-            
+
   return(Results)
-            
+
 }
 
 
 
 #' pvalue.enrichment.plot
 #'
-#' @param data 
+#' @param data
 #' @param Over_Under
 #' @param index result size index
-#' @param pngFile 
+#' @param pngFile
 #' @return plot
 #' @export 
 #' @importFrom dplyr desc
@@ -1125,27 +1134,30 @@ pvalue.enrichment.plot <- function(data, Over_Under, index = "Top50" , pngFile=N
           "overrepresented"  = { 
                    dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_over)) %>% 
                    dplyr::mutate(Pvalue = Pvalue_over) 
+
             },
-          "underrepresented" = { 
-                   dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_under)) %>% 
-                   dplyr::mutate(Pvalue = Pvalue_under) 
+          "underrepresented" = {
+                   dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_under)) %>%
+                   dplyr::mutate(Pvalue = Pvalue_under)
             }
           )
   data_ord$Term <- factor(data_ord$Term, levels = data_ord$Term)
-  
+
   switch (index,
+
     "all" = { p <- ggplot2::ggplot(data = data_ord, aes(x=Pvalue, y=Term, size=Trial_Success, color=Domain)) +  
                      geom_point(alpha=0.5) + scale_size(range = c(0.1, 10))},
     "Top50" = { p <- ggplot2::ggplot(data = tail(data_ord, n=50), aes(x=Pvalue, y=Term, size=Trial_Success, color=Domain)) +  
+
                      geom_point(alpha=0.5) + scale_size(range = c(0.1, 10))}
   )
-  
+
   print(p)
-  
+
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
   }
-  
+
 }
 
 

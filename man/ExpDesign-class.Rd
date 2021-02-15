@@ -18,10 +18,16 @@ ExpDesign Class
 
 \item{\code{Factors.Type}}{Either 'Biological' or 'batch'}
 
+\item{\code{Groups}}{design groups}
+
 \item{\code{Model.formula}}{Modele formula.}
+
+\item{\code{Model.matrix}}{GLM model}
 
 \item{\code{Contrasts.List}}{A list of contrasts.}
 
-\item{\code{Model.matrix}}{.}
+\item{\code{Contrasts.Sel}}{selected contrast}
+
+\item{\code{Contrasts.Coeff}}{contrast vector}
 }}
 

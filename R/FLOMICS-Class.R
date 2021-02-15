@@ -1,9 +1,11 @@
 #' @title ExpDesign Class
-#' @slot List.Factors A list of factor
-#' @slot Factors.Type Either 'Biological' or 'batch'
+#' This class, is an internal class to the RFLOMICS package, to store all information related to
+#' the experimental design set up.
+#' @slot List.Factors A vector of character giving the name of each experimental factor
+#' @slot Factors.Type A vector of character giving the type of effect for each factor ("Bio" or "batch")
 #' @slot Groups design groups
-#' @slot Model.formula Modele formula.
-#' @slot Model.matrix GLM model
+#' @slot Model.formula The model formula that has been choosed.
+#' @slot Model.matrix The associated matrix
 #' @slot Contrasts.List A list of contrasts.
 #' @slot Contrasts.Sel selected contrast
 #' @slot projectName
@@ -27,7 +29,7 @@
           Contrasts.Coeff="data.frame")
   )
 
-setClass("MultiAssayExperiment")
+
 
 #' @title DiffAnalysis class
 #' @description  Store the results of a differential analysis
