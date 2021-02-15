@@ -717,10 +717,10 @@ setMethod(f="getContrastMatrix",
           signature="ExpDesign",
           definition <- function(object, contrastList){
             
-            Design <- contrast <- contrastName <- type <- groupComparison <- NULL
+          contrast <- contrastName <- type <- groupComparison <- NULL
             
   contrast.sel.list <- list()
-  contrast.sel.list <- lapply(names(Design@Contrasts.List), function(contrastType) {
+  contrast.sel.list <- lapply(names(object@Contrasts.List), function(contrastType) {
 
     tmp <- object@Contrasts.List[[contrastType]] %>% dplyr::filter(contrast %in% contrastList) %>%
                     dplyr::select(contrast, contrastName, type, groupComparison)
