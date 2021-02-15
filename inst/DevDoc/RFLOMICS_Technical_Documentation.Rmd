@@ -173,4 +173,21 @@ When the branch is stable, the branch will be merged
 2. A new branch feature has to be created for a short and precise task
 
 
+## Resolving git conflicts from Rstudio
+
+If two people worked on the same files, conflicts could appear.
+
+```{bash eval=FALSE}
+# In your local git repository
+# 1) git pull 
+# => conflicts, files appears with a U symbol in status 
+# 2) Open each file in Rstudio, look at each piece of code
+# begining with 
+# HEAD >>>>>> 
+# ending with
+# end with <<<<< 
+# 3) Suppress piece of code with old version
+# 4) Save the file, the status changes to M 
+# 5) commit 
+```
 
