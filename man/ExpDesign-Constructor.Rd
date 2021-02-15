@@ -2,13 +2,17 @@
 % Please edit documentation in R/FLOMICS-Methods.R
 \name{ExpDesign-Constructor}
 \alias{ExpDesign-Constructor}
-\alias{ExperimentalDesign}
+\alias{ExpDesign.constructor}
 \title{[\code{\link{ExpDesign-class}}] Class constructor}
 \usage{
-ExperimentalDesign(ExpDesign)
+ExpDesign.constructor(ExpDesign, projectName, refList, typeList)
 }
 \arguments{
-\item{dF.List}{A list of factor}
+\item{ExpDesign}{data.frame with experimental design}
+
+\item{refList}{vector with factor ref}
+
+\item{typeList}{vector with type of factor}
 }
 \value{
 An object of class [\code{\link{ExpDesign-class}}]

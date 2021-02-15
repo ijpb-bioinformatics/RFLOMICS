@@ -4,25 +4,29 @@
 \name{ExpDesign-class}
 \alias{ExpDesign-class}
 \alias{.ExpDesign}
-\title{ExpDesign Class}
+\title{ExpDesign Class
+This class, is an internal class to the RFLOMICS package, to store all information related to
+the experimental design set up.}
 \value{
 ExpDesign object
 }
 \description{
 ExpDesign Class
+This class, is an internal class to the RFLOMICS package, to store all information related to
+the experimental design set up.
 }
 \section{Slots}{
 
 \describe{
-\item{\code{List.Factors}}{A list of factor}
+\item{\code{List.Factors}}{A vector of character giving the name of each experimental factor}
 
-\item{\code{Factors.Type}}{Either 'Biological' or 'batch'}
+\item{\code{Factors.Type}}{A vector of character giving the type of effect for each factor ("Bio" or "batch")}
 
 \item{\code{Groups}}{design groups}
 
-\item{\code{Model.formula}}{Modele formula.}
+\item{\code{Model.formula}}{The model formula that has been choosed.}
 
-\item{\code{Model.matrix}}{GLM model}
+\item{\code{Model.matrix}}{The associated matrix}
 
 \item{\code{Contrasts.List}}{A list of contrasts.}
 
