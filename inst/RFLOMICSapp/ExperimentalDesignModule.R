@@ -8,6 +8,10 @@ ExperimentalDesignUI <- function(id){
       box(width = 9, status = "warning",
           
           column(width = 8,
+                 
+                 # project name       
+                 textInput(inputId = ns("projectName"), label = "Project name"),
+          
                  # matrix count/abundance input
                  fileInput(inputId = ns("Experimental.Design.file"), label = "Import matrix of Experimental Design (txt)",
                            accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
@@ -52,13 +56,19 @@ ExperimentalDesign <- function(input, output, session){
   #  => the loadExpDesign function is called and the experimental design item is printed
   observeEvent(input$loadExpDesign, {
     
-        print("# 1- Load experimental design...")
+        # check project name
+        if(input$projectName == ""){
+          showModal(modalDialog(title = "Error message", "project name is required"))
+        }
+        validate({ need(input$projectName != "", message="project name is required") })
         
         ### Experimental Design
         if(is.null(input$Experimental.Design.file)){
           showModal(modalDialog(title = "Error message", "Experimental Design is required"))
         }
         validate({ need(! is.null(input$Experimental.Design.file), message="Set a name") })
+        
+        print("# 1- Load experimental design...")
         
         ExpDesign.tbl <<- read.table(input$Experimental.Design.file$datapath,header = TRUE,row.names = 1, sep = "\t")
         
@@ -155,7 +165,8 @@ ExperimentalDesign <- function(input, output, session){
     print(head(ExpDesign.tbl))
     print(dF.List.ref)
     print(dF.Type.dFac)
-    Design <<- ExpDesign.constructor(ExpDesign = ExpDesign.tbl, refList = dF.List.ref, typeList = dF.Type.dFac)
+    Design <<- ExpDesign.constructor(ExpDesign = ExpDesign.tbl, projectName = input$projectName, 
+                                     refList = dF.List.ref, typeList = dF.Type.dFac)
     
     
     #### check experimental design : experimental design must be a complete and balanced.

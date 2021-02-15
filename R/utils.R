@@ -55,10 +55,10 @@ GetModelFormulae <- function(Factors.Name,Factors.Type){
 
   nFac <- length(FacBio)
 
-  getF <- function(x,FacBatch){
+  .getF <- function(x,FacBatch){
     update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+","(",paste(x,collapse="+"),")^2")),new=~.)
   }
-  getF2 <- function(x,FacBatch){
+  .getF2 <- function(x,FacBatch){
     update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+",paste(x,collapse="+"))),new=~.)
   }
 
@@ -122,9 +122,13 @@ TMM.Normalization <- function(counts, groups){
 #' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
 #' @return A list of object of class [\code{\link{DGELRT}]
 #' @export
+#' @importFrom stats model.matrix as.formula
+#' 
 #'
 #' @examples
 edgeR.AnaDiff <- function(object, data, clustermq = FALSE){
+  
+  z <- y <- NULL
   
   # retrieve the design matrix
   model_matrix <- model.matrix(as.formula(object@metadata$design@Model.formula),
@@ -188,6 +192,8 @@ edgeR.AnaDiff <- function(object, data, clustermq = FALSE){
 #'
 #' @return
 #' @export
+#' @importFrom grDevices colorRampPalette
+#' @importFrom RColorBrewer brewer.pal
 #'
 #' @examples
 colorPlot <- function(design, ColData, condition="samples"){
@@ -226,10 +232,13 @@ colorPlot <- function(design, ColData, condition="samples"){
 #' @param pngFile 
 #' @return plot
 #' @export
+#' @importFrom ggplot2 ggplot geom_bar xlab ylab element_text 
 #'
 #' @examples
 plotLibSize <- function(abundances, dataName, pngFile=NULL){
 
+  value <- NULL
+  
   samples     <- colnames(abundances)
   libSizeNorm <- data.frame ( value = colSums(abundances, na.rm = TRUE) , samples=samples)
 
@@ -258,14 +267,17 @@ plotLibSize <- function(abundances, dataName, pngFile=NULL){
 #' @param pngFile png file name
 #' @return plot
 #' @export
+#' @importFrom ggplot2 geom_density xlab
 #'
 #' @examples plotDistr(assay(MAE), "dataset1", "tmp/countDist.png")
 plotDistr <- function(abundances, dataName, pngFile=NULL){
+  
+  value <- samples <- NULL
 
   pseudo_counts <- log2(abundances+1) %>% reshape2::melt()
   colnames(pseudo_counts) <- c("features", "samples", "value")
 
-  p <- ggplot(pseudo_counts) +
+  p <- ggplot2::ggplot(pseudo_counts) +
     geom_density(aes(value, color=samples) ) +
     xlab(paste0(dataName, " log2(feature abundances)")) + 
     theme(legend.position='none')
@@ -285,11 +297,13 @@ plotDistr <- function(abundances, dataName, pngFile=NULL){
 #' @param pngFile 
 #' @return plot
 #' @export
-#'
+#' @importFrom ggplot2 geom_histogram 
 #' @examples
 pvalue.plot <- function(data, pngFile=NULL){
 
-  p <- ggplot(data=data) + geom_histogram(aes(x=PValue), bins = 200)
+  PValue <- NULL
+  
+  p <- ggplot2::ggplot(data=data) + geom_histogram(aes(x=PValue), bins = 200)
  
   
   if (! is.null(pngFile)){
@@ -300,19 +314,22 @@ pvalue.plot <- function(data, pngFile=NULL){
 }
 
 
+globalVariables(names(data))
 
 #' MA.plot
 #'
 #' @param data 
 #' @param pngFile 
 #' @param FDRcutoff 
-#' @return plot
+#' @return MA plot
 #' @export
-#'
+#' @importFrom ggplot2 aes geom_point scale_colour_manual ggsave
 #' @examples
+#' 
 MA.plot <- function(data, FDRcutoff=0.05, pngFile=NULL){
-  
-  p <- ggplot(data=data, aes(x = logCPM, y=logFC, col=FDR < FDRcutoff)) + geom_point(alpha=0.4, size = 0.8) + 
+
+  logCPM <- logFC <- FDR <- NULL
+  p <- ggplot2::ggplot(data=data, aes(x = logCPM, y=logFC, col=FDR < FDRcutoff)) + geom_point(alpha=0.4, size = 0.8) + 
     scale_colour_manual(values=c("black","red"))
   
   
@@ -338,6 +355,7 @@ MA.plot <- function(data, FDRcutoff=0.05, pngFile=NULL){
 #'
 #' @return A printable/modifiable ggplot2 object.
 #' @export
+#' @importFrom ggplot2 aes_string labs element_rect geom_rect scale_x_continuous scale_y_continuous facet_grid
 #'
 #' @author Christine Paysant-Le Roux
 plotExperimentalDesign <- function(counts, cell_border_size = 10){
@@ -432,7 +450,6 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10){
   
   counts$Count <- as.factor(counts$Count)
   
-  library(ggplot2)
   p <- ggplot2::ggplot( data = counts, aes_string(ymin = 'ymin', ymax = 'ymax', xmin = 'xmin', xmax = 'xmax' , fill = 'Count')) + geom_rect() + labs(x=x_lab,y=y_lab)
   p <- p + theme(
     panel.grid.major = element_blank()
@@ -472,32 +489,6 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10){
 
 
 
-#' SummarizeExpDesignInput
-#'
-#' @param ExpDesign data.frame 
-#' @param 
-#' @param 
-#' @return conditSumm data.frame
-#' @export
-#'
-#' @examples
-SummarizeExpDesignInput <- function(ExpDesign){
-  
-  condit_list <- lapply(colnames(ExpDesign[,-1]), function(x){
-    conditCount <- table(as.data.frame(ExpDesign)[,x])
-    paste(names(conditCount), conditCount, sep=" x ") %>% paste(., collapse =" ; ")
-    })
-  
-  #names(condit_list) <- colnames(ExpDesign[,-1])
-  conditSumm <- data.frame("Factors"    = colnames(ExpDesign[,-1]),
-                           "Conditions" = condit_list %>% unlist ,
-                           "Comments"   = lapply(colnames(ExpDesign[,-1]), function(x){if_else(length(unique(table(as.data.frame(ExpDesign)[,x]))) == 1, "OK", "WARNING") }) %>% unlist)
-  
-  return(conditSumm)
-}
-
-
-
 
 ######################################## get contrast ##################################################
 
@@ -526,10 +517,14 @@ SummarizeExpDesignInput <- function(ExpDesign){
 #'
 #' @return
 #' @export
+#' @importFrom utils combn
 #'
 #' @examples
 #' @author Christine Paysant-Le Roux
 define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
+  
+  contrastPart <- fixFactor <- NULL
+  
   comparisonPart <- treatmentFactorsList
   # combn(x,2) generate all combinations of the elements of x taken 2 at a time
   vectorFromCombn <- combn(treatmentFactorsList[[i]],2)[j,]
@@ -572,10 +567,18 @@ define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
 #'
 #' @return
 #' @export
-#'
+#' @importFrom dplyr all_of
 #' @examples
 #' @author Christine Paysant-Le Roux
 simpleContrastForOneFactor <- function (treatmentFactorsList, i){
+  
+  fixFactor <- groupComparison <- NULL
+  
+  contrastPart1 <- contrastPart2 <- contrastPart3 <- contrastPart4 <-  NULL
+  comparisonPart1 <- comparisonPart2 <- NULL
+  fixPart1 <- fixPart3 <- fixFactor1 <- fixFactor3 <- NULL 
+  comparisonPart3 <- comparisonPart4 <- NULL
+  
   df_FirstComparisonPart <- define_partOfSimpleContrast_df(treatmentFactorsList,i,2)
   #df_FirstComparisonPart[,fixFactor := NULL]
   df_FirstComparisonPart <- df_FirstComparisonPart %>% dplyr::select(-fixFactor)
@@ -648,6 +651,9 @@ defineAllSimpleContrasts <- function(treatmentFactorsList){
 #' @examples
 #' @author Christine Paysant-Le Roux
 define_averaged_contrasts <- function(allSimpleContrast_df){
+  
+  groupComparison <- contrast <- n <- fixFactor <- contrastName <- NULL
+  
   #allAveragedContrasts_df <- allSimpleContrast_df[, list(contrast = paste0(paste0(paste0("(", paste(contrast, collapse=" + ")),")/"),.N), meanIn = paste(fixFactor, collapse=" + ")), by = groupComparison]
   #allAveragedContrasts_df[, type :="mean"]
   allAveragedContrasts_df <- allSimpleContrast_df %>% dplyr::group_by(groupComparison) %>% dplyr::add_tally() %>% 
@@ -680,6 +686,10 @@ define_averaged_contrasts <- function(allSimpleContrast_df){
 #' @examples
 #' @author Christine Paysant-Le Roux
 define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, row_i, row_j) {
+  
+  contrastPart_bis <- outsideGroup_bis <- fixFactor_bis <- NULL
+  
+  
   comparisonPart <- treatmentFactorsList
   # combn(x,2) generate all combinations of the elements of x taken 2 at a time
   comparisonPart [[i]] <- combn(treatmentFactorsList[[i]],2)[row_i,]
@@ -744,6 +754,12 @@ define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, 
 #' @examples
 #' @author Christine Paysant-Le Roux
 defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i, j){
+  
+  contrastPart1 <- contrastPart2 <- contrastPart3 <- contrastPart4 <- NULL
+  comparisonPart1 <- comparisonPart2 <- comparisonPart3 <- comparisonPart4 <- NULL
+  fixPart1 <- fixPart3 <- fixFactor1 <- fixFactor3 <- NULL
+  
+  
   df_part1<- define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 1, 2, 2)
   df_part2<- define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 2, 1, 2)
   df_part3<- define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 3, 2, 1)
@@ -784,6 +800,9 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
 #' @examples
 #' @author Christine Paysant-Le Roux
 defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteractionToKeep = NULL){
+  
+  groupInteraction <- NULL
+  
   allInteractionsContrasts_df <- data.table::data.table(contrast = character(), groupComparison = factor(), groupInteraction = character(),
                                             outsideGroup = character(),contrastName = character(), type = character())
   # combn(names(treatmentFactorsList),2)
@@ -899,18 +918,6 @@ returnContrastCoefficients <- function(contrast, colnamesGLMdesign, treatmentCon
   return(contrastVector)
 }
 
-# convenience function to make more descriptive names for factor variables
-# function from DESeq2 package
-renameModelMatrixColumns <- function(sampleData, modelFormula) {
-  data <- as.data.frame(sampleData)
-  allVars <- all.vars(modelFormula)
-  predictorVars <- allVars[(allVars %in% labels(terms(modelFormula)))]
-  colNamesFrom <- make.names(do.call(c,lapply(predictorVars, function(v) paste0(v,levels(data[[v]])[-1]))))
-  colNamesTo <- make.names(do.call(c,lapply(predictorVars, function(v) paste0(v,"_",levels(data[[v]])[-1],"_vs_",levels(data[[v]])[1]))))
-  data.frame(from=colNamesFrom,to=colNamesTo,stringsAsFactors=FALSE)
-}
-
-
 ####################################### CO-EXPRESSION ##############################
 
 #' return gene list
@@ -978,8 +985,11 @@ runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="a
 #' @param conds condition matrix
 #' @return 
 #' @export 
+#' @importFrom ggplot2 geom_boxplot facet_wrap theme element_blank
+#' 
 coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
   
+  samples <- variable <- value <- cluster <- NULL
   nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
   groups <- conds %>% dplyr::arrange(factor(samples, levels = names(coseq.res@y_profiles)))
   y_profiles <- list()
@@ -992,7 +1002,7 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
   y_profiles.gg$groups <- factor(y_profiles.gg$groups, levels = unique(conds$groups))
   y_profiles.gg$samples <- factor(y_profiles.gg$samples, levels = unique(conds$samples))
   
-  p <- ggplot(data = dplyr::filter(y_profiles.gg, cluster == selectedCluster)) +
+  p <- ggplot2::ggplot(data = dplyr::filter(y_profiles.gg, cluster == selectedCluster)) +
     geom_boxplot(aes(x=samples, y=value, fill = groups), outlier.size = 0.3) + facet_wrap(~cluster) +
     theme(axis.text.x=element_blank())
     #theme(axis.text.x=element_text(angle=90, hjust=1))
@@ -1009,11 +1019,13 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
 #' @param annotation gene annotation
 #' @param geneList gene list 
 #' @return list
-#' @export EnrichmentHyperG
+#' @export
 #'
 EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
 #enrichment_analysis <- function(Reference,Gene_List,Alpha){
     
+  Term <- Name <- Domain <- geneID <- NULL
+  Pvalue_over <- Pvalue_under <- Decision <- NULL
   # ## success in the urn /  For each annotation term, number of annotated genes in the Reference file
   # m=table(Reference[,2])
   # ## failures in the urn / For each annotation term, number of not annotated genes in the Reference file
@@ -1057,8 +1069,8 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
   res= dplyr::full_join(Urn_Success, Trial_Success, by = c("Term", "Name", "Domain")) %>% 
        dplyr::mutate(Urn_percentage_Success   = signif(100*Urn_Success/Urn_effective, 3), Urn_effective = Urn_effective,
                      Trial_percentage_Success = signif(100*Trial_Success/Trial_effective, 3), Trial_effective = Trial_effective, 
-                     Pvalue_over  = phyper(Trial_Success-1,Urn_Success, (Urn_effective-Urn_Success),Trial_effective,lower.tail=FALSE), 
-                     Pvalue_under = phyper(Trial_Success,  Urn_Success, (Urn_effective-Urn_Success),Trial_effective,lower.tail=TRUE))
+                     Pvalue_over  = stats::phyper(Trial_Success-1,Urn_Success, (Urn_effective-Urn_Success),Trial_effective,lower.tail=FALSE), 
+                     Pvalue_under = stats::phyper(Trial_Success,  Urn_Success, (Urn_effective-Urn_Success),Trial_effective,lower.tail=TRUE))
   
   # res_over_under <-NULL
   # index=which(res$Pvalue_over<Alpha)
@@ -1100,10 +1112,14 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
 #' @param index result size index
 #' @param pngFile 
 #' @return plot
-#' @export
+#' @export 
+#' @importFrom dplyr desc
 #'
 #' @examples
 pvalue.enrichment.plot <- function(data, Over_Under, index = "Top50" , pngFile=NULL){
+  
+  Decision <- Pvalue_over <- Pvalue_under <- Pvalue <- NULL
+  Term <- Domain <- Trial_Success <- scale_size <- tail <- NULL
   
   data_ord <- switch (Over_Under,  
           "overrepresented"  = { 
@@ -1118,9 +1134,9 @@ pvalue.enrichment.plot <- function(data, Over_Under, index = "Top50" , pngFile=N
   data_ord$Term <- factor(data_ord$Term, levels = data_ord$Term)
   
   switch (index,
-    "all" = { p <- ggplot(data = data_ord, aes(x=Pvalue, y=Term, size=Trial_Success, color=Domain)) +  
+    "all" = { p <- ggplot2::ggplot(data = data_ord, aes(x=Pvalue, y=Term, size=Trial_Success, color=Domain)) +  
                      geom_point(alpha=0.5) + scale_size(range = c(0.1, 10))},
-    "Top50" = { p <- ggplot(data = tail(data_ord, n=50), aes(x=Pvalue, y=Term, size=Trial_Success, color=Domain)) +  
+    "Top50" = { p <- ggplot2::ggplot(data = tail(data_ord, n=50), aes(x=Pvalue, y=Term, size=Trial_Success, color=Domain)) +  
                      geom_point(alpha=0.5) + scale_size(range = c(0.1, 10))}
   )
   

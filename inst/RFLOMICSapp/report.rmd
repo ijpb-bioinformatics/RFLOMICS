@@ -4,6 +4,7 @@ author: "nadia.bessoltane@inra.fr"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
   html_document:
+    df_print: paged
     toc: true
     toc_depth: 2
     toc_float:
@@ -33,7 +34,7 @@ pngDir <- params$pngDir
 
 
 # Experimental Design :
-> Coldata
+> sample sheet
 
 ```{r Design, echo=FALSE, message=TRUE, warning=TRUE}
 FlomicsMultiAssay@colData

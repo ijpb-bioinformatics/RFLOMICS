@@ -7,7 +7,9 @@
 #    http://shiny.rstudio.com/
 #
 
+library(shiny)
 library(shinydashboard)
+library(shinyFiles)
 
 sidebar <- dashboardSidebar(
   
@@ -37,8 +39,11 @@ body <- dashboardBody({
         ###########################
         
         tabItem(tabName = "coverPage",
-                verbatimTextOutput("print")
-              ),
+                verbatimTextOutput("print"),
+                
+               # shinyDirButton(id = "dir0", label = "Input directory", title = "Upload"),
+  
+        ),
       
         #### Import Exp design ####
         ###########################

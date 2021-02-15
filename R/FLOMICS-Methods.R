@@ -1,13 +1,16 @@
 #' @title [\code{\link{ExpDesign-class}}] Class constructor
 #' @description
 #' @param ExpDesign data.frame with experimental design
+#' @param projectName
 #' @param refList vector with factor ref
 #' @param typeList vector with type of factor
 #' @return An object of class [\code{\link{ExpDesign-class}}]
 #' @name ExpDesign-Constructor
 #' @rdname ExpDesign-Constructor
 #' @export
-ExpDesign.constructor <- function(ExpDesign, refList, typeList){ 
+#' @importFrom stats relevel
+#' @importFrom methods new
+ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){ 
 
   # List.Factors
   dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
@@ -25,6 +28,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
   
   Design = new(Class = "ExpDesign",
                ExpDesign=ExpDesign,
+               projectName=projectName,
                List.Factors=dF.List,
                Factors.Type=typeList,
                Groups=groups,
@@ -104,7 +108,7 @@ FlomicsMultiAssay.constructor <- function(inputs, Design){
 #' @title RunDiffAnalysis
 #' @param An object of class [\code{\link{MultiAssayExperiment}]
 #' @param data omic data type
-#' @param DiffMethod Differential analysis method
+#' @param DiffMethod character vector ... Differential analysis method
 #' @param contrastList list of contrast to test
 #' @param FDR FDR threshold
 #' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
@@ -116,6 +120,8 @@ setMethod(f="RunDiffAnalysis",
           signature="MultiAssayExperiment",
           definition <- function(object, data, FDR = 0.05, contrastList, DiffAnalysisMethod, clustermq=FALSE){
 
+            contrastName <- NULL 
+            
             object@ExperimentList[[data]]@metadata$DiffExpAnal <- list()
             
             Contrasts.Sel <- dplyr::filter(object@metadata$design@Contrasts.Sel, contrastName %in% contrastList)
@@ -325,6 +331,8 @@ setMethod(f= "abundanceBoxplot",
           signature = "MultiAssayExperiment",
           definition <- function(object, dataType, pngFile=NULL){
 
+            samples <- value <- NULL
+            
             # this function generate boxplot (abandance distribution) from raw data and normalized data
 
             
@@ -420,12 +428,15 @@ setMethod(f= "plotPCAnorm",
 #'
 #' @return
 #' @exportMethod barplotPCAnorm
+#' @importFrom ggplot2 position_dodge scale_fill_manual
 #'
 #'
 #' @examples
 setMethod(f= "barplotPCAnorm",
           signature = "MultiAssayExperiment",
           definition <- function(object, condition="samples"){
+            
+            PCs <- value <- samples <- NULL
 
             col <- colorPlot(object@design, object@colData, condition=condition)
 
@@ -479,7 +490,7 @@ setMethod(f= "FilterLowAbundance",
                    "NbReplicates" = { keep <- rowSums(edgeR::cpm(assayFilt) >= CPM_Cutoff) >=  min(NbReplicate) },
                    "filterByExpr" = { dge  <- edgeR::DGEList(counts = assayFilt, genes = rownames(assayFilt))
                                       #keep <- filterByExpr(dge, GLM_Model) 
-                                      keep <- filterByExpr(dge)
+                                      keep <- edgeR::filterByExpr(dge)
                                       }
                    )
             
@@ -550,86 +561,6 @@ setMethod(f="RunPCA",
           }
 )
 
-
-
-#' @title SetModelMatrix
-#'
-#' @param ExpDesign 
-#'
-#' @return
-#' @exportMethod SetModelMatrix
-#'
-#' @examples
-setMethod(f="SetModelMatrix",
-          signature="ExpDesign",
-          definition <- function(object){
-            
-            #  => list of fact from model
-            Fact.list <- strsplit(gsub("[ ~]", "",object@Model.formula), split = "+", fixed = TRUE)[[1]]
-            Fact.list <- Fact.list[str_detect(Fact.list, pattern=":", negate = TRUE)]
-            
-            #  => list of fact bio
-            Fact.Bio  <- names(object@Factors.Type[which(object@Factors.Type == "Bio")])
-            
-            #  => factor vectors to set model.matrix `
-            #  * stock ref values
-            ref.list <- vector()
-            for (i in Fact.list) {
-              assign(i, object@List.Factors[[i]])
-              ref.list <- c(ref.list,levels(object@List.Factors[[i]])[1])
-            }
-            
-            #  => set model matrix
-            #  * change colnames
-            model.design.matrix <- stats::model.matrix(as.formula(object@Model.formula))
-            design.colnames <- colnames(model.design.matrix)
-            #  colnames
-            for (i in names(object@List.Factors)) {
-              design.colnames <- gsub(i, "", design.colnames)
-            }
-            design.colnames <- gsub(":", "_", design.colnames)
-            colnames(model.design.matrix) <- design.colnames
-            object@Model.matrix <- model.design.matrix
-
-            # => Get all the contrasts
-            contrasts <- list()
-            contrast.coef <- list()
-            contrasts.nbr <- 0
-            for(i in Fact.list[which(Fact.list %in% Fact.Bio)]){
-              
-              mat <- as.vector(unique(object@List.Factors[[i]])) %>% utils::combn(.,2)
-              
-              contrast.tmp <- list()
-              
-              contrast.tmp[["hypoth"]] <- apply (mat, 2, function(x) {
-                paste(x, collapse=" - ")
-              })
-              
-              contrast.tmp[["hypoth_tmp"]] <- contrast.tmp[["hypoth"]]
-              
-              for (ref in ref.list) {
-                contrast.tmp[["hypoth_tmp"]] <- gsub(paste(ref, "-"), "", contrast.tmp[["hypoth_tmp"]])
-                contrast.tmp[["hypoth_tmp"]] <- gsub(paste("-", ref), "", contrast.tmp[["hypoth_tmp"]])
-              }
-              
-              contrast.tmp[["idContrast"]] <- paste("C", (contrasts.nbr+1):(contrasts.nbr+length(contrast.tmp[["hypoth"]])), sep = "")
-              
-              contrasts.nbr <- contrasts.nbr+length(contrast.tmp[["hypoth"]])
-              contrasts[[i]] <- data.frame(contrast.tmp) %>% dplyr::mutate(factors=i)
-                   
-              ## contrast coef
-              #contrast.coef[[i]] <- makeContrasts(contrasts = contrasts[[i]]$hypoth_tmp, levels = model.design.matrix) %>% as.data.frame()
-              #colnames(contrast.coef[[i]]) <- contrasts[[i]]$idContrast
-            }
-            object@Contrasts.List  <- contrasts %>% purrr::reduce(rbind)
-            
-            ## contrast coef
-            object@Contrasts.Coeff <- makeContrasts(contrasts = object@Contrasts.List$hypoth_tmp, levels = model.design.matrix) %>% as.data.frame()
-            colnames(object@Contrasts.Coeff) <- object@Contrasts.List$idContrast
-            
-            return(object)
-
-})
 
 
 
@@ -775,11 +706,14 @@ setMethod(f="getExpressionContrast",
 #' @param contrastList
 #' @return ExpDesign
 #' @exportMethod getContrastMatrix
+#' @importFrom stats formula terms.formula
 #'
 #' @author Christine Paysant-Le Roux
 setMethod(f="getContrastMatrix",
           signature="ExpDesign",
           definition <- function(object, contrastList){
+            
+            Design <- contrast <- contrastName <- type <- groupComparison <- NULL
             
   contrast.sel.list <- list()
   contrast.sel.list <- lapply(names(Design@Contrasts.List), function(contrastType) {
