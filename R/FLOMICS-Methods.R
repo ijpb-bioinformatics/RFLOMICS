@@ -1,18 +1,22 @@
-#' @title [\code{\link{ExpDesign-class}}] Class constructor
-#' @description
-#' @param ExpDesign data.frame with experimental design
-#' @param projectName
-#' @param refList vector with factor ref
-#' @param typeList vector with type of factor
+#' @title Constructor for the class \code{\link{ExpDesign-class}}]
+#' @description This method initialize an object of class [\code{\link{ExpDesign-class}}] by initializing the slots
+#' ExpDesign, projectName,List.FactorsFactors.Type,Groups.
+#' @param ExpDesign a data.frame. Row names give the name of each sample which has been to be construct
+#' by combining factor's modality separated by a "_" (EX: WT_treated_rep1). Column names give the name of an experimental
+#' factor which is a vector of character storing the factor modality for each sample.
+#' @param projectName a vector of string giving the name of the project.
+#' @param refList A list of string giving the reference modality for each factor.
+#' @param typeList A vector of string indicating the type of each experimental factor. Two types of effect
+#' are required ("Bio" or "batch")
 #' @return An object of class [\code{\link{ExpDesign-class}}]
 #' @name ExpDesign-Constructor
 #' @rdname ExpDesign-Constructor
 #' @export
 #' @importFrom stats relevel
 #' @importFrom methods new
-ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){ 
+ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
 
-  # List.Factors
+  # Create the List.Factors list with the choosen level of reference for each factor
   dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
 
     relevel(as.factor(ExpDesign[[i]]), ref=refList[[i]])
@@ -22,7 +26,7 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
   # Factors.Type
   names(typeList) <- names(ExpDesign)
 
-  # groups
+  # Create the groups data.frame
   groups <- tidyr::unite(as.data.frame(ExpDesign[typeList == "Bio"]), col="groups", sep="_", remove = TRUE) %>%
             dplyr::mutate(samples = rownames(.))
 
@@ -33,7 +37,6 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
                Factors.Type=typeList,
                Groups=groups,
                Model.formula=vector(),
-               Model.matrix=vector(),
                Contrasts.List=list(),
                Contrasts.Sel=data.frame(),
                Contrasts.Coeff=data.frame())
@@ -43,29 +46,31 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
 
 
 
-#' @title FlomicsMultiAssay.constructor Class constructor
+#' @title FlomicsMultiAssay.constructor Constructor for the class [\code{\link{MultiAssayExperiment}}]
 #' @description
-#' @param inputs list of input data
-#' @param Design ExpDesign class
+#' This function initialize an object of class [\code{\link{MultiAssayExperiment}}]
+#' from a list of omics data and an object of class [\code{\link{ExpDesign}}].
+#' @param inputs list of omics data
+#' @param Design An object of class [\code{\link{ExpDesign}}]
 #' @return An object of class [\code{\link{MultiAssayExperiment}}]
 #' @name FlomicsMultiAssay.constructor
 #' @rdname FlomicsMultiAssay.constructor
 #' @export
-FlomicsMultiAssay.constructor <- function(inputs, Design){ 
-  
+FlomicsMultiAssay.constructor <- function(inputs, Design){
+
  # if input == NULL
-  
+
   SummarizedExperimentList <- list()
   listmap  <- list()
   omicList <- list()
   k <- 0
   for (dataName in names(inputs)){
-  
+
       k <- k+1
-    
+
       ## construct SummarizedExperiment for each data
       abundance <- read.table(inputs[[dataName]][["dataFile"]], header = TRUE, row.names = 1)
-      
+
       if(!is.null(inputs[[dataName]][["qcFile"]])){
         print("# ... metadata QC...")
         QCmat <- read.table(inputs[[dataName]][["qcFile"]], header = TRUE)
@@ -75,53 +80,58 @@ FlomicsMultiAssay.constructor <- function(inputs, Design){
                             colname = colnames(abundance),
                             stringsAsFactors = FALSE)
       }
-      
+
       SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays  = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
                                                                    colData = QCmat)
-      
+
       # metadata for sampleMap for MultiAssayExperiment
       listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
                                         colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
                                         stringsAsFactors = FALSE)
-      
+
       #
       omicType <- inputs[[dataName]][["omicType"]]
-      
+
       colnames <- c(names(omicList[[omicType]]), k)
       omicList[[omicType]] <- c(omicList[[omicType]] ,dataName)
       names(omicList[[omicType]]) <- colnames
-  
+
   }
-  
+
   FlomicsMultiAssay <- MultiAssayExperiment::MultiAssayExperiment(experiments = SummarizedExperimentList,
                                              colData     = Design@ExpDesign,
                                              sampleMap   = MultiAssayExperiment::listToMap(listmap),
                                              metadata    = list(design = Design,
                                                                 colDataStruc = c(n_dFac = dim(Design@ExpDesign)[2], n_qcFac = 0),
                                                                 omicList = omicList))
-  
+
   return(FlomicsMultiAssay)
 }
 
-
+# Je ne comprends pas pourquoi la liste des contrastes n'est pas prise dans l'objet lui même ?
+# soit on change si ce ne sont pas les mêmes ??
+# De plus cette methode est specialisée pour les objets edgeR
 
 #' @title RunDiffAnalysis
+#' @description This is an interface method which run a differential analysis method
+#' on a omic data.
 #' @param An object of class [\code{\link{MultiAssayExperiment}]
-#' @param data omic data type
-#' @param DiffMethod character vector ... Differential analysis method
-#' @param contrastList list of contrast to test
-#' @param FDR FDR threshold
+#' @param data the name of the omic data to
+#' @param DiffAnalysisMethod A character vector giving the differential analysis method
+#' @param contrastList The list of contrast to test
+#' @param FDR The FDR threshold
 #' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
 #' @return MultiAssayExperiment
 #' @exportMethod RunDiffAnalysis
 #' @examples
 #'
+#'
 setMethod(f="RunDiffAnalysis",
           signature="MultiAssayExperiment",
           definition <- function(object, data, FDR = 0.05, contrastList, DiffAnalysisMethod, clustermq=FALSE){
 
-            contrastName <- NULL 
-            
+            contrastName <- NULL
+
             object@ExperimentList[[data]]@metadata$DiffExpAnal <- list()
 
             Contrasts.Sel <- dplyr::filter(object@metadata$design@Contrasts.Sel, contrastName %in% contrastList)
@@ -140,7 +150,7 @@ setMethod(f="RunDiffAnalysis",
             #
             object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]] <- lapply(ListOfDiffResults, function(x){
 
-              
+
               res<-edgeR::topTags(x, n = dim(x)[1])
 
               DEGs<- res$table[res$table$FDR <= FDR,]
@@ -158,21 +168,23 @@ setMethod(f="RunDiffAnalysis",
               return(tmp)
             })
             names(DEG_list) <- names(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]])
-            
-            object@ExperimentList[[data]]@metadata$DiffExpAnal[["mergeDGE"]] <- DEG_list %>% purrr::reduce(dplyr::full_join, by="DEG") %>% 
+
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["mergeDGE"]] <- DEG_list %>% purrr::reduce(dplyr::full_join, by="DEG") %>%
               dplyr::mutate_at(.vars = 2:(length(DEG_list)+1), .funs = function(x){dplyr::if_else(is.na(x), 0, 1)}) %>% data.table::data.table()
-            
+
             return(object)
           })
 
 
+# CEtte méthode est aussi spécialisée pour les données RNAseq alors que le MAplot et le graphe de
+# de pvalue peut-être pour toutes les méthodes. En faite c'est le DGELRT. A voir limma en sortie.
 
 
 #' DiffAnal.plot
 #'
-#' @param data 
-#' @param pngFile 
-#' @param FDRcutoff 
+#' @param data
+#' @param pngFile
+#' @param FDRcutoff
 #' @return plot
 #' @exportMethod DiffAnal.plot
 #' @export
@@ -181,42 +193,26 @@ setMethod(f="RunDiffAnalysis",
 setMethod(f="DiffAnal.plot",
           signature="MultiAssayExperiment",
           definition <- function(object, data, hypothesis){
-            
+
             plots <- list()
-            
+
             res      <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["DGELRT"]][[hypothesis]]
             resTable <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]][[hypothesis]]
             FDR      <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["FDR"]]
-            
+
             res.FDR <- edgeR::topTags(res, n = dim(res)[1])
             plots[["MA.plot"]] <- MA.plot(data = res.FDR$table, FDRcutoff = FDR, pngFile =NULL)
-            
-            
+
+
             plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable[resTable$FDR <= FDR,], pngFile =NULL)
-            
+
             return(plots)
 })
 
 
 
-#' @title [\code{\link{DiffAnalysis-class}}] Class constructor
-#'
-#' @description
-#'
-#' @return An object of class [\code{\link{DiffAnalysis-class}}]
-#' @name DiffAnalysis-Constructor
-#' @rdname DiffAnalysis-Constructor
-#' @export
-DiffAnalysis <- function(){
-  .DiffAnalysis(
-    method="glmLRT",
-    ListOfDEResults=list(),
-    ListOfRawMethodResults=list()
-  )}
-
-
 #' @title Multivariate Quality Check
-#'
+#' @description
 #' @param MultiAssayExperiment an object of Class MultiAssayExperiment
 #' @param data data name
 #' @param axis The number of PCA axis
@@ -276,6 +272,9 @@ setMethod(f="mvQCdesign",
 
 
 #' @title multivariate QC data
+#' This function helps to control if some experimental parameters (technical impact) given as metadata input
+#' explain to much variability in the data. This function correlates quantitative variable describing technical
+#' aspect for each sample with their coordinate on the PCA axis.
 #' @param MultiAssayExperiment an object of Class MultiAssayExperiment
 #' @param data data name
 #' @param axis The number of PCA axis
@@ -334,7 +333,7 @@ setMethod(f= "abundanceBoxplot",
           definition <- function(object, dataType, pngFile=NULL){
 
             samples <- value <- NULL
-            
+
             # this function generate boxplot (abandance distribution) from raw data and normalized data
 
 
@@ -344,7 +343,7 @@ setMethod(f= "abundanceBoxplot",
                        tidyr::unite(col="groups", sep="_", remove = FALSE) %>% dplyr::mutate(samples=sample_names)
 
             # normalized data
-            
+
             if(! is.null(object[[dataType]]@metadata$Normalization)){
               pseudo  <- log2(scale(MultiAssayExperiment::assay(object[[dataType]]), center=FALSE,
                                     scale=object[[dataType]]@metadata$Normalization$coefNorm$norm.factors)+1) %>% reshape2::melt()
@@ -352,7 +351,7 @@ setMethod(f= "abundanceBoxplot",
             else{
               pseudo  <- log2(scale(MultiAssayExperiment::assay(object[[dataType]]), center=FALSE)+1) %>% reshape2::melt()
             }
-            
+
             colnames(pseudo) <- c("feature", "samples", "value")
             pseudo_bis <- dplyr::full_join(pseudo, groups, by="samples")
 
@@ -437,7 +436,7 @@ setMethod(f= "plotPCAnorm",
 setMethod(f= "barplotPCAnorm",
           signature = "MultiAssayExperiment",
           definition <- function(object, condition="samples"){
-            
+
             PCs <- value <- samples <- NULL
 
             col <- colorPlot(object@design, object@colData, condition=condition)
@@ -474,25 +473,25 @@ setMethod(f= "FilterLowAbundance",
             objectFilt <- object[[data]]
 
             assayFilt  <- MultiAssayExperiment::assay(objectFilt)
-            
+
             ## nbr of genes with 0 count
             genes_flt0  <- objectFilt[rowSums(assayFilt) <= 0, ]@NAMES
-            
-            ## remove 0 count 
+
+            ## remove 0 count
             objectFilt  <- objectFilt[rowSums(assayFilt)  > 0, ]
             assayFilt   <- MultiAssayExperiment::assay(objectFilt)
-           
-            
-            
+
+
+
             ## filter cpm
             NbReplicate <- table(tidyr::unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_"))
             NbConditions <- unique(tidyr::unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_"))$groups %>% length()
-            
+
             switch(Filter_Strategy,
                    "NbConditions" = { keep <- rowSums(edgeR::cpm(assayFilt) >= CPM_Cutoff) >=  NbConditions },
                    "NbReplicates" = { keep <- rowSums(edgeR::cpm(assayFilt) >= CPM_Cutoff) >=  min(NbReplicate) },
                    "filterByExpr" = { dge  <- edgeR::DGEList(counts = assayFilt, genes = rownames(assayFilt))
-                                      #keep <- filterByExpr(dge, GLM_Model) 
+                                      #keep <- filterByExpr(dge, GLM_Model)
                                       keep <- edgeR::filterByExpr(dge)
                                       }
                    )
@@ -604,8 +603,8 @@ setMethod(f="CheckExpDesignCompleteness",
     # check nbr of replicats
 
     message <- dplyr::if_else(! "batch" %in% object@Factors.Type , "noBatch",
-                              dplyr::if_else(0 %in% group_count$Count ,   "noCompl", 
-                                             dplyr::if_else(length(unique(group_count$Count)) != 1, "noBalan", 
+                              dplyr::if_else(0 %in% group_count$Count ,   "noCompl",
+                                             dplyr::if_else(length(unique(group_count$Count)) != 1, "noBalan",
                                                             dplyr::if_else(group_count$Count[1] < 3, "lowRep", "true"))))
 
   }
@@ -716,9 +715,9 @@ setMethod(f="getExpressionContrast",
 setMethod(f="getContrastMatrix",
           signature="ExpDesign",
           definition <- function(object, contrastList){
-            
+
           contrast <- contrastName <- type <- groupComparison <- NULL
-            
+
   contrast.sel.list <- list()
   contrast.sel.list <- lapply(names(object@Contrasts.List), function(contrastType) {
 
@@ -830,9 +829,9 @@ setMethod(f="runCoExpression",
             object@ExperimentList[[data]]@metadata$CoExpAnal[["meanFilterCutoff"]] <- 50
             object@ExperimentList[[data]]@metadata$CoExpAnal[["gene.list.names"]]  <- nameList
             object@ExperimentList[[data]]@metadata$CoExpAnal[["merge.type"]]       <- merge
-            
-            counts = MultiAssayExperiment::assay(object@ExperimentList[[data]])[geneList,] 
-            
+
+            counts = MultiAssayExperiment::assay(object@ExperimentList[[data]])[geneList,]
+
 
             switch (tools,
               "coseq" = {
@@ -840,12 +839,12 @@ setMethod(f="runCoExpression",
                   object@ExperimentList[[data]]@metadata$CoExpAnal[["coseqResults"]] <- coseq.res
 
                   # list of genes per cluster
-                  clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){ 
+                  clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
                     names(coseq::clusters(coseq.res)[coseq::clusters(coseq.res) == i])
                     })
                   object@ExperimentList[[data]]@metadata$CoExpAnal[["clusters"]] <- clusters
                   names(object@ExperimentList[[data]]@metadata$CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
-                  
+
                   # nbr of cluster
                   nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
                   object@ExperimentList[[data]]@metadata$CoExpAnal[["cluster.nb"]] <- nb_cluster
@@ -867,8 +866,8 @@ setMethod(f="runCoExpression",
 #' @param data dataset name
 #' @param CoExpListNames
 #' @param DiffListNames
-#' @param alpha 
-#' @param probaMethod 
+#' @param alpha
+#' @param probaMethod
 #' @param annotation gene annotation
 #' @return MultiAssayExperiment
 #' @exportMethod runAnnotationEnrichment
@@ -876,34 +875,34 @@ setMethod(f="runCoExpression",
 setMethod(f="runAnnotationEnrichment",
           signature="MultiAssayExperiment",
 
-          definition <- function(object, data, DiffListNames = NULL, CoExpListNames = NULL, annotation, 
+          definition <- function(object, data, DiffListNames = NULL, CoExpListNames = NULL, annotation,
                                  alpha = 0.01, probaMethod = "hypergeometric"){
-             
+
             EnrichAnal <- list()
             EnrichAnal[["list.names"]] <- c(CoExpListNames, DiffListNames)
             EnrichAnal[["alpha"]]      <- alpha
             EnrichAnal[["proba.test"]] <- probaMethod
-            
-            
+
+
             ## list of gene list to annotate
             geneLists <- list()
             geneLists.diff <- list()
             geneLists.diff <- lapply(DiffListNames, function(listname){
-              
+
               row.names(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]][[listname]])
             })
             names(geneLists.diff) <- DiffListNames
-            
+
             geneLists.coseq <- list()
             #geneLists.coseq <- lapply(CoExpListNames, function(listname){
-              
+
             geneLists.coseq <-  object@ExperimentList[[data]]@metadata[["CoExpAnal"]][["clusters"]][CoExpListNames]
             #})
             #names(geneLists.coseq) <- CoExpListNames
-            
+
             geneLists <- c(geneLists.diff, geneLists.coseq)
-            
-            
+
+
             Results <- list()
 
             for(geneList in names(geneLists)){
@@ -914,9 +913,9 @@ setMethod(f="runAnnotationEnrichment",
             }
 
             EnrichAnal[["results"]] <- Results
-            
+
             object@ExperimentList[[data]]$metadata$EnrichAnal <- EnrichAnal
-            
+
             return(object)
           })
 
