@@ -1,8 +1,7 @@
-#' @title ExpDesign Class
-#'
+#' @title [\code{\link{ExpDesign-class}}] Class
+#' @description
 #' This class, is an internal class to the RFLOMICS package, to store all the information related to
 #' the experimental design. An object of this class is instanciated when the shiny UI
-#'
 #' @slot ExpDesign  An object of class data.frame. Row names give the name of each sample which has been to be construct
 #' by combining factor's modality separated by a "_" (EX: WT_treated_rep1). Column names give the name of an experimental
 #' factor which is a vector of character storing the factor madality for each sample.
@@ -37,39 +36,6 @@
           Contrasts.Sel="data.frame",
           Contrasts.Coeff="data.frame")
   )
-
-
-
-#' @title DiffAnalysis class
-#' @description  Store the results of a differential analysis
-#' @slot method The name of the Differential method applied
-#' @slot ListOfDEResults A list of data.frame with the following columns:
-#' \describe{
-#' \item{id}{feature identifier}
-#' \item{BaseMean}{}
-#' \item{BaseMeanCondA}{}
-#' \item{BaseMeanCondB}{}
-#' \item{logFC}{}
-#' \item{pvalue}{}
-#' \item{FDR}{}
-#' }
-#' @slot ListOfRawMethodResults A list of objects returned by the used method (ex: list of object of class DGELRT)
-#'
-#' @return
-#' @examples
-#' @export
-#' @name DiffAnalysis-class
-#' @rdname DiffAnalysis-class
-#' @exportClass DiffAnalysis
-
-
-.DiffAnalysis <- setClass(
-  Class="DiffAnalysis",
-  representation=representation(
-  method="vector",
-  ListOfDEResults="list",
-  ListOfRawMethodResults="list"
-))
 
 
 
