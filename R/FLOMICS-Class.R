@@ -11,8 +11,7 @@
 #' @slot Groups An object of class data.frame. Row names give the name of each sample which has been to be construct
 #' by combining factor's modality separated by a "_" (EX: WT_treated_rep1). Two columns, the first one give the group
 #' of the sample by concatenating all factor modality except the replicat. The second one give the name of the sample.
-#' @slot Model.formula An object of class formula corresponding to the model that the user choosed  via the shiny UI
-#' at the experimental design set up.
+#' @slot Model.formula An object of class formula.
 #' @slot Contrasts.List A list of data.frame giving all the hypothesis (contrasts) that can be formulated according to a model.
 #' This list is generated thanks to the getExpressionContrast() method. Three type of contrasts could be generated: simple,
 #' averaged, interaction. For details see the help of the getExpressionContrast() method.
