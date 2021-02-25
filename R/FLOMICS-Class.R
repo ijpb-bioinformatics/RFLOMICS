@@ -14,15 +14,24 @@
 #' @slot Model.formula An object of class formula corresponding to the model that the user choosed  via the shiny UI
 #' at the experimental design set up.
 #' @slot Contrasts.List A list of data.frame giving all the hypothesis (contrasts) that can be formulated according to a model.
-#' This list is generated thanks to the getExpressionContrast() method.
+#' This list is generated thanks to the getExpressionContrast() method. Three type of contrasts could be generated: simple,
+#' averaged, interaction. For details see the help of the getExpressionContrast() method.
 #' @slot Contrasts.Sel A data.frame giving the hypothesis (contrasts) that the user selected through the interface.
 #' @slot projectName A vector of character giving the name of the project.
 #' @slot Contrasts.Coeff An object of class data.frame giving the coefficient for each contrast.
 #' @return ExpDesign object
 #' @examples
+#' Design.File <- read.table(file= "inst/ExamplesFiles/TP/experimental_design.txt",header = TRUE,row.names = 1, sep = "\t")
+#' # Define the type of each factor
+#' Design.typeList <- c("Bio","Bio","batch")
+#' # Define the reference modality for each factor
+#' Design.refList <- c("WT","control","rep1")
+#' # Initialize an object of class ExpDesign
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.refList, typeList = Design.typeList)
 #' @name ExpDesign-class
 #' @rdname ExpDesign-class
 #' @exportClass ExpDesign
+#'
 .ExpDesign <- setClass(
   Class="ExpDesign",
   slots=c(ExpDesign="data.frame",
