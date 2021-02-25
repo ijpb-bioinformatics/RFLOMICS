@@ -147,14 +147,17 @@ FlomicsMultiAssay.constructor <- function(inputs, Design){
 
 
 #' @title RunDiffAnalysis
-#' @description This is an interface method which run a differential analysis method
-#' on a omic data.
+#' @description This is an interface method which run the differential analysis method according to the type of omic dataset
+#' and to a list of contrasts. The differential analysis method is applied for each contrasts (or hypothesis).
+#' @details Three methods are available:
+#'  ## For RNAseq data: the lmfit function of edgeR
+#'  ## For Proteomic data: the lmFit function of limma
 #' @param An object of class [\code{\link{MultiAssayExperiment}]
 #' @param data The name of the omic data.
 #' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
 #' to run. Either "edgeRglmfit", "limmalmFit", ...
 #' @param contrastList The list of contrast to test
-#' @param FDR The faslse discovery rate threshold
+#' @param FDR The false discovery rate threshold
 #' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
 #' @return MultiAssayExperiment
 #' @exportMethod RunDiffAnalysis
@@ -213,11 +216,13 @@ setMethod(f="RunDiffAnalysis",
 
 # Je ne comprends pas pourquoi la liste des contrastes n'est pas prise dans l'objet lui même ?
 # soit on change si ce ne sont pas les mêmes ??
-# De plus cette methode est specialisée pour les objets edgeR
+# De plus cette methode n'est pas generique. Elle est specialisée pour les objets edgeR
 
 
 #' DiffAnal.plot
-#'
+#' @description
+#' This is an interface method which run the differential analysis method according to the type of omic dataset
+#' and to a list of contrasts.
 #' @param data
 #' @param pngFile
 #' @param FDRcutoff
