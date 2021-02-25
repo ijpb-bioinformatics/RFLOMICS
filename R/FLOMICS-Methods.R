@@ -9,6 +9,14 @@
 #' @param typeList A vector of string indicating the type of each experimental factor. Two types of effect
 #' are required ("Bio" or "batch")
 #' @return An object of class [\code{\link{ExpDesign-class}}]
+#' @examples
+#' Design.File <- read.table(file= "inst/ExamplesFiles/TP/experimental_design.txt",header = TRUE,row.names = 1, sep = "\t")
+#' # Define the type of each factor
+#' Design.typeList <- c("Bio","Bio","batch")
+#' # Define the reference modality for each factor
+#' Design.refList <- c("WT","control","rep1")
+#' # Initialize an object of class ExpDesign
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.refList, typeList = Design.typeList)
 #' @name ExpDesign-Constructor
 #' @rdname ExpDesign-Constructor
 #' @export
@@ -50,9 +58,37 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
 #' @description
 #' This function initialize an object of class [\code{\link{MultiAssayExperiment}}]
 #' from a list of omics data and an object of class [\code{\link{ExpDesign}}].
-#' @param inputs list of omics data
+#' @param inputs A named list of omic dataset. Names must refer to the name of the omic dataset.
+#' An omics dataset must be itself a list of three objects:
+#' @details
+#' ## dataFile: the path to the omic data
+#' ## qcFile: the path to an optional quality check file
+#' ## omicType: the type of omic data ('RNA','','')
 #' @param Design An object of class [\code{\link{ExpDesign}}]
 #' @return An object of class [\code{\link{MultiAssayExperiment}}]
+#' @examples
+#' Design.File <- read.table(file= "inst/ExamplesFiles/TP/experimental_design.txt",header = TRUE,row.names = 1, sep = "\t")
+#' # Define the type of each factor
+#' Design.Factors.Type <- c("Bio","Bio","batch")
+#' # Define the reference modality for each factor
+#' Design.Factors.Ref <- c("WT","control","rep1")
+#'
+#' # Initialize an object of class ExpDesign
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.Factors.Ref, typeList = Design.Factors.Type)
+#' Design.Factors.Name <- names(Design.File)
+#' Design.formulae <- GetModelFormulae(Factors.Name = Design.Factors.Name,Factors.Type=Design.Factors.Type)
+#' Design.formulae[[1]]
+#' Design.obj <- getExpressionContrast(object = Design.obj, model.formula = names(Design.formulae[1]))
+#' Design.contrastList <- lapply(Design.obj@Contrasts.List, function(x) {
+#' return(x[1:2]$contrast)
+#' })
+#' Design.obj <- getContrastMatrix(object = Design.obj, contrastList = unlist(Design.contrastList))
+#'
+#'  # Create a list of datasets
+#' ListofData <- list("RNAseq1"=list("dataFile"="inst/ExamplesFiles/TP/rnaseq_gene_counts.txt",
+#' "qcFile"="inst/ExamplesFiles/TP/rnaseq_bioinfo_QC.txt"), "omicType"="RNA"))
+#' FlomicsMultiAssay.constructor(inputs = ListofData, Design=Design.obj)
+#'
 #' @name FlomicsMultiAssay.constructor
 #' @rdname FlomicsMultiAssay.constructor
 #' @export
@@ -108,18 +144,17 @@ FlomicsMultiAssay.constructor <- function(inputs, Design){
   return(FlomicsMultiAssay)
 }
 
-# Je ne comprends pas pourquoi la liste des contrastes n'est pas prise dans l'objet lui même ?
-# soit on change si ce ne sont pas les mêmes ??
-# De plus cette methode est specialisée pour les objets edgeR
+
 
 #' @title RunDiffAnalysis
 #' @description This is an interface method which run a differential analysis method
 #' on a omic data.
 #' @param An object of class [\code{\link{MultiAssayExperiment}]
-#' @param data the name of the omic data to
-#' @param DiffAnalysisMethod A character vector giving the differential analysis method
+#' @param data The name of the omic data.
+#' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
+#' to run. Either "edgeRglmfit", "limmalmFit", ...
 #' @param contrastList The list of contrast to test
-#' @param FDR The FDR threshold
+#' @param FDR The faslse discovery rate threshold
 #' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
 #' @return MultiAssayExperiment
 #' @exportMethod RunDiffAnalysis
@@ -176,8 +211,9 @@ setMethod(f="RunDiffAnalysis",
           })
 
 
-# CEtte méthode est aussi spécialisée pour les données RNAseq alors que le MAplot et le graphe de
-# de pvalue peut-être pour toutes les méthodes. En faite c'est le DGELRT. A voir limma en sortie.
+# Je ne comprends pas pourquoi la liste des contrastes n'est pas prise dans l'objet lui même ?
+# soit on change si ce ne sont pas les mêmes ??
+# De plus cette methode est specialisée pour les objets edgeR
 
 
 #' DiffAnal.plot
@@ -208,6 +244,9 @@ setMethod(f="DiffAnal.plot",
 
             return(plots)
 })
+
+# CEtte méthode est aussi spécialisée pour les données RNAseq alors que le MAplot et le graphe de
+# de pvalue peut-être pour toutes les méthodes. En faite c'est le DGELRT. A voir limma en sortie.
 
 
 

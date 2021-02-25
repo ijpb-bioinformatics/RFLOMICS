@@ -28,6 +28,7 @@
 #' Design.refList <- c("WT","control","rep1")
 #' # Initialize an object of class ExpDesign
 #' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.refList, typeList = Design.typeList)
+#' class(Design.obj)
 #' @name ExpDesign-class
 #' @rdname ExpDesign-class
 #' @exportClass ExpDesign
@@ -47,4 +48,5 @@
   )
 
 
+# peut-être mettre une formule dans Model.formula
 
