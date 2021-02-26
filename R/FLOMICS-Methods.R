@@ -1,5 +1,5 @@
 
-################# EXPERIMENTAL DESIGN SET UP #################
+################################## EXPERIMENTAL DESIGN SET UP #################
 
 
 ### ExpDesign CLASS Constructor
@@ -60,7 +60,7 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
 
 
 
-###### Method to check the completness of the design
+###### METHOD to check the completness of the ExpDesign
 
 
 #' @title CheckExpDesignCompleteness
@@ -146,15 +146,15 @@ setMethod(f="CheckExpDesignCompleteness",
 
 
 
-###### Method for obtaining the contrasts expression
+###### METHOD which generate the contrasts expression
 
 
 #' @title getExpressionContrast
-#' get simple, pairwise comparison and averaged expression contrast data frames, offer to the user the possibility to select for each type of contrast
+#' get simple, pairwise comparison and averaged expression contrast data frames, offer
+#' to the user the possibility to select for each type of contrast
 #' the contrast he want to keep and bind the selected expression contrast data frames
 #'
 #' @param model.formula
-#'
 #' @return An object of class [\code{\link{ExpDesign}}]
 #' @exportMethod getExpressionContrast
 #'
@@ -236,14 +236,18 @@ setMethod(f="getExpressionContrast",
           })
 
 
-###### Method for obtaining the contrast Matrix
+###### METHOD to obtain the Matrix of contrast with their names and coefficients
+
+#
+#
 
 #' @title getContrastMatrix
 #' define contrast matrix or contrast list with contrast name and contrast coefficients
 #'
-#' @param ExpDesign
-#' @param contrastList
-#' @return ExpDesign
+#' @param An object of class [\code{\link{ExpDesign}}]
+#' @param contrastList A vector of character of contrast
+#' @return An object of class [\code{\link{ExpDesign}}]
+#' @seealso getExpressionContrast
 #' @exportMethod getContrastMatrix
 #' @importFrom stats formula terms.formula
 #'
@@ -336,11 +340,10 @@ setMethod(f="getContrastMatrix",
 
 
 
+################################################### OMICS DATA MANAGMENT AND ANALYSIS #################
 
-################# OMICS DATA MANAGMENT AND ANALYSIS #################
 
-
-###### FlomicsMultiAssay Class Constructor for DATA MANAGMENT
+###### FlomicsMultiAssay CLASS Constructor for managing omics DATA and RESULTS
 
 
 #' @title FlomicsMultiAssay.constructor Constructor for the class [\code{\link{MultiAssayExperiment}}]
@@ -352,7 +355,7 @@ setMethod(f="getContrastMatrix",
 #' @details
 #' ## dataFile: the path to the omic data
 #' ## qcFile: the path to an optional quality check file
-#' ## omicType: the type of omic data ('RNA','','')
+#' ## omicType: Type of omic data type "None", "RNAseq", "proteomics" or "Metabolomics".
 #' @param Design An object of class [\code{\link{ExpDesign}}]
 #' @return An object of class [\code{\link{MultiAssayExperiment}}]
 #' @examples
@@ -382,6 +385,8 @@ setMethod(f="getContrastMatrix",
 #' @rdname FlomicsMultiAssay.constructor
 #' @export
 #'
+#'
+
 FlomicsMultiAssay.constructor <- function(inputs, Design){
 
   # if input == NULL
@@ -437,14 +442,14 @@ FlomicsMultiAssay.constructor <- function(inputs, Design){
 
 
 
-################## EXPLORATION OF VARIABILITY ##################################
+################################# EXPLORATION OF BIOLOGICAL AND TECHICAL VARIABILITY ##################################
 
 
-##### Statistical methods for exploring biological and technical variability
+##### Statistical METHODS for exploring biological and technical variability
 
 
 #' @title RunPCA
-#' This function performed a scaled principal component analysis omic data stored in an object of class [\code{\link{MultiAssayExperiment}]
+#' This function performed a scaled principal component analysis on omic data stored in an object of class [\code{\link{MultiAssayExperiment}]
 #' Results are stored in the metadata slot.
 #' @param object An object of class [\code{\link{MultiAssayExperiment}].
 #' @param data The name of the omic data for which the PCA plot has to be drawn.
@@ -475,13 +480,13 @@ setMethod(f="RunPCA",
           }
 )
 
-##### Graphical methods for exploring biological and technical variability
+##### Graphical METHODS for exploring biological and technical variability
 
 
 #' @title mvQCdesign
 #' mvQCdesign is for multivariate quality check of design. For each design factor (one color for each), and each PCA axis
-#' this function plot the coordinates of the sample (for one PCA axis) in an increasing order along the x-axis. It allows
-#' to have a quick view of the variability repartition.
+#' this function plot the coordinates of the sample in a PCA axis (y-axis) in an increasing order along the x-axis. It allows
+#' to have a quick view of the variability.
 #' @description
 #' @param object An object of class [\code{\link{MultiAssayExperiment}]
 #' @param data The name of the omic data for which the PCA plot has to be drawn
@@ -492,6 +497,7 @@ setMethod(f="RunPCA",
 #' @exportMethod mvQCdesign
 #'
 #' @rdname mvQCdesign
+
 setMethod(f="mvQCdesign",
           signature="MultiAssayExperiment",
           definition <- function(object, data, PCA=c("raw","norm"), axis=5, pngFile=NULL){
@@ -541,9 +547,9 @@ setMethod(f="mvQCdesign",
 
 
 #' @title mvQCdata
-#' mvQCdata is for multivariate quality check of data.
+#' mvQCdata is for multivariate quality check of metadata.
 #' This function helps to control if some experimental parameters given as metadata in input
-#' explain much variability than expected in the data or if they are cofused with biological one.
+#' explain much variability than expected in the data or if they effect could be confused with biological one.
 #' This function correlates quantitative variable describing technical aspect for each sample with
 #' their coordinate on the PCA axis.
 #' @details Experimental parameters could be:
@@ -595,9 +601,12 @@ setMethod(f="mvQCdata",
 
 
 #' @title abundanceBoxplot
+#' This function produce boxplots from raw and normalized data matrix. One color by level
+#' of combination factor. It allows to detect outlier samples and to see the normalization
+#' effect.
 #' @param object An object of class [\code{\link{MultiAssayExperiment}]
-#' @param dataType omic data type
-#' @param pngFile
+#' @param dataType omic data type: "None", "RNAseq", "proteomics" or "Metabolomics".
+#' @param pngFile The name of the png file for saving the plot.
 #' @exportMethod abundanceBoxplot
 #' @rdname abundanceBoxplot
 #'
@@ -790,7 +799,7 @@ setMethod(f= "FilterLowAbundance",
 
 #' @title RunNormalization
 #' @param object An object of class [\code{\link{MultiAssayExperiment}]
-#' @param data omic data type
+#' @param dataType omic data type "None", "RNAseq", "proteomics" or "Metabolomics".
 #' @param NormMethod normalisation methode
 #' @return MultiAssayExperiment
 #' @exportMethod RunNormalization
