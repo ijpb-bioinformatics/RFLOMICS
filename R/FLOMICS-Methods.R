@@ -60,16 +60,38 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
 
 
 
-###### Method for testing the completness of the design
+###### Method to check the completness of the design
 
 
 #' @title CheckExpDesignCompleteness
-#'
-#' @param ExpDesign
-#' @return list
+#' This method check the experimental design status and return a list of message resuming all checked status:
+#' ## does it have biological factor ?
+#' ## does it have replicat/batch factor ?
+#' ## does it have enough replicat/batch ? at least 3 are advised
+#' ## is the design completed ? presence of all possible combinations of levels for all factors
+#' ## is the design balanced ? presence of the same number of replicat for all possible combinations
+#' @param An object of class [\code{\link{ExpDesign-class}}]
+#' @return a named list of two objects
+#' @details
+#' ## count: a data.frame with the number of each possible combinations of levels for all factors.
+#' ## message: results of the check
+#' ### "true" :  false or "The experimental design is complete and balanced"
+#' ### "lowRep" :  false or "WARNING : 3 biological replicates are needed."
+#' ### "noCompl" : false or "ERROR : The experimental design is not complete."
+#' ### "noBalan" : warning or "WARNING : The experimental design is complete but not balanced."
+#' ### "noBio" : false or "ERROR : no bio factor !"
+#' ### "noBatch" : false or "ERROR : no replicat"
 #' @exportMethod CheckExpDesignCompleteness
-#'
 #' @examples
+#' Design.File <- read.table(file= "inst/ExamplesFiles/TP/experimental_design.txt",header = TRUE,row.names = 1, sep = "\t")
+#' # Define the type of each factor
+#' Design.typeList <- c("Bio","Bio","batch")
+#' # Define the reference modality for each factor
+#' Design.refList <- c("WT","control","rep1")
+#' # Initialize an object of class ExpDesign
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.refList, typeList = Design.typeList)
+#' CheckExpDesignCompleteness(Design.obj)
+
 setMethod(f="CheckExpDesignCompleteness",
           signature="ExpDesign",
           definition <- function(object){
@@ -763,6 +785,8 @@ setMethod(f= "FilterLowAbundance",
 
 
 ######### NORMALIZATION #################
+
+
 
 #' @title RunNormalization
 #' @param object An object of class [\code{\link{MultiAssayExperiment}]
