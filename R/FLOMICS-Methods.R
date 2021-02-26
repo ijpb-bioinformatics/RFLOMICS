@@ -759,7 +759,11 @@ setMethod(f= "barplotPCAnorm",
 #' @details
 #' ## NbConditions: keep gene if the NbOfsample_over_cpm >= NbConditions
 #' ## NbReplicates: keep gene if the NbOfsample_over_cpm >= min(NbReplicat)
-#' ## filterByExpr: the defualt filtering method implemented in the edgeR filterByExpr() function.
+#' ## filterByExpr: the default filtering method implemented in the edgeR filterByExpr() function.
+#'
+#' Filtered dataset is stored in the slot ...
+#' List of filtered features are stored in the slot ..
+#'
 #' @param object An object of class [\code{\link{MultiAssayExperiment}]
 #' @param Filter_Strategy The filtering strategy ("NbConditions" or "NbReplicates")
 #' @param CPM_Cutoff The CPM cutoff.
@@ -811,14 +815,19 @@ setMethod(f= "FilterLowAbundance",
 
 ######### NORMALIZATION #################
 
-
+# Function non generique pour les autres data
 
 #' @title RunNormalization
+#' This function performed a library size normalization. For RNAseq data, the TMM function is used.
+#' @details
+#' Normalized dataset is stored in the slot ...
+#' Coefficients of normalization are stored in the slot ..
 #' @param object An object of class [\code{\link{MultiAssayExperiment}]
-#' @param dataType omic data type "None", "RNAseq", "proteomics" or "Metabolomics".
-#' @param NormMethod normalisation methode
+#' @param data The name of the data set for which the normalization has to be performed.
+#' @param NormMethod Normalization method
 #' @return MultiAssayExperiment
 #' @exportMethod RunNormalization
+#' @seealso TMM.Normalization
 #' @examples
 #'
 setMethod(f="RunNormalization",
@@ -849,6 +858,9 @@ setMethod(f="RunNormalization",
 #' @details Three methods are available according to the type of object:
 #'  ## For RNAseq data: the lmfit function of edgeR
 #'  ## For Proteomic data: the lmFit function of limma
+#'
+#' Results dataset is stored in the slot ...
+#'
 #' @param An object of class [\code{\link{MultiAssayExperiment}]
 #' @param data The name of the omic data.
 #' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
