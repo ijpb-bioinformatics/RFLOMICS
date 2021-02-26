@@ -815,6 +815,8 @@ setMethod(f= "FilterLowAbundance",
 
 ######### NORMALIZATION #################
 
+#### METHOD to normalize data
+
 # Function non generique pour les autres data
 
 #' @title RunNormalization
@@ -850,6 +852,8 @@ setMethod(f="RunNormalization",
 
 
 ###### Statistical METHOD
+
+## METHOD to perform differential analysis
 
 #' @title RunDiffAnalysis
 #' @description This is an interface method which run a differential analysis method on omic datasets stored in an object of class [\code{\link{MultiAssayExperiment}].
@@ -930,6 +934,8 @@ setMethod(f="RunDiffAnalysis",
 
 
 ###### Graphical METHOD
+
+## Method to plot results of a differential analysis
 
 #' @title DiffAnal.plot
 #' @description
