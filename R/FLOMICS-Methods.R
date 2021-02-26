@@ -654,16 +654,20 @@ setMethod(f= "abundanceBoxplot",
           }
 )
 
+# Pas sur pour l'argument condition ..
 
 #' @title plotPCAnorm
-#'
+#' This function plot the factorial map from a PCA object stored
+#' in a [\code{\link{MultiAssayExperiment}] object. By default, samples are
+#' colored by groups (all combinations of level's factor)
 #' @param object An object of class [\code{\link{MultiAssayExperiment}]
-#' @param condition
-#' @param color color palette
-#'
+#' @param data The name of the omic data for which the PCA plot has to be drawn.
+#' @param PCA This argument indicates whether the scaled PCA has to be performed on raw ("raw") or normalized ("norm") data.
+#' @param PCs A vector giving the two axis that have to be drawn for the factorial map
+#' @param condition All combination of level's factor
+#' @param pngFile The name of the png file for saving the plot.
 #' @return
 #' @exportMethod plotPCAnorm
-#'
 #' @examples
 setMethod(f= "plotPCAnorm",
           signature = "MultiAssayExperiment",
@@ -738,18 +742,30 @@ setMethod(f= "barplotPCAnorm",
 
 
 
-####################### FILTER DATA #################
+########################################## FILTER DATA #################
 
-#### method to filter data
+#### METHOD to filter data
+
+# Cette method est propre au RNASEQ => Est-ce que c'est vraiment ce que l'on souhaite ?
+# Plutot qu'une fonction interface pour tous les omics ?
+# Pourquoi ne pas avoir utilisée directement la fonction de edgeR ?
 
 #' @title FilterLowAbundance
-#'
+#' This function aims at filtering the count data matrix of an omic of type "RNAseq".
+#' By defaulft, gene/transcrit with 0 count are removed from the data. Then the function
+#' compute the count per million or read (CPM) for each gene. For each gene, this function
+#' count the number of sample which are over the CPM_cutoff (NbOfsample_over_cpm).
+#' Two filtering strategies:
+#' @details
+#' ## NbConditions: keep gene if the NbOfsample_over_cpm >= NbConditions
+#' ## NbReplicates: keep gene if the NbOfsample_over_cpm >= min(NbReplicat)
+#' ## filterByExpr: the defualt filtering method implemented in the edgeR filterByExpr() function.
 #' @param object An object of class [\code{\link{MultiAssayExperiment}]
-#' @param threshold
-#'
+#' @param Filter_Strategy The filtering strategy ("NbConditions" or "NbReplicates")
+#' @param CPM_Cutoff The CPM cutoff.
 #' @return MultiAssayExperiment
 #' @exportMethod FilterLowAbundance
-#'
+#' @seealso edgeR::filterByExpr
 #' @examples
 setMethod(f= "FilterLowAbundance",
           signature = "MultiAssayExperiment",
