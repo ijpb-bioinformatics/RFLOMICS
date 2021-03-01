@@ -16,13 +16,14 @@
 #' are required ("Bio" or "batch")
 #' @return An object of class [\code{\link{ExpDesign-class}}]
 #' @examples
-#' Design.File <- read.table(file= "inst/ExamplesFiles/TP/experimental_design.txt",header = TRUE,row.names = 1, sep = "\t")
+#' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""),header = TRUE,row.names = 1, sep = "\t")
 #' # Define the type of each factor
 #' Design.typeList <- c("Bio","Bio","batch")
 #' # Define the reference modality for each factor
 #' Design.refList <- c("WT","control","rep1")
 #' # Initialize an object of class ExpDesign
-#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.refList, typeList = Design.typeList)
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name",
+#' refList = Design.refList, typeList = Design.typeList)
 #' @name ExpDesign-Constructor
 #' @rdname ExpDesign-Constructor
 #' @export
@@ -65,31 +66,36 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
 
 #' @title CheckExpDesignCompleteness
 #' This method check the experimental design status and return a list of message resuming all checked status:
-#' ## does it have biological factor ?
-#' ## does it have replicat/batch factor ?
-#' ## does it have enough replicat/batch ? at least 3 are advised
-#' ## is the design completed ? presence of all possible combinations of levels for all factors
-#' ## is the design balanced ? presence of the same number of replicat for all possible combinations
+#' \itemize{
+#'  \item{does it have biological factor ?}
+#'  \item{does it have replicat/batch factor ?}
+#'  \item{does it have enough replicat/batch ? at least 3 are advised}
+#'  \item{is the design completed ? presence of all possible combinations of levels for all factors}
+#'  \item{is the design balanced ? presence of the same number of replicat for all possible combinations}
+#'  }
 #' @param An object of class [\code{\link{ExpDesign-class}}]
 #' @return a named list of two objects
 #' @details
-#' ## count: a data.frame with the number of each possible combinations of levels for all factors.
-#' ## message: results of the check
-#' ### "true" :  false or "The experimental design is complete and balanced"
-#' ### "lowRep" :  false or "WARNING : 3 biological replicates are needed."
-#' ### "noCompl" : false or "ERROR : The experimental design is not complete."
-#' ### "noBalan" : warning or "WARNING : The experimental design is complete but not balanced."
-#' ### "noBio" : false or "ERROR : no bio factor !"
-#' ### "noBatch" : false or "ERROR : no replicat"
+#' \itemize{
+#' \item{"count:"}{ a data.frame with the number of each possible combinations of levels for all factors.}
+#'  \item{"message:"}{ results of the check}
+#'  \item{"true" :"}{  false or "The experimental design is complete and balanced}
+#'  \item{"lowRep" :"}{  false or "WARNING : 3 biological replicates are needed.}
+#'  \item{"noCompl" :"}{ false or "ERROR : The experimental design is not complete.}
+#'  \item{"noBalan" :"}{ warning or "WARNING : The experimental design is complete but not balanced.}
+#'  \item{"noBio" :"}{ false or "ERROR : no bio factor !}
+#'  \item{""noBatch":"}{ false or "ERROR : no replicat}
+#'  }
 #' @exportMethod CheckExpDesignCompleteness
 #' @examples
-#' Design.File <- read.table(file= "inst/ExamplesFiles/TP/experimental_design.txt",header = TRUE,row.names = 1, sep = "\t")
+#' Design.File <- read.table(file= paste(path.package("RFLOMICS"), "/ExamplesFiles/TP/experimental_design.txt",sep=""),header = TRUE,row.names = 1, sep = "\t")
 #' # Define the type of each factor
 #' Design.typeList <- c("Bio","Bio","batch")
 #' # Define the reference modality for each factor
 #' Design.refList <- c("WT","control","rep1")
 #' # Initialize an object of class ExpDesign
-#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.refList, typeList = Design.typeList)
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File,
+#' projectName = "Design.Name", refList = Design.refList, typeList = Design.typeList)
 #' CheckExpDesignCompleteness(Design.obj)
 
 setMethod(f="CheckExpDesignCompleteness",
@@ -154,12 +160,12 @@ setMethod(f="CheckExpDesignCompleteness",
 #' to the user the possibility to select for each type of contrast
 #' the contrast he want to keep and bind the selected expression contrast data frames
 #'
-#' @param model.formula
-#' @return An object of class [\code{\link{ExpDesign}}]
+#' @param model.formula a model formula
+#' @return An object of class [\code{\link{ExpDesign-class}}]
 #' @exportMethod getExpressionContrast
 #'
 #' @examples
-#' #' Design.File <- read.table(file= "inst/ExamplesFiles/TP/experimental_design.txt",header = TRUE,row.names = 1, sep = "\t")
+#' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""), header = TRUE,row.names = 1, sep = "\t")
 #' # Define the type of each factor
 #' Design.Factors.Type <- c("Bio","Bio","batch")
 #'
@@ -167,7 +173,8 @@ setMethod(f="CheckExpDesignCompleteness",
 #' Design.Factors.Ref <- c("WT","control","rep1")
 #'
 #' # Initialize an object of class ExpDesign
-#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.Factors.Ref, typeList = Design.Factors.Type)
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.Factors.Ref,
+#' typeList = Design.Factors.Type)
 #' Design.Factors.Name <- names(Design.File)
 #' # Set the model formulae
 #' Design.formulae <- GetModelFormulae(Factors.Name = Design.Factors.Name,Factors.Type=Design.Factors.Type)
@@ -244,9 +251,9 @@ setMethod(f="getExpressionContrast",
 #' @title getContrastMatrix
 #' define contrast matrix or contrast list with contrast name and contrast coefficients
 #'
-#' @param An object of class [\code{\link{ExpDesign}}]
+#' @param An object of class [\code{\link{ExpDesign-class}}]
 #' @param contrastList A vector of character of contrast
-#' @return An object of class [\code{\link{ExpDesign}}]
+#' @return An object of class [\code{\link{ExpDesign-class}}]
 #' @seealso getExpressionContrast
 #' @exportMethod getContrastMatrix
 #' @importFrom stats formula terms.formula
@@ -346,27 +353,30 @@ setMethod(f="getContrastMatrix",
 ###### FlomicsMultiAssay CLASS Constructor for managing omics DATA and RESULTS
 
 
-#' @title FlomicsMultiAssay.constructor Constructor for the class [\code{\link{MultiAssayExperiment}}]
+#' @title FlomicsMultiAssay.constructor Constructor for the class [\code{\link{MultiAssayExperiment-class}}]
 #' @description
-#' This function initialize an object of class [\code{\link{MultiAssayExperiment}}]
-#' from a list of omics data and an object of class [\code{\link{ExpDesign}}].
+#' This function initialize an object of class [\code{\link{MultiAssayExperiment-class}}]
+#' from a list of omics data and an object of class [\code{\link{ExpDesign-class}}].
 #' @param inputs A named list of omic dataset. Names must refer to the name of the omic dataset.
 #' An omics dataset must be itself a list of three objects:
 #' @details
-#' ## dataFile: the path to the omic data
-#' ## qcFile: the path to an optional quality check file
-#' ## omicType: Type of omic data type "None", "RNAseq", "proteomics" or "Metabolomics".
-#' @param Design An object of class [\code{\link{ExpDesign}}]
-#' @return An object of class [\code{\link{MultiAssayExperiment}}]
+#' \itemize{
+#' \item{dataFile:}{the path to the omic data}
+#' \item{qcFile:}{the path to an optional quality check file}
+#' \item{omicType:}{Type of omic data type "None", "RNAseq", "proteomics" or "Metabolomics".}
+#' }
+#' @param Design An object of class [\code{\link{ExpDesign-class}}]
+#' @return An object of class [\code{\link{MultiAssayExperiment-class}}]
 #' @examples
-#' Design.File <- read.table(file= "inst/ExamplesFiles/TP/experimental_design.txt",header = TRUE,row.names = 1, sep = "\t")
+#' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""),header = TRUE,row.names = 1, sep = "\t")
 #' # Define the type of each factor
 #' Design.Factors.Type <- c("Bio","Bio","batch")
 #' # Define the reference modality for each factor
 #' Design.Factors.Ref <- c("WT","control","rep1")
 #'
 #' # Initialize an object of class ExpDesign
-#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.Factors.Ref, typeList = Design.Factors.Type)
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.Factors.Ref,
+#'  typeList = Design.Factors.Type)
 #' Design.Factors.Name <- names(Design.File)
 #' Design.formulae <- GetModelFormulae(Factors.Name = Design.Factors.Name,Factors.Type=Design.Factors.Type)
 #' Design.formulae[[1]]
@@ -377,8 +387,8 @@ setMethod(f="getContrastMatrix",
 #' Design.obj <- getContrastMatrix(object = Design.obj, contrastList = unlist(Design.contrastList))
 #'
 #'  # Create a list of datasets
-#' ListofData <- list("RNAseq1"=list("dataFile"="inst/ExamplesFiles/TP/rnaseq_gene_counts.txt",
-#' "qcFile"="inst/ExamplesFiles/TP/rnaseq_bioinfo_QC.txt"), "omicType"="RNA"))
+#' ListofData <- list("RNAseq1"=list("dataFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_gene_counts.txt",sep=""),
+#' "qcFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_bioinfo_QC.txt",sep=""), "omicType"="RNA"))
 #' FlomicsMultiAssay.constructor(inputs = ListofData, Design=Design.obj)
 #'
 #' @name FlomicsMultiAssay.constructor
@@ -449,9 +459,10 @@ FlomicsMultiAssay.constructor <- function(inputs, Design){
 
 
 #' @title RunPCA
-#' This function performed a scaled principal component analysis on omic data stored in an object of class [\code{\link{MultiAssayExperiment}]
+#' @description
+#' This function performed a scaled principal component analysis on omic data stored in an object of class [\code{\link{MultiAssayExperiment-class}]
 #' Results are stored in the metadata slot.
-#' @param object An object of class [\code{\link{MultiAssayExperiment}].
+#' @param object An object of class [\code{\link{MultiAssayExperiment-class}].
 #' @param data The name of the omic data for which the PCA plot has to be drawn.
 #' @param PCA This argument indicates whether the scaled PCA has to be performed on raw ("raw") or normalized ("norm") data.
 #' @return MultiAssayExperiment
@@ -484,10 +495,10 @@ setMethod(f="RunPCA",
 
 
 #' @title mvQCdesign
-#' mvQCdesign is for multivariate quality check of design. For each design factor (one color for each), and each PCA axis
-#' this function plot the coordinates of the sample in a PCA axis (y-axis) in an increasing order along the x-axis. It allows
-#' to have a quick view of the variability.
 #' @description
+#' mvQCdesign is for multivariate quality check of design. For each design factor (one color for each),
+#' and each PCA axis this function plot the coordinates of the sample in a PCA axis (y-axis) in an
+#' increasing order along the x-axis. It allows to have a quick view of the variability.
 #' @param object An object of class [\code{\link{MultiAssayExperiment}]
 #' @param data The name of the omic data for which the PCA plot has to be drawn
 #' @param axis The number of PCA axis to keep
@@ -547,15 +558,18 @@ setMethod(f="mvQCdesign",
 
 
 #' @title mvQCdata
+#' @description
 #' mvQCdata is for multivariate quality check of metadata.
 #' This function helps to control if some experimental parameters given as metadata in input
 #' explain much variability than expected in the data or if they effect could be confused with biological one.
 #' This function correlates quantitative variable describing technical aspect for each sample with
 #' their coordinate on the PCA axis.
 #' @details Experimental parameters could be:
-#'  ## Technical parameters from sample preparation as the day of the RNAseq library preparation
-#'  ## Statistics results after the bioinformatics workflow as the percent of sequences with primers or % of rrna in the library
-#' @param object An object of class [\code{\link{MultiAssayExperiment}]
+#' \itemize{
+#'  \item{Technical parameters from sample preparation as the day of the RNAseq library preparation}
+#'  \item{Statistics results after the bioinformatics workflow as the percent of sequences with primers or % of rrna in the library}
+#'  }
+#' @param object An object of class [\code{\link{MultiAssayExperiment-class}]
 #' @param data The name of the omic data for which the PCA plot has to be drawn
 #' @param axis The number of PCA axis to keep
 #' @param PCA This argument indicates which type of PCA results to take: on raw ("raw") or normalized ("norm") data.
@@ -601,12 +615,13 @@ setMethod(f="mvQCdata",
 
 
 #' @title abundanceBoxplot
+#' @description
 #' This function produce boxplots from raw and normalized data matrix. One color by level
 #' of combination factor. It allows to detect outlier samples and to see the normalization
 #' effect.
-#' @param object An object of class [\code{\link{MultiAssayExperiment}]
-#' @param dataType omic data type: "None", "RNAseq", "proteomics" or "Metabolomics".
-#' @param pngFile The name of the png file for saving the plot.
+#' @param object An object of class [\code{\link{MultiAssayExperiment-class}]
+#' @param dataType omic data type: [\sQuote{None}], [\sQuote{RNAseq}], [\sQuote{proteomics}] or [\sQuote{Metabolomics}].
+#' @param pngFile NULL or a name of the png file for saving the plot.
 #' @exportMethod abundanceBoxplot
 #' @rdname abundanceBoxplot
 #'
@@ -657,12 +672,13 @@ setMethod(f= "abundanceBoxplot",
 # Pas sur pour l'argument condition ..
 
 #' @title plotPCAnorm
+#' @description
 #' This function plot the factorial map from a PCA object stored
-#' in a [\code{\link{MultiAssayExperiment}] object. By default, samples are
+#' in a [\code{\link{MultiAssayExperiment-class}] object. By default, samples are
 #' colored by groups (all combinations of level's factor)
-#' @param object An object of class [\code{\link{MultiAssayExperiment}]
+#' @param object An object of class [\code{\link{MultiAssayExperiment-class}]
 #' @param data The name of the omic data for which the PCA plot has to be drawn.
-#' @param PCA This argument indicates whether the scaled PCA has to be performed on raw ("raw") or normalized ("norm") data.
+#' @param PCA This argument indicates whether the scaled PCA has to be performed on raw [\sQuote{raw}] or normalized [\sQuote{norm}] data.
 #' @param PCs A vector giving the two axis that have to be drawn for the factorial map
 #' @param condition All combination of level's factor
 #' @param pngFile The name of the png file for saving the plot.
@@ -684,8 +700,8 @@ setMethod(f= "plotPCAnorm",
             score     <- object[[data]]@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
                          dplyr::mutate(samples=row.names(.)) %>% dplyr::full_join(., conditions, by="samples")
 
-            var1 <- round(object[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digit=3)
-            var2 <- round(object[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digit=3)
+            var1 <- round(object[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digits=3)
+            var2 <- round(object[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digits=3)
 
 
             p <- ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
@@ -709,7 +725,7 @@ setMethod(f= "plotPCAnorm",
 
 #' @title barplotPCAnorm
 #'
-#' @param object An object of class [\code{\link{MultiAssayExperiment}]
+#' @param object An object of class [\code{\link{MultiAssayExperiment-class}]
 #' @param condition
 #' @param colors color palette
 #'
@@ -757,10 +773,11 @@ setMethod(f= "barplotPCAnorm",
 #' count the number of sample which are over the CPM_cutoff (NbOfsample_over_cpm).
 #' Two filtering strategies:
 #' @details
-#' ## NbConditions: keep gene if the NbOfsample_over_cpm >= NbConditions
-#' ## NbReplicates: keep gene if the NbOfsample_over_cpm >= min(NbReplicat)
-#' ## filterByExpr: the default filtering method implemented in the edgeR filterByExpr() function.
-#'
+#'  \itemize{
+#' \item{NbConditions:}{keep gene if the NbOfsample_over_cpm >= NbConditions}
+#' \item{NbReplicates:}{keep gene if the NbOfsample_over_cpm >= min(NbReplicat)}
+#' \item{filterByExpr:}{the default filtering method implemented in the edgeR filterByExpr() function.}
+#' }
 #' Filtered dataset is stored in the slot ...
 #' List of filtered features are stored in the slot ..
 #'
@@ -856,10 +873,12 @@ setMethod(f="RunNormalization",
 ## METHOD to perform differential analysis
 
 #' @title RunDiffAnalysis
-#' @description This is an interface method which run a differential analysis method on omic datasets stored in an object of class [\code{\link{MultiAssayExperiment}].
+#' @description This is an interface method which run a differential analysis method on
+#' omic datasets stored in an object of class [\code{\link{MultiAssayExperiment}].
 #' According to the type of omic and to a list of contrasts.
 #' The differential analysis method is applied to each contrasts (or hypothesis).
 #' @details Three methods are available according to the type of object:
+#'
 #'  ## For RNAseq data: the lmfit function of edgeR
 #'  ## For Proteomic data: the lmFit function of limma
 #'
@@ -939,8 +958,8 @@ setMethod(f="RunDiffAnalysis",
 
 #' @title DiffAnal.plot
 #' @description
-#' This is an interface method which draw a MAplot from the results of a differentiel analysis performed on omic datasets
-#' stored in an object of class [\code{\link{MultiAssayExperiment}]
+#' This is an interface method which draw a MAplot from the results of a differentiel analysis
+#' performed on omic datasets stored in an object of class [\code{\link{MultiAssayExperiment}]
 #' @param object An object of class [\code{\link{MultiAssayExperiment}]
 #' @param data The name of the omic data for which the MAplot has to be drawn
 #' @param hypothesis The hypothesis for which the MAplot has to be drawn
@@ -1009,7 +1028,11 @@ setMethod(f="runCoExpression",
 
             switch (tools,
               "coseq" = {
-                  coseq.res <- runCoseq(counts, K=K, iter=iter, model=model, transformation=transformation, normFactors=normFactors)
+                  coseq.res <- runCoseq(counts, K=K,
+                                        iter=iter,
+                                        model=model,
+                                        transformation=transformation,
+                                        normFactors=normFactors)
                   object@ExperimentList[[data]]@metadata$CoExpAnal[["coseqResults"]] <- coseq.res
 
                   # list of genes per cluster

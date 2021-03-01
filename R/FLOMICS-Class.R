@@ -20,13 +20,15 @@
 #' @slot Contrasts.Coeff An object of class data.frame giving the coefficient for each contrast.
 #' @return ExpDesign object
 #' @examples
-#' Design.File <- read.table(file= "inst/ExamplesFiles/TP/experimental_design.txt",header = TRUE,row.names = 1, sep = "\t")
+#' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""),
+#' header = TRUE,row.names = 1, sep = "\t")
 #' # Define the type of each factor
 #' Design.typeList <- c("Bio","Bio","batch")
 #' # Define the reference modality for each factor
 #' Design.refList <- c("WT","control","rep1")
 #' # Initialize an object of class ExpDesign
-#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.refList, typeList = Design.typeList)
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name",
+#' refList = Design.refList, typeList = Design.typeList)
 #' class(Design.obj)
 #' @name ExpDesign-class
 #' @rdname ExpDesign-class

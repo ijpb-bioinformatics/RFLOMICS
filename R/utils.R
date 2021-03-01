@@ -272,7 +272,6 @@ plotLibSize <- function(abundances, dataName, pngFile=NULL){
 #' @export
 #' @importFrom ggplot2 geom_density xlab
 #'
-#' @examples plotDistr(assay(MAE), "dataset1", "tmp/countDist.png")
 plotDistr <- function(abundances, dataName, pngFile=NULL){
 
   value <- samples <- NULL
