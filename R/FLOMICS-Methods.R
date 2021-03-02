@@ -1,18 +1,36 @@
-#' @title [\code{\link{ExpDesign-class}}] Class constructor
-#' @description
-#' @param ExpDesign data.frame with experimental design
-#' @param projectName
-#' @param refList vector with factor ref
-#' @param typeList vector with type of factor
+
+################################## EXPERIMENTAL DESIGN SET UP #################
+
+
+### ExpDesign CLASS Constructor
+
+#' @title Constructor for the class \code{\link{ExpDesign-class}}]
+#' @description This method initialize an object of class [\code{\link{ExpDesign-class}}].
+#' @param ExpDesign a data.frame. Row names give the name of each sample which has been to be construct
+#' by combining factor's modality separated by a "_" (EX: WT_treated_rep1). Column names give the name of
+#' an experimental factor which is a vector of character storing the factor modality for each sample.
+#' @param projectName a vector of string giving the name of the project.
+#' @param refList A list of string giving the reference modality for each factor.
+#' @param typeList A vector of string indicating the type of each experimental factor. Two types of effect
+#' are required ("Bio" or "batch")
 #' @return An object of class [\code{\link{ExpDesign-class}}]
+#' @examples
+#' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""),header = TRUE,row.names = 1, sep = "\t")
+#' # Define the type of each factor
+#' Design.typeList <- c("Bio","Bio","batch")
+#' # Define the reference modality for each factor
+#' Design.refList <- c("WT","control","rep1")
+#' # Initialize an object of class ExpDesign
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name",
+#' refList = Design.refList, typeList = Design.typeList)
 #' @name ExpDesign-Constructor
 #' @rdname ExpDesign-Constructor
 #' @export
 #' @importFrom stats relevel
 #' @importFrom methods new
-ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){ 
+ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
 
-  # List.Factors
+  # Create the List.Factors list with the choosen level of reference for each factor
   dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
 
     relevel(as.factor(ExpDesign[[i]]), ref=refList[[i]])
@@ -22,7 +40,7 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
   # Factors.Type
   names(typeList) <- names(ExpDesign)
 
-  # groups
+  # Create the groups data.frame
   groups <- tidyr::unite(as.data.frame(ExpDesign[typeList == "Bio"]), col="groups", sep="_", remove = TRUE) %>%
             dplyr::mutate(samples = rownames(.))
 
@@ -33,7 +51,6 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
                Factors.Type=typeList,
                Groups=groups,
                Model.formula=vector(),
-               Model.matrix=vector(),
                Contrasts.List=list(),
                Contrasts.Sel=data.frame(),
                Contrasts.Coeff=data.frame())
@@ -43,190 +60,456 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
 
 
 
-#' @title FlomicsMultiAssay.constructor Class constructor
-#' @description
-#' @param inputs list of input data
-#' @param Design ExpDesign class
-#' @return An object of class [\code{\link{MultiAssayExperiment}}]
+###### METHOD to check the completness of the ExpDesign
+
+
+#' @title CheckExpDesignCompleteness
+#' @description This method check some experimental design characteristics.
+#' \itemize{
+#'  \item{does it have biological factor ?}
+#'  \item{does it have replicat/batch factor ?}
+#'  \item{does it have enough replicat/batch ? at least 3 are advised}
+#'  \item{is the design completed ? presence of all possible combinations of levels for all factors}
+#'  \item{is the design balanced ? presence of the same number of replicat for all possible combinations}
+#'  }
+#'  Completed design and at least on biological and one batch factors are required for using RFLOMICS workflow.
+#' @param An object of class [\code{\link{ExpDesign-class}}]
+#' @return a named list of two objects
+#' \itemize{
+#' \item{"count:"}{ a data.frame with the number of each possible combinations of levels for all factors.}
+#' \item{"message:"}{ results of the check}
+#' \itemize{
+#'  \item{"true" :"}{  false or "The experimental design is complete and balanced}
+#'  \item{"lowRep" :"}{  false or "WARNING : 3 biological replicates are needed.}
+#'  \item{"noCompl" :"}{ false or "ERROR : The experimental design is not complete.}
+#'  \item{"noBalan" :"}{ warning or "WARNING : The experimental design is complete but not balanced.}
+#'  \item{"noBio" :"}{ false or "ERROR : no bio factor !}
+#'  \item{"noBatch :"}{ false or "ERROR : no replicat}
+#'  }
+#'  }
+#' @exportMethod CheckExpDesignCompleteness
+#' @examples
+#' Design.File <- read.table(file= paste(path.package("RFLOMICS"), "/ExamplesFiles/TP/experimental_design.txt",sep=""),header = TRUE,row.names = 1, sep = "\t")
+#' # Define the type of each factor
+#' Design.typeList <- c("Bio","Bio","batch")
+#' # Define the reference modality for each factor
+#' Design.refList <- c("WT","control","rep1")
+#' # Initialize an object of class ExpDesign
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File,
+#' projectName = "Design.Name", refList = Design.refList, typeList = Design.typeList)
+#' CheckExpDesignCompleteness(Design.obj)
+
+setMethod(f="CheckExpDesignCompleteness",
+          signature="ExpDesign",
+          definition <- function(object){
+
+            # output list
+            output <- list()
+
+            # check presence of bio factors
+            if (! "Bio" %in% object@Factors.Type){
+
+              message <- "noBio"
+
+              group_count  <- object@List.Factors[object@Factors.Type == "batch"] %>% as.data.frame() %>% table() %>% as.data.frame()
+              names(group_count)[names(group_count) == "Freq"] <- "Count"
+              output[["count"]]   <- group_count
+
+            }else{
+
+              # count occurence of bio conditions
+              group_count  <- object@List.Factors[object@Factors.Type == "Bio"] %>% as.data.frame() %>% table() %>% as.data.frame()
+              names(group_count)[names(group_count) == "Freq"] <- "Count"
+
+              output[["count"]]   <- group_count
+
+              # check presence of relicat / batch
+              # check if design is complete
+              # check if design is balanced
+              # check nbr of replicats
+
+              message <- dplyr::if_else(! "batch" %in% object@Factors.Type , "noBatch",
+                                        dplyr::if_else(0 %in% group_count$Count ,   "noCompl",
+                                                       dplyr::if_else(length(unique(group_count$Count)) != 1, "noBalan",
+                                                                      dplyr::if_else(group_count$Count[1] < 3, "lowRep", "true"))))
+
+            }
+
+
+            # switch pour message complet
+            output[["message"]] <- switch(message ,
+                                          "true"       = { c("true",    "The experimental design is complete and balanced.") },
+                                          "lowRep"     = { c("warning", "WARNING : 3 biological replicates are needed.") },
+                                          "noCompl"    = { c("false",   "ERROR : The experimental design is not complete.") },
+                                          "noBalan"    = { c("warning", "WARNING : The experimental design is complete but not balanced.") },
+
+                                          "noBio"      = { c("false",   "ERROR : no bio factor !") },
+                                          "noBatch"    = { c("false",   "ERROR : no replicat") }
+            )
+
+
+            return(output)
+          })
+
+
+
+###### METHOD which generate the contrasts expression
+
+
+#' @title getExpressionContrast
+#' @description This function allows, from a model formulae, to give the expression contrast data frames.
+#' Three types of contrasts are expressed:
+#' \itemize{
+#' \item{simple}
+#' \item{pairwise comparison}
+#' \item{averaged expression}
+#' }
+#' @param model.formula a model formula
+#' @return An object of class [\code{\link{ExpDesign-class}}]
+#' @exportMethod getExpressionContrast
+#'
+#' @examples
+#' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""), header = TRUE,row.names = 1, sep = "\t")
+#' # Define the type of each factor
+#' Design.Factors.Type <- c("Bio","Bio","batch")
+#'
+#' # Define the reference modality for each factor
+#' Design.Factors.Ref <- c("WT","control","rep1")
+#'
+#' # Initialize an object of class ExpDesign
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.Factors.Ref,
+#' typeList = Design.Factors.Type)
+#' Design.Factors.Name <- names(Design.File)
+#' # Set the model formulae
+#' Design.formulae <- GetModelFormulae(Factors.Name = Design.Factors.Name,Factors.Type=Design.Factors.Type)
+#' Design.formulae[[1]]
+#'
+#' # Obtained the Expression of Contrasts
+#' Design.obj <- getExpressionContrast(object = Design.obj, model.formula = names(Design.formulae[1]))
+#'
+#' @author Christine Paysant-Le Roux
+#'
+setMethod(f="getExpressionContrast",
+          signature="ExpDesign",
+          definition <- function(object, model.formula){
+
+            # model formula
+            modelFormula <- formula(model.formula)
+
+            #Design@Model.formula <- formula(model.formula)
+            object@Model.formula <- model.formula
+
+            # bio factor list in formulat
+            labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
+
+            FactorBioInDesign <- intersect(names(object@Factors.Type[object@Factors.Type == "Bio"]), labelsIntoDesign)
+
+            #BioFactors <- object@List.Factors[FactorBioInDesign]
+
+            treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(object@List.Factors[[x]]), sep="")})
+            names(treatmentFactorsList) <- FactorBioInDesign
+
+            interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
+            # define all simple contrasts pairwise comparisons
+            allSimpleContrast_df <- defineAllSimpleContrasts(treatmentFactorsList)
+            listOfContrastsDF <- list(simple = allSimpleContrast_df)
+
+            # define all simples contrast means
+            # exists("allSimpleContrast_df", inherits = FALSE)
+            if(length(treatmentFactorsList) != 1){
+              allAveragedContrasts_df <- define_averaged_contrasts (allSimpleContrast_df)
+              listOfContrastsDF[["averaged"]] <- allAveragedContrasts_df
+            }
+
+            # define all interaction contrasts
+            if(length(treatmentFactorsList) != 1){
+              if(interactionPresent){
+                labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
+                labelOrder <- attr(terms.formula(modelFormula), "order")
+                twoWayInteractionInDesign <- labelsIntoDesign[which(labelOrder==2)]
+                groupInteractionToKeep <- gsub(":", " vs ", twoWayInteractionInDesign)
+                allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList, groupInteractionToKeep)
+
+                listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
+              }
+              #allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList)
+              #listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
+            }
+            # choose the contrasts and rbind data frames of contrasts
+            #selectedContrasts <- returnSelectedContrasts(listOfContrastsDF)
+
+            # replace interactive selection of contrasts by return all contrasts -> shiny
+            object@Contrasts.List  <- listOfContrastsDF
+            object@Contrasts.Coeff <- data.frame()
+            object@Contrasts.Sel   <- data.frame()
+
+            return(object)
+          })
+
+
+###### METHOD to obtain the Matrix of contrast with their names and coefficients
+
+#
+#
+
+#' @title getContrastMatrix
+#' @description Define contrast matrix or contrast list with contrast name and contrast coefficients
+#' @param An object of class [\code{\link{ExpDesign-class}}]
+#' @param contrastList A vector of character of contrast
+#' @return An object of class [\code{\link{ExpDesign-class}}]
+#' @seealso getExpressionContrast
+#' @exportMethod getContrastMatrix
+#' @importFrom stats formula terms.formula
+#'
+#' @author Christine Paysant-Le Roux
+setMethod(f="getContrastMatrix",
+          signature="ExpDesign",
+          definition <- function(object, contrastList){
+
+            contrast <- contrastName <- type <- groupComparison <- NULL
+
+            contrast.sel.list <- list()
+            contrast.sel.list <- lapply(names(object@Contrasts.List), function(contrastType) {
+
+              tmp <- object@Contrasts.List[[contrastType]] %>% dplyr::filter(contrast %in% contrastList) %>%
+                dplyr::select(contrast, contrastName, type, groupComparison)
+              return(tmp)
+            })
+            object@Contrasts.Sel <- contrast.sel.list %>% purrr::reduce(rbind) %>% dplyr::mutate(tag = paste("H", 1:dim(.)[1], sep=""))
+
+
+            sampleData <-  object@ExpDesign
+            selectedContrasts <- object@Contrasts.Sel$contrast
+
+            modelFormula <- formula(object@Model.formula)
+            # bio factor list in formulat
+            labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
+            FactorBioInDesign <- intersect(names(object@Factors.Type[object@Factors.Type == "Bio"]), labelsIntoDesign)
+
+            #BioFactors <- object@List.Factors[FactorBioInDesign]
+
+            treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(object@List.Factors[[x]]), sep="")})
+            names(treatmentFactorsList) <- FactorBioInDesign
+
+            treatmentCondenv <- new.env()
+
+            interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
+            isThreeOrderInteraction <- any(attr(terms.formula(modelFormula),"order") == 3)
+
+            # get model matrix
+            modelMatrix <- stats::model.matrix(modelFormula, data = object@List.Factors %>% as.data.frame())
+            colnames(modelMatrix)[colnames(modelMatrix) == "(Intercept)"] <- "Intercept"
+            # assign treatment conditions(group) to boolean vectors according to the design model matrix
+            #treatmentCondenv <- new.env()
+            assignVectorToGroups(treatmentFactorsList = treatmentFactorsList,
+                                 modelMatrix = modelMatrix,
+                                 interactionPresent = interactionPresent,
+                                 isThreeOrderInteraction = isThreeOrderInteraction,
+                                 treatmentCondenv = treatmentCondenv)
+            # get the coefficient vector associated with each selected contrast
+            # contrast <- allSimpleContrast_df$contrast[1]
+            colnamesGLMdesign <- colnames(modelMatrix)
+
+
+            #coefficientsMatrix <- sapply(selectedContrasts$contrast, function(x) returnContrastCoefficients(x, colnamesGLMdesign, treatmentCondenv = treatmentCondenv))
+            coefficientsMatrix <- sapply(selectedContrasts, function(x) returnContrastCoefficients(x, colnamesGLMdesign, treatmentCondenv = treatmentCondenv))
+
+            #coefficientsMatrix <- MASS::as.fractions(coefficientsMatrix)
+            colnames(coefficientsMatrix) <- selectedContrasts
+
+            rownames(coefficientsMatrix) <- colnamesGLMdesign
+            contrastMatrix <- as.data.frame(t(coefficientsMatrix))
+            #contrastMatrix <- as_tibble(t(coefficientsMatrix)) %>%
+            #dplyr::mutate(contrast = selectedContrasts, .before = "Intercept") %>%
+            #dplyr::mutate(type = selectedContrasts$type, .after = "contrast")
+            #contrastMatrix <- MASS::as.fractions(contrastMatrix)
+            #contrastMatrix
+            # contrastList <- as.list(as.data.frame(coefficientsMatrix))
+
+            object@Contrasts.Coeff <- contrastMatrix
+            return(object)
+          })
+
+#coefmatrices <- sapply(unique(names(coefvectors)),
+#                       function(n) as.matrix(as.data.frame(coefvectors[names(coefvectors)==n])),
+#                       simplify=FALSE, USE.NAMES=TRUE)
+
+#Contrasts = list(D1vsD2          = c(1,  1, -1, -1,  0),
+#                 C1vsC2          = c(1, -1,  1, -1,  0),
+#                 InteractionDC   = c(1, -1, -1,  1,  0),
+#                 C1vsC2forD1only = c(1, -1,  0,  0,  0),
+#                 C1vsC2forD2only = c(0,  0,  1, -1,  0),
+#                 TreatsvsControl = c(1,  1,  1,  1, -4),
+#                 T1vsC           = c(1,  0,  0,  0, -1),
+#                 T2vsC           = c(0,  1,  0,  0, -1),
+#                 T3vsC           = c(0,  0,  1,  0, -1),
+#                 T4vsC           = c(0,  0,  0,  1, -1))
+
+# contrast From emmeans v1.3.5 by Russell Lenth 16th Percentile Contrasts and linear functions of EMMs
+# coef returns a data.frame containing the object's grid, along with columns named c.1, c.2, ... containing the contrast coefficients.
+
+
+
+################################################### OMICS DATA MANAGMENT AND ANALYSIS #################
+
+
+###### FlomicsMultiAssay CLASS Constructor for managing omics DATA and RESULTS
+
+
+#' @title FlomicsMultiAssay.constructor Constructor for the class [\code{\link{MultiAssayExperiment-class}}]
+#' @description This function initializes an object of class [\code{\link{MultiAssayExperiment-class}}]
+#' from a list of omics data and an object of class [\code{\link{ExpDesign-class}}].
+#' @param inputs A named list of omic dataset. Names must refer to the name of the omic dataset.
+#' An omics dataset must be itself a list of three objects:
+#' \itemize{
+#' \item{dataFile:}{the path to the omic data}
+#' \item{qcFile:}{the path to an optional quality check file}
+#' \item{omicType:}{Type of omic data type "None", "RNAseq", "proteomics" or "Metabolomics".}
+#' }
+#' @param Design An object of class [\code{\link{ExpDesign-class}}]
+#' @return An object of class [\code{\link{MultiAssayExperiment-class}}]
+#' @examples
+#' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""),header = TRUE,row.names = 1, sep = "\t")
+#'
+#' # Define the type of each factor
+#' Design.Factors.Type <- c("Bio","Bio","batch")
+#'
+#' # Define the reference modality for each factor
+#' Design.Factors.Ref <- c("WT","control","rep1")
+#'
+#' # Initialize an object of class ExpDesign
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.Factors.Ref,
+#'  typeList = Design.Factors.Type)
+#' Design.Factors.Name <- names(Design.File)
+#' Design.formulae <- GetModelFormulae(Factors.Name = Design.Factors.Name,Factors.Type=Design.Factors.Type)
+#' Design.formulae[[1]]
+#' Design.obj <- getExpressionContrast(object = Design.obj, model.formula = names(Design.formulae[1]))
+#' Design.contrastList <- lapply(Design.obj@Contrasts.List, function(x) {
+#' return(x[1:2]$contrast)
+#' })
+#' Design.obj <- getContrastMatrix(object = Design.obj, contrastList = unlist(Design.contrastList))
+#'
+#'  # Create a list of datasets
+#' ListofData <- list("RNAseq1"=list("dataFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_gene_counts.txt",sep=""),
+#' "qcFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_bioinfo_QC.txt",sep=""), "omicType"="RNA"))
+#' FlomicsMultiAssay.constructor(inputs = ListofData, Design=Design.obj)
+#'
 #' @name FlomicsMultiAssay.constructor
 #' @rdname FlomicsMultiAssay.constructor
 #' @export
-FlomicsMultiAssay.constructor <- function(inputs, Design){ 
-  
- # if input == NULL
-  
+#'
+#'
+
+FlomicsMultiAssay.constructor <- function(inputs, Design){
+
+  # if input == NULL
+
   SummarizedExperimentList <- list()
   listmap  <- list()
   omicList <- list()
   k <- 0
   for (dataName in names(inputs)){
-  
-      k <- k+1
-    
-      ## construct SummarizedExperiment for each data
-      abundance <- read.table(inputs[[dataName]][["dataFile"]], header = TRUE, row.names = 1)
-      
-      if(!is.null(inputs[[dataName]][["qcFile"]])){
-        print("# ... metadata QC...")
-        QCmat <- read.table(inputs[[dataName]][["qcFile"]], header = TRUE)
-      }
-      else{
-        QCmat <- data.frame(primary = colnames(abundance),
-                            colname = colnames(abundance),
-                            stringsAsFactors = FALSE)
-      }
-      
-      SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays  = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
-                                                                   colData = QCmat)
-      
-      # metadata for sampleMap for MultiAssayExperiment
-      listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
-                                        colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
-                                        stringsAsFactors = FALSE)
-      
-      #
-      omicType <- inputs[[dataName]][["omicType"]]
-      
-      colnames <- c(names(omicList[[omicType]]), k)
-      omicList[[omicType]] <- c(omicList[[omicType]] ,dataName)
-      names(omicList[[omicType]]) <- colnames
-  
+
+    k <- k+1
+
+    ## construct SummarizedExperiment for each data
+    abundance <- read.table(inputs[[dataName]][["dataFile"]], header = TRUE, row.names = 1)
+
+    if(!is.null(inputs[[dataName]][["qcFile"]])){
+      print("# ... metadata QC...")
+      QCmat <- read.table(inputs[[dataName]][["qcFile"]], header = TRUE)
+    }
+    else{
+      QCmat <- data.frame(primary = colnames(abundance),
+                          colname = colnames(abundance),
+                          stringsAsFactors = FALSE)
+    }
+
+    SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays  = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
+                                                                                       colData = QCmat)
+
+    # metadata for sampleMap for MultiAssayExperiment
+    listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
+                                      colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
+                                      stringsAsFactors = FALSE)
+
+    #
+    omicType <- inputs[[dataName]][["omicType"]]
+
+    colnames <- c(names(omicList[[omicType]]), k)
+    omicList[[omicType]] <- c(omicList[[omicType]] ,dataName)
+    names(omicList[[omicType]]) <- colnames
+
   }
-  
+
   FlomicsMultiAssay <- MultiAssayExperiment::MultiAssayExperiment(experiments = SummarizedExperimentList,
-                                             colData     = Design@ExpDesign,
-                                             sampleMap   = MultiAssayExperiment::listToMap(listmap),
-                                             metadata    = list(design = Design,
-                                                                colDataStruc = c(n_dFac = dim(Design@ExpDesign)[2], n_qcFac = 0),
-                                                                omicList = omicList))
-  
+                                                                  colData     = Design@ExpDesign,
+                                                                  sampleMap   = MultiAssayExperiment::listToMap(listmap),
+                                                                  metadata    = list(design = Design,
+                                                                                     colDataStruc = c(n_dFac = dim(Design@ExpDesign)[2], n_qcFac = 0),
+                                                                                     omicList = omicList))
+
   return(FlomicsMultiAssay)
 }
 
 
 
-#' @title RunDiffAnalysis
-#' @param An object of class [\code{\link{MultiAssayExperiment}]
-#' @param data omic data type
-#' @param DiffMethod character vector ... Differential analysis method
-#' @param contrastList list of contrast to test
-#' @param FDR FDR threshold
-#' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
-#' @return MultiAssayExperiment
-#' @exportMethod RunDiffAnalysis
+
+################################# EXPLORATION OF BIOLOGICAL AND TECHICAL VARIABILITY ##################################
+
+
+##### Statistical METHODS for exploring biological and technical variability
+
+
+#' @title RunPCA
+#' @description This function performed a scaled principal component analysis on omic data stored in an object of class [\code{\link{MultiAssayExperiment-class}]
+#' Results are stored in the metadata slot.
+#' @param object An object of class [\code{\link{MultiAssayExperiment-class}].
+#' @param data The name of the omic data for which the PCA plot has to be drawn.
+#' @param PCA This argument indicates whether the scaled PCA has to be performed on raw ("raw") or normalized ("norm") data.
+#' @return An object of class \code{\link{MultiAssayExperiment}}
+#' @exportMethod RunPCA
 #' @examples
 #'
-setMethod(f="RunDiffAnalysis",
+setMethod(f="RunPCA",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, FDR = 0.05, contrastList, DiffAnalysisMethod, clustermq=FALSE){
+          definition <- function(object, data, PCA){
 
-            contrastName <- NULL 
-            
-            object@ExperimentList[[data]]@metadata$DiffExpAnal <- list()
+            if(PCA=="raw"){
+              pseudo <- log2(scale(MultiAssayExperiment::assay(object[[data]]),
+                                   center=FALSE)+1)
+            }
+            else if(PCA=="norm"){
+              pseudo <- log2(scale(MultiAssayExperiment::assay(object[[data]]),
+                                   center=FALSE,
+                                   scale=object[[data]]@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
+            }
 
-            Contrasts.Sel <- dplyr::filter(object@metadata$design@Contrasts.Sel, contrastName %in% contrastList)
-            object@ExperimentList[[data]]@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
-            object@ExperimentList[[data]]@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
-            object@ExperimentList[[data]]@metadata$DiffExpAnal[["FDR"]]       <- FDR
+            pca <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
 
-            # Run the Diff analysis and get the results as a list of object depending of the
-            ListOfDiffResults <- switch(DiffAnalysisMethod,
-                                     "edgeRglmfit"=edgeR.AnaDiff(object, data, clustermq)
-                                     )
+            object@ExperimentList[[data]]@metadata[["PCAlist"]][[PCA]]<- pca
 
-            # Set an AnaDiff object to
-            object@ExperimentList[[data]]@metadata$DiffExpAnal[["DGELRT"]] <- ListOfDiffResults
-
-            #
-            object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]] <- lapply(ListOfDiffResults, function(x){
-
-              
-              res<-edgeR::topTags(x, n = dim(x)[1])
-
-              DEGs<- res$table[res$table$FDR <= FDR,]
-              #DEGs<-res$table
-              return(DEGs)
-            })
-            names(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]]) <- names(ListOfDiffResults)
-
-            ## merge results in bin matrix
-            DEG_list <- lapply(1:length(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]]), function(x){
-
-              res <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]][[x]]
-              tmp <- data.frame(DEG = rownames(res), bin = rep(1,length(rownames(res))))
-              colnames(tmp) <- c("DEG", paste("H", x, sep=""))
-              return(tmp)
-            })
-            names(DEG_list) <- names(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]])
-            
-            object@ExperimentList[[data]]@metadata$DiffExpAnal[["mergeDGE"]] <- DEG_list %>% purrr::reduce(dplyr::full_join, by="DEG") %>% 
-              dplyr::mutate_at(.vars = 2:(length(DEG_list)+1), .funs = function(x){dplyr::if_else(is.na(x), 0, 1)}) %>% data.table::data.table()
-            
             return(object)
-          })
+          }
+)
+
+##### Graphical METHODS for exploring biological and technical variability
 
 
-
-
-#' DiffAnal.plot
-#'
-#' @param data 
-#' @param pngFile 
-#' @param FDRcutoff 
-#' @return plot
-#' @exportMethod DiffAnal.plot
-#' @export
-#'
+#' @title mvQCdesign
+#' @description mvQCdesign is for multivariate quality check of design. For each design factor (one color for each),
+#' and each PCA axis this function plot the coordinates of the sample in a PCA axis (y-axis) in an
+#' increasing order along the x-axis. It allows to have a quick view of the variability associated to each factor.
+#' @param object An object of class \code{\link{MultiAssayExperiment}}
+#' @param data The name of the omic data for which the PCA plot has to be drawn
+#' @param axis The number of PCA axis to keep
+#' @param PCA This argument indicates which PCA results to plot: raw ("raw") or normalised ("normalised")
+#' @param pngFile The name of the png file for saving the plot.
 #' @examples
-setMethod(f="DiffAnal.plot",
-          signature="MultiAssayExperiment",
-          definition <- function(object, data, hypothesis){
-            
-            plots <- list()
-            
-            res      <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["DGELRT"]][[hypothesis]]
-            resTable <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]][[hypothesis]]
-            FDR      <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["FDR"]]
-            
-            res.FDR <- edgeR::topTags(res, n = dim(res)[1])
-            plots[["MA.plot"]] <- MA.plot(data = res.FDR$table, FDRcutoff = FDR, pngFile =NULL)
-            
-            
-            plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable[resTable$FDR <= FDR,], pngFile =NULL)
-            
-            return(plots)
-})
-
-
-
-#' @title [\code{\link{DiffAnalysis-class}}] Class constructor
-#'
-#' @description
-#'
-#' @return An object of class [\code{\link{DiffAnalysis-class}}]
-#' @name DiffAnalysis-Constructor
-#' @rdname DiffAnalysis-Constructor
-#' @export
-DiffAnalysis <- function(){
-  .DiffAnalysis(
-    method="glmLRT",
-    ListOfDEResults=list(),
-    ListOfRawMethodResults=list()
-  )}
-
-
-#' @title Multivariate Quality Check
-#'
-#' @param MultiAssayExperiment an object of Class MultiAssayExperiment
-#' @param data data name
-#' @param axis The number of PCA axis
-#' @param PCA pca axis to plot
-#' @param pngFile plot file name to save
-
-#'
 #' @exportMethod mvQCdesign
 #'
 #' @rdname mvQCdesign
+
 setMethod(f="mvQCdesign",
           signature="MultiAssayExperiment",
           definition <- function(object, data, PCA=c("raw","norm"), axis=5, pngFile=NULL){
@@ -275,13 +558,21 @@ setMethod(f="mvQCdesign",
 })
 
 
-#' @title multivariate QC data
-#' @param MultiAssayExperiment an object of Class MultiAssayExperiment
-#' @param data data name
-#' @param axis The number of PCA axis
-#' @param PCA pca axis to plot
-#' @param pngFile plot file name to save
-#'
+#' @title mvQCdata
+#' @description mvQCdata is for multivariate quality check of metadata.
+#' This function helps to control if some experimental parameters given as metadata (numeric one) in input
+#' explain much variability than expected in the data or if their effect could be confused with biological one.
+#' This function correlates quantitative variable describing technical aspect for each sample with
+#' their coordinate on the PCA axis.
+#' \itemize{
+#' \item{Technical parameters from sample preparation as the day of the RNAseq library preparation}
+#' \item{Statistics results after the bioinformatics workflow as the percent of sequences with primers or % of rrna in the library}
+#'  }
+#' @param object An object of class [\code{\link{MultiAssayExperiment-class}]
+#' @param data The name of the omic data for which the PCA plot has to be drawn
+#' @param axis The number of PCA axis to keep
+#' @param PCA This argument indicates which type of PCA results to take: on raw ("raw") or normalized ("norm") data.
+#' @param pngFile The name of the png file for saving the plot.
 #' @exportMethod mvQCdata
 #' @rdname mvQCdata
 setMethod(f="mvQCdata",
@@ -323,9 +614,12 @@ setMethod(f="mvQCdata",
 
 
 #' @title abundanceBoxplot
-#' @param MultiAssayExperiment an object of Class MultiAssayExperiment
-#' @param dataType omic data type
-#' @param pngFile
+#' @description This function produces boxplots from raw and normalized data matrix. One color by level
+#' of combination factor. It allows to detect outlier samples and to see the normalization
+#' effect.
+#' @param object An object of class [\code{\link{MultiAssayExperiment-class}]
+#' @param dataType Omic data type: [\sQuote{None}], [\sQuote{RNAseq}], [\sQuote{proteomics}] or [\sQuote{Metabolomics}].
+#' @param pngFile NULL or a name of the png file for saving the plot.
 #' @exportMethod abundanceBoxplot
 #' @rdname abundanceBoxplot
 #'
@@ -334,7 +628,7 @@ setMethod(f= "abundanceBoxplot",
           definition <- function(object, dataType, pngFile=NULL){
 
             samples <- value <- NULL
-            
+
             # this function generate boxplot (abandance distribution) from raw data and normalized data
 
 
@@ -344,7 +638,7 @@ setMethod(f= "abundanceBoxplot",
                        tidyr::unite(col="groups", sep="_", remove = FALSE) %>% dplyr::mutate(samples=sample_names)
 
             # normalized data
-            
+
             if(! is.null(object[[dataType]]@metadata$Normalization)){
               pseudo  <- log2(scale(MultiAssayExperiment::assay(object[[dataType]]), center=FALSE,
                                     scale=object[[dataType]]@metadata$Normalization$coefNorm$norm.factors)+1) %>% reshape2::melt()
@@ -352,7 +646,7 @@ setMethod(f= "abundanceBoxplot",
             else{
               pseudo  <- log2(scale(MultiAssayExperiment::assay(object[[dataType]]), center=FALSE)+1) %>% reshape2::melt()
             }
-            
+
             colnames(pseudo) <- c("feature", "samples", "value")
             pseudo_bis <- dplyr::full_join(pseudo, groups, by="samples")
 
@@ -373,16 +667,20 @@ setMethod(f= "abundanceBoxplot",
           }
 )
 
+# Pas sur pour l'argument condition ..
 
 #' @title plotPCAnorm
-#'
-#' @param MultiAssayExperiment
-#' @param condition
-#' @param color color palette
-#'
+#' @description This function plot the factorial map from a PCA object stored
+#' in a [\code{\link{MultiAssayExperiment-class}] object. By default, samples are
+#' colored by groups (all combinations of level's factor)
+#' @param object An object of class [\code{\link{MultiAssayExperiment-class}]
+#' @param data The name of the omic data for which the PCA plot has to be drawn.
+#' @param PCA This argument indicates whether the scaled PCA has to be performed on raw [\sQuote{raw}] or normalized [\sQuote{norm}] data.
+#' @param PCs A vector giving the two axis that have to be drawn for the factorial map
+#' @param condition All combination of level's factor
+#' @param pngFile The name of the png file for saving the plot.
 #' @return
 #' @exportMethod plotPCAnorm
-#'
 #' @examples
 setMethod(f= "plotPCAnorm",
           signature = "MultiAssayExperiment",
@@ -399,8 +697,8 @@ setMethod(f= "plotPCAnorm",
             score     <- object[[data]]@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
                          dplyr::mutate(samples=row.names(.)) %>% dplyr::full_join(., conditions, by="samples")
 
-            var1 <- round(object[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digit=3)
-            var2 <- round(object[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digit=3)
+            var1 <- round(object[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digits=3)
+            var2 <- round(object[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digits=3)
 
 
             p <- ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
@@ -424,7 +722,7 @@ setMethod(f= "plotPCAnorm",
 
 #' @title barplotPCAnorm
 #'
-#' @param MultiAssayExperiment
+#' @param object An object of class [\code{\link{MultiAssayExperiment-class}]
 #' @param condition
 #' @param colors color palette
 #'
@@ -437,7 +735,7 @@ setMethod(f= "plotPCAnorm",
 setMethod(f= "barplotPCAnorm",
           signature = "MultiAssayExperiment",
           definition <- function(object, condition="samples"){
-            
+
             PCs <- value <- samples <- NULL
 
             col <- colorPlot(object@design, object@colData, condition=condition)
@@ -457,15 +755,39 @@ setMethod(f= "barplotPCAnorm",
 
 
 
+########################################## FILTER DATA #################
 
-#' FilterLowAbundance
-#'
-#' @param MultiAssayExperiment
-#' @param threshold
-#'
-#' @return MultiAssayExperiment
+#### METHOD to filter data
+
+# Cette method est propre au RNASEQ => Est-ce que c'est vraiment ce que l'on souhaite ?
+# Plutot qu'une fonction interface pour tous les omics ?
+# Pourquoi ne pas avoir utilisée directement la fonction de edgeR ?
+
+#' @title FilterLowAbundance
+#' @description This function aims at removing genes/transcript from the count data matrix of an omic of type "RNAseq".
+#' by applying filtering criterion described in reference.
+#' By defaulft, gene/transcript with 0 count are removed from the data. The function then
+#' computes the count per million or read (CPM) for each gene in each sample and gives by
+#' genes the number of sample(s) which are over the CPM_cutoff (NbOfsample_over_cpm).
+#' Then Two filtering strategies are proposed:
+#' \itemize{
+#' \item{NbConditions: }{keep gene if the NbOfsample_over_cpm >= NbConditions}
+#' \item{NbReplicates: }{keep gene if the NbOfsample_over_cpm >= min(NbReplicat)}
+#' \item{filterByExpr:} {the default filtering method implemented in the edgeR filterByExpr() function.}
+#' }
+#' @param object An object of class \code{\link{MultiAssayExperiment}}
+#' @param Filter_Strategy The filtering strategy ("NbConditions" or "NbReplicates")
+#' @param CPM_Cutoff The CPM cutoff.
+#' @return An object of class \code{\link{MultiAssayExperiment}}
+#' @details
+#' Filtered dataset is stored in the ExperimentList slot of the \code{\link{MultiAssayExperiment}} object
+#' as a List named (DataName.filtred).
+#' List of filtered features are stored as a named list ("FilteredFeature") in the metadata slot of a
+#' given data set, stored itself in the ExperimentList slot of a \code{\link{MultiAssayExperiment}} object.
+#' @references
+#' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod FilterLowAbundance
-#'
+#' @seealso edgeR::filterByExpr
 #' @examples
 setMethod(f= "FilterLowAbundance",
           signature = "MultiAssayExperiment",
@@ -474,25 +796,23 @@ setMethod(f= "FilterLowAbundance",
             objectFilt <- object[[data]]
 
             assayFilt  <- MultiAssayExperiment::assay(objectFilt)
-            
+
             ## nbr of genes with 0 count
             genes_flt0  <- objectFilt[rowSums(assayFilt) <= 0, ]@NAMES
-            
-            ## remove 0 count 
+
+            ## remove 0 count
             objectFilt  <- objectFilt[rowSums(assayFilt)  > 0, ]
             assayFilt   <- MultiAssayExperiment::assay(objectFilt)
-           
-            
-            
+
             ## filter cpm
             NbReplicate <- table(tidyr::unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_"))
             NbConditions <- unique(tidyr::unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_"))$groups %>% length()
-            
+
             switch(Filter_Strategy,
                    "NbConditions" = { keep <- rowSums(edgeR::cpm(assayFilt) >= CPM_Cutoff) >=  NbConditions },
                    "NbReplicates" = { keep <- rowSums(edgeR::cpm(assayFilt) >= CPM_Cutoff) >=  min(NbReplicate) },
                    "filterByExpr" = { dge  <- edgeR::DGEList(counts = assayFilt, genes = rownames(assayFilt))
-                                      #keep <- filterByExpr(dge, GLM_Model) 
+                                      #keep <- filterByExpr(dge, GLM_Model)
                                       keep <- edgeR::filterByExpr(dge)
                                       }
                    )
@@ -509,13 +829,31 @@ setMethod(f= "FilterLowAbundance",
           })
 
 
+######### NORMALIZATION #################
+
+#### METHOD to normalize data
+
+# Function non generique pour les autres data
 
 #' @title RunNormalization
-#' @param MultiAssayExperiment
-#' @param data omic data type
-#' @param NormMethod normalisation methode
-#' @return MultiAssayExperiment
+#' @description This function applied a normalization method on an omic data sets stored in an object of
+#' class [\code{\link{MultiAssayExperiment}}].
+#' \itemize{
+#' \item{For RNAseq data:}{the TMM function of edgeR is proposed by default, see the ref}
+#' \item{For Proteomic data:}{}
+#' \item{For Metabolomic data:}{}
+#' }
+#' @param object An object of class \code{\link{MultiAssayExperiment}}
+#' @param data The name of the data set for which the normalization has to be performed.
+#' @param NormMethod Normalization method
+#' @return An object of class \code{\link{MultiAssayExperiment}}
+#' The applied normalization method and computed scaling factors (by samples) are stored as a named list
+#' ("normalization") of two elements (respectively "methode" and "coefNorm") in the metadata slot of a
+#' given data set, stored itself in the ExperimentList slot of a \code{\link{MultiAssayExperiment} object.
 #' @exportMethod RunNormalization
+#' @seealso TMM.Normalization
+#' @references
+#' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @examples
 #'
 setMethod(f="RunNormalization",
@@ -534,270 +872,146 @@ setMethod(f="RunNormalization",
 
 
 
-#' @title RunPCA
-#' @param MultiAssayExperiment
-#' @param data omic data type
-#' @param PCA norm or raw
-#' @return MultiAssayExperiment
-#' @exportMethod RunPCA
+################################### DIFF-ANALYSIS #############################
+
+
+###### Statistical METHOD
+
+## METHOD to perform differential analysis
+
+#' @title RunDiffAnalysis
+#' @description This is an interface method which run a differential analysis method on
+#' omic datasets stored in an object of class \code{\link{MultiAssayExperiment}}.
+#' According to the type of omic and to a list of contrasts.
+#' The differential analysis method is applied to each contrasts (or hypothesis).
+#' Three methods are available according to the type of object:
+#' \itemize{
+#' \item{For RNAseq data: }{the \code{lmfit} function of edgeR}
+#' \item{For Proteomic data: }{the \code{lmFit} function of limma}
+#' }
+#' Parameters used are those recommended in DiCoExpress workflow (see the paper in reference)
+#' @details
+#' The RunDiffAnalysis method return several tables of seven elements: For RNAseq differential
+#' analysis, objects are:
+#' \itemize{
+#' \item{contrasts}{The selected contrasts for which the differential analysis has been conducted}
+#' \item{method}{The method used for the differential analysis}
+#' \item{FDR}{The false discovery rate given in input}
+#' \item{DGELRT}{The results of the model adjustment}
+#' \item{TopDGE}{The top list of differential expressed genes}
+#' \item{mergeDGE}{ }
+#' }
+#' All the results are stored as a named list ("DiffExpAnal") in the metadata slot of a
+#' given data set, stored itself in the ExperimentList slot of a \code{\link{MultiAssayExperiment}} object.
+#' @param An object of class \code{\link{MultiAssayExperiment}}
+#' @param data The name of the omic data.
+#' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
+#' to run. Either "edgeRglmfit", "limmalmFit", ...
+#' @param contrastList The list of contrast to test
+#' @param FDR The false discovery rate threshold
+#' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
+#' @return An object of class \code{\link{MultiAssayExperiment}}
+#' @references
+#' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
+#' @exportMethod runCoExpression
+#' @exportMethod RunDiffAnalysis
 #' @examples
 #'
-setMethod(f="RunPCA",
+#'
+setMethod(f="RunDiffAnalysis",
           signature="MultiAssayExperiment",
-          definition <- function(object, data, PCA){
+          definition <- function(object, data, FDR = 0.05, contrastList, DiffAnalysisMethod, clustermq=FALSE){
 
-            if(PCA=="raw"){
-            pseudo <- log2(scale(MultiAssayExperiment::assay(object[[data]]),
-                                      center=FALSE)+1)
-            }
-            else if(PCA=="norm"){
-            pseudo <- log2(scale(MultiAssayExperiment::assay(object[[data]]),
-                                        center=FALSE,
-                                        scale=object[[data]]@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
-            }
+            contrastName <- NULL
 
-            pca <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
+            object@ExperimentList[[data]]@metadata$DiffExpAnal <- list()
 
-            object@ExperimentList[[data]]@metadata[["PCAlist"]][[PCA]]<- pca
+            Contrasts.Sel <- dplyr::filter(object@metadata$design@Contrasts.Sel, contrastName %in% contrastList)
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["FDR"]]       <- FDR
+
+            # Run the Diff analysis and get the results as a list of object depending of the
+            ListOfDiffResults <- switch(DiffAnalysisMethod,
+                                        "edgeRglmfit"=edgeR.AnaDiff(object, data, clustermq)
+            )
+
+            # Set an AnaDiff object to
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["DGELRT"]] <- ListOfDiffResults
+
+            #
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]] <- lapply(ListOfDiffResults, function(x){
+
+
+              res<-edgeR::topTags(x, n = dim(x)[1])
+
+              DEGs<- res$table[res$table$FDR <= FDR,]
+              #DEGs<-res$table
+              return(DEGs)
+            })
+            names(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]]) <- names(ListOfDiffResults)
+
+            ## merge results in bin matrix
+            DEG_list <- lapply(1:length(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]]), function(x){
+
+              res <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]][[x]]
+              tmp <- data.frame(DEG = rownames(res), bin = rep(1,length(rownames(res))))
+              colnames(tmp) <- c("DEG", paste("H", x, sep=""))
+              return(tmp)
+            })
+            names(DEG_list) <- names(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]])
+
+            object@ExperimentList[[data]]@metadata$DiffExpAnal[["mergeDGE"]] <- DEG_list %>% purrr::reduce(dplyr::full_join, by="DEG") %>%
+              dplyr::mutate_at(.vars = 2:(length(DEG_list)+1), .funs = function(x){dplyr::if_else(is.na(x), 0, 1)}) %>% data.table::data.table()
 
             return(object)
-          }
-)
+          })
 
 
+# PB: Je ne comprends pas pourquoi la liste des contrastes n'est pas prise dans l'objet lui même ?
+# soit on change si ce ne sont pas les mêmes ??
+# De plus cette methode n'est pas generique. Elle est specialisée pour les objets edgeR
+# l'argument data pourrait etre remplacé par dataName
 
 
-#' @title CheckExpDesignCompleteness
-#'
-#' @param ExpDesign
-#' @return list
-#' @exportMethod CheckExpDesignCompleteness
-#'
-#' @examples
-setMethod(f="CheckExpDesignCompleteness",
-            signature="ExpDesign",
-            definition <- function(object){
+###### Graphical METHOD
 
-  # output list
-  output <- list()
+## Method to plot results of a differential analysis
 
-  # check presence of bio factors
-  if (! "Bio" %in% object@Factors.Type){
-
-    message <- "noBio"
-
-    group_count  <- object@List.Factors[object@Factors.Type == "batch"] %>% as.data.frame() %>% table() %>% as.data.frame()
-    names(group_count)[names(group_count) == "Freq"] <- "Count"
-    output[["count"]]   <- group_count
-
-  }else{
-
-    # count occurence of bio conditions
-    group_count  <- object@List.Factors[object@Factors.Type == "Bio"] %>% as.data.frame() %>% table() %>% as.data.frame()
-    names(group_count)[names(group_count) == "Freq"] <- "Count"
-
-    output[["count"]]   <- group_count
-
-    # check presence of relicat / batch
-    # check if design is complete
-    # check if design is balanced
-    # check nbr of replicats
-
-    message <- dplyr::if_else(! "batch" %in% object@Factors.Type , "noBatch",
-                              dplyr::if_else(0 %in% group_count$Count ,   "noCompl", 
-                                             dplyr::if_else(length(unique(group_count$Count)) != 1, "noBalan", 
-                                                            dplyr::if_else(group_count$Count[1] < 3, "lowRep", "true"))))
-
-  }
-
-
-  # switch pour message complet
-  output[["message"]] <- switch(message ,
-         "true"       = { c("true",    "The experimental design is complete and balanced.") },
-         "lowRep"     = { c("warning", "WARNING : 3 biological replicates are needed.") },
-         "noCompl"    = { c("false",   "ERROR : The experimental design is not complete.") },
-         "noBalan"    = { c("warning", "WARNING : The experimental design is complete but not balanced.") },
-
-         "noBio"      = { c("false",   "ERROR : no bio factor !") },
-         "noBatch"    = { c("false",   "ERROR : no replicat") }
-         )
-
-
-  return(output)
-})
-
-
-
-######################################### Contrasts ############################################
-
-
-
-#' @title getExpressionContrast
-#' get simple, pairwise comparison and averaged expression contrast data frames, offer to the user the possibility to select for each type of contrast
-#' the contrast he want to keep and bind the selected expression contrast data frames
-#'
-#' @param ExpDesign
-#' @param model.formula
-#'
-#' @return ExpDesign
-#' @exportMethod getExpressionContrast
+#' @title DiffAnal.plot
+#' @description
+#' This is an interface method which draw a MAplot from the results of a differential analysis
+#' performed on omic datasets stored in an object of class \code{\link{MultiAssayExperiment}}
+#' @param object An object of class \code{\link{MultiAssayExperiment}}
+#' @param data The name of the omic data for which the MAplot has to be drawn
+#' @param hypothesis The hypothesis for which the MAplot has to be drawn
+#' @return plot
+#' @exportMethod DiffAnal.plot
+#' @export
 #'
 #' @examples
-#' @author Christine Paysant-Le Roux
-#'
-setMethod(f="getExpressionContrast",
-          signature="ExpDesign",
-          definition <- function(object, model.formula){
+setMethod(f="DiffAnal.plot",
+          signature="MultiAssayExperiment",
+          definition <- function(object, data, hypothesis){
 
-  # model formula
-  modelFormula <- formula(model.formula)
+            plots <- list()
 
-  #Design@Model.formula <- formula(model.formula)
-  object@Model.formula <- model.formula
+            res      <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["DGELRT"]][[hypothesis]]
+            resTable <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]][[hypothesis]]
+            FDR      <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["FDR"]]
 
-  # bio factor list in formulat
-  labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
-
-  FactorBioInDesign <- intersect(names(object@Factors.Type[object@Factors.Type == "Bio"]), labelsIntoDesign)
-
-  #BioFactors <- object@List.Factors[FactorBioInDesign]
-
-  treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(object@List.Factors[[x]]), sep="")})
-  names(treatmentFactorsList) <- FactorBioInDesign
-
-  interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
-  # define all simple contrasts pairwise comparisons
-  allSimpleContrast_df <- defineAllSimpleContrasts(treatmentFactorsList)
-  listOfContrastsDF <- list(simple = allSimpleContrast_df)
-
-  # define all simples contrast means
-  # exists("allSimpleContrast_df", inherits = FALSE)
-  if(length(treatmentFactorsList) != 1){
-    allAveragedContrasts_df <- define_averaged_contrasts (allSimpleContrast_df)
-    listOfContrastsDF[["averaged"]] <- allAveragedContrasts_df
-  }
-
-  # define all interaction contrasts
-  if(length(treatmentFactorsList) != 1){
-    if(interactionPresent){
-      labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
-      labelOrder <- attr(terms.formula(modelFormula), "order")
-      twoWayInteractionInDesign <- labelsIntoDesign[which(labelOrder==2)]
-      groupInteractionToKeep <- gsub(":", " vs ", twoWayInteractionInDesign)
-      allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList, groupInteractionToKeep)
-
-      listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
-    }
-    #allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList)
-    #listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
-  }
-  # choose the contrasts and rbind data frames of contrasts
-  #selectedContrasts <- returnSelectedContrasts(listOfContrastsDF)
-
-  # replace interactive selection of contrasts by return all contrasts -> shiny
-  object@Contrasts.List  <- listOfContrastsDF
-  object@Contrasts.Coeff <- data.frame()
-  object@Contrasts.Sel   <- data.frame()
-
-  return(object)
-})
+            res.FDR <- edgeR::topTags(res, n = dim(res)[1])
+            plots[["MA.plot"]] <- MA.plot(data = res.FDR$table, FDRcutoff = FDR, pngFile =NULL)
 
 
-#' @title getContrastMatrix
-#' define contrast matrix or contrast list with contrast name and contrast coefficients
-#'
-#' @param ExpDesign
-#' @param contrastList
-#' @return ExpDesign
-#' @exportMethod getContrastMatrix
-#' @importFrom stats formula terms.formula
-#'
-#' @author Christine Paysant-Le Roux
-setMethod(f="getContrastMatrix",
-          signature="ExpDesign",
-          definition <- function(object, contrastList){
-            
-          contrast <- contrastName <- type <- groupComparison <- NULL
-            
-  contrast.sel.list <- list()
-  contrast.sel.list <- lapply(names(object@Contrasts.List), function(contrastType) {
+            plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable[resTable$FDR <= FDR,], pngFile =NULL)
 
-    tmp <- object@Contrasts.List[[contrastType]] %>% dplyr::filter(contrast %in% contrastList) %>%
-                    dplyr::select(contrast, contrastName, type, groupComparison)
-    return(tmp)
-  })
-  object@Contrasts.Sel <- contrast.sel.list %>% purrr::reduce(rbind) %>% dplyr::mutate(tag = paste("H", 1:dim(.)[1], sep=""))
+            return(plots)
+          })
 
-
-  sampleData <-  object@ExpDesign
-  selectedContrasts <- object@Contrasts.Sel$contrast
-
-  modelFormula <- formula(object@Model.formula)
-  # bio factor list in formulat
-  labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
-  FactorBioInDesign <- intersect(names(object@Factors.Type[object@Factors.Type == "Bio"]), labelsIntoDesign)
-
-  #BioFactors <- object@List.Factors[FactorBioInDesign]
-
-  treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(object@List.Factors[[x]]), sep="")})
-  names(treatmentFactorsList) <- FactorBioInDesign
-
-  treatmentCondenv <- new.env()
-
-  interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
-  isThreeOrderInteraction <- any(attr(terms.formula(modelFormula),"order") == 3)
-
-  # get model matrix
-  modelMatrix <- stats::model.matrix(modelFormula, data = object@List.Factors %>% as.data.frame())
-  colnames(modelMatrix)[colnames(modelMatrix) == "(Intercept)"] <- "Intercept"
-  # assign treatment conditions(group) to boolean vectors according to the design model matrix
-  #treatmentCondenv <- new.env()
-  assignVectorToGroups(treatmentFactorsList = treatmentFactorsList,
-                       modelMatrix = modelMatrix,
-                       interactionPresent = interactionPresent,
-                       isThreeOrderInteraction = isThreeOrderInteraction,
-                       treatmentCondenv = treatmentCondenv)
-  # get the coefficient vector associated with each selected contrast
-  # contrast <- allSimpleContrast_df$contrast[1]
-  colnamesGLMdesign <- colnames(modelMatrix)
-
-
-  #coefficientsMatrix <- sapply(selectedContrasts$contrast, function(x) returnContrastCoefficients(x, colnamesGLMdesign, treatmentCondenv = treatmentCondenv))
-  coefficientsMatrix <- sapply(selectedContrasts, function(x) returnContrastCoefficients(x, colnamesGLMdesign, treatmentCondenv = treatmentCondenv))
-
-  #coefficientsMatrix <- MASS::as.fractions(coefficientsMatrix)
-  colnames(coefficientsMatrix) <- selectedContrasts
-
-  rownames(coefficientsMatrix) <- colnamesGLMdesign
-  contrastMatrix <- as.data.frame(t(coefficientsMatrix))
-  #contrastMatrix <- as_tibble(t(coefficientsMatrix)) %>%
-    #dplyr::mutate(contrast = selectedContrasts, .before = "Intercept") %>%
-    #dplyr::mutate(type = selectedContrasts$type, .after = "contrast")
-  #contrastMatrix <- MASS::as.fractions(contrastMatrix)
-  #contrastMatrix
-  # contrastList <- as.list(as.data.frame(coefficientsMatrix))
-
-  object@Contrasts.Coeff <- contrastMatrix
-  return(object)
-})
-
-#coefmatrices <- sapply(unique(names(coefvectors)),
-#                       function(n) as.matrix(as.data.frame(coefvectors[names(coefvectors)==n])),
-#                       simplify=FALSE, USE.NAMES=TRUE)
-
-#Contrasts = list(D1vsD2          = c(1,  1, -1, -1,  0),
-#                 C1vsC2          = c(1, -1,  1, -1,  0),
-#                 InteractionDC   = c(1, -1, -1,  1,  0),
-#                 C1vsC2forD1only = c(1, -1,  0,  0,  0),
-#                 C1vsC2forD2only = c(0,  0,  1, -1,  0),
-#                 TreatsvsControl = c(1,  1,  1,  1, -4),
-#                 T1vsC           = c(1,  0,  0,  0, -1),
-#                 T2vsC           = c(0,  1,  0,  0, -1),
-#                 T3vsC           = c(0,  0,  1,  0, -1),
-#                 T4vsC           = c(0,  0,  0,  1, -1))
-
-# contrast From emmeans v1.3.5 by Russell Lenth 16th Percentile Contrasts and linear functions of EMMs
-# coef returns a data.frame containing the object's grid, along with columns named c.1, c.2, ... containing the contrast coefficients.
+# CEtte méthode est aussi spécialisée pour les données RNAseq alors que le MAplot et le graphe de
+# de pvalue peut-être pour toutes les méthodes. En faite c'est le DGELRT. A voir limma en sortie.
+# l'argument data pourrait etre remplacé par dataName
 
 
 
@@ -806,18 +1020,41 @@ setMethod(f="getContrastMatrix",
 
 
 #' @title runCoExpression
-#' @param object MultiAssayExperiment
-#' @param data dataset name
-#' @param tools
-#' @param geneList
-#' @param K list of number of clusters
-#' @param iter gene list
-#' @param model
-#' @param transformation
-#' @param normFactors
-#' @return MultiAssayExperiment
+#' @description This is an interface method which perfomed co-expression/co-aboundance analysis
+#' of omic-data. For instance, only the coseq function of the package coseq is proposed.
+#' For RNAseq data, parameters used are those recommended in DiCoExpress workflow (see the reference)
+#' @details
+#' The runCoExpression method return several results, for coseq method, objects are:
+#' \itemize{
+#' \item{model: }{see model params description}
+#' \item{transformation: }{see transformation params description}
+#' \item{normFactors: }{see normFactors params description}
+#' \item{meanFilterCutoff: }{set to 50}
+#' \item{gene.list.names: }{see nameList params description}
+#' \item{merge.type: }{see merge params description}
+#' \item{coseqResults: }{the raw results of coseq}
+#' \item{clusters: }{a List of gene's cluster}
+#' \item{cluster.nb: }{The number of cluster}
+#' \item{plots: }{The plots of coseq results}
+#' }
+#' All this results are stored as a named list ("DiffExpAnal") in the metadata slot of a
+#' given data set, stored itself in the ExperimentList slot of a \code{\link{MultiAssayExperiment}} object.
+#' @param object An object of class \code{\link{MultiAssayExperiment}}
+#' @param data The name of the omic data from which the co-expression analysis has to be performed
+#' @param tools The name of the function to use
+#' @param geneList A list of genes
+#' @param K Number of clusters (a single value or a vector of values)
+#' @param iter The number of iteration for each K.
+#' @param model Type of mixture model to use (“Poisson” or “Normal”). By default, it is the normal.
+#' @param transformation The transformation type to be used. By default, it is the "arcsin" one.
+#' @param normFactors The type of estimator to be used to normalize for differences in library size.
+#' By default, it is the "TMM" one.
+#' @param merge "union" or "intersection"
+#' @return An S4 object of class \code{\link{MultiAssayExperiment}}
+#' @references
+#' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod runCoExpression
-#'
+#' @seealso \code{\link{coseq::coseq}}
 setMethod(f="runCoExpression",
           signature="MultiAssayExperiment",
           definition <- function(object, data, tools = "coseq", geneList, K, iter=5 , model="normal",
@@ -830,22 +1067,26 @@ setMethod(f="runCoExpression",
             object@ExperimentList[[data]]@metadata$CoExpAnal[["meanFilterCutoff"]] <- 50
             object@ExperimentList[[data]]@metadata$CoExpAnal[["gene.list.names"]]  <- nameList
             object@ExperimentList[[data]]@metadata$CoExpAnal[["merge.type"]]       <- merge
-            
-            counts = MultiAssayExperiment::assay(object@ExperimentList[[data]])[geneList,] 
-            
+
+            counts = MultiAssayExperiment::assay(object@ExperimentList[[data]])[geneList,]
+
 
             switch (tools,
               "coseq" = {
-                  coseq.res <- runCoseq(counts, K=K, iter=iter, model=model, transformation=transformation, normFactors=normFactors)
+                  coseq.res <- runCoseq(counts, K=K,
+                                        iter=iter,
+                                        model=model,
+                                        transformation=transformation,
+                                        normFactors=normFactors)
                   object@ExperimentList[[data]]@metadata$CoExpAnal[["coseqResults"]] <- coseq.res
 
                   # list of genes per cluster
-                  clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){ 
+                  clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
                     names(coseq::clusters(coseq.res)[coseq::clusters(coseq.res) == i])
                     })
                   object@ExperimentList[[data]]@metadata$CoExpAnal[["clusters"]] <- clusters
                   names(object@ExperimentList[[data]]@metadata$CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
-                  
+
                   # nbr of cluster
                   nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
                   object@ExperimentList[[data]]@metadata$CoExpAnal[["cluster.nb"]] <- nb_cluster
@@ -860,50 +1101,58 @@ setMethod(f="runCoExpression",
       return(object)
 })
 
+
+# Pour utiliser la fonction repeatable(), "seed"  pourrait être ajouté en paramètre.
+
 ################################### ANNOTATION #############################
 
 #' @title runAnnotationEnrichment
-#' @param object MultiAssayExperiment
-#' @param data dataset name
-#' @param CoExpListNames
-#' @param DiffListNames
-#' @param alpha 
-#' @param probaMethod 
-#' @param annotation gene annotation
-#' @return MultiAssayExperiment
+#' @description This function performs enrichment test from functional gene annotation data. This data could be
+#' GO, KEGG or other... For instance, the hypergeometric test is applied. Parameters used are those
+#' recommended in DiCoExpress workflow (see the paper in reference)
+#' @param object An object of class \code{\link{MultiAssayExperiment}}
+#' @param data The name of the omic data from which the co-expression analysis has to be performed
+#' @param CoExpListNames A list of clusters names.
+#' @param DiffListNames A list of differential expressed genes given as constrast names.
+#' @param alpha The pvalue cut-off
+#' @param probaMethod The probabilistic method to use.
+#' @param annotation The gene annotation file.
+#' @return An object of class \code{\link{MultiAssayExperiment}}
+#' @references
+#' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod runAnnotationEnrichment
 #'
 setMethod(f="runAnnotationEnrichment",
           signature="MultiAssayExperiment",
 
-          definition <- function(object, data, DiffListNames = NULL, CoExpListNames = NULL, annotation, 
+          definition <- function(object, data, DiffListNames = NULL, CoExpListNames = NULL, annotation,
                                  alpha = 0.01, probaMethod = "hypergeometric"){
-             
+
             EnrichAnal <- list()
             EnrichAnal[["list.names"]] <- c(CoExpListNames, DiffListNames)
             EnrichAnal[["alpha"]]      <- alpha
             EnrichAnal[["proba.test"]] <- probaMethod
-            
-            
+
+
             ## list of gene list to annotate
             geneLists <- list()
             geneLists.diff <- list()
             geneLists.diff <- lapply(DiffListNames, function(listname){
-              
+
               row.names(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]][[listname]])
             })
             names(geneLists.diff) <- DiffListNames
-            
+
             geneLists.coseq <- list()
             #geneLists.coseq <- lapply(CoExpListNames, function(listname){
-              
+
             geneLists.coseq <-  object@ExperimentList[[data]]@metadata[["CoExpAnal"]][["clusters"]][CoExpListNames]
             #})
             #names(geneLists.coseq) <- CoExpListNames
-            
+
             geneLists <- c(geneLists.diff, geneLists.coseq)
-            
-            
+
+
             Results <- list()
 
             for(geneList in names(geneLists)){
@@ -914,9 +1163,9 @@ setMethod(f="runAnnotationEnrichment",
             }
 
             EnrichAnal[["results"]] <- Results
-            
+
             object@ExperimentList[[data]]$metadata$EnrichAnal <- EnrichAnal
-            
+
             return(object)
           })
 
