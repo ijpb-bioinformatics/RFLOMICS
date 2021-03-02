@@ -5,11 +5,10 @@
 ### ExpDesign CLASS Constructor
 
 #' @title Constructor for the class \code{\link{ExpDesign-class}}]
-#' @description This method initialize an object of class [\code{\link{ExpDesign-class}}] by initializing the slots
-#' ExpDesign, projectName,List.FactorsFactors.Type,Groups.
+#' @description This method initialize an object of class [\code{\link{ExpDesign-class}}].
 #' @param ExpDesign a data.frame. Row names give the name of each sample which has been to be construct
-#' by combining factor's modality separated by a "_" (EX: WT_treated_rep1). Column names give the name of an experimental
-#' factor which is a vector of character storing the factor modality for each sample.
+#' by combining factor's modality separated by a "_" (EX: WT_treated_rep1). Column names give the name of
+#' an experimental factor which is a vector of character storing the factor modality for each sample.
 #' @param projectName a vector of string giving the name of the project.
 #' @param refList A list of string giving the reference modality for each factor.
 #' @param typeList A vector of string indicating the type of each experimental factor. Two types of effect
@@ -65,7 +64,7 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
 
 
 #' @title CheckExpDesignCompleteness
-#' This method check the experimental design status and return a list of message resuming all checked status:
+#' @description This method check some experimental design characteristics.
 #' \itemize{
 #'  \item{does it have biological factor ?}
 #'  \item{does it have replicat/batch factor ?}
@@ -73,18 +72,20 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
 #'  \item{is the design completed ? presence of all possible combinations of levels for all factors}
 #'  \item{is the design balanced ? presence of the same number of replicat for all possible combinations}
 #'  }
+#'  Completed design and at least on biological and one batch factors are required for using RFLOMICS workflow.
 #' @param An object of class [\code{\link{ExpDesign-class}}]
 #' @return a named list of two objects
-#' @details
 #' \itemize{
 #' \item{"count:"}{ a data.frame with the number of each possible combinations of levels for all factors.}
-#'  \item{"message:"}{ results of the check}
+#' \item{"message:"}{ results of the check}
+#' \itemize{
 #'  \item{"true" :"}{  false or "The experimental design is complete and balanced}
 #'  \item{"lowRep" :"}{  false or "WARNING : 3 biological replicates are needed.}
 #'  \item{"noCompl" :"}{ false or "ERROR : The experimental design is not complete.}
 #'  \item{"noBalan" :"}{ warning or "WARNING : The experimental design is complete but not balanced.}
 #'  \item{"noBio" :"}{ false or "ERROR : no bio factor !}
-#'  \item{""noBatch":"}{ false or "ERROR : no replicat}
+#'  \item{"noBatch :"}{ false or "ERROR : no replicat}
+#'  }
 #'  }
 #' @exportMethod CheckExpDesignCompleteness
 #' @examples
@@ -156,10 +157,13 @@ setMethod(f="CheckExpDesignCompleteness",
 
 
 #' @title getExpressionContrast
-#' get simple, pairwise comparison and averaged expression contrast data frames, offer
-#' to the user the possibility to select for each type of contrast
-#' the contrast he want to keep and bind the selected expression contrast data frames
-#'
+#' @description This function allows, from a model formulae, to give the expression contrast data frames.
+#' Three types of contrasts are expressed:
+#' \itemize{
+#' \item{simple}
+#' \item{pairwise comparison}
+#' \item{averaged expression}
+#' }
 #' @param model.formula a model formula
 #' @return An object of class [\code{\link{ExpDesign-class}}]
 #' @exportMethod getExpressionContrast
@@ -249,8 +253,7 @@ setMethod(f="getExpressionContrast",
 #
 
 #' @title getContrastMatrix
-#' define contrast matrix or contrast list with contrast name and contrast coefficients
-#'
+#' @description Define contrast matrix or contrast list with contrast name and contrast coefficients
 #' @param An object of class [\code{\link{ExpDesign-class}}]
 #' @param contrastList A vector of character of contrast
 #' @return An object of class [\code{\link{ExpDesign-class}}]
@@ -354,12 +357,10 @@ setMethod(f="getContrastMatrix",
 
 
 #' @title FlomicsMultiAssay.constructor Constructor for the class [\code{\link{MultiAssayExperiment-class}}]
-#' @description
-#' This function initialize an object of class [\code{\link{MultiAssayExperiment-class}}]
+#' @description This function initializes an object of class [\code{\link{MultiAssayExperiment-class}}]
 #' from a list of omics data and an object of class [\code{\link{ExpDesign-class}}].
 #' @param inputs A named list of omic dataset. Names must refer to the name of the omic dataset.
 #' An omics dataset must be itself a list of three objects:
-#' @details
 #' \itemize{
 #' \item{dataFile:}{the path to the omic data}
 #' \item{qcFile:}{the path to an optional quality check file}
@@ -369,8 +370,10 @@ setMethod(f="getContrastMatrix",
 #' @return An object of class [\code{\link{MultiAssayExperiment-class}}]
 #' @examples
 #' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""),header = TRUE,row.names = 1, sep = "\t")
+#'
 #' # Define the type of each factor
 #' Design.Factors.Type <- c("Bio","Bio","batch")
+#'
 #' # Define the reference modality for each factor
 #' Design.Factors.Ref <- c("WT","control","rep1")
 #'
@@ -459,13 +462,12 @@ FlomicsMultiAssay.constructor <- function(inputs, Design){
 
 
 #' @title RunPCA
-#' @description
-#' This function performed a scaled principal component analysis on omic data stored in an object of class [\code{\link{MultiAssayExperiment-class}]
+#' @description This function performed a scaled principal component analysis on omic data stored in an object of class [\code{\link{MultiAssayExperiment-class}]
 #' Results are stored in the metadata slot.
 #' @param object An object of class [\code{\link{MultiAssayExperiment-class}].
 #' @param data The name of the omic data for which the PCA plot has to be drawn.
 #' @param PCA This argument indicates whether the scaled PCA has to be performed on raw ("raw") or normalized ("norm") data.
-#' @return MultiAssayExperiment
+#' @return An object of class \code{\link{MultiAssayExperiment}}
 #' @exportMethod RunPCA
 #' @examples
 #'
@@ -495,11 +497,10 @@ setMethod(f="RunPCA",
 
 
 #' @title mvQCdesign
-#' @description
-#' mvQCdesign is for multivariate quality check of design. For each design factor (one color for each),
+#' @description mvQCdesign is for multivariate quality check of design. For each design factor (one color for each),
 #' and each PCA axis this function plot the coordinates of the sample in a PCA axis (y-axis) in an
-#' increasing order along the x-axis. It allows to have a quick view of the variability.
-#' @param object An object of class [\code{\link{MultiAssayExperiment}]
+#' increasing order along the x-axis. It allows to have a quick view of the variability associated to each factor.
+#' @param object An object of class \code{\link{MultiAssayExperiment}}
 #' @param data The name of the omic data for which the PCA plot has to be drawn
 #' @param axis The number of PCA axis to keep
 #' @param PCA This argument indicates which PCA results to plot: raw ("raw") or normalised ("normalised")
@@ -558,16 +559,14 @@ setMethod(f="mvQCdesign",
 
 
 #' @title mvQCdata
-#' @description
-#' mvQCdata is for multivariate quality check of metadata.
-#' This function helps to control if some experimental parameters given as metadata in input
-#' explain much variability than expected in the data or if they effect could be confused with biological one.
+#' @description mvQCdata is for multivariate quality check of metadata.
+#' This function helps to control if some experimental parameters given as metadata (numeric one) in input
+#' explain much variability than expected in the data or if their effect could be confused with biological one.
 #' This function correlates quantitative variable describing technical aspect for each sample with
 #' their coordinate on the PCA axis.
-#' @details Experimental parameters could be:
 #' \itemize{
-#'  \item{Technical parameters from sample preparation as the day of the RNAseq library preparation}
-#'  \item{Statistics results after the bioinformatics workflow as the percent of sequences with primers or % of rrna in the library}
+#' \item{Technical parameters from sample preparation as the day of the RNAseq library preparation}
+#' \item{Statistics results after the bioinformatics workflow as the percent of sequences with primers or % of rrna in the library}
 #'  }
 #' @param object An object of class [\code{\link{MultiAssayExperiment-class}]
 #' @param data The name of the omic data for which the PCA plot has to be drawn
@@ -615,12 +614,11 @@ setMethod(f="mvQCdata",
 
 
 #' @title abundanceBoxplot
-#' @description
-#' This function produce boxplots from raw and normalized data matrix. One color by level
+#' @description This function produces boxplots from raw and normalized data matrix. One color by level
 #' of combination factor. It allows to detect outlier samples and to see the normalization
 #' effect.
 #' @param object An object of class [\code{\link{MultiAssayExperiment-class}]
-#' @param dataType omic data type: [\sQuote{None}], [\sQuote{RNAseq}], [\sQuote{proteomics}] or [\sQuote{Metabolomics}].
+#' @param dataType Omic data type: [\sQuote{None}], [\sQuote{RNAseq}], [\sQuote{proteomics}] or [\sQuote{Metabolomics}].
 #' @param pngFile NULL or a name of the png file for saving the plot.
 #' @exportMethod abundanceBoxplot
 #' @rdname abundanceBoxplot
@@ -672,8 +670,7 @@ setMethod(f= "abundanceBoxplot",
 # Pas sur pour l'argument condition ..
 
 #' @title plotPCAnorm
-#' @description
-#' This function plot the factorial map from a PCA object stored
+#' @description This function plot the factorial map from a PCA object stored
 #' in a [\code{\link{MultiAssayExperiment-class}] object. By default, samples are
 #' colored by groups (all combinations of level's factor)
 #' @param object An object of class [\code{\link{MultiAssayExperiment-class}]
@@ -767,24 +764,28 @@ setMethod(f= "barplotPCAnorm",
 # Pourquoi ne pas avoir utilisée directement la fonction de edgeR ?
 
 #' @title FilterLowAbundance
-#' This function aims at filtering the count data matrix of an omic of type "RNAseq".
-#' By defaulft, gene/transcrit with 0 count are removed from the data. Then the function
-#' compute the count per million or read (CPM) for each gene. For each gene, this function
-#' count the number of sample which are over the CPM_cutoff (NbOfsample_over_cpm).
-#' Two filtering strategies:
-#' @details
-#'  \itemize{
-#' \item{NbConditions:}{keep gene if the NbOfsample_over_cpm >= NbConditions}
-#' \item{NbReplicates:}{keep gene if the NbOfsample_over_cpm >= min(NbReplicat)}
-#' \item{filterByExpr:}{the default filtering method implemented in the edgeR filterByExpr() function.}
+#' @description This function aims at removing genes/transcript from the count data matrix of an omic of type "RNAseq".
+#' by applying filtering criterion described in reference.
+#' By defaulft, gene/transcript with 0 count are removed from the data. The function then
+#' computes the count per million or read (CPM) for each gene in each sample and gives by
+#' genes the number of sample(s) which are over the CPM_cutoff (NbOfsample_over_cpm).
+#' Then Two filtering strategies are proposed:
+#' \itemize{
+#' \item{NbConditions: }{keep gene if the NbOfsample_over_cpm >= NbConditions}
+#' \item{NbReplicates: }{keep gene if the NbOfsample_over_cpm >= min(NbReplicat)}
+#' \item{filterByExpr:} {the default filtering method implemented in the edgeR filterByExpr() function.}
 #' }
-#' Filtered dataset is stored in the slot ...
-#' List of filtered features are stored in the slot ..
-#'
-#' @param object An object of class [\code{\link{MultiAssayExperiment}]
+#' @param object An object of class \code{\link{MultiAssayExperiment}}
 #' @param Filter_Strategy The filtering strategy ("NbConditions" or "NbReplicates")
 #' @param CPM_Cutoff The CPM cutoff.
-#' @return MultiAssayExperiment
+#' @return An object of class \code{\link{MultiAssayExperiment}}
+#' @details
+#' Filtered dataset is stored in the ExperimentList slot of the \code{\link{MultiAssayExperiment}} object
+#' as a List named (DataName.filtred).
+#' List of filtered features are stored as a named list ("FilteredFeature") in the metadata slot of a
+#' given data set, stored itself in the ExperimentList slot of a \code{\link{MultiAssayExperiment}} object.
+#' @references
+#' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod FilterLowAbundance
 #' @seealso edgeR::filterByExpr
 #' @examples
@@ -802,8 +803,6 @@ setMethod(f= "FilterLowAbundance",
             ## remove 0 count
             objectFilt  <- objectFilt[rowSums(assayFilt)  > 0, ]
             assayFilt   <- MultiAssayExperiment::assay(objectFilt)
-
-
 
             ## filter cpm
             NbReplicate <- table(tidyr::unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_"))
@@ -837,16 +836,24 @@ setMethod(f= "FilterLowAbundance",
 # Function non generique pour les autres data
 
 #' @title RunNormalization
-#' This function performed a library size normalization. For RNAseq data, the TMM function is used.
-#' @details
-#' Normalized dataset is stored in the slot ...
-#' Coefficients of normalization are stored in the slot ..
-#' @param object An object of class [\code{\link{MultiAssayExperiment}]
+#' @description This function applied a normalization method on an omic data sets stored in an object of
+#' class [\code{\link{MultiAssayExperiment}}].
+#' \itemize{
+#' \item{For RNAseq data:}{the TMM function of edgeR is proposed by default, see the ref}
+#' \item{For Proteomic data:}{}
+#' \item{For Metabolomic data:}{}
+#' }
+#' @param object An object of class \code{\link{MultiAssayExperiment}}
 #' @param data The name of the data set for which the normalization has to be performed.
 #' @param NormMethod Normalization method
-#' @return MultiAssayExperiment
+#' @return An object of class \code{\link{MultiAssayExperiment}}
+#' The applied normalization method and computed scaling factors (by samples) are stored as a named list
+#' ("normalization") of two elements (respectively "methode" and "coefNorm") in the metadata slot of a
+#' given data set, stored itself in the ExperimentList slot of a \code{\link{MultiAssayExperiment} object.
 #' @exportMethod RunNormalization
 #' @seealso TMM.Normalization
+#' @references
+#' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @examples
 #'
 setMethod(f="RunNormalization",
@@ -874,24 +881,39 @@ setMethod(f="RunNormalization",
 
 #' @title RunDiffAnalysis
 #' @description This is an interface method which run a differential analysis method on
-#' omic datasets stored in an object of class [\code{\link{MultiAssayExperiment}].
+#' omic datasets stored in an object of class \code{\link{MultiAssayExperiment}}.
 #' According to the type of omic and to a list of contrasts.
 #' The differential analysis method is applied to each contrasts (or hypothesis).
-#' @details Three methods are available according to the type of object:
-#'
-#'  ## For RNAseq data: the lmfit function of edgeR
-#'  ## For Proteomic data: the lmFit function of limma
-#'
-#' Results dataset is stored in the slot ...
-#'
-#' @param An object of class [\code{\link{MultiAssayExperiment}]
+#' Three methods are available according to the type of object:
+#' \itemize{
+#' \item{For RNAseq data: }{the \code{lmfit} function of edgeR}
+#' \item{For Proteomic data: }{the \code{lmFit} function of limma}
+#' }
+#' Parameters used are those recommended in DiCoExpress workflow (see the paper in reference)
+#' @details
+#' The RunDiffAnalysis method return several tables of seven elements: For RNAseq differential
+#' analysis, objects are:
+#' \itemize{
+#' \item{contrasts}{The selected contrasts for which the differential analysis has been conducted}
+#' \item{method}{The method used for the differential analysis}
+#' \item{FDR}{The false discovery rate given in input}
+#' \item{DGELRT}{The results of the model adjustment}
+#' \item{TopDGE}{The top list of differential expressed genes}
+#' \item{mergeDGE}{ }
+#' }
+#' All the results are stored as a named list ("DiffExpAnal") in the metadata slot of a
+#' given data set, stored itself in the ExperimentList slot of a \code{\link{MultiAssayExperiment}} object.
+#' @param An object of class \code{\link{MultiAssayExperiment}}
 #' @param data The name of the omic data.
 #' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
 #' to run. Either "edgeRglmfit", "limmalmFit", ...
 #' @param contrastList The list of contrast to test
 #' @param FDR The false discovery rate threshold
 #' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
-#' @return MultiAssayExperiment
+#' @return An object of class \code{\link{MultiAssayExperiment}}
+#' @references
+#' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
+#' @exportMethod runCoExpression
 #' @exportMethod RunDiffAnalysis
 #' @examples
 #'
@@ -958,9 +980,9 @@ setMethod(f="RunDiffAnalysis",
 
 #' @title DiffAnal.plot
 #' @description
-#' This is an interface method which draw a MAplot from the results of a differentiel analysis
-#' performed on omic datasets stored in an object of class [\code{\link{MultiAssayExperiment}]
-#' @param object An object of class [\code{\link{MultiAssayExperiment}]
+#' This is an interface method which draw a MAplot from the results of a differential analysis
+#' performed on omic datasets stored in an object of class \code{\link{MultiAssayExperiment}}
+#' @param object An object of class \code{\link{MultiAssayExperiment}}
 #' @param data The name of the omic data for which the MAplot has to be drawn
 #' @param hypothesis The hypothesis for which the MAplot has to be drawn
 #' @return plot
@@ -998,18 +1020,41 @@ setMethod(f="DiffAnal.plot",
 
 
 #' @title runCoExpression
-#' @param object MultiAssayExperiment
-#' @param data dataset name
-#' @param tools
-#' @param geneList
-#' @param K list of number of clusters
-#' @param iter gene list
-#' @param model
-#' @param transformation
-#' @param normFactors
-#' @return MultiAssayExperiment
+#' @description This is an interface method which perfomed co-expression/co-aboundance analysis
+#' of omic-data. For instance, only the coseq function of the package coseq is proposed.
+#' For RNAseq data, parameters used are those recommended in DiCoExpress workflow (see the reference)
+#' @details
+#' The runCoExpression method return several results, for coseq method, objects are:
+#' \itemize{
+#' \item{model: }{see model params description}
+#' \item{transformation: }{see transformation params description}
+#' \item{normFactors: }{see normFactors params description}
+#' \item{meanFilterCutoff: }{set to 50}
+#' \item{gene.list.names: }{see nameList params description}
+#' \item{merge.type: }{see merge params description}
+#' \item{coseqResults: }{the raw results of coseq}
+#' \item{clusters: }{a List of gene's cluster}
+#' \item{cluster.nb: }{The number of cluster}
+#' \item{plots: }{The plots of coseq results}
+#' }
+#' All this results are stored as a named list ("DiffExpAnal") in the metadata slot of a
+#' given data set, stored itself in the ExperimentList slot of a \code{\link{MultiAssayExperiment}} object.
+#' @param object An object of class \code{\link{MultiAssayExperiment}}
+#' @param data The name of the omic data from which the co-expression analysis has to be performed
+#' @param tools The name of the function to use
+#' @param geneList A list of genes
+#' @param K Number of clusters (a single value or a vector of values)
+#' @param iter The number of iteration for each K.
+#' @param model Type of mixture model to use (“Poisson” or “Normal”). By default, it is the normal.
+#' @param transformation The transformation type to be used. By default, it is the "arcsin" one.
+#' @param normFactors The type of estimator to be used to normalize for differences in library size.
+#' By default, it is the "TMM" one.
+#' @param merge "union" or "intersection"
+#' @return An S4 object of class \code{\link{MultiAssayExperiment}}
+#' @references
+#' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod runCoExpression
-#'
+#' @seealso \code{\link{coseq::coseq}}
 setMethod(f="runCoExpression",
           signature="MultiAssayExperiment",
           definition <- function(object, data, tools = "coseq", geneList, K, iter=5 , model="normal",
@@ -1056,17 +1101,25 @@ setMethod(f="runCoExpression",
       return(object)
 })
 
+
+# Pour utiliser la fonction repeatable(), "seed"  pourrait être ajouté en paramètre.
+
 ################################### ANNOTATION #############################
 
 #' @title runAnnotationEnrichment
-#' @param object MultiAssayExperiment
-#' @param data dataset name
-#' @param CoExpListNames
-#' @param DiffListNames
-#' @param alpha
-#' @param probaMethod
-#' @param annotation gene annotation
-#' @return MultiAssayExperiment
+#' @description This function performs enrichment test from functional gene annotation data. This data could be
+#' GO, KEGG or other... For instance, the hypergeometric test is applied. Parameters used are those
+#' recommended in DiCoExpress workflow (see the paper in reference)
+#' @param object An object of class \code{\link{MultiAssayExperiment}}
+#' @param data The name of the omic data from which the co-expression analysis has to be performed
+#' @param CoExpListNames A list of clusters names.
+#' @param DiffListNames A list of differential expressed genes given as constrast names.
+#' @param alpha The pvalue cut-off
+#' @param probaMethod The probabilistic method to use.
+#' @param annotation The gene annotation file.
+#' @return An object of class \code{\link{MultiAssayExperiment}}
+#' @references
+#' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod runAnnotationEnrichment
 #'
 setMethod(f="runAnnotationEnrichment",
