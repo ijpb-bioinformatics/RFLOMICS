@@ -26,6 +26,14 @@ ExperimentalDesignUI <- function(id){
       uiOutput(ns("ExpDesignTable"))
     ),
     tags$br(),
+
+    ### de-select sample
+    fluidRow(
+      uiOutput(ns("selectSample"))
+    ),
+    tags$br(),
+    
+    verbatimTextOutput(ns("tmp")),
     
     ### level
     fluidRow(
@@ -73,16 +81,30 @@ ExperimentalDesign <- function(input, output, session){
         ExpDesign.tbl <<- read.table(input$Experimental.Design.file$datapath,header = TRUE,row.names = 1, sep = "\t")
         
         # display desgin table
+        # select samples to explore
         output$ExpDesignTable <- renderUI({
           
           box(width = 9, status = "warning",
-              DT::renderDataTable( DT::datatable(ExpDesign.tbl) )
+              DT::renderDataTable( DT::datatable(ExpDesign.tbl)),
+              
+              pickerInput(
+                inputId = session$ns("select.sample"),
+                label = "Select DEG lists:", 
+                choices = row.names(ExpDesign.tbl),
+                options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+                multiple = TRUE, selected = row.names(ExpDesign.tbl)
+              )
+   
           )
+          
         })
+      
         
         ####### Set up Design model ########
         output$GetdFactorRef <- renderUI({
     
+          ExpDesign.tbl <- ExpDesign.tbl[input$select.sample,]
+          
           box(status = "warning", width = 9, height = NULL,
     
               # Construct the form to enter the name of the factor
@@ -122,6 +144,8 @@ ExperimentalDesign <- function(input, output, session){
   observeEvent(input$ValidF, {
     print("# 2- Set design model...")
 
+    ExpDesign.tbl <- ExpDesign.tbl[input$select.sample,]
+    
     # Get the Type, ref and the new name of the factors that the users enter in the form
     dF.Type.dFac<-vector()
     dF.List.Name<-vector()
