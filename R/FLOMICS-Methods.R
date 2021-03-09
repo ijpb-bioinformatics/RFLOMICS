@@ -44,8 +44,12 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
   names(typeList) <- names(ExpDesign)
 
   # Create the groups data.frame
-  groups <- tidyr::unite(as.data.frame(ExpDesign[typeList == "Bio"]), col="groups", sep="_", remove = TRUE) %>%
-            dplyr::mutate(samples = rownames(.))
+  # groups <- tidyr::unite(as.data.frame(ExpDesign[typeList == "Bio"]), col="groups", sep="_", remove = TRUE) %>%
+  #           dplyr::mutate(samples = rownames(.))
+  
+  groups <- ExpDesign %>% as.data.frame() %>% dplyr::mutate(samples = rownames(.)) %>%
+            tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
+            
 
   Design = new(Class = "ExpDesign",
                ExpDesign=ExpDesign,
@@ -432,9 +436,13 @@ FlomicsMultiAssay.constructor <- function(inputs, Design){
                           colname = colnames(abundance),
                           stringsAsFactors = FALSE)
     }
-
-    SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays  = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
-                                                                                       colData = QCmat)
+    
+    # groups
+    
+    SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
+                                                                                       colData  = QCmat,
+                                                                                       metadata = list(omicType = inputs[[dataName]][["omicType"]],
+                                                                                                       Groups   = Design@Groups))
 
     # metadata for sampleMap for MultiAssayExperiment
     listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
@@ -472,30 +480,28 @@ FlomicsMultiAssay.constructor <- function(inputs, Design){
 #' @title RunPCA
 #' @description This function performed a scaled principal component analysis on omic data stored in an object of class [\code{\link{MultiAssayExperiment-class}]
 #' Results are stored in the metadata slot.
-#' @param object An object of class \link{MultiAssayExperiment-class}.
-#' @param data The name of the omic data for which the PCA plot has to be drawn.
-#' @param PCA This argument indicates whether the scaled PCA has to be performed on raw ("raw") or normalized ("norm") data.
-#' @return An object of class \link{MultiAssayExperiment}
+#' @param object An object of class \link{SummarizedExperiment-class}.
+#' @return An object of class \link{SummarizedExperiment}
 #' @exportMethod RunPCA
 #' @examples
 #'
 setMethod(f="RunPCA",
-          signature="MultiAssayExperiment",
-          definition <- function(object, data, PCA){
+          signature="SummarizedExperiment",
+          definition <- function(object){
 
-            if(PCA=="raw"){
-              pseudo <- log2(scale(MultiAssayExperiment::assay(object[[data]]),
-                                   center=FALSE)+1)
+            if(is.null(object@metadata[["Normalization"]]$coefNorm)){
+              
+              pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE) + 1)
+              object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
+              
             }
-            else if(PCA=="norm"){
-              pseudo <- log2(scale(MultiAssayExperiment::assay(object[[data]]),
-                                   center=FALSE,
-                                   scale=object[[data]]@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
+            else{
+              pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
+                                   scale=object@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
+              object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
             }
 
-            pca <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
-
-            object@ExperimentList[[data]]@metadata[["PCAlist"]][[PCA]]<- pca
+            
 
             return(object)
           }
@@ -625,88 +631,70 @@ setMethod(f="mvQCdata",
 #' @description This function produces boxplots from raw and normalized data matrix. One color by level
 #' of combination factor. It allows to detect outlier samples and to see the normalization
 #' effect.
-#' @param object An object of class \link{MultiAssayExperiment-class}
-#' @param dataType Omic data type: [\sQuote{None}], [\sQuote{RNAseq}], [\sQuote{proteomics}] or [\sQuote{Metabolomics}].
-#' @param pngFile NULL or a name of the png file for saving the plot.
+#' @param object An object of class \link{SummarizedExperiment-class}
 #' @exportMethod abundanceBoxplot
 #' @rdname abundanceBoxplot
 #'
 setMethod(f= "abundanceBoxplot",
-          signature = "MultiAssayExperiment",
-          definition <- function(object, dataType, pngFile=NULL){
+          signature = "SummarizedExperiment",
+          definition <- function(object){
 
             samples <- value <- NULL
 
-            # this function generate boxplot (abandance distribution) from raw data and normalized data
-
-
-            sample_names <- row.names(object@colData)
-
-            groups  <- object@metadata$design@List.Factors[object@metadata$design@Factors.Type == "Bio"] %>% as.data.frame() %>%
-                       tidyr::unite(col="groups", sep="_", remove = FALSE) %>% dplyr::mutate(samples=sample_names)
-
             # normalized data
 
-            if(! is.null(object[[dataType]]@metadata$Normalization)){
-              pseudo  <- log2(scale(MultiAssayExperiment::assay(object[[dataType]]), center=FALSE,
-                                    scale=object[[dataType]]@metadata$Normalization$coefNorm$norm.factors)+1) %>% reshape2::melt()
+            if(! is.null(object@metadata$Normalization)){
+              pseudo  <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
+                                    scale=object@metadata$Normalization$coefNorm$norm.factors)+1) %>% reshape2::melt()
             }
             else{
-              pseudo  <- log2(scale(MultiAssayExperiment::assay(object[[dataType]]), center=FALSE)+1) %>% reshape2::melt()
+              pseudo  <- log2(scale(SummarizedExperiment::assay(object), center=FALSE)+1) %>% reshape2::melt()
             }
 
             colnames(pseudo) <- c("feature", "samples", "value")
-            pseudo_bis <- dplyr::full_join(pseudo, groups, by="samples")
+            
+            pseudo_bis <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples")
 
             pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
 
             # boxplot
             p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + geom_boxplot(aes(fill=groups)) +
-              theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +
-              xlab(paste0(dataType, " samples"))
+              theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
 
-              #scale_fill_manual(values=col)
             print(p)
-
-            if(! is.null(pngFile)){
-              ggsave(filename = pngFile, plot = p)
-            }
 
           }
 )
 
 # Pas sur pour l'argument condition ..
 
-#' @title plotPCAnorm
+#' @title plotPCA
 #' @description This function plot the factorial map from a PCA object stored
-#' in a \link{MultiAssayExperiment-class} object. By default, samples are
+#' in a \link{SummarizedExperiment-class} object. By default, samples are
 #' colored by groups (all combinations of level's factor)
-#' @param object An object of class \link{MultiAssayExperiment-class}
-#' @param data The name of the omic data for which the PCA plot has to be drawn.
+#' @param object An object of class \link{SummarizedExperiment-class}
 #' @param PCA This argument indicates whether the scaled PCA has to be performed on raw [\sQuote{raw}] or normalized [\sQuote{norm}] data.
 #' @param PCs A vector giving the two axis that have to be drawn for the factorial map
 #' @param condition All combination of level's factor
-#' @param pngFile The name of the png file for saving the plot.
 #' @return
-#' @exportMethod plotPCAnorm
+#' @exportMethod plotPCA
 #' @examples
-setMethod(f= "plotPCAnorm",
-          signature = "MultiAssayExperiment",
-          definition <- function(object, data, PCA, PCs=c(1,2), condition="groups", pngFile){
+setMethod(f= "plotPCA",
+          signature = "SummarizedExperiment",
+          definition <- function(object, PCA, PCs=c(1,2), condition="groups"){
 
             #
             PC1 <- paste("Dim.",PCs[1], sep="")
             PC2 <- paste("Dim.",PCs[2], sep="")
 
-            groups    <- tidyr::unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]),
-                               col="groups", sep="_", remove = TRUE)$groups
-            conditions<- object@colData %>% as.data.frame() %>% dplyr::mutate(samples=row.names(.), groups=groups)
+            # groups    <- object@metadata$Groups$groups
+            # conditions<- object@colData %>% as.data.frame() %>% dplyr::mutate(samples=row.names(.), groups=groups)
 
-            score     <- object[[data]]@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
-                         dplyr::mutate(samples=row.names(.)) %>% dplyr::full_join(., conditions, by="samples")
+            score     <- object@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
+                         dplyr::mutate(samples=row.names(.)) %>% dplyr::full_join(., object@metadata$Groups, by="samples")
 
-            var1 <- round(object[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digits=3)
-            var2 <- round(object[[data]]@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digits=3)
+            var1 <- round(object@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digits=3)
+            var2 <- round(object@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digits=3)
 
 
             p <- ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
@@ -721,45 +709,12 @@ setMethod(f= "plotPCAnorm",
               #scale_color_manual(values=col$colors)
 
             print(p)
-            if(! is.null(pngFile)){
-              ggsave(filename = pngFile, plot = p)
-            }
+
             })
 
 
 
-#' @title barplotPCAnorm
-#'
-#' @param object An object of class \link{MultiAssayExperiment-class}
-#' @param condition
-#' @param colors color palette
-#'
-#' @return
-#' @exportMethod barplotPCAnorm
-#' @importFrom ggplot2 position_dodge scale_fill_manual
-#'
-#'
-#' @examples
-setMethod(f= "barplotPCAnorm",
-          signature = "MultiAssayExperiment",
-          definition <- function(object, condition="samples"){
 
-            PCs <- value <- samples <- NULL
-
-            col <- colorPlot(object@design, object@colData, condition=condition)
-
-            score_raw  <- object@listPCA$raw$ind$coord  %>% data.table::melt %>%
-                          dplyr::mutate(tag="1.Unnormalised data")
-            score_norm <- object@listPCA$norm$ind$coord %>% data.table::melt %>%
-                          dplyr::mutate(tag=paste("2.Normalised data : ", object@Normalization@Method,  sep=""))
-
-            score <- rbind(score_raw, score_norm)
-            colnames(score) <- c("samples", "PCs", "value", "tag")
-
-            ggplot(data=score, aes(x=PCs, y=value, fill=samples)) +
-              geom_bar(stat="identity", position=position_dodge(), color="black") +
-              facet_grid(tag~PCs, scale ="free", space = "free") + scale_fill_manual(values=col)
-          })
 
 
 
@@ -783,25 +738,25 @@ setMethod(f= "barplotPCAnorm",
 #' \item{NbReplicates: }{keep gene if the NbOfsample_over_cpm >= min(NbReplicat)}
 #' \item{filterByExpr:} {the default filtering method implemented in the edgeR filterByExpr() function.}
 #' }
-#' @param object An object of class \link{MultiAssayExperiment}
+#' @param object An object of class \link{SummarizedExperiment}
 #' @param Filter_Strategy The filtering strategy ("NbConditions" or "NbReplicates")
 #' @param CPM_Cutoff The CPM cutoff.
-#' @return An object of class \link{MultiAssayExperiment}
+#' @return An object of class \link{SummarizedExperiment}
 #' @details
-#' Filtered dataset is stored in the ExperimentList slot of the \link{MultiAssayExperiment} object
+#' Filtered dataset is stored in the ExperimentList slot of the \link{SummarizedExperiment} object
 #' as a List named (DataName.filtred).
-#' List of filtered features are stored as a named list ("FilteredFeature") in the metadata slot of a
-#' given data set, stored itself in the ExperimentList slot of a \link{MultiAssayExperiment} object.
+#' List of filtered features are stored as a named list ("FilteredFeatures") in the metadata slot of a
+#' given data set, stored itself in the ExperimentList slot of a \link{SummarizedExperiment} object.
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod FilterLowAbundance
 #' @seealso edgeR::filterByExpr
 #' @examples
 setMethod(f= "FilterLowAbundance",
-          signature = "MultiAssayExperiment",
+          signature = "SummarizedExperiment",
           definition <- function(object, data, Filter_Strategy = "NbConditions", CPM_Cutoff = 5){
 
-            objectFilt <- object[[data]]
+            objectFilt <- object
 
             assayFilt  <- MultiAssayExperiment::assay(objectFilt)
 
@@ -813,8 +768,8 @@ setMethod(f= "FilterLowAbundance",
             assayFilt   <- MultiAssayExperiment::assay(objectFilt)
 
             ## filter cpm
-            NbReplicate <- table(tidyr::unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_"))
-            NbConditions <- unique(tidyr::unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_"))$groups %>% length()
+            NbReplicate <- table(object@metadata$Groups$groups)
+            NbConditions <- length(unique(object@metadata$Groups$groups)) 
 
             switch(Filter_Strategy,
                    "NbConditions" = { keep <- rowSums(edgeR::cpm(assayFilt) >= CPM_Cutoff) >=  NbConditions },
@@ -828,9 +783,9 @@ setMethod(f= "FilterLowAbundance",
             ## nbr of genes filtered
             genes_flt1  <- objectFilt[!keep]@NAMES
 
-            objectFilt@metadata[["FilteredFeature"]] <-  c(genes_flt0, genes_flt1)
+            objectFilt@metadata[["FilteredFeatures"]] <-  c(genes_flt0, genes_flt1)
 
-            object@ExperimentList[[paste0(data, ".filtred")]] <- objectFilt[keep]
+            object <- objectFilt[keep]
 
             return(object)
 
@@ -845,19 +800,19 @@ setMethod(f= "FilterLowAbundance",
 
 #' @title RunNormalization
 #' @description This function applied a normalization method on an omic data sets stored in an object of
-#' class \link{MultiAssayExperiment}.
+#' class \link{SummarizedExperiment}.
 #' \itemize{
 #' \item{For RNAseq data:}{the TMM function of edgeR is proposed by default, see the ref}
 #' \item{For Proteomic data:}{}
 #' \item{For Metabolomic data:}{}
 #' }
-#' @param object An object of class \link{MultiAssayExperiment}
+#' @param object An object of class \link{SummarizedExperiment}
 #' @param data The name of the data set for which the normalization has to be performed.
 #' @param NormMethod Normalization method
-#' @return An object of class \link{MultiAssayExperiment}
+#' @return An object of class \link{SummarizedExperiment}
 #' The applied normalization method and computed scaling factors (by samples) are stored as a named list
 #' ("normalization") of two elements (respectively "methode" and "coefNorm") in the metadata slot of a
-#' given data set, stored itself in the ExperimentList slot of a \link{MultiAssayExperiment} object.
+#' given data set, stored itself in the ExperimentList slot of a \link{SummarizedExperiment} object.
 #' @exportMethod RunNormalization
 #' @seealso TMM.Normalization
 #' @references
@@ -865,18 +820,15 @@ setMethod(f= "FilterLowAbundance",
 #' @examples
 #'
 setMethod(f="RunNormalization",
-          signature="MultiAssayExperiment",
-          definition <- function(object, data, NormMethod){
-
-            groups <- tidyr::unite(as.data.frame(object@colData[object@metadata$design@Factors.Type == "Bio"]), col="groups", sep="_")$groups
+          signature="SummarizedExperiment",
+          definition <- function(object, NormMethod){
 
             coefNorm  = switch(NormMethod,
-                               "TMM"=TMM.Normalization(MultiAssayExperiment::assay(object[[data]]), groups)
+                               "TMM"=TMM.Normalization(SummarizedExperiment::assay(object), object@metadata$Groups$groups)
             )
-            object@ExperimentList[[data]]@metadata[["Normalization"]] <- list(methode = NormMethod, coefNorm = coefNorm)
+            object@metadata[["Normalization"]] <- list(methode = NormMethod, coefNorm = coefNorm)
             return(object)
-          }
-)
+          })
 
 
 
@@ -889,7 +841,7 @@ setMethod(f="RunNormalization",
 
 #' @title RunDiffAnalysis
 #' @description This is an interface method which run a differential analysis method on
-#' omic datasets stored in an object of class \link{MultiAssayExperiment}.
+#' omic datasets stored in an object of class \link{SummarizedExperiment}.
 #' According to the type of omic and to a list of contrasts.
 #' The differential analysis method is applied to each contrasts (or hypothesis).
 #' Three methods are available according to the type of object:
@@ -911,14 +863,14 @@ setMethod(f="RunNormalization",
 #' }
 #' All the results are stored as a named list ("DiffExpAnal") in the metadata slot of a
 #' given data set, stored itself in the ExperimentList slot of a \link{MultiAssayExperiment} object.
-#' @param An object of class \link{MultiAssayExperiment}
-#' @param data The name of the omic data.
+#' @param object an object of class \link{SummarizedExperiment}
+#' @param design an object of class [\code{\link{ExpDesign-class}]
 #' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
 #' to run. Either "edgeRglmfit", "limmalmFit", ...
 #' @param contrastList The list of contrast to test
 #' @param FDR The false discovery rate threshold
 #' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
-#' @return An object of class \link{MultiAssayExperiment}
+#' @return An object of class \link{SummarizedExperiment}
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod runCoExpression
@@ -927,49 +879,48 @@ setMethod(f="RunNormalization",
 #'
 #'
 setMethod(f="RunDiffAnalysis",
-          signature="MultiAssayExperiment",
-          definition <- function(object, data, FDR = 0.05, contrastList, DiffAnalysisMethod, clustermq=FALSE){
+          signature="SummarizedExperiment",
+          definition <- function(object, design, FDR = 0.05, contrastList, DiffAnalysisMethod, clustermq=FALSE){
 
             contrastName <- NULL
 
-            object@ExperimentList[[data]]@metadata$DiffExpAnal <- list()
+            object@metadata$DiffExpAnal <- list()
 
-            Contrasts.Sel <- dplyr::filter(object@metadata$design@Contrasts.Sel, contrastName %in% contrastList)
-            object@ExperimentList[[data]]@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
-            object@ExperimentList[[data]]@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
-            object@ExperimentList[[data]]@metadata$DiffExpAnal[["FDR"]]       <- FDR
+            Contrasts.Sel <- dplyr::filter(design@Contrasts.Sel, contrastName %in% contrastList)
+            object@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
+            object@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
+            object@metadata$DiffExpAnal[["FDR"]]       <- FDR
 
             # Run the Diff analysis and get the results as a list of object depending of the
             ListOfDiffResults <- switch(DiffAnalysisMethod,
-                                        "edgeRglmfit"=edgeR.AnaDiff(object, data, clustermq)
+                                        "edgeRglmfit"=edgeR.AnaDiff(object, design, clustermq)
             )
 
             # Set an AnaDiff object to
-            object@ExperimentList[[data]]@metadata$DiffExpAnal[["DGELRT"]] <- ListOfDiffResults
+            object@metadata$DiffExpAnal[["DGELRT"]] <- ListOfDiffResults
 
             #
-            object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]] <- lapply(ListOfDiffResults, function(x){
+            object@metadata$DiffExpAnal[["TopDGE"]] <- lapply(ListOfDiffResults, function(x){
 
-
-              res<-edgeR::topTags(x, n = dim(x)[1])
+              res <- edgeR::topTags(x, n = dim(x)[1])
 
               DEGs<- res$table[res$table$FDR <= FDR,]
               #DEGs<-res$table
               return(DEGs)
             })
-            names(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]]) <- names(ListOfDiffResults)
+            names(object@metadata$DiffExpAnal[["TopDGE"]]) <- names(ListOfDiffResults)
 
             ## merge results in bin matrix
-            DEG_list <- lapply(1:length(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]]), function(x){
+            DEG_list <- lapply(1:length(object@metadata$DiffExpAnal[["TopDGE"]]), function(x){
 
-              res <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]][[x]]
+              res <- object@metadata$DiffExpAnal[["TopDGE"]][[x]]
               tmp <- data.frame(DEG = rownames(res), bin = rep(1,length(rownames(res))))
               colnames(tmp) <- c("DEG", paste("H", x, sep=""))
               return(tmp)
             })
-            names(DEG_list) <- names(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]])
+            names(DEG_list) <- names(object@metadata$DiffExpAnal[["TopDGE"]])
 
-            object@ExperimentList[[data]]@metadata$DiffExpAnal[["mergeDGE"]] <- DEG_list %>% purrr::reduce(dplyr::full_join, by="DEG") %>%
+            object@metadata$DiffExpAnal[["mergeDGE"]] <- DEG_list %>% purrr::reduce(dplyr::full_join, by="DEG") %>%
               dplyr::mutate_at(.vars = 2:(length(DEG_list)+1), .funs = function(x){dplyr::if_else(is.na(x), 0, 1)}) %>% data.table::data.table()
 
             return(object)
@@ -989,8 +940,8 @@ setMethod(f="RunDiffAnalysis",
 #' @title DiffAnal.plot
 #' @description
 #' This is an interface method which draw a MAplot from the results of a differential analysis
-#' performed on omic datasets stored in an object of class \link{MultiAssayExperiment}
-#' @param object An object of class \link{MultiAssayExperiment}
+#' performed on omic datasets stored in an object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{SummarizedExperiment}
 #' @param data The name of the omic data for which the MAplot has to be drawn
 #' @param hypothesis The hypothesis for which the MAplot has to be drawn
 #' @return plot
@@ -999,20 +950,20 @@ setMethod(f="RunDiffAnalysis",
 #'
 #' @examples
 setMethod(f="DiffAnal.plot",
-          signature="MultiAssayExperiment",
-          definition <- function(object, data, hypothesis){
+          signature="SummarizedExperiment",
+          definition <- function(object, hypothesis){
 
             plots <- list()
 
-            res      <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["DGELRT"]][[hypothesis]]
-            resTable <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]][[hypothesis]]
-            FDR      <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["FDR"]]
+            # sera adapté par delphine & gwendal pour prot/meta aussi
+            res      <- object@metadata$DiffExpAnal[["DGELRT"]][[hypothesis]]
+            resTable <- object@metadata$DiffExpAnal[["TopDGE"]][[hypothesis]]
+            FDR      <- object@metadata$DiffExpAnal[["FDR"]]
 
             res.FDR <- edgeR::topTags(res, n = dim(res)[1])
-            plots[["MA.plot"]] <- MA.plot(data = res.FDR$table, FDRcutoff = FDR, pngFile =NULL)
-
-
-            plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable[resTable$FDR <= FDR,], pngFile =NULL)
+            
+            plots[["MA.plot"]]     <- MA.plot(data = res.FDR$table, FDRcutoff = FDR)
+            plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable[resTable$FDR <= FDR,])
 
             return(plots)
           })
@@ -1046,9 +997,8 @@ setMethod(f="DiffAnal.plot",
 #' \item{plots: }{The plots of coseq results}
 #' }
 #' All this results are stored as a named list ("DiffExpAnal") in the metadata slot of a
-#' given data set, stored itself in the ExperimentList slot of a \link{MultiAssayExperiment} object.
-#' @param object An object of class \link{MultiAssayExperiment}
-#' @param data The name of the omic data from which the co-expression analysis has to be performed
+#' given data set, stored itself in the ExperimentList slot of a \link{SummarizedExperiment} object.
+#' @param object An object of class \link{SummarizedExperiment}
 #' @param tools The name of the function to use
 #' @param geneList A list of genes
 #' @param K Number of clusters (a single value or a vector of values)
@@ -1058,27 +1008,27 @@ setMethod(f="DiffAnal.plot",
 #' @param normFactors The type of estimator to be used to normalize for differences in library size.
 #' By default, it is the "TMM" one.
 #' @param merge "union" or "intersection"
-#' @return An S4 object of class \link{MultiAssayExperiment}
+#' @return An S4 object of class \link{SummarizedExperiment}
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod runCoExpression
 #' @seealso \code{\link{coseq::coseq}}
 setMethod(f="runCoExpression",
-          signature="MultiAssayExperiment",
-          definition <- function(object, data, tools = "coseq", geneList, K, iter=5 , model="normal",
+          signature="SummarizedExperiment",
+          definition <- function(object, tools = "coseq", geneList, K, iter=5 , model="normal",
                                  transformation="arcsin", normFactors="TMM", nameList, merge="union"){
 
-            object@ExperimentList[[data]]@metadata$CoExpAnal <- list()
-            object@ExperimentList[[data]]@metadata$CoExpAnal[["model"]]            <- model
-            object@ExperimentList[[data]]@metadata$CoExpAnal[["transformation"]]   <- transformation
-            object@ExperimentList[[data]]@metadata$CoExpAnal[["normFactors"]]      <- normFactors
-            object@ExperimentList[[data]]@metadata$CoExpAnal[["meanFilterCutoff"]] <- 50
-            object@ExperimentList[[data]]@metadata$CoExpAnal[["gene.list.names"]]  <- nameList
-            object@ExperimentList[[data]]@metadata$CoExpAnal[["merge.type"]]       <- merge
+            object@metadata$CoExpAnal <- list()
+            object@metadata$CoExpAnal[["model"]]            <- model
+            object@metadata$CoExpAnal[["transformation"]]   <- transformation
+            object@metadata$CoExpAnal[["normFactors"]]      <- normFactors
+            object@metadata$CoExpAnal[["meanFilterCutoff"]] <- 50
+            object@metadata$CoExpAnal[["gene.list.names"]]  <- nameList
+            object@metadata$CoExpAnal[["merge.type"]]       <- merge
 
-            counts = MultiAssayExperiment::assay(object@ExperimentList[[data]])[geneList,]
+            counts = SummarizedExperiment::assay(object)[geneList,]
 
-
+            # 
             switch (tools,
               "coseq" = {
                   coseq.res <- runCoseq(counts, K=K,
@@ -1086,22 +1036,22 @@ setMethod(f="runCoExpression",
                                         model=model,
                                         transformation=transformation,
                                         normFactors=normFactors)
-                  object@ExperimentList[[data]]@metadata$CoExpAnal[["coseqResults"]] <- coseq.res
+                  object@metadata$CoExpAnal[["coseqResults"]] <- coseq.res
 
                   # list of genes per cluster
                   clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
                     names(coseq::clusters(coseq.res)[coseq::clusters(coseq.res) == i])
                     })
-                  object@ExperimentList[[data]]@metadata$CoExpAnal[["clusters"]] <- clusters
-                  names(object@ExperimentList[[data]]@metadata$CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
+                  object@metadata$CoExpAnal[["clusters"]] <- clusters
+                  names(object@metadata$CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
 
                   # nbr of cluster
                   nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
-                  object@ExperimentList[[data]]@metadata$CoExpAnal[["cluster.nb"]] <- nb_cluster
+                  object@metadata$CoExpAnal[["cluster.nb"]] <- nb_cluster
 
                   # plot
-                  plot.coseq.res <- coseq::plot(coseq.res, conds = FlomicsMultiAssay@metadata$design@Groups$groups)
-                  object@ExperimentList[[data]]@metadata$CoExpAnal[["plots"]] <- plot.coseq.res
+                  plot.coseq.res <- coseq::plot(coseq.res, conds = object@metadata$Groups$groups)
+                  object@metadata$CoExpAnal[["plots"]] <- plot.coseq.res
 
                 }
             )
@@ -1118,22 +1068,21 @@ setMethod(f="runCoExpression",
 #' @description This function performs enrichment test from functional gene annotation data. This data could be
 #' GO, KEGG or other... For instance, the hypergeometric test is applied. Parameters used are those
 #' recommended in DiCoExpress workflow (see the paper in reference)
-#' @param object An object of class \link{MultiAssayExperiment}
-#' @param data The name of the omic data from which the co-expression analysis has to be performed
+#' @param object An object of class \link{SummarizedExperiment}
 #' @param CoExpListNames A list of clusters names.
 #' @param DiffListNames A list of differential expressed genes given as constrast names.
 #' @param alpha The pvalue cut-off
 #' @param probaMethod The probabilistic method to use.
 #' @param annotation The gene annotation file.
-#' @return An object of class \link{MultiAssayExperiment}
+#' @return An object of class \link{SummarizedExperiment}
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod runAnnotationEnrichment
 #'
 setMethod(f="runAnnotationEnrichment",
-          signature="MultiAssayExperiment",
+          signature="SummarizedExperiment",
 
-          definition <- function(object, data, DiffListNames = NULL, CoExpListNames = NULL, annotation,
+          definition <- function(object, DiffListNames = NULL, CoExpListNames = NULL, annotation,
                                  alpha = 0.01, probaMethod = "hypergeometric"){
 
             EnrichAnal <- list()
@@ -1147,14 +1096,14 @@ setMethod(f="runAnnotationEnrichment",
             geneLists.diff <- list()
             geneLists.diff <- lapply(DiffListNames, function(listname){
 
-              row.names(object@ExperimentList[[data]]@metadata$DiffExpAnal[["TopDGE"]][[listname]])
+              row.names(object@metadata$DiffExpAnal[["TopDGE"]][[listname]])
             })
             names(geneLists.diff) <- DiffListNames
 
             geneLists.coseq <- list()
             #geneLists.coseq <- lapply(CoExpListNames, function(listname){
 
-            geneLists.coseq <-  object@ExperimentList[[data]]@metadata[["CoExpAnal"]][["clusters"]][CoExpListNames]
+            geneLists.coseq <-  object@metadata[["CoExpAnal"]][["clusters"]][CoExpListNames]
             #})
             #names(geneLists.coseq) <- CoExpListNames
 
@@ -1172,7 +1121,7 @@ setMethod(f="runAnnotationEnrichment",
 
             EnrichAnal[["results"]] <- Results
 
-            object@ExperimentList[[data]]$metadata$EnrichAnal <- EnrichAnal
+            object@metadata$EnrichAnal <- EnrichAnal
 
             return(object)
           })

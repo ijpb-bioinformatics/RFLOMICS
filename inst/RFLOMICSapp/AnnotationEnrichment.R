@@ -43,8 +43,6 @@ AnnotationEnrichment <- function(input, output, session, dataset){
     ListNames.diff <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["contrasts"]]$contrastName
     ListNames.coseq <- names(FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata$CoExpAnal[["clusters"]])
     
-    
-    
     # multiInput(
     #   inputId = session$ns("GeneList.diff"),
     #   label = "Select DEG to Coseq :", 
@@ -98,38 +96,20 @@ AnnotationEnrichment <- function(input, output, session, dataset){
     
     print(paste("# 11- Enrichment Analysis...", dataset))
     
-    # ## list of gene list to annotate
-    # geneLists <- list()
-    # geneLists.diff <- list()
-    # geneLists.diff <- lapply(input$GeneList.diff, function(listname){
-    # 
-    #    row.names(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["TopDGE"]][[listname]])
-    #   
-    # })
-    # names(geneLists.diff) <- input$GeneList.diff
-    # 
-    # geneLists.coseq <- list()
-    # geneLists.coseq <- lapply(input$GeneList.coseq, function(listname){
-    #   
-    #   FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata[["CoExpAnal"]][["clusters"]][[listname]]
-    #   
-    # })
-    # names(geneLists.coseq) <- input$GeneList.coseq
-    # 
-    # geneLists <- c(geneLists.diff, geneLists.coseq)
-    
     ## run annotation
-    FlomicsMultiAssay <<- runAnnotationEnrichment(FlomicsMultiAssay, data = paste0(dataset,".filtred"), annotation= annotation, 
-                                                  DiffListNames=input$GeneList.diff, CoExpListNames=input$GeneList.coseq, 
-                                                  alpha = input$Alpha_Enrichment, probaMethod = input$EnrichMethod)
+    dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
+    dataset.SE <- runAnnotationEnrichment(dataset.SE, annotation= annotation, 
+                                          DiffListNames=input$GeneList.diff, CoExpListNames=input$GeneList.coseq, 
+                                          alpha = input$Alpha_Enrichment, probaMethod = input$EnrichMethod)
+    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
     
     ## print results
     output$AnnotEnrichResults <- renderUI({
 
       # foreach gene list selected (contrast)
-      lapply(names(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]$metadata$EnrichAnal[["results"]]), function(listname) {
+      lapply(names(dataset.SE@metadata$EnrichAnal[["results"]]), function(listname) {
 
-        data <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]$metadata$EnrichAnal[["results"]][[listname]][["Over_Under_Results"]]
+        data <- dataset.SE@metadata$EnrichAnal[["results"]][[listname]][["Over_Under_Results"]]
         
         fluidRow(
           column(12, 
@@ -142,7 +122,7 @@ AnnotationEnrichment <- function(input, output, session, dataset){
                                       
                                   column(10,
                                         
-                                        renderPlot({ pvalue.enrichment.plot(data, "overrepresented", index = input$top.over, pngFile=NULL)})
+                                        renderPlot({ pvalue.enrichment.plot(data, "overrepresented", index = input$top.over)})
                                   ),
                                   column(2,
                                          
@@ -164,7 +144,7 @@ AnnotationEnrichment <- function(input, output, session, dataset){
                              tabPanel(title = "underrepresented", 
                                       
                                   column(10,
-                                         renderPlot({ pvalue.enrichment.plot(data, "underrepresented", index = input$top.under, pngFile=NULL)})
+                                         renderPlot({ pvalue.enrichment.plot(data, "underrepresented", index = input$top.under)})
                                   ),
                                   column(2,
                                          radioGroupButtons(direction = "vertical", inputId = session$ns("top.under"), 
