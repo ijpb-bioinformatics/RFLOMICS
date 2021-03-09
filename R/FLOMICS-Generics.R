@@ -27,13 +27,8 @@ setGeneric(
 )
 
 setGeneric(
-  name="plotPCAnorm",
-  def = function( object, ... ){standardGeneric("plotPCAnorm")}
-)
-
-setGeneric(
-  name="barplotPCAnorm",
-  def = function( object, ... ){standardGeneric("barplotPCAnorm")}
+  name="plotPCA",
+  def = function( object, ... ){standardGeneric("plotPCA")}
 )
 
 setGeneric(
@@ -44,11 +39,6 @@ setGeneric(
 setGeneric(
   name="RunPCA",
   def = function( object, ... ){standardGeneric("RunPCA")}
-)
-
-setGeneric(
-  name="SetModelMatrix",
-  def = function( object, ... ){standardGeneric("SetModelMatrix")}
 )
 
 setGeneric(

@@ -120,8 +120,8 @@ TMM.Normalization <- function(counts, groups){
 
 #' @title edgeR.AnaDiff
 #'
-#' @param object an object of class [\code{\link{MultiAssayExperiment}]
-#' @param data Omic data type
+#' @param object an object of class [\code{\link{SummarizedExperiment}]
+#' @param design an object of class [\code{\link{ExpDesign-class}]
 #' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
 #' @return A list of object of class [\code{\link{DGELRT}]
 #' @export
@@ -129,19 +129,18 @@ TMM.Normalization <- function(counts, groups){
 #'
 #'
 #' @examples
-edgeR.AnaDiff <- function(object, data, clustermq = FALSE){
+edgeR.AnaDiff <- function(object, design, clustermq = FALSE){
 
   z <- y <- NULL
 
   # retrieve the design matrix
-  model_matrix <- model.matrix(as.formula(object@metadata$design@Model.formula),
-                               data=as.data.frame(object@metadata$design@List.Factors))
+  model_matrix <- model.matrix(as.formula(design@Model.formula), data=as.data.frame(design@List.Factors))
 
   # Construct the DGE obect
-  dge <- edgeR::DGEList(counts=MultiAssayExperiment::assay(object@ExperimentList[[data]]),
-                        group=object@ExperimentList[[data]]@metadata$Normalization$coefNorm$group,
-                        lib.size =object@ExperimentList[[data]]@metadata$Normalization$coefNorm$lib.size,
-                        norm.factors = object@ExperimentList[[data]]@metadata$Normalization$coefNorm$norm.factors)
+  dge <- edgeR::DGEList(counts       = SummarizedExperiment::assay(object),
+                        group        = object@metadata$Normalization$coefNorm$group,
+                        lib.size     = object@metadata$Normalization$coefNorm$lib.size,
+                        norm.factors = object@metadata$Normalization$coefNorm$norm.factors)
 
   # Run the model
   print("[cmd] dge <- edgeR::estimateGLMCommonDisp(dge, design=model_matrix)")
@@ -155,7 +154,7 @@ edgeR.AnaDiff <- function(object, data, clustermq = FALSE){
 
 
   # selected contrast
-  Contrasts.Sel <- object@ExperimentList[[data]]@metadata$DiffExpAnal[["contrasts"]]
+  Contrasts.Sel <- object@metadata$DiffExpAnal[["contrasts"]]
 
   # test clustermq
   if(clustermq == TRUE){
@@ -168,7 +167,7 @@ edgeR.AnaDiff <- function(object, data, clustermq = FALSE){
       }
 
       ListRes <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
-                              export=list(y=fit.f,z=object@metadata$design@Contrasts.Coeff),
+                              export=list(y=fit.f,z=design@Contrasts.Coeff),
                               n_jobs=length(Contrasts.Sel$contrast),pkgs="edgeR")
 
   }
@@ -176,7 +175,7 @@ edgeR.AnaDiff <- function(object, data, clustermq = FALSE){
 
      ListRes <-  lapply(Contrasts.Sel$contrast, function(x){
 
-       edgeR::glmLRT(fit.f, contrast = unlist(object@metadata$design@Contrasts.Coeff[x,]))
+       edgeR::glmLRT(fit.f, contrast = unlist(design@Contrasts.Coeff[x,]))
 
      })
   }
@@ -231,14 +230,12 @@ colorPlot <- function(design, ColData, condition="samples"){
 #' plotLibSize
 #'
 #' @param abundances
-#' @param dataName
-#' @param pngFile
 #' @return plot
 #' @export
 #' @importFrom ggplot2 ggplot geom_bar xlab ylab element_text
 #'
 #' @examples
-plotLibSize <- function(abundances, dataName, pngFile=NULL){
+plotLibSize <- function(abundances){
 
   value <- NULL
 
@@ -247,8 +244,7 @@ plotLibSize <- function(abundances, dataName, pngFile=NULL){
 
   libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
 
-  p <- ggplot(libSizeNorm, aes(x=samples,y=value, fill=samples)) + geom_bar( stat="identity" ) +
-    xlab(paste0(dataName, " samples")) + ylab("Library Size") +
+  p <- ggplot(libSizeNorm, aes(x=samples,y=value, fill=samples)) + geom_bar( stat="identity" ) + ylab("Library Size") +
     theme(axis.text.x      = element_text(angle = 45, hjust = 1),
           legend.position  = "none")
           #axis.text.x     = element_blank(),
@@ -257,37 +253,26 @@ plotLibSize <- function(abundances, dataName, pngFile=NULL){
           #legend.text     = element_text(size=5))
   print(p)
 
-  if (! is.null(pngFile)){
-    ggsave(filename = pngFile, plot = p)
-  }
 }
 
 
 #' plotDistr
 #'
 #' @param abundances matrix or dataframe of feature/gene abundances/counts
-#' @param dataName name of dataset
-#' @param pngFile png file name
-#' @return plot
 #' @export
 #' @importFrom ggplot2 geom_density xlab
 #'
-plotDistr <- function(abundances, dataName, pngFile=NULL){
+plotDistr <- function(abundances, dataName){
 
   value <- samples <- NULL
 
   pseudo_counts <- log2(abundances+1) %>% reshape2::melt()
   colnames(pseudo_counts) <- c("features", "samples", "value")
 
-  p <- ggplot2::ggplot(pseudo_counts) +
-    geom_density(aes(value, color=samples) ) +
-    xlab(paste0(dataName, " log2(feature abundances)")) +
-    theme(legend.position='none')
+  p <- ggplot2::ggplot(pseudo_counts) + geom_density(aes(value, color=samples) ) + xlab(" log2(feature abundances)") +
+                                        theme(legend.position='none')
   print(p)
 
-  if (! is.null(pngFile)){
-    ggsave(filename = pngFile, plot = p)
-  }
 }
 
 
@@ -1118,13 +1103,12 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
 #' @param data
 #' @param Over_Under
 #' @param index result size index
-#' @param pngFile
 #' @return plot
 #' @export
 #' @importFrom dplyr desc
 #'
 #' @examples
-pvalue.enrichment.plot <- function(data, Over_Under, index = "Top50" , pngFile=NULL){
+pvalue.enrichment.plot <- function(data, Over_Under, index = "Top50" ){
 
   Decision <- Pvalue_over <- Pvalue_under <- Pvalue <- NULL
   Term <- Domain <- Trial_Success <- scale_size <- tail <- NULL
@@ -1153,9 +1137,6 @@ pvalue.enrichment.plot <- function(data, Over_Under, index = "Top50" , pngFile=N
 
   print(p)
 
-  if (! is.null(pngFile)){
-    ggsave(filename = pngFile, plot = p)
-  }
 
 }
 

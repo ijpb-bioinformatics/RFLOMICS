@@ -118,17 +118,18 @@ CoSeqAnalysis <- function(input, output, session, dataset){
     progress$inc(1/10, detail = paste("Doing part ", 10,"%", sep=""))
     #----------------------#
     
-    # run coseq   
-    FlomicsMultiAssay <<- runCoExpression(FlomicsMultiAssay, data = paste0(dataset,".filtred"), tools="coseq", geneList=DEG_list(), 
-                                          K=input$minK:input$maxK, iter = input$iter, model  = input$model, 
-                                          transformation=input$transfo, normFactors="TMM", nameList=input$select, merge=input$unionInter)
-
+    # run coseq  
+    dataset.SE <- runCoExpression(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], tools="coseq", geneList=DEG_list(), 
+                                  K=input$minK:input$maxK, iter = input$iter, model  = input$model, 
+                                  transformation=input$transfo, normFactors="TMM", nameList=input$select, merge=input$unionInter)
+    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
+    
     #---- progress bar ----#    
     progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep=""))
     #----------------------#
     
     # print coseq plots
-    plot.coseq.res <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["plots"]]
+    plot.coseq.res <- dataset.SE@metadata$CoExpAnal[["plots"]]
     
     output$logLike  <- renderPlot({ plot.coseq.res$logLike }) 
     output$ICL      <- renderPlot({ plot.coseq.res$ICL }) 
@@ -144,13 +145,13 @@ CoSeqAnalysis <- function(input, output, session, dataset){
     
     output$selectClusters <- renderUI({
       
-      nb_cluster <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["cluster.nb"]]
-      coseq.res  <- FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata$CoExpAnal[["coseqResults"]]
+      nb_cluster <- dataset.SE@metadata$CoExpAnal[["cluster.nb"]]
+      coseq.res  <- dataset.SE@metadata$CoExpAnal[["coseqResults"]]
 
       fluidRow(
         
         ## plot selected cluster(s)
-        renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, FlomicsMultiAssay@metadata$design@Groups) }),
+        renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, dataset.SE@metadata$Groups) }),
         
         ## select cluster to plot
         checkboxGroupInput(inputId = session$ns("selectCluster"), label = "Select cluster(s) :",

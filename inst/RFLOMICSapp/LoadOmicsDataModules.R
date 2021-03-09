@@ -143,47 +143,16 @@ LoadOmicsData <- function(input, output, session){
           qcFile   <- input[[paste0("metadataQC", k)]]
           inputs[[dataName]][["qcFile"]] <- input[[paste0("metadataQC", k)]]$datapath ####
           
-          # colnames <- c(names(omicList[[omicType]]), k)
-          # omicList[[omicType]] <- c(omicList[[omicType]] ,dataName)
-          # names(omicList[[omicType]]) <- colnames
 
           validate({
             need(validate.status == 0, message="error")
           })
           
           
-          
-          # ## construct SummarizedExperiment for each data
-          # abundance <- read.table(dataFile$datapath, header = TRUE, row.names = 1)
-          # 
-          # if(!is.null(qcFile)){
-          #   print("# ... metadata QC...")
-          #   QCmat <- read.table(qcFile$datapath, header = TRUE)
-          # }
-          # else{
-          #   QCmat <- data.frame(primary = colnames(abundance),
-          #                       colname = colnames(abundance),
-          #                       stringsAsFactors = FALSE)
-          # }
-          # 
-          # SummarizedExperimentList[[dataName]] <- SummarizedExperiment(assays  = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
-          #                                                              colData = QCmat)
-          # 
-          # # metadata for sampleMap for MultiAssayExperiment
-          # listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
-          #                                   colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
-          #                                   stringsAsFactors = FALSE)
         }
       }
       
       FlomicsMultiAssay <<- FlomicsMultiAssay.constructor(inputs = inputs, Design=Design)
-      
-      # FlomicsMultiAssay <<- MultiAssayExperiment(experiments = SummarizedExperimentList,
-      #                                            colData     = Design@ExpDesign,
-      #                                            sampleMap   = listToMap(listmap),
-      #                                            metadata    = list(design = Design,
-      #                                                               colDataStruc = c(n_dFac = dim(Design@ExpDesign)[2], n_qcFac = 0),
-      #                                                               omicList = omicList))
       
     })
 

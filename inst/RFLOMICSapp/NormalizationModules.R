@@ -89,8 +89,8 @@ RNAseqDataNormTab <- function(input, output, session, dataset){
   
   ## Boxplot of distribution of normalized abundance 
   output$norm.boxplot <- renderPlot({
-    abundanceBoxplot(FlomicsMultiAssay, dataType=paste0(dataset,".filtred"), 
-                     pngFile=file.path(tempdir(), paste0(dataset,"_norm.boxplot.png")))
+    
+    abundanceBoxplot(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
   })  
   
 
@@ -110,8 +110,7 @@ RNAseqDataNormTab <- function(input, output, session, dataset){
     PC2.value <- as.numeric(input$`normData-Secondaxis`[1])   
     condGroup <- input$`normData-condColorSelect`[1]
     
-    plotPCAnorm(FlomicsMultiAssay, data=paste0(dataset,".filtred"), PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup, 
-                pngFile=file.path(tempdir(), paste0(dataset,".filtred","_PCAdesign_norm_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")))
+    plotPCA(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
   })
     
   observeEvent(input$normUpdate, {
@@ -143,8 +142,7 @@ RNAseqDataNormTab <- function(input, output, session, dataset){
       PC2.value <- as.numeric(input$`normData-Secondaxis`[1])   
       condGroup <- input$`normData-condColorSelect`[1]
       
-      plotPCAnorm(FlomicsMultiAssay, data=paste0(dataset,".filtred"), PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup, 
-                  pngFile=file.path(tempdir(), paste0(dataset,".filtred","_PCAdesign_norm_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")))
+      plotPCA(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
     })
   })
   
@@ -165,17 +163,17 @@ RNAseqDataNormTab <- function(input, output, session, dataset){
 
 
 ############## functions ###############
-RunFilterNormPCAfunction <- function(FlomicsMultiAssay, dataset, Filter_Strategy = "NbConditions", CPM_Cutoff = 1, NormMethod){
+RunFilterNormPCAfunction <- function(FlomicsMultiAssay, dataset, Filter_Strategy = "NbConditions", CPM_Cutoff = 1, NormMethod = "TMM"){
   #### Filter low abundance ####
   print("# 7- Low Abundance Filtering...")
-  FlomicsMultiAssay <- FilterLowAbundance(FlomicsMultiAssay, data=dataset, Filter_Strategy, CPM_Cutoff)
+  FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <- FilterLowAbundance(FlomicsMultiAssay@ExperimentList[[dataset]], Filter_Strategy, CPM_Cutoff)
   
   #### Run Normalisation ####
   print("# 8- Abundance normalization...")
-  FlomicsMultiAssay <- RunNormalization(FlomicsMultiAssay, data=paste0(dataset,".filtred"), NormMethod)
+  FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <- RunNormalization(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], NormMethod)
   
   #### Run PCA for filtred & normalized data ####
-  FlomicsMultiAssay <- RunPCA(FlomicsMultiAssay, data=paste0(dataset,".filtred"), PCA="norm")
+  FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <- RunPCA(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
   
   return(FlomicsMultiAssay)
 }
