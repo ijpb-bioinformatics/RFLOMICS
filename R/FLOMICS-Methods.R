@@ -857,9 +857,9 @@ setMethod(f="RunNormalization",
 #' \item{contrasts}{The selected contrasts for which the differential analysis has been conducted}
 #' \item{method}{The method used for the differential analysis}
 #' \item{FDR}{The false discovery rate given in input}
-#' \item{DGELRT}{The results of the model adjustment}
-#' \item{TopDGE}{The top list of differential expressed genes}
-#' \item{mergeDGE}{ }
+#' \item{DGELRT}{a list giving for each contrast the edgeR raw results}
+#' \item{TopDGE}{a list giving for each contrast a data.frame of differential expressed genes}
+#' \item{mergeDGE}{A data frame indicating for each genes in row, if it is DE in a given contrasts in column}
 #' }
 #' All the results are stored as a named list ("DiffExpAnal") in the metadata slot of a
 #' given data set, stored itself in the ExperimentList slot of a \link{MultiAssayExperiment} object.
