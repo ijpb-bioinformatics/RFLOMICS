@@ -46,10 +46,10 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
   # Create the groups data.frame
   # groups <- tidyr::unite(as.data.frame(ExpDesign[typeList == "Bio"]), col="groups", sep="_", remove = TRUE) %>%
   #           dplyr::mutate(samples = rownames(.))
-  
+
   groups <- ExpDesign %>% as.data.frame() %>% dplyr::mutate(samples = rownames(.)) %>%
             tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
-            
+
 
   Design = new(Class = "ExpDesign",
                ExpDesign=ExpDesign,
@@ -436,9 +436,9 @@ FlomicsMultiAssay.constructor <- function(inputs, Design){
                           colname = colnames(abundance),
                           stringsAsFactors = FALSE)
     }
-    
+
     # groups
-    
+
     SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
                                                                                        colData  = QCmat,
                                                                                        metadata = list(omicType = inputs[[dataName]][["omicType"]],
@@ -490,10 +490,10 @@ setMethod(f="RunPCA",
           definition <- function(object){
 
             if(is.null(object@metadata[["Normalization"]]$coefNorm)){
-              
+
               pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE) + 1)
               object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
-              
+
             }
             else{
               pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
@@ -501,7 +501,7 @@ setMethod(f="RunPCA",
               object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
             }
 
-            
+
 
             return(object)
           }
@@ -652,7 +652,7 @@ setMethod(f= "abundanceBoxplot",
             }
 
             colnames(pseudo) <- c("feature", "samples", "value")
-            
+
             pseudo_bis <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples")
 
             pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
@@ -769,7 +769,7 @@ setMethod(f= "FilterLowAbundance",
 
             ## filter cpm
             NbReplicate <- table(object@metadata$Groups$groups)
-            NbConditions <- length(unique(object@metadata$Groups$groups)) 
+            NbConditions <- length(unique(object@metadata$Groups$groups))
 
             switch(Filter_Strategy,
                    "NbConditions" = { keep <- rowSums(edgeR::cpm(assayFilt) >= CPM_Cutoff) >=  NbConditions },
@@ -887,28 +887,33 @@ setMethod(f="RunDiffAnalysis",
             object@metadata$DiffExpAnal <- list()
 
             Contrasts.Sel <- dplyr::filter(design@Contrasts.Sel, contrastName %in% contrastList)
+
+            # move in ExpDesign Constructor
+            model_matrix <- model.matrix(as.formula(design@Model.formula), data=as.data.frame(design@List.Factors))
+
             object@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
             object@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
             object@metadata$DiffExpAnal[["FDR"]]       <- FDR
 
             # Run the Diff analysis and get the results as a list of object depending of the
-            ListOfDiffResults <- switch(DiffAnalysisMethod,
-                                        "edgeRglmfit"=edgeR.AnaDiff(object, design, clustermq)
+            ListRes <- switch(DiffAnalysisMethod,
+                                        "edgeRglmfit"=edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
+                                                                    model_matrix    = model_matrix,
+                                                                    group           = object@metadata$Normalization$coefNorm$group,
+                                                                    lib.size        = object@metadata$Normalization$coefNorm$lib.size,
+                                                                    norm.factors    = object@metadata$Normalization$coefNorm$norm.factors,
+                                                                    Contrasts.Sel   = object@metadata$DiffExpAnal[["contrasts"]],
+                                                                    Contrasts.Coeff = design@Contrasts.Coeff,
+                                                                    FDR             = FDR,
+                                                                    clustermq)
             )
 
-            # Set an AnaDiff object to
-            object@metadata$DiffExpAnal[["DGELRT"]] <- ListOfDiffResults
 
-            #
-            object@metadata$DiffExpAnal[["TopDGE"]] <- lapply(ListOfDiffResults, function(x){
+            ### DGELRT
+            object@metadata$DiffExpAnal[["DGELRT"]] <- ListRes[[1]]
 
-              res <- edgeR::topTags(x, n = dim(x)[1])
-
-              DEGs<- res$table[res$table$FDR <= FDR,]
-              #DEGs<-res$table
-              return(DEGs)
-            })
-            names(object@metadata$DiffExpAnal[["TopDGE"]]) <- names(ListOfDiffResults)
+            ### TopDGE -> TopDFE
+            object@metadata$DiffExpAnal[["TopDGE"]] <- ListRes[[2]]
 
             ## merge results in bin matrix
             DEG_list <- lapply(1:length(object@metadata$DiffExpAnal[["TopDGE"]]), function(x){
@@ -961,7 +966,7 @@ setMethod(f="DiffAnal.plot",
             FDR      <- object@metadata$DiffExpAnal[["FDR"]]
 
             res.FDR <- edgeR::topTags(res, n = dim(res)[1])
-            
+
             plots[["MA.plot"]]     <- MA.plot(data = res.FDR$table, FDRcutoff = FDR)
             plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable[resTable$FDR <= FDR,])
 
@@ -1028,7 +1033,7 @@ setMethod(f="runCoExpression",
 
             counts = SummarizedExperiment::assay(object)[geneList,]
 
-            # 
+            #
             switch (tools,
               "coseq" = {
                   coseq.res <- runCoseq(counts, K=K,
