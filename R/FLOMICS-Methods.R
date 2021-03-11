@@ -46,10 +46,10 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
   # Create the groups data.frame
   # groups <- tidyr::unite(as.data.frame(ExpDesign[typeList == "Bio"]), col="groups", sep="_", remove = TRUE) %>%
   #           dplyr::mutate(samples = rownames(.))
-  
+
   groups <- ExpDesign %>% as.data.frame() %>% dplyr::mutate(samples = rownames(.)) %>%
             tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
-            
+
 
   Design = new(Class = "ExpDesign",
                ExpDesign=ExpDesign,
@@ -436,9 +436,9 @@ FlomicsMultiAssay.constructor <- function(inputs, Design){
                           colname = colnames(abundance),
                           stringsAsFactors = FALSE)
     }
-    
+
     # groups
-    
+
     SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
                                                                                        colData  = QCmat,
                                                                                        metadata = list(omicType = inputs[[dataName]][["omicType"]],
@@ -490,10 +490,10 @@ setMethod(f="RunPCA",
           definition <- function(object){
 
             if(is.null(object@metadata[["Normalization"]]$coefNorm)){
-              
+
               pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE) + 1)
               object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
-              
+
             }
             else{
               pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
@@ -501,7 +501,7 @@ setMethod(f="RunPCA",
               object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
             }
 
-            
+
 
             return(object)
           }
@@ -652,7 +652,7 @@ setMethod(f= "abundanceBoxplot",
             }
 
             colnames(pseudo) <- c("feature", "samples", "value")
-            
+
             pseudo_bis <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples")
 
             pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
@@ -769,7 +769,7 @@ setMethod(f= "FilterLowAbundance",
 
             ## filter cpm
             NbReplicate <- table(object@metadata$Groups$groups)
-            NbConditions <- length(unique(object@metadata$Groups$groups)) 
+            NbConditions <- length(unique(object@metadata$Groups$groups))
 
             switch(Filter_Strategy,
                    "NbConditions" = { keep <- rowSums(edgeR::cpm(assayFilt) >= CPM_Cutoff) >=  NbConditions },
@@ -880,57 +880,57 @@ setMethod(f="RunNormalization",
 #'
 setMethod(f="RunDiffAnalysis",
           signature="SummarizedExperiment",
-          definition <- function(object, design, FDR = 0.05, contrastList, DiffAnalysisMethod, clustermq=FALSE){
+          definition <- function(object, design, Adj.pvalue.method="FDR", Adj.pvalue.cutoff = 0.05, contrastList, DiffAnalysisMethod, clustermq=FALSE){
 
             contrastName <- NULL
 
             object@metadata$DiffExpAnal <- list()
 
             Contrasts.Sel <- dplyr::filter(design@Contrasts.Sel, contrastName %in% contrastList)
+
+            # move in ExpDesign Constructor
+            model_matrix <- model.matrix(as.formula(design@Model.formula), data=as.data.frame(design@List.Factors))
+
             object@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
             object@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
-            object@metadata$DiffExpAnal[["FDR"]]       <- FDR
+            object@metadata$DiffExpAnal[["Adj.pvalue.method"]]       <- Adj.pvalue.method
+            object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]        <- Adj.pvalue.cutoff
 
             # Run the Diff analysis and get the results as a list of object depending of the
-            ListOfDiffResults <- switch(DiffAnalysisMethod,
-                                        "edgeRglmfit"=edgeR.AnaDiff(object, design, clustermq)
+            ListRes <- switch(DiffAnalysisMethod,
+                                        "edgeRglmfit"=edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
+                                                                    model_matrix    = model_matrix,
+                                                                    group           = object@metadata$Normalization$coefNorm$group,
+                                                                    lib.size        = object@metadata$Normalization$coefNorm$lib.size,
+                                                                    norm.factors    = object@metadata$Normalization$coefNorm$norm.factors,
+                                                                    Contrasts.Sel   = object@metadata$DiffExpAnal[["contrasts"]],
+                                                                    Contrasts.Coeff = design@Contrasts.Coeff,
+                                                                    FDR             = Adj.pvalue.cutoff,
+                                                                    clustermq)
             )
 
-            # Set an AnaDiff object to
-            object@metadata$DiffExpAnal[["DGELRT"]] <- ListOfDiffResults
 
-            #
-            object@metadata$DiffExpAnal[["TopDGE"]] <- lapply(ListOfDiffResults, function(x){
+            ### RawDEFres: Raw results from the given diff method
+            object@metadata$DiffExpAnal[["RawDEFres"]] <- ListRes[["RawDEFres"]]
 
-              res <- edgeR::topTags(x, n = dim(x)[1])
-
-              DEGs<- res$table[res$table$FDR <= FDR,]
-              #DEGs<-res$table
-              return(DEGs)
-            })
-            names(object@metadata$DiffExpAnal[["TopDGE"]]) <- names(ListOfDiffResults)
+            ## TopDEF: Top differential expressed features
+            object@metadata$DiffExpAnal[["TopDEF"]] <- ListRes[["TopDEF"]]
 
             ## merge results in bin matrix
-            DEG_list <- lapply(1:length(object@metadata$DiffExpAnal[["TopDGE"]]), function(x){
+            DEF_list <- lapply(1:length(object@metadata$DiffExpAnal[["TopDEF"]]), function(x){
 
-              res <- object@metadata$DiffExpAnal[["TopDGE"]][[x]]
-              tmp <- data.frame(DEG = rownames(res), bin = rep(1,length(rownames(res))))
-              colnames(tmp) <- c("DEG", paste("H", x, sep=""))
+              res <- object@metadata$DiffExpAnal[["TopDEF"]][[x]]
+              tmp <- data.frame(DEF = rownames(res), bin = rep(1,length(rownames(res))))
+              colnames(tmp) <- c("DEF", paste("H", x, sep=""))
               return(tmp)
             })
-            names(DEG_list) <- names(object@metadata$DiffExpAnal[["TopDGE"]])
+            names(DEF_list) <- names(object@metadata$DiffExpAnal[["TopDEF"]])
 
-            object@metadata$DiffExpAnal[["mergeDGE"]] <- DEG_list %>% purrr::reduce(dplyr::full_join, by="DEG") %>%
-              dplyr::mutate_at(.vars = 2:(length(DEG_list)+1), .funs = function(x){dplyr::if_else(is.na(x), 0, 1)}) %>% data.table::data.table()
+            object@metadata$DiffExpAnal[["mergeDEF"]] <- DEF_list %>% purrr::reduce(dplyr::full_join, by="DEF") %>%
+              dplyr::mutate_at(.vars = 2:(length(DEF_list)+1), .funs = function(x){dplyr::if_else(is.na(x), 0, 1)}) %>% data.table::data.table()
 
             return(object)
           })
-
-
-# PB: Je ne comprends pas pourquoi la liste des contrastes n'est pas prise dans l'objet lui même ?
-# soit on change si ce ne sont pas les mêmes ??
-# De plus cette methode n'est pas generique. Elle est specialisée pour les objets edgeR
-# l'argument data pourrait etre remplacé par dataName
 
 
 ###### Graphical METHOD
@@ -955,22 +955,17 @@ setMethod(f="DiffAnal.plot",
 
             plots <- list()
 
-            # sera adapté par delphine & gwendal pour prot/meta aussi
-            res      <- object@metadata$DiffExpAnal[["DGELRT"]][[hypothesis]]
-            resTable <- object@metadata$DiffExpAnal[["TopDGE"]][[hypothesis]]
-            FDR      <- object@metadata$DiffExpAnal[["FDR"]]
+            res      <- object@metadata$DiffExpAnal[["RawDEFres"]][[hypothesis]]
+            resTable <- object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]]
+            Adj.pvalue.cutoff     <- object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]
 
-            res.FDR <- edgeR::topTags(res, n = dim(res)[1])
-            
-            plots[["MA.plot"]]     <- MA.plot(data = res.FDR$table, FDRcutoff = FDR)
-            plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable[resTable$FDR <= FDR,])
+            #res.FDR <- edgeR::topTags(res, n = dim(res)[1])
+
+            plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff)
+            plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable[resTable$Adj.pvalue <= Adj.pvalue.cutoff,])
 
             return(plots)
           })
-
-# CEtte méthode est aussi spécialisée pour les données RNAseq alors que le MAplot et le graphe de
-# de pvalue peut-être pour toutes les méthodes. En faite c'est le DGELRT. A voir limma en sortie.
-# l'argument data pourrait etre remplacé par dataName
 
 
 
@@ -1028,7 +1023,7 @@ setMethod(f="runCoExpression",
 
             counts = SummarizedExperiment::assay(object)[geneList,]
 
-            # 
+            #
             switch (tools,
               "coseq" = {
                   coseq.res <- runCoseq(counts, K=K,

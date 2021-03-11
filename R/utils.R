@@ -129,18 +129,17 @@ TMM.Normalization <- function(counts, groups){
 #'
 #'
 #' @examples
-edgeR.AnaDiff <- function(object, design, clustermq = FALSE){
+edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.factors, Contrasts.Sel, Contrasts.Coeff, FDR, clustermq = FALSE){
 
   z <- y <- NULL
 
-  # retrieve the design matrix
-  model_matrix <- model.matrix(as.formula(design@Model.formula), data=as.data.frame(design@List.Factors))
+  ListRes <- list()
 
   # Construct the DGE obect
-  dge <- edgeR::DGEList(counts       = SummarizedExperiment::assay(object),
-                        group        = object@metadata$Normalization$coefNorm$group,
-                        lib.size     = object@metadata$Normalization$coefNorm$lib.size,
-                        norm.factors = object@metadata$Normalization$coefNorm$norm.factors)
+  dge <- edgeR::DGEList(counts       = count_matrix,
+                        group        = group,
+                        lib.size     = lib.size,
+                        norm.factors = norm.factors)
 
   # Run the model
   print("[cmd] dge <- edgeR::estimateGLMCommonDisp(dge, design=model_matrix)")
@@ -152,10 +151,6 @@ edgeR.AnaDiff <- function(object, design, clustermq = FALSE){
   print("[cmd] fit.f <- edgeR::glmFit(dge,design=model_matrix)")
   fit.f <- edgeR::glmFit(dge,design=model_matrix)
 
-
-  # selected contrast
-  Contrasts.Sel <- object@metadata$DiffExpAnal[["contrasts"]]
-
   # test clustermq
   if(clustermq == TRUE){
 
@@ -166,21 +161,47 @@ edgeR.AnaDiff <- function(object, design, clustermq = FALSE){
         edgeR::glmLRT(y, contrast = unlist(z[x,]))
       }
 
-      ListRes <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
-                              export=list(y=fit.f,z=design@Contrasts.Coeff),
+      ListRes[[1]] <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
+                              export=list(y=fit.f,z=Contrasts.Coeff),
                               n_jobs=length(Contrasts.Sel$contrast),pkgs="edgeR")
 
   }
   else{
+    print("[cmd] apply model to each contrast")
+     ListRes[[1]] <-  lapply(Contrasts.Sel$contrast, function(x){
 
-     ListRes <-  lapply(Contrasts.Sel$contrast, function(x){
-
-       edgeR::glmLRT(fit.f, contrast = unlist(design@Contrasts.Coeff[x,]))
+       edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,]))
 
      })
   }
 
-  names(ListRes) <- Contrasts.Sel$contrastName
+  # Name the table of raw results
+
+  names(ListRes[[1]]) <- Contrasts.Sel$contrastName
+
+  # ListRes[[2]] => TOPDGE => TopDFE
+
+    TopDGE <- lapply(ListRes[[1]], function(x){
+
+    res <- edgeR::topTags(x, n = dim(x)[1])
+
+    DEGs<- res$table[res$table$FDR <= FDR,]
+    #DEGs<-res$table
+    return(DEGs)
+  })
+
+  ListRes[[2]] <- TopDGE
+  names(ListRes[[2]]) <- names(ListRes[[1]])
+
+
+  # Mutate column name to render the anadiff results generic
+  # Initial column Name:  gene_name  logFC      logCPM        LR        PValue           FDR
+  ListRes[[2]] <- lapply(ListRes[[2]], function(x){
+      dplyr::rename(x,"Abundance"="logCPM","StatTest"="LR","pvalue"="PValue","Adj.pvalue"="FDR")
+  })
+
+  names(ListRes) <- c("RawDEFres","TopDEF")
+
   return(ListRes)
 }
 
@@ -290,7 +311,7 @@ pvalue.plot <- function(data, pngFile=NULL){
 
   PValue <- NULL
 
-  p <- ggplot2::ggplot(data=data) + geom_histogram(aes(x=PValue), bins = 200)
+  p <- ggplot2::ggplot(data=data) + geom_histogram(aes(x=pvalue), bins = 200)
 
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
@@ -312,10 +333,10 @@ globalVariables(names(data))
 #' @importFrom ggplot2 aes geom_point scale_colour_manual ggsave
 #' @examples
 #'
-MA.plot <- function(data, FDRcutoff=0.05, pngFile=NULL){
+MA.plot <- function(data, Adj.pvalue.cutoff, pngFile=NULL){
 
-  logCPM <- logFC <- FDR <- NULL
-  p <- ggplot2::ggplot(data=data, aes(x = logCPM, y=logFC, col=FDR < FDRcutoff)) + geom_point(alpha=0.4, size = 0.8) +
+  Abundance <- logFC <- Adj.pvalue <- NULL
+  p <- ggplot2::ggplot(data=data, aes(x = Abundance, y=logFC, col=Adj.pvalue < Adj.pvalue.cutoff)) + geom_point(alpha=0.4, size = 0.8) +
     scale_colour_manual(values=c("black","red"))
 
 
@@ -927,9 +948,9 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
          "intersection"={ dplyr::filter(matrix_sum, sum == length(colnames))[1] }
   )
 
-  if (length(DEG_list$DEG) == 0 ){ return(NULL) }
+  if (length(DEG_list$DEF) == 0 ){ return(NULL) }
 
-  return(DEG_list$DEG)
+  return(DEG_list$DEF)
 }
 
 
