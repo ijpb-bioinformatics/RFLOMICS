@@ -193,9 +193,14 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
   ListRes[[2]] <- TopDGE
   names(ListRes[[2]]) <- names(ListRes[[1]])
 
-  #gene_name  logFC      logCPM        LR        PValue           FDR
-  # Mutate column name to render the anadiff results generic
 
+  # Mutate column name to render the anadiff results generic
+  # Initial column Name:  gene_name  logFC      logCPM        LR        PValue           FDR
+  ListRes[[2]] <- lapply(ListRes[[2]], function(x){
+      dplyr::rename(x,"Abundance"="logCPM","StatTest"="LR","pvalue"="PValue","Adj.pvalue"="FDR")
+  })
+
+  names(ListRes) <- c("RawDEFres","TopDEF")
 
   return(ListRes)
 }
@@ -306,7 +311,7 @@ pvalue.plot <- function(data, pngFile=NULL){
 
   PValue <- NULL
 
-  p <- ggplot2::ggplot(data=data) + geom_histogram(aes(x=PValue), bins = 200)
+  p <- ggplot2::ggplot(data=data) + geom_histogram(aes(x=pvalue), bins = 200)
 
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
@@ -328,10 +333,10 @@ globalVariables(names(data))
 #' @importFrom ggplot2 aes geom_point scale_colour_manual ggsave
 #' @examples
 #'
-MA.plot <- function(data, FDRcutoff=0.05, pngFile=NULL){
+MA.plot <- function(data, Adj.pvalue.cutoff, pngFile=NULL){
 
-  logCPM <- logFC <- FDR <- NULL
-  p <- ggplot2::ggplot(data=data, aes(x = logCPM, y=logFC, col=FDR < FDRcutoff)) + geom_point(alpha=0.4, size = 0.8) +
+  Abundance <- logFC <- Adj.pvalue <- NULL
+  p <- ggplot2::ggplot(data=data, aes(x = Abundance, y=logFC, col=Adj.pvalue < Adj.pvalue.cutoff)) + geom_point(alpha=0.4, size = 0.8) +
     scale_colour_manual(values=c("black","red"))
 
 
@@ -943,9 +948,9 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
          "intersection"={ dplyr::filter(matrix_sum, sum == length(colnames))[1] }
   )
 
-  if (length(DEG_list$DEG) == 0 ){ return(NULL) }
+  if (length(DEG_list$DEF) == 0 ){ return(NULL) }
 
-  return(DEG_list$DEG)
+  return(DEG_list$DEF)
 }
 
 
