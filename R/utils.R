@@ -169,7 +169,6 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
   else{
     print("[cmd] apply model to each contrast")
      ListRes[[1]] <-  lapply(Contrasts.Sel$contrast, function(x){
-
        edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,]))
 
      })
@@ -198,6 +197,64 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
   # Initial column Name:  gene_name  logFC      logCPM        LR        PValue           FDR
   ListRes[[2]] <- lapply(ListRes[[2]], function(x){
       dplyr::rename(x,"Abundance"="logCPM","StatTest"="LR","pvalue"="PValue","Adj.pvalue"="FDR")
+  })
+
+  names(ListRes) <- c("RawDEFres","TopDEF")
+
+  return(ListRes)
+}
+
+
+limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.Coeff, Adj.pvalue.cutoff, Adj.pvalue.method){
+
+  ListRes <- list()
+
+  # Run the model
+  fit <- limma::lmFit(count_matrix, model_matrix)
+
+  # test clustermq
+  if(clustermq == TRUE){
+
+    # Fonction to run on contrast per job
+    # y is the model, Contrasts are stored in a matrix, by columns
+
+    fx <- function(x){
+      limma::contrasts.fit(y, contrasts  = unlist(z[x,]))
+    }
+
+    ListRes[[1]] <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
+                                 export=list(y=fit,z=Contrasts.Coeff),
+                                 n_jobs=length(Contrasts.Sel$contrast),pkgs="edgeR")
+
+  }
+  else{
+    print("[cmd] apply model to each contrast")
+    ListRes[[1]] <-  lapply(Contrasts.Sel$contrast, function(x){
+      limma::contrasts.fit(fit, contrasts  = unlist(Contrasts.Coeff[x,]))
+    })
+  }
+
+  # Name the table of raw results
+
+  names(ListRes[[1]]) <- Contrasts.Sel$contrastName
+
+  # ListRes[[2]] => TOPDGE => TopDFE
+
+  ListRes[[2]] <- lapply(ListRes[[1]], function(x){
+
+    fit2 <- limma::eBayes(x, robust=TRUE)
+    res <- topTable(fit2, adjust=Adj.pvalue.method, number=Inf, sort.by="AveExpr")
+    DEPs<- res[res$adj.P.Val <= Adj.pvalue.cutoff,]
+
+    return(DEPs)
+  })
+
+  names(ListRes[[2]]) <- names(ListRes[[1]])
+
+  # Mutate column name to render the anadiff results generic
+  # Initial column Name:  logFC  AveExpr         t      P.Value    adj.P.Val            B
+  ListRes[[2]] <- lapply(ListRes[[2]], function(x){
+    dplyr::rename(x,"Abundance"="AveExpr","StatTest"="t","pvalue"="P.Value","Adj.pvalue"="adj.P.Val")
   })
 
   names(ListRes) <- c("RawDEFres","TopDEF")
