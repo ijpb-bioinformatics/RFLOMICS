@@ -4,10 +4,10 @@
 
 # exemple
 sliderTextUI <- function(id){
-  
+
   #name space for id
   ns <- NS(id)
-  
+
   tagList(
     sliderInput(ns("slider"), "Slide Me", 0, 100, 1),
     textOutput(ns("number"))
@@ -15,7 +15,7 @@ sliderTextUI <- function(id){
 }
 
 sliderText <- function(input, output, session){
-  
+
   output$number <- renderText({ input$slider })
 }
 
@@ -26,25 +26,25 @@ sliderText <- function(input, output, session){
 ##########################################
 
 RNAseqDataNormTabUI <- function(id){
-  
+
   #name space for id
   ns <- NS(id)
   tagList(
-  
+
       fluidRow(
         column(3,
                fluidRow(
                  box( title = "Low count Filtering",  solidHeader = TRUE, status = "warning", width = 12,
-                      
-                      radioGroupButtons(inputId = ns("Filter_Strategy"), direction = "horizontal", 
-                                        label = "Filtering stategy (CPM) :", 
-                                        choices = c("NbConditions" = "NbConditions",  "NbReplicates" = "NbReplicates"), 
+
+                      radioGroupButtons(inputId = ns("Filter_Strategy"), direction = "horizontal",
+                                        label = "Filtering stategy (CPM) :",
+                                        choices = c("NbConditions" = "NbConditions",  "NbReplicates" = "NbReplicates"),
                                         justified = FALSE, selected = "NbConditions"),
-                      
+
                       numericInput(inputId = ns("FilterSeuil"),
                                    label="CPM cutoff :",
                                    value=5, min = 1, max=50, step = 1 ),
-                      
+
                       verbatimTextOutput(ns("FilterResults"))
                  )
                ),
@@ -65,9 +65,9 @@ RNAseqDataNormTabUI <- function(id){
         )
       ),
       fluidRow(
-        
+
         box(title = "Principal component analysis", solidHeader = TRUE, status = "warning", width = 12 ,  height = NULL,
-            
+
             column(width = 2,
                    fluidRow(
                      RadioButtonsConditionUI(ns("normData"))),
@@ -84,81 +84,82 @@ RNAseqDataNormTabUI <- function(id){
 }
 
 RNAseqDataNormTab <- function(input, output, session, dataset){
-  
+
   FlomicsMultiAssay <<- RunFilterNormPCAfunction (FlomicsMultiAssay, dataset, Filter_Strategy = "NbConditions", CPM_Cutoff = 1, NormMethod="TMM")
-  
-  ## Boxplot of distribution of normalized abundance 
+
+  ## Boxplot of distribution of normalized abundance
   output$norm.boxplot <- renderPlot({
-    
+
     abundanceBoxplot(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
-  })  
-  
+  })
+
 
   #### PCA analysis ####
   # select PCA axis for plot
   # update/adapt PCA axis
   callModule(UpdateRadioButtons, "normData")
-  
+
   # select factors for color PCA plot
   callModule(RadioButtonsCondition, "normData")
-  
-  
+
+
   # PCA plot
   output$norm.PCAcoord <- renderPlot({
-    
+
     PC1.value <- as.numeric(input$`normData-Firstaxis`[1])
-    PC2.value <- as.numeric(input$`normData-Secondaxis`[1])   
+    PC2.value <- as.numeric(input$`normData-Secondaxis`[1])
     condGroup <- input$`normData-condColorSelect`[1]
-    
+
     plotPCA(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
   })
-    
+
   observeEvent(input$normUpdate, {
-    
+
     FilterSeuil <- input$FilterSeuil
     NormMethod  <- input$selectNormMethod
-    
-    
-    FlomicsMultiAssay <<- RunFilterNormPCAfunction (FlomicsMultiAssay, dataset = dataset, Filter_Strategy = input$Filter_Strategy, 
+
+
+    FlomicsMultiAssay <<- RunFilterNormPCAfunction (FlomicsMultiAssay, dataset = dataset, Filter_Strategy = input$Filter_Strategy,
                                                     CPM_Cutoff = input$FilterSeuil , NormMethod = input$selectNormMethod)
-    
+
     output$FilterResults <- renderPrint({
-  
+
       paste0( length(FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$FilteredFeature),
               " features filtered (from ", dim(FlomicsMultiAssay[[dataset]])[1], ")")
     })
-    
-    ## Boxplot of distribution of normalized abundance 
+
+    ## Boxplot of distribution of normalized abundance
     output$norm.boxplot <- renderPlot({
-      abundanceBoxplot(FlomicsMultiAssay, dataType=paste0(dataset,".filtred"), 
+      abundanceBoxplot(FlomicsMultiAssay, dataType=paste0(dataset,".filtred"),
                        pngFile=file.path(tempdir(), paste0(dataset,"_norm.boxplot.png")))
     })
-    
-    
+
+
     # PCA plot
     output$norm.PCAcoord <- renderPlot({
-      
+
       PC1.value <- as.numeric(input$`normData-Firstaxis`[1])
-      PC2.value <- as.numeric(input$`normData-Secondaxis`[1])   
+      PC2.value <- as.numeric(input$`normData-Secondaxis`[1])
       condGroup <- input$`normData-condColorSelect`[1]
-      
-      plotPCA(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
+
+      plotPCA(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]],
+              PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
     })
   })
-  
-  
+
+
   # save current PCA plot with fixed axix & color
   ## screenShot
   observeEvent(input$screenshotPCA_Norm, {
     PC1.value <- as.numeric(input$`normData-Firstaxis`[1])
     PC2.value <- as.numeric(input$`normData-Secondaxis`[1])
     condGroup <- input$`normData-condColorSelect`[1]
-    
-    file.copy(file.path(tempdir(), paste0(dataset,".filtred","_PCAdesign_norm_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")), 
-              file.path(tempdir(), paste0(dataset,".filtred","_PCAdesign_norm_PC",     PC1.value,"_PC", PC2.value, "_", condGroup, ".png")), 
+
+    file.copy(file.path(tempdir(), paste0(dataset,".filtred","_PCAdesign_norm_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")),
+              file.path(tempdir(), paste0(dataset,".filtred","_PCAdesign_norm_PC",     PC1.value,"_PC", PC2.value, "_", condGroup, ".png")),
               overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
     })
-  
+
 }
 
 
@@ -167,14 +168,14 @@ RunFilterNormPCAfunction <- function(FlomicsMultiAssay, dataset, Filter_Strategy
   #### Filter low abundance ####
   print("# 7- Low Abundance Filtering...")
   FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <- FilterLowAbundance(FlomicsMultiAssay@ExperimentList[[dataset]], Filter_Strategy, CPM_Cutoff)
-  
+
   #### Run Normalisation ####
   print("# 8- Abundance normalization...")
   FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <- RunNormalization(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], NormMethod)
-  
+
   #### Run PCA for filtred & normalized data ####
   FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <- RunPCA(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
-  
+
   return(FlomicsMultiAssay)
 }
 

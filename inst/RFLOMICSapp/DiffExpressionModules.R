@@ -11,7 +11,7 @@ DiffExpAnalysisUI <- function(id){
     ### parametres for Diff Analysis
     fluidRow(
       #uiOutput(ns("DiffParam"))
-      box(title = span(tagList(icon("cogs"), "   edgeR")), width = 12, status = "warning",
+      box(title = span(tagList(icon("cogs"), "   edgeR, limma")), width = 12, status = "warning",
 
               column(4,
                      uiOutput(ns("contrastListUI")),
@@ -57,7 +57,7 @@ DiffExpAnalysis <- function(input, output, session, dataset){
 
   output$AnaDiffMethodUI <- renderUI({
 
-        MethodList <- c("glmfit (edgeR)"="edgeRglmfit", "Limma"="limma")
+        MethodList <- c("glmfit (edgeR)"="edgeRglmfit", "lmFit (limma)"="limmalmFit")
 
         method <- switch (FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$omicType,
                   "RNAseq"       = MethodList[1],
@@ -97,7 +97,7 @@ DiffExpAnalysis <- function(input, output, session, dataset){
 
     # run diff analysis with select method
     dataset.SE <- RunDiffAnalysis(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], design = Design,
-                                  contrastList = input$contrastList, Adj.pvalue.method="FDR", Adj.pvalue.cutoff =input$Adj.pvalue.cutoff, DiffAnalysisMethod=input$AnaDiffMethod,
+                                  contrastList = input$contrastList, Adj.pvalue.method="BH", Adj.pvalue.cutoff =input$Adj.pvalue.cutoff, DiffAnalysisMethod=input$AnaDiffMethod,
                                   clustermq=input$clustermq)
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
 

@@ -12,17 +12,17 @@ library(shinydashboard)
 library(shinyFiles)
 
 sidebar <- dashboardSidebar(
-  
+
   sidebarMenu(id="StateSave",
               menuItem(text = "Presentation", tabName = "coverPage", icon = icon('dna'), startExpanded=TRUE, selected = TRUE),
-              menuItem(text = "Experimental Design", tabName = "ExpDesign", icon = icon('vials'), 
+              menuItem(text = "Experimental Design", tabName = "ExpDesign", icon = icon('vials'),
                        menuSubItem(text = "Import design",  tabName = "importExpDesign"),
                        menuItemOutput(outputId = "SetUpModelMenu")
                        ),
               menuItemOutput(outputId = "importData"),
               menuItemOutput(outputId = "omics"),
               menuItemOutput(outputId = "Integration")
-              
+
               ),
   tags$br(),
   tags$br(),
@@ -31,61 +31,61 @@ sidebar <- dashboardSidebar(
 
 body <- dashboardBody({
 
-  items <- c( 
-    
+  items <- c(
+
     list(
-  
+
         #### Cover Page        ####
         ###########################
-        
+
         tabItem(tabName = "coverPage",
                 verbatimTextOutput("print"),
-                
+
                # shinyDirButton(id = "dir0", label = "Input directory", title = "Upload"),
-  
+
         ),
-      
+
         #### Import Exp design ####
         ###########################
-        
-    
+
+
         tabItem(tabName = "importExpDesign",
-                
+
               ExperimentalDesignUI("Exp"),
         ),
-        
+
         #### Set Up statistical model & hypothesis ####
         ###############################################
-        
+
         tabItem(tabName = "SetUpModel",
-              
+
                 GLM_modelUI("model")
         ),
-        
+
         #### Import data       ####
         ###########################
         tabItem(tabName = "importData",
-                
+
              LoadOmicsDataUI("data")
         )
     ),
-    
+
     #### RNAseq Analysis  ####
     ###############################
-    lapply(1:10, function(i){ 
+    lapply(1:10, function(i){
       tabItem(tabName = paste0("RNAseqAnalysis", i),
             tabsetPanel(
-              
+
               #### Data Exploratory & QC ####
               ###############################
               tabPanel("Data Exploratory",
                        tags$br(),
                        tags$br(),
-                       
+
                        RNAseqDataExplorTabUI(paste0("RNAseq",i))
-                       
+
                        ),
-              
+
               #### Data Filter & Normalisation  ####
               ######################################
               tabPanel("Filter & Normalization",
@@ -102,7 +102,7 @@ body <- dashboardBody({
                        ),
               #### Co-expression analysis  ####
               ######################################
-              tabPanel("Gene CoExpression", 
+              tabPanel("Gene CoExpression",
                        tags$br(),
                        tags$br(),
                        CoSeqAnalysisUI(paste0("RNAseq",i))
@@ -115,43 +115,58 @@ body <- dashboardBody({
                        tags$br(),
                        AnnotationEnrichmentUI(paste0("RNAseq",i))
               )
-              
+
             )
     )
-      
+
   }),
-  
+
   #### Proteome Analysis  #######
   ###############################
-  lapply(1:10, function(j){ 
-    
+  lapply(1:10, function(j){
+
     tabItem(tabName = paste0("ProtAnalysis", j),
             tabsetPanel(
-              
+
               #### Data Exploratory & QC ####
               ###############################
               tabPanel("Data Exploratory",
                        tags$br(),
                        tags$br(),
-                       
+
                        ProtMetaDataExplorTabUI(paste0("proteomics",j))
+              ),
+              #### Diff analysis  ####
+              ######################################
+              tabPanel("Diff Prot Expression",
+                       tags$br(),
+                       tags$br(),
+                       DiffExpAnalysisUI(paste0("proteomics",j))
+              ),
+              #### Co-expression analysis  ####
+              ######################################
+              tabPanel("Gene CoExpression",
+                       tags$br(),
+                       tags$br(),
+                       CoSeqAnalysisUI(paste0("proteomics",j))
+                       #verbatimTextOutput("Asuivre")
               )
             )
           )
     }),
   #### metabolome Analysis  #######
   ###############################
-  lapply(1:10, function(i){ 
-    
+  lapply(1:10, function(i){
+
     tabItem(tabName = paste0("MetaAnalysis", i),
             tabsetPanel(
-              
+
               #### Data Exploratory & QC ####
               ###############################
               tabPanel("Data Exploratory",
                        tags$br(),
                        tags$br(),
-                       
+
                        ProtMetaDataExplorTabUI(paste0("metabolomics",i))
               )
             )

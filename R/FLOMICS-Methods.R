@@ -880,7 +880,7 @@ setMethod(f="RunNormalization",
 #'
 setMethod(f="RunDiffAnalysis",
           signature="SummarizedExperiment",
-          definition <- function(object, design, Adj.pvalue.method="FDR", Adj.pvalue.cutoff = 0.05, contrastList, DiffAnalysisMethod, clustermq=FALSE){
+          definition <- function(object, design, Adj.pvalue.method="BH", Adj.pvalue.cutoff = 0.05, contrastList, DiffAnalysisMethod, clustermq=FALSE){
 
             contrastName <- NULL
 
@@ -906,13 +906,14 @@ setMethod(f="RunDiffAnalysis",
                                                                     Contrasts.Sel   = object@metadata$DiffExpAnal[["contrasts"]],
                                                                     Contrasts.Coeff = design@Contrasts.Coeff,
                                                                     FDR             = Adj.pvalue.cutoff,
-                                                                    clustermq),
+                                                                    clustermq=clustermq),
                                           "limmalmFit"=limma.AnaDiff(count_matrix      = SummarizedExperiment::assay(object),
                                                                      model_matrix      = model_matrix,
                                                                      Contrasts.Sel     = object@metadata$DiffExpAnal[["contrasts"]],
                                                                      Contrasts.Coeff   = design@Contrasts.Coeff,
                                                                      Adj.pvalue.cutoff = Adj.pvalue.cutoff,
-                                                                     Adj.pvalue.method = Adj.pvalue.method))
+                                                                     Adj.pvalue.method = Adj.pvalue.method,
+                                                                     clustermq=clustermq))
 
 
 

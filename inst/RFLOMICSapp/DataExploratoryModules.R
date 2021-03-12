@@ -4,7 +4,7 @@
 ##########################################
 
 RNAseqDataExplorTabUI <- function(id){
-  
+
   #name space for id
   ns <- NS(id)
   tagList(
@@ -19,12 +19,12 @@ RNAseqDataExplorTabUI <- function(id){
     fluidRow(
       box(title = "Exploratory of Biological and Technical variability", solidHeader = TRUE, width = 12, status = "warning",
           tabBox( id = "ExplorAnalysisQC", width = 12,
-                  
+
                   tabPanel("Principal component analysis (1/2)",
                            tags$br(),
                            tags$br(),
                            column(width = 2,
-                                  
+
                                   fluidRow(
                                     RadioButtonsConditionUI(ns("rawData"))),
                                   tags$br(),
@@ -34,7 +34,7 @@ RNAseqDataExplorTabUI <- function(id){
                                   fluidRow(actionButton(ns("screenshotPCA_QC"),"Screenshot"))
                            ),
                            column(width = 10,  plotOutput(ns("QCdesignPCARaw")))
-                           
+
                   ),
                   tabPanel("Principal component analysis (2/2)", plotOutput(ns("QCdesignPCA")))#,
                   #tabPanel("Quality check for technical issues", plotOutput(ns("QCdata")))
@@ -47,66 +47,66 @@ RNAseqDataExplorTabUI <- function(id){
 
 
 RNAseqDataExplorTab <- function(input, output, session, dataset){
-  
-  
-  #### library size plot #### 
+
+
+  #### library size plot ####
   output$LibSize <- renderPlot(height = 300, {
-    
+
     plotLibSize(abundances=assay(FlomicsMultiAssay@ExperimentList[[dataset]]))
   })
-  
-  #### abundance distribution #### 
+
+  #### abundance distribution ####
   output$CountDist <- renderPlot(height = 300, {
-    
+
     plotDistr(abundances=assay(FlomicsMultiAssay@ExperimentList[[dataset]]))
   })
-  
+
   #### PCA analysis ####
   # select PCA axis for plot
   # update/adapt PCA axis
   callModule(UpdateRadioButtons, "rawData")
-  
+
   # select factors for color PCA plot
   callModule(RadioButtonsCondition, "rawData")
-  
+
   # run PCA plot
   output$QCdesignPCARaw <- renderPlot({
     FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
     PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
-    PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])   
+    PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])
     condGroup <- input$`rawData-condColorSelect`[1]
-    
+
     plotPCA(FlomicsMultiAssay@ExperimentList[[dataset]], PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup)
   })
-  
-  
+
+
   # save current PCA plot with fixed axix & color
   ## screenShot
   observeEvent(input$screenshotPCA_QC, {
-    
+
     PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
-    PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])   
+    PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])
     condGroup <- input$`rawData-condColorSelect`[1]
-    
-    # file.copy(file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")), 
-    #           file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")), 
+
+    # file.copy(file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")),
+    #           file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")),
     #           overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
   })
-  
+
   #### PCA analysis QCdesign ####
   output$QCdesignPCA <- renderPlot({
-    
-    mvQCdesign(FlomicsMultiAssay,data=dataset,PCA="raw", axis=5, 
-               pngFile=file.path(tempdir(), paste0(dataset,"_PCAdesignCoordRaw.png"))) 
+
+    mvQCdesign(FlomicsMultiAssay,data=dataset,PCA="raw", axis=5,
+               pngFile=file.path(tempdir(), paste0(dataset,"_PCAdesignCoordRaw.png")))
   })
-  
+
   #### PCA analysis QCdata ####
   output$QCdata <- renderPlot({
-    
-    mvQCdata(FlomicsMultiAssay,data=dataset,PCA="raw",axis=5, 
-             pngFile=file.path(tempdir(), paste0(dataset,"_PCAmetaCorrRaw.png"))) 
+
+    mvQCdata(FlomicsMultiAssay,data=dataset,PCA="raw",axis=5,
+             pngFile=file.path(tempdir(), paste0(dataset,"_PCAmetaCorrRaw.png")))
   })
-  
+
 }
 
 
@@ -159,8 +159,10 @@ ProtMetaDataExplorTab <- function(input, output, session, dataset){
   #### abundance distribution ####
   output$CountDistbis <- renderPlot(height = 300, {
 
-    plotDistr(abundances=assay(FlomicsMultiAssay[[dataset]]), dataName=dataset, pngFile=file.path(tempdir(), paste0(dataset,"_CountDist.png")))
+    #plotDistr(abundances=assay(FlomicsMultiAssay[[dataset]]), dataName=dataset, pngFile=file.path(tempdir(), paste0(dataset,"_CountDist.png")))
+    plotDistr(abundances=assay(FlomicsMultiAssay@ExperimentList[[dataset]]))
   })
+
 
   #### PCA analysis ####
   # select PCA axis for plot
@@ -177,8 +179,9 @@ ProtMetaDataExplorTab <- function(input, output, session, dataset){
     PC2.value <- as.numeric(input$`rawDatabis-Secondaxis`[1])
     condGroup <- input$`rawDatabis-condColorSelect`[1]
 
-    plotPCA(FlomicsMultiAssay, data=dataset, PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup,
-                pngFile=file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")))
+    #plotPCA(FlomicsMultiAssay@ExperimentList[[dataset]], data=dataset, PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup,
+    #            pngFile=file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")))
+    plotPCA(FlomicsMultiAssay@ExperimentList[[dataset]], PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup)
   })
 
 
@@ -190,9 +193,9 @@ ProtMetaDataExplorTab <- function(input, output, session, dataset){
     PC2.value <- as.numeric(input$`rawDatabis-Secondaxis`[1])
     condGroup <- input$`rawDatabis-condColorSelect`[1]
 
-    file.copy(file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")),
-              file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")),
-              overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
+    # file.copy(file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")),
+    #           file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")),
+    #           overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
   })
 
   #### PCA analysis QCdesign ####

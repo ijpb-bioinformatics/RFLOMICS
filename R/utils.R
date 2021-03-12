@@ -205,7 +205,19 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
 }
 
 
-limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.Coeff, Adj.pvalue.cutoff, Adj.pvalue.method){
+#' @title limma.AnaDiff
+#'
+#' @param object an object of class [\code{\link{SummarizedExperiment}]
+#' @param design an object of class [\code{\link{ExpDesign-class}]
+#' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
+#' @return A list
+#' @export
+#' @importFrom stats model.matrix as.formula
+#'
+#'
+#' @examples
+
+limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.Coeff, Adj.pvalue.cutoff, Adj.pvalue.method,clustermq){
 
   ListRes <- list()
 
