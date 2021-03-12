@@ -30,9 +30,9 @@ CoSeqAnalysisUI <- function(id){
             selectInput(ns("model"), label = "model :",
                         choices = list("normal"="normal"), selected = "normal"),
             selectInput(ns("transfo"), label = "Transformation :",
-                        choices = list("arcsin"="arcsin"), selected = "arcsin"),
+                        choices = list("arcsin"="arcsin","none"="none"), selected = "arcsin"),
             selectInput(ns("norm"), label = "normFactors :",
-                        choices = list("TMM"="TMM"), selected = "TMM")
+                        choices = list("TMM"="TMM","none"="none"), selected = "TMM")
           ),
           column(6,
                  numericInput(inputId = ns("minK"), label="min K :", value=2 , 2, max=25, 1),
@@ -119,9 +119,12 @@ CoSeqAnalysis <- function(input, output, session, dataset){
     #----------------------#
 
     # run coseq
-    dataset.SE <- runCoExpression(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], tools="coseq", geneList=DEG_list(),
-                                  K=input$minK:input$maxK, iter = input$iter, model  = input$model,
-                                  transformation=input$transfo, normFactors="TMM", nameList=input$select, merge=input$unionInter)
+    dataset.SE <- runCoExpression(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]],
+                                  tools="coseq", geneList=DEG_list(),
+                                  K=input$minK:input$maxK, iter = input$iter,
+                                  model  = input$model,
+                                  transformation=input$transfo, normFactors=input$norm,
+                                  nameList=input$select, merge=input$unionInter)
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
 
     #---- progress bar ----#

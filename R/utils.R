@@ -1032,7 +1032,7 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
 #' @param normFactors
 #' @return coseqResults
 #' @export
-runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="arcsin",  normFactors="TMM"){
+runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="arcsin",  normFactors="TMM",GaussianModel = "Gaussian_pk_Lk_Ck"){
 
 
 

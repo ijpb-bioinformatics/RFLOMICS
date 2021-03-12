@@ -97,8 +97,12 @@ DiffExpAnalysis <- function(input, output, session, dataset){
 
     # run diff analysis with select method
     dataset.SE <- RunDiffAnalysis(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], design = Design,
-                                  contrastList = input$contrastList, Adj.pvalue.method="BH", Adj.pvalue.cutoff =input$Adj.pvalue.cutoff, DiffAnalysisMethod=input$AnaDiffMethod,
+                                  contrastList = input$contrastList,
+                                  Adj.pvalue.method="BH",
+                                  Adj.pvalue.cutoff =input$Adj.pvalue.cutoff,
+                                  DiffAnalysisMethod=input$AnaDiffMethod,
                                   clustermq=input$clustermq)
+
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
 
     #---- progress bar ----#

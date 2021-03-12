@@ -1021,15 +1021,31 @@ setMethod(f="runCoExpression",
                                  transformation="arcsin", normFactors="TMM", nameList, merge="union"){
 
             object@metadata$CoExpAnal <- list()
+            object@metadata$CoExpAnal[["tools"]]            <- tools
             object@metadata$CoExpAnal[["model"]]            <- model
             object@metadata$CoExpAnal[["transformation"]]   <- transformation
             object@metadata$CoExpAnal[["normFactors"]]      <- normFactors
-            object@metadata$CoExpAnal[["meanFilterCutoff"]] <- 50
             object@metadata$CoExpAnal[["gene.list.names"]]  <- nameList
             object@metadata$CoExpAnal[["merge.type"]]       <- merge
 
             counts = SummarizedExperiment::assay(object)[geneList,]
 
+            switch (object@metadata$omicType ,
+              "rnaseq" = {
+              object@metadata$CoExpAnal[["meanFilterCutoff"]] <- 50
+              GaussianModel <- "Gaussian_pk_Lk_Ck"
+              },
+              "proteomics" = {
+                print("Scale each protein")
+                # Normalization par proteine
+                object@metadata$CoExpAnal[["transformation.prot"]] <- "scaleProt"
+                counts[] <- t(apply(counts,1,scale))
+                print("Use Gaussian_pk_Lk_Bk model")
+                # Change GaussianModel
+                object@metadata$CoExpAnal[["GaussianModel"]] <- "Gaussian_pk_Lk_Bk"
+                GaussianModel <- "Gaussian_pk_Lk_Bk"
+              }
+            )
             #
             switch (tools,
               "coseq" = {
@@ -1037,7 +1053,9 @@ setMethod(f="runCoExpression",
                                         iter=iter,
                                         model=model,
                                         transformation=transformation,
-                                        normFactors=normFactors)
+                                        normFactors=normFactors,
+                                        GaussianModel = GaussianModel)
+
                   object@metadata$CoExpAnal[["coseqResults"]] <- coseq.res
 
                   # list of genes per cluster
