@@ -196,7 +196,8 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
   # Mutate column name to render the anadiff results generic
   # Initial column Name:  gene_name  logFC      logCPM        LR        PValue           FDR
   ListRes[[2]] <- lapply(ListRes[[2]], function(x){
-      dplyr::rename(x,"Abundance"="logCPM","StatTest"="LR","pvalue"="PValue","Adj.pvalue"="FDR")
+      #dplyr::rename(x,"Abundance"="logCPM","StatTest"="LR","pvalue"="PValue","Adj.pvalue"="FDR")
+      dplyr::rename(x,"Abundance"="logCPM","pvalue"="PValue","Adj.pvalue"="FDR")
   })
 
   names(ListRes) <- c("RawDEFres","TopDEF")
@@ -240,24 +241,23 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
 
   }
   else{
-    print("[cmd] apply model to each contrast")
+    print("[cmd] fit contrasts")
     ListRes[[1]] <-  lapply(Contrasts.Sel$contrast, function(x){
       limma::contrasts.fit(fit, contrasts  = unlist(Contrasts.Coeff[x,]))
-    })
+  })
   }
 
   # Name the table of raw results
 
   names(ListRes[[1]]) <- Contrasts.Sel$contrastName
 
-  # ListRes[[2]] => TOPDGE => TopDFE
+  # ListRes[[2]] TopDPE with column names common to all AnaDiff function
 
   ListRes[[2]] <- lapply(ListRes[[1]], function(x){
 
     fit2 <- limma::eBayes(x, robust=TRUE)
     res <- topTable(fit2, adjust=Adj.pvalue.method, number=Inf, sort.by="AveExpr")
-    DEPs<- res[res$adj.P.Val <= Adj.pvalue.cutoff,]
-
+    DEPs <- res[res$adj.P.Val <= Adj.pvalue.cutoff,]
     return(DEPs)
   })
 
@@ -266,7 +266,8 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
   # Mutate column name to render the anadiff results generic
   # Initial column Name:  logFC  AveExpr         t      P.Value    adj.P.Val            B
   ListRes[[2]] <- lapply(ListRes[[2]], function(x){
-    dplyr::rename(x,"Abundance"="AveExpr","StatTest"="t","pvalue"="P.Value","Adj.pvalue"="adj.P.Val")
+    #dplyr::rename(x,"Abundance"="AveExpr","StatTest"="t","pvalue"="P.Value","Adj.pvalue"="adj.P.Val")
+    dplyr::rename(x,"Abundance"="AveExpr","pvalue"="P.Value","Adj.pvalue"="adj.P.Val")
   })
 
   names(ListRes) <- c("RawDEFres","TopDEF")
@@ -405,8 +406,8 @@ globalVariables(names(data))
 MA.plot <- function(data, Adj.pvalue.cutoff, pngFile=NULL){
 
   Abundance <- logFC <- Adj.pvalue <- NULL
-  p <- ggplot2::ggplot(data=data, aes(x = Abundance, y=logFC, col=Adj.pvalue < Adj.pvalue.cutoff)) + geom_point(alpha=0.4, size = 0.8) +
-    scale_colour_manual(values=c("black","red"))
+  p <- ggplot2::ggplot(data=data, aes(x = Abundance, y=logFC, col=Adj.pvalue < Adj.pvalue.cutoff)) +
+    geom_point(alpha=0.4, size = 0.8) + scale_colour_manual(values=c("black","red")) + labs(color=paste("Adj.pvalue <=",Adj.pvalue.cutoff,sep=""))
 
 
   if (! is.null(pngFile)){
@@ -1023,6 +1024,24 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
 }
 
 
+# Try function from http://adv-r.had.co.nz/Exceptions-Debugging.html
+
+try_rflomics <- function(code, silent = FALSE) {
+  tryCatch(code,
+           error = function(c) {
+           msg <- conditionMessage(c)
+           if (! silent) message(c)
+           invisible(structure(msg, class = "try-error"))
+           },
+           warning = function(c) {
+             msg <- conditionMessage(c)
+             if (! silent) message(c)
+             invisible(structure(msg, class = "try-error"))
+           }
+  )
+}
+
+
 #' @title run Coseq for co-expression analysis
 #' @param counts matrix
 #' @param K
@@ -1032,12 +1051,11 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
 #' @param normFactors
 #' @return coseqResults
 #' @export
-runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="arcsin",  normFactors="TMM",GaussianModel = "Gaussian_pk_Lk_Ck"){
-
+runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="arcsin",  normFactors="TMM",GaussianModel = "Gaussian_pk_Lk_Ck",meanFilterCutoff=50){
 
 
             coseq.res <- coseq::coseq(counts, K=K, iter=iter, model=model, transformation=transformation,
-                                      parallel=TRUE, meanFilterCutoff=50, normFactors=normFactors, seed=12345)
+                                      parallel=TRUE, meanFilterCutoff=meanFilterCutoff, normFactors=normFactors, seed=12345)
 
             # Results.1 <- list()
             # Results.1_min_icl <- list()

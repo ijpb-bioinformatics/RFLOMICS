@@ -35,7 +35,6 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
 
   # Create the List.Factors list with the choosen level of reference for each factor
   dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
-
     relevel(as.factor(ExpDesign[[i]]), ref=refList[[i]])
   })
   names(dF.List) <- names(ExpDesign)
@@ -47,7 +46,8 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
   # groups <- tidyr::unite(as.data.frame(ExpDesign[typeList == "Bio"]), col="groups", sep="_", remove = TRUE) %>%
   #           dplyr::mutate(samples = rownames(.))
 
-  groups <- ExpDesign %>% as.data.frame() %>% dplyr::mutate(samples = rownames(.)) %>%
+  groups <- ExpDesign %>% as.data.frame() %>%
+    dplyr::mutate(samples = rownames(.)) %>%
             tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
 
 
@@ -65,6 +65,10 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
   return(Design)
 }
 
+#
+# Error quand plus de 3 facteurs bio et plus de 1 facteur batch
+# TEST(design_nbbio_3)
+# TEST(design_nbbatch_1)
 
 
 ###### METHOD to check the completness of the ExpDesign
@@ -161,6 +165,9 @@ setMethod(f="CheckExpDesignCompleteness",
             return(output)
           })
 
+# print output
+# warining -> warning
+# false -> stop
 
 
 ###### METHOD which generate the contrasts expression
@@ -468,6 +475,8 @@ FlomicsMultiAssay.constructor <- function(inputs, Design){
   return(FlomicsMultiAssay)
 }
 
+#
+#
 
 
 
@@ -571,6 +580,9 @@ setMethod(f="mvQCdesign",
             }
 })
 
+# copier coldataStruct dans metadata
+# tester que PCA existe
+#
 
 #' @title mvQCdata
 #' @description mvQCdata is for multivariate quality check of metadata.
@@ -625,6 +637,7 @@ setMethod(f="mvQCdata",
 
           })
 
+# A refflechir avec metadata
 
 
 #' @title abundanceBoxplot
@@ -666,7 +679,7 @@ setMethod(f= "abundanceBoxplot",
           }
 )
 
-# Pas sur pour l'argument condition ..
+# switch pour proteomics
 
 #' @title plotPCA
 #' @description This function plot the factorial map from a PCA object stored
@@ -905,13 +918,13 @@ setMethod(f="RunDiffAnalysis",
                                                                     norm.factors    = object@metadata$Normalization$coefNorm$norm.factors,
                                                                     Contrasts.Sel   = object@metadata$DiffExpAnal[["contrasts"]],
                                                                     Contrasts.Coeff = design@Contrasts.Coeff,
-                                                                    FDR             = Adj.pvalue.cutoff,
+                                                                    FDR             = 1,
                                                                     clustermq=clustermq),
                                           "limmalmFit"=limma.AnaDiff(count_matrix      = SummarizedExperiment::assay(object),
                                                                      model_matrix      = model_matrix,
                                                                      Contrasts.Sel     = object@metadata$DiffExpAnal[["contrasts"]],
                                                                      Contrasts.Coeff   = design@Contrasts.Coeff,
-                                                                     Adj.pvalue.cutoff = Adj.pvalue.cutoff,
+                                                                     Adj.pvalue.cutoff = 1,
                                                                      Adj.pvalue.method = Adj.pvalue.method,
                                                                      clustermq=clustermq))
 
@@ -927,6 +940,8 @@ setMethod(f="RunDiffAnalysis",
             DEF_list <- lapply(1:length(object@metadata$DiffExpAnal[["TopDEF"]]), function(x){
 
               res <- object@metadata$DiffExpAnal[["TopDEF"]][[x]]
+              # filter adjusted pvalue
+              res <- res[res$Adj.pvalue <= Adj.pvalue.cutoff,]
               tmp <- data.frame(DEF = rownames(res), bin = rep(1,length(rownames(res))))
               colnames(tmp) <- c("DEF", paste("H", x, sep=""))
               return(tmp)
@@ -939,6 +954,11 @@ setMethod(f="RunDiffAnalysis",
             return(object)
           })
 
+# limma
+# Warning quand pas de F DE
+# Recuperer les messages d'erreurs de limma ou
+# Enlever le seuil pvalue.ajust et le mettre que pour fonction graphique
+# Fonction pvalue
 
 ###### Graphical METHOD
 
@@ -969,7 +989,7 @@ setMethod(f="DiffAnal.plot",
             #res.FDR <- edgeR::topTags(res, n = dim(res)[1])
 
             plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff)
-            plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable[resTable$Adj.pvalue <= Adj.pvalue.cutoff,])
+            plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable)
 
             return(plots)
           })
@@ -1021,6 +1041,7 @@ setMethod(f="runCoExpression",
                                  transformation="arcsin", normFactors="TMM", nameList, merge="union"){
 
             object@metadata$CoExpAnal <- list()
+
             object@metadata$CoExpAnal[["tools"]]            <- tools
             object@metadata$CoExpAnal[["model"]]            <- model
             object@metadata$CoExpAnal[["transformation"]]   <- transformation
@@ -1033,29 +1054,38 @@ setMethod(f="runCoExpression",
             switch (object@metadata$omicType ,
               "rnaseq" = {
               object@metadata$CoExpAnal[["meanFilterCutoff"]] <- 50
-              GaussianModel <- "Gaussian_pk_Lk_Ck"
+              # set meanFilterCutoff  to 50
+              meanFilterCutoff <- 50
+              # object@metadata$CoExpAnal[["GaussianModel"]] <- "Gaussian_pk_Lk_Ck"
+              # GaussianModel <- "Gaussian_pk_Lk_Ck"
               },
               "proteomics" = {
                 print("Scale each protein")
                 # Normalization par proteine
                 object@metadata$CoExpAnal[["transformation.prot"]] <- "scaleProt"
-                counts[] <- t(apply(counts,1,scale))
-                print("Use Gaussian_pk_Lk_Bk model")
+                counts[] <- t(apply(counts,1,function(x){
+                scale(x, center=TRUE,scale = TRUE)
+                }))
+                #print("Use Gaussian_pk_Lk_Bk model")
                 # Change GaussianModel
-                object@metadata$CoExpAnal[["GaussianModel"]] <- "Gaussian_pk_Lk_Bk"
-                GaussianModel <- "Gaussian_pk_Lk_Bk"
+                #object@metadata$CoExpAnal[["GaussianModel"]] <- "Gaussian_pk_Lk_Bk"
+                #GaussianModel <- "Gaussian_pk_Lk_Bk"
+                # No filter
+                meanFilterCutoff = NULL
               }
             )
             #
             switch (tools,
               "coseq" = {
-                  coseq.res <- runCoseq(counts, K=K,
+                  coseq.res <- try_rflomics(runCoseq(counts, K=K,
                                         iter=iter,
                                         model=model,
                                         transformation=transformation,
                                         normFactors=normFactors,
-                                        GaussianModel = GaussianModel)
+                                        GaussianModel = GaussianModel,
+                                        meanFilterCutoff = meanFilterCutoff ))
 
+                  if(class(coseq.res) != "try-error"){
                   object@metadata$CoExpAnal[["coseqResults"]] <- coseq.res
 
                   # list of genes per cluster
@@ -1072,8 +1102,10 @@ setMethod(f="runCoExpression",
                   # plot
                   plot.coseq.res <- coseq::plot(coseq.res, conds = object@metadata$Groups$groups)
                   object@metadata$CoExpAnal[["plots"]] <- plot.coseq.res
-
-                }
+                  }
+                  # Réinitialisation de l'objet CoExpAnal
+                  else object@metadata$CoExpAnal[["error"]] <- coseq.res
+              }
             )
 
       return(object)

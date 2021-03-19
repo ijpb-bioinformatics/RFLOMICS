@@ -28,7 +28,7 @@ CoSeqAnalysisUI <- function(id){
 
           column(6,
             selectInput(ns("model"), label = "model :",
-                        choices = list("normal"="normal"), selected = "normal"),
+                        choices = list("normal"="normal","kmeans"="kmeans"), selected = "normal"),
             selectInput(ns("transfo"), label = "Transformation :",
                         choices = list("arcsin"="arcsin","none"="none"), selected = "arcsin"),
             selectInput(ns("norm"), label = "normFactors :",
@@ -125,7 +125,10 @@ CoSeqAnalysis <- function(input, output, session, dataset){
                                   model  = input$model,
                                   transformation=input$transfo, normFactors=input$norm,
                                   nameList=input$select, merge=input$unionInter)
+
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
+
+    showModal(modalDialog( title = "Error message", dataset.SE@metadata$CoExpAnal[["error"]]))
 
     #---- progress bar ----#
     progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep=""))
