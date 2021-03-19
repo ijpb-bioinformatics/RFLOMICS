@@ -3,6 +3,11 @@
 # Part3 : Data Exploratory
 ##########################################
 
+
+##########
+# RNAseq
+##########
+
 RNAseqDataExplorTabUI <- function(id){
 
   #name space for id
@@ -111,6 +116,10 @@ RNAseqDataExplorTab <- function(input, output, session, dataset){
 
 
 
+##########
+# Proteomic
+##########
+
 
 ProtMetaDataExplorTabUI <- function(id){
 
@@ -119,6 +128,24 @@ ProtMetaDataExplorTabUI <- function(id){
   tagList(
     fluidRow(
       box(title = "Raw Data Summary", solidHeader = TRUE, status = "warning", width = 12, height = NULL,
+          column(6,
+                 # Nombre de prot
+                 strong("Number of Proteins:"),
+                 verbatimTextOutput(ns("NbProt")),
+                 # Nombre de NA
+                 br(),
+                 strong("Number of Proteins with at least 1 NA:"),
+                 verbatimTextOutput(ns("NbNA")),
+                 br(),
+                 # Data transformation ?
+                 radioButtons(
+                   inputId  ="dataTransform",
+                   "Which transformation did you apply to the data ?",
+                   c("none" = "none",
+                     "log2" = "log2",
+                     "log10" = "log10")
+                 )
+                 ),
           # count distribution plot
           column(6, plotOutput(ns("CountDistbis"), height = "400%"))
       )
@@ -163,6 +190,21 @@ ProtMetaDataExplorTab <- function(input, output, session, dataset){
     plotDistr(abundances=assay(FlomicsMultiAssay@ExperimentList[[dataset]]))
   })
 
+
+  #### Nombre de Prot, Nombre de NA
+  NbProt <- dim(assays(FlomicsMultiAssay@ExperimentList[["proteomics.set1"]])$abundance)[1]
+  output$NbProt <- renderPrint({ NbProt })
+
+  #### Nombre de proteine avec au moins une valeur manquante
+  ## Nb NA
+  NbProtWoutNA <- dim(na.omit(assays(FlomicsMultiAssay@ExperimentList[["proteomics.set1"]])$abundance))[1]
+  output$NbNA <- renderPrint({ NbProt - NbProtWoutNA})
+
+  #### Data Transformation:
+  observeEvent(input$dataTransform,{
+
+
+  })
 
   #### PCA analysis ####
   # select PCA axis for plot
@@ -213,4 +255,11 @@ ProtMetaDataExplorTab <- function(input, output, session, dataset){
   })
 
 }
+
+
+
+##########
+# Metabolomic
+##########
+
 

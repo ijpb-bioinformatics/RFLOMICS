@@ -89,9 +89,10 @@ CoSeqAnalysis <- function(input, output, session, dataset){
 
   # get list of DGE to process
   # from union or intersection
-  DEG_list <- reactive({getDEGlist_for_coseqAnalysis(matrix    = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]],
-                                           colnames  = input$select,
-                                           mergeType = input$unionInter)})
+  DEG_list <- reactive({getDEGlist_for_coseqAnalysis(
+        matrix    = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]],
+        colnames  = input$select,
+        mergeType = input$unionInter)})
 
   output$mergeValue <- renderText({ print(paste(length(DEG_list()), "genes", sep =" ")) })
 
