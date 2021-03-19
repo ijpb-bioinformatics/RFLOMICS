@@ -192,12 +192,12 @@ ProtMetaDataExplorTab <- function(input, output, session, dataset){
 
 
   #### Nombre de Prot, Nombre de NA
-  NbProt <- dim(assays(FlomicsMultiAssay@ExperimentList[["proteomics.set1"]])$abundance)[1]
+  NbProt <- dim(assays(FlomicsMultiAssay@ExperimentList[[dataset]])$abundance)[1]
   output$NbProt <- renderPrint({ NbProt })
 
   #### Nombre de proteine avec au moins une valeur manquante
   ## Nb NA
-  NbProtWoutNA <- dim(na.omit(assays(FlomicsMultiAssay@ExperimentList[["proteomics.set1"]])$abundance))[1]
+  NbProtWoutNA <- dim(na.omit(assays(FlomicsMultiAssay@ExperimentList[[dataset]])$abundance))[1]
   output$NbNA <- renderPrint({ NbProt - NbProtWoutNA})
 
   #### Data Transformation:
