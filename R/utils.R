@@ -353,14 +353,34 @@ plotLibSize <- function(abundances){
 #' @export
 #' @importFrom ggplot2 geom_density xlab
 #'
-plotDistr <- function(abundances, dataName){
+plotDistr <- function(abundances, dataName, dataType,transform_method){
+
 
   value <- samples <- NULL
 
-  pseudo_counts <- log2(abundances+1) %>% reshape2::melt()
-  colnames(pseudo_counts) <- c("features", "samples", "value")
+  switch(dataType,
+        "rnaseq" = {
+          pseudo_counts <- log2(abundances+1) %>% reshape2::melt()
+          colnames(pseudo_counts) <- c("features", "samples", "value")
+          x_lab <-"log2(feature abundances)"
+         },
+        "proteomics"={
+        pseudo_counts <- abundances %>% reshape2::melt()
+        colnames(pseudo_counts) <- c("features", "samples", "value")
+        x_lab <- switch (transform_method,
+                         "log2"= "log2(feature abundances)",
+                          "none"="feature abundances")
+        },
+        "metabolomics"={
+        pseudo_counts <- abundances %>% reshape2::melt()
+        colnames(pseudo_counts) <- c("features", "samples", "value")
+        x_lab <- switch (transform_method,
+                         "log2"= "log2(feature abundances)",
+                         "none"="feature abundances")
+        }
+        )
 
-  p <- ggplot2::ggplot(pseudo_counts) + geom_density(aes(value, color=samples) ) + xlab(" log2(feature abundances)") +
+  p <- ggplot2::ggplot(pseudo_counts) + geom_density(aes(value, color=samples) ) + xlab(x_lab) +
                                         theme(legend.position='none')
   print(p)
 

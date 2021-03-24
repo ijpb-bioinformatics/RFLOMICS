@@ -158,16 +158,19 @@ shinyServer(function(input, output, session) {
     ##########################################
     lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
 
+      switch(omics ,
+             "RNAseq"={
+
       lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
       #for(i in names(FlomicsMultiAssay@metadata$omicList[[omics]])){
-
         callModule(RNAseqDataNormTab, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
       #}
       })
+             })
     })
 
     ##########################################
-    # Part5 : Analysi Diff
+    # Part5 :  Diff Analysis
     ##########################################
 
     inputDiff <- list()

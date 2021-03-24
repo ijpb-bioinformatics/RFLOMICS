@@ -31,7 +31,7 @@ RNAseqDataExplorTabUI <- function(id){
                            column(width = 2,
 
                                   fluidRow(
-                                    RadioButtonsConditionUI(ns("rawData"))),
+                                  RadioButtonsConditionUI(ns("rawData"))),
                                   tags$br(),
                                   UpdateRadioButtonsUI(ns("rawData")),
                                   tags$br(),
@@ -63,7 +63,7 @@ RNAseqDataExplorTab <- function(input, output, session, dataset){
   #### abundance distribution ####
   output$CountDist <- renderPlot(height = 300, {
 
-    plotDistr(abundances=assay(FlomicsMultiAssay@ExperimentList[[dataset]]))
+    plotDistr(abundances=assay(FlomicsMultiAssay@ExperimentList[[dataset]]),dataType="rnaseq")
   })
 
   #### PCA analysis ####
@@ -117,7 +117,8 @@ RNAseqDataExplorTab <- function(input, output, session, dataset){
 
 
 ##########
-# Proteomic
+# Proteomic & Metabolomic
+#
 ##########
 
 
@@ -130,21 +131,19 @@ ProtMetaDataExplorTabUI <- function(id){
       box(title = "Raw Data Summary", solidHeader = TRUE, status = "warning", width = 12, height = NULL,
           column(6,
                  # Nombre de prot
-                 strong("Number of Proteins:"),
+                 strong("Number of Features:"),
                  verbatimTextOutput(ns("NbProt")),
                  # Nombre de NA
                  br(),
-                 strong("Number of Proteins with at least 1 NA:"),
+                 strong("Number of Features with at least 1 NA:"),
                  verbatimTextOutput(ns("NbNA")),
                  br(),
                  # Data transformation ?
                  radioButtons(
-                   inputId  ="dataTransform",
-                   "Which transformation did you apply to the data ?",
-                   c("none" = "none",
-                     "log2" = "log2",
-                     "log10" = "log10")
-                 )
+                   inputId  =ns("dataTransform"),
+                   label = "Switch to log2 data transformation ?",
+                   choices=c("yes"="yes","no"="no"),
+                   selected="no")
                  ),
           # count distribution plot
           column(6, plotOutput(ns("CountDistbis"), height = "400%"))
@@ -161,7 +160,7 @@ ProtMetaDataExplorTabUI <- function(id){
                            column(width = 2,
 
                                   fluidRow(
-                                    RadioButtonsConditionUI(ns("rawDatabis"))),
+                                  RadioButtonsConditionUI(ns("rawDatabis"))),
                                   tags$br(),
                                   UpdateRadioButtonsUI(ns("rawDatabis")),
                                   tags$br(),
@@ -183,14 +182,6 @@ ProtMetaDataExplorTabUI <- function(id){
 
 ProtMetaDataExplorTab <- function(input, output, session, dataset){
 
-  #### abundance distribution ####
-  output$CountDistbis <- renderPlot(height = 300, {
-
-    #plotDistr(abundances=assay(FlomicsMultiAssay[[dataset]]), dataName=dataset, pngFile=file.path(tempdir(), paste0(dataset,"_CountDist.png")))
-    plotDistr(abundances=assay(FlomicsMultiAssay@ExperimentList[[dataset]]))
-  })
-
-
   #### Nombre de Prot, Nombre de NA
   NbProt <- dim(assays(FlomicsMultiAssay@ExperimentList[[dataset]])$abundance)[1]
   output$NbProt <- renderPrint({ NbProt })
@@ -200,11 +191,25 @@ ProtMetaDataExplorTab <- function(input, output, session, dataset){
   NbProtWoutNA <- dim(na.omit(assays(FlomicsMultiAssay@ExperimentList[[dataset]])$abundance))[1]
   output$NbNA <- renderPrint({ NbProt - NbProtWoutNA})
 
-  #### Data Transformation:
-  observeEvent(input$dataTransform,{
 
+    #### abundance distribution ####
+    output$CountDistbis <- renderPlot(height = 300, {
+      #### Data Transformation:
+      if(input$dataTransform == "yes"){
+        print("# 7- Transform data...")
+        FlomicsMultiAssay <<- RunTransformPCAfunction(FlomicsMultiAssay, dataset,transform_method = "log2")
+      }
+      else if(input$dataTransform == "no"){
+        print("# 7- No need to Transform data...")
+        FlomicsMultiAssay <<- RunTransformPCAfunction(FlomicsMultiAssay, dataset,transform_method = "none")
+      }
+      plotDistr(abundances = assay(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]),
+                dataType = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$omicType,
+                transform_method = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$transform_method)
 
-  })
+      #plotDistr(abundances=assay(FlomicsMultiAssay[[dataset]]), dataName=dataset, pngFile=file.path(tempdir(), paste0(dataset,"_CountDist.png")))
+
+    })
 
   #### PCA analysis ####
   # select PCA axis for plot
@@ -216,14 +221,16 @@ ProtMetaDataExplorTab <- function(input, output, session, dataset){
 
   # run PCA plot
   output$QCdesignPCARawbis <- renderPlot({
-    FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
+    #FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
+
     PC1.value <- as.numeric(input$`rawDatabis-Firstaxis`[1])
     PC2.value <- as.numeric(input$`rawDatabis-Secondaxis`[1])
     condGroup <- input$`rawDatabis-condColorSelect`[1]
 
     #plotPCA(FlomicsMultiAssay@ExperimentList[[dataset]], data=dataset, PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup,
     #            pngFile=file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")))
-    plotPCA(FlomicsMultiAssay@ExperimentList[[dataset]], PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup)
+
+      plotPCA(FlomicsMultiAssay@ExperimentList[[dataset]], PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup)
   })
 
 
@@ -256,10 +263,18 @@ ProtMetaDataExplorTab <- function(input, output, session, dataset){
 
 }
 
+#
+# FUNCTIONS
+#
+RunTransformPCAfunction <- function(FlomicsMultiAssay, dataset,transform_method){
+  FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <- TransformData(FlomicsMultiAssay@ExperimentList[[dataset]],
+                                                                                  transform_method = transform_method)
+  #### Run PCA for transformed data ####
+  FlomicsMultiAssay@ExperimentList[[dataset]] <- RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
+  return(FlomicsMultiAssay)
+}
 
 
-##########
-# Metabolomic
-##########
+
 
 

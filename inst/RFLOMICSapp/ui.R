@@ -145,7 +145,7 @@ body <- dashboardBody({
               ),
               #### Co-expression analysis  ####
               ######################################
-              tabPanel("Gene CoExpression",
+              tabPanel("Proteins CoExpression",
                        tags$br(),
                        tags$br(),
                        CoSeqAnalysisUI(paste0("proteomics",j))
@@ -156,9 +156,9 @@ body <- dashboardBody({
     }),
   #### metabolome Analysis  #######
   ###############################
-  lapply(1:10, function(i){
+  lapply(1:10, function(k){
 
-    tabItem(tabName = paste0("MetaAnalysis", i),
+    tabItem(tabName = paste0("MetaAnalysis", k),
             tabsetPanel(
 
               #### Data Exploratory & QC ####
@@ -167,7 +167,21 @@ body <- dashboardBody({
                        tags$br(),
                        tags$br(),
 
-                       ProtMetaDataExplorTabUI(paste0("metabolomics",i))
+                       ProtMetaDataExplorTabUI(paste0("metabolomics",k))
+              ),#### Diff analysis  ####
+              ######################################
+              tabPanel("Diff Metabo Expression",
+                       tags$br(),
+                       tags$br(),
+                       DiffExpAnalysisUI(paste0("metabolomics",k))
+              ),
+              #### Co-expression analysis  ####
+              ######################################
+              tabPanel("Metabolites CoExpression",
+                       tags$br(),
+                       tags$br(),
+                       CoSeqAnalysisUI(paste0("metabolomics",k))
+                       #verbatimTextOutput("Asuivre")
               )
             )
     )

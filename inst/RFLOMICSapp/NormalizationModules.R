@@ -70,7 +70,7 @@ RNAseqDataNormTabUI <- function(id){
 
             column(width = 2,
                    fluidRow(
-                     RadioButtonsConditionUI(ns("normData"))),
+                  RadioButtonsConditionUI(ns("normData"))),
                    tags$br(),
                    UpdateRadioButtonsUI(ns("normData")),
                    tags$br(),
@@ -178,4 +178,6 @@ RunFilterNormPCAfunction <- function(FlomicsMultiAssay, dataset, Filter_Strategy
 
   return(FlomicsMultiAssay)
 }
+
+
 

@@ -499,10 +499,8 @@ setMethod(f="RunPCA",
           definition <- function(object){
 
             if(is.null(object@metadata[["Normalization"]]$coefNorm)){
-
               pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE) + 1)
               object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
-
             }
             else{
               pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
@@ -726,8 +724,39 @@ setMethod(f= "plotPCA",
             })
 
 
+########################################## TRANSFORM DATA #################
 
+#### METHOD to transform data
 
+#' @title TransformData
+#'
+#' @param An object of class \link{SummarizedExperiment}
+#'
+#' @return An object of class \link{SummarizedExperiment}
+#'
+#' @exportMethod TransformData
+#'
+#' @examples
+setMethod(f= "TransformData",
+          signature = "SummarizedExperiment",
+          definition <- function(object, data, transform_method = "log2"){
+
+            objectTransform <- object
+
+            assayTransform  <- SummarizedExperiment::assay(objectTransform)
+
+            switch(transform_method,
+                   "log2" = {
+                     SummarizedExperiment::assay(objectTransform) <- log2(assayTransform)
+                     objectTransform@metadata[["transform_method"]] <- transform_method
+                     },
+                   "none"= {
+                     SummarizedExperiment::assay(objectTransform) <- assayTransform
+                     objectTransform@metadata[["transform_method"]] <- transform_method
+                   }
+            )
+            return(objectTransform)
+          })
 
 
 
@@ -742,7 +771,7 @@ setMethod(f= "plotPCA",
 #' @title FilterLowAbundance
 #' @description This function aims at removing genes/transcript from the count data matrix of an omic of type "RNAseq".
 #' by applying filtering criterion described in reference.
-#' By defaulft, gene/transcript with 0 count are removed from the data. The function then
+#' By default, gene/transcript with 0 count are removed from the data. The function then
 #' computes the count per million or read (CPM) for each gene in each sample and gives by
 #' genes the number of sample(s) which are over the CPM_cutoff (NbOfsample_over_cpm).
 #' Then Two filtering strategies are proposed:
@@ -1061,7 +1090,7 @@ setMethod(f="runCoExpression",
               },
               "proteomics" = {
                 print("Scale each protein")
-                # Normalization par proteine
+                # Normalization per protein
                 object@metadata$CoExpAnal[["transformation.prot"]] <- "scaleProt"
                 counts[] <- t(apply(counts,1,function(x){
                 scale(x, center=TRUE,scale = TRUE)
@@ -1071,6 +1100,15 @@ setMethod(f="runCoExpression",
                 #object@metadata$CoExpAnal[["GaussianModel"]] <- "Gaussian_pk_Lk_Bk"
                 #GaussianModel <- "Gaussian_pk_Lk_Bk"
                 # No filter
+                meanFilterCutoff = NULL
+              },
+              "metabolomics" = {
+                print("Scale each protein")
+                # Normalization per metabolite
+                object@metadata$CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
+                counts[] <- t(apply(counts,1,function(x){
+                  scale(x, center=FALSE,scale = TRUE)
+                }))
                 meanFilterCutoff = NULL
               }
             )
