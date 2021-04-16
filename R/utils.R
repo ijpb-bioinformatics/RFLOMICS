@@ -190,6 +190,7 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
   })
 
   ListRes[[2]] <- TopDGE
+
   names(ListRes[[2]]) <- names(ListRes[[1]])
 
 
@@ -261,7 +262,6 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
     return(DEPs)
   })
 
-  names(ListRes[[2]]) <- names(ListRes[[1]])
 
   # Mutate column name to render the anadiff results generic
   # Initial column Name:  logFC  AveExpr         t      P.Value    adj.P.Val            B
@@ -269,6 +269,8 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
     #dplyr::rename(x,"Abundance"="AveExpr","StatTest"="t","pvalue"="P.Value","Adj.pvalue"="adj.P.Val")
     dplyr::rename(x,"Abundance"="AveExpr","pvalue"="P.Value","Adj.pvalue"="adj.P.Val")
   })
+
+  names(ListRes[[2]]) <- names(ListRes[[1]])
 
   names(ListRes) <- c("RawDEFres","TopDEF")
 
@@ -1044,23 +1046,38 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
 }
 
 
-# Try function from http://adv-r.had.co.nz/Exceptions-Debugging.html
 
-try_rflomics <- function(code, silent = FALSE) {
-  tryCatch(code,
-           error = function(c) {
-           msg <- conditionMessage(c)
-           if (! silent) message(c)
-           invisible(structure(msg, class = "try-error"))
-           },
-           warning = function(c) {
-             msg <- conditionMessage(c)
-             if (! silent) message(c)
-             invisible(structure(msg, class = "try-error"))
-           }
+#' @title try_rflomics
+#' @details
+#' This function come from https://stackoverflow.com/questions/4948361/how-do-i-save-warnings-and-errors-as-output-from-a-function
+#  The author indicated that he merged Martins solution (https://stackoverflow.com/a/4952908/2161065) and
+#  the one from the R-help mailing list you get with demo(error.catching).
+#' @param expr The expression that has been to be evaluated.
+#' @return a named list
+#' \itemize{
+#' \item{\code{value:} }{The results of the expr evaluation or NULL if an error occured }
+#' \item{\code{warning:} }{warning message or NULL}
+#' \item{\code{error:} }{error message or NULL}
+#' }
+#' @export
+
+
+try_rflomics <- function(expr) {
+  warn <- err <- NULL
+  value <- withCallingHandlers(
+    tryCatch(expr,
+             error=function(e) {
+               err <<- e
+               NULL
+             })
+    ,
+     warning=function(w) {
+       warn <<- w
+    invokeRestart("muffleWarning")
+     }
   )
+  list(value=value, warning=warn, error=err)
 }
-
 
 #' @title run Coseq for co-expression analysis
 #' @param counts matrix
@@ -1071,11 +1088,14 @@ try_rflomics <- function(code, silent = FALSE) {
 #' @param normFactors
 #' @return coseqResults
 #' @export
-runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="arcsin",  normFactors="TMM",GaussianModel = "Gaussian_pk_Lk_Ck",meanFilterCutoff=50){
+runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="arcsin",
+                     GaussianModel = "Gaussian_pk_Lk_Ck", normFactors="TMM",meanFilterCutoff=50){
 
 
             coseq.res <- coseq::coseq(counts, K=K, iter=iter, model=model, transformation=transformation,
-                                      parallel=TRUE, meanFilterCutoff=meanFilterCutoff, normFactors=normFactors, seed=12345)
+                                      parallel=TRUE, meanFilterCutoff=meanFilterCutoff,
+                                      GaussianModel = GaussianModel,
+                                      normFactors=normFactors, seed=12345)
 
             # Results.1 <- list()
             # Results.1_min_icl <- list()

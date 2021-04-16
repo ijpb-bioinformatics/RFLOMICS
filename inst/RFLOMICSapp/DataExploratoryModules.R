@@ -197,11 +197,17 @@ ProtMetaDataExplorTab <- function(input, output, session, dataset){
       #### Data Transformation:
       if(input$dataTransform == "yes"){
         print("# 7- Transform data...")
-        FlomicsMultiAssay <<- RunTransformPCAfunction(FlomicsMultiAssay, dataset,transform_method = "log2")
+        FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- TransformData(FlomicsMultiAssay@ExperimentList[[dataset]],
+                                                                                        transform_method = "log2")
+        #FlomicsMultiAssay@ExperimentList[[dataset]] <<- RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
+        #FlomicsMultiAssay <<- RunTransformPCAfunction(FlomicsMultiAssay, dataset,transform_method = "log2")
       }
       else if(input$dataTransform == "no"){
         print("# 7- No need to Transform data...")
-        FlomicsMultiAssay <<- RunTransformPCAfunction(FlomicsMultiAssay, dataset,transform_method = "none")
+        #FlomicsMultiAssay <<- RunTransformPCAfunction(FlomicsMultiAssay, dataset,transform_method = "none")
+        FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- TransformData(FlomicsMultiAssay@ExperimentList[[dataset]],
+                                                                                         transform_method = "none")
+        #FlomicsMultiAssay@ExperimentList[[dataset]] <<- RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
       }
       plotDistr(abundances = assay(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]),
                 dataType = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$omicType,
@@ -221,7 +227,7 @@ ProtMetaDataExplorTab <- function(input, output, session, dataset){
 
   # run PCA plot
   output$QCdesignPCARawbis <- renderPlot({
-    #FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
+    FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
 
     PC1.value <- as.numeric(input$`rawDatabis-Firstaxis`[1])
     PC2.value <- as.numeric(input$`rawDatabis-Secondaxis`[1])
@@ -263,16 +269,6 @@ ProtMetaDataExplorTab <- function(input, output, session, dataset){
 
 }
 
-#
-# FUNCTIONS
-#
-RunTransformPCAfunction <- function(FlomicsMultiAssay, dataset,transform_method){
-  FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <- TransformData(FlomicsMultiAssay@ExperimentList[[dataset]],
-                                                                                  transform_method = transform_method)
-  #### Run PCA for transformed data ####
-  FlomicsMultiAssay@ExperimentList[[dataset]] <- RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
-  return(FlomicsMultiAssay)
-}
 
 
 

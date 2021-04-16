@@ -884,61 +884,71 @@ setMethod(f="RunNormalization",
 #' @title RunDiffAnalysis
 #' @description This is an interface method which run a differential analysis method on
 #' omic datasets stored in an object of class \link{SummarizedExperiment}.
-#' According to the type of omic and to a list of contrasts.
-#' The differential analysis method is applied to each contrasts (or hypothesis).
+#' According to the type of omic and to a list of contrasts,
+#' a differential analysis method is applied to each contrasts (or hypothesis).
 #' Three methods are available according to the type of object:
 #' \itemize{
-#' \item{For RNAseq data: }{the \code{lmfit} function of edgeR}
-#' \item{For Proteomic data: }{the \code{lmFit} function of limma}
+#' \item{For RNAseq data: }{the \code{glmFit} function of the \code{edgeR} package}
+#' \item{For proteomic and metabolomic data: }{the \code{lmFit} function of the \code{limma} package}
 #' }
-#' Parameters used are those recommended in DiCoExpress workflow (see the paper in reference)
-#' @details
-#' The RunDiffAnalysis method return several tables of seven elements: For RNAseq differential
-#' analysis, objects are:
+#' Parameters used for RNAseq are those recommended in DiCoExpress workflow (see the paper in reference)
+#' @return
+#' All the results are stored as a named list \code{DiffExpAnal} in the metadata slot of a
+#' given \code{SummarizedExperiment} object. Objects are:
 #' \itemize{
-#' \item{contrasts}{The selected contrasts for which the differential analysis has been conducted}
-#' \item{method}{The method used for the differential analysis}
-#' \item{FDR}{The false discovery rate given in input}
-#' \item{DGELRT}{a list giving for each contrast the edgeR raw results}
-#' \item{TopDGE}{a list giving for each contrast a data.frame of differential expressed genes}
-#' \item{mergeDGE}{A data frame indicating for each genes in row, if it is DE in a given contrasts in column}
+#' \item{contrasts: }{The selected contrasts for which the differential analysis has been conducted}
+#' \item{method: }{The method used for the differential analysis}
+#' \item{Adj.pvalue.method: The method applied for the pvalue adjustment}
+#' \item{Adj.pvalue.cutoff: The threshold applied for the pvalue adjustment}
+#' \item{FDR: }{The false discovery rate given in input}
+#' \item{RawDEFres: }{a list giving for each contrast the raw results of the differential analysis method}
+#' \item{DEF: }{a list giving for each contrast a data.frame of non filtered differential expressed features}}
+#' \item{TopDEF: }{a list giving for each contrast a data.frame of differential expressed features by Adj.pvalue.cutoff}
+#' \item{mergeDEF: }{A data frame indicating for each features in row, if it is DE in a given contrasts in column}
 #' }
-#' All the results are stored as a named list ("DiffExpAnal") in the metadata slot of a
-#' given data set, stored itself in the ExperimentList slot of a \link{MultiAssayExperiment} object.
-#' @param object an object of class \link{SummarizedExperiment}
+#' @param object an object of class [\code\link{SummarizedExperiment}]
 #' @param design an object of class [\code{\link{ExpDesign-class}]
 #' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
 #' to run. Either "edgeRglmfit", "limmalmFit", ...
 #' @param contrastList The list of contrast to test
-#' @param FDR The false discovery rate threshold
+#' @param Adj.pvalue.method The method choosen to adjust pvalue.
+#' @param Adj.pvalue.cutoff The adjusted pvalue cut-off
 #' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
-#' @return An object of class \link{SummarizedExperiment}
+#' @param filter_only A boolean indicating whether only filter on DE results have to be applied (\code{filter_only=TRUE}). FALSE by default.
+#' @return An object of class [\code\link{SummarizedExperiment}]
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
-#' @exportMethod runCoExpression
 #' @exportMethod RunDiffAnalysis
 #' @examples
 #'
 #'
 setMethod(f="RunDiffAnalysis",
           signature="SummarizedExperiment",
-          definition <- function(object, design, Adj.pvalue.method="BH", Adj.pvalue.cutoff = 0.05, contrastList, DiffAnalysisMethod, clustermq=FALSE){
+          definition <- function(object, design, Adj.pvalue.method="BH", Adj.pvalue.cutoff = 0.05, filter_only=FALSE ,
+                                 contrastList, DiffAnalysisMethod, clustermq=FALSE){
+
+            if(filter_only == TRUE & is.null(object@metadata$DiffExpAnal)){
+              stop("can't filter the DiffExpAnal object because it doesn't exist")
+            }
+
+
+            # Run the Diff analysis and get the results as a list of
+
+            if(filter_only == FALSE){
 
             contrastName <- NULL
+            Contrasts.Sel <- dplyr::filter(design@Contrasts.Sel, contrastName %in% contrastList)
 
             object@metadata$DiffExpAnal <- list()
-
-            Contrasts.Sel <- dplyr::filter(design@Contrasts.Sel, contrastName %in% contrastList)
+            object@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
+            object@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
+            object@metadata$DiffExpAnal[["Adj.pvalue.method"]]  <- Adj.pvalue.method
+            object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
 
             # move in ExpDesign Constructor
             model_matrix <- model.matrix(as.formula(design@Model.formula), data=as.data.frame(design@List.Factors))
 
-            object@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
-            object@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
-            object@metadata$DiffExpAnal[["Adj.pvalue.method"]]       <- Adj.pvalue.method
-            object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]        <- Adj.pvalue.cutoff
 
-            # Run the Diff analysis and get the results as a list of object depending of the
             ListRes <- switch(DiffAnalysisMethod,
                                         "edgeRglmfit"=edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
                                                                     model_matrix    = model_matrix,
@@ -958,19 +968,27 @@ setMethod(f="RunDiffAnalysis",
                                                                      clustermq=clustermq))
 
 
-
             ### RawDEFres: Raw results from the given diff method
             object@metadata$DiffExpAnal[["RawDEFres"]] <- ListRes[["RawDEFres"]]
+            #names(ListRes[["TopDEF"]]) <- names( ListRes[["RawDEFres"]])
+            object@metadata$DiffExpAnal[["DEF"]] <- ListRes[["TopDEF"]]
+            }
+
+            object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
 
             ## TopDEF: Top differential expressed features
-            object@metadata$DiffExpAnal[["TopDEF"]] <- ListRes[["TopDEF"]]
+            DEF_filtred <- lapply(1:length(object@metadata$DiffExpAnal[["DEF"]]),function(x){
+              res <- object@metadata$DiffExpAnal[["DEF"]][[x]]
+              res <- res[res$Adj.pvalue <= Adj.pvalue.cutoff,]
+              return(res)
+            })
+            names(DEF_filtred) <- names(object@metadata$DiffExpAnal[["RawDEFres"]])
+            object@metadata$DiffExpAnal[["TopDEF"]] <- DEF_filtred
+
 
             ## merge results in bin matrix
             DEF_list <- lapply(1:length(object@metadata$DiffExpAnal[["TopDEF"]]), function(x){
-
               res <- object@metadata$DiffExpAnal[["TopDEF"]][[x]]
-              # filter adjusted pvalue
-              res <- res[res$Adj.pvalue <= Adj.pvalue.cutoff,]
               tmp <- data.frame(DEF = rownames(res), bin = rep(1,length(rownames(res))))
               colnames(tmp) <- c("DEF", paste("H", x, sep=""))
               return(tmp)
@@ -986,8 +1004,7 @@ setMethod(f="RunDiffAnalysis",
 # limma
 # Warning quand pas de F DE
 # Recuperer les messages d'erreurs de limma ou
-# Enlever le seuil pvalue.ajust et le mettre que pour fonction graphique
-# Fonction pvalue
+
 
 ###### Graphical METHOD
 
@@ -1007,15 +1024,12 @@ setMethod(f="RunDiffAnalysis",
 #' @examples
 setMethod(f="DiffAnal.plot",
           signature="SummarizedExperiment",
-          definition <- function(object, hypothesis){
+          definition <- function(object, hypothesis,Adj.pvalue.cutoff = 0.05){
 
             plots <- list()
 
             res      <- object@metadata$DiffExpAnal[["RawDEFres"]][[hypothesis]]
-            resTable <- object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]]
-            Adj.pvalue.cutoff     <- object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]
-
-            #res.FDR <- edgeR::topTags(res, n = dim(res)[1])
+            resTable <- object@metadata$DiffExpAnal[["DEF"]][[hypothesis]]
 
             plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff)
             plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable)
@@ -1031,34 +1045,46 @@ setMethod(f="DiffAnal.plot",
 
 #' @title runCoExpression
 #' @description This is an interface method which perfomed co-expression/co-aboundance analysis
-#' of omic-data. For instance, only the coseq function of the package coseq is proposed.
-#' For RNAseq data, parameters used are those recommended in DiCoExpress workflow (see the reference)
-#' @details
-#' The runCoExpression method return several results, for coseq method, objects are:
+#' of omic-data.
+#' @details For instance, only the coseq function of the package coseq is proposed.
+#' For RNAseq data, parameters used are those recommended in DiCoExpress workflow (see the reference).
+#' This parameters are: \code{model="normal"}, \code{transformation="arcsin"}, \code{GaussianModel="Gaussian_pk_Lk_Ck"},
+#' \code{normFactors="TMM"}, \code{meanFilterCutoff = 50}
+#' For proteomic or metabolomic, data are scaled by protein or metabolite to groups them by expression
+#' profiles rather than by expression intensity.
+#' After data scaling, recommended parameters (from \code{coseq} developers) for co-expression analysis are:
+#' \code{model="normal"}, \code{transformation="none"}, \code{GaussianModel="Gaussian_pk_Lk_Ck"},
+#' \code{normFactors="none",  \code{meanFilterCutoff = NULL}
+#'
+#' @return
+#' All the results are stored as a named list \code{CoExpAnal} in the metadata slot of a
+#' given \code{SummarizedExperiment} object. Objects are:
+#' The runCoExpression method return several results, for \link{coseq} method, objects are:
 #' \itemize{
-#' \item{model: }{see model params description}
-#' \item{transformation: }{see transformation params description}
-#' \item{normFactors: }{see normFactors params description}
-#' \item{meanFilterCutoff: }{set to 50}
-#' \item{gene.list.names: }{see nameList params description}
-#' \item{merge.type: }{see merge params description}
-#' \item{coseqResults: }{the raw results of coseq}
-#' \item{clusters: }{a List of gene's cluster}
-#' \item{cluster.nb: }{The number of cluster}
-#' \item{plots: }{The plots of coseq results}
+#' \item{\code{model:} }{see model params description}
+#' \item{\code{transformation:} }{see transformation params description}
+#' \item{\code{normFactors:} }{see normFactors params description}
+#' \item{\code{meanFilterCutoff:} }{set to 50 for RNA and to NULL for others}
+#' \item{\code{gene.list.names:} }{see nameList in Arguments description}
+#' \item{\code{merge.type:} }{see merge params description}
+#' \item{\code{coseqResults:} }{the raw results of \code{coseq}}
+#' \item{\code{clusters:} }{a List of clusters}
+#' \item{\code{cluster.nb:} }{The number of cluster}
+#' \item{\code{plots:} }{The plots of \code{coseq} results}
 #' }
-#' All this results are stored as a named list ("DiffExpAnal") in the metadata slot of a
-#' given data set, stored itself in the ExperimentList slot of a \link{SummarizedExperiment} object.
 #' @param object An object of class \link{SummarizedExperiment}
 #' @param tools The name of the function to use
 #' @param geneList A list of genes
 #' @param K Number of clusters (a single value or a vector of values)
 #' @param iter The number of iteration for each K.
-#' @param model Type of mixture model to use (“Poisson” or “Normal”). By default, it is the normal.
+#' @param model Type of mixture model to use \code{"Poisson"} or \code{"normal"}. By default, it is the normal.
+#' @param GaussianModel Type of \code{GaussianModel} to be used for the Normal mixture model only. This parameters
+#' is set to \code{"Gaussian_pk_Lk_Ck"} by default and doesn't have to be changed except if an error message proposed
+#' to try another model like \code{"Gaussian_pk_Lk_Bk"}.
 #' @param transformation The transformation type to be used. By default, it is the "arcsin" one.
 #' @param normFactors The type of estimator to be used to normalize for differences in library size.
 #' By default, it is the "TMM" one.
-#' @param merge "union" or "intersection"
+#' @param merge \code{"union"} or \code{"intersection"}
 #' @return An S4 object of class \link{SummarizedExperiment}
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
@@ -1067,7 +1093,8 @@ setMethod(f="DiffAnal.plot",
 setMethod(f="runCoExpression",
           signature="SummarizedExperiment",
           definition <- function(object, tools = "coseq", geneList, K, iter=5 , model="normal",
-                                 transformation="arcsin", normFactors="TMM", nameList, merge="union"){
+                                 transformation="arcsin", normFactors="TMM", nameList, merge="union",
+                                 GaussianModel = "Gaussian_pk_Lk_Ck"){
 
             object@metadata$CoExpAnal <- list()
 
@@ -1077,6 +1104,7 @@ setMethod(f="runCoExpression",
             object@metadata$CoExpAnal[["normFactors"]]      <- normFactors
             object@metadata$CoExpAnal[["gene.list.names"]]  <- nameList
             object@metadata$CoExpAnal[["merge.type"]]       <- merge
+            object@metadata$CoExpAnal[["GaussianModel"]]    <- GaussianModel
 
             counts = SummarizedExperiment::assay(object)[geneList,]
 
@@ -1085,46 +1113,46 @@ setMethod(f="runCoExpression",
               object@metadata$CoExpAnal[["meanFilterCutoff"]] <- 50
               # set meanFilterCutoff  to 50
               meanFilterCutoff <- 50
-              # object@metadata$CoExpAnal[["GaussianModel"]] <- "Gaussian_pk_Lk_Ck"
-              # GaussianModel <- "Gaussian_pk_Lk_Ck"
               },
               "proteomics" = {
-                print("Scale each protein")
-                # Normalization per protein
+                # Print the selected GaussianModel
+                print(paste("Use ",GaussianModel,sep=""))
+                print("Scale each protein (center=TRUE,scale = TRUE)")
                 object@metadata$CoExpAnal[["transformation.prot"]] <- "scaleProt"
                 counts[] <- t(apply(counts,1,function(x){
                 scale(x, center=TRUE,scale = TRUE)
                 }))
-                #print("Use Gaussian_pk_Lk_Bk model")
-                # Change GaussianModel
-                #object@metadata$CoExpAnal[["GaussianModel"]] <- "Gaussian_pk_Lk_Bk"
-                #GaussianModel <- "Gaussian_pk_Lk_Bk"
                 # No filter
-                meanFilterCutoff = NULL
+                meanFilterCutoff <- NULL
               },
               "metabolomics" = {
-                print("Scale each protein")
-                # Normalization per metabolite
+                # Print the selected GaussianModel
+                print(paste("Use ",GaussianModel,sep=""))
+                print("Scale each metabolite (center=TRUE,scale = TRUE)")
                 object@metadata$CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
                 counts[] <- t(apply(counts,1,function(x){
-                  scale(x, center=FALSE,scale = TRUE)
+                  scale(x, center=TRUE,scale = TRUE)
                 }))
-                meanFilterCutoff = NULL
+                meanFilterCutoff <- NULL
               }
             )
-            #
+
             switch (tools,
               "coseq" = {
-                  coseq.res <- try_rflomics(runCoseq(counts, K=K,
-                                        iter=iter,
-                                        model=model,
-                                        transformation=transformation,
-                                        normFactors=normFactors,
-                                        GaussianModel = GaussianModel,
-                                        meanFilterCutoff = meanFilterCutoff ))
 
-                  if(class(coseq.res) != "try-error"){
-                  object@metadata$CoExpAnal[["coseqResults"]] <- coseq.res
+                   coseq.res <- try_rflomics(runCoseq(counts, K=K,
+                                       iter=iter,
+                                         model=model,
+                                         transformation=transformation,
+                                         normFactors=normFactors,
+                                         GaussianModel = GaussianModel,
+                                         meanFilterCutoff = meanFilterCutoff ))
+
+                  if( ! is.null(coseq.res$value) ){
+                  object@metadata$CoExpAnal[["results"]] <- TRUE
+                  object@metadata$CoExpAnal[["warning"]] <- coseq.res$warning
+                  object@metadata$CoExpAnal[["coseqResults"]] <- coseq.res$value
+                  coseq.res <- coseq.res$value
 
                   # list of genes per cluster
                   clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
@@ -1142,7 +1170,11 @@ setMethod(f="runCoExpression",
                   object@metadata$CoExpAnal[["plots"]] <- plot.coseq.res
                   }
                   # Réinitialisation de l'objet CoExpAnal
-                  else object@metadata$CoExpAnal[["error"]] <- coseq.res
+                else{
+                  object@metadata$CoExpAnal[["results"]] <- FALSE
+                  object@metadata$CoExpAnal[["warning"]] <- coseq.res$warning
+                  object@metadata$CoExpAnal[["error"]] <- coseq.res$error
+                }
               }
             )
 
