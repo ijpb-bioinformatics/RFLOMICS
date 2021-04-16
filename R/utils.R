@@ -169,7 +169,6 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
   else{
     print("[cmd] apply model to each contrast")
      ListRes[[1]] <-  lapply(Contrasts.Sel$contrast, function(x){
-
        edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,]))
 
      })
@@ -191,14 +190,87 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
   })
 
   ListRes[[2]] <- TopDGE
+
   names(ListRes[[2]]) <- names(ListRes[[1]])
 
 
   # Mutate column name to render the anadiff results generic
   # Initial column Name:  gene_name  logFC      logCPM        LR        PValue           FDR
   ListRes[[2]] <- lapply(ListRes[[2]], function(x){
-      dplyr::rename(x,"Abundance"="logCPM","StatTest"="LR","pvalue"="PValue","Adj.pvalue"="FDR")
+      #dplyr::rename(x,"Abundance"="logCPM","StatTest"="LR","pvalue"="PValue","Adj.pvalue"="FDR")
+      dplyr::rename(x,"Abundance"="logCPM","pvalue"="PValue","Adj.pvalue"="FDR")
   })
+
+  names(ListRes) <- c("RawDEFres","TopDEF")
+
+  return(ListRes)
+}
+
+
+#' @title limma.AnaDiff
+#'
+#' @param object an object of class [\code{\link{SummarizedExperiment}]
+#' @param design an object of class [\code{\link{ExpDesign-class}]
+#' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
+#' @return A list
+#' @export
+#' @importFrom stats model.matrix as.formula
+#'
+#'
+#' @examples
+
+limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.Coeff, Adj.pvalue.cutoff, Adj.pvalue.method,clustermq){
+
+  ListRes <- list()
+
+  # Run the model
+  fit <- limma::lmFit(count_matrix, model_matrix)
+
+  # test clustermq
+  if(clustermq == TRUE){
+
+    # Fonction to run on contrast per job
+    # y is the model, Contrasts are stored in a matrix, by columns
+
+    fx <- function(x){
+      limma::contrasts.fit(y, contrasts  = unlist(z[x,]))
+    }
+
+    ListRes[[1]] <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
+                                 export=list(y=fit,z=Contrasts.Coeff),
+                                 n_jobs=length(Contrasts.Sel$contrast),pkgs="edgeR")
+
+  }
+  else{
+    print("[cmd] fit contrasts")
+    ListRes[[1]] <-  lapply(Contrasts.Sel$contrast, function(x){
+      limma::contrasts.fit(fit, contrasts  = unlist(Contrasts.Coeff[x,]))
+  })
+  }
+
+  # Name the table of raw results
+
+  names(ListRes[[1]]) <- Contrasts.Sel$contrastName
+
+  # ListRes[[2]] TopDPE with column names common to all AnaDiff function
+
+  ListRes[[2]] <- lapply(ListRes[[1]], function(x){
+
+    fit2 <- limma::eBayes(x, robust=TRUE)
+    res <- topTable(fit2, adjust=Adj.pvalue.method, number=Inf, sort.by="AveExpr")
+    DEPs <- res[res$adj.P.Val <= Adj.pvalue.cutoff,]
+    return(DEPs)
+  })
+
+
+  # Mutate column name to render the anadiff results generic
+  # Initial column Name:  logFC  AveExpr         t      P.Value    adj.P.Val            B
+  ListRes[[2]] <- lapply(ListRes[[2]], function(x){
+    #dplyr::rename(x,"Abundance"="AveExpr","StatTest"="t","pvalue"="P.Value","Adj.pvalue"="adj.P.Val")
+    dplyr::rename(x,"Abundance"="AveExpr","pvalue"="P.Value","Adj.pvalue"="adj.P.Val")
+  })
+
+  names(ListRes[[2]]) <- names(ListRes[[1]])
 
   names(ListRes) <- c("RawDEFres","TopDEF")
 
@@ -283,14 +355,34 @@ plotLibSize <- function(abundances){
 #' @export
 #' @importFrom ggplot2 geom_density xlab
 #'
-plotDistr <- function(abundances, dataName){
+plotDistr <- function(abundances, dataName, dataType,transform_method){
+
 
   value <- samples <- NULL
 
-  pseudo_counts <- log2(abundances+1) %>% reshape2::melt()
-  colnames(pseudo_counts) <- c("features", "samples", "value")
+  switch(dataType,
+        "rnaseq" = {
+          pseudo_counts <- log2(abundances+1) %>% reshape2::melt()
+          colnames(pseudo_counts) <- c("features", "samples", "value")
+          x_lab <-"log2(feature abundances)"
+         },
+        "proteomics"={
+        pseudo_counts <- abundances %>% reshape2::melt()
+        colnames(pseudo_counts) <- c("features", "samples", "value")
+        x_lab <- switch (transform_method,
+                         "log2"= "log2(feature abundances)",
+                          "none"="feature abundances")
+        },
+        "metabolomics"={
+        pseudo_counts <- abundances %>% reshape2::melt()
+        colnames(pseudo_counts) <- c("features", "samples", "value")
+        x_lab <- switch (transform_method,
+                         "log2"= "log2(feature abundances)",
+                         "none"="feature abundances")
+        }
+        )
 
-  p <- ggplot2::ggplot(pseudo_counts) + geom_density(aes(value, color=samples) ) + xlab(" log2(feature abundances)") +
+  p <- ggplot2::ggplot(pseudo_counts) + geom_density(aes(value, color=samples) ) + xlab(x_lab) +
                                         theme(legend.position='none')
   print(p)
 
@@ -336,8 +428,8 @@ globalVariables(names(data))
 MA.plot <- function(data, Adj.pvalue.cutoff, pngFile=NULL){
 
   Abundance <- logFC <- Adj.pvalue <- NULL
-  p <- ggplot2::ggplot(data=data, aes(x = Abundance, y=logFC, col=Adj.pvalue < Adj.pvalue.cutoff)) + geom_point(alpha=0.4, size = 0.8) +
-    scale_colour_manual(values=c("black","red"))
+  p <- ggplot2::ggplot(data=data, aes(x = Abundance, y=logFC, col=Adj.pvalue < Adj.pvalue.cutoff)) +
+    geom_point(alpha=0.4, size = 0.8) + scale_colour_manual(values=c("black","red")) + labs(color=paste("Adj.pvalue <=",Adj.pvalue.cutoff,sep=""))
 
 
   if (! is.null(pngFile)){
@@ -954,6 +1046,39 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
 }
 
 
+
+#' @title try_rflomics
+#' @details
+#' This function come from https://stackoverflow.com/questions/4948361/how-do-i-save-warnings-and-errors-as-output-from-a-function
+#  The author indicated that he merged Martins solution (https://stackoverflow.com/a/4952908/2161065) and
+#  the one from the R-help mailing list you get with demo(error.catching).
+#' @param expr The expression that has been to be evaluated.
+#' @return a named list
+#' \itemize{
+#' \item{\code{value:} }{The results of the expr evaluation or NULL if an error occured }
+#' \item{\code{warning:} }{warning message or NULL}
+#' \item{\code{error:} }{error message or NULL}
+#' }
+#' @export
+
+
+try_rflomics <- function(expr) {
+  warn <- err <- NULL
+  value <- withCallingHandlers(
+    tryCatch(expr,
+             error=function(e) {
+               err <<- e
+               NULL
+             })
+    ,
+     warning=function(w) {
+       warn <<- w
+    invokeRestart("muffleWarning")
+     }
+  )
+  list(value=value, warning=warn, error=err)
+}
+
 #' @title run Coseq for co-expression analysis
 #' @param counts matrix
 #' @param K
@@ -963,12 +1088,14 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
 #' @param normFactors
 #' @return coseqResults
 #' @export
-runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="arcsin",  normFactors="TMM"){
-
+runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="arcsin",
+                     GaussianModel = "Gaussian_pk_Lk_Ck", normFactors="TMM",meanFilterCutoff=50){
 
 
             coseq.res <- coseq::coseq(counts, K=K, iter=iter, model=model, transformation=transformation,
-                                      parallel=TRUE, meanFilterCutoff=50, normFactors=normFactors, seed=12345)
+                                      parallel=TRUE, meanFilterCutoff=meanFilterCutoff,
+                                      GaussianModel = GaussianModel,
+                                      normFactors=normFactors, seed=12345)
 
             # Results.1 <- list()
             # Results.1_min_icl <- list()

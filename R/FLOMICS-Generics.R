@@ -32,6 +32,11 @@ setGeneric(
 )
 
 setGeneric(
+  name="TransformData",
+  def = function( object, ... ){standardGeneric("TransformData")}
+)
+
+setGeneric(
   name="FilterLowAbundance",
   def = function( object, ... ){standardGeneric("FilterLowAbundance")}
 )

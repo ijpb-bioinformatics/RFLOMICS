@@ -28,18 +28,25 @@ CoSeqAnalysisUI <- function(id){
 
           column(6,
             selectInput(ns("model"), label = "model :",
-                        choices = list("normal"="normal"), selected = "normal"),
+                        choices = list("normal"="normal","kmeans"="kmeans"), selected = "normal"),
             selectInput(ns("transfo"), label = "Transformation :",
-                        choices = list("arcsin"="arcsin"), selected = "arcsin"),
+                        choices = list("arcsin"="arcsin","none"="none"), selected = "arcsin"),
             selectInput(ns("norm"), label = "normFactors :",
-                        choices = list("TMM"="TMM"), selected = "TMM")
+                        choices = list("TMM"="TMM","none"="none"), selected = "TMM")
+
           ),
           column(6,
                  numericInput(inputId = ns("minK"), label="min K :", value=2 , 2, max=25, 1),
                  numericInput(inputId = ns("maxK"), label="max K :", value=20, 5, max=30, 1),
                  numericInput(inputId = ns("iter"), label="iteration :", value=5, 5, max=30, 1)
-          )
+          ),
+
+        fluidRow(
+         column(12,selectInput(ns("GaussianModel"), label = "Gaussian Model (only for normal model) :",
+                              choices = list("Gaussian_pk_Lk_Ck"="Gaussian_pk_Lk_Ck",
+                                             "Gaussian_pk_Lk_Bk"="Gaussian_pk_Lk_Bk"), selected = "Gaussian_pk_Lk_Ck")))
         ),
+
         box(title = "run", solidHeader = TRUE, status = "warning", width = 14,
           column(6,
             selectInput(inputId = ns("clustermq-coseq"), label="send job to cluster",
@@ -89,9 +96,10 @@ CoSeqAnalysis <- function(input, output, session, dataset){
 
   # get list of DGE to process
   # from union or intersection
-  DEG_list <- reactive({getDEGlist_for_coseqAnalysis(matrix    = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]],
-                                           colnames  = input$select,
-                                           mergeType = input$unionInter)})
+  DEG_list <- reactive({getDEGlist_for_coseqAnalysis(
+        matrix    = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]],
+        colnames  = input$select,
+        mergeType = input$unionInter)})
 
   output$mergeValue <- renderText({ print(paste(length(DEG_list()), "genes", sep =" ")) })
 
@@ -118,11 +126,23 @@ CoSeqAnalysis <- function(input, output, session, dataset){
     progress$inc(1/10, detail = paste("Doing part ", 10,"%", sep=""))
     #----------------------#
 
+
     # run coseq
-    dataset.SE <- runCoExpression(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], tools="coseq", geneList=DEG_list(),
-                                  K=input$minK:input$maxK, iter = input$iter, model  = input$model,
-                                  transformation=input$transfo, normFactors="TMM", nameList=input$select, merge=input$unionInter)
+    dataset.SE <- runCoExpression(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]],
+                                  tools="coseq", geneList=DEG_list(),
+                                  K=input$minK:input$maxK, iter = input$iter,
+                                  model  = input$model,
+                                  transformation=input$transfo, normFactors=input$norm,
+                                  nameList=input$select, merge=input$unionInter,GaussianModel =input$GaussianModel)
+
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
+
+    # If an error occured
+    if(isFALSE(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["results"]]))
+    {
+    showModal(modalDialog( title = "Error message",
+                           as.character(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["error"]])))
+    }
 
     #---- progress bar ----#
     progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep=""))
