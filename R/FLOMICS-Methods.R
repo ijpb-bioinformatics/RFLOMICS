@@ -924,17 +924,10 @@ setMethod(f="RunNormalization",
 #'
 setMethod(f="RunDiffAnalysis",
           signature="SummarizedExperiment",
-          definition <- function(object, design, Adj.pvalue.method="BH", Adj.pvalue.cutoff = 0.05, filter_only=FALSE ,
+          definition <- function(object, design, Adj.pvalue.method="BH",
                                  contrastList, DiffAnalysisMethod, clustermq=FALSE){
 
-            if(filter_only == TRUE & is.null(object@metadata$DiffExpAnal)){
-              stop("can't filter the DiffExpAnal object because it doesn't exist")
-            }
 
-
-            # Run the Diff analysis and get the results as a list of
-
-            if(filter_only == FALSE){
 
             contrastName <- NULL
             Contrasts.Sel <- dplyr::filter(design@Contrasts.Sel, contrastName %in% contrastList)
@@ -943,7 +936,7 @@ setMethod(f="RunDiffAnalysis",
             object@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
             object@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
             object@metadata$DiffExpAnal[["Adj.pvalue.method"]]  <- Adj.pvalue.method
-            object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
+            #object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
 
             # move in ExpDesign Constructor
             model_matrix <- model.matrix(as.formula(design@Model.formula), data=as.data.frame(design@List.Factors))
@@ -972,6 +965,31 @@ setMethod(f="RunDiffAnalysis",
             object@metadata$DiffExpAnal[["RawDEFres"]] <- ListRes[["RawDEFres"]]
             #names(ListRes[["TopDEF"]]) <- names( ListRes[["RawDEFres"]])
             object@metadata$DiffExpAnal[["DEF"]] <- ListRes[["TopDEF"]]
+
+            return(object)
+          })
+
+# limma
+# Warning quand pas de F DE
+# Recuperer les messages d'erreurs de limma ou
+
+## METHOD to filter differential analysis
+
+#' Title
+#'
+#' @param SummarizedExperiment
+#'
+#' @return
+#' @exportMethod FilterDiffAnalysis
+#'
+#' @examples
+#'
+setMethod(f="FilterDiffAnalysis",
+          signature="SummarizedExperiment",
+          definition <- function(object, Adj.pvalue.cutoff = 0.05){
+
+            if(is.null(object@metadata$DiffExpAnal)){
+              stop("can't filter the DiffExpAnal object because it doesn't exist")
             }
 
             object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
@@ -984,6 +1002,27 @@ setMethod(f="RunDiffAnalysis",
             })
             names(DEF_filtred) <- names(object@metadata$DiffExpAnal[["RawDEFres"]])
             object@metadata$DiffExpAnal[["TopDEF"]] <- DEF_filtred
+
+            ## stats
+            stats_list <- lapply(1:length(object@metadata$DiffExpAnal[["TopDEF"]]), function(x){
+              gN = dim(object@metadata$DiffExpAnal[["DEF"]][[x]])[1]
+              gDE =  dim(object@metadata$DiffExpAnal[["TopDEF"]][[x]])[1]
+              pgDE =   round((gDE/gN)*100,0)
+              gDEup =  dim(dplyr::filter(object@metadata$DiffExpAnal[["TopDEF"]][[x]],logFC > 0))[1]
+              pgDEup =  round((gDEup/gDE)*100,0)
+              gDEdown =  dim(dplyr::filter(object@metadata$DiffExpAnal[["TopDEF"]][[x]],logFC < 0))[1]
+              pgDEdown =  round((gDEdown/gDE)*100,0)
+              list(
+              "gN" = gN,
+              "gDE" =  gDE,
+              "pgDE" =  pgDE,
+              "gDEup" =  gDEup,
+              "pgDEup" =  pgDEup,
+              "gDEdown" =  gDEdown,
+              "pgDEdown" =  pgDEdown)
+            })
+            names(stats_list) <- names(object@metadata$DiffExpAnal[["RawDEFres"]])
+            object@metadata$DiffExpAnal[["stats"]] <- stats_list
 
 
             ## merge results in bin matrix
@@ -1000,10 +1039,6 @@ setMethod(f="RunDiffAnalysis",
 
             return(object)
           })
-
-# limma
-# Warning quand pas de F DE
-# Recuperer les messages d'erreurs de limma ou
 
 
 ###### Graphical METHOD

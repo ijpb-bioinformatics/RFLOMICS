@@ -30,11 +30,7 @@ DiffExpAnalysisUI <- function(id){
     ),
     tags$br(),
     tags$br(),
-    fluidRow(box(title = NULL,status = "warning", width = 10,
-              numericInput(inputId = ns("Adj.pvalue.cutoff"),
-                         label="Adjusted pvalue cutoff :",
-                         value=0.05, 0, max=1, 0.01),
-             actionButton(ns("runFiltering"),"Filter"))),
+    fluidRow(uiOutput(ns("FilterPvalueUI"))),
     fluidRow( uiOutput(ns("ContrastsResults"))),
     fluidRow( uiOutput(ns("ResultsMerge")))
   )
@@ -71,6 +67,7 @@ DiffExpAnalysis <- function(input, output, session, dataset){
   })
 
   # Run the differential analysis for each contrast set
+  # Filter
   #   -> return a dynamic user interface with a collapsible box for each contrast
   #         - Pvalue graph
   #         - MAplot
@@ -100,16 +97,35 @@ DiffExpAnalysis <- function(input, output, session, dataset){
     dataset.SE <- RunDiffAnalysis(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], design = Design,
                                   contrastList = input$contrastList,
                                   Adj.pvalue.method="BH",
-                                  Adj.pvalue.cutoff =input$Adj.pvalue.cutoff,
                                   DiffAnalysisMethod=input$AnaDiffMethod,
-                                  clustermq=input$clustermq,filter_only=FALSE)
+                                  clustermq=input$clustermq)
 
 
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
 
+
     #---- progress bar ----#
     progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep=""))
     #----------------------#
+
+    output$FilterPvalueUI <- renderUI({
+      box(title = NULL,status = "warning", width = 10,
+          numericInput(inputId = session$ns("Adj.pvalue.cutoff"),
+                   label="Adjusted pvalue cutoff :",
+                   value=0.05, 0, max=1, 0.01))
+    })
+  })
+
+
+  observeEvent(input$Adj.pvalue.cutoff, {
+
+    print(paste("# 9bis- Filter Diff Analysis...", dataset))
+
+    ### adj_pvalue filtering by calling the RundDiffAnalysis method without filtering
+    dataset.SE <- FilterDiffAnalysis(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]],
+                                     Adj.pvalue.cutoff =input$Adj.pvalue.cutoff)
+
+    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
 
     output$ContrastsResults <- renderUI({
 
@@ -119,12 +135,14 @@ DiffExpAnalysis <- function(input, output, session, dataset){
 
         vect     <- unlist(Contrasts.Sel[i,])
         res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
+        stats     <- dataset.SE@metadata$DiffExpAnal[["stats"]][[vect["contrastName"]]]
 
         diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=vect["contrastName"],Adj.pvalue.cutoff = input$Adj.pvalue.cutoff)
 
         fluidRow(
           column(10,
-                 box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = paste0(vect["tag"], " : ", vect["contrastName"], sep=""),
+                 box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning",
+                     title = paste0(vect["tag"], " : ", vect["contrastName"] ,"   [#DE: ", stats$gDE," (up: ", stats$pgDEup,"%, ", "down: ", stats$pgDEdown,"%)]", sep=""),
                      ### MAplot
                      column(6, renderPlot({ diff.plots$MA.plot }) ),
 
@@ -147,46 +165,6 @@ DiffExpAnalysis <- function(input, output, session, dataset){
       })
     })
 
-    #---- progress bar ----#
-    progress$inc(3/4, detail = paste("Doing part ", 75,"%", sep=""))
-    #----------------------#
-
-
-
-    ### intersection
-    DEF_mat <- dataset.SE@metadata$DiffExpAnal[["mergeDEF"]]
-
-    output$ResultsMerge <- renderUI({
-      if (ncol(DEF_mat) > 2){
-        fluidRow(
-          column(10,
-                 box(width=12,  status = "warning",
-
-                     renderPlot({ UpSetR::upset(DEF_mat, sets = (names(DEF_mat[,-1]))) })
-                 )
-          )
-        )
-      }
-    })
-
-    #---- progress bar ----#
-    progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
-    #----------------------#
-  })
-
-  ### UPDATE UPSET RESULTS With FILTER and UPDATE object
-
-  observeEvent(input$runFiltering, {
-
-    ### adj_pvalue filtering by calling the RundDiffAnalysis method without filtering
-    dataset.SE <- RunDiffAnalysis(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], design = Design,
-                                  contrastList = input$contrastList,
-                                  Adj.pvalue.method="BH",
-                                  Adj.pvalue.cutoff =input$Adj.pvalue.cutoff,
-                                  DiffAnalysisMethod=input$AnaDiffMethod,
-                                  clustermq=input$clustermq, filter_only=TRUE)
-
-    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
 
     DEF_mat <- dataset.SE@metadata$DiffExpAnal[["mergeDEF"]]
 
@@ -202,7 +180,8 @@ DiffExpAnalysis <- function(input, output, session, dataset){
         )
       }
     })
-  })
+
+  },ignoreNULL=TRUE,ignoreInit = TRUE)
 
   return(input)
 }
