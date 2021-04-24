@@ -20,6 +20,10 @@ setGeneric(
   def = function( object, ... ){standardGeneric("RunDiffAnalysis")}
 )
 
+setGeneric(
+  name="FilterDiffAnalysis",
+  def = function( object, ... ){standardGeneric("FilterDiffAnalysis")}
+)
 
 setGeneric(
   name="abundanceBoxplot",
