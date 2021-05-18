@@ -63,7 +63,7 @@ RNAseqDataExplorTab <- function(input, output, session, dataset){
   #### abundance distribution ####
   output$CountDist <- renderPlot(height = 300, {
 
-    plotDistr(abundances=assay(FlomicsMultiAssay@ExperimentList[[dataset]]),dataType="rnaseq")
+    plotDistr(abundances=assay(FlomicsMultiAssay@ExperimentList[[dataset]]),dataType="RNAseq")
   })
 
   #### PCA analysis ####

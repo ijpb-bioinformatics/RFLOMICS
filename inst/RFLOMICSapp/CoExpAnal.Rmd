@@ -1,0 +1,70 @@
+
+> Tools: `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$tools`
+
+> Model: `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$model`
+
+> Transformation: `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$Transformation`
+
+> GaussianModel: `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$GaussianModel`
+
+> meanFilterCutoff: `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$meanFilterCutoff`
+
+### Results {.tabset}
+ 
+#### logLike 
+
+```{r ,echo=FALSE}
+plot.coseq.res <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$plots
+par(mar = c(4, 4, .5, .1))
+plot.coseq.res$logLike
+```
+
+#### ICL 
+
+```{r , echo=FALSE}
+plot.coseq.res <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$plots
+par(mar = c(4, 4, .5, .1))
+plot.coseq.res$ICL 
+```
+
+#### profiles  
+
+```{r , echo=FALSE}
+plot.coseq.res <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$plots
+par(mar = c(4, 4, .5, .1))
+plot.coseq.res$profiles 
+```
+
+#### boxplots
+
+```{r , echo=FALSE}
+plot.coseq.res <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$plots
+par(mar = c(4, 4, .5, .1))
+plot.coseq.res$boxplots
+```
+
+#### probapost_boxplots 
+
+```{r , echo=FALSE}
+plot.coseq.res <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$plots
+par(mar = c(4, 4, .5, .1))
+plot.coseq.res$probapost_boxplots 
+```
+
+#### probapost_barplots
+
+```{r , echo=FALSE}
+plot.coseq.res <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$plots
+par(mar = c(4, 4, .5, .1))
+plot.coseq.res$probapost_barplots
+```
+
+#### probapost_barplots
+
+```{r , echo=FALSE}
+plot.coseq.res <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$plots
+par(mar = c(4, 4, .5, .1))
+plot.coseq.res$probapost_histogram
+```   
+
+

@@ -1,12 +1,12 @@
 ---
 title: "RFLOMICS report"
-author: "nadia.bessoltane@inra.fr"
+author: "nadia.bessoltane@inra.fr "
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
   html_document:
     df_print: paged
     toc: true
-    toc_depth: 2
+    toc_depth: 3
     toc_float:
       collapsed: true
       smooth_scroll: true
@@ -34,6 +34,7 @@ pngDir <- params$pngDir
 
 
 # Experimental Design :
+
 > sample sheet
 
 ```{r Design, echo=FALSE, message=TRUE, warning=TRUE}
@@ -45,6 +46,12 @@ FlomicsMultiAssay@colData
 
 ```{r factor, echo=FALSE, message=TRUE, warning=TRUE}
 FlomicsMultiAssay@metadata$design@Factors.Type
+```
+
+> Check Experimental Design Completeness
+
+```{r CheckDesign, echo=FALSE, message=TRUE, warning=TRUE}
+CheckExpDesignCompleteness(FlomicsMultiAssay@metadata$design)
 ```
 
 > Statistical model
@@ -74,7 +81,6 @@ FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName
     child <- paste0(omictype, ".Rmd")
 
     for (data in  FlomicsMultiAssay@metadata$omicList[[omictype]]){
-      
       
       out <- c(out, knitr::knit_child(child, quiet=TRUE))  
     }

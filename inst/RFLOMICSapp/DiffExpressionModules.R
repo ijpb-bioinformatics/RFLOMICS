@@ -123,7 +123,7 @@ DiffExpAnalysis <- function(input, output, session, dataset){
 
     ### adj_pvalue filtering by calling the RundDiffAnalysis method without filtering
     dataset.SE <- FilterDiffAnalysis(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]],
-                                     Adj.pvalue.cutoff =input$Adj.pvalue.cutoff)
+                                     Adj.pvalue.cutoff = input$Adj.pvalue.cutoff)
 
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
 

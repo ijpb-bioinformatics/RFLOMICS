@@ -1144,7 +1144,7 @@ setMethod(f="runCoExpression",
             counts = SummarizedExperiment::assay(object)[geneList,]
 
             switch (object@metadata$omicType ,
-              "rnaseq" = {
+              "RNAseq" = {
               object@metadata$CoExpAnal[["meanFilterCutoff"]] <- 50
               # set meanFilterCutoff  to 50
               meanFilterCutoff <- 50
