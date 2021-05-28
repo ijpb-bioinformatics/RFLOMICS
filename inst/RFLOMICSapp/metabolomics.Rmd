@@ -5,7 +5,6 @@
 
 ## data Exploratory
 
-plotPCA(FlomicsMultiAssay@ExperimentList[[dataset]], PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup)
 
 ```{r ,echo=FALSE, fig.show="hold", message=FALSE, warning=FALSE, out.width="50%"}
 #knitr::include_graphics(c(file.path(pngDir, paste0(data, "_LibSize.png")), 
