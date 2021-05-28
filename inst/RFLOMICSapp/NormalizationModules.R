@@ -87,6 +87,7 @@ RNAseqDataNormTab <- function(input, output, session, dataset){
 
   FlomicsMultiAssay <<- RunFilterNormPCAfunction (FlomicsMultiAssay, dataset, Filter_Strategy = "NbConditions", CPM_Cutoff = 1, NormMethod="TMM")
 
+
   ## Boxplot of distribution of normalized abundance
   output$norm.boxplot <- renderPlot({
 
