@@ -1,12 +1,13 @@
 ---
 title: "RFLOMICS report"
-author: "nadia.bessoltane@inra.fr"
+author: "nadia.bessoltane@inra.fr & delphine.charif@inra.fr"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
+bibliography: bibliography.bib
 output: 
   html_document:
     df_print: paged
     toc: true
-    toc_depth: 2
+    toc_depth: 3
     toc_float:
       collapsed: true
       smooth_scroll: true
@@ -34,32 +35,40 @@ pngDir <- params$pngDir
 
 
 # Experimental Design :
-> sample sheet
 
-```{r Design, echo=FALSE, message=TRUE, warning=TRUE}
-FlomicsMultiAssay@colData
+
+<!-- ## Sample sheet overview -->
+
+<!-- ```{r Design, echo=FALSE, message=TRUE, warning=TRUE} -->
+<!-- FlomicsMultiAssay@colData -->
+<!-- ``` -->
+
+
+* The experimental design of the  **`r length(FlomicsMultiAssay@metadata$design@projectName)` project** has **`r length(FlomicsMultiAssay@metadata$design@Factors.Type)` factor(s)**:  
+
+`r paste0(paste0(str_c(names(FlomicsMultiAssay@metadata$design@Factors.Type),as.vector(FlomicsMultiAssay@metadata$design@Factors.Type),sep=": a "),collapse=" factor,  ")," factor",collapse="")`
+
+* The statistical model written for the experiment is:  
+
+**`r FlomicsMultiAssay@metadata$design@Model.formula`**
+
+
+```{r CheckDesign1, echo=FALSE, message=TRUE, warning=TRUE}
+check <- CheckExpDesignCompleteness(FlomicsMultiAssay@metadata$design)
 ```
 
+* The number of replicates per condition are:
 
-> Factor type
-
-```{r factor, echo=FALSE, message=TRUE, warning=TRUE}
-FlomicsMultiAssay@metadata$design@Factors.Type
+```{r checkDesign, echo=FALSE, results="asis"}
+kable_styling(kable(check$count, row.names=FALSE, caption=NULL,  format="html"), font_size=12, full_width = F, position = "left")
 ```
 
-> Statistical model
+* **`r check$message[2]`**
 
-```{r model, echo=FALSE, message=TRUE, warning=TRUE}
-FlomicsMultiAssay@metadata$design@Model.formula
+* The selected contrast(s) is (are):
 
-```
-
-> Selected hypothesis
-
-```{r contrast, echo=FALSE, message=TRUE, warning=TRUE}
-
-FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName 
-
+```{r contrastSel, echo=FALSE, results="asis"}
+kable_styling(kable(FlomicsMultiAssay@metadata$design@Contrasts.Sel[,c(5,2:3)], row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
 ```
 
 
@@ -75,7 +84,6 @@ FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName
 
     for (data in  FlomicsMultiAssay@metadata$omicList[[omictype]]){
       
-      
       out <- c(out, knitr::knit_child(child, quiet=TRUE))  
     }
     
@@ -87,6 +95,13 @@ knitr::asis_output(out)
 
 `r if(length(FlomicsMultiAssay@metadata$omicList) == 0) {"\\end{comment}"}`
 
+# R Session
 
+```{r session, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
+sessionInfo()
+```
+
+
+# Bibliographie
 
 

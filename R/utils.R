@@ -361,7 +361,7 @@ plotDistr <- function(abundances, dataName, dataType,transform_method){
   value <- samples <- NULL
 
   switch(dataType,
-        "rnaseq" = {
+        "RNAseq" = {
           pseudo_counts <- log2(abundances+1) %>% reshape2::melt()
           colnames(pseudo_counts) <- c("features", "samples", "value")
           x_lab <-"log2(feature abundances)"

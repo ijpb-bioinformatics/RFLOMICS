@@ -1,52 +1,41 @@
 
 # `r data`  analysis
 
-## data Exploratory
+### Workflow of reference 
 
-> raw data 
-
-```{r , echo=FALSE, message=TRUE, warning=TRUE}
-#data <- paste0("RNAseq.",data)
-
-colnames(assay(FlomicsMultiAssay[[data]]))
-
-```
+DiCoExpress [@Lambert:2020ta]
 
 
-> Library size
+### Library size and count distributions of raw RNAseq data:
 
 ```{r, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE, echo=FALSE}
 #knitr::include_graphics(c(file.path(pngDir, paste0(data, "_LibSize.png")), 
 #                          file.path(pngDir, paste0(data, "_CountDist.png"))))
 
-plotLibSize(abundances= assay(FlomicsMultiAssay[[data]]), 
-            dataName  = data, 
-            pngFile   = NULL)
-
-```
-
-> Count distribution
-
-```{r,echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
 #knitr::include_graphics(c(file.path(pngDir, paste0(data, "_LibSize.png")), 
 #                          file.path(pngDir, paste0(data, "_CountDist.png"))))
 
+
+plotLibSize(abundances= assay(FlomicsMultiAssay@ExperimentList[[data]]))
+
 plotDistr(abundances= assay(FlomicsMultiAssay[[data]]),
           dataName  = data, 
-          pngFile   = NULL)
+          dataType=FlomicsMultiAssay@ExperimentList[[data]]@metadata$omicType,
+          transform_method="none") 
 ```
 
-> Principal component analysis
+
+### Raw data Exploratory
 
 
-```{r , echo=FALSE , message=FALSE, warning=FALSE, fig.show = "hold", out.width = "50%"}
+```{r rdeRNA, echo=FALSE , message=FALSE, eval=FALSE,warning=FALSE, fig.show = "hold", out.width = "50%"}
 knitr::include_graphics(list.files (path = file.path(pngDir), 
                                     pattern = paste0(data,"_PCAdesign_raw_PC"), 
                                     full.names = TRUE))
 ```
 
 
-```{r , echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE, cho=FALSE}
+```{r , echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE,out.width = "80%"}
 #, paged.print=FALSE
 #knitr::include_graphics(file.path(pngDir, paste0(data, "_PCAdesignCoordRaw.png")))
 mvQCdesign(object = FlomicsMultiAssay,
@@ -55,30 +44,50 @@ mvQCdesign(object = FlomicsMultiAssay,
 ```
 
 
-```{r , echo=FALSE,message=FALSE, warning=FALSE, fig.show = "hold"}
+## Filtering and Normalization
 
-#knitr::include_graphics(file.path(pngDir, paste0(data, "_PCAmetaCorrRaw.png")))
-# mvQCdata(object = FlomicsMultiAssay,
-#          data   = data, PCA="raw", axis=5, 
-#          pngFile= NULL) 
+### Filtering method:
 
+* By default, gene with 0 count are removed from the data. 
+* The choosen filtering strategy is `r FlomicsMultiAssay[[paste0(data, ".filtred")]]@metadata$FilteringOptions$Filter_Strategy` with a count per million of read (CPM)
+cut-off of `r FlomicsMultiAssay[[paste0(data, ".filtred")]]@metadata$FilteringOptions$CPM_Cutoff`  
+
+### Normalization method:
+
+The `r FlomicsMultiAssay[[paste0(data, ".filtred")]]@metadata$Normalization$methode` normalization method 
+was applied and the scaling factors are stored in the table below:
+
+```{r NormCoeff, echo=FALSE, results="asis"}
+kable_styling(kable(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$Normalization$coefNorm, row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
 ```
 
-## Filtering and Normalisation
 
-> Normalisation method : `r FlomicsMultiAssay[[paste0(data, ".filtred")]]@metadata$Normalization$methode`
+### Results
 
-```{r ,echo=FALSE,message=FALSE, warning=FALSE,  fig.show = "hold"}
-#knitr::include_graphics(file.path(pngDir, paste0(data, "_norm.boxplot.png")))
-abundanceBoxplot(object  = FlomicsMultiAssay, 
-                 dataType= paste0(data,".filtred"), 
-                 pngFile = NULL)
+`r length(FlomicsMultiAssay@ExperimentList[["RNAseq.set1.filtred"]]@metadata$FilteredFeatures)` genes were filtered
+out.  
 
+In this graph, 
+
+```{r BeforAfterFilteringRNA,echo=FALSE,message=FALSE, out.width = "50%", warning=FALSE,  fig.show = "hold"}
+# plotDistr(abundances= assay(FlomicsMultiAssay[[data]]),
+#          dataName  = data, 
+#          dataType=FlomicsMultiAssay@ExperimentList[[data]]@metadata$omicType,
+#          transform_method="none") 
+
+# plotDistr(abundances= assay(FlomicsMultiAssay[[paste0(data,".filtred")]]),
+#          dataName  = paste0(data,".filtred"), 
+#          dataType=FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$omicType,
+#          transform_method="none") 
+abundanceBoxplot(FilterLowAbundance(FlomicsMultiAssay@ExperimentList[[data]],CPM_Cutoff=5))
+abundanceBoxplot(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]])
 ```
 
-> Principal component analysis
 
-```{r , echo=FALSE ,message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "50%"}
+## Technical and Biological variability exploration
+
+
+```{r , echo=FALSE ,message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "50%",eval=FALSE}
 
 knitr::include_graphics(list.files (path = file.path(pngDir),
                                     pattern = paste0(data,".filtred_PCAdesign_norm_PC"),
@@ -86,33 +95,95 @@ knitr::include_graphics(list.files (path = file.path(pngDir),
 
 ```
 
-## Differential expression analysis 
 
-```{r ,echo=FALSE, message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "50%"}
-#knitr::include_graphics(list.files (path = file.path(pngDir), 
-#                                    pattern = paste0(data, "_PvalueDistribution"), 
-#                                    full.names = TRUE))
+```{r , echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE}
+#, paged.print=FALSE
+#knitr::include_graphics(file.path(pngDir, paste0(data, "_PCAdesignCoordRaw.png")))
+mvQCdesign(object = FlomicsMultiAssay,
+           data   = paste0(data,".filtred") , PCA="norm", axis=5, 
+           pngFile= NULL) 
+```
 
-for (contrast  in  names(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["AnaDiffDeg"]])) {
-    
-   print(paste("@", contrast))
-  
-   print(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["AnaDiffDeg"]][[contrast]][1:10,])
-  
-   res     <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["AnaDiff"]][[contrast]]
-   res.FDR <- topTags(res, n = dim(res)[1])
-   p <- MA.plot(data = res.FDR$table, FDRcutoff = 0.05, pngFile = NULL) 
-   
-   print(p)
-   
-   p <- pvalue.plot(data    = FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["AnaDiffDeg"]][[contrast]], 
-               contrast= as.vector(filter(FlomicsMultiAssay@metadata$design@Contrasts.List , idContrast == contrast)$hypoth),
-               pngFile = NULL) 
-   
-   
-   
-   print(p)
+
+`r if(is.null(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["contrasts"]])) {"\\begin{comment}"}`
+
+## Differential expression 
+
+Differential expression analysis was carried out for each selected contrast thanks to the `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]$method` model. 
+
+P-value of differential expressed genes were adjusted according to the `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]$Adj.pvalue.method` method
+with a cutoff set to `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff`.
+
+### Summary
+
+```{r DiffExprRNA1,echo=FALSE,message=FALSE, out.width = "100%",warning=FALSE,  fig.show = "hold"}
+
+tmpRes <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]
+DE <- vector()
+DEup <- vector()
+DEdown <- vector()
+
+for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
+   contrastName <- tmpRes[["contrasts"]][i,]$contrastName
+   #hyp <- tmpRes[["contrasts"]][i,]$tag
+   stats <- tmpRes[["stats"]][[contrastName]]
+   DE[i] <- stats$gDE
+   DEup[i] <- paste(stats$gDEup,"(",stats$pgDEup," %)",sep="")
+   DEdown[i] <- paste(stats$gDEdown,"(",stats$pgDEdown," %)",sep="")
 }
 
+```
+
+```{r summaryRNADE, echo=FALSE, results="asis"}
+kable_styling(kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("Nb DE"=DE,"Nb DEup"=DEup,"Nb DEdown"=DEdown)), row.names=FALSE, caption=NULL, format="html"), font_size=12)
+```
+
+
+The following graph gives the number of common and specific differential expressed genes per testing hypothetis.
+
+```{r DiffExprRNA2,echo=FALSE, message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "80%", echo=FALSE}
+DEF_mat <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]]
+UpSetR::upset(DEF_mat, sets = (names(DEF_mat[,-1]))) 
+```
+
+
+```{r DiffPerContRNA, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
+
+  out <- NULL
+  
+  for (contrast  in  FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["contrasts"]]$contrastName) {
+    
+      out <- c(out, knitr::knit_child("DiffExpAnal_PerContrast.Rmd", quiet=TRUE))  
+      
+    }
+    
+knitr::asis_output(out)
+```
+
+`r if(isFALSE(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$results))  {"\\begin{comment}"}`
+
+
+## Co-expression
+
+Co-expression analysis was carried out on the `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$merge.type`
+of the following list of gene `r FlomicsMultiAssay[["RNAseq.set1.filtred"]]@metadata$CoExpAnal$gene.list.names`. 
+`r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$tools` was
+used to cluster genes. 
+The gaussian mixture models was run on filtered (meanFilterCutoff was set to: `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$meanFilterCutoff`), 
+normalised (normalisation method was `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$normFactors`) 
+and transformed (transformation method: `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$transformation`) count data.
+X technical replicates were performed from $K=i$ to $K=i$ (K=number of clusters). 
+The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
+was `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$cluster.nb`.
+
+```{r Coexp, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
+
+  out <- NULL
+ 
+      out <- c(out, knitr::knit_child("CoExpAnal.Rmd", quiet=TRUE))  
+    
+knitr::asis_output(out)
 
 ```
+
+`r  if(isFALSE(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$results)) {"\\end{comment}"}`

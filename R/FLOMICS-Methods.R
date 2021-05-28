@@ -690,6 +690,7 @@ setMethod(f= "abundanceBoxplot",
 #' @return
 #' @exportMethod plotPCA
 #' @examples
+#' @rdname plotPCA
 setMethod(f= "plotPCA",
           signature = "SummarizedExperiment",
           definition <- function(object, PCA, PCs=c(1,2), condition="groups"){
@@ -828,6 +829,11 @@ setMethod(f= "FilterLowAbundance",
             objectFilt@metadata[["FilteredFeatures"]] <-  c(genes_flt0, genes_flt1)
 
             object <- objectFilt[keep]
+
+            object@metadata$FilteredOptions <- list()
+
+            object@metadata$FilteringOptions[["Filter_Strategy"]] <- Filter_Strategy
+            object@metadata$FilteringOptions[["CPM_Cutoff"]] <- CPM_Cutoff
 
             return(object)
 
@@ -1079,7 +1085,7 @@ setMethod(f="DiffAnal.plot",
 
 
 #' @title runCoExpression
-#' @description This is an interface method which perfomed co-expression/co-aboundance analysis
+#' @description This is an interface method which performed co-expression/co-abundance analysis
 #' of omic-data.
 #' @details For instance, only the coseq function of the package coseq is proposed.
 #' For RNAseq data, parameters used are those recommended in DiCoExpress workflow (see the reference).

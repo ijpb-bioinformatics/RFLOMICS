@@ -1,24 +1,106 @@
 
 # `r data` analysis
 
+## Workflow of reference 
+
 ## data Exploratory
 
-> Raw abundance
-
-```{r raw data meta, echo=FALSE}
-
-colnames(assay(FlomicsMultiAssay[[data]]))
-
-```
-
-> Library size & count distribution
 
 ```{r ,echo=FALSE, fig.show="hold", message=FALSE, warning=FALSE, out.width="50%"}
 #knitr::include_graphics(c(file.path(pngDir, paste0(data, "_LibSize.png")), 
 #                          file.path(pngDir, paste0(data, "_CountDist.png"))))
 
+
 plotDistr(abundances= assay(FlomicsMultiAssay[[data]]),
-          dataName  = data, 
-          pngFile   = NULL)
+           dataName  = paste0(data,".filtred"), 
+          dataType=FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$omicType,
+          transform_method=FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$transform_method)
 
 ```
+
+
+
+`r if(is.null(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["contrasts"]])) {"\\begin{comment}"}`
+
+## Differential expression 
+
+Differential expression analysis was carried out for each selected contrast thanks to the `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]$method` model. 
+
+P-value of differential expressed metabolites were adjusted according to the `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]$Adj.pvalue.method` method
+with a cutoff set to `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff`.
+
+### Results summary
+
+
+```{r DiffExprMetabo1,echo=FALSE,message=FALSE, out.width = "100%",warning=FALSE,  fig.show = "hold"}
+
+tmpRes <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]
+DE <- vector()
+DEup <- vector()
+DEdown <- vector()
+
+for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
+   contrastName <- tmpRes[["contrasts"]][i,]$contrastName
+   #hyp <- tmpRes[["contrasts"]][i,]$tag
+   stats <- tmpRes[["stats"]][[contrastName]]
+   DE[i] <- stats$gDE
+   DEup[i] <- paste(stats$gDEup,"(",stats$pgDEup," %)",sep="")
+   DEdown[i] <- paste(stats$gDEdown,"(",stats$pgDEdown," %)",sep="")
+}
+```
+
+```{r DiffExprMetabo2, echo=FALSE, results="asis"}
+kable_styling(kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("Nb DE"=DE,"Nb DEup"=DEup,"Nb DEdown"=DEdown)), row.names=TRUE, caption=NULL, format="html"), font_size=12)
+```
+
+
+```{r DiffExprMetabo3,echo=FALSE, message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "80%", echo=FALSE}
+
+DEF_mat <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]]
+UpSetR::upset(DEF_mat, sets = (names(DEF_mat[,-1]))) 
+
+```
+
+
+```{r DiffPerContMetabo, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
+
+  out <- NULL
+  
+  for (contrast  in  FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["contrasts"]]$contrastName) {
+    
+      out <- c(out, knitr::knit_child("DiffExpAnal_PerContrast.Rmd", quiet=TRUE))  
+      
+    }
+    
+knitr::asis_output(out)
+
+```
+
+`r if(is.null(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["contrasts"]]))  {"\\end{comment}"}`
+
+
+## Co-expression
+
+Co-expression analysis was carried out on the `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$merge.type`
+of the following list of gene `r FlomicsMultiAssay[["RNAseq.set1.filtred"]]@metadata$CoExpAnal$gene.list.names`. 
+`r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$tools` was
+used to cluster metabolite. 
+The gaussian mixture models was run on filtered (meanFilterCutoff was set to: `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$meanFilterCutoff`), 
+normalised (normalisation method was `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$normFactors`) 
+and transformed (transformation method: `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$transformation`) count data.
+X technical replicates were performed from $K=i$ to $K=i$ (K=number of clusters). 
+The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
+was `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$cluster.nb`.
+
+
+```{r CoexpMeta, message=FALSE, warning=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
+
+  out <- NULL
+ 
+      out <- c(out, knitr::knit_child("CoExpAnal.Rmd", quiet=TRUE))  
+    
+knitr::asis_output(out)
+
+```
+
+`r  if(isFALSE(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$results)) {"\\end{comment}"}`

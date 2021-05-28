@@ -1,0 +1,35 @@
+
+### `r contrast` results {.tabset}
+
+#### MA plots
+
+```{r , echo=FALSE,out.width = "50%"}
+diff.plots <- DiffAnal.plot(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]], 
+                            hypothesis=contrast,
+                            Adj.pvalue.cutoff = FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff)
+
+diff.plots$MA.plot
+```
+
+#### Pvalue plots
+
+```{r , echo=FALSE,out.width = "50%"}
+diff.plots$Pvalue.hist
+```
+
+
+#### Tables
+
+```{r, echo=FALSE,include = FALSE}
+DT::datatable(matrix())
+```
+
+```{r , results='asis', echo = FALSE,out.width = "70%"}
+
+  cat(knitr::knit_print(DT::datatable(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["DEF"]][[contrast]][1:100,]), width = "100%"))
+  
+```
+
+
+
+
