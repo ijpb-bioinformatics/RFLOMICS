@@ -98,7 +98,7 @@ knitr::asis_output(out)
 # R Session
 
 ```{r session, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
-sessionInfo()
+devtools::session_info()
 ```
 
 

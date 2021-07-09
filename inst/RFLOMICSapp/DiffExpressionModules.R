@@ -137,7 +137,7 @@ DiffExpAnalysis <- function(input, output, session, dataset){
         res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
         stats     <- dataset.SE@metadata$DiffExpAnal[["stats"]][[vect["contrastName"]]]
 
-        diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=vect["contrastName"],Adj.pvalue.cutoff = input$Adj.pvalue.cutoff)
+        diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=vect["contrastName"], Adj.pvalue.cutoff = input$Adj.pvalue.cutoff)
 
         fluidRow(
           column(10,
