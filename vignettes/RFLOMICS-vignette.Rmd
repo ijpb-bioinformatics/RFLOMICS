@@ -1,0 +1,450 @@
+---
+title: "RFLOMICS: Quick Guide to RNAseq data analysis"
+author: "Nadia Bessoltane, Christine Paysant-Leroux and Delphine Charif "
+package: RFLOMICS
+date: "`r Sys.Date()`"
+output: 
+  BiocStyle::html_document:
+    toc_float: true
+vignette: >
+  %\VignetteIndexEntry{RFLOMICS-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+abstract: > 
+    Here, we will walk through an analysis of a RNAseq dataset. We will see how to set up the statistical framework of the designed protocol: ie translate biological condition comparisons into contrasts, perform quality controls and statistical analysis of the dataset: ie. find DEG per contrasts, identify cluster of co-expressed genes and perform a gene set enrichment analysis from lists of DEG or from clusters of co-expressed genes.
+    
+
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(RFLOMICS)
+```
+
+# Introduction:
+
+RFLOMICS is based on proven statistical methods (published) and pipeline for RNAseq data analysis (1). It is also based on  functions (not yet published) allowing the automation of contrasts's writting in R (2).
+The dataset used in this example is the same that has been used in the SPS Research School (3). It describes 
+
+* (1) [Ilana Lambert, Christine Paysant-Le Roux, Stefano Colella, and Marie-Laure Martin-Magniette (2020)	DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. *Plant Methods* vol. 16, p. 68](http://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=pubmed&id=32426025&retmode=ref&cmd=prlinks)
+
+* (2) [Christine Paysant-Le Roux (2020), packageContrast_2020, unpublished]
+
+* (3) [Marie-Laure Martin-Magniette, Etienne Delannoy (2017). Practical session about normalization and differential analysis of RNAseq data - Estimating interaction effects-] 
+
+# Set up the statistical framework
+
+* **Load** the experimental design file
+
+```{r ImportDesign}
+ 
+Design.File <- read.table(file= paste(path.package("RFLOMICS"),
+                           "/ExamplesFiles/TP/experimental_design.txt",sep=""),
+                           header = TRUE,row.names = 1, sep = "\t")
+```
+
+
+* Rename the design factor if necessary
+
+```{r NamesFactor}
+
+ Design.Factors.Name <- names(Design.File)
+ Design.Factors.Name
+ 
+```
+
+* Define the type of the factor (either 'biological'='Bio' or 'batch'='batch' effect factor)
+
+```{r EffectFactor}
+
+Design.Factors.Type <- c("Bio","Bio","batch")
+
+```
+
+* Define the level of reference for each factor. 
+
+```{r RefFactor}
+
+# Define the level of reference (factor modality) of each factor
+ Design.Factors.Ref <- c("WT","control","rep1")
+
+```
+
+* Instantiate an object of class Design. 
+
+```{r refLevel}
+
+ Design <- ExpDesign.constructor(ExpDesign = Design.File, 
+                                     projectName = "Design.Name", 
+                                     refList = Design.Factors.Ref, 
+                                     typeList = Design.Factors.Type)
+
+```
+
+* Check the **completeness** of the design. You **must** have all possible combinations of factor's level. **Balanced design** is not required (presence of the same number of replicats for all possible combinations) but advised. You **must** also have at least one biological factor and 2 replicats.
+
+```{r CheckDesign, fig.cap="Check Design results",fig.small=TRUE}
+
+ completeCheckRes <- CheckExpDesignCompleteness(Design)
+ completeCheckRes
+
+ plotExperimentalDesign(completeCheckRes[["count"]])
+ 
+```
+In this example, you can see that the design is balanced and complete.
+
+* **Choose** the statistical model associated to the experimental design.
+Models are written from the most complete one, with two orders interaction terms between the
+biological factors, to the simplest one. Batch factor did not appears in interaction terms.
+
+```{r ChooseModel}
+
+ Design.formulae <- GetModelFormulae(Factors.Name = Design.Factors.Name,
+                                     Factors.Type=Design.Factors.Type)
+
+ Design.formulae
+ 
+```
+
+
+* **View** all the 'a priori' hypothesis you thought for the experiment. Contrasts are divided into 3 
+categories: simple, averaged and interaction.
+
+  + **simple**: For a given biological factor, it gives all 2 by 2 comparisons between factor modalities. Other factors modalities being fixed.
+  + **averaged**: The effect of 
+  + **interaction**: Does the difference in gene expression between two factor modalities is the same 
+  for the different modalities of other factors ?
+
+
+```{r viewContrast,  }
+
+ # Get all the possible contrasts from the complete model with interaction
+ Design <- getExpressionContrast(object = Design, 
+                                     model.formula = names(Design.formulae[1]))
+ 
+ # Simple Contrasts
+ knitr::kable(
+  Design@Contrasts.List$simple[,-c(1:2)], caption = 'Simple Contrasts') 
+
+ 
+# Averaged Contrasts
+ knitr::kable(
+  Design@Contrasts.List$averaged[,-c(1:2)], caption = 'Averaged Contrasts')
+ 
+ # Interaction Contrasts
+ knitr::kable(
+  Design@Contrasts.List$interaction[,-c(1:2)], caption = 'Interaction Contrasts')
+ 
+```
+
+```{r SetContrast}
+
+
+ # Select The 2 firsts
+ Design.contrastList <- Design@Contrasts.List
+ Design.contrastList$simple <- Design.contrastList$simple[c(1:3,7:9)]$contrast
+ Design.contrastList <- Design.contrastList[-2]
+ Design.contrastList$interaction <- Design.contrastList$interaction[1:3]$contrast
+
+ # Set the coefficients
+ Design <- getContrastMatrix(object = Design, 
+                                 contrastList = unlist(Design.contrastList))
+ 
+ 
+```
+ 
+# Load datasets
+
+```{r loadData}
+
+ListofData <- list(
+  "RNAseq1"=list(
+    "dataFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_gene_counts.txt",sep=""),
+    "qcFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_bioinfo_QC.txt",sep=""), "omicType"="RNAseq"))
+ # "proteomics1"=list(
+ #    "dataFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/ecoseed/proteome_ecoseed.txt",sep=""),
+ #    "qcFile"=NULL, "omicType"="proteomics"),
+ #  "Metabolomics1"=list(
+ #    "dataFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/ecoseed/metabolome_ecoseed.txt",sep=""),
+ #    "qcFile"=NULL, "omicType"="Metabolomics"))
+      
+ FlomicsMultiAssay <- FlomicsMultiAssay.constructor(inputs = ListofData, Design=Design)
+
+```
+
+# Manage datasets into R
+
+Datasets are managed in the FlomicsMultiAssayExp object, an instance of the class MultiAssayExperiment (MAE).
+see the [MAE package vignette](https://www.bioconductor.org/packages/release/bioc/vignettes/MultiAssayExperiment/inst/doc/MultiAssayExperiment.html)
+
+```{r description}
+
+FlomicsMultiAssay
+```
+
+
+# Statistical analysis of RNAseq data:
+
+## Exploratory 
+
+* Library size distribution of raw RNAseq data:
+
+
+
+```{r Distr,  message=FALSE, warning=FALSE}
+
+data="RNAseq1"
+
+plotLibSize(abundances= SummarizedExperiment::assay(FlomicsMultiAssay@ExperimentList[[data]]))
+```
+* Count distribution of raw RNAseq data:
+
+```{r CountDistr}
+
+plotDistr(abundances= SummarizedExperiment::assay(FlomicsMultiAssay[[data]]),
+          dataName  = data, 
+          dataType=FlomicsMultiAssay@ExperimentList[[data]]@metadata$omicType,
+          transform_method="none") 
+```
+
+
+* Raw data Exploratory of raw RNAseq data:
+
+```{r qcRNA1, message=FALSE, warning=FALSE}
+
+ FlomicsMultiAssay@ExperimentList[[data]] <- RunPCA(FlomicsMultiAssay@ExperimentList[[data]])
+ 
+ mvQCdesign(object = FlomicsMultiAssay, data = data , PCA="raw", axis=5, pngFile= NULL) 
+
+ RFLOMICS::plotPCA(FlomicsMultiAssay@ExperimentList[[data]],PCA="raw", PCs=c(1,2), condition="groups")
+ RFLOMICS::plotPCA(FlomicsMultiAssay@ExperimentList[[data]],PCA="raw", PCs=c(2,3), condition="groups")
+ RFLOMICS::plotPCA(FlomicsMultiAssay@ExperimentList[[data]],PCA="raw", PCs=c(1,3), condition="groups")
+ 
+```
+
+## Filter and Normalize
+
+* By default, gene with 0 count are removed from the data.
+* The advice filtering method is to remove genes for which NbOfsample_over_cpm <= NbConditions. For a CPM fixed
+at 5.
+In this example, there are 8 conditions. So, the number of gene with a CPM less than 5 in at least 8 samples 
+are removed. 
+Other strategies are available (see the help). 
+
+```{r filterRNA}
+
+FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]] <- FilterLowAbundance(FlomicsMultiAssay@ExperimentList[[data]], Filter_Strategy="NbConditions", CPM_Cutoff=5)
+
+names(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata)
+```
+
+* Run the TMM normalization method. Scaling factors are stored in the table below:
+
+```{r normalizeRNA}
+
+FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]] <- RunNormalization(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]],NormMethod="TMM")
+
+names(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata)
+```
+
+We can obtain the number of genes which were filtred with this command:
+
+```{r filteredFeatures}
+
+length(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$FilteredFeatures)
+```
+
+`r length(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$FilteredFeatures)` genes were filtered
+out.  
+
+* Did the filtering step and normalization introduice changes ?
+
+```{r BeforAfterFilteringRNA, message=FALSE, out.width = "50%", warning=FALSE,  fig.show = "hold"}
+ plotDistr(abundances= SummarizedExperiment::assay(FlomicsMultiAssay[[data]]),
+          dataName  = data, 
+          dataType=FlomicsMultiAssay@ExperimentList[[data]]@metadata$omicType,
+         transform_method="none") 
+
+ plotDistr(abundances= SummarizedExperiment::assay(FlomicsMultiAssay[[paste0(data,".filtred")]]),
+          dataName  = paste0(data,".filtred"), 
+          dataType=FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$omicType,
+         transform_method="none") 
+
+ plotLibSize(abundances= SummarizedExperiment::assay(FlomicsMultiAssay@ExperimentList[[data]]))
+ 
+ CoefNorm <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$Normalization$coefNorm
+ CoefNorm$samples <- row.names(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$Normalization$coefNorm)
+ CoefNorm$samples <- factor(CoefNorm$samples, levels = CoefNorm$samples)
+ pA <- ggplot2::ggplot(CoefNorm, ggplot2::aes(x=samples,y=lib.size*norm.factors, fill=samples)) + ggplot2::geom_bar( stat="identity" ) + ggplot2::ylab("Library Size") +
+    ggplot2::theme(axis.text.x      = ggplot2::element_text(angle = 45, hjust = 1),
+          legend.position  = "none")
+ pA
+```
+
+
+## Technical and Biological variability exploration after filtering and normalisation step
+
+```{r pcaNorm}
+
+  #### Run PCA for filtred & normalized data ####
+  FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]] <-  RunPCA(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]])
+
+ 
+ RFLOMICS::plotPCA(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]],PCA="norm", PCs=c(1,2), condition="groups")
+ RFLOMICS::plotPCA(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]],PCA="norm", PCs=c(2,3), condition="groups")
+ RFLOMICS::plotPCA(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]],PCA="norm", PCs=c(1,3), condition="groups")
+ 
+ mvQCdesign(object = FlomicsMultiAssay,data= paste0(data,".filtred") , PCA="norm", axis=5,pngFile= NULL) 
+ mvQCdata(object = FlomicsMultiAssay,data= paste0(data,".filtred") , PCA="norm", axis=5,pngFile= NULL) 
+ 
+```
+
+We can noticed that genotype and treatment factor explained the same proportion of 
+dataset variability, with respectively 9.2 \% (12.6 \% before) and 27.8 \% (29.7 \% before) 
+than before filtering and normalisation. But we can see, a litlle replicat effect in the 
+first axis (rep1). 
+To better explained such artifact, it could be interesting to see if some metadata (date of 
+sample library preparation,  \% or rRNA in the sample, ...) could correlate to axis. 
+
+
+## Differential expression analysis
+
+* Run the differential analysis thanks to the 'RunDiffAnalyis' method which calls the glmFit function from the edgeR package and applied the Benjamini and Hochberg (BH) FDR correction. The designed statistical model is applied for each contrast. 
+To filter deferentially expressed genes, the 'FilterDiffAnalysis' method **has to be called**.
+All the raw and filtered results are stored in the metadata list of the SummarizedExperiment Object.
+
+```{r diffAnalysisRNA}
+
+   # run diffAnalysis
+   FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]] <-  
+     RunDiffAnalysis(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]],
+                                  design = Design,
+                                  contrastList = Design@Contrasts.Sel$contrastName,
+                                  Adj.pvalue.method="BH",
+                                  DiffAnalysisMethod="edgeRglmfit")
+  
+   # results filering
+   FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]] <-
+     FilterDiffAnalysis(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]],
+                                     Adj.pvalue.cutoff = 0.05)
+
+   # results access
+   names(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata)
+ 
+```
+
+* Access to the number of up and down regulated genes with this piece of code.
+
+```{r DiffResults}
+ 
+ tmpRes <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]
+ DE <- vector(); DEup <- vector(); DEdown <- vector()
+
+for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
+   contrastName <- tmpRes[["contrasts"]][i,]$contrastName
+   stats <- tmpRes[["stats"]][[contrastName]]
+   DE[i] <- stats$gDE
+   DEup[i] <- paste("(",stats$pgDEup," %)",sep="")
+   DEdown[i] <- paste("(",stats$pgDEdown," %)",sep="")
+}
+
+
+ knitr::kable(dplyr::bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("Nb DE"=DE,"Nb DEup"=DEup,"Nb DEdown"=DEdown)), row.names=FALSE, caption=NULL)
+```
+
+* Run the DiffAnal.plot function to get the MAplot and the Pvalue distribution.
+
+```{r Diff}
+
+pDA <- DiffAnal.plot(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]], tmpRes[["contrasts"]][1,]$contrastName , Adj.pvalue.cutoff = 0.05)
+```
+
+* Check the MAplot:  
+
+```{r MAplot}
+
+pDA$MA.plot
+```
+
+* You **must** check the Pvalue distribution for each contrast.
+  + If the distribution is uniform: a few genes are DE and the FDR will find them.
+  + If the distribution as a peak near 0 and then is uniform: The higher is the peak, the higher is
+the number of DE genes. FDR correction can be applied.
+  + If the distribution has 2 peaks one near 0 and one near 1 or just one peak near 1, it is not a good news ! You have to understand what's append (model changes, ...).
+ 
+
+```{r PvaluePlot}
+
+pDA$Pvalue.hist
+```
+
+* Obtain a Venn diagramm of DEG for samples thanks to the UpSetR function. For example, we can see
+that 2953 genes are DE between the dbMT and WT genotype in control (H1 contrast) and 525 genes are
+uniquely DE in this condition.
+
+```{r DEF}
+
+DEF_mat <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]]
+UpSetR::upset(DEF_mat, sets = (names(DEF_mat[,-1]))) 
+```
+
+### Coexpression analysis
+
+* A list of DEG associated to contrasts has to be constructed. Choice is given to merge (**union**) or intersect  (**intersection**) the list of genes.
+
+* Co-expression analysis is done thanks to the coseq package and function with a set of optimal parameters which are the data transformation method: fixed to **arcsin** and the model: fixed to **gaussian mixture models**. 
+The number of technical replicates to perform (**iter**) for each **K** which is the number of cluster into which
+the DEG genes have to be cut, can be first set to 0 to precise the range of K and then put to a minimum of 10 replicates.
+see the coseq vignette.
+
+
+```{r Coexpression1}
+
+DEG_list <- getDEGlist_for_coseqAnalysis(
+        matrix    = FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]],
+        colnames  = c("H7","H8","H9"),
+        mergeType = "intersection")
+
+FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]] <-  
+runCoExpression(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]],
+                                  tools="coseq", geneList=DEG_list,
+                                  K=2:20, 
+                                  iter = 10,
+                                  model  = "normal",
+                                  transformation= "arcsin", 
+                                  normFactors="TMM",
+                                  nameList="List1", 
+                                  merge= "union",
+                                  GaussianModel = "Gaussian_pk_Lk_Ck")
+```
+
+* Plot likelihood
+
+```{r plotCoseq1}
+
+FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$CoExpAnal$plots$logLike
+```
+
+* Plot Expression profiles
+
+```{r}
+
+FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$CoExpAnal$plots$boxplots
+```
+
+
+```{r}
+devtools::session_info()
+```
+
+
+
+
+
+
