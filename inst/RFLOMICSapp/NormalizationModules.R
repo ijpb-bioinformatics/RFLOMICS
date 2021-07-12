@@ -131,8 +131,8 @@ RNAseqDataNormTab <- function(input, output, session, dataset){
 
     ## Boxplot of distribution of normalized abundance
     output$norm.boxplot <- renderPlot({
-      abundanceBoxplot(FlomicsMultiAssay, dataType=paste0(dataset,".filtred"),
-                       pngFile=file.path(tempdir(), paste0(dataset,"_norm.boxplot.png")))
+      abundanceBoxplot(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
+      
     })
 
 

@@ -89,7 +89,7 @@ ExperimentalDesign <- function(input, output, session){
               
               pickerInput(
                 inputId = session$ns("select.sample"),
-                label = "Select DEG lists:", 
+                label = "Select samples :", 
                 choices = row.names(ExpDesign.tbl),
                 options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                 multiple = TRUE, selected = row.names(ExpDesign.tbl)

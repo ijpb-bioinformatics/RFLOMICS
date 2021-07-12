@@ -1260,7 +1260,7 @@ setMethod(f="runAnnotationEnrichment",
             geneLists.diff <- list()
             geneLists.diff <- lapply(DiffListNames, function(listname){
 
-              row.names(object@metadata$DiffExpAnal[["TopDGE"]][[listname]])
+              row.names(object@metadata$DiffExpAnal[["TopDEF"]][[listname]])
             })
             names(geneLists.diff) <- DiffListNames
 
