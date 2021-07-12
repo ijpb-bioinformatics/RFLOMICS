@@ -36,9 +36,9 @@ CoSeqAnalysisUI <- function(id){
 
           ),
           column(6,
-                 numericInput(inputId = ns("minK"), label="min K :", value=2 , 2, max=25, 1),
-                 numericInput(inputId = ns("maxK"), label="max K :", value=20, 5, max=30, 1),
-                 numericInput(inputId = ns("iter"), label="iteration :", value=5, 5, max=30, 1)
+                 numericInput(inputId = ns("minK"), label="min K :",     value=2 , 2, max=25, 1),
+                 numericInput(inputId = ns("maxK"), label="max K :",     value=10, 5, max=30, 1),
+                 numericInput(inputId = ns("iter"), label="iteration :", value=5, 2, max=5, 1)
           ),
 
         fluidRow(

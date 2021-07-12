@@ -797,7 +797,7 @@ setMethod(f= "TransformData",
 #' @examples
 setMethod(f= "FilterLowAbundance",
           signature = "SummarizedExperiment",
-          definition <- function(object, data, Filter_Strategy = "NbConditions", CPM_Cutoff = 5){
+          definition <- function(object, Filter_Strategy = "NbConditions", CPM_Cutoff = 5){
 
             objectFilt <- object
 
