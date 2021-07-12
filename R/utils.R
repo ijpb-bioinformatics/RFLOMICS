@@ -1091,23 +1091,25 @@ try_rflomics <- function(expr) {
 runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="arcsin",
                      GaussianModel = "Gaussian_pk_Lk_Ck", normFactors="TMM",meanFilterCutoff=50){
 
+  
+            set.seed(12345)
 
-            coseq.res <- coseq::coseq(counts, K=K, iter=iter, model=model, transformation=transformation,
-                                      parallel=TRUE, meanFilterCutoff=meanFilterCutoff,
-                                      GaussianModel = GaussianModel,
-                                      normFactors=normFactors, seed=12345)
+            # coseq.res <- coseq::coseq(counts, K=K, iter=iter, model=model, transformation=transformation,
+            #                           parallel=TRUE, meanFilterCutoff=meanFilterCutoff,
+            #                           GaussianModel = GaussianModel,
+            #                           normFactors=normFactors)
 
-            # Results.1 <- list()
-            # Results.1_min_icl <- list()
-            #
-            # for (a in 1:iter){
-            #   Results.1[[a]] <- coseq(counts, K=K, model=model, transformation=transformation,
-            #                           parallel=parallel, meanFilterCutoff=meanFilterCutoff, normFactors=normFactors)
-            #
-            #   Results.1_min_icl[[a]] <- min(metadata(Results.1[[a]])$ICL,na.rm=TRUE)
-            # }
-            #
-            # coseq.res <- Results.1[[which.min(Results.1_min_icl)]]
+            Results.1 <- list()
+            Results.1_min_icl <- list()
+
+            for (a in 1:iter){
+              Results.1[[a]] <- coseq::coseq(counts, K=K, model=model, transformation=transformation,
+                                      parallel=TRUE, meanFilterCutoff=meanFilterCutoff, normFactors=normFactors, GaussianModel = GaussianModel)
+
+              Results.1_min_icl[[a]] <- min(metadata(Results.1[[a]])$ICL,na.rm=TRUE)
+            }
+
+            coseq.res <- Results.1[[which.min(Results.1_min_icl)]]
 
             return(coseq.res)
           }
