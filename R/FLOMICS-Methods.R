@@ -410,7 +410,7 @@ setMethod(f="getContrastMatrix",
 #'
 #'  # Create a list of datasets
 #' ListofData <- list("RNAseq1"=list("dataFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_gene_counts.txt",sep=""),
-#' "qcFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_bioinfo_QC.txt",sep=""), "omicType"="RNA"))
+#' "qcFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_bioinfo_QC.txt",sep=""), "omicType"="RNAseq"))
 #' FlomicsMultiAssay.constructor(inputs = ListofData, Design=Design.obj)
 #'
 #' @name FlomicsMultiAssay.constructor
@@ -562,7 +562,7 @@ setMethod(f="mvQCdesign",
               m <- droplevels(m)
               names(m) <- c("y", "col", "Axis", "dfac", unique(m$dfac), "x")
               m <- ggplot(m,aes(y=y,x=x),aes_string(color=unique(m$dfac)))+
-                geom_bar(stat = "identity",position = position_dodge(),aes_string(fill=unique(m$dfac)))+
+                ggplot2::geom_bar(stat = "identity",position = ggplot2::position_dodge(),aes_string(fill=unique(m$dfac)))+
                 facet_grid(as.factor(dfac)~Axis) +
                 labs(x = "Samples", y="Coordinates on \n the PCA axis")+
                 theme(axis.title.y = element_text(size = 5),
@@ -574,7 +574,7 @@ setMethod(f="mvQCdesign",
             print(p)
 
             if(! is.null(pngFile)){
-              ggsave(filename = pngFile,  plot = p)
+              ggplot2::ggsave(filename = pngFile,  plot = p)
             }
 })
 
@@ -624,13 +624,13 @@ setMethod(f="mvQCdata",
                             "Axis"=rep(paste(rep("Axis",axis),1:axis,VarAxis,sep=""), each=n_qcFac))
 
             p <- ggplot(df,aes(x=Axis, y=abs(Spearman),fill=QCparam))+
-              geom_bar(stat="identity",position=position_dodge(),width=0.7)+ylim(0,1)+
-              labs(x = "Axis number", y="Cor(Coord_dFactor_PCA,QCparam)")
+              geom_bar(stat="identity",position=ggplot2::position_dodge(),width=0.7)+ggplot2::ylim(0,1)+
+              ggplot2::labs(x = "Axis number", y="Cor(Coord_dFactor_PCA,QCparam)")
 
             print(p)
 
             if(! is.null(pngFile)){
-              ggsave(filename = pngFile, plot = p)
+              ggplot2::ggsave(filename = pngFile, plot = p)
             }
 
           })
@@ -669,7 +669,7 @@ setMethod(f= "abundanceBoxplot",
             pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
 
             # boxplot
-            p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + geom_boxplot(aes(fill=groups)) +
+            p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + ggplot2::geom_boxplot(aes(fill=groups)) +
               theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
 
             print(p)
@@ -710,12 +710,12 @@ setMethod(f= "plotPCA",
 
 
             p <- ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
-              geom_point(size=3) +
-              geom_text(aes(label=samples), size=3, vjust = 0) +
+              ggplot2::geom_point(size=3) +
+              ggplot2::geom_text(aes(label=samples), size=3, vjust = 0) +
               xlab(paste(PC1, " (",var1,"%)", sep="")) +
               ylab(paste(PC2, " (",var2,"%)", sep="")) +
-              geom_hline(yintercept=0, linetype="dashed", color = "red") +
-              geom_vline(xintercept=0, linetype="dashed", color = "red") +
+              ggplot2::geom_hline(yintercept=0, linetype="dashed", color = "red") +
+              ggplot2::geom_vline(xintercept=0, linetype="dashed", color = "red") +
               theme(strip.text.x = element_text(size=8, face="bold.italic"),
                     strip.text.y = element_text(size=8, face="bold.italic")) #+
               #scale_color_manual(values=col$colors)
@@ -900,7 +900,8 @@ setMethod(f="RunNormalization",
 #' Parameters used for RNAseq are those recommended in DiCoExpress workflow (see the paper in reference)
 #' @return
 #' All the results are stored as a named list \code{DiffExpAnal} in the metadata slot of a
-#' given \code{SummarizedExperiment} object. Objects are:
+#' given \code{SummarizedExperiment} object.
+#' Objects are:
 #' \itemize{
 #' \item{contrasts: }{The selected contrasts for which the differential analysis has been conducted}
 #' \item{method: }{The method used for the differential analysis}
