@@ -190,4 +190,3 @@ If two people worked on the same files, conflicts could appear.
 # 4) Save the file, the status changes to M 
 # 5) commit 
 ```
-
