@@ -52,9 +52,12 @@ ssh -o "ExitOnForwardFailure yes" -f \
     -R {{ ctl_port }}:localhost:{{ local_port }} \
     -R {{ job_port }}:localhost:{{ fwd_port }} \
     {{ ssh_host }} \
-    "/tools/R/R-3.6.0/bin/R --no-save --no-restore -e \
+    "source /etc/profile\
+     module load {{ bashenv }}\
+     R --no-save --no-restore -e \
      'clustermq:::ssh_proxy(ctl={{ ctl_port }}, job={{ job_port }})' \
      > {{ ssh_log | /dev/null }} 2>&1"
+     
 
      2) In your $HOME/.Rprofile on your LOCAL machine:
 
@@ -70,8 +73,11 @@ ssh -o "ExitOnForwardFailure yes" -f \
 
 options(
     clustermq.scheduler = "slurm",
-    clustermq.template = "/home/dcharif/clustermq.template"
+    clustermq.template = "/home/dcharif/clustermq.template",
+    clustermq.defaults = list(bashenv="system/R-3.6.0")
 )
+
+#ou Q(..., template=list(bashenv="system/R-3.6.0"))
 
    4) In your $HOME directory on GENOTOUL, create the clustermq.template file
 
@@ -84,8 +90,10 @@ options(
 #SBATCH --array=1-{{ n_jobs }}
 #SBATCH --mail-user=delphine.charif@inra.fr
 
+module load {{ bashenv }}
+
 ulimit -v $(( 1024 * {{ memory | 4096 }} ))
-/tools/R/R-3.6.0/bin/R --no-save --no-restore -e 'clustermq:::worker("{{ master}}")'
+CMQ_AUTH={{ auth }} R --no-save --no-restore -e 'clustermq:::worker("{{ master}}")'
 
 
 
