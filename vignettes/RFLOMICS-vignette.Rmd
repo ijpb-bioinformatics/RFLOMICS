@@ -426,7 +426,8 @@ FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]] <-
     design = Design,
     contrastList = Design@Contrasts.Sel$contrastName,
     Adj.pvalue.method = "BH",
-    DiffAnalysisMethod = "edgeRglmfit"
+    DiffAnalysisMethod = "edgeRglmfit",
+    clustermq = TRUE
   )
 
 # results filering
