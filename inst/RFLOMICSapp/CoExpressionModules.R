@@ -80,7 +80,8 @@ CoSeqAnalysis <- function(input, output, session, dataset){
 
   # Select lists of DGE to co-expression analysis
   output$selectDEGtoCoExp <- renderUI({
-
+    
+    ListValidNames.diff        <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]]$tag
     ListNames.diff        <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["contrasts"]]$tag
     names(ListNames.diff) <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["contrasts"]]$contrastName
 
@@ -89,7 +90,7 @@ CoSeqAnalysis <- function(input, output, session, dataset){
       label = "Select DEG lists:",
       choices = ListNames.diff,
       options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-      multiple = TRUE, selected = ListNames.diff
+      multiple = TRUE, selected = ListValidNames.diff
     )
   })
 

@@ -1033,16 +1033,21 @@ setMethod(f="FilterDiffAnalysis",
 
 
             ## merge results in bin matrix
-            DEF_list <- lapply(1:length(object@metadata$DiffExpAnal[["TopDEF"]]), function(x){
+            DEF_list <- lapply(names(object@metadata$DiffExpAnal[["TopDEF"]]), function(x){
+              print(x)
               res <- object@metadata$DiffExpAnal[["TopDEF"]][[x]]
               tmp <- data.frame(DEF = rownames(res), bin = rep(1,length(rownames(res))))
-              colnames(tmp) <- c("DEF", paste("H", x, sep=""))
+              colnames(tmp) <- c("DEF", dplyr::filter(object@metadata$DiffExpAnal$contrasts, contrastName == x)$tag)
+              print(dplyr::filter(object@metadata$DiffExpAnal$contrasts, contrastName == x)$tag)
               return(tmp)
             })
             names(DEF_list) <- names(object@metadata$DiffExpAnal[["TopDEF"]])
 
             object@metadata$DiffExpAnal[["mergeDEF"]] <- DEF_list %>% purrr::reduce(dplyr::full_join, by="DEF") %>%
-              dplyr::mutate_at(.vars = 2:(length(DEF_list)+1), .funs = function(x){dplyr::if_else(is.na(x), 0, 1)}) %>% data.table::data.table()
+              dplyr::mutate_at(.vars = 2:(length(DEF_list)+1), 
+                               .funs = function(x){
+                                  dplyr::if_else(is.na(x), 0, 1)}) %>% 
+              data.table::data.table()
 
             return(object)
           })

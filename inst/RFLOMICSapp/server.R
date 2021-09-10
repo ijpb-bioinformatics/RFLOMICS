@@ -190,7 +190,7 @@ shinyServer(function(input, output, session) {
 
       lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
 
-        observeEvent(inputDiff[[paste0(omics, i)]]$runAnaDiff, {
+        observeEvent(inputDiff[[paste0(omics, i)]]$validContrast, {
 
           callModule(CoSeqAnalysis, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
         })
@@ -203,7 +203,7 @@ shinyServer(function(input, output, session) {
 
       lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
 
-        observeEvent(inputDiff[[paste0(omics, i)]]$runAnaDiff, {
+        observeEvent(inputDiff[[paste0(omics, i)]]$validContrast, {
 
           callModule(AnnotationEnrichment, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
         })
