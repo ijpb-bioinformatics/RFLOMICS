@@ -6,103 +6,123 @@ CoSeqAnalysisUI <- function(id){
 
   tagList(
 
+    fluidRow(
+      box(title = span(tagList(icon("cogs"), "   CoSeq")), solidHeader = TRUE, status = "warning", width = 12,
+          "blablablabla"
+      )),
     ### parametres for Co-Exp
     fluidRow(
-      column(4,
-        box(title = "data", solidHeader = TRUE, status = "warning", width = 14,
-            fluidRow(
-              column(12,
-                uiOutput(ns("selectDEGtoCoExp")))
-            ),
-
-            # Select type of merge : union or intersection
-            fluidRow(
-              column(12,
-                selectInput(inputId = ns("unionInter"), label = "union or intersection",
-                            choices = c("union", "intersection"), selected = "union"),
-                verbatimTextOutput(ns("mergeValue"))
-              )
-            )
-          ),
-        box(title = span(tagList(icon("cogs"), "   CoSeq")), solidHeader = TRUE, status = "warning", width = 14,
-
-          column(6,
-            selectInput(ns("model"), label = "model :",
-                        choices = list("normal"="normal","kmeans"="kmeans"), selected = "normal"),
-            selectInput(ns("transfo"), label = "Transformation :",
-                        choices = list("arcsin"="arcsin","none"="none"), selected = "arcsin"),
-            selectInput(ns("norm"), label = "normFactors :",
-                        choices = list("TMM"="TMM","none"="none"), selected = "TMM")
-
-          ),
-          column(6,
-                 numericInput(inputId = ns("minK"), label="min K :",     value=2 , 2, max=25, 1),
-                 numericInput(inputId = ns("maxK"), label="max K :",     value=10, 5, max=30, 1),
-                 numericInput(inputId = ns("iter"), label="iteration :", value=5, 2, max=5, 1)
-          ),
-
-        fluidRow(
-         column(12,selectInput(ns("GaussianModel"), label = "Gaussian Model (only for normal model) :",
-                              choices = list("Gaussian_pk_Lk_Ck"="Gaussian_pk_Lk_Ck",
-                                             "Gaussian_pk_Lk_Bk"="Gaussian_pk_Lk_Bk"), selected = "Gaussian_pk_Lk_Ck")))
-        ),
-
-        box(title = "run", solidHeader = TRUE, status = "warning", width = 14,
-          column(6,
-            selectInput(inputId = ns("clustermq-coseq"), label="send job to cluster",
-                        choices = list("no"=FALSE,"genotoul"=TRUE))
-          ),
-          column(6, actionButton(ns("runCoSeq"),"Run clustering"))
-        )
-      ),
-      column(8,
-        box(title = "run clustering", status = "warning", solidHeader = TRUE, width = 14,
-
-          tabBox( id = "runClustering", width = 12,
-
-            tabPanel("logLike",  plotOutput(ns("logLike"))),
-            tabPanel("ICL",      plotOutput(ns("ICL"))),
-            tabPanel("profiles", plotOutput(ns("profiles"))),
-            tabPanel("boxplots", plotOutput(ns("boxplots"))),
-            tabPanel("boxplots_bis", uiOutput(ns("selectClusters"))),
-            tabPanel("probapost_boxplots",  plotOutput(ns("probapost_boxplots"))),
-            tabPanel("probapost_barplots",  plotOutput(ns("probapost_barplots"))),
-            tabPanel("probapost_histogram", plotOutput(ns("probapost_histogram")))
-          )
-        )
-      )
-    )
+      column(4, uiOutput(ns("CoExpParamUI"))),
+      column(8, uiOutput(ns("CoExpResultUI"))))
   )
 }
 
+# tags$a(href="www.rstudio.com", "Click here!")
+
 CoSeqAnalysis <- function(input, output, session, dataset){
 
-
-  # Select lists of DGE to co-expression analysis
-  output$selectDEGtoCoExp <- renderUI({
+  # co-expression parameters
+  output$CoExpParamUI <- renderUI({
     
-    ListValidNames.diff        <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]]$tag
-    ListNames.diff        <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["contrasts"]]$tag
-    names(ListNames.diff) <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["contrasts"]]$contrastName
-
-    pickerInput(
-      inputId = session$ns("select"),
-      label = "Select DEG lists:",
-      choices = ListNames.diff,
-      options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-      multiple = TRUE, selected = ListValidNames.diff
+    # get good param :
+    dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
+    
+    ##-> retrieve DEG lists and DEG valid lists
+    ListValidNames.diff   <- dataset.SE@metadata$DiffExpAnal[["Validcontrasts"]]$tag
+    ListNames.diff        <- dataset.SE@metadata$DiffExpAnal[["contrasts"]]$tag
+    names(ListNames.diff) <- dataset.SE@metadata$DiffExpAnal[["contrasts"]]$contrastName
+    
+    ##-> option 
+    switch(dataset.SE@metadata$omicType,
+           
+           "RNAseq" = {
+               model <- "normal"
+               Trans <- "arcsin"
+               normF <- "TMM"
+               Gaussian <- "Gaussian_pk_Lk_Ck"},
+           
+           "metabolomics" = {
+               model <- "kmeans"
+               Trans <- "none"
+               normF <- "none"
+               Gaussian <- c("Gaussian_pk_Lk_Bk", "Gaussian_pk_Lk_Ck")},
+           
+           "proteomics" = {
+               model <- "kmeans"
+               Trans <- "none"
+               normF <- "none"
+               Gaussian <- c("Gaussian_pk_Lk_Bk", "Gaussian_pk_Lk_Ck")})
+  
+    # set param in interface
+    tagList(
+      
+      ## Input parameters
+      box(title = "Input", solidHeader = TRUE, status = "warning", width = 14,
+          
+          # Select lists of DGE to co-expression analysis
+          fluidRow(
+            column(12,
+                   
+                   pickerInput(
+                     inputId  = session$ns("select"),
+                     label    = "Select DEG lists:",
+                     choices  = ListNames.diff,
+                     options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+                     multiple = TRUE, 
+                     selected = ListValidNames.diff))),
+          
+          # Select type of merge : union or intersection
+          fluidRow(
+            column(12,
+               
+                   selectInput(inputId = session$ns("unionInter"), label = "union or intersection",
+                               choices = c("union", "intersection"), selected = "union"),
+                   verbatimTextOutput(session$ns("mergeValue")) ))),
+      
+      ## coseq options
+      box(title = span(tagList(icon("cogs"), "   CoSeq")), solidHeader = TRUE, status = "warning", width = 14,
+          
+          column(6,
+                 selectInput(session$ns("model"),   label = "model :",          choices = model, selected = model),
+                 selectInput(session$ns("transfo"), label = "Transformation :", choices = Trans, selected = Trans),
+                 selectInput(session$ns("norm"),    label = "normFactors :",    choices = normF, selected = normF)),
+          
+          column(6,
+                 numericInput(inputId = session$ns("minK"), label="min K :",     value=2 , 2, max=25, 1),
+                 numericInput(inputId = session$ns("maxK"), label="max K :",     value=10, 5, max=30, 1),
+                 numericInput(inputId = session$ns("iter"), label="iteration :", value=5, 2, max=20, 1)
+          ),
+          
+          fluidRow(
+            column(12, 
+                 selectInput(session$ns("GaussianModel"), label = "Gaussian Model (only for normal model) :", 
+                             choices = Gaussian, selected = Gaussian)))),
+      
+      ## coseq options
+      box(title = "run", solidHeader = TRUE, status = "warning", width = 14,
+          column(6,
+                 radioGroupButtons(inputId = session$ns("clustermqCoseq"), direction = "horizontal",
+                                   label = " RUN :",
+                                   choices = c("Local" = FALSE,  "genotoul" = TRUE),
+                                   justified = FALSE, selected = "Local")),
+                 
+                 # selectInput(inputId = session$ns("clustermqCoseq"), label="send job to cluster", 
+                 #             choices = list("no"=FALSE,"genotoul"=TRUE))),
+          
+          column(6, actionButton(session$ns("runCoSeq"),"Run clustering")))
     )
   })
-
+  
+  
 
   # get list of DGE to process
-  # from union or intersection
-  DEG_list <- reactive({getDEGlist_for_coseqAnalysis(
-        matrix    = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]],
-        colnames  = input$select,
-        mergeType = input$unionInter)})
+  DEG_list <- reactive({
+    getDEGlist_for_coseqAnalysis( matrix   = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]],
+                                  colnames = input$select, mergeType = input$unionInter)})
 
-  output$mergeValue <- renderText({ print(paste(length(DEG_list()), "genes", sep =" ")) })
+  # display nbr of selected genes
+  output$mergeValue <- renderText({ 
+    print(paste(length(DEG_list()), "genes", sep =" ")) })
 
   # run coexpression analysis
   # coseq
@@ -129,56 +149,66 @@ CoSeqAnalysis <- function(input, output, session, dataset){
 
 
     # run coseq
-    dataset.SE <- runCoExpression(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]],
-                                  tools="coseq", geneList=DEG_list(),
-                                  K=input$minK:input$maxK, iter = input$iter,
+    dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
+    dataset.SE <- runCoExpression(object=dataset.SE, geneList=DEG_list(),
+                                  K=input$minK:input$maxK, loop = input$iter,
                                   model  = input$model,
                                   transformation=input$transfo, normFactors=input$norm,
-                                  nameList=input$select, merge=input$unionInter,GaussianModel =input$GaussianModel)
+                                  nameList=input$select, merge=input$unionInter,GaussianModel =input$GaussianModel, clustermq = input$clustermqCoseq)
 
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
 
     # If an error occured
-    if(isFALSE(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["results"]]))
+    if(isFALSE(dataset.SE@metadata$CoExpAnal[["results"]]))
     {
-    showModal(modalDialog( title = "Error message",
-                           as.character(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["error"]])))
+      showModal(modalDialog( title = "Error message",
+                           as.character(dataset.SE@metadata$CoExpAnal[["error"]])))
     }
 
     #---- progress bar ----#
     progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep=""))
     #----------------------#
 
-    # print coseq plots
-    plot.coseq.res <- dataset.SE@metadata$CoExpAnal[["plots"]]
-
-    output$logLike  <- renderPlot({ plot.coseq.res$logLike })
-    output$ICL      <- renderPlot({ plot.coseq.res$ICL })
-    output$profiles <- renderPlot({ plot.coseq.res$profiles })
-    output$boxplots <- renderPlot({ plot.coseq.res$boxplots })
-    output$probapost_boxplots  <- renderPlot({ plot.coseq.res$probapost_boxplots })
-    output$probapost_barplots  <- renderPlot({ plot.coseq.res$probapost_barplots })
-    output$probapost_histogram <- renderPlot({ plot.coseq.res$probapost_histogram })
+    
+    output$CoExpResultUI <- renderUI({
+      
+      # print coseq plots
+      plot.coseq.res <- dataset.SE@metadata$CoExpAnal[["plots"]]
+      
+      box(title = "run clustering", status = "warning", solidHeader = TRUE, width = 14,
+          
+          tabBox( id = "runClustering", width = 12,
+                  
+                  tabPanel("logLike",  renderPlot({ plot.coseq.res$logLike })),
+                  tabPanel("ICL",      renderPlot({ plot.coseq.res$ICL })),
+                  tabPanel("profiles", renderPlot({ plot.coseq.res$profiles })),
+                  tabPanel("boxplots", renderPlot({ plot.coseq.res$boxplots })),
+                  tabPanel("boxplots_bis", 
+                           renderUI({
+                             
+                             nb_cluster <- dataset.SE@metadata$CoExpAnal[["cluster.nb"]]
+                             coseq.res  <- dataset.SE@metadata$CoExpAnal[["coseqResults"]]
+                             
+                             fluidRow(
+                                 ## plot selected cluster(s)
+                                 renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, dataset.SE@metadata$Groups) }),
+                                 
+                                 ## select cluster to plot
+                                 checkboxGroupInput(inputId = session$ns("selectCluster"), label = "Select cluster(s) :",
+                                                    choices  = 1:nb_cluster, selected = 1, inline = TRUE))})),
+                  
+                  tabPanel("probapost_boxplots",  renderPlot({ plot.coseq.res$probapost_boxplots })),
+                  tabPanel("probapost_barplots",  renderPlot({ plot.coseq.res$probapost_barplots })),
+                  tabPanel("probapost_histogram", renderPlot({ plot.coseq.res$probapost_histogram }))
+          )
+      )
+    })
+    
 
     #---- progress bar ----#
     progress$inc(3/4, detail = paste("Doing part ", 75,"%", sep=""))
     #----------------------#
 
-    output$selectClusters <- renderUI({
-
-      nb_cluster <- dataset.SE@metadata$CoExpAnal[["cluster.nb"]]
-      coseq.res  <- dataset.SE@metadata$CoExpAnal[["coseqResults"]]
-
-      fluidRow(
-
-        ## plot selected cluster(s)
-        renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, dataset.SE@metadata$Groups) }),
-
-        ## select cluster to plot
-        checkboxGroupInput(inputId = session$ns("selectCluster"), label = "Select cluster(s) :",
-                           choices  = 1:nb_cluster, selected = 1, inline = TRUE)
-      )
-    })
 
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))

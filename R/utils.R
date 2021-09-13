@@ -1036,8 +1036,8 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
 
   DEG_list <- switch(mergeType,
 
-         "union"={        dplyr::filter(matrix_sum, sum != 0)[1] },
-         "intersection"={ dplyr::filter(matrix_sum, sum == length(colnames))[1] }
+         "union"={        dplyr::filter(matrix_sum, sum != 0) },
+         "intersection"={ dplyr::filter(matrix_sum, sum == length(colnames)) }
   )
 
   if (length(DEG_list$DEF) == 0 ){ return(NULL) }
@@ -1082,29 +1082,23 @@ try_rflomics <- function(expr) {
 #' @title run Coseq for co-expression analysis
 #' @param counts matrix
 #' @param K
-#' @param iter
-#' @param model
-#' @param transformation
-#' @param normFactors
+#' @param loop
+#' @param param.list list of coseq parameters
 #' @return coseqResults
 #' @export
-runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="arcsin",
-                     GaussianModel = "Gaussian_pk_Lk_Ck", normFactors="TMM",meanFilterCutoff=50){
-
-  
-            set.seed(12345)
-
-            # coseq.res <- coseq::coseq(counts, K=K, iter=iter, model=model, transformation=transformation,
-            #                           parallel=TRUE, meanFilterCutoff=meanFilterCutoff,
-            #                           GaussianModel = GaussianModel,
-            #                           normFactors=normFactors)
+runCoseq <- function(counts, K=2:20, loop = 5, param.list){
 
             Results.1 <- list()
             Results.1_min_icl <- list()
-
-            for (a in 1:iter){
-              Results.1[[a]] <- coseq::coseq(counts, K=K, model=model, transformation=transformation,
-                                      parallel=TRUE, meanFilterCutoff=meanFilterCutoff, normFactors=normFactors, GaussianModel = GaussianModel)
+            
+            
+            for (a in 1:loop){
+              Results.1[[a]] <- coseq::coseq(counts, K=K, parallel=TRUE, seed=12345,
+                                             model           =param.list[["model"]], 
+                                             transformation  =param.list[["transformation"]],
+                                             meanFilterCutoff=param.list[["meanFilterCutoff"]], 
+                                             normFactors     =param.list[["normFactors"]], 
+                                             GaussianModel   =param.list[["GaussianModel"]])
 
               Results.1_min_icl[[a]] <- min(metadata(Results.1[[a]])$ICL,na.rm=TRUE)
             }
@@ -1113,6 +1107,43 @@ runCoseq <- function(counts, K=2:20, iter = 5, model="Normal", transformation="a
 
             return(coseq.res)
           }
+
+
+#' @title run Coseq for co-expression analysis
+#' @param counts matrix
+#' @param K
+#' @param loop
+#' @param param.list list of coseq parameters
+#' @return coseqResults
+#' @export
+runCoseq_clustermq <- function(counts, K=2:10, loop = 5, param.list){
+  
+  Results.1 <- list()
+  Results.1_min_icl <- list()
+  
+  
+  param.list[["object"]] <- counts
+  param.list[["K"]] <- K
+  
+  fx <- function(x){
+    coseq::coseq(object, K=K, model=model, transformation=transformation, GaussianModel = GaussianModel, 
+                 normFactors=normFactors, meanFilterCutoff=meanFilterCutoff, seed=12345)
+  }
+  
+  Results.1 <- clustermq::Q(fx, x=1:loop, export=param.list, n_jobs=loop, pkgs="coseq")
+
+  names(Results.1) <- c(1:loop)
+  
+  Results.1_min_icl <- sapply(names(Results.1), function(x){
+      min(metadata(Results.1[[x]])$ICL,na.rm=TRUE)
+  })
+  
+  coseq.res <- Results.1[[which.min(Results.1_min_icl)]]
+  
+  return(coseq.res)
+}
+
+
 
 
 
