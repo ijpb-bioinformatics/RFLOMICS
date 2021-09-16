@@ -5,5 +5,8 @@
 .DS_Store
 .Rbuildignore
 rflomics.Rproj
-man/*.Rd
-man
+inst/DevDoc/rflomics_cmd.nb.html
+inst/DevDoc/rflomics_cmd.nb.nb.html
+inst/.DS_Store
+inst/ExamplesFiles/.DS_Store
+man/.gitignore
