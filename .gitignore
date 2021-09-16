@@ -10,3 +10,5 @@ inst/DevDoc/rflomics_cmd.nb.nb.html
 inst/.DS_Store
 inst/ExamplesFiles/.DS_Store
 man/.gitignore
+man/*.Rd
+

@@ -14,7 +14,7 @@ library(shinyFiles)
 sidebar <- dashboardSidebar(
 
   sidebarMenu(id="StateSave",
-              menuItem(text = "Presentation", tabName = "coverPage", icon = icon('dna'), startExpanded=TRUE, selected = TRUE),
+              menuItem(text = "Welcome", tabName = "coverPage", icon = icon('dna'), startExpanded=TRUE, selected = TRUE),
               menuItem(text = "Experimental Design", tabName = "ExpDesign", icon = icon('vials'),
                        menuSubItem(text = "Import design",  tabName = "importExpDesign"),
                        menuItemOutput(outputId = "SetUpModelMenu")
@@ -39,7 +39,7 @@ body <- dashboardBody({
         ###########################
 
         tabItem(tabName = "coverPage",
-                verbatimTextOutput("print"),
+                coverPage
 
                # shinyDirButton(id = "dir0", label = "Input directory", title = "Upload"),
 
