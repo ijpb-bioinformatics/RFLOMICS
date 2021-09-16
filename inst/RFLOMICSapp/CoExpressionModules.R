@@ -7,8 +7,11 @@ CoSeqAnalysisUI <- function(id){
   tagList(
 
     fluidRow(
-      box(title = span(tagList(icon("cogs"), "   CoSeq")), solidHeader = TRUE, status = "warning", width = 12,
-          "blablablabla"
+      box(title = span(tagList(icon("cogs"), "   CoSeq ",a("(?)", href="https://www.bioconductor.org/packages/release/bioc/vignettes/coseq/inst/doc/coseq.html")  )), 
+          solidHeader = TRUE, status = "warning", width = 12,
+          
+          "instructions... recommandation..."
+          
       )),
     ### parametres for Co-Exp
     fluidRow(
@@ -36,23 +39,28 @@ CoSeqAnalysis <- function(input, output, session, dataset){
     switch(dataset.SE@metadata$omicType,
            
            "RNAseq" = {
-               model <- "normal"
+               model <- "Normal"
                Trans <- "arcsin"
                normF <- "TMM"
                Gaussian <- "Gaussian_pk_Lk_Ck"},
            
            "metabolomics" = {
-               model <- "kmeans"
+               model <- c("Normal","kmeans")
                Trans <- "none"
                normF <- "none"
-               Gaussian <- c("Gaussian_pk_Lk_Bk", "Gaussian_pk_Lk_Ck")},
+               Gaussian <- c("Gaussian_pk_Lk_Ck", "Gaussian_pk_Lk_Bk", "none")},
            
            "proteomics" = {
-               model <- "kmeans"
+               model <- c("Normal","kmeans")
                Trans <- "none"
                normF <- "none"
-               Gaussian <- c("Gaussian_pk_Lk_Bk", "Gaussian_pk_Lk_Ck")})
-  
+               Gaussian <- c("Gaussian_pk_Lk_Ck", "Gaussian_pk_Lk_Bk", "none")})
+    
+    names(model) <- paste0("model = ", model)
+    names(Trans) <- paste0("transformation = ", Trans)
+    names(normF) <- paste0("normFactors = ", normF)
+    names(Gaussian) <- paste0("GaussianModel = ", Gaussian)
+           
     # set param in interface
     tagList(
       
@@ -65,7 +73,7 @@ CoSeqAnalysis <- function(input, output, session, dataset){
                    
                    pickerInput(
                      inputId  = session$ns("select"),
-                     label    = "Select DEG lists:",
+                     label    = "Validated DEG lists:",
                      choices  = ListNames.diff,
                      options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                      multiple = TRUE, 
@@ -73,44 +81,75 @@ CoSeqAnalysis <- function(input, output, session, dataset){
           
           # Select type of merge : union or intersection
           fluidRow(
-            column(12,
+            column(4,
                
-                   selectInput(inputId = session$ns("unionInter"), label = "union or intersection",
-                               choices = c("union", "intersection"), selected = "union"),
-                   verbatimTextOutput(session$ns("mergeValue")) ))),
-      
-      ## coseq options
-      box(title = span(tagList(icon("cogs"), "   CoSeq")), solidHeader = TRUE, status = "warning", width = 14,
+                   radioButtons(inputId = session$ns("unionInter"), label=NULL , 
+                                choices = c("union","intersection"), 
+                                selected = "union", inline = FALSE, width = 2)),
           
-          column(6,
-                 selectInput(session$ns("model"),   label = "model :",          choices = model, selected = model),
-                 selectInput(session$ns("transfo"), label = "Transformation :", choices = Trans, selected = Trans),
-                 selectInput(session$ns("norm"),    label = "normFactors :",    choices = normF, selected = normF)),
+            column(8,
+                   verbatimTextOutput(session$ns("mergeValue")) )),
           
-          column(6,
-                 numericInput(inputId = session$ns("minK"), label="min K :",     value=2 , 2, max=25, 1),
-                 numericInput(inputId = session$ns("maxK"), label="max K :",     value=10, 5, max=30, 1),
-                 numericInput(inputId = session$ns("iter"), label="iteration :", value=5, 2, max=20, 1)
-          ),
+          
+          fluidRow(
+            column(12,
+                   selectInput(session$ns("model"), 
+                               label    = "Default parameters :",
+                               choices  = model ,
+                               selected = model[1]),
+                   
+                   selectInput(session$ns("transfo"), 
+                               label    = NULL,
+                               choices  = Trans,
+                               selected = Trans[1]),
+                   
+                   selectInput(session$ns("norm"), 
+                               label    = NULL,
+                               choices  = normF,
+                               selected = normF[1]))),
           
           fluidRow(
             column(12, 
-                 selectInput(session$ns("GaussianModel"), label = "Gaussian Model (only for normal model) :", 
-                             choices = Gaussian, selected = Gaussian)))),
+                   selectInput(session$ns("GaussianModel"), 
+                               label    = "Gaussian Model (only for normal model) :", 
+                               choices  = Gaussian, 
+                               selected = Gaussian[1]))),
       
-      ## coseq options
-      box(title = "run", solidHeader = TRUE, status = "warning", width = 14,
-          column(6,
-                 radioGroupButtons(inputId = session$ns("clustermqCoseq"), direction = "horizontal",
-                                   label = " RUN :",
-                                   choices = c("Local" = FALSE,  "genotoul" = TRUE),
-                                   justified = FALSE, selected = "Local")),
-                 
-                 # selectInput(inputId = session$ns("clustermqCoseq"), label="send job to cluster", 
-                 #             choices = list("no"=FALSE,"genotoul"=TRUE))),
-          
-          column(6, actionButton(session$ns("runCoSeq"),"Run clustering")))
-    )
+          fluidRow(
+            column(8, 
+                   sliderInput(session$ns("K.values"), label = "Number of clusters :", min=2, max=30, value=c(2,10), step=1)),
+            
+            column(4, 
+                   numericInput(inputId = session$ns("iter"), label="Replicat :", value=10, 2, max=20, 1))),
+      
+   
+          fluidRow(
+            
+            column(8,
+                   materialSwitch(inputId = session$ns("clustermqCoseq"), label = "Cluster", value = FALSE, status = "success")),
+                   # radioGroupButtons(inputId = session$ns("clustermqCoseq"), direction = "horizontal",
+                   #                   label = " RUN :",
+                   #                   choices = c("Local" = FALSE,  "genotoul" = TRUE),
+                   #                   justified = FALSE, selected = "Local")
+                   
+                   
+            column(4, actionButton(session$ns("runCoSeq"),"Run")))
+    ))
+  })
+  
+  
+  # update K value (min max)
+  observeEvent( input$K.values ,{
+    
+      min <- input$K.values[1]
+      max <- input$K.values[2]
+      if ((max - min) > 10) {max <- min + 10}
+      
+      
+      # Control the value, min, max, and step.
+      # Step size is 2 when input value is even; 1 when value is odd.
+      updateSliderInput(session, "K.values", value = c(min, max),
+                        min=2, max=30, step = 1)
   })
   
   
@@ -150,11 +189,10 @@ CoSeqAnalysis <- function(input, output, session, dataset){
 
     # run coseq
     dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
-    dataset.SE <- runCoExpression(object=dataset.SE, geneList=DEG_list(),
-                                  K=input$minK:input$maxK, loop = input$iter,
-                                  model  = input$model,
-                                  transformation=input$transfo, normFactors=input$norm,
-                                  nameList=input$select, merge=input$unionInter,GaussianModel =input$GaussianModel, clustermq = input$clustermqCoseq)
+    dataset.SE <- runCoExpression(object=dataset.SE, geneList=DEG_list(), merge=input$unionInter, nameList=input$select, 
+                                  K=input$K.values[1]:input$K.values[2], replicates = input$iter,
+                                  model  = input$model, transformation=input$transfo, normFactors=input$norm,
+                                  GaussianModel =input$GaussianModel, clustermq = input$clustermqCoseq)
 
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
 
@@ -214,5 +252,9 @@ CoSeqAnalysis <- function(input, output, session, dataset){
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
     #----------------------#
 
-  })
+  }, ignoreInit = TRUE)
 }
+
+
+
+

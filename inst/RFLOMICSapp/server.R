@@ -164,6 +164,8 @@ shinyServer(function(input, output, session) {
       lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
       #for(i in names(FlomicsMultiAssay@metadata$omicList[[omics]])){
         callModule(RNAseqDataNormTab, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+        #inputNorm[[paste0(omics, i)]] <- callModule(RNAseqDataNormTab, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+        
       #}
       })
              })
@@ -177,9 +179,10 @@ shinyServer(function(input, output, session) {
     lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
 
       lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
-
+        
+       # observeEvent(inputNorm[[paste0(omics, i)]]$validContrast, {
+          
         inputDiff[[paste0(omics, i)]] <<- callModule(DiffExpAnalysis, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
-
       })
     })
 
@@ -193,7 +196,7 @@ shinyServer(function(input, output, session) {
         observeEvent(inputDiff[[paste0(omics, i)]]$validContrast, {
 
           callModule(CoSeqAnalysis, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
-        })
+        }, ignoreInit = TRUE)
       })
     })
     ##########################################

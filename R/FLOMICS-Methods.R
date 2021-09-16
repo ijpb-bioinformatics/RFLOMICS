@@ -1122,7 +1122,7 @@ setMethod(f="DiffAnal.plot",
 #' @param object An object of class \link{SummarizedExperiment}
 #' @param geneList A list of genes
 #' @param K Number of clusters (a single value or a vector of values)
-#' @param loop The number of iteration for each K.
+#' @param replicates The number of iteration for each K.
 #' @param model Type of mixture model to use \code{"Poisson"} or \code{"normal"}. By default, it is the normal.
 #' @param GaussianModel Type of \code{GaussianModel} to be used for the Normal mixture model only. This parameters
 #' is set to \code{"Gaussian_pk_Lk_Ck"} by default and doesn't have to be changed except if an error message proposed
@@ -1138,14 +1138,15 @@ setMethod(f="DiffAnal.plot",
 #' @seealso \code{\link{coseq::coseq}}
 setMethod(f="runCoExpression",
           signature="SummarizedExperiment",
-          definition <- function(object, geneList, K=2:20, loop=5, nameList, model, transformation, normFactors, merge="union",
-                                 GaussianModel, clustermq=FALSE){
+          definition <- function(object, geneList, K=2:20, replicates=5, nameList, merge="union",
+                                 model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation, normFactors, clustermq=FALSE){
 
-            object@metadata$CoExpAnal <- list()
-            object@metadata$CoExpAnal[["tools"]]            <- "CoSeq"
-            object@metadata$CoExpAnal[["gene.list.names"]]  <- nameList
-            object@metadata$CoExpAnal[["merge.type"]]       <- merge
             
+            CoExpAnal <- list()
+            
+            CoExpAnal[["tools"]]            <- "CoSeq"
+            CoExpAnal[["gene.list.names"]]  <- nameList
+            CoExpAnal[["merge.type"]]       <- merge
             
             counts = SummarizedExperiment::assay(object)[geneList,]
   
@@ -1155,88 +1156,106 @@ setMethod(f="runCoExpression",
             switch (object@metadata$omicType,
                     
               "RNAseq" = {
-                param.list[["model"]]            <- "normal"
+                param.list[["model"]]            <- model
                 param.list[["transformation"]]   <- "arcsin"
                 param.list[["normFactors"]]      <- "TMM"
                 param.list[["meanFilterCutoff"]] <- 50
-                param.list[["GaussianModel"]]    <- "Gaussian_pk_Lk_Ck"
+                param.list[["GaussianModel"]]    <- GaussianModel
 
               },
               "proteomics" = {
                 # Print the selected GaussianModel
                 print(paste("Use ",GaussianModel,sep=""))
                 print("Scale each protein (center=TRUE,scale = TRUE)")
-                object@metadata$CoExpAnal[["transformation.prot"]] <- "scaleProt"
+                CoExpAnal[["transformation.prot"]] <- "scaleProt"
                 counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
                 
                 # param
-                param.list[["model"]]            <- "kmeans"
+                param.list[["model"]]            <- model
                 param.list[["transformation"]]   <- "none"
                 param.list[["normFactors"]]      <- "none"
                 param.list[["meanFilterCutoff"]] <- NULL
-                param.list[["GaussianModel"]]    <- "Gaussian_pk_Lk_Bk"
+                param.list[["GaussianModel"]]    <- GaussianModel
               },
               "metabolomics" = {
                 # Print the selected GaussianModel
                 print(paste("Use ",GaussianModel,sep=""))
                 print("Scale each metabolite (center=TRUE,scale = TRUE)")
-                object@metadata$CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
+                CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
                 counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
                 
                 # param
-                param.list[["model"]]            <- "kmeans"
+                param.list[["model"]]            <- model
                 param.list[["transformation"]]   <- "none"
                 param.list[["normFactors"]]      <- "none"
                 param.list[["meanFilterCutoff"]] <- NULL
-                param.list[["GaussianModel"]]    <- "Gaussian_pk_Lk_Bk"
+                param.list[["GaussianModel"]]    <- GaussianModel
               }
             )
 
-            object@metadata$CoExpAnal[["param"]] <- param.list
-            
+            CoExpAnal[["param"]] <- param.list
           
-            # run coseq : local or remote cluster
-            switch (clustermq,
-              "FALSE" = {
-                coseq.res <- try_rflomics(
-                   runCoseq(counts, K=K, loop=loop, param.list=param.list ))
-              },
-              "TRUE" = {
-                coseq.res <- try_rflomics(
-                  runCoseq_clustermq(counts, K=K, loop=loop, param.list=param.list))
-              })
-                 
+            # run coseq : on local machine or remote cluster
+            coseq.res.list <- list()
+            coseq.res.list <- try_rflomics(
+                    runCoseq(counts, K=K, replicates=replicates, param.list=param.list , clustermq=clustermq))
+            
 
-              if( ! is.null(coseq.res$value) ){
-              object@metadata$CoExpAnal[["results"]]      <- TRUE
-              object@metadata$CoExpAnal[["warning"]]      <- coseq.res$warning
-              object@metadata$CoExpAnal[["coseqResults"]] <- coseq.res$value
-              coseq.res <- coseq.res$value
-
-              # list of genes per cluster
-              clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
-                names(coseq::clusters(coseq.res)[coseq::clusters(coseq.res) == i])
-                })
-              object@metadata$CoExpAnal[["clusters"]] <- clusters
-              names(object@metadata$CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
-
-              # nbr of cluster
-              nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
-              object@metadata$CoExpAnal[["cluster.nb"]] <- nb_cluster
-
-              # plot
-              plot.coseq.res <- coseq::plot(coseq.res, conds = object@metadata$Groups$groups)
-              object@metadata$CoExpAnal[["plots"]] <- plot.coseq.res
-              }
-              # Réinitialisation de l'objet CoExpAnal
+            if( ! is.null(coseq.res.list$value) ){
+              
+              
+                    # ICL plot
+                    ICL.vec <- sapply(1:(length(K)*replicates), function(x){ coseq::ICL(coseq.res.list[["value"]][[x]]) }) 
+                    ICL.tab <- data.frame(K=stringr::str_replace(names(ICL.vec), "K=", ""), ICL=ICL.vec)
+                    ICL.p   <- ggplot(data = ICL.tab) + geom_boxplot(aes(x=K, y=ICL))
+                    
+                    #CoExpAnal[["plots"]][["ICL"]] <- ICL.p
+                    
+                    # logLike plot
+                    logLike.vec <- sapply(1:(length(K)*replicates), function(x){ coseq::likelihood(coseq.res.list[["value"]][[x]]) }) 
+                    logLike.tab <- data.frame(K=stringr::str_replace(names(logLike.vec), "K=", ""), logLike=logLike.vec)
+                    logLike.p   <- ggplot(data = logLike.tab) + geom_boxplot(aes(x=K, y=logLike))
+                    
+                    #CoExpAnal[["plots"]][["logLike"]] <- logLike.p
+                    
+                    # results with 
+                    coseq.res <- coseq.res.list[["value"]][[which.min(ICL.vec)]]
+              
+                    CoExpAnal[["results"]]      <- TRUE
+                    CoExpAnal[["warning"]]      <- coseq.res.list$warning
+                    CoExpAnal[["coseqResults"]] <- coseq.res
+                    #CoExpAnal[["coseqResults"]] <- coseq.res.list$value
+                    #coseq.res <- coseq.res.list$value
+      
+                    # list of genes per cluster
+                    clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
+                      names(coseq::clusters(coseq.res)[coseq::clusters(coseq.res) == i])
+                      })
+                    CoExpAnal[["clusters"]] <- clusters
+                    names(CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
+      
+                    # nbr of cluster
+                    nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
+                    CoExpAnal[["cluster.nb"]] <- nb_cluster
+      
+                    # plot
+                    plot.coseq.res <- coseq::plot(coseq.res, conds = object@metadata$Groups$groups,
+                                                  graphs = c("profiles", "boxplots", "probapost_boxplots",
+                                                             "probapost_barplots", "probapost_histogram")) # , collapse_reps = "average"
+                    CoExpAnal[["plots"]] <- plot.coseq.res
+                    CoExpAnal[["plots"]][["ICL"]]     <- ICL.p
+                    CoExpAnal[["plots"]][["logLike"]] <- logLike.p
+            }
+            # Réinitialisation de l'objet CoExpAnal
             else{
-              object@metadata$CoExpAnal[["results"]] <- FALSE
-              object@metadata$CoExpAnal[["warning"]] <- coseq.res$warning
-              object@metadata$CoExpAnal[["error"]] <- coseq.res$error
+                    CoExpAnal[["results"]] <- FALSE
+                    CoExpAnal[["warning"]] <- coseq.res.list$warning
+                    CoExpAnal[["error"]]   <- coseq.res.list$error
             }
 
 
-      return(object)
+            object@metadata$CoExpAnal <- CoExpAnal
+            return(object)
 })
 
 

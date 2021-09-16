@@ -1065,83 +1065,75 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
 try_rflomics <- function(expr) {
   warn <- err <- NULL
   value <- withCallingHandlers(
-    tryCatch(expr,
-             error=function(e) {
-               err <<- e
-               NULL
-             })
-    ,
-     warning=function(w) {
-       warn <<- w
-    invokeRestart("muffleWarning")
-     }
-  )
-  list(value=value, warning=warn, error=err)
+        tryCatch(expr,
+                 error    =function(e){ err <<- e
+                                        }),
+                  warning =function(w){ warn <<- w
+                                        invokeRestart("muffleWarning")}
+        )
+        list(value=value, warning=warn, error=err)
 }
 
 #' @title run Coseq for co-expression analysis
 #' @param counts matrix
 #' @param K
-#' @param loop
+#' @param replicates
 #' @param param.list list of coseq parameters
 #' @return coseqResults
 #' @export
-runCoseq <- function(counts, K=2:20, loop = 5, param.list){
+runCoseq <- function(counts, K=2:20, replicates = 5, param.list, clustermq=FALSE){
 
             Results.1 <- list()
             Results.1_min_icl <- list()
             
+            iter <- rep(K, replicates)
+            nbr_iter <- length(iter)
             
-            for (a in 1:loop){
-              Results.1[[a]] <- coseq::coseq(counts, K=K, parallel=TRUE, seed=12345,
-                                             model           =param.list[["model"]], 
-                                             transformation  =param.list[["transformation"]],
-                                             meanFilterCutoff=param.list[["meanFilterCutoff"]], 
-                                             normFactors     =param.list[["normFactors"]], 
-                                             GaussianModel   =param.list[["GaussianModel"]])
+            #set.seed(12345)
+            
+            switch (as.character(clustermq),
+                    `FALSE` = {
+            
+                          coseq.res.list <- sapply (iter, function(x){
+                            (coseq::coseq(counts, K=x, 
+                                               model           =param.list[["model"]], 
+                                               transformation  =param.list[["transformation"]],
+                                               meanFilterCutoff=param.list[["meanFilterCutoff"]], 
+                                               normFactors     =param.list[["normFactors"]], 
+                                               GaussianModel   =param.list[["GaussianModel"]]))})
+                    },
+                    `TRUE` = {
+                      
+                          param.list[["object"]] <- counts
+                          param.list[["K"]] <- K
+                          
+                          fx <- function(x){
+                            
+                            
+                           
+                            (coseq::coseq(object, K=x, model=model, transformation=transformation, GaussianModel = GaussianModel, 
+                                         normFactors=normFactors, meanFilterCutoff=meanFilterCutoff))
+                          }
+                          coseq.res.list <- clustermq::Q(fx, x=iter, export=param.list, n_jobs=nbr_iter, pkgs="coseq")
+                    })
+            
+            names(coseq.res.list) <- c(1:nbr_iter)
+            
+            
+            # ICL.vec <- lapply(coseq.res.list, function(x){ coseq::ICL(x) }) %>% unlist() 
+            # ICL.tab <- data.frame(K=stringr::str_replace(names(ICL.vec), "K=", ""), ICL=ICL.vec)
+            # ggplot(data = tab) + geom_boxplot(aes(x=K, y=ICL))
+            
+            # Results.1_min_icl <- sapply(names(coseq.res.list), function(x){
+            #   min(coseq::ICL(coseq.res.list[[x]]),na.rm=TRUE)
+            # })
+            # 
+            # 
+            # coseq.res <- coseq.res.list[[which.min(Results.1_min_icl)]]
 
-              Results.1_min_icl[[a]] <- min(metadata(Results.1[[a]])$ICL,na.rm=TRUE)
-            }
-
-            coseq.res <- Results.1[[which.min(Results.1_min_icl)]]
-
-            return(coseq.res)
+            return(coseq.res.list)
           }
 
-
-#' @title run Coseq for co-expression analysis
-#' @param counts matrix
-#' @param K
-#' @param loop
-#' @param param.list list of coseq parameters
-#' @return coseqResults
-#' @export
-runCoseq_clustermq <- function(counts, K=2:10, loop = 5, param.list){
-  
-  Results.1 <- list()
-  Results.1_min_icl <- list()
-  
-  
-  param.list[["object"]] <- counts
-  param.list[["K"]] <- K
-  
-  fx <- function(x){
-    coseq::coseq(object, K=K, model=model, transformation=transformation, GaussianModel = GaussianModel, 
-                 normFactors=normFactors, meanFilterCutoff=meanFilterCutoff, seed=12345)
-  }
-  
-  Results.1 <- clustermq::Q(fx, x=1:loop, export=param.list, n_jobs=loop, pkgs="coseq")
-
-  names(Results.1) <- c(1:loop)
-  
-  Results.1_min_icl <- sapply(names(Results.1), function(x){
-      min(metadata(Results.1[[x]])$ICL,na.rm=TRUE)
-  })
-  
-  coseq.res <- Results.1[[which.min(Results.1_min_icl)]]
-  
-  return(coseq.res)
-}
 
 
 
