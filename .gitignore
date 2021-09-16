@@ -1,14 +1,8 @@
 .Rproj.user
 .Rhistory
 .RData
-.Ruserdata
 .DS_Store
 .Rbuildignore
 rflomics.Rproj
-inst/DevDoc/rflomics_cmd.nb.html
-inst/DevDoc/rflomics_cmd.nb.nb.html
-inst/.DS_Store
-inst/ExamplesFiles/.DS_Store
 man/.gitignore
-man/*.Rd
 
