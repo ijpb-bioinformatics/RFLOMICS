@@ -97,7 +97,8 @@ DiffExpAnalysis <- function(input, output, session, dataset){
   #         - Table of the DE genes
   #   -> combine data : union or intersection
   observeEvent(input$runAnaDiff, {
-
+    print(paste0("observeEvent",input$runAnaDiff))
+    
     # check list of genes
     if(length(input$contrastList) == 0){
 
@@ -137,7 +138,8 @@ DiffExpAnalysis <- function(input, output, session, dataset){
                    label="Adjusted pvalue cutoff :",
                    value=0.05, 0, max=1, 0.01))
     })
-  })
+
+  }, ignoreInit = TRUE)
 
 
   observeEvent((input$Adj.pvalue.cutoff ), {
@@ -157,7 +159,7 @@ DiffExpAnalysis <- function(input, output, session, dataset){
 
         vect     <- unlist(Contrasts.Sel[i,])
         res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
-        stats     <- dataset.SE@metadata$DiffExpAnal[["stats"]][[vect["contrastName"]]]
+        stats    <- dataset.SE@metadata$DiffExpAnal[["stats"]][[vect["contrastName"]]]
 
         diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=vect["contrastName"], Adj.pvalue.cutoff = input$Adj.pvalue.cutoff)
 
@@ -224,7 +226,7 @@ DiffExpAnalysis <- function(input, output, session, dataset){
        
     })
 
-  },ignoreNULL=TRUE,ignoreInit = TRUE)
+  }, ignoreInit = TRUE)
   
   
   observeEvent(input$validContrast, {
