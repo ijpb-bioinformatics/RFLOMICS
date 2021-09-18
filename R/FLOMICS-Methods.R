@@ -536,42 +536,54 @@ setMethod(f="mvQCdesign",
           definition <- function(object, data, PCA=c("raw","norm"), axis=5, pngFile=NULL){
 
             resPCA <- object[[data]]@metadata[["PCAlist"]][[PCA]]
-            cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
-
             n_dFac <-  object@metadata$colDataStruc["n_dFac"]
 
+            # correspondance between coordinate and factor modalities thanks to the sample's name
+            tab_tmp <- merge(as.data.frame(resPCA$ind$coord),as.data.frame(object@colData),by='row.names',all=TRUE)
+
+            df <- list()
             bigdf <- list()
+
             for(i in 1:n_dFac){
+
               Factor <-  object@colData[,i]
-              nameFac <- names(object@colData)[i]
-              df <- list()
+              FactorName <- names(object@colData)[i]
+              nF <- length(Factor)
+
               for(j in 1:axis){
-                qc = as.vector(resPCA$ind$coord[,j])
-                o = order(qc)[order(Factor[order(qc)])]
-                col = cc[Factor][o]
-                y=qc[o]
-                Axis = rep(paste("PCA",j, "\n(Var=",round(resPCA$eig[j,2],1),")",sep=""),length(qc))
-                Fac = Factor[o]
-                df[[j]] <- data.frame(y,col,Axis,dfac=names(object@colData)[1:n_dFac][i],
-                                      Levels=Fac,x=1:length(y))
+                Dim=paste0("Dim.",j)
+                # select the coordinates and the factor columns
+                df[[j]] <- select(tab_tmp, all_of(FactorName),all_of(Dim)) %>%
+                  # sort by factor modalities then by coordinate
+                  arrange_(.,.dots=c(FactorName,Dim)) %>%
+                  # rename
+                  rename(.,"Levels"=FactorName,"y"=starts_with("Dim.")) %>%
+                  # add column
+                  mutate(.,"x"=1:nF,
+                         "Axis"=rep(paste("PCA",j, "\n(",round(resPCA$eig[j,2],1),"%)",sep=""),nF),
+                         "FactorN"=rep(FactorName,nF))
+
               }
               bigdf[[i]] <- dplyr::bind_rows(df)
             }
             big <- dplyr::bind_rows(bigdf)
-            out <- by(data = big, INDICES = big$dfac, FUN = function(m) {
+
+            out <- by(data = big, INDICES = big$FactorN, FUN = function(m) {
+
               m <- droplevels(m)
-              names(m) <- c("y", "col", "Axis", "dfac", unique(m$dfac), "x")
-              m <- ggplot(m,aes(y=y,x=x),aes_string(color=unique(m$dfac)))+
-                ggplot2::geom_bar(stat = "identity",position = ggplot2::position_dodge(),aes_string(fill=unique(m$dfac)))+
-                facet_grid(as.factor(dfac)~Axis) +
-                labs(x = "Samples", y="Coordinates on \n the PCA axis")+
-                theme(axis.title.y = element_text(size = 5),
-                      axis.title.x=element_text(size = 5),
+
+              m <- ggplot(m,aes(y=y,x=x,colour=Levels))+
+                ggplot2::geom_bar(stat = "identity",position = ggplot2::position_dodge(),aes(fill=Levels))+
+                facet_grid(as.factor(FactorN)~Axis) +
+                labs(x = "Samples", y="Coordinates \n on the PCA axis")+
+                theme(axis.title.y = element_text(size = 10),
+                      axis.title.x=element_text(size = 10),
                       axis.text.x=element_blank(),
                       axis.ticks.x=element_blank())
             })
             p <- do.call(gridExtra::grid.arrange, out)
             print(p)
+
 
             if(! is.null(pngFile)){
               ggplot2::ggsave(filename = pngFile,  plot = p)
@@ -1044,9 +1056,9 @@ setMethod(f="FilterDiffAnalysis",
             names(DEF_list) <- names(object@metadata$DiffExpAnal[["TopDEF"]])
 
             object@metadata$DiffExpAnal[["mergeDEF"]] <- DEF_list %>% purrr::reduce(dplyr::full_join, by="DEF") %>%
-              dplyr::mutate_at(.vars = 2:(length(DEF_list)+1), 
+              dplyr::mutate_at(.vars = 2:(length(DEF_list)+1),
                                .funs = function(x){
-                                  dplyr::if_else(is.na(x), 0, 1)}) %>% 
+                                  dplyr::if_else(is.na(x), 0, 1)}) %>%
               data.table::data.table()
 
             return(object)
@@ -1141,20 +1153,20 @@ setMethod(f="runCoExpression",
           definition <- function(object, geneList, K=2:20, replicates=5, nameList, merge="union",
                                  model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation, normFactors, clustermq=FALSE){
 
-            
+
             CoExpAnal <- list()
-            
+
             CoExpAnal[["tools"]]            <- "CoSeq"
             CoExpAnal[["gene.list.names"]]  <- nameList
             CoExpAnal[["merge.type"]]       <- merge
-            
+
             counts = SummarizedExperiment::assay(object)[geneList,]
-  
-            
+
+
             # set default parameters based on data type
             param.list <- list()
             switch (object@metadata$omicType,
-                    
+
               "RNAseq" = {
                 param.list[["model"]]            <- model
                 param.list[["transformation"]]   <- "arcsin"
@@ -1169,7 +1181,7 @@ setMethod(f="runCoExpression",
                 print("Scale each protein (center=TRUE,scale = TRUE)")
                 CoExpAnal[["transformation.prot"]] <- "scaleProt"
                 counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
-                
+
                 # param
                 param.list[["model"]]            <- model
                 param.list[["transformation"]]   <- "none"
@@ -1183,7 +1195,7 @@ setMethod(f="runCoExpression",
                 print("Scale each metabolite (center=TRUE,scale = TRUE)")
                 CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
                 counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
-                
+
                 # param
                 param.list[["model"]]            <- model
                 param.list[["transformation"]]   <- "none"
@@ -1194,50 +1206,50 @@ setMethod(f="runCoExpression",
             )
 
             CoExpAnal[["param"]] <- param.list
-          
+
             # run coseq : on local machine or remote cluster
             coseq.res.list <- list()
             coseq.res.list <- try_rflomics(
                     runCoseq(counts, K=K, replicates=replicates, param.list=param.list , clustermq=clustermq))
-            
+
 
             if( ! is.null(coseq.res.list$value) ){
-              
-              
+
+
                     # ICL plot
-                    ICL.vec <- sapply(1:(length(K)*replicates), function(x){ coseq::ICL(coseq.res.list[["value"]][[x]]) }) 
+                    ICL.vec <- sapply(1:(length(K)*replicates), function(x){ coseq::ICL(coseq.res.list[["value"]][[x]]) })
                     ICL.tab <- data.frame(K=stringr::str_replace(names(ICL.vec), "K=", ""), ICL=ICL.vec)
                     ICL.p   <- ggplot(data = ICL.tab) + geom_boxplot(aes(x=K, y=ICL))
-                    
+
                     #CoExpAnal[["plots"]][["ICL"]] <- ICL.p
-                    
+
                     # logLike plot
-                    logLike.vec <- sapply(1:(length(K)*replicates), function(x){ coseq::likelihood(coseq.res.list[["value"]][[x]]) }) 
+                    logLike.vec <- sapply(1:(length(K)*replicates), function(x){ coseq::likelihood(coseq.res.list[["value"]][[x]]) })
                     logLike.tab <- data.frame(K=stringr::str_replace(names(logLike.vec), "K=", ""), logLike=logLike.vec)
                     logLike.p   <- ggplot(data = logLike.tab) + geom_boxplot(aes(x=K, y=logLike))
-                    
+
                     #CoExpAnal[["plots"]][["logLike"]] <- logLike.p
-                    
-                    # results with 
+
+                    # results with
                     coseq.res <- coseq.res.list[["value"]][[which.min(ICL.vec)]]
-              
+
                     CoExpAnal[["results"]]      <- TRUE
                     CoExpAnal[["warning"]]      <- coseq.res.list$warning
                     CoExpAnal[["coseqResults"]] <- coseq.res
                     #CoExpAnal[["coseqResults"]] <- coseq.res.list$value
                     #coseq.res <- coseq.res.list$value
-      
+
                     # list of genes per cluster
                     clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
                       names(coseq::clusters(coseq.res)[coseq::clusters(coseq.res) == i])
                       })
                     CoExpAnal[["clusters"]] <- clusters
                     names(CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
-      
+
                     # nbr of cluster
                     nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
                     CoExpAnal[["cluster.nb"]] <- nb_cluster
-      
+
                     # plot
                     plot.coseq.res <- coseq::plot(coseq.res, conds = object@metadata$Groups$groups,
                                                   graphs = c("profiles", "boxplots", "probapost_boxplots",
