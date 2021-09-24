@@ -6,6 +6,13 @@ DiffExpAnalysisUI <- function(id){
   ns <- NS(id)
 
   tagList(
+    fluidRow(
+      box(title = span(tagList(icon("cogs"), "   edgeR ",a("(?)", href="https://bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf")  )), 
+          solidHeader = TRUE, status = "warning", width = 12,
+          
+          "instructions... recommandation..."
+          
+      )),
 
     ### parametres for Diff Analysis
     fluidRow(

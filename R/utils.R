@@ -244,8 +244,8 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
   else{
     print("[cmd] fit contrasts")
     ListRes[[1]] <-  lapply(Contrasts.Sel$contrast, function(x){
-      limma::contrasts.fit(fit, contrasts  = unlist(Contrasts.Coeff[x,]))
-  })
+                                limma::contrasts.fit(fit, contrasts  = as.vector(unlist(Contrasts.Coeff[x,])))
+                      })
   }
 
   # Name the table of raw results
@@ -320,42 +320,13 @@ colorPlot <- function(design, ColData, condition="samples"){
 }
 
 
-#' plotLibSize
-#'
-#' @param abundances
-#' @return plot
-#' @export
-#' @importFrom ggplot2 ggplot geom_bar xlab ylab element_text
-#'
-#' @examples
-plotLibSize <- function(abundances){
-
-  value <- NULL
-
-  samples     <- colnames(abundances)
-  libSizeNorm <- data.frame ( value = colSums(abundances, na.rm = TRUE) , samples=samples)
-
-  libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
-
-  p <- ggplot(libSizeNorm, aes(x=samples,y=value, fill=samples)) + geom_bar( stat="identity" ) + ylab("Library Size") +
-    theme(axis.text.x      = element_text(angle = 45, hjust = 1),
-          legend.position  = "none")
-          #axis.text.x     = element_blank(),
-          #axis.ticks      = element_blank())
-          #legend.key.size = unit(0.3, "cm"))
-          #legend.text     = element_text(size=5))
-  print(p)
-
-}
-
-
 #' plotDistr
 #'
 #' @param abundances matrix or dataframe of feature/gene abundances/counts
 #' @export
 #' @importFrom ggplot2 geom_density xlab
 #'
-plotDistr <- function(abundances, dataName, dataType,transform_method){
+plotDistr <- function(abundances, dataType, transform_method){
 
 
   value <- samples <- NULL
@@ -387,6 +358,9 @@ plotDistr <- function(abundances, dataName, dataType,transform_method){
   print(p)
 
 }
+
+
+
 
 
 

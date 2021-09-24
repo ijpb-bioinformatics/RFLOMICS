@@ -44,7 +44,6 @@
 .ExpDesign <- setClass(
   Class="ExpDesign",
   slots=c(ExpDesign="data.frame",
-          projectName="character",
           List.Factors="list",
           Factors.Type="vector",
           Groups="data.frame",

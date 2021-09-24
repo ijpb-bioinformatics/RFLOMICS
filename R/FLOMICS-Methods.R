@@ -9,7 +9,6 @@
 #' @param ExpDesign a data.frame. Row names give the name of each sample which has been to be construct
 #' by combining factor's modality separated by a "_" (EX: WT_treated_rep1). Column names give the name of
 #' an experimental factor which is a vector of character storing the factor modality for each sample.
-#' @param projectName a vector of string giving the name of the project.
 #' @param refList A list of string giving the reference modality for each factor.
 #' @param typeList A vector of string indicating the type of each experimental factor. Two types of effect
 #' are required ("Bio" or "batch")
@@ -24,18 +23,18 @@
 #' Design.refList <- c("WT","control","rep1")
 #'
 #' # Initialize an object of class ExpDesign
-#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name",
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File,
 #' refList = Design.refList, typeList = Design.typeList)
 #' @name ExpDesign-Constructor
 #' @rdname ExpDesign-Constructor
 #' @export
 #' @importFrom stats relevel
 #' @importFrom methods new
-ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
+ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 
   # Create the List.Factors list with the choosen level of reference for each factor
   dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
-    relevel(as.factor(ExpDesign[[i]]), ref=refList[[i]])
+    relevel(as.factor(ExpDesign[[i]]), ref=refList[i])
   })
   names(dF.List) <- names(ExpDesign)
 
@@ -52,8 +51,7 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
 
 
   Design = new(Class = "ExpDesign",
-               ExpDesign=ExpDesign,
-               projectName=projectName,
+               ExpDesign=as.data.frame(ExpDesign),
                List.Factors=dF.List,
                Factors.Type=typeList,
                Groups=groups,
@@ -110,58 +108,67 @@ ExpDesign.constructor <- function(ExpDesign, projectName, refList, typeList){
 #'
 #' # Initialize an object of class ExpDesign
 #' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File,
-#' projectName = "Design.Name", refList = Design.refList, typeList = Design.typeList)
+#' refList = Design.refList, typeList = Design.typeList)
 #' CheckExpDesignCompleteness(Design.obj)
 
 setMethod(f="CheckExpDesignCompleteness",
           signature="ExpDesign",
-          definition <- function(object){
+          definition <- function(object, colnames=NULL){
 
             # output list
             output <- list()
 
             # check presence of bio factors
-            if (! "Bio" %in% object@Factors.Type){
+            if (! table(object@Factors.Type)["Bio"] %in% 1:3){
 
-              message <- "noBio"
-
-              group_count  <- object@List.Factors[object@Factors.Type == "batch"] %>% as.data.frame() %>% table() %>% as.data.frame()
-              names(group_count)[names(group_count) == "Freq"] <- "Count"
-              output[["count"]]   <- group_count
-
-            }else{
-
-              # count occurence of bio conditions
-              group_count  <- object@List.Factors[object@Factors.Type == "Bio"] %>% as.data.frame() %>% table() %>% as.data.frame()
-              names(group_count)[names(group_count) == "Freq"] <- "Count"
-
-              output[["count"]]   <- group_count
-
-              # check presence of relicat / batch
-              # check if design is complete
-              # check if design is balanced
-              # check nbr of replicats
-
-              message <- dplyr::if_else(! "batch" %in% object@Factors.Type , "noBatch",
-                                        dplyr::if_else(0 %in% group_count$Count ,   "noCompl",
-                                                       dplyr::if_else(length(unique(group_count$Count)) != 1, "noBalan",
-                                                                      dplyr::if_else(group_count$Count[1] < 3, "lowRep", "true"))))
-
+              stop("ERROR : no bio factor ! or nbr of bio factors exeed 3!")
+              
+              # message <- "noBio"
+              # 
+              # group_count  <- object@List.Factors[object@Factors.Type == "batch"] %>% as.data.frame() %>% table() %>% as.data.frame()
+              # names(group_count)[names(group_count) == "Freq"] <- "Count"
+              # output[["count"]]   <- group_count
             }
+            if (table(object@Factors.Type)["batch"] == 0){
+              
+              stop("ERROR : no replicate!")
+            }
+            
+            # count occurence of bio conditions
+            if(is.null(colnames)){
+              
+              ExpDesign <- object@ExpDesign
+            }
+            else{
+              
+              ExpDesign <- dplyr::filter(object@ExpDesign, rownames(object@ExpDesign) %in% colnames)
+            }
+            
+           
 
+            group_count <- ExpDesign[object@Factors.Type == "Bio"] %>% dplyr::group_by(temperature, imbibition) %>% dplyr::count(name = "Count")
+            #group_count  <- object@List.Factors[object@Factors.Type == "Bio"] %>% as.data.frame() %>% table() %>% as.data.frame()
 
+           
+
+            # check presence of relicat / batch
+            # check if design is complete
+            # check if design is balanced
+            # check nbr of replicats
+
+            message <- dplyr::if_else(min(group_count$Count) == 0 ,           "noCompl",
+                       dplyr::if_else(length(unique(group_count$Count)) != 1, "noBalan",
+                       dplyr::if_else(max(group_count$Count) < 3,             "lowRep" , "true")))
+
+          
+
+            output[["count"]]   <- group_count
             # switch pour message complet
             output[["message"]] <- switch(message ,
                                           "true"       = { c("true",    "The experimental design is complete and balanced.") },
                                           "lowRep"     = { c("warning", "WARNING : 3 biological replicates are needed.") },
                                           "noCompl"    = { c("false",   "ERROR : The experimental design is not complete.") },
-                                          "noBalan"    = { c("warning", "WARNING : The experimental design is complete but not balanced.") },
-
-                                          "noBio"      = { c("false",   "ERROR : no bio factor !") },
-                                          "noBatch"    = { c("false",   "ERROR : no replicat") }
-            )
-
-
+                                          "noBalan"    = { c("warning", "WARNING : The experimental design is complete but not balanced.") })
             return(output)
           })
 
@@ -419,64 +426,189 @@ setMethod(f="getContrastMatrix",
 #'
 #'
 
-FlomicsMultiAssay.constructor <- function(inputs, Design){
+# FlomicsMultiAssay.constructor <- function(inputs, Design){
+# 
+#   # if input == NULL
+# 
+#   SummarizedExperimentList <- list()
+#   listmap  <- list()
+#   omicList <- list()
+#   k <- 0
+#   for (dataName in names(inputs)){
+# 
+#     k <- k+1
+# 
+#     ## construct SummarizedExperiment for each data
+#     abundance <- read.table(inputs[[dataName]][["dataFile"]], header = TRUE, row.names = 1)
+# 
+#     if(!is.null(inputs[[dataName]][["qcFile"]])){
+#       print("# ... metadata QC...")
+#       QCmat <- read.table(inputs[[dataName]][["qcFile"]], header = TRUE)
+#     }
+#     else{
+#       QCmat <- data.frame(primary = colnames(abundance),
+#                           colname = colnames(abundance),
+#                           stringsAsFactors = FALSE)
+#     }
+# 
+#     # groups
+# 
+#     SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
+#                                                                                        colData  = QCmat,
+#                                                                                        metadata = list(omicType = inputs[[dataName]][["omicType"]],
+#                                                                                                        Groups   = Design@Groups))
+# 
+#     # metadata for sampleMap for MultiAssayExperiment
+#     listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
+#                                       colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
+#                                       stringsAsFactors = FALSE)
+# 
+#     #
+#     omicType <- inputs[[dataName]][["omicType"]]
+# 
+#     colnames <- c(names(omicList[[omicType]]), k)
+#     omicList[[omicType]] <- c(omicList[[omicType]] ,dataName)
+#     names(omicList[[omicType]]) <- colnames
+# 
+#   }
+# 
+#   FlomicsMultiAssay <- MultiAssayExperiment::MultiAssayExperiment(experiments = SummarizedExperimentList,
+#                                                                   colData     = Design@ExpDesign,
+#                                                                   sampleMap   = MultiAssayExperiment::listToMap(listmap),
+#                                                                   metadata    = list(design = Design,
+#                                                                                      colDataStruc = c(n_dFac = dim(Design@ExpDesign)[2], n_qcFac = 0),
+#                                                                                      omicList = omicList))
+# 
+#   return(FlomicsMultiAssay)
+# }
+# 
+# #
+# #
 
+
+#' @title FlomicsMultiAssay.constructor Constructor for the class \link{MultiAssayExperiment-class}
+#' @description This function initializes an object of class \link{MultiAssayExperiment-class}
+#' from a list of omics data and an object of class \link{ExpDesign-class}.
+#' @param inputs A named list of omic dataset. Names must refer to the name of the omic dataset.
+#' An omics dataset must be itself a list of three objects:
+#' \itemize{
+#' \item{data:}{matrix of omic data}
+#' \item{meta:}{an optional quality check data}
+#' \item{omicType:}{Type of omic data type "None", "RNAseq", "proteomics" or "Metabolomics".}
+#' }
+#' @param Design An object of class \link{ExpDesign-class}
+#' @param projectName Project name
+#' @return An object of class \link{MultiAssayExperiment-class}
+#' @examples
+#' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""),header = TRUE,row.names = 1, sep = "\t")
+#'
+#' # Define the type of each factor
+#' Design.Factors.Type <- c("Bio","Bio","batch")
+#'
+#' # Define the reference modality for each factor
+#' Design.Factors.Ref <- c("WT","control","rep1")
+#'
+#' # Initialize an object of class ExpDesign
+#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.Factors.Ref,
+#'  typeList = Design.Factors.Type)
+#' Design.Factors.Name <- names(Design.File)
+#' Design.formulae <- GetModelFormulae(Factors.Name = Design.Factors.Name,Factors.Type=Design.Factors.Type)
+#' Design.formulae[[1]]
+#' Design.obj <- getExpressionContrast(object = Design.obj, model.formula = names(Design.formulae[1]))
+#' Design.contrastList <- lapply(Design.obj@Contrasts.List, function(x) {
+#' return(x[1:2]$contrast)
+#' })
+#' Design.obj <- getContrastMatrix(object = Design.obj, contrastList = unlist(Design.contrastList))
+#'
+#'  # Create a list of datasets
+#' ListofData <- list("RNAseq1"=list("dataFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_gene_counts.txt",sep=""),
+#' "qcFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_bioinfo_QC.txt",sep=""), "omicType"="RNAseq"))
+#' FlomicsMultiAssay.constructor(inputs = ListofData, Design=Design.obj)
+#'
+#' @name FlomicsMultiAssay.constructor
+#' @rdname FlomicsMultiAssay.constructor
+#' @export
+#'
+#'
+
+FlomicsMultiAssay.constructor <- function(inputs, Design, projectName){
+  
   # if input == NULL
-
+  
   SummarizedExperimentList <- list()
   listmap  <- list()
   omicList <- list()
   k <- 0
   for (dataName in names(inputs)){
-
+    
     k <- k+1
-
+    
     ## construct SummarizedExperiment for each data
-    abundance <- read.table(inputs[[dataName]][["dataFile"]], header = TRUE, row.names = 1)
-
-    if(!is.null(inputs[[dataName]][["qcFile"]])){
-      print("# ... metadata QC...")
-      QCmat <- read.table(inputs[[dataName]][["qcFile"]], header = TRUE)
+    abundance <- inputs[[dataName]][["data"]]
+    
+    if(!is.null(inputs[[dataName]][["meta"]])){
+      QCmat <- inputs[[dataName]][["meta"]]
     }
     else{
       QCmat <- data.frame(primary = colnames(abundance),
                           colname = colnames(abundance),
                           stringsAsFactors = FALSE)
     }
-
-    # groups
-
-    SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
+    
+    
+    ###### remove row with sum == 0
+    matrix <- as.matrix(abundance)
+    ## nbr of genes with 0 count
+    genes_flt0  <- rownames(matrix[rowSums(matrix) <= 0, ])
+    ## remove 0 count
+    matrix.filt  <- matrix[rowSums(matrix)  > 0, ]
+    
+    ##### create groups for SE
+    
+    # groups <- Design@Groups %>%
+    #   dplyr::mutate(samples = rownames(.)) %>%
+    #   tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
+    
+    ###### create SE object
+    SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance=as.matrix(matrix.filt)),
                                                                                        colData  = QCmat,
                                                                                        metadata = list(omicType = inputs[[dataName]][["omicType"]],
-                                                                                                       Groups   = Design@Groups))
-
+                                                                                                         Groups = Design@Groups, 
+                                                                                                       rowSums.zero = genes_flt0))
+    names(assays(SummarizedExperimentList[[dataName]])) <- c(dataName)
+    
     # metadata for sampleMap for MultiAssayExperiment
     listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
                                       colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
                                       stringsAsFactors = FALSE)
-
+    
     #
     omicType <- inputs[[dataName]][["omicType"]]
-
+    
     colnames <- c(names(omicList[[omicType]]), k)
     omicList[[omicType]] <- c(omicList[[omicType]] ,dataName)
     names(omicList[[omicType]]) <- colnames
-
+    
   }
+  
+  
 
-  FlomicsMultiAssay <- MultiAssayExperiment::MultiAssayExperiment(experiments = SummarizedExperimentList,
-                                                                  colData     = Design@ExpDesign,
-                                                                  sampleMap   = MultiAssayExperiment::listToMap(listmap),
-                                                                  metadata    = list(design = Design,
-                                                                                     colDataStruc = c(n_dFac = dim(Design@ExpDesign)[2], n_qcFac = 0),
-                                                                                     omicList = omicList))
-
+  
+  prepFlomicsMultiAssay <- prepMultiAssay( ExperimentList = SummarizedExperimentList, 
+                                           sampleMap      = MultiAssayExperiment::listToMap(listmap), 
+                                           colData        = Design@ExpDesign, outFile = stdout())
+  
+  
+  FlomicsMultiAssay <- MultiAssayExperiment::MultiAssayExperiment(experiments = prepFlomicsMultiAssay$experiments,
+                                                                  colData     = prepFlomicsMultiAssay$colData,
+                                                                  sampleMap   = prepFlomicsMultiAssay$sampleMap,
+                                                                  metadata    = list(colDataStruc = c(n_dFac = dim(prepFlomicsMultiAssay$colData)[2], n_qcFac = 0),
+                                                                                     omicList = omicList, projectName = projectName, design = Design))
+  
+  
+  
   return(FlomicsMultiAssay)
 }
-
-#
-#
 
 
 
@@ -498,23 +630,292 @@ setMethod(f="RunPCA",
           signature="SummarizedExperiment",
           definition <- function(object){
 
-            if(is.null(object@metadata[["Normalization"]]$coefNorm)){
-              pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE) + 1)
-              object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
-            }
-            else{
+            # if the data has undergone a normalization (RNAseq data) 
+            if(! is.null(object@metadata[["Normalization"]]$coefNorm)){
               pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
                                    scale=object@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
               object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
+              
             }
-
-
-
+            # if the data has undergone a transformation (meta or prot data) 
+            else if(! is.null(object@metadata$transform_method)){
+              pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE) + 1)
+              object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = 5,graph=F)
+            }
+            
+            # if no transformation
+            else{
+              pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE) + 1)
+              object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = 5,graph=F)
+            }
             return(object)
           }
 )
 
 ##### Graphical METHODS for exploring biological and technical variability
+
+
+#' Library_size_barplot.plot
+#'
+#' @param object An object of class \link{SummarizedExperiment}
+#' @return plot
+#' @export
+#' @importFrom ggplot2 ggplot geom_bar xlab ylab element_text
+#'
+#' @examples
+setMethod(f="Library_size_barplot.plot",
+          signature="SummarizedExperiment",
+          definition <- function(object){
+            
+            value    <- NULL
+            warnning <- NULL
+            
+            if (object@metadata$omicType != "RNAseq"){
+              warnning <- "WARNING : data are not RNAseq!"
+            }
+            
+            abundances <- SummarizedExperiment::assay(object)
+            samples    <- colnames(abundances)
+            
+            # normalized data
+            if(! is.null(object@metadata$Normalization)){
+              pseudo  <- scale(SummarizedExperiment::assay(object), center=FALSE,
+                               scale=object@metadata$Normalization$coefNorm$norm.factors) %>% colSums(., na.rm = TRUE)
+              ylab <- "Total normalized read count per sample"
+              title <- "Filtered and normalized (TMM) data"
+            }
+            # raw data
+            else{
+              pseudo  <- SummarizedExperiment::assay(object) %>% colSums(., na.rm = TRUE)
+              ylab <- "Total read count per sample (method : TMM)"
+              title <- "Raw data"
+            }
+            
+            libSizeNorm <- data.frame ( "value" = pseudo , "samples"=names(pseudo)) %>% dplyr::full_join(object@metadata$Groups, by="samples")
+            
+            libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
+            
+            p <- ggplot(libSizeNorm, aes(x=samples,y=value, fill=groups)) + geom_bar( stat="identity" ) + ylab(ylab) +
+              theme(axis.text.x      = element_text(angle = 45, hjust = 1), legend.position  = "none") + labs(x = "") + ggtitle(title)
+            #axis.text.x     = element_blank(),
+            #axis.ticks      = element_blank())
+            #legend.key.size = unit(0.3, "cm"))
+            #legend.text     = element_text(size=5))
+            print(p)
+            
+          })
+
+
+
+
+
+#' @title Data_Distribution_Density.plot
+#'
+#' @param object An object of class \link{SummarizedExperiment}
+#' @export
+#' @importFrom ggplot2 geom_density xlab
+
+setMethod(f="Data_Distribution_Density.plot",
+          signature="SummarizedExperiment",
+          definition <- function(object){
+            
+            switch (object@metadata$omicType,
+                    "RNAseq" = {
+                      
+                      # before normalization
+                      if(is.null(object@metadata[["Normalization"]]$coefNorm)){
+                        pseudo <- log2(SummarizedExperiment::assay(object) + 1) 
+                        y_lab  <- "log2(gene counts)"
+                        title  <- "Raw data"
+                        
+                      }
+                      # after normalization
+                      else{
+                        pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
+                                             scale=object@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
+                        y_lab  <- "log2(normalized gene counts)"
+                        title  <- "Filtered and normalized (TMM) data"
+                      }
+                      # 
+                      pseudo.gg <- pseudo %>% reshape2::melt()
+                      colnames(pseudo.gg) <- c("features", "samples", "value")
+                      
+                      pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples") 
+                      
+                      p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + xlab(y_lab) +
+                        theme(legend.position='none') + ggtitle(title)
+                    },
+                    "proteomics" = {
+                      # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
+                      if(is.null(object@metadata$transform_method)){
+                        pseudo <- SummarizedExperiment::assay(object)
+                        x_lab  <- "Protein abundance (?)"
+                        title  <- "Raw data"
+                        
+                      }
+                      # after transformation
+                      else{
+                        # if log2 transformation was chosen
+                        switch (object@metadata$transform_method,
+                                "log2" = {
+                                  pseudo <- SummarizedExperiment::assay(object)
+                                  x_lab  <- "Transformed protein abundance" 
+                                  title  <- "Transformed data (method : log2)" },
+                                
+                                "none" = {
+                                  pseudo <- log2(SummarizedExperiment::assay(object) + 1)
+                                  x_lab  <- "Transformed protein abundance" 
+                                  title  <- "Transformed data (method : ?)"
+                                  
+                                  }
+                        )
+                        
+                        
+                        
+                      }
+                      # 
+                      pseudo.gg <- pseudo %>% reshape2::melt()
+                      colnames(pseudo.gg) <- c("features", "samples", "value")
+                      
+                      pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples")
+                      
+                      p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + xlab(x_lab) +
+                        theme(legend.position='none') + ggtitle(title)
+                    },
+                    "metabolomics" = {
+                      # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
+                      if(is.null(object@metadata$transform_method)){
+                        pseudo <- SummarizedExperiment::assay(object)
+                        x_lab  <- "Metabolite abundance (?)"
+                        title  <- "Raw data"
+                      }
+                      # after transformation
+                      else{
+                        # if log2 transformation was chosen
+                        switch( object@metadata$transform_method,
+                                "log2" = {
+                                  pseudo <- SummarizedExperiment::assay(object)
+                                  x_lab  <- "Transformed protein abundance"
+                                  title  <- "Transformed data (method : log2)"
+                                },
+                                "none" = {
+                                  pseudo <- log2(SummarizedExperiment::assay(object) + 1)
+                                  x_lab  <- "Transformed protein abundance"
+                                  title  <- "Transformed data (method : ?)"
+                                }
+                        )
+                      }
+                      # 
+                      pseudo.gg <- pseudo %>% reshape2::melt()
+                      colnames(pseudo.gg) <- c("features", "samples", "value")
+                      
+                      pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples")
+                      
+                      p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + xlab(x_lab) +
+                        theme(legend.position='none') + ggtitle(title)
+                    }
+            )
+            print(p)
+          }
+)
+
+
+
+#' @title abundanceBoxplot
+#' @description This function produces boxplots from raw and normalized data matrix. One color by level
+#' of combination factor. It allows to detect outlier samples and to see the normalization
+#' effect.
+#' @param object An object of class \link{SummarizedExperiment-class}
+#' @exportMethod abundanceBoxplot
+#' @rdname abundanceBoxplot
+#'
+setMethod(f= "abundanceBoxplot",
+          signature = "SummarizedExperiment",
+          definition <- function(object){
+            
+            samples <- value <- NULL
+            
+            # normalized data
+            if(! is.null(object@metadata$Normalization)){
+              pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
+                                   scale=object@metadata$Normalization$coefNorm$norm.factors)+1) %>% reshape2::melt()
+              y_lab  <- "log2(normalized gene counts)"
+              title  <- "Raw data"
+            }
+            else{
+              pseudo <- log2(SummarizedExperiment::assay(object)+1) %>% reshape2::melt()
+              y_lab  <- "log2( gene counts)"
+              title  <- "Filtred and normalized (TMM) data"
+              
+            }
+            
+            colnames(pseudo) <- c("feature", "samples", "value")
+            
+            pseudo_bis <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples")
+            
+            pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
+            
+            # boxplot
+            p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + ggplot2::geom_boxplot(aes(fill=groups)) +
+              theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + xlab("") + ylab(y_lab) + ggtitle(title)
+            
+            print(p)
+            
+          }
+)
+
+#' @title plotPCA
+#' @description This function plot the factorial map from a PCA object stored
+#' in a \link{SummarizedExperiment-class} object. By default, samples are
+#' colored by groups (all combinations of level's factor)
+#' @param object An object of class \link{SummarizedExperiment-class}
+#' @param PCA This argument indicates whether the scaled PCA has to be performed on raw [\sQuote{raw}] or normalized [\sQuote{norm}] data.
+#' @param PCs A vector giving the two axis that have to be drawn for the factorial map
+#' @param condition All combination of level's factor
+#' @return
+#' @exportMethod plotPCA
+#' @examples
+#' @rdname plotPCA
+setMethod(f= "plotPCA",
+          signature = "SummarizedExperiment",
+          definition <- function(object, PCA, PCs=c(1,2), condition="groups"){
+            
+            #
+            PC1 <- paste("Dim.",PCs[1], sep="")
+            PC2 <- paste("Dim.",PCs[2], sep="")
+            
+            score     <- object@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
+              dplyr::mutate(samples=row.names(.)) %>% dplyr::full_join(., object@metadata$Groups, by="samples")
+            
+            var1 <- round(object@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digits=3)
+            var2 <- round(object@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digits=3)
+            
+            switch (PCA,
+                    "raw"  = {title <- paste0("Raw ", object@metadata$omicType, " data")},
+                    "norm" = {title <- switch (object@metadata$omicType,
+                                               "RNAseq" = {"Filtred and normalized (TMM) RNAseq data"},
+                                               "proteomics" = {"Transformed proteomics data (log2)"},
+                                               "metabolomics" = {"Transformed proteomics data (log2)"}
+                    )}
+            )
+            
+            
+            p <- ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
+              ggplot2::geom_point(size=3) +
+              ggplot2::geom_text(aes(label=samples), size=3, vjust = 0) +
+              xlab(paste(PC1, " (",var1,"%)", sep="")) +
+              ylab(paste(PC2, " (",var2,"%)", sep="")) +
+              ggplot2::geom_hline(yintercept=0, linetype="dashed", color = "red") +
+              ggplot2::geom_vline(xintercept=0, linetype="dashed", color = "red") +
+              theme(strip.text.x = element_text(size=8, face="bold.italic"),
+                    strip.text.y = element_text(size=8, face="bold.italic")) +
+              ggtitle(title)
+            
+            print(p)
+            
+          })
+
+
 
 
 #' @title mvQCdesign
@@ -650,91 +1051,7 @@ setMethod(f="mvQCdata",
 # A refflechir avec metadata
 
 
-#' @title abundanceBoxplot
-#' @description This function produces boxplots from raw and normalized data matrix. One color by level
-#' of combination factor. It allows to detect outlier samples and to see the normalization
-#' effect.
-#' @param object An object of class \link{SummarizedExperiment-class}
-#' @exportMethod abundanceBoxplot
-#' @rdname abundanceBoxplot
-#'
-setMethod(f= "abundanceBoxplot",
-          signature = "SummarizedExperiment",
-          definition <- function(object){
 
-            samples <- value <- NULL
-
-            # normalized data
-
-            if(! is.null(object@metadata$Normalization)){
-              pseudo  <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
-                                    scale=object@metadata$Normalization$coefNorm$norm.factors)+1) %>% reshape2::melt()
-            }
-            else{
-              pseudo  <- log2(scale(SummarizedExperiment::assay(object), center=FALSE)+1) %>% reshape2::melt()
-            }
-
-            colnames(pseudo) <- c("feature", "samples", "value")
-
-            pseudo_bis <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples")
-
-            pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
-
-            # boxplot
-            p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + ggplot2::geom_boxplot(aes(fill=groups)) +
-              theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
-
-            print(p)
-
-          }
-)
-
-# switch pour proteomics
-
-#' @title plotPCA
-#' @description This function plot the factorial map from a PCA object stored
-#' in a \link{SummarizedExperiment-class} object. By default, samples are
-#' colored by groups (all combinations of level's factor)
-#' @param object An object of class \link{SummarizedExperiment-class}
-#' @param PCA This argument indicates whether the scaled PCA has to be performed on raw [\sQuote{raw}] or normalized [\sQuote{norm}] data.
-#' @param PCs A vector giving the two axis that have to be drawn for the factorial map
-#' @param condition All combination of level's factor
-#' @return
-#' @exportMethod plotPCA
-#' @examples
-#' @rdname plotPCA
-setMethod(f= "plotPCA",
-          signature = "SummarizedExperiment",
-          definition <- function(object, PCA, PCs=c(1,2), condition="groups"){
-
-            #
-            PC1 <- paste("Dim.",PCs[1], sep="")
-            PC2 <- paste("Dim.",PCs[2], sep="")
-
-            # groups    <- object@metadata$Groups$groups
-            # conditions<- object@colData %>% as.data.frame() %>% dplyr::mutate(samples=row.names(.), groups=groups)
-
-            score     <- object@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
-                         dplyr::mutate(samples=row.names(.)) %>% dplyr::full_join(., object@metadata$Groups, by="samples")
-
-            var1 <- round(object@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digits=3)
-            var2 <- round(object@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digits=3)
-
-
-            p <- ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
-              ggplot2::geom_point(size=3) +
-              ggplot2::geom_text(aes(label=samples), size=3, vjust = 0) +
-              xlab(paste(PC1, " (",var1,"%)", sep="")) +
-              ylab(paste(PC2, " (",var2,"%)", sep="")) +
-              ggplot2::geom_hline(yintercept=0, linetype="dashed", color = "red") +
-              ggplot2::geom_vline(xintercept=0, linetype="dashed", color = "red") +
-              theme(strip.text.x = element_text(size=8, face="bold.italic"),
-                    strip.text.y = element_text(size=8, face="bold.italic")) #+
-              #scale_color_manual(values=col$colors)
-
-            print(p)
-
-            })
 
 
 ########################################## TRANSFORM DATA #################
@@ -752,7 +1069,7 @@ setMethod(f= "plotPCA",
 #' @examples
 setMethod(f= "TransformData",
           signature = "SummarizedExperiment",
-          definition <- function(object, data, transform_method = "log2"){
+          definition <- function(object, transform_method = "log2"){
 
             objectTransform <- object
 
@@ -823,7 +1140,7 @@ setMethod(f= "FilterLowAbundance",
             assayFilt   <- MultiAssayExperiment::assay(objectFilt)
 
             ## filter cpm
-            NbReplicate <- table(object@metadata$Groups$groups)
+            NbReplicate  <- table(object@metadata$Groups$groups)
             NbConditions <- length(unique(object@metadata$Groups$groups))
 
             switch(Filter_Strategy,
@@ -1379,7 +1696,6 @@ setMethod(f="runAnnotationEnrichment",
 
             return(object)
           })
-
 
 
 

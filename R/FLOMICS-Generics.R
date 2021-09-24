@@ -80,3 +80,14 @@ setGeneric(
   name="DiffAnal.plot",
   def = function( object, ... ){standardGeneric("DiffAnal.plot")}
 )
+
+
+setGeneric(
+  name="Data_Distribution_Density.plot",
+  def = function( object, ... ){standardGeneric("Data_Distribution_Density.plot")}
+)
+
+setGeneric(
+  name="Library_size_barplot.plot",
+  def = function( object, ... ){standardGeneric("Library_size_barplot.plot")}
+)

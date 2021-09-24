@@ -14,12 +14,14 @@ library(shinyFiles)
 sidebar <- dashboardSidebar(
 
   sidebarMenu(id="StateSave",
-              menuItem(text = "Welcome", tabName = "coverPage", icon = icon('dna'), startExpanded=TRUE, selected = TRUE),
-              menuItem(text = "Experimental Design", tabName = "ExpDesign", icon = icon('vials'),
-                       menuSubItem(text = "Import design",  tabName = "importExpDesign"),
-                       menuItemOutput(outputId = "SetUpModelMenu")
-                       ),
-              menuItemOutput(outputId = "importData"),
+              menuItem(text = "Welcome", tabName = "coverPage", icon = icon('dna')),
+              menuItem(text = "Load Data", tabName = "importData", icon = icon('download')),
+              menuItemOutput(outputId = "SetUpModelMenu"),
+              
+              # menuItem(text = "Experimental Design", tabName = "ExpDesign", icon = icon('vials'),
+              #          menuSubItem(text = "Import design",  tabName = "importExpDesign"),
+              #          menuItemOutput(outputId = "SetUpModelMenu")
+              #          ),
               menuItemOutput(outputId = "omics"),
               menuItemOutput(outputId = "Integration")
 
@@ -44,30 +46,23 @@ body <- dashboardBody({
                # shinyDirButton(id = "dir0", label = "Input directory", title = "Upload"),
 
         ),
-
-        #### Import Exp design ####
+        
+        #### Import data       ####
         ###########################
-
-
-        tabItem(tabName = "importExpDesign",
-
-              ExperimentalDesignUI("Exp"),
+        tabItem(tabName = "importData",
+                
+                LoadOmicsDataUI("data")
+    
         ),
 
         #### Set Up statistical model & hypothesis ####
         ###############################################
-
         tabItem(tabName = "SetUpModel",
 
                 GLM_modelUI("model")
-        ),
-
-        #### Import data       ####
-        ###########################
-        tabItem(tabName = "importData",
-
-             LoadOmicsDataUI("data")
         )
+
+
     ),
 
     #### RNAseq Analysis  ####
@@ -82,17 +77,10 @@ body <- dashboardBody({
                        tags$br(),
                        tags$br(),
 
-                       RNAseqDataExplorTabUI(paste0("RNAseq",i))
+                       QCNormalizationTabUI(paste0("RNAseq",i))
 
                        ),
 
-              #### Data Filter & Normalisation  ####
-              ######################################
-              tabPanel("Filter & Normalization",
-                       tags$br(),
-                       tags$br(),
-                       RNAseqDataNormTabUI(paste0("RNAseq",i))
-                       ),
               #### Diff analysis  ####
               ######################################
               tabPanel("Diff Gene Expression",
@@ -134,7 +122,7 @@ body <- dashboardBody({
                        tags$br(),
                        tags$br(),
 
-                       ProtMetaDataExplorTabUI(paste0("proteomics",j))
+                       QCNormalizationTabUI(paste0("proteomics",j))
               ),
               #### Diff analysis  ####
               ######################################
@@ -167,7 +155,7 @@ body <- dashboardBody({
                        tags$br(),
                        tags$br(),
 
-                       ProtMetaDataExplorTabUI(paste0("metabolomics",k))
+                       QCNormalizationTabUI(paste0("metabolomics",k))
               ),#### Diff analysis  ####
               ######################################
               tabPanel("Diff Metabo Expression",

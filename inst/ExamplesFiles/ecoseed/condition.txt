@@ -8,7 +8,7 @@ Elevated_EI_3	rep3	Elevated	EI
 Elevated_DS_1	rep1	Elevated	DS
 Elevated_DS_3	rep3	Elevated	DS
 Elevated_DS_2	rep2	Elevated	DS
-#Low_LI_1	rep1	Low	LI
+Low_LI_1	rep1	Low	LI
 Low_LI_2	rep2	Low	LI
 Low_LI_3	rep3	Low	LI
 Low_EI_3	rep3	Low	EI
@@ -21,7 +21,7 @@ Medium_LI_1	rep1	Medium	LI
 Medium_LI_2	rep2	Medium	LI
 Medium_LI_3	rep3	Medium	LI
 Medium_EI_2	rep2	Medium	EI
-#Medium_EI_1	rep1	Medium	EI
+Medium_EI_1	rep1	Medium	EI
 Medium_EI_3	rep3	Medium	EI
 Medium_DS_1	rep1	Medium	DS
 Medium_DS_3	rep3	Medium	DS

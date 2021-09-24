@@ -15,35 +15,39 @@ shinyServer(function(input, output, session) {
     ##########################################
     # Part0 : presentation page
     ##########################################
-    # à faire
-    output$print <- renderPrint({ "HELLO" })
 
     # # dir
     # shinyDirChoose(input = input, id = 'dir0', roots = c(home = '~'))
     # output$filepaths <- renderPrint({parseDirPath(roots = c(home = '~'), selection = input$dir0)})
 
-
-
     ##########################################
-    # Part1 : Set GLM model
+    # Part1 : load data
     ##########################################
-    # load design
+    
+    # load omics data and experimental design
+    inputData <- callModule(LoadOmicsData, "data")
+    
     # set reference
     # set type of factor (bio/batch)
     # check design (complete and balanced)
-    inputExp <- callModule(ExperimentalDesign, "Exp")
+  
+    
+
+    ##########################################
+    # Part2 : Set GLM model
+    ##########################################
 
     # display set up model Item
     # if no error message
-    observeEvent(inputExp$ValidF, {
-
+    observeEvent(inputData$loadData, {
+      
       #continue only if message is true or warning
       validate({
-        need(validate.status == 0 ,message="set design step failed")
+        need(validate.status == 0, message="set design step failed")
       })
 
       output$SetUpModelMenu <- renderMenu({
-        menuSubItem("Statistical model", tabName = "SetUpModel",  selected = TRUE)
+        menuItem(text = "Experimental Design", tabName = "SetUpModel", icon = icon('vials'))
       })
     })
 
@@ -51,33 +55,22 @@ shinyServer(function(input, output, session) {
     # and select list of contrast to test
     inputModel <- callModule(GLM_model, "model")
 
-    # display load data Item
-    # if no error message
-    observeEvent(inputModel$validContrasts, {
-
-      #continue only if message is true
-      validate({
-        need(validate.status == 0 ,message="select model and contrast step failed")
-      })
-
-      output$importData <- renderMenu({
-        menuItem("Load Data", tabName = "importData",icon = icon('download'), selected = TRUE)
-      })
-    })
+    
 
 
     ##########################################
-    # Part2 : load data
+    # Part : ANALYSE
     ##########################################
 
-    # load omics data
-    inputData <- callModule(LoadOmicsData, "data")
+    # # load omics data
+    # inputData <- callModule(LoadOmicsData, "data")
 
     # display omics Item
     # for each omics data type
     # and for each dataser
     # if no error message
-    observeEvent(inputData$loadData, {
+    observeEvent(inputModel$validContrasts, {
+      
 
       #continue only if message is true
       validate({
@@ -100,20 +93,20 @@ shinyServer(function(input, output, session) {
                                  "RNAseq"={
                                    lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
                                      menuSubItem(text = paste0(FlomicsMultiAssay@metadata$omicList[[omics]][[i]]),
-                                                 tabName = paste0("RNAseqAnalysis", i), icon = icon('chart-area'), selected = FALSE)
+                                                 tabName = paste0("RNAseqAnalysis", i), icon = icon('chart-area'))
                                    })
 
                                  },
                                  "proteomics"={
                                    lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
                                      menuSubItem(text = paste0(FlomicsMultiAssay@metadata$omicList[[omics]][[i]]),
-                                                 tabName = paste0("ProtAnalysis", i), icon = icon('chart-area'), selected = FALSE)
+                                                 tabName = paste0("ProtAnalysis", i), icon = icon('chart-area'))
                                    })
                                  },
                                  "metabolomics"={
                                    lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
                                      menuSubItem(text = paste0(FlomicsMultiAssay@metadata$omicList[[omics]][[i]]),
-                                                 tabName = paste0("MetaAnalysis", i), icon = icon('chart-area'), selected = FALSE)
+                                                 tabName = paste0("MetaAnalysis", i), icon = icon('chart-area'))
                                     })
                                   }
                                  )
@@ -129,46 +122,29 @@ shinyServer(function(input, output, session) {
     ##########################################
     # Part3 : Data Exploratory
     ##########################################
+    inputNorm <- list()
     lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
 
       switch(omics ,
              "RNAseq"={
                  lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
 
-                   callModule(RNAseqDataExplorTab, paste0("RNAseq",i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+                   inputNorm[[paste0(omics, i)]] <- callModule(QCNormalizationTab, paste0("RNAseq",i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
                   })
              },
              "proteomics"={
                  lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
 
-                   callModule(ProtMetaDataExplorTab, paste0("proteomics",i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+                   inputNorm[[paste0(omics, i)]] <- callModule(QCNormalizationTab, paste0("proteomics",i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
                  })
              },
              "metabolomics"={
                  lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
 
-                   callModule(ProtMetaDataExplorTab, paste0("metabolomics",i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+                   inputNorm[[paste0(omics, i)]] <- callModule(QCNormalizationTab, paste0("metabolomics",i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
                  })
               }
       )
-    })
-
-    ##########################################
-    # Part4 : Data processing : filtering, Normalisation...
-    ##########################################
-    lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
-
-      switch(omics ,
-             "RNAseq"={
-
-      lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
-      #for(i in names(FlomicsMultiAssay@metadata$omicList[[omics]])){
-        callModule(RNAseqDataNormTab, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
-        #inputNorm[[paste0(omics, i)]] <- callModule(RNAseqDataNormTab, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
-        
-      #}
-      })
-             })
     })
 
     ##########################################
@@ -180,12 +156,15 @@ shinyServer(function(input, output, session) {
 
       lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
         
-       # observeEvent(inputNorm[[paste0(omics, i)]]$validContrast, {
+        observeEvent(inputModel$validContrasts, {
           
-        inputDiff[[paste0(omics, i)]] <<- callModule(DiffExpAnalysis, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+            inputDiff[[paste0(omics, i)]] <<- callModule(DiffExpAnalysis, paste0(omics, i), FlomicsMultiAssay@metadata$omicList[[omics]][[i]])
+            
+        })
       })
     })
 
+    
   ##########################################
   # Part6 : Co-Expression Analysis
   ##########################################
@@ -199,6 +178,8 @@ shinyServer(function(input, output, session) {
         }, ignoreInit = TRUE)
       })
     })
+    
+    
     ##########################################
     # Part7 : Enrichment Analysis
     ##########################################
