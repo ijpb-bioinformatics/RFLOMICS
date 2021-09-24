@@ -76,6 +76,7 @@ RNAseqDataExplorTab <- function(input, output, session, dataset){
 
   # run PCA plot
   output$QCdesignPCARaw <- renderPlot({
+    print("# 6 - Compute PCA")
     FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
     PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
     PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])

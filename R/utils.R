@@ -1067,6 +1067,7 @@ try_rflomics <- function(expr) {
   value <- withCallingHandlers(
         tryCatch(expr,
                  error    =function(e){ err <<- e
+                                        NULL
                                         }),
                   warning =function(w){ warn <<- w
                                         invokeRestart("muffleWarning")}
@@ -1085,50 +1086,66 @@ runCoseq <- function(counts, K=2:20, replicates = 5, param.list, clustermq=FALSE
 
             Results.1 <- list()
             Results.1_min_icl <- list()
-            
+
             iter <- rep(K, replicates)
             nbr_iter <- length(iter)
-            
+            coseq.res.list <- list()
             #set.seed(12345)
-            
+
             switch (as.character(clustermq),
                     `FALSE` = {
-            
-                          coseq.res.list <- sapply (iter, function(x){
-                            (coseq::coseq(counts, K=x, 
-                                               model           =param.list[["model"]], 
+
+                      coseq.res.list <- lapply (iter, function(x){
+
+                              try_rflomics(coseq::coseq(counts, K=x,
+                                               model           =param.list[["model"]],
                                                transformation  =param.list[["transformation"]],
-                                               meanFilterCutoff=param.list[["meanFilterCutoff"]], 
-                                               normFactors     =param.list[["normFactors"]], 
+                                               meanFilterCutoff=param.list[["meanFilterCutoff"]],
+                                               normFactors     =param.list[["normFactors"]],
                                                GaussianModel   =param.list[["GaussianModel"]]))})
                     },
                     `TRUE` = {
-                      
+
                           param.list[["object"]] <- counts
                           param.list[["K"]] <- K
-                          
+
                           fx <- function(x){
-                            
-                            
-                           
-                            (coseq::coseq(object, K=x, model=model, transformation=transformation, GaussianModel = GaussianModel, 
-                                         normFactors=normFactors, meanFilterCutoff=meanFilterCutoff))
+
+                            try_rflomics <- function(expr) {
+                              warn <- err <- NULL
+                              value <- withCallingHandlers(
+                                tryCatch(expr,
+                                         error    =function(e){ err <<- e
+                                         NULL
+                                         }),
+                                warning =function(w){ warn <<- w
+                                invokeRestart("muffleWarning")}
+                              )
+                              list(value=value, warning=warn, error=err)
+                            }
+
+                            try_rflomics(coseq::coseq(object=object, K=x,
+                                                      model=model,
+                                                      transformation=transformation,
+                                                      GaussianModel = GaussianModel,
+                                                      normFactors=normFactors,
+                                                      meanFilterCutoff=meanFilterCutoff))
                           }
                           coseq.res.list <- clustermq::Q(fx, x=iter, export=param.list, n_jobs=nbr_iter, pkgs="coseq")
                     })
-            
+
             names(coseq.res.list) <- c(1:nbr_iter)
-            
-            
-            # ICL.vec <- lapply(coseq.res.list, function(x){ coseq::ICL(x) }) %>% unlist() 
+
+
+            # ICL.vec <- lapply(coseq.res.list, function(x){ coseq::ICL(x) }) %>% unlist()
             # ICL.tab <- data.frame(K=stringr::str_replace(names(ICL.vec), "K=", ""), ICL=ICL.vec)
             # ggplot(data = tab) + geom_boxplot(aes(x=K, y=ICL))
-            
+
             # Results.1_min_icl <- sapply(names(coseq.res.list), function(x){
             #   min(coseq::ICL(coseq.res.list[[x]]),na.rm=TRUE)
             # })
-            # 
-            # 
+            #
+            #
             # coseq.res <- coseq.res.list[[which.min(Results.1_min_icl)]]
 
             return(coseq.res.list)

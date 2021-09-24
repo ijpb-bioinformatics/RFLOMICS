@@ -1164,7 +1164,7 @@ setMethod(f="runCoExpression",
 
 
             # set default parameters based on data type
-            param.list <- list()
+            param.list <- list("meanFilterCutoff"=NULL)
             switch (object@metadata$omicType,
 
               "RNAseq" = {
@@ -1186,7 +1186,7 @@ setMethod(f="runCoExpression",
                 param.list[["model"]]            <- model
                 param.list[["transformation"]]   <- "none"
                 param.list[["normFactors"]]      <- "none"
-                param.list[["meanFilterCutoff"]] <- NULL
+                #param.list[["meanFilterCutoff"]] <- NULL
                 param.list[["GaussianModel"]]    <- GaussianModel
               },
               "metabolomics" = {
@@ -1200,7 +1200,7 @@ setMethod(f="runCoExpression",
                 param.list[["model"]]            <- model
                 param.list[["transformation"]]   <- "none"
                 param.list[["normFactors"]]      <- "none"
-                param.list[["meanFilterCutoff"]] <- NULL
+                #param.list[["meanFilterCutoff"]] <- NULL
                 param.list[["GaussianModel"]]    <- GaussianModel
               }
             )
@@ -1212,21 +1212,59 @@ setMethod(f="runCoExpression",
             coseq.res.list <- try_rflomics(
                     runCoseq(counts, K=K, replicates=replicates, param.list=param.list , clustermq=clustermq))
 
+            # If coseq could run (no problem with SSH connexion in case of clustermq=TRUE)
 
-            if( ! is.null(coseq.res.list$value) ){
+            if(! is.null(coseq.res.list$value)){
 
+            # Create a table of jobs summary
+            error.list <- unlist(lapply(coseq.res.list$value, function(x){
+              ifelse(is.null(x$error),"success",as.character(x$error))
+            }))
+
+            K.list <- rep(K,each=replicates)
+
+            jobs.tab <- data.frame(K= K.list, error.message=as.factor(error.list))
+
+            jobs.tab.sum <- jobs.tab %>% dplyr::group_by(K,error.message) %>%
+            dplyr::summarise(n=dplyr::n()) %>%  dplyr::mutate(prop.failed=round((n/replicates)*100)) %>%
+            dplyr::filter(error.message != "success")
+
+            # If exists jobs.tab.sum
+            if(dim(jobs.tab.sum)[1]>0){
+
+            # Number of K for which p(success) > p(failed)
+            nK_success <- length(which(jobs.tab.sum$prop.failed < 50))
+            }
+            else{
+              nK_success <- length(K)
+            }
+            print(nK_success)
+
+            # If they are at least the half of K which succeed, valid results
+            if( nK_success > round(length(K)/2)){
+
+                    # Generate the list of results
+                    coseq.res.list[["value"]] <- lapply(coseq.res.list$value,function(x){x$value})
 
                     # ICL plot
                     ICL.vec <- sapply(1:(length(K)*replicates), function(x){ coseq::ICL(coseq.res.list[["value"]][[x]]) })
-                    ICL.tab <- data.frame(K=stringr::str_replace(names(ICL.vec), "K=", ""), ICL=ICL.vec)
-                    ICL.p   <- ggplot(data = ICL.tab) + geom_boxplot(aes(x=K, y=ICL))
+                    ICL.tab <- data.frame(K=stringr::str_replace(names(ICL.vec), "K=", ""), ICL=ICL.vec) %>%
+                      dplyr::mutate(K=as.numeric(K))
+                    ICL.n <- ICL.tab  %>% dplyr::group_by(.,K) %>% dplyr::summarise(median = median(ICL), n = dplyr::n()) %>%
+                      dplyr::mutate(K=as.numeric(K))
+                    ICL.p   <- ggplot(data = ICL.tab) + geom_boxplot(aes(x=K, y=ICL,group=K)) +
+                      geom_text(data=ICL.n, aes(x=K-0.6, y=median, label=paste0("n=",n)), col='red', size=4)
 
                     #CoExpAnal[["plots"]][["ICL"]] <- ICL.p
 
                     # logLike plot
                     logLike.vec <- sapply(1:(length(K)*replicates), function(x){ coseq::likelihood(coseq.res.list[["value"]][[x]]) })
-                    logLike.tab <- data.frame(K=stringr::str_replace(names(logLike.vec), "K=", ""), logLike=logLike.vec)
-                    logLike.p   <- ggplot(data = logLike.tab) + geom_boxplot(aes(x=K, y=logLike))
+                    logLike.tab <- data.frame(K=stringr::str_replace(names(logLike.vec), "K=", ""), logLike=logLike.vec) %>%
+                      dplyr::mutate(K=as.numeric(K))
+                    logLike.n <- logLike.tab  %>% dplyr::group_by(.,K) %>% dplyr::summarise(median = median(logLike), n = dplyr::n()) %>%
+                      dplyr::mutate(K=as.numeric(K))
+                    logLike.p   <- ggplot(data = logLike.tab) + geom_boxplot(aes(x=K, y=logLike,group=K)) +
+                      geom_text(data=logLike.n, aes(x=K-0.6, y=median, label=paste0("n=",n)), col='red', size=4)
 
                     #CoExpAnal[["plots"]][["logLike"]] <- logLike.p
 
@@ -1261,10 +1299,15 @@ setMethod(f="runCoExpression",
             # Réinitialisation de l'objet CoExpAnal
             else{
                     CoExpAnal[["results"]] <- FALSE
-                    CoExpAnal[["warning"]] <- coseq.res.list$warning
-                    CoExpAnal[["error"]]   <- coseq.res.list$error
+                    CoExpAnal[["stats"]] <- jobs.tab.sum
+                    #CoExpAnal[["warning"]] <- coseq.res.list$warning
             }
-
+            }
+            else{
+              CoExpAnal[["results"]] <- FALSE
+              CoExpAnal[["stats"]] <- NULL
+              CoExpAnal[["error"]]   <- coseq.res.list$error
+            }
 
             object@metadata$CoExpAnal <- CoExpAnal
             return(object)
