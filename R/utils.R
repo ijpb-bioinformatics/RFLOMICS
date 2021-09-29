@@ -1,6 +1,7 @@
-#' @importFrom magrittr %>%
-#' @export
+#' @importFrom magrittr %>% 
+#' @export 
 magrittr::`%>%`
+
 
 
 #' GetDesignFromNames
