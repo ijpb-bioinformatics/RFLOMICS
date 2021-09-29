@@ -1,0 +1,578 @@
+---
+title: "RFLOMICS: Quick Guide to omics data analysis"
+author: "Delphine Charif and Nadia Bessoltane"
+package: RFLOMICS
+date: "`r Sys.Date()`"
+output: 
+  BiocStyle::html_document:
+    df_print: paged
+    toc_float: true
+vignette: >
+  %\VignetteIndexEntry{RFLOMICS-vignette-CommandLine}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+abstract: > 
+    Here, we will walk through -omics data analysis with the RFLOMICS package. We will see how to set up the statistical framework of the designed protocol: ie translate biological condition comparisons into contrasts, perform quality controls and statistical analysis of the dataset: ie. find DEG per contrasts, identify cluster of co-expressed genes and perform a gene set enrichment analysis from lists of DEG or from clusters of co-expressed genes.
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(RFLOMICS)
+library(ggplot2)
+```
+
+# Introduction:
+
+RFLOMICS is based on proven statistical methods and pipeline for RNAseq data analysis (1). 
+It is also based on functions allowing the automation of contrasts's writting in R (2).
+
+Data that will be used for this example have been provided by Loic Rajjou and Gwendal Cueff. They are included in the inst/ExampleFiles/ecoseed directory of the package. Briefly, A. thaliana's transcriptomes have been obtained in the context of the study of seed germination and vigor. In particular, the author were interested in the influence of temperature (high, medium and low) and imbibition (Dry: DI, early imbibition: EI and late imbibition: LI) on gene's expression. 
+
+* (1) [Ilana Lambert, Christine Paysant-Le Roux, Stefano Colella, and Marie-Laure Martin-Magniette (2020)	DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. *Plant Methods* vol. 16, p. 68](http://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=pubmed&id=32426025&retmode=ref&cmd=prlinks)
+
+* (2) [Christine Paysant-Le Roux (2020), packageContrast_2020, unpublished]
+
+* (3) [Projet ecoseed (), ]
+
+# Input data
+
+* **Set** name project. 
+```{r}
+projectName = "ecossed"
+```
+
+* **Load** the experimental design file.
+
+This file provides the experimental plan table. The first column indicates the sample names. Next columns indicate experimental conditions (called biological factor or replicate factor) and metadata (optional). Each row describes a sample by specifying the level for each experimental condition.
+This file is edited by the user and must contain a header with explicit column names.
+To  avoid  errors  during  the script  execution, it is preferable that each modality description starts with a letter (for example, for a factor Month, it is better to write M1 rather than 1).
+```{r ImportDesign}
+
+ExpDesign <- read.table(file= paste(path.package("RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt",sep=""),
+                          header = TRUE,row.names = 1, sep = "\t")
+ExpDesign
+```
+
+* **Load** the omics data files
+
+For each omics : 
+1) The fist file **(mandatory)** provide matrix-likes of abundance of omics data : read counts per genes for RNAseq data, intensity of proteins for proteomics data, intensity of metabolites for metabolomics data. The first column indicates feature (gene, protein, metabolite) names, Header of matrix indicates sample names. 
+2) The second file **(optional)** provide supplementary information (metadata) for each sample (to develop).
+
+```{r ImportOmics}
+
+geneCount <- read.table(file   = file.path(path = path.package("RFLOMICS"), file ="/ExamplesFiles/ecoseed/transcriptome2_ecoseed.txt"),
+                        header = TRUE, row.names = 1, sep = "\t")
+
+# protAbundance <- read.table(file = file.path(path = path.package("RFLOMICS"), file ="/ExamplesFiles/ecoseed/proteome_ecoseed.txt"),
+#                             header = TRUE,row.names = 1, sep = "\t")
+# metaAbundance <- read.table(file = file.path(path = path.package("RFLOMICS"), file ="/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"),
+#                             header = TRUE,row.names = 1, sep = "\t")
+
+head(geneCount)
+```
+
+* **Load** annotation file(s) for enrichment analysis.
+
+The column 1 => feature names (same used in abundance matrix)
+The column 2 => term IDs (ex. GO term accession : GO:0034599)
+The column 3 => term names (ex. GO term name : cellular response to oxidative stress)
+The column 4 => source or type (ex. GO domain : biological_process)
+```{r}
+
+annot.genes <- read.table(file   = file.path(path=path.package("RFLOMICS"), file="/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt"), 
+                          header = TRUE, sep="\t", )
+colnames(annot.genes) <- c("geneID", "Term", "Name", "Domain")
+
+head(annot.genes)
+```
+
+
+# Set up the statistical framework
+
+* Define the type of factors (either 'biological'='Bio' or 'batch'='batch' effect factor) and the level of reference for each factor. 
+
+```{r EffectFactor}
+
+Design.Factors.Name <- names(ExpDesign)
+
+Design.Factors.Type <- c("batch","Bio","Bio")
+
+# Define the level of reference (factor modality) of each factor
+Design.Factors.Ref <- c("rep1","Medium","EI")
+
+# remplacer les 2 derniers parametres par un dataframe? 
+# Design.Factors <- data.frame(Design.Factors.Name = c("Repeat", "temperature", "imbibition"),
+#                              Design.Factors.Type = c("batch","Bio","Bio"),
+#                              Design.Factors.Ref  = c("rep1","Medium","EI"))
+
+```
+
+* Instantiate an object of class Design. 
+This object will contain all information about statistical framework.
+
+```{r refLevel}
+
+#Design <- ExpDesign.constructor(ExpDesign = ExpDesign, Design.Factors = Design.Factors)
+
+Design <- ExpDesign.constructor(ExpDesign = ExpDesign, refList = Design.Factors.Ref, typeList = Design.Factors.Type)
+
+```
+
+* Check the **completeness** of the design. You **must** have all possible combinations of factor's level. **Balanced design** is not required (presence of the same number of replicats for all possible combinations) but advised. You **must** also have at least one biological factor and 2 replicats.
+
+```{r CheckDesign, fig.cap="Design checking's result",fig.small=TRUE}
+
+# je pense qu'il faut fusionner en une seule fonction qui retourne une list(plot, warning, error)
+
+ completeCheckRes <- CheckExpDesignCompleteness(Design)
+
+ plotExperimentalDesign(completeCheckRes[["count"]])
+ 
+```
+In this example, you can see that the design is complete but not balanced.
+
+* **Choose** the statistical model associated to the experimental design.
+Models are written from the most complete one, with two orders interaction terms between the
+biological factors, to the simplest one. Batch factor did not appears in interaction terms.
+
+```{r ChooseModel}
+
+# remplacer aussi ici
+#Design.formulae <- GetModelFormulae(Design.Factors = Design.Factors)
+
+Design.formulae <- GetModelFormulae(Factors.Name = Design.Factors.Name,
+                                    Factors.Type = Design.Factors.Type)
+
+ Design.formulae
+ 
+```
+
+In this example, the complete model with the interaction term describes the experiment. 
+
+* **View** all the 'a priori' hypothesis you thought for the experiment. They are divided into 3 
+categories: simple, averaged and interaction contrasts
+
+  + **simple**: For a given biological factor, does a difference in gene expression between two factor's modalities exists when one modality has been fixed for all other factors.
+  + **averaged**: Does the difference in gene expression between two factor's modalities exists if we consider an average gene expression between the modalities for the other factor's ?
+  + **interaction**: Does the difference in gene expression between two factor's modalities is the same 
+  for the different modalities of other factors ?
+
+
+```{r viewContrast  }
+
+ # Get all the possible contrasts from the complete model with interaction
+ Design <- getExpressionContrast(object = Design, 
+                                 model.formula = names(Design.formulae[1]))
+ 
+ # Simple Contrasts
+ # knitr::kable( Design@Contrasts.List$simple[,-c(1:2)], caption = 'Simple Contrasts') 
+  Design@Contrasts.List$simple[,-c(1:2)]
+ 
+ # Averaged Contrasts
+ # knitr::kable( Design@Contrasts.List$averaged[,-c(1:2)], caption = 'Averaged Contrasts')
+ Design@Contrasts.List$averaged[,-c(1:2)]
+ 
+ # Interaction Contrasts
+ # knitr::kable(Design@Contrasts.List$interaction[,-c(1:2,4)], caption = 'Interaction Contrasts')
+ Design@Contrasts.List$interaction[,-c(1:2,4)]
+ 
+```
+
+```{r SetContrast}
+
+
+ # Select The 2 firsts
+ Design.contrastList <- Design@Contrasts.List
+ #Design.contrastList$simple <- Design.contrastList$simple[c(1:9)]$contrast
+ #Design.contrastList$averaged <- Design.contrastList$averaged[1:3]
+ #Design.contrastList <- Design.contrastList[-3]
+
+ # Set the coefficients
+ Design <- getContrastMatrix(object = Design, contrastList = unlist(Design.contrastList))
+ 
+ 
+```
+ 
+# Creating a Flomics **MultiAssayExperiment** object
+
+* All input data (abundance, metadata, statistical framework), choice about tools, parameters, threshold, and analysis results are managed in (by) the FlomicsMultiAssayExp object, an instance of the class MultiAssayExperiment (MAE). See the next paragraph to have a description. 
+This object is created by FlomicsMultiAssay.constructor method. This method takes in input : a list of lists (per dataset) of abundance matrices (and their metadata if it exist), and "Design" object.
+
+- Build a list of abundances :
+```{r list input }
+
+ListofData <- list(
+  "RNAseq1"=list( "data"=geneCount,      "meta"=NULL, "omicType"="RNAseq"))
+  # "proteomics1"=  list( "data"=protAbundance,  "meta"=NULL, "omicType"="proteomics"),
+  # "Metabolomics1"=list( "data"= metaAbundance, "meta"=NULL, "omicType"="Metabolomics"))
+```
+
+- Instantiate an object of class MultiAssayExperiment. 
+```{r creat MAE}
+
+ FlomicsMultiAssay <- FlomicsMultiAssay.constructor(inputs      = ListofData, 
+                                                    Design      = Design, 
+                                                    projectName = projectName)
+```
+
+
+```{r description}
+
+FlomicsMultiAssay
+```
+
+
+# Statistical analysis of RNAseq data:
+
+```{r}
+data="RNAseq1"
+RNAseq.raw.SE <-  FlomicsMultiAssay@ExperimentList[[data]]
+```
+
+
+## Filter and Normalize
+
+* By default, gene with 0 count are removed from the data.
+* The advice filtering method is to remove genes for which NbOfsample_over_cpm <= NbConditions. For a CPM fixed
+at 5.
+In this example, there are 9 conditions. So, the number of gene with a CPM less than 5 in at least 9 samples 
+are removed. 
+Other strategies are available (see the help). 
+
+```{r filterRNA}
+
+RNAseq.SE <- FilterLowAbundance(RNAseq.raw.SE, Filter_Strategy = "NbConditions", CPM_Cutoff = 5 )
+
+names(RNAseq.SE@metadata)
+```
+
+We can obtain the number of genes which were filtred with this command:
+
+```{r filteredFeatures}
+
+length(RNAseq.SE@metadata$FilteredFeatures)
+```
+
+`r length(RNAseq.SE@metadata$FilteredFeatures)` genes were filtered
+out.  
+
+* Run the TMM normalization method. Scaling factors are stored in the table below:
+
+```{r normalizeRNA}
+
+
+RNAseq.SE <- RunNormalization(RNAseq.SE, NormMethod = "TMM")
+
+names(RNAseq.SE@metadata)
+```
+
+
+## Exploratory 
+
+* Library size distribution of raw RNAseq data:
+
+```{r Library size, message=FALSE, warning=FALSE,  fig.show = "hold"}
+
+Library_size_barplot.plot(RNAseq.raw.SE)
+
+Library_size_barplot.plot(RNAseq.SE)
+
+CoefNorm <- RNAseq.SE@metadata$Normalization$coefNorm
+CoefNorm$samples <- row.names(RNAseq.SE@metadata$Normalization$coefNorm)
+CoefNorm$samples <- factor(CoefNorm$samples, levels = CoefNorm$samples)
+pA <- ggplot(CoefNorm, aes( x = samples, y = lib.size * norm.factors, fill = group )) + 
+  geom_bar(stat = "identity") + ylab("Library Size") +
+  theme( axis.text.x = element_text(angle = 45, hjust = 1), legend.position  = "none" )
+pA
+```
+
+
+* Count distribution of raw RNAseq data:
+
+```{r CountDistr, message=FALSE, warning=FALSE,  fig.show = "hold"}
+
+#Data_Distribution.plot(RNAseq.raw.SE, "density") 
+#Data_Distribution.plot(RNAseq.raw.SE, "boxplot") 
+
+Data_Distribution_Density.plot(RNAseq.raw.SE) 
+
+Data_Distribution_Density.plot(RNAseq.SE) 
+
+```
+
+
+## Technical and Biological variability exploration after filtering and normalisation step
+
+* Raw data Exploratory of raw RNAseq data:
+
+
+```{r qcRNA1, message=FALSE, warning=FALSE,  fig.show = "hold"}
+
+RNAseq.raw.SE <- RunPCA(RNAseq.raw.SE)
+RNAseq.SE     <- RunPCA(RNAseq.SE)
+
+```
+
+```{r mvQCdesign, message=FALSE, warning=FALSE,  fig.show = "hold"}
+
+# mvQCdesign(object = FlomicsMultiAssay, data = data , PCA = "raw", axis = 5, pngFile = NULL)
+# 
+# mvQCdesign(object = FlomicsMultiAssay, data = paste0(data, ".filtred") , PCA = "norm", axis = 5, pngFile = NULL)
+
+```
+```{r plotPCA groups, message=FALSE, warning=FALSE,  fig.show = "hold"}
+
+
+RFLOMICS::plotPCA( RNAseq.raw.SE, 
+                   PCA = "raw", PCs = c(1, 2), condition = "groups")
+RFLOMICS::plotPCA( RNAseq.SE, 
+                   PCA = "norm", PCs = c(1, 2), condition = "groups")
+
+
+RFLOMICS::plotPCA( RNAseq.raw.SE, 
+                   PCA = "raw", PCs = c(1, 3), condition = "groups")
+RFLOMICS::plotPCA( RNAseq.SE, 
+                   PCA = "norm", PCs = c(1, 3), condition = "groups")
+
+
+RFLOMICS::plotPCA( RNAseq.raw.SE, 
+                   PCA = "raw", PCs = c(1, 3), condition = "groups")
+RFLOMICS::plotPCA( RNAseq.SE, 
+                   PCA = "norm", PCs = c(1, 3), condition = "groups")
+
+```
+
+```{r plotPCA factor1, message=FALSE, warning=FALSE,  fig.show = "hold"}
+
+
+RFLOMICS::plotPCA( RNAseq.raw.SE, 
+                   PCA = "raw", PCs = c(1, 2), condition = "imbibition")
+RFLOMICS::plotPCA( RNAseq.SE, 
+                   PCA = "norm", PCs = c(1, 2), condition = "imbibition")
+
+
+RFLOMICS::plotPCA( RNAseq.raw.SE, 
+                   PCA = "raw", PCs = c(1, 3), condition = "imbibition")
+RFLOMICS::plotPCA( RNAseq.SE, 
+                   PCA = "norm", PCs = c(1, 3), condition = "imbibition")
+
+
+RFLOMICS::plotPCA( RNAseq.raw.SE, 
+                   PCA = "raw", PCs = c(1, 3), condition = "imbibition")
+RFLOMICS::plotPCA( RNAseq.SE, 
+                   PCA = "norm", PCs = c(1, 3), condition = "imbibition")
+
+```
+
+
+```{r meta}
+
+#mvQCdata(object = FlomicsMultiAssay,data= paste0(data,".filtred") , PCA="norm", axis=5,pngFile= NULL) 
+ 
+```
+
+We can noticed that imbibition factor explained a very huge proportion of 
+dataset variability:
+* PCA1 & PCA2: DS vs LI  \leftarrow 41.5 + 33.9 = 75 \%
+* PCA3: EI vs LI+DS \leftarrow 11.1 \% 
+Whereas the temperature factor explain very few:
+* PCA4 and PCA5: low vs Elevated \leftarrow 3,+ 3.6 = 6.6 \%.
+ 
+## Differential expression analysis
+
+* Run the differential analysis thanks to the 'RunDiffAnalyis' method which calls the glmFit function from the edgeR package and applied the Benjamini and Hochberg (BH) FDR correction. The designed statistical model is applied for each contrast. 
+To filter diferentially expressed genes, the 'FilterDiffAnalysis' method **has to be called**.
+All the raw and filtered results are stored in the metadata list of the SummarizedExperiment Object.
+
+```{r diffAnalysisRNA}
+
+
+# run diffAnalysis
+RNAseq.SE <-
+  RunDiffAnalysis( RNAseq.SE, design = Design, contrastList = Design@Contrasts.Sel$contrastName[1:3], Adj.pvalue.method = "BH", DiffAnalysisMethod = "edgeRglmfit", clustermq = FALSE )
+
+# results filering
+RNAseq.SE <-
+  FilterDiffAnalysis(RNAseq.SE, Adj.pvalue.cutoff = 0.05)
+
+# results access
+names(RNAseq.SE@metadata)
+ 
+```
+
+* Access to the number of up and down regulated genes.
+
+```{r DiffResults}
+
+tmpRes <-
+  RNAseq.SE@metadata[["DiffExpAnal"]]
+DE <- vector()
+DEup <- vector()
+DEdown <- vector()
+
+for (i  in  1:dim(tmpRes[["contrasts"]])[1]) {
+  contrastName <- tmpRes[["contrasts"]][i, ]$contrastName
+  stats <- tmpRes[["stats"]][[contrastName]]
+  DE[i] <- stats$gDE
+  DEup[i] <- paste("(", stats$pgDEup, " %)", sep = "")
+  DEdown[i] <- paste("(", stats$pgDEdown, " %)", sep = "")
+}
+
+
+# knitr::kable(dplyr::bind_cols(
+#   tmpRes[["contrasts"]][, c("tag", "contrastName")],
+#   data.frame(
+#     "Nb DE" = DE,
+#     "Nb DEup" = DEup,
+#     "Nb DEdown" = DEdown
+#   )
+# ),
+# row.names = FALSE,
+# caption = NULL)
+
+dplyr::bind_cols( tmpRes[["contrasts"]][, c("tag", "contrastName")],
+                  data.frame("Nb DE" = DE, "Nb DEup" = DEup, "Nb DEdown" = DEdown))
+
+
+```
+
+We can see that there are more genes differentially expressed between imbibition modalities than between temperature modalities except for low vs moderated.    
+
+
+* Run the DiffAnal.plot function to get the MAplot and the Pvalue distribution. By example, 
+
+```{r Diff}
+
+pDA <-
+  DiffAnal.plot(RNAseq.SE,
+                tmpRes[["contrasts"]][1, ]$contrastName ,
+                Adj.pvalue.cutoff = 0.05)
+```
+
+* Check the MAplot:  
+
+```{r MAplot}
+
+pDA$MA.plot
+```
+
+* You **must** check the Pvalue distribution for each contrast.
+  + If the distribution is uniform: it is ok. a few genes are DE and the FDR will find them.
+  + If the distribution as a peak near 0 and then is uniform: it is also ok. The higher is the peak, the higher is
+the number of DE genes. FDR correction can be applied.
+  + If the distribution has 2 peaks one near 0 and one near 1 or just one peak near 1, it is not a good news ! You have to understand what's happened.
+ 
+
+```{r PvaluePlot}
+
+pDA$Pvalue.hist
+```
+
+* Draw a Venn diagramm of DEG for samples thanks to the UpSetR function. 
+
+```{r DEF}
+
+
+DEF_mat <-
+  RNAseq.SE@metadata$DiffExpAnal[["mergeDEF"]]
+#UpSetR::upset(DEF_mat, sets = c("H22","H23","H24")) 
+```
+In this example, we focus on 3 contrasts which are the difference in imbibition modalities factor with 
+an averaged response to temperature. 
+Set Size is the number of DEGs per hypothesis. We can see that very few DEGs are specific to one contrast. 
+2573 DEGs are common to the DS-LI and DS-EI contrasts. 1631 DEGs are common to the ES-LI and DS-LI contrasts. 
+947 DEGs are common to EI_LI and DS-EI contrasts. 7007 DEG in the three contrasts. 
+
+
+### Coexpression analysis
+
+* A list of DEG associated to contrasts has to be constructed. Choice is given to merge (**union**) or intersect  (**intersection**) the list of genes.
+
+* Co-expression analysis is done thanks to the coseq package and function with a set of optimal parameters which are the data transformation method: fixed to **arcsin** and the model: fixed to **gaussian mixture models**. 
+The number of technical replicates to perform (**iter**) for each **K** which is the number of cluster into which
+the DEG genes have to be cut, can be first set to 0 to precise the range of K and then put to a minimum of 10 replicates.
+see the coseq vignette.
+
+
+```{r Coexpression1,eval=TRUE}
+
+DEG_list <- getDEGlist_for_coseqAnalysis(
+        matrix    = RNAseq.SE@metadata$DiffExpAnal[["mergeDEF"]],
+        colnames  = c("H1","H2","H3"),
+        mergeType = "union")
+
+RNAseq.SE <-  
+runCoExpression(RNAseq.SE,
+                                  geneList=DEG_list,
+                                  K=2:4, 
+                                  replicate = 5,
+                                  model  = "normal",
+                                  transformation= "arcsin", 
+                                  normFactors="TMM",
+                                  nameList="List1", 
+                                  merge= "union",
+                                  GaussianModel = "Gaussian_pk_Lk_Ck")
+```
+
+In this example, we took the union of three DEG lists. 
+
+
+* Plot likelihood
+
+```{r plotCoseq1}
+
+RNAseq.SE@metadata$CoExpAnal$plots$ICL
+```
+
+The best number of clusters (K) into which DEG list's union have to be cut is 10.
+
+* Plot Expression profiles
+
+```{r plotCoexp}
+
+RNAseq.SE@metadata$CoExpAnal$plots$boxplots
+```
+
+## Annotation and Enrichment analysis
+il faut definir les lists à annoter de l'analyse diff et analyse coseq
+
+
+
+```{r, eval=FALSE}
+
+ListNames.diff <- dataset.SE@metadata$DiffExpAnal[["contrasts"]]$contrastName
+ListNames.coseq <- names(dataset.SE@metadata$CoExpAnal[["clusters"]])
+
+runAnnotationEnrichment(dataset.SE, annotation = annot.genes, 
+                        DiffListNames = ListNames.diff, 
+                        CoExpListNames= ListNames.coseq,
+                        alpha = 0.01, 
+                        probaMethod = hypergeometric)
+```
+
+
+
+
+
+
+```{r}
+FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]] <- RNAseq.SE
+
+```
+
+
+
+# Session information:
+
+```{r}
+devtools::session_info()
+```
+
+
