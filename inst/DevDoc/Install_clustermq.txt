@@ -57,7 +57,7 @@ ssh -o "ExitOnForwardFailure yes" -f \
      R --no-save --no-restore -e \
      'clustermq:::ssh_proxy(ctl={{ ctl_port }}, job={{ job_port }})' \
      > {{ ssh_log | /dev/null }} 2>&1"
-     
+
 
      2) In your $HOME/.Rprofile on your LOCAL machine:
 
@@ -66,6 +66,7 @@ ssh -o "ExitOnForwardFailure yes" -f \
     clustermq.template = "/Users/dcharif/SSH.tmpl",
     clustermq.ssh.host = "dcharif@genologin.toulouse.inra.fr", # use your user and host, obviously
     clustermq.ssh.log = "/home/dcharif/cmq_ssh.log" # log for easier debugging
+    clustermq.defaults = list(bashenv="system/R-3.6.0")
 )
 
 
