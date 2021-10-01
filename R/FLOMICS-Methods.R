@@ -49,7 +49,6 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
     dplyr::mutate(samples = rownames(.)) %>%
             tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
 
-
   Design = new(Class = "ExpDesign",
                ExpDesign=as.data.frame(ExpDesign),
                List.Factors=dF.List,
@@ -122,34 +121,34 @@ setMethod(f="CheckExpDesignCompleteness",
             if (! table(object@Factors.Type)["Bio"] %in% 1:3){
 
               stop("ERROR : no bio factor ! or nbr of bio factors exeed 3!")
-              
+
               # message <- "noBio"
-              # 
+              #
               # group_count  <- object@List.Factors[object@Factors.Type == "batch"] %>% as.data.frame() %>% table() %>% as.data.frame()
               # names(group_count)[names(group_count) == "Freq"] <- "Count"
               # output[["count"]]   <- group_count
             }
             if (table(object@Factors.Type)["batch"] == 0){
-              
+
               stop("ERROR : no replicate!")
             }
-            
+
             # count occurence of bio conditions
             if(is.null(colnames)){
-              
+
               ExpDesign <- object@ExpDesign
             }
             else{
-              
+
               ExpDesign <- dplyr::filter(object@ExpDesign, rownames(object@ExpDesign) %in% colnames)
             }
-            
-           
+
+
 
             group_count <- ExpDesign[object@Factors.Type == "Bio"] %>% dplyr::group_by(temperature, imbibition) %>% dplyr::count(name = "Count")
             #group_count  <- object@List.Factors[object@Factors.Type == "Bio"] %>% as.data.frame() %>% table() %>% as.data.frame()
 
-           
+
 
             # check presence of relicat / batch
             # check if design is complete
@@ -160,7 +159,7 @@ setMethod(f="CheckExpDesignCompleteness",
                        dplyr::if_else(length(unique(group_count$Count)) != 1, "noBalan",
                        dplyr::if_else(max(group_count$Count) < 3,             "lowRep" , "true")))
 
-          
+
 
             output[["count"]]   <- group_count
             # switch pour message complet
@@ -427,20 +426,20 @@ setMethod(f="getContrastMatrix",
 #'
 
 # FlomicsMultiAssay.constructor <- function(inputs, Design){
-# 
+#
 #   # if input == NULL
-# 
+#
 #   SummarizedExperimentList <- list()
 #   listmap  <- list()
 #   omicList <- list()
 #   k <- 0
 #   for (dataName in names(inputs)){
-# 
+#
 #     k <- k+1
-# 
+#
 #     ## construct SummarizedExperiment for each data
 #     abundance <- read.table(inputs[[dataName]][["dataFile"]], header = TRUE, row.names = 1)
-# 
+#
 #     if(!is.null(inputs[[dataName]][["qcFile"]])){
 #       print("# ... metadata QC...")
 #       QCmat <- read.table(inputs[[dataName]][["qcFile"]], header = TRUE)
@@ -450,38 +449,38 @@ setMethod(f="getContrastMatrix",
 #                           colname = colnames(abundance),
 #                           stringsAsFactors = FALSE)
 #     }
-# 
+#
 #     # groups
-# 
+#
 #     SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
 #                                                                                        colData  = QCmat,
 #                                                                                        metadata = list(omicType = inputs[[dataName]][["omicType"]],
 #                                                                                                        Groups   = Design@Groups))
-# 
+#
 #     # metadata for sampleMap for MultiAssayExperiment
 #     listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
 #                                       colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
 #                                       stringsAsFactors = FALSE)
-# 
+#
 #     #
 #     omicType <- inputs[[dataName]][["omicType"]]
-# 
+#
 #     colnames <- c(names(omicList[[omicType]]), k)
 #     omicList[[omicType]] <- c(omicList[[omicType]] ,dataName)
 #     names(omicList[[omicType]]) <- colnames
-# 
+#
 #   }
-# 
+#
 #   FlomicsMultiAssay <- MultiAssayExperiment::MultiAssayExperiment(experiments = SummarizedExperimentList,
 #                                                                   colData     = Design@ExpDesign,
 #                                                                   sampleMap   = MultiAssayExperiment::listToMap(listmap),
 #                                                                   metadata    = list(design = Design,
 #                                                                                      colDataStruc = c(n_dFac = dim(Design@ExpDesign)[2], n_qcFac = 0),
 #                                                                                      omicList = omicList))
-# 
+#
 #   return(FlomicsMultiAssay)
 # }
-# 
+#
 # #
 # #
 
@@ -532,20 +531,20 @@ setMethod(f="getContrastMatrix",
 #'
 
 FlomicsMultiAssay.constructor <- function(inputs, Design, projectName){
-  
+
   # if input == NULL
-  
+
   SummarizedExperimentList <- list()
   listmap  <- list()
   omicList <- list()
   k <- 0
   for (dataName in names(inputs)){
-    
+
     k <- k+1
-    
+
     ## construct SummarizedExperiment for each data
     abundance <- inputs[[dataName]][["data"]]
-    
+
     if(!is.null(inputs[[dataName]][["meta"]])){
       QCmat <- inputs[[dataName]][["meta"]]
     }
@@ -554,59 +553,57 @@ FlomicsMultiAssay.constructor <- function(inputs, Design, projectName){
                           colname = colnames(abundance),
                           stringsAsFactors = FALSE)
     }
-    
-    
+
+
     ###### remove row with sum == 0
     matrix <- as.matrix(abundance)
     ## nbr of genes with 0 count
     genes_flt0  <- rownames(matrix[rowSums(matrix) <= 0, ])
     ## remove 0 count
     matrix.filt  <- matrix[rowSums(matrix)  > 0, ]
-    
+
     ##### create groups for SE
-    
+
     # groups <- Design@Groups %>%
     #   dplyr::mutate(samples = rownames(.)) %>%
     #   tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
-    
+
     ###### create SE object
     SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance=as.matrix(matrix.filt)),
                                                                                        colData  = QCmat,
                                                                                        metadata = list(omicType = inputs[[dataName]][["omicType"]],
-                                                                                                         Groups = Design@Groups, 
+                                                                                                         Groups = Design@Groups,
                                                                                                        rowSums.zero = genes_flt0))
     names(assays(SummarizedExperimentList[[dataName]])) <- c(dataName)
-    
+
     # metadata for sampleMap for MultiAssayExperiment
     listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
                                       colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
                                       stringsAsFactors = FALSE)
-    
+
     #
     omicType <- inputs[[dataName]][["omicType"]]
-    
+
     colnames <- c(names(omicList[[omicType]]), k)
     omicList[[omicType]] <- c(omicList[[omicType]] ,dataName)
     names(omicList[[omicType]]) <- colnames
-    
-  }
-  
-  
 
-  
-  prepFlomicsMultiAssay <- prepMultiAssay( ExperimentList = SummarizedExperimentList, 
-                                           sampleMap      = MultiAssayExperiment::listToMap(listmap), 
+  }
+
+
+  prepFlomicsMultiAssay <- prepMultiAssay( ExperimentList = SummarizedExperimentList,
+                                           sampleMap      = MultiAssayExperiment::listToMap(listmap),
                                            colData        = Design@ExpDesign, outFile = stdout())
-  
-  
+
+
   FlomicsMultiAssay <- MultiAssayExperiment::MultiAssayExperiment(experiments = prepFlomicsMultiAssay$experiments,
                                                                   colData     = prepFlomicsMultiAssay$colData,
                                                                   sampleMap   = prepFlomicsMultiAssay$sampleMap,
                                                                   metadata    = list(colDataStruc = c(n_dFac = dim(prepFlomicsMultiAssay$colData)[2], n_qcFac = 0),
                                                                                      omicList = omicList, projectName = projectName, design = Design))
-  
-  
-  
+
+
+
   return(FlomicsMultiAssay)
 }
 
@@ -630,19 +627,19 @@ setMethod(f="RunPCA",
           signature="SummarizedExperiment",
           definition <- function(object){
 
-            # if the data has undergone a normalization (RNAseq data) 
+            # if the data has undergone a normalization (RNAseq data)
             if(! is.null(object@metadata[["Normalization"]]$coefNorm)){
               pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
                                    scale=object@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
               object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
-              
+
             }
-            # if the data has undergone a transformation (meta or prot data) 
+            # if the data has undergone a transformation (meta or prot data)
             else if(! is.null(object@metadata$transform_method)){
               pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE) + 1)
               object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = 5,graph=F)
             }
-            
+
             # if no transformation
             else{
               pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE) + 1)
@@ -666,17 +663,17 @@ setMethod(f="RunPCA",
 setMethod(f="Library_size_barplot.plot",
           signature="SummarizedExperiment",
           definition <- function(object){
-            
+
             value    <- NULL
             warnning <- NULL
-            
+
             if (object@metadata$omicType != "RNAseq"){
               warnning <- "WARNING : data are not RNAseq!"
             }
-            
+
             abundances <- SummarizedExperiment::assay(object)
             samples    <- colnames(abundances)
-            
+
             # normalized data
             if(! is.null(object@metadata$Normalization)){
               pseudo  <- scale(SummarizedExperiment::assay(object), center=FALSE,
@@ -690,11 +687,11 @@ setMethod(f="Library_size_barplot.plot",
               ylab <- "Total read count per sample (method : TMM)"
               title <- "Raw data"
             }
-            
+
             libSizeNorm <- data.frame ( "value" = pseudo , "samples"=names(pseudo)) %>% dplyr::full_join(object@metadata$Groups, by="samples")
-            
+
             libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
-            
+
             p <- ggplot(libSizeNorm, aes(x=samples,y=value, fill=groups)) + geom_bar( stat="identity" ) + ylab(ylab) +
               theme(axis.text.x      = element_text(angle = 45, hjust = 1), legend.position  = "none") + labs(x = "") + ggtitle(title)
             #axis.text.x     = element_blank(),
@@ -702,7 +699,7 @@ setMethod(f="Library_size_barplot.plot",
             #legend.key.size = unit(0.3, "cm"))
             #legend.text     = element_text(size=5))
             print(p)
-            
+
           })
 
 
@@ -718,16 +715,16 @@ setMethod(f="Library_size_barplot.plot",
 setMethod(f="Data_Distribution_Density.plot",
           signature="SummarizedExperiment",
           definition <- function(object){
-            
+
             switch (object@metadata$omicType,
                     "RNAseq" = {
-                      
+
                       # before normalization
                       if(is.null(object@metadata[["Normalization"]]$coefNorm)){
-                        pseudo <- log2(SummarizedExperiment::assay(object) + 1) 
+                        pseudo <- log2(SummarizedExperiment::assay(object) + 1)
                         y_lab  <- "log2(gene counts)"
                         title  <- "Raw data"
-                        
+
                       }
                       # after normalization
                       else{
@@ -736,12 +733,12 @@ setMethod(f="Data_Distribution_Density.plot",
                         y_lab  <- "log2(normalized gene counts)"
                         title  <- "Filtered and normalized (TMM) data"
                       }
-                      # 
+                      #
                       pseudo.gg <- pseudo %>% reshape2::melt()
                       colnames(pseudo.gg) <- c("features", "samples", "value")
-                      
-                      pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples") 
-                      
+
+                      pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples")
+
                       p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + xlab(y_lab) +
                         theme(legend.position='none') + ggtitle(title)
                     },
@@ -751,7 +748,7 @@ setMethod(f="Data_Distribution_Density.plot",
                         pseudo <- SummarizedExperiment::assay(object)
                         x_lab  <- "Protein abundance (?)"
                         title  <- "Raw data"
-                        
+
                       }
                       # after transformation
                       else{
@@ -759,26 +756,26 @@ setMethod(f="Data_Distribution_Density.plot",
                         switch (object@metadata$transform_method,
                                 "log2" = {
                                   pseudo <- SummarizedExperiment::assay(object)
-                                  x_lab  <- "Transformed protein abundance" 
+                                  x_lab  <- "Transformed protein abundance"
                                   title  <- "Transformed data (method : log2)" },
-                                
+
                                 "none" = {
                                   pseudo <- log2(SummarizedExperiment::assay(object) + 1)
-                                  x_lab  <- "Transformed protein abundance" 
+                                  x_lab  <- "Transformed protein abundance"
                                   title  <- "Transformed data (method : ?)"
-                                  
+
                                   }
                         )
-                        
-                        
-                        
+
+
+
                       }
-                      # 
+                      #
                       pseudo.gg <- pseudo %>% reshape2::melt()
                       colnames(pseudo.gg) <- c("features", "samples", "value")
-                      
+
                       pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples")
-                      
+
                       p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + xlab(x_lab) +
                         theme(legend.position='none') + ggtitle(title)
                     },
@@ -805,12 +802,12 @@ setMethod(f="Data_Distribution_Density.plot",
                                 }
                         )
                       }
-                      # 
+                      #
                       pseudo.gg <- pseudo %>% reshape2::melt()
                       colnames(pseudo.gg) <- c("features", "samples", "value")
-                      
+
                       pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples")
-                      
+
                       p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + xlab(x_lab) +
                         theme(legend.position='none') + ggtitle(title)
                     }
@@ -832,9 +829,9 @@ setMethod(f="Data_Distribution_Density.plot",
 setMethod(f= "abundanceBoxplot",
           signature = "SummarizedExperiment",
           definition <- function(object){
-            
+
             samples <- value <- NULL
-            
+
             # normalized data
             if(! is.null(object@metadata$Normalization)){
               pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
@@ -846,21 +843,21 @@ setMethod(f= "abundanceBoxplot",
               pseudo <- log2(SummarizedExperiment::assay(object)+1) %>% reshape2::melt()
               y_lab  <- "log2( gene counts)"
               title  <- "Filtred and normalized (TMM) data"
-              
+
             }
-            
+
             colnames(pseudo) <- c("feature", "samples", "value")
-            
+
             pseudo_bis <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples")
-            
+
             pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
-            
+
             # boxplot
             p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + ggplot2::geom_boxplot(aes(fill=groups)) +
               theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + xlab("") + ylab(y_lab) + ggtitle(title)
-            
+
             print(p)
-            
+
           }
 )
 
@@ -879,17 +876,17 @@ setMethod(f= "abundanceBoxplot",
 setMethod(f= "plotPCA",
           signature = "SummarizedExperiment",
           definition <- function(object, PCA, PCs=c(1,2), condition="groups"){
-            
+
             #
             PC1 <- paste("Dim.",PCs[1], sep="")
             PC2 <- paste("Dim.",PCs[2], sep="")
-            
+
             score     <- object@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
               dplyr::mutate(samples=row.names(.)) %>% dplyr::full_join(., object@metadata$Groups, by="samples")
-            
+
             var1 <- round(object@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digits=3)
             var2 <- round(object@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digits=3)
-            
+
             switch (PCA,
                     "raw"  = {title <- paste0("Raw ", object@metadata$omicType, " data")},
                     "norm" = {title <- switch (object@metadata$omicType,
@@ -898,8 +895,8 @@ setMethod(f= "plotPCA",
                                                "metabolomics" = {"Transformed proteomics data (log2)"}
                     )}
             )
-            
-            
+
+
             p <- ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
               ggplot2::geom_point(size=3) +
               ggplot2::geom_text(aes(label=samples), size=3, vjust = 0) +
@@ -910,9 +907,9 @@ setMethod(f= "plotPCA",
               theme(strip.text.x = element_text(size=8, face="bold.italic"),
                     strip.text.y = element_text(size=8, face="bold.italic")) +
               ggtitle(title)
-            
+
             print(p)
-            
+
           })
 
 
@@ -1279,7 +1276,7 @@ setMethod(f="RunDiffAnalysis",
 
 
             ListRes <- switch(DiffAnalysisMethod,
-                                        "edgeRglmfit"=edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
+                                        "edgeRglmfit"=try_rflomics(edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
                                                                     model_matrix    = model_matrix,
                                                                     group           = object@metadata$Normalization$coefNorm$group,
                                                                     lib.size        = object@metadata$Normalization$coefNorm$lib.size,
@@ -1287,20 +1284,32 @@ setMethod(f="RunDiffAnalysis",
                                                                     Contrasts.Sel   = object@metadata$DiffExpAnal[["contrasts"]],
                                                                     Contrasts.Coeff = design@Contrasts.Coeff,
                                                                     FDR             = 1,
-                                                                    clustermq=clustermq),
-                                          "limmalmFit"=limma.AnaDiff(count_matrix      = SummarizedExperiment::assay(object),
+                                                                    clustermq=clustermq)),
+                                          "limmalmFit"=try_rflomics(limma.AnaDiff(count_matrix      = SummarizedExperiment::assay(object),
                                                                      model_matrix      = model_matrix,
                                                                      Contrasts.Sel     = object@metadata$DiffExpAnal[["contrasts"]],
                                                                      Contrasts.Coeff   = design@Contrasts.Coeff,
                                                                      Adj.pvalue.cutoff = 1,
                                                                      Adj.pvalue.method = Adj.pvalue.method,
-                                                                     clustermq=clustermq))
+                                                                     clustermq=clustermq)))
 
 
-            ### RawDEFres: Raw results from the given diff method
-            object@metadata$DiffExpAnal[["RawDEFres"]] <- ListRes[["RawDEFres"]]
-            #names(ListRes[["TopDEF"]]) <- names( ListRes[["RawDEFres"]])
-            object@metadata$DiffExpAnal[["DEF"]] <- ListRes[["TopDEF"]]
+
+            if(! is.null(ListRes$value)){
+              if(! is.null(ListRes$value[["RawDEFres"]])){
+            object@metadata$DiffExpAnal[["results"]] <- TRUE
+            object@metadata$DiffExpAnal[["RawDEFres"]] <- ListRes$value[["RawDEFres"]]
+            object@metadata$DiffExpAnal[["DEF"]] <- ListRes$value[["TopDEF"]]
+              }else{
+              object@metadata$DiffExpAnal[["results"]] <- FALSE
+              object@metadata$DiffExpAnal[["ErrorStats"]] <- ListRes$value[["ErrorTab"]]
+              }
+            }else{
+              object@metadata$DiffExpAnal[["results"]] <- FALSE
+              object@metadata$DiffExpAnal[["Error"]] <- ListRes$error
+              object@metadata$DiffExpAnal[["ErrorStats"]] <- NULL
+            }
+
 
             return(object)
           })
@@ -1324,7 +1333,7 @@ setMethod(f="FilterDiffAnalysis",
           signature="SummarizedExperiment",
           definition <- function(object, Adj.pvalue.cutoff = 0.05){
 
-            if(is.null(object@metadata$DiffExpAnal)){
+            if(is.null(object@metadata$DiffExpAnal[["RawDEFres"]])){
               stop("can't filter the DiffExpAnal object because it doesn't exist")
             }
 

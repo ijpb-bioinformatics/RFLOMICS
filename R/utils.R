@@ -151,6 +151,7 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
   print("[cmd] fit.f <- edgeR::glmFit(dge,design=model_matrix)")
   fit.f <- edgeR::glmFit(dge,design=model_matrix)
 
+
   # test clustermq
   if(clustermq == TRUE){
 
@@ -158,27 +159,56 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
      # y is the model, Contrasts are stored in a matrix, by columns
 
       fx <- function(x){
-        edgeR::glmLRT(y, contrast = unlist(z[x,]))
+
+        try_rflomics <- function(expr) {
+          warn <- err <- NULL
+          value <- withCallingHandlers(
+            tryCatch(expr,
+                     error    =function(e){ err <<- e
+                     NULL
+                     }),
+            warning =function(w){ warn <<- w
+            invokeRestart("muffleWarning")}
+          )
+          list(value=value, warning=warn, error=err)
+        }
+
+        try_rflomics(edgeR::glmLRT(y, contrast = unlist(z[x,])))
       }
 
-      ListRes[[1]] <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
+      ResGlm <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
                               export=list(y=fit.f,z=Contrasts.Coeff),
                               n_jobs=length(Contrasts.Sel$contrast),pkgs="edgeR")
 
   }
   else{
     print("[cmd] apply model to each contrast")
-     ListRes[[1]] <-  lapply(Contrasts.Sel$contrast, function(x){
-       edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,]))
+     ResGlm <-  lapply(Contrasts.Sel$contrast, function(x){
+       try_rflomics(edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,])))
 
      })
   }
 
-  # Name the table of raw results
+    # Create a table of jobs summary
+    error.list <- unlist(lapply(ResGlm, function(x){
+      ifelse(is.null(x$error),"success",as.character(x$error))
+    }))
 
-  names(ListRes[[1]]) <- Contrasts.Sel$contrastName
+    jobs.tab <- data.frame(H=Contrasts.Sel$contrast , error.message=as.factor(error.list))
 
-  # ListRes[[2]] => TOPDGE => TopDFE
+    jobs.tab.error <- jobs.tab %>% dplyr::filter(., error.message != "success")
+
+    # If no error
+    if(dim(jobs.tab.error)[1]==0){
+
+    ListRes[[1]] <- lapply(ResGlm,function(x){
+      x$value
+    })
+
+    # Name the table of raw results
+     names(ListRes[[1]]) <- Contrasts.Sel$contrastName
+
+    # ListRes[[2]] => TOPDGE => TopDFE
 
     TopDGE <- lapply(ListRes[[1]], function(x){
 
@@ -193,7 +223,6 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
 
   names(ListRes[[2]]) <- names(ListRes[[1]])
 
-
   # Mutate column name to render the anadiff results generic
   # Initial column Name:  gene_name  logFC      logCPM        LR        PValue           FDR
   ListRes[[2]] <- lapply(ListRes[[2]], function(x){
@@ -202,6 +231,12 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
   })
 
   names(ListRes) <- c("RawDEFres","TopDEF")
+  }
+  else{
+    ListRes[[1]] <- NULL
+    ListRes[[2]] <- jobs.tab.error
+    names(ListRes) <- c("RawDEFres","ErrorTab")
+    }
 
   return(ListRes)
 }
@@ -229,24 +264,54 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
   # test clustermq
   if(clustermq == TRUE){
 
+    fx <- function(x){
+
+      try_rflomics <- function(expr) {
+        warn <- err <- NULL
+        value <- withCallingHandlers(
+          tryCatch(expr,
+                   error    =function(e){ err <<- e
+                   NULL
+                   }),
+          warning =function(w){ warn <<- w
+          invokeRestart("muffleWarning")}
+        )
+        list(value=value, warning=warn, error=err)
+      }
+
     # Fonction to run on contrast per job
     # y is the model, Contrasts are stored in a matrix, by columns
 
-    fx <- function(x){
-      limma::contrasts.fit(y, contrasts  = unlist(z[x,]))
+      try_rflomics(limma::contrasts.fit(y, contrasts  = unlist(z[x,])))
     }
 
-    ListRes[[1]] <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
+    ResGlm  <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
                                  export=list(y=fit,z=Contrasts.Coeff),
                                  n_jobs=length(Contrasts.Sel$contrast),pkgs="edgeR")
 
   }
   else{
     print("[cmd] fit contrasts")
-    ListRes[[1]] <-  lapply(Contrasts.Sel$contrast, function(x){
-                                limma::contrasts.fit(fit, contrasts  = as.vector(unlist(Contrasts.Coeff[x,])))
+    ResGlm <-  lapply(Contrasts.Sel$contrast, function(x){
+      try_rflomics(limma::contrasts.fit(fit, contrasts  = as.vector(unlist(Contrasts.Coeff[x,]))))
                       })
   }
+
+  # Create a table of jobs summary
+  error.list <- unlist(lapply(ResGlm, function(x){
+    ifelse(is.null(x$error),"success",as.character(x$error))
+  }))
+
+  jobs.tab <- data.frame(H=Contrasts.Sel$contrast , error.message=as.factor(error.list))
+
+  jobs.tab.error <- jobs.tab %>% dplyr::filter(., error.message != "success")
+
+  # If no error
+  if(dim(jobs.tab.error)[1]==0){
+
+    ListRes[[1]] <- lapply(ResGlm,function(x){
+      x$value
+    })
 
   # Name the table of raw results
 
@@ -273,6 +338,14 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
   names(ListRes[[2]]) <- names(ListRes[[1]])
 
   names(ListRes) <- c("RawDEFres","TopDEF")
+
+  }
+  else{
+    ListRes[[1]] <- NULL
+    ListRes[[2]] <- jobs.tab.error
+    names(ListRes) <- c("RawDEFres","ErrorTab")
+  }
+
 
   return(ListRes)
 }

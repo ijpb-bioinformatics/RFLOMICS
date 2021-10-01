@@ -17,7 +17,7 @@ sidebar <- dashboardSidebar(
               menuItem(text = "Welcome", tabName = "coverPage", icon = icon('dna')),
               menuItem(text = "Load Data", tabName = "importData", icon = icon('download')),
               menuItemOutput(outputId = "SetUpModelMenu"),
-              
+
               # menuItem(text = "Experimental Design", tabName = "ExpDesign", icon = icon('vials'),
               #          menuSubItem(text = "Import design",  tabName = "importExpDesign"),
               #          menuItemOutput(outputId = "SetUpModelMenu")
@@ -46,13 +46,13 @@ body <- dashboardBody({
                # shinyDirButton(id = "dir0", label = "Input directory", title = "Upload"),
 
         ),
-        
+
         #### Import data       ####
         ###########################
         tabItem(tabName = "importData",
-                
+
                 LoadOmicsDataUI("data")
-    
+
         ),
 
         #### Set Up statistical model & hypothesis ####

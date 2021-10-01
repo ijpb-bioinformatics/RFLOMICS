@@ -5,7 +5,7 @@
 
 
 QCNormalizationTabUI <- function(id){
-  
+
   #name space for id
   ns <- NS(id)
   tagList(
@@ -16,10 +16,10 @@ QCNormalizationTabUI <- function(id){
       box(width = 4, title = "Setting", status = "warning", solidHeader = TRUE,
           uiOutput(ns("selectSamplesUI")),
           uiOutput(ns("completenessUI")),
-          uiOutput(ns("paramUI")) 
+          uiOutput(ns("paramUI"))
           ),
       box(width = 8, title = "Exploratory of Biological and Technical variability", solidHeader = TRUE, status = "warning",
-          uiOutput(ns("tabPanelUI")) 
+          uiOutput(ns("tabPanelUI"))
           )
     )
   )
@@ -28,12 +28,12 @@ QCNormalizationTabUI <- function(id){
 
 
 QCNormalizationTab <- function(input, output, session, dataset){
-  
+
   #### sample list  ####
   output$selectSamplesUI <- renderUI( {
-    
+
     sampleList <- colnames(FlomicsMultiAssay@ExperimentList[[dataset]])
-    
+
     # sample list :
     pickerInput(
       inputId  = session$ns("selectSamples"),
@@ -43,20 +43,20 @@ QCNormalizationTab <- function(input, output, session, dataset){
       multiple = TRUE,
       selected = sampleList)
   })
-  
+
   #### dataset completeness ####
   output$completenessUI <- renderUI({
 
     SE <- FlomicsMultiAssay@ExperimentList[[dataset]]
     completeCheckRes <<- CheckExpDesignCompleteness(Design, input$selectSamples)
-    
+
     if(completeCheckRes[["message"]][1] == "false"){
       showModal(modalDialog(title = "Error message", completeCheckRes[["message"]][2]))
-      
+
     }
     # continue only if message is true or warning
     validate({ need(completeCheckRes[["message"]][1] != "false" ,message="ok") })
-    
+
     list(
          # plot of count per condition
          renderPlot( plotExperimentalDesign(completeCheckRes[["count"]] )),
@@ -64,9 +64,9 @@ QCNormalizationTab <- function(input, output, session, dataset){
          hr()
     )
   })
-  
+
   output$paramUI <- renderUI({
-    
+
     paramRNAseq.list <- list(
 
          radioGroupButtons(inputId = session$ns("Filter_Strategy"), direction = "horizontal",
@@ -79,7 +79,7 @@ QCNormalizationTab <- function(input, output, session, dataset){
                       value=5, min = 1, max=50, step = 1 ),
 
          verbatimTextOutput(session$ns("FilterResults")),
-         
+
          hr(),
          selectInput(inputId  = session$ns("selectNormMethod"),
                      label    = "Normalization (method) :",
@@ -88,7 +88,7 @@ QCNormalizationTab <- function(input, output, session, dataset){
          hr(),
          actionButton(session$ns("Update"),"Update")
       )
-    
+
     paramProtMeta.list <- list(
         radioButtons(
           inputId  =session$ns("dataImputation"),
@@ -96,17 +96,17 @@ QCNormalizationTab <- function(input, output, session, dataset){
           choices=c("yes"="yes","no"="no"),
           selected="no"),
         hr(),
-        
+
         radioButtons(
           inputId  =session$ns("dataTransform"),
           label = "Does the data need to be transformed (log2) ?",
           choices=c("yes"="log2","no"="none"),
           selected="none"),
         hr(),
-        
+
         actionButton(session$ns("Update"),"Update")
     )
-    
+
     switch (FlomicsMultiAssay@ExperimentList[[dataset]]@metadata$omicType,
             "RNAseq"       = { paramRNAseq.list },
             "proteomics"   = { paramProtMeta.list },
@@ -121,15 +121,15 @@ QCNormalizationTab <- function(input, output, session, dataset){
               "RNAseq"       = { list(Filter_Strategy = "NbConditions", CPM_Cutoff = 5, NormMethod = "TMM") },
               "proteomics"   = { list(transform_method = "none") },
               "metabolomics" = { list(transform_method = "none") } )
-  
+
   FlomicsMultiAssay <<- process_data(FlomicsMultiAssay = FlomicsMultiAssay, dataset = dataset, samples = colnames(FlomicsMultiAssay@ExperimentList[[dataset]]), param.list = param.list)
 
-  
-  ## Exploratory of Biological and Technical variability 
+
+  ## Exploratory of Biological and Technical variability
   output$tabPanelUI <- renderUI({
-    
-    tabPanel.default.list <- list( 
-      
+
+    tabPanel.default.list <- list(
+
         tabPanel("Distribution (density)",
                   tags$br(),
                   tags$br(),
@@ -153,21 +153,21 @@ QCNormalizationTab <- function(input, output, session, dataset){
         ),
         tabPanel("Principal component analysis (2/2)", plotOutput(session$ns("QCdesignPCA")))
     )
-    
+
     tabPanel.list <- list()
-     switch(FlomicsMultiAssay@ExperimentList[[dataset]]@metadata$omicType, 
+     switch(FlomicsMultiAssay@ExperimentList[[dataset]]@metadata$omicType,
             "RNAseq" = {
               tabPanel.list <- c(
-                list( 
-                  tabPanel("Library size", 
+                list(
+                  tabPanel("Library size",
                          # library size plot
                          #column(4, plotOutput(ns("LibSize"),   height = "400%")),
                          column(12, plotOutput(session$ns("raw.LibSize"))),
                          column(12, plotOutput(session$ns("norm.LibSize")))),
-                  
-                  tabPanel("Data summary", 
+
+                  tabPanel("Data summary",
                          column(12, uiOutput(session$ns("RNAseqSummaryUI"))) ),
-                  
+
                   tabPanel("Distribution (boxplot)",
                          tags$br(),
                          tags$br(),
@@ -178,53 +178,53 @@ QCNormalizationTab <- function(input, output, session, dataset){
             },
             "proteomics" = {
               tabPanel.list <- c(
-                list( 
-                  tabPanel("Data summary", 
+                list(
+                  tabPanel("Data summary",
                          column(12, uiOutput(session$ns("ProtMetaSummaryUI"))) )
                 ),
                 tabPanel.default.list)
             },
             "metabolomics" = {
               tabPanel.list <- c(
-                list( 
-                  tabPanel("Data summary", 
+                list(
+                  tabPanel("Data summary",
                          column(12, uiOutput(session$ns("ProtMetaSummaryUI"))) )
                 ),
                 tabPanel.default.list)
             }
     )
-    
+
     # Exploratory of Biological and Technical variability
     column(12, do.call(what = tabsetPanel, args = tabPanel.list))
   })
-  
-  
+
+
   ## summary tabPanel
   # => RNAseq
   output$RNAseqSummaryUI <- renderUI({
-    
+
     NbGenes             <- length(names(FlomicsMultiAssay@ExperimentList[[dataset]]))
     NbGene.rowSums.zero <- length(FlomicsMultiAssay@ExperimentList[[dataset]]@metadata$rowSums.zero)
     NbGene.low.counts   <- length(FlomicsMultiAssay@ExperimentList[[paste0(dataset, ".filtred")]]@metadata$FilteredFeatures)
-    
+
     list(
     strong("Number of genes:"),
     renderPrint(NbGenes),
-    
+
     strong("Number of gene 0 expression:"),
     renderPrint(NbGene.rowSums.zero),
-    
+
     strong("Number of gene with low counts:"),
-    renderPrint(NbGene.low.counts) 
+    renderPrint(NbGene.low.counts)
     )
   })
-  
+
   # => prot or meta
   output$ProtMetaSummaryUI <- renderUI({
-    
+
     NbProt <- length(names(FlomicsMultiAssay@ExperimentList[[dataset]]))
     NbProtWoutNA <- dim(na.omit(assay(FlomicsMultiAssay@ExperimentList[[dataset]])))[1]
-    
+
     list(
       ## Nombre de prot
       strong("Number of Features:"),
@@ -232,52 +232,52 @@ QCNormalizationTab <- function(input, output, session, dataset){
       # Nombre de NA
       br(),
       strong("Number of features with at least 1 NA:"),
-      renderPrint(NbProt - NbProtWoutNA) 
+      renderPrint(NbProt - NbProtWoutNA)
     )
   })
-  
-  
+
+
   #### library size plot only for RNAseq data####
   # => raw data
   output$raw.LibSize <- renderPlot({
-    
+
     Library_size_barplot.plot(FlomicsMultiAssay@ExperimentList[[dataset]])
   })
-  
+
   # => normalized data
   output$norm.LibSize <- renderPlot({
-    
+
     Library_size_barplot.plot(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
   })
-  
+
   #### boxplot only for RNAseq data ####
   # => raw
   output$raw.boxplot <- renderPlot({
-    
+
     abundanceBoxplot(FlomicsMultiAssay@ExperimentList[[dataset]])
   })
-  
+
   # => norm
   output$norm.boxplot <- renderPlot({
-    
+
     abundanceBoxplot(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
   })
-  
+
   #### abundance distribution ####
   # => raw for all data
   output$raw.CountDist <- renderPlot(height = 300, {
-    
+
     Data_Distribution_Density.plot(FlomicsMultiAssay@ExperimentList[[dataset]])
   })
-  
+
   # => display only for normalized RNAseq data
   if (FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$omicType == "RNAseq"){
-    
+
       output$norm.CountDist <- renderPlot(height = 300, {
         Data_Distribution_Density.plot(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
       })
   }
-  
+
   #### PCA analysis ####
   # select PCA axis for plot
   # update/adapt PCA axis
@@ -286,15 +286,12 @@ QCNormalizationTab <- function(input, output, session, dataset){
   # select factors for color PCA plot
   callModule(RadioButtonsCondition, "rawData")
 
-<<<<<<< HEAD
-  # run PCA plot
-  output$QCdesignPCARaw <- renderPlot({
+
     print("# 6 - Compute PCA")
-=======
+
   #### PCA plot  ####
   # => raw
   output$raw.PCAcoord <- renderPlot({
->>>>>>> 5bda9608e630797170273229721721cd61d0483d
     FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
     PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
     PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])
@@ -311,20 +308,20 @@ QCNormalizationTab <- function(input, output, session, dataset){
           PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
           PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])
           condGroup <- input$`rawData-condColorSelect`[1]
-          
+
           RFLOMICS::plotPCA(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
         })
   }
-  
-  
+
+
   # # save current PCA plot with fixed axis & color
   # ## screenShot
   # observeEvent(input$screenshotPCA_QC, {
-  # 
+  #
   #   PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
   #   PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])
   #   condGroup <- input$`rawData-condColorSelect`[1]
-  # 
+  #
   #   # file.copy(file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_tmp_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")),
   #   #           file.path(tempdir(), paste0(dataset,"_PCAdesign_raw_PC", PC1.value,"_PC", PC2.value, "_", condGroup, ".png")),
   #   #           overwrite = TRUE, recursive = FALSE, copy.mode = TRUE, copy.date = FALSE)
@@ -339,14 +336,14 @@ QCNormalizationTab <- function(input, output, session, dataset){
 
   # #### PCA analysis QCdata ####
   # output$QCdata <- renderPlot({
-  # 
+  #
   #   mvQCdata(FlomicsMultiAssay,data=dataset,PCA="raw",axis=5,
   #            pngFile=file.path(tempdir(), paste0(dataset,"_PCAmetaCorrRaw.png")))
   # })
-  
-  
-  
-  
+
+
+
+
   observeEvent(input$Update, {
 
     # update processing data
@@ -376,10 +373,10 @@ QCNormalizationTab <- function(input, output, session, dataset){
 
     # => normalized data
     output$norm.LibSize <- renderPlot({
-      
+
       Library_size_barplot.plot(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
     })
-    
+
     #### abundance distribution ####
     output$norm.CountDist <- renderPlot(height = 300, {
 
@@ -396,7 +393,7 @@ QCNormalizationTab <- function(input, output, session, dataset){
     output$norm.PCAcoord <- renderPlot({
 
       FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
-      
+
       PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
       PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])
       condGroup <- input$`rawData-condColorSelect`[1]
@@ -422,10 +419,10 @@ QCNormalizationTab <- function(input, output, session, dataset){
   #
   #
   #
-  
-  
+
+
   return(input)
-  
+
 }
 
 
@@ -436,12 +433,12 @@ QCNormalizationTab <- function(input, output, session, dataset){
 process_data <- function(FlomicsMultiAssay, dataset, samples , param.list = list(Filter_Strategy = "NbConditions", CPM_Cutoff = 1, NormMethod = "TMM", transform_method = "none")){
   print("# 7- Data processing...")
   SE <- FlomicsMultiAssay@ExperimentList[[dataset]]
-  
+
   print("# => select samples")
   SE.new <- SE[, SE$primary %in% samples]
-  
+
   SE.new@metadata$Groups <- dplyr::filter(SE@metadata$Groups, samples %in% SE.new$primary)
-  
+
    switch(SE.new@metadata$omicType,
           "RNAseq" = {
              #### Filter low abundance ####
@@ -464,7 +461,7 @@ process_data <- function(FlomicsMultiAssay, dataset, samples , param.list = list
              SE.processed <- TransformData(SE.new, transform_method = param.list[["transform_method"]])
          }
        )
-  
+
   FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <- SE.processed
   return(FlomicsMultiAssay)
 }
