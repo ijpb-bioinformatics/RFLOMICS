@@ -48,22 +48,14 @@ projectName = "ecossed"
 ```
 
 * **Load** the experimental design file.
-
-This file provides the experimental plan table. The first column indicates the sample names. Next columns indicate experimental conditions (called biological factor or replicate factor) and metadata (optional). Each row describes a sample by specifying the level for each experimental condition.
-This file is edited by the user and must contain a header with explicit column names.
-To  avoid  errors  during  the script  execution, it is preferable that each modality description starts with a letter (for example, for a factor Month, it is better to write M1 rather than 1).
 ```{r ImportDesign}
 
 ExpDesign <- read.table(file= paste(path.package("RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt",sep=""),
                           header = TRUE,row.names = 1, sep = "\t")
-ExpDesign
+
 ```
 
 * **Load** the omics data files
-
-For each omics : 
-1) The fist file **(mandatory)** provide matrix-likes of abundance of omics data : read counts per genes for RNAseq data, intensity of proteins for proteomics data, intensity of metabolites for metabolomics data. The first column indicates feature (gene, protein, metabolite) names, Header of matrix indicates sample names. 
-2) The second file **(optional)** provide supplementary information (metadata) for each sample (to develop).
 
 ```{r ImportOmics}
 
@@ -75,7 +67,6 @@ geneCount <- read.table(file   = file.path(path = path.package("RFLOMICS"), file
 # metaAbundance <- read.table(file = file.path(path = path.package("RFLOMICS"), file ="/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"),
 #                             header = TRUE,row.names = 1, sep = "\t")
 
-head(geneCount)
 ```
 
 * **Load** annotation file(s) for enrichment analysis.
@@ -90,7 +81,6 @@ annot.genes <- read.table(file   = file.path(path=path.package("RFLOMICS"), file
                           header = TRUE, sep="\t", )
 colnames(annot.genes) <- c("geneID", "Term", "Name", "Domain")
 
-head(annot.genes)
 ```
 
 

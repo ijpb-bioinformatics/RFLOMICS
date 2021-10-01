@@ -19,14 +19,16 @@ navbar:
     articles:
       text: Articles
       menu:
+      - text: RFLOMICS input data
+        href: articles/RFLOMICS-input-data.html
       - text: RFLOMICS contrast
         href: articles/RFLOMICS-contrast.html
       - text: RFLOMICS install
         href: articles/RFLOMICS-install.html
-      - text: RFLOMICS input data
-        href: articles/RFLOMICS-input-data.html
       - text: RFLOMICS data management
         href: articles/RFLOMICS-data-management.html
+      - text: RFLOMICS benchmark coseq
+        href: articles/RFLOMICS-benchmark-coseq.html  
     tutorials:
       text: Tutorials
       menu:
@@ -44,54 +46,81 @@ template:
   params:
     bootswatch: flatly
 
+
+
+
 reference:
-- title: All functions
+
+- title: Set statistical framework
   contents:
-  - '`CheckExpDesignCompleteness,ExpDesign-method`'
-  - '`Data_Distribution_Density.plot,SummarizedExperiment-method`'
-  - '`DiffAnal.plot,SummarizedExperiment-method`'
-  - '`EnrichmentHyperG`'
   - '`ExpDesign-Constructor`'
   - '`ExpDesign-class`'
-  - '`FilterDiffAnalysis,SummarizedExperiment-method`'
-  - '`FilterLowAbundance,SummarizedExperiment-method`'
-  - '`FlomicsMultiAssay.constructor`'
   - '`GetDesignFromNames`'
   - '`GetModelFormulae`'
-  - '`Library_size_barplot.plot,SummarizedExperiment-method`'
-  - '`MA.plot`'
-  - '`RunDiffAnalysis,SummarizedExperiment-method`'
-  - '`RunNormalization,SummarizedExperiment-method`'
-  - '`RunPCA,SummarizedExperiment-method`'
-  - '`TMM.Normalization`'
-  - '`TransformData,SummarizedExperiment-method`'
-  - '`abundanceBoxplot,SummarizedExperiment-method`'
   - '`assignVectorToGroups`'
   - '`colorPlot`'
   - '`computeGroupVector`'
-  - '`coseq.y_profile.one.plot`'
   - '`defineAllInteractionContrasts`'
   - '`defineAllSimpleContrasts`'
   - '`defineInteractionConstrastForPairsOfFactors`'
   - '`define_averaged_contrasts`'
   - '`define_partOfInteractionContrast_df`'
   - '`define_partOfSimpleContrast_df`'
-  - '`edgeR.AnaDiff`'
   - '`getContrastMatrix,ExpDesign-method`'
-  - '`getDEGlist_for_coseqAnalysis`'
   - '`getExpressionContrast,ExpDesign-method`'
-  - '`limma.AnaDiff`'
+  - '`simpleContrastForOneFactor`'
+  - '`returnContrastCoefficients`'
+
+- title: Manage data
+  contents:
+  - '`FlomicsMultiAssay.constructor`'
+
+- title: QC
+  contents:
+  - '`Data_Distribution_Density.plot,SummarizedExperiment-method`'
+  - '`Library_size_barplot.plot,SummarizedExperiment-method`'
+  - '`RunPCA,SummarizedExperiment-method`'
+  - '`abundanceBoxplot,SummarizedExperiment-method`'
+  - '`CheckExpDesignCompleteness,ExpDesign-method`'
   - '`mvQCdata,MultiAssayExperiment-method`'
   - '`mvQCdesign,MultiAssayExperiment-method`'
   - '`plotDistr`'
   - '`plotExperimentalDesign`'
   - '`plotPCA,SummarizedExperiment-method`'
-  - '`pvalue.enrichment.plot`'
+  
+- title: Filtering and Normalization (RNAseq)
+  contents:
+  - '`FilterLowAbundance,SummarizedExperiment-method`'
+  - '`RunNormalization,SummarizedExperiment-method`'
+  - '`TMM.Normalization`'
+  
+- title: Transformation (proteomics & metabolomics)
+  contents:
+  - '`TransformData,SummarizedExperiment-method`'
+
+- title: Differential analysis
+  contents:
+  - '`DiffAnal.plot,SummarizedExperiment-method`'
+  - '`FilterDiffAnalysis,SummarizedExperiment-method`'
+  - '`RunDiffAnalysis,SummarizedExperiment-method`'
+  - '`edgeR.AnaDiff`'
+  - '`getDEGlist_for_coseqAnalysis`'
+  - '`limma.AnaDiff`'
   - '`pvalue.plot`'
-  - '`returnContrastCoefficients`'
-  - '`runAnnotationEnrichment,SummarizedExperiment-method`'
-  - '`runCoExpression,SummarizedExperiment-method`'
+  - '`MA.plot`'
+- title: Co-expression analysis
+  contents:
+  - '`coseq.y_profile.one.plot`'
+  - '`pvalue.enrichment.plot`'
   - '`runCoseq`'
-  - '`simpleContrastForOneFactor`'
+  - '`runCoExpression,SummarizedExperiment-method`'
+
+- title: Annotation & Enrichment
+  contents:
+  - '`EnrichmentHyperG`'
+  - '`runAnnotationEnrichment,SummarizedExperiment-method`'
+
+- title: others
+  contents: 
   - '`try_rflomics`'
 

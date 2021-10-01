@@ -1,8 +1,8 @@
 ---
-title: "RFLOMICS"
+title: "RFLOMICS-benchmark-coseq"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{RFLOMICS}
+  %\VignetteIndexEntry{RFLOMICS-benchmark-coseq}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -17,5 +17,3 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(RFLOMICS)
 ```
-
-![alt text here](Input1.png)

@@ -17,3 +17,129 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(RFLOMICS)
 ```
+
+* **Load** the experimental design file.
+```{r ImportDesign}
+
+ExpDesign <- read.table(file= paste(path.package("RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt",sep=""),
+                          header = TRUE,row.names = 1, sep = "\t")
+
+```
+
+# Set up the statistical framework
+
+* Define the type of factors (either 'biological'='Bio' or 'batch'='batch' effect factor) and the level of reference for each factor. 
+
+```{r EffectFactor}
+
+Design.Factors.Name <- names(ExpDesign)
+
+Design.Factors.Type <- c("batch","Bio","Bio")
+
+# Define the level of reference (factor modality) of each factor
+Design.Factors.Ref <- c("rep1","Medium","EI")
+
+# remplacer les 2 derniers parametres par un dataframe? 
+# Design.Factors <- data.frame(Design.Factors.Name = c("Repeat", "temperature", "imbibition"),
+#                              Design.Factors.Type = c("batch","Bio","Bio"),
+#                              Design.Factors.Ref  = c("rep1","Medium","EI"))
+
+```
+
+* Instantiate an object of class Design. 
+This object will contain all information about statistical framework.
+
+```{r refLevel}
+
+#Design <- ExpDesign.constructor(ExpDesign = ExpDesign, Design.Factors = Design.Factors)
+
+Design <- ExpDesign.constructor(ExpDesign = ExpDesign, refList = Design.Factors.Ref, typeList = Design.Factors.Type)
+
+```
+
+* Check the **completeness** of the design. You **must** have all possible combinations of factor's level. **Balanced design** is not required (presence of the same number of replicats for all possible combinations) but advised. You **must** also have at least one biological factor and 2 replicats.
+
+```{r CheckDesign, fig.cap="Design checking's result",fig.small=TRUE}
+
+# je pense qu'il faut fusionner en une seule fonction qui retourne une list(plot, warning, error)
+
+ completeCheckRes <- CheckExpDesignCompleteness(Design)
+
+ plotExperimentalDesign(completeCheckRes[["count"]])
+ 
+```
+
+In this example, you can see that the design is complete but not balanced.
+
+* **Choose** the statistical model associated to the experimental design.
+Models are written from the most complete one, with two orders interaction terms between the
+biological factors, to the simplest one. Batch factor did not appears in interaction terms.
+
+```{r ChooseModel}
+
+# remplacer aussi ici
+#Design.formulae <- GetModelFormulae(Design.Factors = Design.Factors)
+
+Design.formulae <- GetModelFormulae(Factors.Name = Design.Factors.Name,
+                                    Factors.Type = Design.Factors.Type)
+
+names(Design.formulae)
+ 
+```
+
+* 
+```{r getExpressionContrast}
+
+# Get all the possible contrasts from the complete model with interaction
+ Design <- getExpressionContrast(object = Design, 
+                                 model.formula = "~Repeat + temperature + imbibition + temperature:imbibition")
+
+```
+
+In this example, the complete model with the interaction term describes the experiment. 
+
+* **View** all the 'a priori' hypothesis you thought for the experiment. They are divided into 3 
+categories: simple, averaged and interaction contrasts
+
+  + **simple**: For a given biological factor, does a difference in gene expression between two factor's modalities exists when one modality has been fixed for all other factors.
+  + **averaged**: Does the difference in gene expression between two factor's modalities exists if we consider an average gene expression between the modalities for the other factor's ?
+  + **interaction**: Does the difference in gene expression between two factor's modalities is the same 
+  for the different modalities of other factors ?
+
+
+```{r viewContrast  }
+
+all.contrast <- rbind(
+  Design@Contrasts.List$simple[,     c("type", "contrastName", "contrast")],
+  Design@Contrasts.List$averaged[,   c("type", "contrastName", "contrast")],
+  Design@Contrasts.List$interaction[,c("type", "contrastName", "contrast")]
+)
+
+knitr::kable( all.contrast, caption = 'All Contrasts') 
+#DT::datatable(all.contrast, caption = 'All Contrasts')
+
+```
+
+* **Choose** the contrasts to test for differential analysis
+```{r select contrast}
+
+# select from column named "contrast"
+# In this example we select 3 simple contrasts
+contrastList <- c("(temperatureLow_imbibitionLI - temperatureElevated_imbibitionLI)",
+                  "(temperatureMedium_imbibitionLI - temperatureLow_imbibitionLI)",
+                  "(temperatureMedium_imbibitionEI - temperatureElevated_imbibitionEI)")
+
+# or all average contrasts
+contrastList <- Design@Contrasts.List$averaged$contrast
+
+```
+
+* **set coefficients**
+This function add slot "Contrasts.Coeff" at Design object. **Contrasts.Coeff** data.frame with coefficients foreach selected contrasts. 
+```{r SetContrast}
+
+ # Set the coefficients
+ Design <- getContrastMatrix(Design, contrastList)
+
+ knitr::kable(Design@Contrasts.Coeff) 
+```

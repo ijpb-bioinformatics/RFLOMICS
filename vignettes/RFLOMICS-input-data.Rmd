@@ -1,9 +1,6 @@
 ---
 title: "RFLOMICS-input-data"
-output: 
-  #rmarkdown::html_vignette
-  html_document:
-    df_print: paged
+output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{RFLOMICS-input-data}
   %\VignetteEngine{knitr::rmarkdown}
@@ -15,50 +12,72 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+
 ```
 
-```{r setup}
+```{r}
 library(RFLOMICS)
 ```
 
 
-# Input data
-
-* **Set** name project. 
-```{r}
-projectName = "ecossed"
-```
-
-* **Load** the experimental design file.
+## Experimental design
 
 This file provides the experimental plan table. The first column indicates the sample names. Next columns indicate experimental conditions (called biological factor or replicate factor) and metadata (optional). Each row describes a sample by specifying the level for each experimental condition.
 This file is edited by the user and must contain a header with explicit column names.
 To  avoid  errors  during  the script  execution, it is preferable that each modality description starts with a letter (for example, for a factor Month, it is better to write M1 rather than 1).
-```{r ImportDesign}
+```{r ImportDesign, output="asis"}
+ExpDesign.file <- file.path(path=path.package("RFLOMICS"), file="/ExamplesFiles/ecoseed/condition.txt")
+ExpDesign      <- read.table(file = ExpDesign.file, header = TRUE, row.names = 1, sep = "\t")
 
-ExpDesign <- read.table(file= paste(path.package("RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt",sep=""),
-                          header = TRUE,row.names = 1, sep = "\t")
-ExpDesign
+DT::datatable(ExpDesign)
 ```
 
-* **Load** the omics data files
+## Omics data
 
 For each omics : 
-1) The fist file **(mandatory)** provide matrix-likes of abundance of omics data : read counts per genes for RNAseq data, intensity of proteins for proteomics data, intensity of metabolites for metabolomics data. The first column indicates feature (gene, protein, metabolite) names, Header of matrix indicates sample names. 
+The fist file **(mandatory)** provide matrix-likes of abundance of omics data : read counts per genes for RNAseq data, intensity of proteins for proteomics data, intensity of metabolites for metabolomics data. The first column indicates feature (gene, protein, metabolite) names, Header of matrix indicates sample names. 
+
+### **RNAseq data**
+```{r RNAseq, output="asis"}
+
+geneCount.file <- file.path(path = path.package("RFLOMICS"), file ="/ExamplesFiles/ecoseed/transcriptome2_ecoseed.txt")
+geneCount      <- read.table(file = geneCount.file, header = TRUE, row.names = 1, sep = "\t")
+
+DT::datatable(geneCount[1:10, 1:5])
+```
+
+
+### **Proteomics data**
+```{r Proteomics, output="asis"}
+protAbundance.file <- file.path(path = path.package("RFLOMICS"), file ="/ExamplesFiles/ecoseed/proteome_ecoseed.txt")
+protAbundance <- read.table(file = protAbundance.file, header = TRUE, row.names = 1, sep = "\t")
+
+DT::datatable(protAbundance[1:10, 1:5])
+```
+
+
+### **Metabolomics data**
+```{r Metabolomics, output="asis"}
+metaAbundance.file <- file.path(path = path.package("RFLOMICS"), file ="/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")
+metaAbundance <- read.table(file = metaAbundance.file, header = TRUE, row.names = 1, sep = "\t")
+
+DT::datatable(metaAbundance[1:10, 1:5])
+```
+
+## metadata
 2) The second file **(optional)** provide supplementary information (metadata) for each sample (to develop).
 
-```{r ImportOmics}
+```{r metadata, output="asis"}
 
-geneCount <- read.table(file   = file.path(path = path.package("RFLOMICS"), file ="/ExamplesFiles/ecoseed/transcriptome2_ecoseed.txt"),
-                        header = TRUE, row.names = 1, sep = "\t")
+# metadata.file <- file.path(path = path.package("RFLOMICS"), file ="/ExamplesFiles/ecoseed/???")
+# metadata      <- read.table(file = metadata.file, header = TRUE, row.names = 1, sep = "\t")
+# 
+# DT::datatable(metadata[1:10, 1:5])
 
-# protAbundance <- read.table(file = file.path(path = path.package("RFLOMICS"), file ="/ExamplesFiles/ecoseed/proteome_ecoseed.txt"),
-#                             header = TRUE,row.names = 1, sep = "\t")
-# metaAbundance <- read.table(file = file.path(path = path.package("RFLOMICS"), file ="/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"),
-#                             header = TRUE,row.names = 1, sep = "\t")
-
-head(geneCount)
 ```
+
+
+## Annotation
 
 * **Load** annotation file(s) for enrichment analysis.
 
@@ -66,11 +85,11 @@ The column 1 => feature names (same used in abundance matrix)
 The column 2 => term IDs (ex. GO term accession : GO:0034599)
 The column 3 => term names (ex. GO term name : cellular response to oxidative stress)
 The column 4 => source or type (ex. GO domain : biological_process)
-```{r}
+```{r, output="asis"}
 
-annot.genes <- read.table(file   = file.path(path=path.package("RFLOMICS"), file="/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt"), 
-                          header = TRUE, sep="\t", )
+annot.genes.file <- file.path(path=path.package("RFLOMICS"), file="/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt")
+annot.genes <- read.table(file = annot.genes.file, header = TRUE, sep="\t", )
 colnames(annot.genes) <- c("geneID", "Term", "Name", "Domain")
 
-head(annot.genes)
+DT::datatable(annot.genes[1:10,])
 ```
