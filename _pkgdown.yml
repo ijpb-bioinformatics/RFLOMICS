@@ -1,0 +1,126 @@
+navbar:
+  structure:
+    left:
+    - intro
+    - reference
+    - articles
+    - tutorials
+    - news
+    right:
+    - icon: fa-github
+      href: https://forgemia.inra.fr/flomics/rflomics
+  components:
+    reference:
+      text: Reference
+      href: reference/index.html
+    intro:
+      text: Get started
+      href: articles/RFLOMICS.html
+    articles:
+      text: Articles
+      menu:
+      - text: RFLOMICS input data
+        href: articles/RFLOMICS-input-data.html
+      - text: RFLOMICS contrast
+        href: articles/RFLOMICS-contrast.html
+      - text: RFLOMICS install
+        href: articles/RFLOMICS-install.html
+      - text: RFLOMICS data management
+        href: articles/RFLOMICS-data-management.html
+      - text: RFLOMICS benchmark coseq
+        href: articles/RFLOMICS-benchmark-coseq.html  
+    tutorials:
+      text: Tutorials
+      menu:
+      - text: RFLOMICS command lines
+        href: articles/RFLOMICS-command-lines.html
+
+authors:
+  IJPB Bioinfo:
+    href: https://forgemia.inra.fr/flomics/rflomics
+
+development:
+  mode: unreleased
+  
+template:
+  params:
+    bootswatch: flatly
+
+
+
+
+reference:
+
+- title: Set statistical framework
+  contents:
+  - '`ExpDesign-Constructor`'
+  - '`ExpDesign-class`'
+  - '`GetDesignFromNames`'
+  - '`GetModelFormulae`'
+  - '`assignVectorToGroups`'
+  - '`colorPlot`'
+  - '`computeGroupVector`'
+  - '`defineAllInteractionContrasts`'
+  - '`defineAllSimpleContrasts`'
+  - '`defineInteractionConstrastForPairsOfFactors`'
+  - '`define_averaged_contrasts`'
+  - '`define_partOfInteractionContrast_df`'
+  - '`define_partOfSimpleContrast_df`'
+  - '`getContrastMatrix,ExpDesign-method`'
+  - '`getExpressionContrast,ExpDesign-method`'
+  - '`simpleContrastForOneFactor`'
+  - '`returnContrastCoefficients`'
+
+- title: Manage data
+  contents:
+  - '`FlomicsMultiAssay.constructor`'
+
+- title: QC
+  contents:
+  - '`Data_Distribution_Density.plot,SummarizedExperiment-method`'
+  - '`Library_size_barplot.plot,SummarizedExperiment-method`'
+  - '`RunPCA,SummarizedExperiment-method`'
+  - '`abundanceBoxplot,SummarizedExperiment-method`'
+  - '`CheckExpDesignCompleteness,ExpDesign-method`'
+  - '`mvQCdata,MultiAssayExperiment-method`'
+  - '`mvQCdesign,MultiAssayExperiment-method`'
+  - '`plotDistr`'
+  - '`plotExperimentalDesign`'
+  - '`plotPCA,SummarizedExperiment-method`'
+  
+- title: Filtering and Normalization (RNAseq)
+  contents:
+  - '`FilterLowAbundance,SummarizedExperiment-method`'
+  - '`RunNormalization,SummarizedExperiment-method`'
+  - '`TMM.Normalization`'
+  
+- title: Transformation (proteomics & metabolomics)
+  contents:
+  - '`TransformData,SummarizedExperiment-method`'
+
+- title: Differential analysis
+  contents:
+  - '`DiffAnal.plot,SummarizedExperiment-method`'
+  - '`FilterDiffAnalysis,SummarizedExperiment-method`'
+  - '`RunDiffAnalysis,SummarizedExperiment-method`'
+  - '`edgeR.AnaDiff`'
+  - '`getDEGlist_for_coseqAnalysis`'
+  - '`limma.AnaDiff`'
+  - '`pvalue.plot`'
+  - '`MA.plot`'
+- title: Co-expression analysis
+  contents:
+  - '`coseq.y_profile.one.plot`'
+  - '`pvalue.enrichment.plot`'
+  - '`runCoseq`'
+  - '`runCoExpression,SummarizedExperiment-method`'
+
+- title: Annotation & Enrichment
+  contents:
+  - '`EnrichmentHyperG`'
+  - '`runAnnotationEnrichment,SummarizedExperiment-method`'
+
+- title: others
+  contents: 
+  - '`try_rflomics`'
+

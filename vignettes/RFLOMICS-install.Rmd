@@ -1,0 +1,131 @@
+---
+title: "RFLOMICS-install"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{RFLOMICS-install}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, eval=FALSE}
+library(RFLOMICS)
+```
+
+# What is clutsermq
+[clustermq](https://github.com/mschubert/clustermq) is a R package...
+
+# clustermq configuration
+
+- Create bioinfo [account](http://bioinfo.genotoul.fr/index.php/ask-for/create-an-account-2/)
+- Clustermq is installed on R 4.1.1 version. Thus egdeR and Coseq packages.
+
+## Set up SSH keys for password-less login on Genotoul
+
+  1)  Generate a ssh key in local
+  
+```{bash, eval=FALSE}
+
+ssh-keygen -t rsa
+
+<!-- Enter file in which to save the key (/home/dcharif/.ssh/id_rsa): -->
+
+```
+
+=> Enter without changing the default location
+
+Enter passphrase (empty for no passphrase):
+
+=> Enter 2 times and let empty
+
+2 keys have been created: on public and one private. The first one has to be send to genotoul
+and the second one has to be keeped in your local machine.
+
+  2) Copy the public key to genotoul
+This command will put your public key to the authorized_keys file on genotoul.
+
+$ ssh-copy-id dcharif@genologin.toulouse.inra.fr
+The authenticity of host 'Server's IP address' can't be established. RSA key fingerprint is ... Are you sure you want to continue connecting (yes/no)?
+
+=> enter yes
+=> enter your password
+
+  3) Try to connect know and verify that your password is no more asked
+
+$ ssh dcharif@genologin.toulouse.inra.fr
+
+
+https://www.hostinger.fr/tutoriels/generer-cle-ssh/
+
+## On own computer 
+
+
+
+## On cluster (genotoul server : SLURM)
+
+
+
+
+
+
+II) Configure clustermq
+
+
+     1) Create a file SSH.tmpl in your home directory on your LOCAL machine:
+
+ssh -o "ExitOnForwardFailure yes" -f \
+    -R {{ ctl_port }}:localhost:{{ local_port }} \
+    -R {{ job_port }}:localhost:{{ fwd_port }} \
+    {{ ssh_host }} \
+    "source /etc/profile\
+     module load {{ bashenv }}\
+     R --no-save --no-restore -e \
+     'clustermq:::ssh_proxy(ctl={{ ctl_port }}, job={{ job_port }})' \
+     > {{ ssh_log | /dev/null }} 2>&1"
+     
+
+     2) In your $HOME/.Rprofile on your LOCAL machine:
+
+    options(
+    clustermq.scheduler = "ssh",
+    clustermq.template = "/Users/dcharif/SSH.tmpl",
+    clustermq.ssh.host = "dcharif@genologin.toulouse.inra.fr", # use your user and host, obviously
+    clustermq.ssh.log = "/home/dcharif/cmq_ssh.log" # log for easier debugging
+)
+
+
+    3) In your $HOME/.Rprofile on GENOTOUL set the following options:
+
+options(
+    clustermq.scheduler = "slurm",
+    clustermq.template = "/home/dcharif/clustermq.template",
+    clustermq.defaults = list(bashenv="system/R-3.6.0")
+)
+
+#ou Q(..., template=list(bashenv="system/R-3.6.0"))
+
+   4) In your $HOME directory on GENOTOUL, create the clustermq.template file
+
+#!/bin/sh
+#SBATCH --job-name={{ job_name }}
+#SBATCH --partition=workq
+#SBATCH --output={{ log_file | /dev/null }} # you can add .%a for array index
+#SBATCH --error={{ log_file | /dev/null }}
+#SBATCH --mem-per-cpu={{ memory | 4096 }}
+#SBATCH --array=1-{{ n_jobs }}
+#SBATCH --mail-user=delphine.charif@inra.fr
+
+module load {{ bashenv }}
+
+ulimit -v $(( 1024 * {{ memory | 4096 }} ))
+CMQ_AUTH={{ auth }} R --no-save --no-restore -e 'clustermq:::worker("{{ master}}")'
+
+
+
+

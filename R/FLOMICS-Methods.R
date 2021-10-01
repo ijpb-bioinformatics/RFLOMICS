@@ -34,6 +34,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 
   # Create the List.Factors list with the choosen level of reference for each factor
   dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
+    
     relevel(as.factor(ExpDesign[[i]]), ref=refList[i])
   })
   names(dF.List) <- names(ExpDesign)
@@ -144,10 +145,22 @@ setMethod(f="CheckExpDesignCompleteness",
               ExpDesign <- dplyr::filter(object@ExpDesign, rownames(object@ExpDesign) %in% colnames)
             }
             
-           
+            
+            
+            # bio.fact.names <- names(ExpDesign)
+            # 
+            # BioFact.levels <- sapply(names(ExpDesign), function(x){
+            #   
+            #   levels(object@List.Factors[[x]])
+            # })
+            
+            
+            dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
+              relevel(as.factor(ExpDesign[[i]]), ref=levels(object@List.Factors[[i]])[1])
+            })
+            names(dF.List) <- names(ExpDesign)
 
-            group_count <- ExpDesign[object@Factors.Type == "Bio"] %>% dplyr::group_by(temperature, imbibition) %>% dplyr::count(name = "Count")
-            #group_count  <- object@List.Factors[object@Factors.Type == "Bio"] %>% as.data.frame() %>% table() %>% as.data.frame()
+            group_count  <- dF.List[object@Factors.Type == "Bio"] %>% as.data.frame() %>% table() %>% as.data.frame()
 
            
 
@@ -575,7 +588,7 @@ FlomicsMultiAssay.constructor <- function(inputs, Design, projectName){
                                                                                        metadata = list(omicType = inputs[[dataName]][["omicType"]],
                                                                                                          Groups = Design@Groups, 
                                                                                                        rowSums.zero = genes_flt0))
-    names(assays(SummarizedExperimentList[[dataName]])) <- c(dataName)
+    #names(assays(SummarizedExperimentList[[dataName]])) <- c(dataName)
     
     # metadata for sampleMap for MultiAssayExperiment
     listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
@@ -594,7 +607,7 @@ FlomicsMultiAssay.constructor <- function(inputs, Design, projectName){
   
 
   
-  prepFlomicsMultiAssay <- prepMultiAssay( ExperimentList = SummarizedExperimentList, 
+  prepFlomicsMultiAssay <- MultiAssayExperiment::prepMultiAssay( ExperimentList = SummarizedExperimentList, 
                                            sampleMap      = MultiAssayExperiment::listToMap(listmap), 
                                            colData        = Design@ExpDesign, outFile = stdout())
   
@@ -660,7 +673,7 @@ setMethod(f="RunPCA",
 #' @param object An object of class \link{SummarizedExperiment}
 #' @return plot
 #' @export
-#' @importFrom ggplot2 ggplot geom_bar xlab ylab element_text
+#' @importFrom ggplot2 ggplot geom_bar xlab ylab element_text ggtitle
 #'
 #' @examples
 setMethod(f="Library_size_barplot.plot",
@@ -818,6 +831,115 @@ setMethod(f="Data_Distribution_Density.plot",
             print(p)
           }
 )
+
+
+
+
+
+#' #' @title Data_Distribution.plot
+#' #'
+#' #' @param object An object of class \link{SummarizedExperiment}
+#' #' @param plot Type of plot : boxplot ("boxplot") or density plot ("density")
+#' #' @exportMethod Data_Distribution.plot
+#' #' @export
+#' #' @return plot
+#' #' @rdname Data_Distribution.plot
+#' #' @examples
+#' #' @importFrom ggplot2 geom_density boxplot xlab
+#' 
+#' setMethod(f="Data_Distribution.plot",
+#'           signature="SummarizedExperiment",
+#'           definition <- function(object, plot = "boxplot"){
+#'             
+#'             switch (object@metadata$omicType,
+#'                     "RNAseq" = {
+#'                       
+#'                       # before normalization
+#'                       if(is.null(object@metadata[["Normalization"]]$coefNorm)){
+#'                         pseudo <- log2(SummarizedExperiment::assay(object) + 1) %>% reshape2::melt()
+#'                         y_lab  <- "log2(gene counts)"
+#'                         title  <- "Raw data"
+#'                         
+#'                       }
+#'                       # after normalization
+#'                       else{
+#'                         pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
+#'                                              scale=object@metadata[["Normalization"]]$coefNorm$norm.factors)+1) %>% reshape2::melt()
+#'                         y_lab  <- "log2(normalized gene counts)"
+#'                         title  <- "Filtered and normalized (TMM) data"
+#'                       }
+#' 
+#'                     },
+#'                     "proteomics" = {
+#'                       # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
+#'                       if(is.null(object@metadata$transform_method)){
+#'                         pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
+#'                         x_lab  <- "Protein abundance (?)"
+#'                         title  <- "Raw data"
+#'                         
+#'                       }
+#'                       # after transformation
+#'                       else{
+#'                         # if log2 transformation was chosen
+#'                         switch (object@metadata$transform_method,
+#'                                 "log2" = {
+#'                                   pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
+#'                                   x_lab  <- "Transformed protein abundance" 
+#'                                   title  <- "Transformed data (method : log2)" },
+#'                                 
+#'                                 "none" = {
+#'                                   pseudo <- log2(SummarizedExperiment::assay(object) + 1) %>% reshape2::melt()
+#'                                   x_lab  <- "Transformed protein abundance" 
+#'                                   title  <- "Transformed data (method : ?)" } )
+#'                       }
+#'                     },
+#'                     "metabolomics" = {
+#'                       # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
+#'                       if(is.null(object@metadata$transform_method)){
+#'                         pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
+#'                         x_lab  <- "Metabolite abundance (?)"
+#'                         title  <- "Raw data"
+#'                       }
+#'                       # after transformation
+#'                       else{
+#'                         # if log2 transformation was chosen
+#'                         switch( object@metadata$transform_method,
+#'                                 "log2" = {
+#'                                   pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
+#'                                   x_lab  <- "Transformed protein abundance"
+#'                                   title  <- "Transformed data (method : log2)" },
+#'                                 "none" = {
+#'                                   pseudo <- log2(SummarizedExperiment::assay(object) + 1) %>% reshape2::melt()
+#'                                   x_lab  <- "Transformed protein abundance"
+#'                                   title  <- "Transformed data (method : ?)" } )
+#'                       }
+#'                     }
+#'             )
+#'             
+#'             colnames(pseudo) <- c("features", "samples", "value")
+#'             pseudo.gg <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples") 
+#'             
+#'             switch (plot,
+#'               "boxplot" = {
+#'                 #
+#'                 pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
+#' 
+#'                 p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + ggplot2::geom_boxplot(aes(fill=groups)) +
+#'                   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + xlab("") + ylab(y_lab) + ggtitle(title)
+#'                 
+#'                 
+#'               },
+#'               "density" = {
+#'                   # 
+#'                   p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + xlab(y_lab) +
+#'                     theme(legend.position='none') + ggtitle(title)
+#'               }
+#'             )
+#'             
+#'             print(p)
+#'           }
+#' )
+
 
 
 
@@ -1035,10 +1157,6 @@ setMethod(f="mvQCdata",
             }
 
           })
-
-# A refflechir avec metadata
-
-
 
 
 
