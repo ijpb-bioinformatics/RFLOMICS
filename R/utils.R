@@ -15,6 +15,7 @@ magrittr::`%>%`
 #' the modalities in row
 #' @md
 #' @export
+#' @noRd
 #'
 #' @examples
 #'
@@ -49,7 +50,7 @@ GetDesignFromNames <- function(samples_name){
 #'
 #' @return a named list of object of class formula
 #' @export
-#'
+#' @noRd
 #' @examples
 #'
 #' GetModelFormulae(Factors.Name=c("Genotype","Temperature"),Factors.Type=c("Bio","Bio"))
@@ -109,7 +110,7 @@ GetModelFormulae <- function(Factors.Name,Factors.Type){
 #' @param groups vector or factor giving the experimental group/condition for each sample/library.
 #' @return a data.frame with a row for each sample and columns group, lib.size and norm.factors containing the group labels, library sizes and normalization factors. Other columns can be optionally added to give more detailed sample information.
 #' @export
-#'
+#' @noRd
 #' @examples
 TMM.Normalization <- function(counts, groups){
   dge <- edgeR::DGEList(counts=counts, group=groups)
@@ -127,7 +128,7 @@ TMM.Normalization <- function(counts, groups){
 #' @return A list of object of class [\code{\link{DGELRT}]
 #' @export
 #' @importFrom stats model.matrix as.formula
-#'
+#' @noRd
 #'
 #' @examples
 edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.factors, Contrasts.Sel, Contrasts.Coeff, FDR, clustermq = FALSE){
@@ -216,7 +217,7 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
 #' @return A list
 #' @export
 #' @importFrom stats model.matrix as.formula
-#'
+#' @noRd
 #'
 #' @examples
 
@@ -290,7 +291,7 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
 #' @export
 #' @importFrom grDevices colorRampPalette
 #' @importFrom RColorBrewer brewer.pal
-#'
+#' @noRd
 #' @examples
 colorPlot <- function(design, ColData, condition="samples"){
 
@@ -326,7 +327,7 @@ colorPlot <- function(design, ColData, condition="samples"){
 #' @param abundances matrix or dataframe of feature/gene abundances/counts
 #' @export
 #' @importFrom ggplot2 geom_density xlab
-#'
+#' @noRd
 plotDistr <- function(abundances, dataType, transform_method){
 
 
@@ -374,6 +375,7 @@ plotDistr <- function(abundances, dataType, transform_method){
 #' @export
 #' @importFrom ggplot2 geom_histogram
 #' @examples
+#' @noRd
 pvalue.plot <- function(data, pngFile=NULL){
 
   PValue <- NULL
@@ -399,7 +401,7 @@ globalVariables(names(data))
 #' @export
 #' @importFrom ggplot2 aes geom_point scale_colour_manual ggsave
 #' @examples
-#'
+#' @noRd
 MA.plot <- function(data, Adj.pvalue.cutoff, pngFile=NULL){
 
   Abundance <- logFC <- Adj.pvalue <- NULL
@@ -430,7 +432,7 @@ MA.plot <- function(data, Adj.pvalue.cutoff, pngFile=NULL){
 #' @return A printable/modifiable ggplot2 object.
 #' @export
 #' @importFrom ggplot2 aes_string labs element_rect geom_rect scale_x_continuous scale_y_continuous facet_grid
-#'
+#' @noRd
 #' @author Christine Paysant-Le Roux
 plotExperimentalDesign <- function(counts, cell_border_size = 10){
   if (names(counts)[ncol(counts)] != "Count"){
@@ -590,7 +592,7 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10){
 #' @return
 #' @export
 #' @importFrom utils combn
-#'
+#' @noRd
 #' @examples
 #' @author Christine Paysant-Le Roux
 define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
@@ -636,7 +638,7 @@ define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
 #'
 #' @param treatmentFactorsList
 #' @param i
-#'
+#' @noRd
 #' @return
 #' @export
 #' @importFrom dplyr all_of
@@ -697,7 +699,7 @@ simpleContrastForOneFactor <- function (treatmentFactorsList, i){
 #'
 #' @return
 #' @export
-#'
+#' @noRd
 #' @examples
 #' @author Christine Paysant-Le Roux
 defineAllSimpleContrasts <- function(treatmentFactorsList){
@@ -719,7 +721,7 @@ defineAllSimpleContrasts <- function(treatmentFactorsList){
 #'
 #' @return allAveragedContrasts_df : a data frame with all the averaged contrasts
 #' @export
-#'
+#' @noRd
 #' @examples
 #' @author Christine Paysant-Le Roux
 define_averaged_contrasts <- function(allSimpleContrast_df){
@@ -755,7 +757,7 @@ define_averaged_contrasts <- function(allSimpleContrast_df){
 #'
 #' @return
 #' @export
-#'
+#' @noRd
 #' @examples
 #' @author Christine Paysant-Le Roux
 define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, row_i, row_j) {
@@ -823,7 +825,7 @@ define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, 
 #'
 #' @return
 #' @export
-#'
+#' @noRd
 #' @examples
 #' @author Christine Paysant-Le Roux
 defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i, j){
@@ -871,7 +873,7 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
 #'
 #' @return
 #' @export
-#'
+#' @noRd
 #' @examples
 #' @author Christine Paysant-Le Roux
 defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteractionToKeep = NULL){
@@ -913,7 +915,7 @@ defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteraction
 #'
 #' @return a binary vector (a single vector of 0 and 1) returning the matched group string(s) from a grepl match on the design model matrix colnames
 #' @export
-#'
+#' @noRd
 #' @examples
 #' @author Christine Paysant-Le Roux
 computeGroupVector <- function(treatmentGroups, colnamesMatrixDesign, interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction) {
@@ -954,7 +956,7 @@ computeGroupVector <- function(treatmentGroups, colnamesMatrixDesign, interactio
 #'
 #' @return
 #' @export
-#'
+#' @noRd
 #' @examples
 #' @author Christine Paysant-Le Roux
 assignVectorToGroups <- function(treatmentFactorsList = treatmentFactorsList, modelMatrix = modelMatrix,  interactionPresent = interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction, treatmentCondenv = treatmentCondenv){
@@ -976,7 +978,7 @@ assignVectorToGroups <- function(treatmentFactorsList = treatmentFactorsList, mo
 #' @param contrast
 #' @param colnamesGLMdesign
 #' @param treatmentCondenv: the environment to use
-#'
+#' @noRd
 #' @return
 #' @export
 #' @examples
@@ -1003,6 +1005,8 @@ returnContrastCoefficients <- function(contrast, colnamesGLMdesign, treatmentCon
 #' @return list of genes
 #' @export
 #' @examples
+#' @noRd
+#'  
 getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1], mergeType="union"){
 
   if (length(colnames) == 0 ){ return(NULL) }
@@ -1035,6 +1039,7 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
 #' \item{\code{error:} }{error message or NULL}
 #' }
 #' @export
+#' @noRd
 
 
 try_rflomics <- function(expr) {
@@ -1056,6 +1061,8 @@ try_rflomics <- function(expr) {
 #' @param param.list list of coseq parameters
 #' @return coseqResults
 #' @export
+#' @noRd
+#' 
 runCoseq <- function(counts, K=2:20, replicates = 5, param.list, clustermq=FALSE){
 
             Results.1 <- list()
@@ -1121,6 +1128,7 @@ runCoseq <- function(counts, K=2:20, replicates = 5, param.list, clustermq=FALSE
 #' @return
 #' @export
 #' @importFrom ggplot2 geom_boxplot facet_wrap theme element_blank
+#' @noRd
 #'
 coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
 
@@ -1159,6 +1167,7 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
 #' @param geneList gene list
 #' @return list
 #' @export
+#' @noRd
 #'
 EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
 #enrichment_analysis <- function(Reference,Gene_List,Alpha){
@@ -1254,7 +1263,7 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
 #' @return plot
 #' @export
 #' @importFrom dplyr desc
-#'
+#' @noRd
 #' @examples
 pvalue.enrichment.plot <- function(data, Over_Under, index = "Top50" ){
 
