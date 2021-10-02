@@ -50,18 +50,16 @@ QCNormalizationTab <- function(input, output, session, dataset){
     SE <- FlomicsMultiAssay@ExperimentList[[dataset]]
     completeCheckRes <<- CheckExpDesignCompleteness(Design, input$selectSamples)
 
-    if(completeCheckRes[["message"]][1] == "false"){
-      showModal(modalDialog(title = "Error message", completeCheckRes[["message"]][2]))
+    if(!is.null(completeCheckRes[["error"]])){
+      showModal(modalDialog(title = "Error message", completeCheckRes[["error"]]))
 
     }
     # continue only if message is true or warning
-    validate({ need(completeCheckRes[["message"]][1] != "false" ,message="ok") })
+    validate({ need(is.null(completeCheckRes[["error"]]) ,message="ok") })
 
     list(
          # plot of count per condition
-         renderPlot( plotExperimentalDesign(completeCheckRes[["count"]] )),
-         renderText( completeCheckRes[["message"]][2] ),
-         hr()
+         renderPlot( completeCheckRes[["plot"]])
     )
   })
 

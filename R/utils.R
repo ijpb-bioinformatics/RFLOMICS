@@ -507,7 +507,7 @@ MA.plot <- function(data, Adj.pvalue.cutoff, pngFile=NULL){
 #' @importFrom ggplot2 aes_string labs element_rect geom_rect scale_x_continuous scale_y_continuous facet_grid
 #' @noRd
 #' @author Christine Paysant-Le Roux
-plotExperimentalDesign <- function(counts, cell_border_size = 10){
+plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
   if (names(counts)[ncol(counts)] != "Count"){
     stop("the last column of the input data frame must be labelled Count")
   }
@@ -599,7 +599,7 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10){
 
   counts$Count <- as.factor(counts$Count)
 
-  p <- ggplot2::ggplot( data = counts, aes_string(ymin = 'ymin', ymax = 'ymax', xmin = 'xmin', xmax = 'xmax' , fill = 'Count')) + geom_rect() + labs(x=x_lab,y=y_lab)
+  p <- ggplot2::ggplot( data = counts, aes_string(ymin = 'ymin', ymax = 'ymax', xmin = 'xmin', xmax = 'xmax' , fill = 'Count')) + geom_rect() + labs(x=x_lab,y=y_lab) + ggtitle(message)
   p <- p + theme(
     panel.grid.major = element_blank()
     , panel.grid.minor = element_blank()

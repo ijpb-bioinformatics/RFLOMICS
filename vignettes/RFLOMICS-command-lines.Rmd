@@ -118,12 +118,15 @@ Design <- ExpDesign.constructor(ExpDesign = ExpDesign, refList = Design.Factors.
 * Check the **completeness** of the design. You **must** have all possible combinations of factor's level. **Balanced design** is not required (presence of the same number of replicats for all possible combinations) but advised. You **must** also have at least one biological factor and 2 replicats.
 
 ```{r CheckDesign, fig.cap="Design checking's result",fig.small=TRUE}
+  
+  # check completeness
+  completeCheckRes <- CheckExpDesignCompleteness(Design)
 
-# je pense qu'il faut fusionner en une seule fonction qui retourne une list(plot, warning, error)
-
- completeCheckRes <- CheckExpDesignCompleteness(Design)
-
- plotExperimentalDesign(completeCheckRes[["count"]])
+  # plot
+  completeCheckRes$plot
+  
+  # error message if exist
+  completeCheckRes$error
  
 ```
 In this example, you can see that the design is complete but not balanced.
@@ -226,6 +229,15 @@ data="RNAseq1"
 RNAseq.raw.SE <-  FlomicsMultiAssay@ExperimentList[[data]]
 ```
 
+<!-- * dans le cas ou le nombre de samples dans la matrice ne correspond tous à fait aux samples decrits dans le design -->
+<!-- il faut faire une fonction pour aider l'utilisateur de retirer des samples facilement -->
+```{r CheckExp }
+CheckCompleteness.dataset <- CheckExpDesignCompleteness(Design, colnames(RNAseq.raw.SE))
+
+CheckCompleteness.dataset$plot
+
+CheckCompleteness.dataset$error
+```
 
 ## Filter and Normalize
 

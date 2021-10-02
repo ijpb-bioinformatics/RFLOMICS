@@ -159,27 +159,40 @@ setMethod(f="CheckExpDesignCompleteness",
             names(dF.List) <- names(ExpDesign)
 
             group_count  <- dF.List[object@Factors.Type == "Bio"] %>% as.data.frame() %>% table() %>% as.data.frame()
+            names(group_count) <- c(names(dF.List[object@Factors.Type == "Bio"]), "Count")
 
-
-
+            
             # check presence of relicat / batch
             # check if design is complete
             # check if design is balanced
             # check nbr of replicats
 
-            message <- dplyr::if_else(min(group_count$Count) == 0 ,           "noCompl",
-                       dplyr::if_else(length(unique(group_count$Count)) != 1, "noBalan",
-                       dplyr::if_else(max(group_count$Count) < 3,             "lowRep" , "true")))
+            output[["error"]] <- NULL
+            output[["warning"]] <- NULL
+            
+            # message <- dplyr::if_else(min(group_count$Count) == 0 ,           "noCompl",
+            #            dplyr::if_else(length(unique(group_count$Count)) != 1, "noBalan",
+            #            dplyr::if_else(max(group_count$Count) < 3,             "lowRep" , "true")))
 
-
-
-            output[["count"]]   <- group_count
-            # switch pour message complet
-            output[["message"]] <- switch(message ,
-                                          "true"       = { c("true",    "The experimental design is complete and balanced.") },
-                                          "lowRep"     = { c("warning", "WARNING : 3 biological replicates are needed.") },
-                                          "noCompl"    = { c("false",   "ERROR : The experimental design is not complete.") },
-                                          "noBalan"    = { c("warning", "WARNING : The experimental design is complete but not balanced.") })
+            if(min(group_count$Count) == 0){
+              message <- "ERROR : The experimental design is not complete."
+              output[["error"]] <- message
+            }
+            else if(length(unique(group_count$Count)) != 1){
+              message <- "WARNING : The experimental design is complete but not balanced."
+              output[["warning"]] <- message
+            }
+            else if(max(group_count$Count) < 3){
+              message <- "WARNING : 3 biological replicates are needed."
+              output[["warning"]] <- message
+            }
+            else{
+              message <- "The experimental design is complete and balanced."
+            }
+            
+            #plot
+            output[["plot"]] <- plotExperimentalDesign(group_count, message=message)
+                
             return(output)
           })
 

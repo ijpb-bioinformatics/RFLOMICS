@@ -144,18 +144,18 @@ LoadOmicsData <- function(input, output, session){
       validate({ need((length(stringr::str_subset(dF.Type.dFac, "Bio"  )) %in% 1:3) &
                       (length(stringr::str_subset(dF.Type.dFac, "batch")) != 0), message="") })
 
-      print("ok1")
+      
       ## create Design object
       Design <<- ExpDesign.constructor(ExpDesign = ExpDesign.tbl, refList = dF.List.ref, typeList = dF.Type.dFac)
-      print("ok4")
+      
       # => completeness
       #### check experimental design : experimental design must be a complete and balanced.
 
-      print(paste0("# 3- Design Completeness Check..."))
+      print(paste0("# 2- Design Completeness Check..."))
 
       completeCheckRes <- CheckExpDesignCompleteness(Design)
-      if(completeCheckRes[["message"]][1] == "false"){
-        showModal(modalDialog(title = "Error message", completeCheckRes[["message"]][2]))
+      if(!is.null(completeCheckRes[["error"]])){
+        showModal(modalDialog(title = "Error message", completeCheckRes[["error"]]))
 
       }
 
@@ -164,10 +164,9 @@ LoadOmicsData <- function(input, output, session){
         box( width = 12, title = "Completeness",  status = "warning",
 
              #print message
-             renderText( completeCheckRes[["message"]][2] ),
              hr(),
              # plot of count per condition
-             renderPlot( plotExperimentalDesign(completeCheckRes[["count"]] )),
+             renderPlot( completeCheckRes[["plot"]] ),
              hr(),
              tags$i("You **must** have a **complete design** (i.e. all possible combinations of factor's level).
                      **Balanced design** (presence of the same number of replicats for all
@@ -177,7 +176,7 @@ LoadOmicsData <- function(input, output, session){
       })
 
       # continue only if message is true or warning
-      validate({ need(completeCheckRes[["message"]][1] != "false" ,message="ok") })
+      validate({ need(is.null(completeCheckRes[["error"]]) ,message="ok") })
 
 
       ### display interface for load data

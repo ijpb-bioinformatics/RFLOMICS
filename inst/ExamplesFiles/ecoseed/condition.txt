@@ -3,7 +3,7 @@ Elevated_LI_1	rep1	Elevated	LI
 Elevated_LI_3	rep3	Elevated	LI
 Elevated_LI_2	rep2	Elevated	LI
 Elevated_EI_1	rep1	Elevated	EI
-#Elevated_EI_2	rep2	Elevated	EI
+Elevated_EI_2	rep2	Elevated	EI
 Elevated_EI_3	rep3	Elevated	EI
 Elevated_DS_1	rep1	Elevated	DS
 Elevated_DS_3	rep3	Elevated	DS
