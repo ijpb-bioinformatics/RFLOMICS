@@ -543,26 +543,50 @@ RNAseq.SE@metadata$CoExpAnal$plots$boxplots
 ```
 
 ## Annotation and Enrichment analysis
-il faut definir les lists à annoter de l'analyse diff et analyse coseq
+To perform annotation and enrichment analysis, we need Reference file (see [rflomics input data](`r file.path(path = path.package("RFLOMICS"), file ="/docs/articles/RFLOMICS-input-data.html")`). 
 
+Then we select a lists of DGEs and clusters to annotate. By default the annotation whill be done on all setected DGE lists and clusters.
+```{r list}
 
+ListNames.diff  <- RNAseq.SE@metadata$DiffExpAnal[["contrasts"]]$contrastName
+ListNames.coseq <- names(RNAseq.SE@metadata$CoExpAnal[["clusters"]])
 
-```{r, eval=FALSE}
-
-ListNames.diff <- dataset.SE@metadata$DiffExpAnal[["contrasts"]]$contrastName
-ListNames.coseq <- names(dataset.SE@metadata$CoExpAnal[["clusters"]])
-
-runAnnotationEnrichment(dataset.SE, annotation = annot.genes, 
-                        DiffListNames = ListNames.diff, 
-                        CoExpListNames= ListNames.coseq,
-                        alpha = 0.01, 
-                        probaMethod = hypergeometric)
 ```
 
+Run gene enrichment with hypergenometric method.
+```{r, runAnnotationEnrichment}
+
+RNAseq.SE <- runAnnotationEnrichment( RNAseq.SE, annotation = annot.genes, 
+                                      DiffListNames = ListNames.diff, 
+                                      CoExpListNames= ListNames.coseq,
+                                      alpha = 0.01, 
+                                      probaMethod = "hypergeometric")
+```
+
+Plot the over-represented GO terms for each list.
+
+```{r, pvalue.enrichment.plot overrepresented}
 
 
+  # top based on pvalue
+  p <- Enrichment.plot(RNAseq.SE, Over_Under="overrepresented", top = 50, listNames=c("cluster.4", "cluster.3"))
+
+  p
+
+```
+
+Plot the over-represented GO terms for each list.
+```{r, pvalue.enrichment.plot underrepresented}
 
 
+  # top based on pvalue
+  p <- Enrichment.plot(RNAseq.SE, Over_Under="underrepresented", top = 50, listNames=c("cluster.4", "cluster.3"))
+
+  p
+
+```
+
+## 
 
 ```{r}
 FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]] <- RNAseq.SE
