@@ -1793,8 +1793,10 @@ setMethod(f="runCoExpression",
 setMethod(f="runAnnotationEnrichment",
           signature="SummarizedExperiment",
 
-          definition <- function(object, DiffListNames = NULL, CoExpListNames = NULL, annotation,
-                                 alpha = 0.01, probaMethod = "hypergeometric"){
+          definition <- function(object, annotation, alpha = 0.01, probaMethod = "hypergeometric",
+                                 DiffListNames  = object@metadata$DiffExpAnal[["contrasts"]]$contrastName, 
+                                 CoExpListNames = names(object@metadata$CoExpAnal[["clusters"]])
+                                 ){
 
             EnrichAnal <- list()
             EnrichAnal[["list.names"]] <- c(CoExpListNames, DiffListNames)
@@ -1838,4 +1840,72 @@ setMethod(f="runAnnotationEnrichment",
           })
 
 
+#' Enrichment.plot
+#'
+#' @param object An object of class \link{SummarizedExperiment}
+#' @param Over_Under "overrepresented" or "underrepresented" (default : overrepresented)
+#' @param top level of enriched terms to display
+#' @param listNames vector of DGEs or cluster names (default : all enriched lists)
+#' @return plot
+#' @export
+#' @exportMethod Enrichment.plot
+#' @importFrom dplyr desc
+#' @examples
+Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepresented"), top = "all" , listNames=NULL){
+  
+  Decision <- Pvalue_over <- Pvalue_under <- Pvalue <- NULL
+  Term <- Domain <- Trial_Success <- scale_size <- tail <- NULL
+  
+  # if Over_Under are not recognized we choose default value == overrepresented
+  if (! Over_Under %in% c("overrepresented", "underrepresented") ){
+    
+    Over_Under <- "overrepresented"
+  }
+  
+  if (!is.numeric(top)){
+    top <- "NA"
+    Top.tag <- ""
+  }
+  else{
+    Top.tag <- paste0("Top ", top)
+  }
+  
+  if(is.null(listNames)){
+    listNames <- names(object@metadata$EnrichAnal[["results"]])
+  }
+  
+  p <- list()
+  for (listname in listNames){
+    
+    
+    data <- object@metadata$EnrichAnal[["results"]][[listname]][["Over_Under_Results"]]
 
+    data_ord <- switch (Over_Under,
+            "overrepresented"  = {
+                     dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_over)) %>%
+                     dplyr::mutate(Pvalue = Pvalue_over)
+
+              },
+            "underrepresented" = {
+                     dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_under)) %>%
+                     dplyr::mutate(Pvalue = Pvalue_under)
+              }
+            )
+    
+    
+    data_ord$Term <- factor(data_ord$Term, levels = data_ord$Term)
+
+    Urn_effective <- data$Urn_effective[1]
+    Trial_effective <- data$Trial_effective[1]
+    
+    p[[listname]] <- ggplot2::ggplot(data = tail(data_ord, n=top), aes(x=sort(Trial_Success), y=Term, size=Urn_Success, color=Pvalue)) +
+      geom_point(alpha=0.5) + scale_size(range = c(0.1, 10)) + scale_color_gradient(low="blue", high="red") +
+      ggtitle(paste0(listname, " : ",Over_Under," ", Top.tag, " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")")) 
+    
+    
+    
+  }
+  
+  return(p)
+  
+}

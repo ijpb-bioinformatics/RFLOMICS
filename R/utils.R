@@ -1345,46 +1345,4 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
 
 
 
-#' pvalue.enrichment.plot
-#'
-#' @param data
-#' @param Over_Under
-#' @param index result size index
-#' @return plot
-#' @export
-#' @importFrom dplyr desc
-#' @noRd
-#' @examples
-pvalue.enrichment.plot <- function(data, Over_Under, index = "Top50" ){
-
-  Decision <- Pvalue_over <- Pvalue_under <- Pvalue <- NULL
-  Term <- Domain <- Trial_Success <- scale_size <- tail <- NULL
-
-  data_ord <- switch (Over_Under,
-          "overrepresented"  = {
-                   dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_over)) %>%
-                   dplyr::mutate(Pvalue = Pvalue_over)
-
-            },
-          "underrepresented" = {
-                   dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_under)) %>%
-                   dplyr::mutate(Pvalue = Pvalue_under)
-            }
-          )
-  data_ord$Term <- factor(data_ord$Term, levels = data_ord$Term)
-
-  switch (index,
-
-    "all" = { p <- ggplot2::ggplot(data = data_ord, aes(x=Pvalue, y=Term, size=Trial_Success, color=Domain)) +
-                     geom_point(alpha=0.5) + scale_size(range = c(0.1, 10))},
-    "Top50" = { p <- ggplot2::ggplot(data = tail(data_ord, n=50), aes(x=Pvalue, y=Term, size=Trial_Success, color=Domain)) +
-
-                     geom_point(alpha=0.5) + scale_size(range = c(0.1, 10))}
-  )
-
-  print(p)
-
-
-}
-
 
