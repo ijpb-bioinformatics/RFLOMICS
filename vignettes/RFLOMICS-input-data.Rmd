@@ -21,6 +21,7 @@ library(RFLOMICS)
 
 
 ## Experimental design
+<!-- ce fichier contient le plan experimental (conditions) plus des metadata par echantillons -->
 
 This file provides the experimental plan table. The first column indicates the sample names. Next columns indicate experimental conditions (called biological factor or replicate factor) and metadata (optional). Each row describes a sample by specifying the level for each experimental condition.
 This file is edited by the user and must contain a header with explicit column names.
@@ -38,6 +39,9 @@ For each omics :
 The fist file **(mandatory)** provide matrix-likes of abundance of omics data : read counts per genes for RNAseq data, intensity of proteins for proteomics data, intensity of metabolites for metabolomics data. The first column indicates feature (gene, protein, metabolite) names, Header of matrix indicates sample names. 
 
 ### **RNAseq data**
+
+<!-- les comptage de reads sont obtenu après une analyse bioinfo (mapping sur le genome de ref et comptage des reads qui couvrent chaque gene) -->
+
 ```{r RNAseq, output="asis"}
 
 geneCount.file <- file.path(path = path.package("RFLOMICS"), file ="/ExamplesFiles/ecoseed/transcriptome2_ecoseed.txt")
@@ -76,6 +80,9 @@ DT::datatable(metaAbundance[1:10, 1:5])
 
 ```
 
+![image](Input1.png)
+
+![image](Input2.png)
 
 ## Annotation
 
@@ -93,3 +100,5 @@ colnames(annot.genes) <- c("geneID", "Term", "Name", "Domain")
 
 DT::datatable(annot.genes[1:10,])
 ```
+
+

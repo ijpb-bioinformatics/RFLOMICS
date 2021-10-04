@@ -15,7 +15,42 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-library(RFLOMICS)
+
 ```
 
-![alt text here](Input1.png)
+
+# Run RFLOMICS
+
+```{r, eval=FALSE}
+library(RFLOMICS)
+runApp()
+```
+
+In the left side of interface the different tab Items will be appear as the analysis progresses to guide the user. 
+
+# Load Data
+
+In this section we start to set project name (its mandatory). Then we load the experimental design and different datasets.
+
+<!-- ![capture]() -->
+
+## Load Design
+
+<!-- ![capture]() -->
+## Load Omics data 
+
+<!-- ![capture]() -->
+# Set statistical model choose contrasts to test
+
+
+<!-- ![capture]() -->
+# Omics data analysis
+
+## QC, Low counts filtering and normalization
+<!-- ![capture]() -->
+## Differiencial expression analysis
+<!-- ![capture]() -->
+## Co-Expression analysis
+<!-- ![capture]() -->
+## Annotation and enrichment analysis
+<!-- ![capture]() -->
