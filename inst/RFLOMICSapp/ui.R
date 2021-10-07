@@ -138,6 +138,13 @@ body <- dashboardBody({
                        tags$br(),
                        CoSeqAnalysisUI(paste0("proteomics",j))
                        #verbatimTextOutput("Asuivre")
+              ),
+              #### enrichment analysis  ####
+              ######################################
+              tabPanel("Annotation Enrichment",
+                       tags$br(),
+                       tags$br(),
+                       AnnotationEnrichmentUI(paste0("proteomics",j))
               )
             )
           )

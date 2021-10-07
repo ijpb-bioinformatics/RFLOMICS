@@ -24,8 +24,8 @@ CoSeqAnalysisUI <- function(id){
       ))),
     ### parametres for Co-Exp
     fluidRow(
-      column(4, uiOutput(ns("CoExpParamUI"))),
-      column(8, uiOutput(ns("CoExpResultUI"))))
+      column(3, uiOutput(ns("CoExpParamUI"))),
+      column(9, uiOutput(ns("CoExpResultUI"))))
   )
 }
 

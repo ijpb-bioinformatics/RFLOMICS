@@ -16,12 +16,12 @@ DiffExpAnalysisUI <- function(id){
 
     ### parametres for Diff Analysis
     fluidRow(
-      column(4,uiOutput(ns("DiffParamUI"))),
-      column(8,uiOutput(ns("ContrastsResults")))),
+      column(3,uiOutput(ns("DiffParamUI"))),
+      column(9,uiOutput(ns("ContrastsResults")))),
     tags$br(),
     fluidRow(
-      column(4,uiOutput(ns("FilterPvalueUI"))),
-      column(8,uiOutput(ns("ResultsMerge"))))
+      column(3,uiOutput(ns("FilterPvalueUI"))),
+      column(9,uiOutput(ns("ResultsMerge"))))
   )
 }
 

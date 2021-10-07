@@ -6,33 +6,34 @@ AnnotationEnrichmentUI <- function(id){
   ns <- NS(id)
   
   tagList(  
-    
+    fluidRow(
+      box(title = span(tagList(icon("cogs"), "   Enrichment analysis")),
+          solidHeader = TRUE, status = "warning", width = 12, )
+      ),
     ## parameters + input data
     fluidRow(
       
-      box(title = span(tagList(icon("cogs"), "")), solidHeader = FALSE, status = "warning", width = 12, 
+      box(title = span(tagList(icon("cogs"), "")), solidHeader = FALSE, status = "warning", width = 3, 
 
         ## gene lists
-        column(4, uiOutput(ns("selectGeneListtoAnnot"))),
+        uiOutput(ns("selectGeneListtoAnnot")),
         
         ## file with annotation (geneID, Term, Name, Domain/source)
-        column(3, fileInput(inputId = ns("annotationFile"), label = "Annotation file :", 
-                            accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
+        fileInput(inputId = ns("annotationFile"), label = "Annotation file :", 
+                            accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
         
         ## choice of probability
-        column(2, 
-               selectInput(ns("EnrichMethod"), label = "Test :", 
-                           choices = list("Hypergeometric"="hypergeometric"),selected = "hypergeometric")),
+        selectInput(ns("EnrichMethod"), label = "Test :", 
+                           choices = list("Hypergeometric"="hypergeometric"),selected = "hypergeometric"),
         
         ## alpha threshold
-        column(2, numericInput(inputId = ns("Alpha_Enrichment"), label="P-value :", value=0.01 , min = 0, max=0.1, step = 0.01),
-                  actionButton(ns("runEnrich"),"Run"))
+        numericInput(inputId = ns("Alpha_Enrichment"), label="P-value :", value=0.01 , min = 0, max=0.1, step = 0.01),
+                  actionButton(ns("runEnrich"),"Run")
         
-      )
-    ),
-        
-    fluidRow( uiOutput(ns("AnnotEnrichResults")) )
-    
+      ),
+      uiOutput(ns("AnnotEnrichResults"))
+    )
+
   )
 }
 
