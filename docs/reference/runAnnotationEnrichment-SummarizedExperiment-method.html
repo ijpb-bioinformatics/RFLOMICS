@@ -160,11 +160,11 @@ recommended in DiCoExpress workflow (see the paper in reference)</p>
     <div class="ref-usage sourceCode"><pre class='sourceCode r'><code><span class='co'># S4 method for SummarizedExperiment</span>
 <span class='fu'>runAnnotationEnrichment</span><span class='op'>(</span>
   <span class='va'>object</span>,
-  DiffListNames <span class='op'>=</span> <span class='cn'>NULL</span>,
-  CoExpListNames <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>annotation</span>,
   alpha <span class='op'>=</span> <span class='fl'>0.01</span>,
-  probaMethod <span class='op'>=</span> <span class='st'>"hypergeometric"</span>
+  probaMethod <span class='op'>=</span> <span class='st'>"hypergeometric"</span>,
+  DiffListNames <span class='op'>=</span> <span class='va'>object</span><span class='op'>@</span><span class='va'>metadata</span><span class='op'>$</span><span class='va'>DiffExpAnal</span><span class='op'>[[</span><span class='st'>"contrasts"</span><span class='op'>]</span><span class='op'>]</span><span class='op'>$</span><span class='va'>contrastName</span>,
+  CoExpListNames <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>object</span><span class='op'>@</span><span class='va'>metadata</span><span class='op'>$</span><span class='va'>CoExpAnal</span><span class='op'>[[</span><span class='st'>"clusters"</span><span class='op'>]</span><span class='op'>]</span><span class='op'>)</span>
 <span class='op'>)</span></code></pre></div>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -173,14 +173,6 @@ recommended in DiCoExpress workflow (see the paper in reference)</p>
     <tr>
       <th>object</th>
       <td><p>An object of class SummarizedExperiment</p></td>
-    </tr>
-    <tr>
-      <th>DiffListNames</th>
-      <td><p>A list of differential expressed genes given as constrast names.</p></td>
-    </tr>
-    <tr>
-      <th>CoExpListNames</th>
-      <td><p>A list of clusters names.</p></td>
     </tr>
     <tr>
       <th>annotation</th>
@@ -193,6 +185,14 @@ recommended in DiCoExpress workflow (see the paper in reference)</p>
     <tr>
       <th>probaMethod</th>
       <td><p>The probabilistic method to use.</p></td>
+    </tr>
+    <tr>
+      <th>DiffListNames</th>
+      <td><p>A list of differential expressed genes given as constrast names.</p></td>
+    </tr>
+    <tr>
+      <th>CoExpListNames</th>
+      <td><p>A list of clusters names.</p></td>
     </tr>
     </table>
 

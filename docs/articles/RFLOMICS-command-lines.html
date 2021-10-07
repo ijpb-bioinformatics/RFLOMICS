@@ -98,7 +98,7 @@
       <h1 data-toc-skip>RFLOMICS: Quick Guide to omics data analysis</h1>
                         <h4 data-toc-skip class="author">Delphine Charif and Nadia Bessoltane</h4>
             
-            <h4 data-toc-skip class="date">2021-10-01</h4>
+            <h4 data-toc-skip class="date">2021-10-06</h4>
       
       
       <div class="hidden name"><code>RFLOMICS-command-lines.Rmd</code></div>
@@ -202,22 +202,26 @@
 <li>Check the <strong>completeness</strong> of the design. You <strong>must</strong> have all possible combinations of factor’s level. <strong>Balanced design</strong> is not required (presence of the same number of replicats for all possible combinations) but advised. You <strong>must</strong> also have at least one biological factor and 2 replicats.</li>
 </ul>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># je pense qu'il faut fusionner en une seule fonction qui retourne une list(plot, warning, error)</span>
+<code class="sourceCode R">  <span class="co"># check completeness</span>
+  <span class="va">completeCheckRes</span> <span class="op">&lt;-</span> <span class="fu">CheckExpDesignCompleteness</span><span class="op">(</span><span class="va">Design</span><span class="op">)</span>
 
- <span class="va">completeCheckRes</span> <span class="op">&lt;-</span> <span class="fu">CheckExpDesignCompleteness</span><span class="op">(</span><span class="va">Design</span><span class="op">)</span>
-
- <span class="fu">plotExperimentalDesign</span><span class="op">(</span><span class="va">completeCheckRes</span><span class="op">[[</span><span class="st">"count"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></code></pre></div>
+  <span class="co"># plot</span>
+  <span class="va">completeCheckRes</span><span class="op">$</span><span class="va">plot</span></code></pre></div>
 <div class="figure">
 <img src="RFLOMICS-command-lines_files/figure-html/CheckDesign-1.png" alt="Design checking's result" width="700"><p class="caption">
 Design checking’s result
 </p>
 </div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R">  <span class="co"># error message if exist</span>
+  <span class="va">completeCheckRes</span><span class="op">$</span><span class="va">error</span>
+<span class="co">#&gt; NULL</span></code></pre></div>
 <p>In this example, you can see that the design is complete but not balanced.</p>
 <ul>
 <li>
 <strong>Choose</strong> the statistical model associated to the experimental design. Models are written from the most complete one, with two orders interaction terms between the biological factors, to the simplest one. Batch factor did not appears in interaction terms.</li>
 </ul>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># remplacer aussi ici</span>
 <span class="co">#Design.formulae &lt;- GetModelFormulae(Design.Factors = Design.Factors)</span>
 
@@ -227,19 +231,19 @@ Design checking’s result
  <span class="va">Design.formulae</span>
 <span class="co">#&gt; $`~Repeat + temperature + imbibition + temperature:imbibition`</span>
 <span class="co">#&gt; ~Repeat + temperature + imbibition + temperature:imbibition</span>
-<span class="co">#&gt; &lt;environment: 0x7fa8ed2c0900&gt;</span>
+<span class="co">#&gt; &lt;environment: 0x7fc4b1b7add0&gt;</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $`~Repeat + temperature + imbibition`</span>
 <span class="co">#&gt; ~Repeat + temperature + imbibition</span>
-<span class="co">#&gt; &lt;environment: 0x7fa8ed2b1118&gt;</span>
+<span class="co">#&gt; &lt;environment: 0x7fc4b1b6a040&gt;</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $`~Repeat + temperature`</span>
 <span class="co">#&gt; ~Repeat + temperature</span>
-<span class="co">#&gt; &lt;environment: 0x7fa8ed2ed690&gt;</span>
+<span class="co">#&gt; &lt;environment: 0x7fc4b1ba4f20&gt;</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $`~Repeat + imbibition`</span>
 <span class="co">#&gt; ~Repeat + imbibition</span>
-<span class="co">#&gt; &lt;environment: 0x7fa8ed2d1888&gt;</span></code></pre></div>
+<span class="co">#&gt; &lt;environment: 0x7fc4b1b8a318&gt;</span></code></pre></div>
 <p>In this example, the complete model with the interaction term describes the experiment.</p>
 <ul>
 <li>
@@ -254,7 +258,7 @@ Design checking’s result
 </ul>
 </li>
 </ul>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"> <span class="co"># Get all the possible contrasts from the complete model with interaction</span>
  <span class="va">Design</span> <span class="op">&lt;-</span> <span class="fu">getExpressionContrast</span><span class="op">(</span>object <span class="op">=</span> <span class="va">Design</span>, 
                                  model.formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">Design.formulae</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>
@@ -352,7 +356,7 @@ Design checking’s result
 <span class="co">#&gt; 7: interaction</span>
 <span class="co">#&gt; 8: interaction</span>
 <span class="co">#&gt; 9: interaction</span></code></pre></div>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"> <span class="co"># Select The 2 firsts</span>
  <span class="va">Design.contrastList</span> <span class="op">&lt;-</span> <span class="va">Design</span><span class="op">@</span><span class="va">Contrasts.List</span>
  <span class="co">#Design.contrastList$simple &lt;- Design.contrastList$simple[c(1:9)]$contrast</span>
@@ -369,7 +373,7 @@ Design checking’s result
 <li><p>All input data (abundance, metadata, statistical framework), choice about tools, parameters, threshold, and analysis results are managed in (by) the FlomicsMultiAssayExp object, an instance of the class MultiAssayExperiment (MAE). See the next paragraph to have a description. This object is created by FlomicsMultiAssay.constructor method. This method takes in input : a list of lists (per dataset) of abundance matrices (and their metadata if it exist), and “Design” object.</p></li>
 <li><p>Build a list of abundances :</p></li>
 </ul>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ListofData</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
   <span class="st">"RNAseq1"</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> <span class="st">"data"</span><span class="op">=</span><span class="va">geneCount</span>,      <span class="st">"meta"</span><span class="op">=</span><span class="cn">NULL</span>, <span class="st">"omicType"</span><span class="op">=</span><span class="st">"RNAseq"</span><span class="op">)</span><span class="op">)</span>
   <span class="co"># "proteomics1"=  list( "data"=protAbundance,  "meta"=NULL, "omicType"="proteomics"),</span>
@@ -377,11 +381,11 @@ Design checking’s result
 <ul>
 <li>Instantiate an object of class MultiAssayExperiment.</li>
 </ul>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"> <span class="va">FlomicsMultiAssay</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/FlomicsMultiAssay.constructor.html">FlomicsMultiAssay.constructor</a></span><span class="op">(</span>inputs      <span class="op">=</span> <span class="va">ListofData</span>, 
                                                     Design      <span class="op">=</span> <span class="va">Design</span>, 
                                                     projectName <span class="op">=</span> <span class="va">projectName</span><span class="op">)</span></code></pre></div>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">FlomicsMultiAssay</span>
 <span class="co">#&gt; A MultiAssayExperiment object of 1 listed</span>
 <span class="co">#&gt;  experiment with a user-defined name and respective class.</span>
@@ -399,9 +403,19 @@ Design checking’s result
 <div id="statistical-analysis-of-rnaseq-data" class="section level1">
 <h1 class="hasAnchor">
 <a href="#statistical-analysis-of-rnaseq-data" class="anchor" aria-hidden="true"></a>Statistical analysis of RNAseq data:</h1>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">data</span><span class="op">=</span><span class="st">"RNAseq1"</span>
 <span class="va">RNAseq.raw.SE</span> <span class="op">&lt;-</span>  <span class="va">FlomicsMultiAssay</span><span class="op">@</span><span class="va">ExperimentList</span><span class="op">[[</span><span class="va">data</span><span class="op">]</span><span class="op">]</span></code></pre></div>
+<!-- * dans le cas ou le nombre de samples dans la matrice ne correspond tous à fait aux samples decrits dans le design -->
+<!-- il faut faire une fonction pour aider l'utilisateur de retirer des samples facilement -->
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">CheckCompleteness.dataset</span> <span class="op">&lt;-</span> <span class="fu">CheckExpDesignCompleteness</span><span class="op">(</span><span class="va">Design</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">RNAseq.raw.SE</span><span class="op">)</span><span class="op">)</span>
+
+<span class="va">CheckCompleteness.dataset</span><span class="op">$</span><span class="va">plot</span></code></pre></div>
+<p><img src="RFLOMICS-command-lines_files/figure-html/CheckExp-1.png" width="700"></p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">CheckCompleteness.dataset</span><span class="op">$</span><span class="va">error</span>
+<span class="co">#&gt; NULL</span></code></pre></div>
 <div id="filter-and-normalize" class="section level2">
 <h2 class="hasAnchor">
 <a href="#filter-and-normalize" class="anchor" aria-hidden="true"></a>Filter and Normalize</h2>
@@ -409,21 +423,21 @@ Design checking’s result
 <li>By default, gene with 0 count are removed from the data.</li>
 <li>The advice filtering method is to remove genes for which NbOfsample_over_cpm &lt;= NbConditions. For a CPM fixed at 5. In this example, there are 9 conditions. So, the number of gene with a CPM less than 5 in at least 9 samples are removed. Other strategies are available (see the help).</li>
 </ul>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">RNAseq.SE</span> <span class="op">&lt;-</span> <span class="fu">FilterLowAbundance</span><span class="op">(</span><span class="va">RNAseq.raw.SE</span>, Filter_Strategy <span class="op">=</span> <span class="st">"NbConditions"</span>, CPM_Cutoff <span class="op">=</span> <span class="fl">5</span> <span class="op">)</span>
 
 <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">RNAseq.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">)</span>
 <span class="co">#&gt; [1] "omicType"         "Groups"           "rowSums.zero"     "FilteredFeatures"</span>
 <span class="co">#&gt; [5] "FilteredOptions"  "FilteringOptions"</span></code></pre></div>
 <p>We can obtain the number of genes which were filtred with this command:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">RNAseq.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">$</span><span class="va">FilteredFeatures</span><span class="op">)</span>
 <span class="co">#&gt; [1] 11597</span></code></pre></div>
 <p>11597 genes were filtered out.</p>
 <ul>
 <li>Run the TMM normalization method. Scaling factors are stored in the table below:</li>
 </ul>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">RNAseq.SE</span> <span class="op">&lt;-</span> <span class="fu">RunNormalization</span><span class="op">(</span><span class="va">RNAseq.SE</span>, NormMethod <span class="op">=</span> <span class="st">"TMM"</span><span class="op">)</span>
 
 <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">RNAseq.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">)</span>
@@ -436,7 +450,7 @@ Design checking’s result
 <ul>
 <li>Library size distribution of raw RNAseq data:</li>
 </ul>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">Library_size_barplot.plot</span><span class="op">(</span><span class="va">RNAseq.raw.SE</span><span class="op">)</span>
 
 <span class="fu">Library_size_barplot.plot</span><span class="op">(</span><span class="va">RNAseq.SE</span><span class="op">)</span>
@@ -452,7 +466,7 @@ Design checking’s result
 <ul>
 <li>Count distribution of raw RNAseq data:</li>
 </ul>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#Data_Distribution.plot(RNAseq.raw.SE, "density") </span>
 <span class="co">#Data_Distribution.plot(RNAseq.raw.SE, "boxplot") </span>
 
@@ -467,14 +481,14 @@ Design checking’s result
 <ul>
 <li>Raw data Exploratory of raw RNAseq data:</li>
 </ul>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">RNAseq.raw.SE</span> <span class="op">&lt;-</span> <span class="fu">RunPCA</span><span class="op">(</span><span class="va">RNAseq.raw.SE</span><span class="op">)</span>
 <span class="va">RNAseq.SE</span>     <span class="op">&lt;-</span> <span class="fu">RunPCA</span><span class="op">(</span><span class="va">RNAseq.SE</span><span class="op">)</span></code></pre></div>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># mvQCdesign(object = FlomicsMultiAssay, data = data , PCA = "raw", axis = 5, pngFile = NULL)</span>
 <span class="co"># </span>
 <span class="co"># mvQCdesign(object = FlomicsMultiAssay, data = paste0(data, ".filtred") , PCA = "norm", axis = 5, pngFile = NULL)</span></code></pre></div>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">RFLOMICS</span><span class="fu">::</span><span class="fu">plotPCA</span><span class="op">(</span> <span class="va">RNAseq.raw.SE</span>, 
                    PCA <span class="op">=</span> <span class="st">"raw"</span>, PCs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, condition <span class="op">=</span> <span class="st">"groups"</span><span class="op">)</span>
 <span class="fu">RFLOMICS</span><span class="fu">::</span><span class="fu">plotPCA</span><span class="op">(</span> <span class="va">RNAseq.SE</span>, 
@@ -492,7 +506,7 @@ Design checking’s result
 <span class="fu">RFLOMICS</span><span class="fu">::</span><span class="fu">plotPCA</span><span class="op">(</span> <span class="va">RNAseq.SE</span>, 
                    PCA <span class="op">=</span> <span class="st">"norm"</span>, PCs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span><span class="op">)</span>, condition <span class="op">=</span> <span class="st">"groups"</span><span class="op">)</span></code></pre></div>
 <p><img src="RFLOMICS-command-lines_files/figure-html/plotPCA%20groups-1.png" width="700"><img src="RFLOMICS-command-lines_files/figure-html/plotPCA%20groups-2.png" width="700"><img src="RFLOMICS-command-lines_files/figure-html/plotPCA%20groups-3.png" width="700"><img src="RFLOMICS-command-lines_files/figure-html/plotPCA%20groups-4.png" width="700"><img src="RFLOMICS-command-lines_files/figure-html/plotPCA%20groups-5.png" width="700"><img src="RFLOMICS-command-lines_files/figure-html/plotPCA%20groups-6.png" width="700"></p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">RFLOMICS</span><span class="fu">::</span><span class="fu">plotPCA</span><span class="op">(</span> <span class="va">RNAseq.raw.SE</span>, 
                    PCA <span class="op">=</span> <span class="st">"raw"</span>, PCs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, condition <span class="op">=</span> <span class="st">"imbibition"</span><span class="op">)</span>
 <span class="fu">RFLOMICS</span><span class="fu">::</span><span class="fu">plotPCA</span><span class="op">(</span> <span class="va">RNAseq.SE</span>, 
@@ -510,7 +524,7 @@ Design checking’s result
 <span class="fu">RFLOMICS</span><span class="fu">::</span><span class="fu">plotPCA</span><span class="op">(</span> <span class="va">RNAseq.SE</span>, 
                    PCA <span class="op">=</span> <span class="st">"norm"</span>, PCs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span><span class="op">)</span>, condition <span class="op">=</span> <span class="st">"imbibition"</span><span class="op">)</span></code></pre></div>
 <p><img src="RFLOMICS-command-lines_files/figure-html/plotPCA%20factor1-1.png" width="700"><img src="RFLOMICS-command-lines_files/figure-html/plotPCA%20factor1-2.png" width="700"><img src="RFLOMICS-command-lines_files/figure-html/plotPCA%20factor1-3.png" width="700"><img src="RFLOMICS-command-lines_files/figure-html/plotPCA%20factor1-4.png" width="700"><img src="RFLOMICS-command-lines_files/figure-html/plotPCA%20factor1-5.png" width="700"><img src="RFLOMICS-command-lines_files/figure-html/plotPCA%20factor1-6.png" width="700"></p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#mvQCdata(object = FlomicsMultiAssay,data= paste0(data,".filtred") , PCA="norm", axis=5,pngFile= NULL) </span></code></pre></div>
 <p>We can noticed that imbibition factor explained a very huge proportion of dataset variability: * PCA1 &amp; PCA2: DS vs LI  + 33.9 = 75 % * PCA3: EI vs LI+DS  % Whereas the temperature factor explain very few: * PCA4 and PCA5: low vs Elevated ,+ 3.6 = 6.6 %.</p>
 </div>
@@ -520,7 +534,7 @@ Design checking’s result
 <ul>
 <li>Run the differential analysis thanks to the ‘RunDiffAnalyis’ method which calls the glmFit function from the edgeR package and applied the Benjamini and Hochberg (BH) FDR correction. The designed statistical model is applied for each contrast. To filter diferentially expressed genes, the ‘FilterDiffAnalysis’ method <strong>has to be called</strong>. All the raw and filtered results are stored in the metadata list of the SummarizedExperiment Object.</li>
 </ul>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># run diffAnalysis</span>
 <span class="va">RNAseq.SE</span> <span class="op">&lt;-</span>
   <span class="fu">RunDiffAnalysis</span><span class="op">(</span> <span class="va">RNAseq.SE</span>, design <span class="op">=</span> <span class="va">Design</span>, contrastList <span class="op">=</span> <span class="va">Design</span><span class="op">@</span><span class="va">Contrasts.Sel</span><span class="op">$</span><span class="va">contrastName</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>, Adj.pvalue.method <span class="op">=</span> <span class="st">"BH"</span>, DiffAnalysisMethod <span class="op">=</span> <span class="st">"edgeRglmfit"</span>, clustermq <span class="op">=</span> <span class="cn">FALSE</span> <span class="op">)</span>
@@ -546,7 +560,7 @@ Design checking’s result
 <ul>
 <li>Access to the number of up and down regulated genes.</li>
 </ul>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">tmpRes</span> <span class="op">&lt;-</span>
   <span class="va">RNAseq.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">[[</span><span class="st">"DiffExpAnal"</span><span class="op">]</span><span class="op">]</span>
 <span class="va">DE</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">vector</a></span><span class="op">(</span><span class="op">)</span>
@@ -587,7 +601,7 @@ Design checking’s result
 <ul>
 <li>Run the DiffAnal.plot function to get the MAplot and the Pvalue distribution. By example,</li>
 </ul>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pDA</span> <span class="op">&lt;-</span>
   <span class="fu">DiffAnal.plot</span><span class="op">(</span><span class="va">RNAseq.SE</span>,
                 <span class="va">tmpRes</span><span class="op">[[</span><span class="st">"contrasts"</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span><span class="op">$</span><span class="va">contrastName</span> ,
@@ -595,7 +609,7 @@ Design checking’s result
 <ul>
 <li>Check the MAplot:</li>
 </ul>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pDA</span><span class="op">$</span><span class="va">MA.plot</span></code></pre></div>
 <p><img src="RFLOMICS-command-lines_files/figure-html/MAplot-1.png" width="700"></p>
 <ul>
@@ -607,13 +621,13 @@ Design checking’s result
 </ul>
 </li>
 </ul>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pDA</span><span class="op">$</span><span class="va">Pvalue.hist</span></code></pre></div>
 <p><img src="RFLOMICS-command-lines_files/figure-html/PvaluePlot-1.png" width="700"></p>
 <ul>
 <li>Draw a Venn diagramm of DEG for samples thanks to the UpSetR function.</li>
 </ul>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">DEF_mat</span> <span class="op">&lt;-</span>
   <span class="va">RNAseq.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">$</span><span class="va">DiffExpAnal</span><span class="op">[[</span><span class="st">"mergeDEF"</span><span class="op">]</span><span class="op">]</span>
 <span class="co">#UpSetR::upset(DEF_mat, sets = c("H22","H23","H24")) </span></code></pre></div>
@@ -625,7 +639,7 @@ Design checking’s result
 <li><p>A list of DEG associated to contrasts has to be constructed. Choice is given to merge (<strong>union</strong>) or intersect (<strong>intersection</strong>) the list of genes.</p></li>
 <li><p>Co-expression analysis is done thanks to the coseq package and function with a set of optimal parameters which are the data transformation method: fixed to <strong>arcsin</strong> and the model: fixed to <strong>gaussian mixture models</strong>. The number of technical replicates to perform (<strong>iter</strong>) for each <strong>K</strong> which is the number of cluster into which the DEG genes have to be cut, can be first set to 0 to precise the range of K and then put to a minimum of 10 replicates. see the coseq vignette.</p></li>
 </ul>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">DEG_list</span> <span class="op">&lt;-</span> <span class="fu">getDEGlist_for_coseqAnalysis</span><span class="op">(</span>
         matrix    <span class="op">=</span> <span class="va">RNAseq.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">$</span><span class="va">DiffExpAnal</span><span class="op">[[</span><span class="st">"mergeDEF"</span><span class="op">]</span><span class="op">]</span>,
         colnames  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"H1"</span>,<span class="st">"H2"</span>,<span class="st">"H3"</span><span class="op">)</span>,
@@ -731,19 +745,20 @@ Design checking’s result
 <span class="co">#&gt; K = 4 to 4 </span>
 <span class="co">#&gt; Use seed argument in coseq for reproducible results.</span>
 <span class="co">#&gt; ****************************************</span>
-<span class="co">#&gt; Running K = 4 ...</span></code></pre></div>
+<span class="co">#&gt; Running K = 4 ...</span>
+<span class="co">#&gt; [1] 3</span></code></pre></div>
 <p>In this example, we took the union of three DEG lists.</p>
 <ul>
 <li>Plot likelihood</li>
 </ul>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">RNAseq.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">$</span><span class="va">CoExpAnal</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">ICL</span></code></pre></div>
 <p><img src="RFLOMICS-command-lines_files/figure-html/plotCoseq1-1.png" width="700"></p>
 <p>The best number of clusters (K) into which DEG list’s union have to be cut is 10.</p>
 <ul>
 <li>Plot Expression profiles</li>
 </ul>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">RNAseq.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">$</span><span class="va">CoExpAnal</span><span class="op">$</span><span class="va">plots</span><span class="op">$</span><span class="va">boxplots</span></code></pre></div>
 <p><img src="RFLOMICS-command-lines_files/figure-html/plotCoexp-1.png" width="700"></p>
 </div>
@@ -751,24 +766,51 @@ Design checking’s result
 <div id="annotation-and-enrichment-analysis" class="section level2">
 <h2 class="hasAnchor">
 <a href="#annotation-and-enrichment-analysis" class="anchor" aria-hidden="true"></a>Annotation and Enrichment analysis</h2>
-<p>il faut definir les lists à annoter de l’analyse diff et analyse coseq</p>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">ListNames.diff</span> <span class="op">&lt;-</span> <span class="va">dataset.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">$</span><span class="va">DiffExpAnal</span><span class="op">[[</span><span class="st">"contrasts"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">contrastName</span>
-<span class="va">ListNames.coseq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">dataset.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">$</span><span class="va">CoExpAnal</span><span class="op">[[</span><span class="st">"clusters"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>
+<p>To perform annotation and enrichment analysis, we need Reference file (see <a href="/private/var/folders/mn/95p840s571b4mgdjr6n330fr0000gp/T/RtmpEbqx08/temp_libpath14173db9c5ef/RFLOMICS//docs/articles/RFLOMICS-input-data.html">rflomics input data</a>.</p>
+<p>Then we select a lists of DGEs and clusters to annotate. By default the annotation whill be done on all setected DGE lists and clusters.</p>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">ListNames.diff</span>  <span class="op">&lt;-</span> <span class="va">RNAseq.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">$</span><span class="va">DiffExpAnal</span><span class="op">[[</span><span class="st">"contrasts"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">contrastName</span>
+<span class="va">ListNames.coseq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">RNAseq.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">$</span><span class="va">CoExpAnal</span><span class="op">[[</span><span class="st">"clusters"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></code></pre></div>
+<p>Run gene enrichment with hypergenometric method.</p>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">RNAseq.SE</span> <span class="op">&lt;-</span> <span class="fu">runAnnotationEnrichment</span><span class="op">(</span> <span class="va">RNAseq.SE</span>, annotation <span class="op">=</span> <span class="va">annot.genes</span>, 
+                                      DiffListNames <span class="op">=</span> <span class="va">ListNames.diff</span>, 
+                                      CoExpListNames<span class="op">=</span> <span class="va">ListNames.coseq</span>,
+                                      alpha <span class="op">=</span> <span class="fl">0.01</span>, 
+                                      probaMethod <span class="op">=</span> <span class="st">"hypergeometric"</span><span class="op">)</span></code></pre></div>
+<p>Plot the over-represented GO terms for each list.</p>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R">  <span class="co"># top based on pvalue</span>
+  <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Enrichment.plot.html">Enrichment.plot</a></span><span class="op">(</span><span class="va">RNAseq.SE</span>, Over_Under<span class="op">=</span><span class="st">"overrepresented"</span>, top <span class="op">=</span> <span class="fl">50</span>, listNames<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cluster.4"</span>, <span class="st">"cluster.3"</span><span class="op">)</span><span class="op">)</span>
 
-<span class="fu">runAnnotationEnrichment</span><span class="op">(</span><span class="va">dataset.SE</span>, annotation <span class="op">=</span> <span class="va">annot.genes</span>, 
-                        DiffListNames <span class="op">=</span> <span class="va">ListNames.diff</span>, 
-                        CoExpListNames<span class="op">=</span> <span class="va">ListNames.coseq</span>,
-                        alpha <span class="op">=</span> <span class="fl">0.01</span>, 
-                        probaMethod <span class="op">=</span> <span class="va">hypergeometric</span><span class="op">)</span></code></pre></div>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+  <span class="va">p</span>
+<span class="co">#&gt; $cluster.4</span></code></pre></div>
+<p><img src="RFLOMICS-command-lines_files/figure-html/pvalue.enrichment.plot%20overrepresented-1.png" width="700"></p>
+<pre><code>#&gt; 
+#&gt; $cluster.3</code></pre>
+<p><img src="RFLOMICS-command-lines_files/figure-html/pvalue.enrichment.plot%20overrepresented-2.png" width="700"></p>
+<p>Plot the over-represented GO terms for each list.</p>
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R">  <span class="co"># top based on pvalue</span>
+  <span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Enrichment.plot.html">Enrichment.plot</a></span><span class="op">(</span><span class="va">RNAseq.SE</span>, Over_Under<span class="op">=</span><span class="st">"underrepresented"</span>, top <span class="op">=</span> <span class="fl">50</span>, listNames<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cluster.4"</span>, <span class="st">"cluster.3"</span><span class="op">)</span><span class="op">)</span>
+
+  <span class="va">p</span>
+<span class="co">#&gt; $cluster.4</span></code></pre></div>
+<p><img src="RFLOMICS-command-lines_files/figure-html/pvalue.enrichment.plot%20underrepresented-1.png" width="700"></p>
+<pre><code>#&gt; 
+#&gt; $cluster.3</code></pre>
+<p><img src="RFLOMICS-command-lines_files/figure-html/pvalue.enrichment.plot%20underrepresented-2.png" width="700"></p>
+</div>
+<div id="section" class="section level2">
+<h2></h2>
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">FlomicsMultiAssay</span><span class="op">@</span><span class="va">ExperimentList</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">".filtred"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">RNAseq.SE</span></code></pre></div>
 </div>
 </div>
 <div id="session-information" class="section level1">
 <h1 class="hasAnchor">
 <a href="#session-information" class="anchor" aria-hidden="true"></a>Session information:</h1>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/sessioninfo/man/session_info.html" class="external-link">session_info</a></span><span class="op">(</span><span class="op">)</span>
 <span class="co">#&gt; ─ Session info ───────────────────────────────────────────────────────────────</span>
 <span class="co">#&gt;  setting  value                       </span>
@@ -780,7 +822,7 @@ Design checking’s result
 <span class="co">#&gt;  collate  fr_FR.UTF-8                 </span>
 <span class="co">#&gt;  ctype    fr_FR.UTF-8                 </span>
 <span class="co">#&gt;  tz       Europe/Paris                </span>
-<span class="co">#&gt;  date     2021-10-01                  </span>
+<span class="co">#&gt;  date     2021-10-06                  </span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ─ Packages ───────────────────────────────────────────────────────────────────</span>
 <span class="co">#&gt;  package              * version    date       lib</span>
@@ -887,7 +929,7 @@ Design checking’s result
 <span class="co">#&gt;  RCurl                  1.98-1.5   2021-09-17 [2]</span>
 <span class="co">#&gt;  remotes                2.4.0      2021-06-02 [2]</span>
 <span class="co">#&gt;  reshape2               1.4.4      2020-04-09 [2]</span>
-<span class="co">#&gt;  RFLOMICS             * 0.0.0.9000 2021-10-01 [1]</span>
+<span class="co">#&gt;  RFLOMICS             * 0.0.0.9000 2021-10-06 [1]</span>
 <span class="co">#&gt;  rlang                  0.4.11     2021-04-30 [2]</span>
 <span class="co">#&gt;  rmarkdown              2.11       2021-09-14 [2]</span>
 <span class="co">#&gt;  Rmixmod                2.1.5      2020-06-14 [2]</span>
@@ -1060,7 +1102,7 @@ Design checking’s result
 <span class="co">#&gt;  CRAN (R 4.1.0)                </span>
 <span class="co">#&gt;  Bioconductor                  </span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; [1] /private/var/folders/mn/95p840s571b4mgdjr6n330fr0000gp/T/RtmpBieTuM/temp_libpathcc430a55072</span>
+<span class="co">#&gt; [1] /private/var/folders/mn/95p840s571b4mgdjr6n330fr0000gp/T/RtmpEbqx08/temp_libpath14173db9c5ef</span>
 <span class="co">#&gt; [2] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</span></code></pre></div>
 </div>
   </div>

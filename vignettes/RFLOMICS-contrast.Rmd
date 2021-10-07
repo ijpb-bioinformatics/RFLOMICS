@@ -65,7 +65,7 @@ Design <- ExpDesign.constructor(ExpDesign = ExpDesign, refList = Design.Factors.
 
  completeCheckRes <- CheckExpDesignCompleteness(Design)
 
- plotExperimentalDesign(completeCheckRes[["count"]])
+ completeCheckRes[["plot"]]
  
 ```
 

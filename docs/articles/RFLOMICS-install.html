@@ -107,21 +107,29 @@
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">RFLOMICS</span><span class="op">)</span></code></pre></div>
-<div id="clustermq-configuration" class="section level2">
+<div id="what-is-clutsermq" class="section level1">
+<h1 class="hasAnchor">
+<a href="#what-is-clutsermq" class="anchor" aria-hidden="true"></a>What is clutsermq</h1>
+<p><a href="https://github.com/mschubert/clustermq" class="external-link">clustermq</a> is a R package…</p>
+</div>
+<div id="clustermq-configuration" class="section level1">
+<h1 class="hasAnchor">
+<a href="#clustermq-configuration" class="anchor" aria-hidden="true"></a>clustermq configuration</h1>
+<ul>
+<li>Create bioinfo <a href="http://bioinfo.genotoul.fr/index.php/ask-for/create-an-account-2/" class="external-link">account</a>
+</li>
+<li>Clustermq is installed on R 4.1.1 version. Thus egdeR and Coseq packages.</li>
+</ul>
+<div id="set-up-ssh-keys-for-password-less-login-on-genotoul" class="section level2">
 <h2 class="hasAnchor">
-<a href="#clustermq-configuration" class="anchor" aria-hidden="true"></a>clustermq configuration</h2>
-<ol style="list-style-type: decimal">
-<li>ouvrir un compte chez genotoul ou IFB</li>
-</ol>
-<p>cluster mq est déja installer + les package d’analyse edgeR et coseq</p>
-<ol style="list-style-type: upper-roman">
-<li>Set up SSH keys for password-less login on Genotoul</li>
-</ol>
+<a href="#set-up-ssh-keys-for-password-less-login-on-genotoul" class="anchor" aria-hidden="true"></a>Set up SSH keys for password-less login on Genotoul</h2>
 <ol style="list-style-type: decimal">
 <li>Generate a ssh key in local</li>
 </ol>
-<p>$ ssh-keygen -t rsa</p>
-<p>Enter file in which to save the key (/home/dcharif/.ssh/id_rsa):</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh-keygen</span> <span class="at">-t</span> rsa</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;</span>!-- <span class="ex">Enter</span> file in which to save the key <span class="er">(</span><span class="ex">/home/dcharif/.ssh/id_rsa</span><span class="kw">)</span><span class="bu">:</span> <span class="at">--</span><span class="op">&gt;</span></span></code></pre></div>
 <p>=&gt; Enter without changing the default location</p>
 <p>Enter passphrase (empty for no passphrase):</p>
 <p>=&gt; Enter 2 times and let empty</p>
@@ -136,6 +144,14 @@
 </ol>
 <p>$ ssh <a href="mailto:dcharif@genologin.toulouse.inra.fr" class="email">dcharif@genologin.toulouse.inra.fr</a></p>
 <p><a href="https://www.hostinger.fr/tutoriels/generer-cle-ssh/" class="external-link uri">https://www.hostinger.fr/tutoriels/generer-cle-ssh/</a></p>
+</div>
+<div id="on-own-computer" class="section level2">
+<h2 class="hasAnchor">
+<a href="#on-own-computer" class="anchor" aria-hidden="true"></a>On own computer</h2>
+</div>
+<div id="on-cluster-genotoul-server-slurm" class="section level2">
+<h2 class="hasAnchor">
+<a href="#on-cluster-genotoul-server-slurm" class="anchor" aria-hidden="true"></a>On cluster (genotoul server : SLURM)</h2>
 <ol start="2" style="list-style-type: upper-roman">
 <li>
 <p>Configure clustermq</p>
@@ -170,6 +186,7 @@ clustermq.ssh.log = "/home/dcharif/cmq_ssh.log" # log for easier debugging</code
 <p>#!/bin/sh #SBATCH –job-name={{ job_name }} #SBATCH –partition=workq #SBATCH –output={{ log_file | /dev/null }} # you can add .%a for array index #SBATCH –error={{ log_file | /dev/null }} #SBATCH –mem-per-cpu={{ memory | 4096 }} #SBATCH –array=1-{{ n_jobs }} #SBATCH –<a href="mailto:mail-user=delphine.charif@inra.fr" class="email">mail-user=delphine.charif@inra.fr</a></p>
 <p>module load {{ bashenv }}</p>
 <p>ulimit -v $(( 1024 * {{ memory | 4096 }} )) CMQ_AUTH={{ auth }} R –no-save –no-restore -e ‘clustermq:::worker(“{{ master}}”)’</p>
+</div>
 </div>
   </div>
 

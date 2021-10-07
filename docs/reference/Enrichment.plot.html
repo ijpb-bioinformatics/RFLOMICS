@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>CheckExpDesignCompleteness — CheckExpDesignCompleteness,ExpDesign-method • RFLOMICS</title>
+<title>Enrichment.plot — Enrichment.plot • RFLOMICS</title>
 
 
 <!-- jquery -->
@@ -39,14 +39,8 @@
 
 
 
-<meta property="og:title" content="CheckExpDesignCompleteness — CheckExpDesignCompleteness,ExpDesign-method" />
-<meta property="og:description" content="This method check some experimental design characteristics.
-does it have biological factor ?
-does it have replicat/batch factor ?
-does it have enough replicat/batch ? at least 3 are advised
-is the design completed ? presence of all possible combinations of levels for all factors
-is the design balanced ? presence of the same number of replicat for all possible combinations
-Completed design and at least on biological and one batch factors are required for using RFLOMICS workflow." />
+<meta property="og:title" content="Enrichment.plot — Enrichment.plot" />
+<meta property="og:description" content="Enrichment.plot" />
 
 
 
@@ -150,65 +144,47 @@ Completed design and at least on biological and one batch factors are required f
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>CheckExpDesignCompleteness</h1>
+    <h1>Enrichment.plot</h1>
     
-    <div class="hidden name"><code>CheckExpDesignCompleteness-ExpDesign-method.Rd</code></div>
+    <div class="hidden name"><code>Enrichment.plot.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This method check some experimental design characteristics.</p><ul>
-<li><p>does it have biological factor ?</p></li>
-<li><p>does it have replicat/batch factor ?</p></li>
-<li><p>does it have enough replicat/batch ? at least 3 are advised</p></li>
-<li><p>is the design completed ? presence of all possible combinations of levels for all factors</p></li>
-<li><p>is the design balanced ? presence of the same number of replicat for all possible combinations</p></li>
-</ul><p>Completed design and at least on biological and one batch factors are required for using RFLOMICS workflow.</p>
+    <p>Enrichment.plot</p>
     </div>
 
-    <div class="ref-usage sourceCode"><pre class='sourceCode r'><code><span class='co'># S4 method for ExpDesign</span>
-<span class='fu'>CheckExpDesignCompleteness</span><span class='op'>(</span><span class='va'>object</span>, colnames <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></code></pre></div>
+    <div class="ref-usage sourceCode"><pre class='sourceCode r'><code><span class='fu'>Enrichment.plot</span><span class='op'>(</span>
+  <span class='va'>object</span>,
+  Over_Under <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"overrepresented"</span>, <span class='st'>"underrepresented"</span><span class='op'>)</span>,
+  top <span class='op'>=</span> <span class='st'>"all"</span>,
+  listNames <span class='op'>=</span> <span class='cn'>NULL</span>
+<span class='op'>)</span></code></pre></div>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>An</th>
-      <td><p>object of class <a href='ExpDesign-class.html'>ExpDesign-class</a></p></td>
+      <th>object</th>
+      <td><p>An object of class SummarizedExperiment</p></td>
+    </tr>
+    <tr>
+      <th>Over_Under</th>
+      <td><p>"overrepresented" or "underrepresented" (default : overrepresented)</p></td>
+    </tr>
+    <tr>
+      <th>top</th>
+      <td><p>level of enriched terms to display</p></td>
+    </tr>
+    <tr>
+      <th>listNames</th>
+      <td><p>vector of DGEs or cluster names (default : all enriched lists)</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>a named list of two objects</p><ul>
-<li><p>"count:" a data.frame with the number of each possible combinations of levels for all factors.</p></li>
-<li><p>"message:" results of the check</p><ul>
-<li><p>"true" :"  false or "The experimental design is complete and balanced</p></li>
-<li><p>"lowRep" :"  false or "WARNING : 3 biological replicates are needed.</p></li>
-<li><p>"noCompl" :" false or "ERROR : The experimental design is not complete.</p></li>
-<li><p>"noBalan" :" warning or "WARNING : The experimental design is complete but not balanced.</p></li>
-<li><p>"noBio" :" false or "ERROR : no bio factor !</p></li>
-<li><p>"noBatch :" false or "ERROR : no replicat</p></li>
-</ul></li>
-</ul>
+    <p>plot</p>
 
-
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <div class="ref-examples sourceCode"><pre class='sourceCode r'><code><span class='r-in'><span class='va'>Design.File</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/utils/read.table.html'>read.table</a></span><span class='op'>(</span>file<span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/find.package.html'>path.package</a></span><span class='op'>(</span><span class='st'>"RFLOMICS"</span><span class='op'>)</span>, <span class='st'>"/ExamplesFiles/TP/experimental_design.txt"</span>,sep<span class='op'>=</span><span class='st'>""</span><span class='op'>)</span>,header <span class='op'>=</span> <span class='cn'>TRUE</span>,row.names <span class='op'>=</span> <span class='fl'>1</span>, sep <span class='op'>=</span> <span class='st'>"\t"</span><span class='op'>)</span></span>
-<span class='r-in'></span>
-<span class='r-in'><span class='co'># Define the type of each factor</span></span>
-<span class='r-in'><span class='va'>Design.typeList</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Bio"</span>,<span class='st'>"Bio"</span>,<span class='st'>"batch"</span><span class='op'>)</span></span>
-<span class='r-in'></span>
-<span class='r-in'><span class='co'># Define the reference modality for each factor</span></span>
-<span class='r-in'><span class='va'>Design.refList</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"WT"</span>,<span class='st'>"control"</span>,<span class='st'>"rep1"</span><span class='op'>)</span></span>
-<span class='r-in'></span>
-<span class='r-in'><span class='co'># Initialize an object of class ExpDesign</span></span>
-<span class='r-in'><span class='va'>Design.obj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='ExpDesign-Constructor.html'>ExpDesign.constructor</a></span><span class='op'>(</span>ExpDesign <span class='op'>=</span> <span class='va'>Design.File</span>,</span>
-<span class='r-in'>refList <span class='op'>=</span> <span class='va'>Design.refList</span>, typeList <span class='op'>=</span> <span class='va'>Design.typeList</span><span class='op'>)</span></span>
-<span class='r-in'><span class='fu'>CheckExpDesignCompleteness</span><span class='op'>(</span><span class='va'>Design.obj</span><span class='op'>)</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> $plot</span>
-<span class='r-plt'><img src='CheckExpDesignCompleteness-ExpDesign-method-1.png' alt='' width='700' height='433' /></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
-</code></pre></div>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

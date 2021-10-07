@@ -1,12 +1,10 @@
----
-title: "RFLOMICS : Interactive web application for Omics-data analysis"
-output: rmarkdown::html_vignette
----
+# RFLOMICS : Interactive web application for Omics-data analysis
+
 
 # Introduction
 **Rflomics is a** ( under devlopement ) **R package coupled with a shiny application** dedicated to the managment and analysis of multiple omics-datasets (RNAseq illumina, proteomic LC-MS/MS, … ) in the statistical framework of **vertical integration** of observations (i.e. analysis of omics data across experiments on the same indivuals) see the figure below.
 
-<img src="RFLOMICSapp/www/Integration.png" align="center" width="900"/>
+<img src="inst/RFLOMICSapp/www/Integration.png" align="center" width="900"/>
 
 For the moment, Rflomics can deal with **multi-factorial experiments** (up to 3 biological factors with a batch factor) and helps to set up the statistical model and contrasts associated to the biological experiments. RNA, proteomic and metabolomic datasets are then analysed with expert methods and parameters.
 
@@ -18,7 +16,7 @@ For the moment, Rflomics can deal with **multi-factorial experiments** (up to 3 
 
 #  Features
 
-<img src="RFLOMICSapp/www/Rflomics_features.png" align="center" width="900"/>
+<img src="inst/RFLOMICSapp/www/Rflomics_features.png" align="center" width="900"/>
 
 - It manages raw and processed (filtred, normalized) datasets **(MultiAssayExperiment package)**
 - It can allows the remote computing for time/cpu consuming tasks **(clustermq packag)**

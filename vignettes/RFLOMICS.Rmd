@@ -30,21 +30,27 @@ In the left side of interface the different tab Items will be appear as the anal
 
 # Load Data
 
-In this section we start to set project name (its mandatory). Then we load the experimental design and different datasets.
+In this section we start by set project name (its mandatory). Then we load the experimental design and different datasets.
 
-<!-- ![capture]() -->
+
+![interface capture](figure3.jpg)
 
 ## Load Design
 
-<!-- ![capture]() -->
+
+
 ## Load Omics data 
 
-<!-- ![capture]() -->
+
 # Set statistical model choose contrasts to test
 
+![interface capture](figure2.jpg)
 
-<!-- ![capture]() -->
+
 # Omics data analysis
+
+![interface capture](figure1.jpg)
+
 
 ## QC, Low counts filtering and normalization
 <!-- ![capture]() -->
