@@ -38,7 +38,7 @@ h4("Incoming Features")
 - ecoseed dataset: Data have been provided by Loic Rajjou and Gwendal Cueff. They are included in the inst/ExampleFiles/ecoseed directory of the package. Briefly, A. thaliana's transcriptoms, proteoms and metaboloms have been obtained in the context of the study of seed germination and vigor. In particular, the author were interested in the influence of temperature (high, medium and low) and imbibition (Dry: DI, early imbibition: EI and late imbibition: LI) on gene's expression.
 - [An example of report](RFLOMICSapp/www/ecoseed-report.html)
 
-# Vignettes
+# [Vignettes](docs/index.html)
 
 # Contact and support
 ijpb-bioinfo-team

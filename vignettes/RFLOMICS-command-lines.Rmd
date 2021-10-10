@@ -162,19 +162,9 @@ categories: simple, averaged and interaction contrasts
 
  # Get all the possible contrasts from the complete model with interaction
  Design <- getExpressionContrast(object = Design, 
-                                 model.formula = names(Design.formulae[1]))
+                                 model.formula = names(Design.formulae[2]))
  
- # Simple Contrasts
- # knitr::kable( Design@Contrasts.List$simple[,-c(1:2)], caption = 'Simple Contrasts') 
-  Design@Contrasts.List$simple[,-c(1:2)]
- 
- # Averaged Contrasts
- # knitr::kable( Design@Contrasts.List$averaged[,-c(1:2)], caption = 'Averaged Contrasts')
- Design@Contrasts.List$averaged[,-c(1:2)]
- 
- # Interaction Contrasts
- # knitr::kable(Design@Contrasts.List$interaction[,-c(1:2,4)], caption = 'Interaction Contrasts')
- Design@Contrasts.List$interaction[,-c(1:2,4)]
+
  
 ```
 

@@ -14,10 +14,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-
-```
-
 
 # Run RFLOMICS
 
@@ -26,7 +22,7 @@ library(RFLOMICS)
 runApp()
 ```
 
-In the left side of interface the different tab Items will be appear as the analysis progresses to guide the user. 
+In the left side of interface the different tab Items and box will be appear as the analysis progresses to guide the user. 
 
 # Load Data
 
@@ -37,12 +33,32 @@ In this section we start by set project name (its mandatory). Then we load the e
 
 ## Load Design
 
+Import experimental plan (see input data vignette).
+Dès que on charge le plan experimental le contenu de ce fichier s'affiche sous forme de tableau avec la liste des diff modalité par facteur. Il faut definit les niv de ref pour chaque factor et le type de facteur.
+Il est imposer d'avoir au min 1 factor bio et un factor rep. et max 3factor bio et 2factor rep?!
+Il est aussi possible de déselectionner les nom dsample que on voudrais explure de l'analyse.
 
+ensuite il faut valider vos chois en cliquant sur valid factor set up.
+aussi tot une verification de la completrenss. avec un affichage graphique. Il est imposer est ce que le model soit complet mais tolere si le model est non equilibré . il est tout de même recommander d'avoir min 2 replicats.
 
 ## Load Omics data 
 
+suite a cela on pourait importet les données omics. Il faut choisir le type de omics puis loader la matrice des données correspondante (see input data). Il est aussi possible de charger les metadat. par defaut les donnes seront appeler par le nomdu omics suivie de set(i)
 
+Pour rajouter un nv dataset il suffi de cliquer sur add data et charger les données comme expliquer précédemment.
+
+Il est possible de charger des datasert du plusieru du même type ou de omics diff du moement ou il derive du même design experimental.
+Il n'est pas oubliger que les donnee est le même nombre d'echantillon
+Seul les echantllons présent dans le desgin seront pris en compte
+un upset permet d'avoir une idee sur l'intersection des echantillons
+la desgn complet et equilibré de chaque dataset set sera tester au QC de chaque analyse
+
+l'interface offre une flexibilité 
+
+Dés que on clique sur load si on a plusier data set un upset representation s'affiche pour 
 # Set statistical model choose contrasts to test
+
+
 
 ![interface capture](figure2.jpg)
 
