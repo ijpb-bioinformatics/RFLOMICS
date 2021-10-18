@@ -1,6 +1,6 @@
 ---
 title: "RFLOMICS report"
-author: "nadia.bessoltane@inra.fr & delphine.charif@inra.fr"
+author: "Bioinfo team"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 bibliography: bibliography.bib
 output: 
@@ -33,7 +33,6 @@ pngDir <- params$pngDir
 ```
 
 
-
 # Experimental Design :
 
 
@@ -44,7 +43,7 @@ pngDir <- params$pngDir
 <!-- ``` -->
 
 
-* The experimental design of the  **`r length(FlomicsMultiAssay@metadata$design@projectName)` project** has **`r length(FlomicsMultiAssay@metadata$design@Factors.Type)` factor(s)**:  
+* The experimental design of the  **`r length(FlomicsMultiAssay@metadata$projectName)` project** has **`r length(FlomicsMultiAssay@metadata$design@Factors.Type)` factor(s)**:  
 
 `r paste0(paste0(str_c(names(FlomicsMultiAssay@metadata$design@Factors.Type),as.vector(FlomicsMultiAssay@metadata$design@Factors.Type),sep=": a "),collapse=" factor,  ")," factor",collapse="")`
 
@@ -53,13 +52,13 @@ pngDir <- params$pngDir
 **`r FlomicsMultiAssay@metadata$design@Model.formula`**
 
 
-```{r CheckDesign1, echo=FALSE, message=TRUE, warning=TRUE}
-check <- CheckExpDesignCompleteness(FlomicsMultiAssay@metadata$design)
+```{r CheckDesignExp, echo=FALSE, message=TRUE, warning=TRUE}
+check <- CheckExpDesignCompleteness(Design)
 ```
 
 * The number of replicates per condition are:
 
-```{r checkDesign, echo=FALSE, results="asis"}
+```{r checkDesignAsis, echo=FALSE, results="asis"}
 kable_styling(kable(check$count, row.names=FALSE, caption=NULL,  format="html"), font_size=12, full_width = F, position = "left")
 ```
 
@@ -69,6 +68,13 @@ kable_styling(kable(check$count, row.names=FALSE, caption=NULL,  format="html"),
 
 ```{r contrastSel, echo=FALSE, results="asis"}
 kable_styling(kable(FlomicsMultiAssay@metadata$design@Contrasts.Sel[,c(5,2:3)], row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
+```
+
+## Datasets loaded:
+
+```{r upsetSamples, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+FlomicsMultiAssay@ExperimentList
+#upsetSamples(FlomicsMultiAssay)
 ```
 
 

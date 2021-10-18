@@ -7,7 +7,7 @@ coverPage <- fluidPage(
                     hr(),
                     p(
                       tags$b("Rflomics is a (",tags$i("under devlopement"),") R package coupled with a shiny application"),
-                      "dedicated to the managment and analysis of multiple omics-datasets (RNAseq illumina, proteomic LC-MS/MS, … )
+                      "dedicated to the management and analysis of multiple omics-datasets (RNAseq illumina, proteomic LC-MS/MS, … )
                     in the statistical framework of", tags$b("vertical integration")," of observations ",tags$i("(i.e. analysis of omics data
                     across experiments on the same indivuals)"),"see the figure below.",
                       tags$hr(), tags$img(src = "integration.png", width = "600px", height = "300px" )),
@@ -29,33 +29,33 @@ coverPage <- fluidPage(
                     p("",tags$img(src = "Rflomics_features.png", width = "600px", height = "400px"),
                       tags$hr(),
                       tags$ul(
-                        tags$li( "It manages raw and processed (filtred, normalized) datasets (",tags$a("MultiAssayExperiment package",href="#ref2"),")"),
+                        tags$li( "It manages raw and processed (filtered, normalized) datasets (",tags$a("MultiAssayExperiment package",href="#ref2"),")"),
                         tags$li( "It can allows the remote computing for time/cpu consuming tasks (",tags$a("clustermq package",href="#ref4"),")")
                       ),""),
                     hr(),
-                    h4("Incoming Features"),
+                    h4("Incoming features"),
                     tags$ul(
-                      tags$li("start to include multi-omics integration methods (MCIA first ?)"),
+                      tags$li("Start to include multi-omics integration methods (MCIA first ?)"),
                       tags$li("Imputation of missing values for proteomics and metabolomics data"),
                     ),
                   h2(tags$span("Input", style = "color:orange")),
                   tags$ul(
                     tags$li("RNAseq (illumina data sequencing technology): matrix of gene expression based on ",tags$b("raw read count"), "quantification. ",
-                            tags$br(),"-> gene_id in line and individuals in column"),
-                    tags$li("Proteomic (LC-MS/MS mass spectrometry): matrix of protein abundances based on ",tags$b("XIC quantification"), "(Extracted ion chromatograms) ",
-                            tags$br(),"-> protein_id in line and individuals in column",
+                            tags$br(),"-> gene_id in row and individuals in column"),
+                    tags$li("Proteomic (LC-MS/MS mass spectrometry): matrix of protein abundance based on ",tags$b("XIC quantification"), "(Extracted ion chromatograms) ",
+                            tags$br(),"-> protein_id in row and individuals in column",
                             tags$br(),"-> preprocessed matrix are expected for the moment (NA imputation, filtering)"),
-                    tags$li("Metabolomic (GC-MS mass spectrometry): matrix of metabolomic abundances based on ", tags$b("XIC quantification"), "(Extracted ion chromatograms) ",
-                            tags$br(),"-> metabolite_id in line and individuals in column",
+                    tags$li("Metabolomic (GC-MS mass spectrometry): matrix of metabolomic abundance based on ", tags$b("XIC quantification"), "(Extracted ion chromatograms) ",
+                            tags$br(),"-> metabolite_id in row and individuals in column",
                             tags$br(),"-> preprocessed matrix are expected for the moment (NA imputation, filtering)"),
                     ),
                   h3(tags$span("Datasets example", style = "color:orange")),
                   tags$ul(
-                    tags$li("ecoseed dataset:
-                    Data have been provided by Loic Rajjou and Gwendal Cueff.
+                    tags$li("Ecoseed dataset:
+                    data have been provided by Loic Rajjou and Gwendal Cueff.
                     They are included in the inst/ExampleFiles/ecoseed directory of the package. Briefly,
                     A. thaliana's transcriptoms, proteoms and metaboloms have been obtained in the context of the study of seed
-                    germination and vigor. In particular, the author were interested in the influence of
+                    germination and vigor. In particular, authors were interested in the influence of
                     temperature (high, medium and low) and imbibition (Dry: DI, early imbibition: EI and late
                     imbibition: LI) on gene's expression."),
                     tags$li(tags$a(href="ecoseed-report.html","An example of report"),),

@@ -7,20 +7,28 @@ CoSeqAnalysisUI <- function(id){
   tagList(
 
     fluidRow(
-      box(title = span(tagList(icon("cogs"), "   CoSeq ",a("(?)", href="https://www.bioconductor.org/packages/release/bioc/vignettes/coseq/inst/doc/coseq.html")  )),
+      box(title = span(tagList(icon("cogs"), "   CoSeq ",a("(see the guide)", href="https://www.bioconductor.org/packages/release/bioc/vignettes/coseq/inst/doc/coseq.html")  )),
           solidHeader = TRUE, status = "warning", width = 12,
           div(
-            h5(tags$span("Parameters recommandation", style = "color:orange")),
-            p("Running coseq in local is very time consuming as iteration (one K, one replicate) run one after the other (ie. several hours for 5000 genes, a range of 20 K and 10 replicates),
-            Whereas iteration run in parrallel onto the clusters (ie, 2 minutes for the same manip). In this case, K and the number of genes have more influence on time"),
-            h5(tags$span("Send coseq jobs to a cluster", style = "color:orange")),
+            h4(tags$span("Parameters set up:", style = "color:orange")),
+            p("You have first to choose between the ",tags$b("union")," or ",tags$b("intersection")," of your contrasts lists according to your biological question."),
+            p("All the default parameters have been expertised according to each omic."),
+            p("It is then recommanded to do a ",tags$b("first run")," with a large number of K with few replicates.
+            If their is a K (Kbest different from Kmin and Kmax) for which the ICL is minimum (check the first graph obtained),
+            then a second run has to be done with a larger experiment: the window of K can be centered around the Kbest and the number
+            of technical replicates has to be increased to at least 20 replicates. For this larger experiment, it is recommanded to send
+              analysis to remote ressources (see cluster option)"),
+            h4(tags$span("Successful analysis:", style = "color:orange")),
+            p("For a given K, the result will be considered as successful when at least the half of the replicates
+              have run. Co-expression analysis will be considered as successful if there is at least a result for more than the
+              half of K. In case of unsuccessful results, a detailed table of errors will appear."),
+            h4(tags$span("Cluster option", style = "color:orange")),
             p("If you have a cluster account, you can configure a remote access to it
-              (see config_file) and speed up results obtention."),
-            h5(tags$span("Successful run:", style = "color:orange")),
-            p("For a given K, the coexpression run will be considered as successful when at least the half of the replicates
-              are successful. Results will be outputed if there is a result for more than the half of K. In case of unsuccessful results,
-              a detailed table of errors will appear")
-
+              (see config_file) and speed up results obtention. Running coseq in local
+              is very time consuming as iteration (one K, one replicate) run one after
+              the other (ie. several hours for 5000 genes, a range of 20 K and 10 replicates),
+              Whereas iteration run in parallel onto the cluster (ie, 2 minutes for the same manip).
+              In this case, K and the number of genes have more influence on time"),
       ))),
     ### parametres for Co-Exp
     fluidRow(
@@ -48,27 +56,40 @@ CoSeqAnalysis <- function(input, output, session, dataset){
     switch(dataset.SE@metadata$omicType,
 
            "RNAseq" = {
+               warning <- ""
+               name <- "gene"
                model <- "Normal"
                Trans <- "arcsin"
                normF <- "TMM"
-               Gaussian <- "Gaussian_pk_Lk_Ck"},
+               Gaussian <- "Gaussian_pk_Lk_Ck"
+               Scale <- FALSE
+               },
 
            "metabolomics" = {
+               warning <- "(warning)"
+               name <- "metabolite"
                model <- c("Normal","kmeans")
                Trans <- "none"
                normF <- "none"
-               Gaussian <- c("Gaussian_pk_Lk_Ck", "Gaussian_pk_Lk_Bk", "none")},
+               Gaussian <- c("Gaussian_pk_Lk_Ck", "Gaussian_pk_Lk_Bk", "none")
+               Scale <- TRUE
+               },
 
            "proteomics" = {
+               warning <- "(warning)"
+               name <- "protein"
                model <- c("Normal","kmeans")
                Trans <- "none"
                normF <- "none"
-               Gaussian <- c("Gaussian_pk_Lk_Ck", "Gaussian_pk_Lk_Bk", "none")})
+               Gaussian <- c("Gaussian_pk_Lk_Ck", "Gaussian_pk_Lk_Bk", "none")
+               Scale <- TRUE
+               })
 
     names(model) <- paste0("model = ", model)
     names(Trans) <- paste0("transformation = ", Trans)
     names(normF) <- paste0("normFactors = ", normF)
     names(Gaussian) <- paste0("GaussianModel = ", Gaussian)
+    names(Scale) <- paste0("Scale = ", Scale)
 
     # set param in interface
     tagList(
@@ -99,6 +120,15 @@ CoSeqAnalysis <- function(input, output, session, dataset){
             column(8,
                    verbatimTextOutput(session$ns("mergeValue")) )),
 
+          fluidRow(
+
+            column(12,
+                   selectInput(session$ns("scale"),
+                               label    = popify(actionLink("infoScale",paste0("Scale by ", name , " : (help)")),"","By default for proteomics or metabolomics data,coseq is done onto Z-scores (data scaled by proteins or metabolites) to group them according to their expression profile rather than abundance",options=list(container="body")),
+                               choices  = Scale ,
+                               selected = Scale[1])
+                   )
+          ),
 
           fluidRow(
             column(12,
@@ -120,14 +150,14 @@ CoSeqAnalysis <- function(input, output, session, dataset){
           fluidRow(
             column(12,
                    selectInput(session$ns("GaussianModel"),
-                               label    = "Gaussian Model (only for normal model) :",
+
+                               label    = popify(actionLink("infoGaussianModel",paste0("Gaussian Model :", warning,"")),"","For proteomics or metabolomics data, coseq analysis may fail with default GaussianModel parameter. In this case, an error message will indicate to switch the other option: Gaussian_pk_Lk_Bk",options=list(container="body")),
                                choices  = Gaussian,
                                selected = Gaussian[1]))),
 
           fluidRow(
             column(8,
                    sliderInput(session$ns("K.values"), label = "Number of clusters :", min=2, max=30, value=c(2,10), step=1)),
-
             column(4,
                    numericInput(inputId = session$ns("iter"), label="Replicat :", value=10, 2, max=20, 1))),
 
@@ -135,7 +165,8 @@ CoSeqAnalysis <- function(input, output, session, dataset){
           fluidRow(
 
             column(8,
-                   materialSwitch(inputId = session$ns("clustermqCoseq"), label = "Cluster", value = FALSE, status = "success")),
+                   materialSwitch(inputId = session$ns("clustermqCoseq"), label = "Cluster", value = FALSE, status = "success"),
+                   ),
                    # radioGroupButtons(inputId = session$ns("clustermqCoseq"), direction = "horizontal",
                    #                   label = " RUN :",
                    #                   choices = c("Local" = FALSE,  "genotoul" = TRUE),
@@ -241,8 +272,8 @@ CoSeqAnalysis <- function(input, output, session, dataset){
 
           tabBox( id = "runClustering", width = 12,
 
-                  tabPanel("logLike",  renderPlot({ plot.coseq.res$logLike })),
                   tabPanel("ICL",      renderPlot({ plot.coseq.res$ICL })),
+                  tabPanel("logLike",  renderPlot({ plot.coseq.res$logLike })),
                   tabPanel("profiles", renderPlot({ plot.coseq.res$profiles })),
                   tabPanel("boxplots", renderPlot({ plot.coseq.res$boxplots })),
                   tabPanel("boxplots_bis",

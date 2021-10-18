@@ -1,24 +1,36 @@
 
 # `r data` analysis
 
+
 ## Workflow of reference 
 
-## data Exploratory
+### Dataset processing
 
+```{r CheckDesignMeta, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+check <- CheckExpDesignCompleteness(Design, colnames(FlomicsMultiAssay[[paste0(data,".filtrered")]]))
+NbProt <- length(names(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]))
+NbProtWoutNA <- dim(na.omit(assay(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]])))[1]
+```
 
-```{r ,echo=FALSE, fig.show="hold", message=FALSE, warning=FALSE, out.width="50%"}
-#knitr::include_graphics(c(file.path(pngDir, paste0(data, "_LibSize.png")), 
-#                          file.path(pngDir, paste0(data, "_CountDist.png"))))
+* X samples were removed from the datasets.
+* The data were X transformed.
+* The number of metabolite: `r NbProt`  
+* Number of metabolite with at least 1 NA: `r NbProt - NbProtWoutNA`
 
+### Distribution of density 
 
-plotDistr(abundances= assay(FlomicsMultiAssay[[data]]),
-           dataName  = paste0(data,".filtred"), 
-          dataType=FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$omicType,
-          transform_method=FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$transform_method)
-
+```{r densityPlotMeta, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+Data_Distribution_Density.plot(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]])
 ```
 
 
+### Principal component analysis
+
+```{r PCAMetabo, echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE,out.width = "80%"}
+mvQCdesign(object = FlomicsMultiAssay,
+           data   = data, PCA="raw", axis=5, 
+           pngFile= NULL) 
+```
 
 `r if(is.null(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["contrasts"]])) {"\\begin{comment}"}`
 
@@ -81,14 +93,12 @@ knitr::asis_output(out)
 
 ## Co-expression
 
+
 Co-expression analysis was carried out on the `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$merge.type`
-of the following list of gene `r FlomicsMultiAssay[["RNAseq.set1.filtred"]]@metadata$CoExpAnal$gene.list.names`. 
+of the following list of metabolites `r FlomicsMultiAssay[[paste0(data,".filtred")]]@metadata$CoExpAnal$gene.list.names`. 
 `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$tools` was
-used to cluster metabolite. 
-The gaussian mixture models was run on filtered (meanFilterCutoff was set to: `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$meanFilterCutoff`), 
-normalised (normalisation method was `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$normFactors`) 
-and transformed (transformation method: `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$transformation`) count data.
-X technical replicates were performed from $K=i$ to $K=i$ (K=number of clusters). 
+used to cluster them with the following parameters. The gaussian mixture models (`r paste0("model=",FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$GaussianModel,"")` was run on scaled by metabolits data to cluster them by expression profile rather than abundance.
+`r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$replicates.nb` technical replicates were performed with K=`r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$K.range`. 
 The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
 was `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$cluster.nb`.
 

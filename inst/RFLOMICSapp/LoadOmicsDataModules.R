@@ -13,7 +13,12 @@ LoadOmicsDataUI <- function(id){
         box(width = 12, status = "warning", solidHeader = TRUE,
             title = "Load omics data and experimental design",
             column(4,
-                   textInput(inputId = ns("projectName"), label = "Project name")))),
+                   #textInput(inputId = ns("projectName"), label = "Project name"),
+                   textInput(inputId = ns("projectName"), label =popify(actionLink("infoLink", "Information Link", class = "btn-info"),
+                                                                        "A Pointless Button",
+                                                                        "This button is <b>pointless</b>. It does not do <em>anything</em>!")),
+                   shinyBS::bsTooltip( ns("projectName"), "blablabla","right"))
+            )),
 
 
     fluidRow(
@@ -144,10 +149,10 @@ LoadOmicsData <- function(input, output, session){
       validate({ need((length(stringr::str_subset(dF.Type.dFac, "Bio"  )) %in% 1:3) &
                       (length(stringr::str_subset(dF.Type.dFac, "batch")) != 0), message="") })
 
-      
+
       ## create Design object
       Design <<- ExpDesign.constructor(ExpDesign = ExpDesign.tbl, refList = dF.List.ref, typeList = dF.Type.dFac)
-      
+
       # => completeness
       #### check experimental design : experimental design must be a complete and balanced.
 
