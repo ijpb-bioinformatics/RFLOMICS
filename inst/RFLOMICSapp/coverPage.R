@@ -65,7 +65,7 @@ coverPage <- fluidPage(
                   p(tags$a(href="RFLOMICS-vignette-CommandLine.html","CommandLine-Vignette.html")),
                   hr(),
                   h3(tags$span("Contact and support", style = "color:orange")),
-                  p("ijpb-bioinfo-team"),
+                  tags$a(href="mailto:ijpb-bioinfo-team@inrae.fr","ijpb-bioinfo-team"),
                   hr(),
                   h3(tags$span("References", style = "color:orange")),
                   tags$ul(

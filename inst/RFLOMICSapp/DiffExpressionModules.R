@@ -10,8 +10,8 @@ DiffExpAnalysisUI <- function(id){
       box(title = "Instructions:",
           solidHeader = TRUE, status = "warning", width = 12,
         p("Differential expression/abundance analysis is conducted for each hypothesis. There is just one option to set (the ajusted-pvalue cut-off, which is set to 5 % by default).
-        The results will appear in blocks. Each block will have with 3 outputs:"),
-        p("- the distribution of pvalue's plot : which has to be validated according to this ", a("document", href=""),""),
+        The results will appear in blocks (one per hypothesis) with 3 outputs:"),
+        p("- the distribution of pvalue's : which has to be validated", a("(some help to identify the good shapes)", href="Pvalue_distrib.pdf"),""),
         p("- the MA plot (DE genes in red will varie with the p-value cutoff)"),
         p("- the table of statistics per gene/protein/metabolite (Number of stats displayed will varie with the p-value cutoff)")
       )),

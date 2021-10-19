@@ -78,7 +78,7 @@ FlomicsMultiAssay@ExperimentList
 ```
 
 
-`r if(length(FlomicsMultiAssay@metadata$omicList) == 0) {"\\begin{comment}"}`
+`r if(length(FlomicsMultiAssay@metadata$omicList) ==0 ) {"\\begin{comment}"}`
 
 
 ```{r analysis, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
@@ -99,7 +99,7 @@ knitr::asis_output(out)
 
 ```
 
-`r if(length(FlomicsMultiAssay@metadata$omicList) == 0) {"\\end{comment}"}`
+`r if(length(FlomicsMultiAssay@metadata$omicList) == 0 ) {"\\end{comment}"}`
 
 # R Session
 

@@ -13,12 +13,8 @@ LoadOmicsDataUI <- function(id){
         box(width = 12, status = "warning", solidHeader = TRUE,
             title = "Load omics data and experimental design",
             column(4,
-                   #textInput(inputId = ns("projectName"), label = "Project name"),
-                   textInput(inputId = ns("projectName"), label =popify(actionLink("infoLink", "Information Link", class = "btn-info"),
-                                                                        "A Pointless Button",
-                                                                        "This button is <b>pointless</b>. It does not do <em>anything</em>!")),
-                   shinyBS::bsTooltip( ns("projectName"), "blablabla","right"))
-            )),
+                   textInput(inputId = ns("projectName"), label = "Project name"),
+            ))),
 
 
     fluidRow(

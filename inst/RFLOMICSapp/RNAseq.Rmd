@@ -1,5 +1,5 @@
 
-# `r data`  analysis
+# `r data`  analysis 
 
 ## Workflow of reference 
 
@@ -9,6 +9,7 @@ DiCoExpress [@Lambert:2020ta]
 
 
 ```{r CheckDesign1, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+#data="RNAseq.set1"
 check <- CheckExpDesignCompleteness(Design, colnames(FlomicsMultiAssay[[paste0(data,".filtrered")]]))
 
 NbGenes             <- length(names(FlomicsMultiAssay@ExperimentList[[data]]))
@@ -91,18 +92,23 @@ for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
 }
 
 ```
+`r if(is.null(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["contrasts"]])) {"\\end{comment}"}`
+
 
 ```{r summaryRNADE, echo=FALSE, results="asis"}
 kable_styling(kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("Nb DE"=DE,"Nb DEup"=DEup,"Nb DEdown"=DEdown)), row.names=FALSE, caption=NULL, format="html"), font_size=12)
 ```
 
 
-The following graph gives the number of common and specific differential expressed genes per testing hypothetis.
+The following graph gives the number of common and specific differential expressed genes per testing hypotethis.
+
+
 
 ```{r DiffExprRNA2,echo=FALSE, message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "80%", echo=FALSE}
 DEF_mat <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]]
 UpSetR::upset(DEF_mat, sets = (names(DEF_mat[,-1]))) 
 ```
+
 
 
 ```{r DiffPerContRNA, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}

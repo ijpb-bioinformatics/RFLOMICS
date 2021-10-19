@@ -14,7 +14,7 @@ CoSeqAnalysisUI <- function(id){
             p("You have first to choose between the ",tags$b("union")," or ",tags$b("intersection")," of your contrasts lists according to your biological question."),
             p("All the default parameters have been expertised according to each omic."),
             p("It is then recommanded to do a ",tags$b("first run")," with a large number of K with few replicates.
-            If their is a K (Kbest different from Kmin and Kmax) for which the ICL is minimum (check the first graph obtained),
+            If there is a K (Kbest different from Kmin and Kmax) for which the ICL is minimum (check the first graph obtained),
             then a second run has to be done with a larger experiment: the window of K can be centered around the Kbest and the number
             of technical replicates has to be increased to at least 20 replicates. For this larger experiment, it is recommanded to send
               analysis to remote ressources (see cluster option)"),
@@ -24,8 +24,8 @@ CoSeqAnalysisUI <- function(id){
               half of K. In case of unsuccessful results, a detailed table of errors will appear."),
             h4(tags$span("Cluster option", style = "color:orange")),
             p("If you have a cluster account, you can configure a remote access to it
-              (see config_file) and speed up results obtention. Running coseq in local
-              is very time consuming as iteration (one K, one replicate) run one after
+              (", a("see config_file", href="install_clustermq.txt"),")","and speed up results obtention. Running coseq in local
+              is very time consuming for the moment as iterations (one K, one replicate) run one after
               the other (ie. several hours for 5000 genes, a range of 20 K and 10 replicates),
               Whereas iteration run in parallel onto the cluster (ie, 2 minutes for the same manip).
               In this case, K and the number of genes have more influence on time"),
