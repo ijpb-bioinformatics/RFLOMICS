@@ -3,16 +3,40 @@
 
 ## Workflow of reference 
 
-## data Exploratory
+  To create the abundance matrix, tools from the Pappso platform (Gif sur Yvette) have been used for proteins identification and quantification.
+  For the identification step XtandemPipeline was used (http://pappso.inrae.fr/bioinfo/xtandempipeline). For quantification two steps are required.
+  First MassChroQ (http://pappso.inrae.fr/bioinfo/masschroq/) retrieves from the raw data the peptides intensities
+  and then MassChroqR, a R package and script, finally computes the protein abundances, after many steps of peptides QC and filtering.
 
 
-```{r, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+### Dataset processing
 
-plotDistr(abundances= assay(FlomicsMultiAssay[[data]]),
-           dataName  = paste0(data,".filtred"), 
-          dataType=FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$omicType,
-          transform_method=FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$transform_method)
+```{r CheckDesignProt, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+check <- CheckExpDesignCompleteness(Design, colnames(FlomicsMultiAssay[[paste0(data,".filtrered")]]))
+NbProt <- length(names(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]))
+NbProtWoutNA <- dim(na.omit(assay(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]])))[1]
+```
 
+* X samples were removed from the datasets.
+* The data were X transformed.
+* The number of proteins: `r NbProt`  
+* Number of proteins with at least 1 NA: `r NbProt - NbProtWoutNA`
+
+### Distribution of density 
+
+```{r densityPlotProt, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+Data_Distribution_Density.plot(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]])
+```
+
+
+### Principal component analysis
+
+```{r PCAprot, echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE,out.width = "80%"}
+if(! is.null(FlomicsMultiAssay[[data]]@metadata[["PCAlist"]])){ 
+mvQCdesign(object = FlomicsMultiAssay,
+           data   = data, PCA="raw", axis=5, 
+           pngFile= NULL) 
+}
 ```
 
 
@@ -79,11 +103,8 @@ knitr::asis_output(out)
 Co-expression analysis was carried out on the `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$merge.type`
 of the following list of proteins `r FlomicsMultiAssay[[paste0(data,".filtred")]]@metadata$CoExpAnal$gene.list.names`. 
 `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$tools` was
-used to cluster genes. 
-The gaussian mixture models was run on filtered (meanFilterCutoff was set to: `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$meanFilterCutoff`), 
-normalised (normalisation method was `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$normFactors`) 
-and transformed (transformation method: `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$transformation`) count data.
-X technical replicates were performed from $K=i$ to $K=i$ (K=number of clusters). 
+used to cluster them with the following parameters. The gaussian mixture models (`r paste0("model=",FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$GaussianModel,"")` was run on scaled by proteins data to cluster them by expression profile rather than abundance.
+`r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$replicates.nb` technical replicates were performed with K=`r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$K.range`. 
 The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
 was `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$cluster.nb`.
 

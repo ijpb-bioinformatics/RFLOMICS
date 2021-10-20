@@ -34,7 +34,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 
   # Create the List.Factors list with the choosen level of reference for each factor
   dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
-    
+
     relevel(as.factor(ExpDesign[[i]]), ref=refList[i])
   })
   names(dF.List) <- names(ExpDesign)
@@ -143,16 +143,16 @@ setMethod(f="CheckExpDesignCompleteness",
 
               ExpDesign <- dplyr::filter(object@ExpDesign, rownames(object@ExpDesign) %in% colnames)
             }
-            
-            
+
+
             # bio.fact.names <- names(ExpDesign)
-            # 
+            #
             # BioFact.levels <- sapply(names(ExpDesign), function(x){
-            #   
+            #
             #   levels(object@List.Factors[[x]])
             # })
-            
-            
+
+
             dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
               relevel(as.factor(ExpDesign[[i]]), ref=levels(object@List.Factors[[i]])[1])
             })
@@ -161,7 +161,7 @@ setMethod(f="CheckExpDesignCompleteness",
             group_count  <- dF.List[object@Factors.Type == "Bio"] %>% as.data.frame() %>% table() %>% as.data.frame()
             names(group_count) <- c(names(dF.List[object@Factors.Type == "Bio"]), "Count")
 
-            
+
             # check presence of relicat / batch
             # check if design is complete
             # check if design is balanced
@@ -169,7 +169,7 @@ setMethod(f="CheckExpDesignCompleteness",
 
             output[["error"]] <- NULL
             output[["warning"]] <- NULL
-            
+
             # message <- dplyr::if_else(min(group_count$Count) == 0 ,           "noCompl",
             #            dplyr::if_else(length(unique(group_count$Count)) != 1, "noBalan",
             #            dplyr::if_else(max(group_count$Count) < 3,             "lowRep" , "true")))
@@ -189,10 +189,10 @@ setMethod(f="CheckExpDesignCompleteness",
             else{
               message <- "The experimental design is complete and balanced."
             }
-            
+
             #plot
             output[["plot"]] <- plotExperimentalDesign(group_count, message=message)
-                
+
             return(output)
           })
 
@@ -607,7 +607,7 @@ FlomicsMultiAssay.constructor <- function(inputs, Design, projectName){
                                                                                                          Groups = Design@Groups,
                                                                                                        rowSums.zero = genes_flt0))
     #names(assays(SummarizedExperimentList[[dataName]])) <- c(dataName)
-    
+
     # metadata for sampleMap for MultiAssayExperiment
     listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
                                       colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
@@ -623,8 +623,8 @@ FlomicsMultiAssay.constructor <- function(inputs, Design, projectName){
   }
 
 
-  
-  prepFlomicsMultiAssay <- MultiAssayExperiment::prepMultiAssay( ExperimentList = SummarizedExperimentList, 
+
+  prepFlomicsMultiAssay <- MultiAssayExperiment::prepMultiAssay( ExperimentList = SummarizedExperimentList,
                                            sampleMap      = MultiAssayExperiment::listToMap(listmap),
                                            colData        = Design@ExpDesign, outFile = stdout())
 
@@ -863,20 +863,20 @@ setMethod(f="Data_Distribution_Density.plot",
 #' #' @rdname Data_Distribution.plot
 #' #' @examples
 #' #' @importFrom ggplot2 geom_density boxplot xlab
-#' 
+#'
 #' setMethod(f="Data_Distribution.plot",
 #'           signature="SummarizedExperiment",
 #'           definition <- function(object, plot = "boxplot"){
-#'             
+#'
 #'             switch (object@metadata$omicType,
 #'                     "RNAseq" = {
-#'                       
+#'
 #'                       # before normalization
 #'                       if(is.null(object@metadata[["Normalization"]]$coefNorm)){
 #'                         pseudo <- log2(SummarizedExperiment::assay(object) + 1) %>% reshape2::melt()
 #'                         y_lab  <- "log2(gene counts)"
 #'                         title  <- "Raw data"
-#'                         
+#'
 #'                       }
 #'                       # after normalization
 #'                       else{
@@ -885,7 +885,7 @@ setMethod(f="Data_Distribution_Density.plot",
 #'                         y_lab  <- "log2(normalized gene counts)"
 #'                         title  <- "Filtered and normalized (TMM) data"
 #'                       }
-#' 
+#'
 #'                     },
 #'                     "proteomics" = {
 #'                       # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
@@ -893,7 +893,7 @@ setMethod(f="Data_Distribution_Density.plot",
 #'                         pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
 #'                         x_lab  <- "Protein abundance (?)"
 #'                         title  <- "Raw data"
-#'                         
+#'
 #'                       }
 #'                       # after transformation
 #'                       else{
@@ -901,12 +901,12 @@ setMethod(f="Data_Distribution_Density.plot",
 #'                         switch (object@metadata$transform_method,
 #'                                 "log2" = {
 #'                                   pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
-#'                                   x_lab  <- "Transformed protein abundance" 
+#'                                   x_lab  <- "Transformed protein abundance"
 #'                                   title  <- "Transformed data (method : log2)" },
-#'                                 
+#'
 #'                                 "none" = {
 #'                                   pseudo <- log2(SummarizedExperiment::assay(object) + 1) %>% reshape2::melt()
-#'                                   x_lab  <- "Transformed protein abundance" 
+#'                                   x_lab  <- "Transformed protein abundance"
 #'                                   title  <- "Transformed data (method : ?)" } )
 #'                       }
 #'                     },
@@ -932,27 +932,27 @@ setMethod(f="Data_Distribution_Density.plot",
 #'                       }
 #'                     }
 #'             )
-#'             
+#'
 #'             colnames(pseudo) <- c("features", "samples", "value")
-#'             pseudo.gg <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples") 
-#'             
+#'             pseudo.gg <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples")
+#'
 #'             switch (plot,
 #'               "boxplot" = {
 #'                 #
 #'                 pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
-#' 
+#'
 #'                 p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + ggplot2::geom_boxplot(aes(fill=groups)) +
 #'                   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + xlab("") + ylab(y_lab) + ggtitle(title)
-#'                 
-#'                 
+#'
+#'
 #'               },
 #'               "density" = {
-#'                   # 
+#'                   #
 #'                   p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + xlab(y_lab) +
 #'                     theme(legend.position='none') + ggtitle(title)
 #'               }
 #'             )
-#'             
+#'
 #'             print(p)
 #'           }
 #' )
@@ -979,13 +979,13 @@ setMethod(f= "abundanceBoxplot",
               pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
                                    scale=object@metadata$Normalization$coefNorm$norm.factors)+1) %>% reshape2::melt()
               y_lab  <- "log2(normalized gene counts)"
-              title  <- "Raw data"
+              title  <- "Filtered and normalized (TMM) data"
             }
+
             else{
               pseudo <- log2(SummarizedExperiment::assay(object)+1) %>% reshape2::melt()
               y_lab  <- "log2( gene counts)"
-              title  <- "Filtred and normalized (TMM) data"
-
+              title  <- "Raw data"
             }
 
             colnames(pseudo) <- c("feature", "samples", "value")
@@ -1623,6 +1623,8 @@ setMethod(f="runCoExpression",
             CoExpAnal[["tools"]]            <- "CoSeq"
             CoExpAnal[["gene.list.names"]]  <- nameList
             CoExpAnal[["merge.type"]]       <- merge
+            CoExpAnal[["replicates.nb"]]    <- replicates
+            CoExpAnal[["K.range"]]    <- K
 
             counts = SummarizedExperiment::assay(object)[geneList,]
 
@@ -1801,7 +1803,7 @@ setMethod(f="runAnnotationEnrichment",
           signature="SummarizedExperiment",
 
           definition <- function(object, annotation, alpha = 0.01, probaMethod = "hypergeometric",
-                                 DiffListNames  = object@metadata$DiffExpAnal[["contrasts"]]$contrastName, 
+                                 DiffListNames  = object@metadata$DiffExpAnal[["contrasts"]]$contrastName,
                                  CoExpListNames = names(object@metadata$CoExpAnal[["clusters"]])
                                  ){
 
@@ -1859,16 +1861,16 @@ setMethod(f="runAnnotationEnrichment",
 #' @importFrom dplyr desc
 #' @examples
 Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepresented"), top = "all" , listNames=NULL){
-  
+
   Decision <- Pvalue_over <- Pvalue_under <- Pvalue <- NULL
   Term <- Domain <- Trial_Success <- scale_size <- tail <- NULL
-  
+
   # if Over_Under are not recognized we choose default value == overrepresented
   if (! Over_Under %in% c("overrepresented", "underrepresented") ){
-    
+
     Over_Under <- "overrepresented"
   }
-  
+
   if (!is.numeric(top)){
     top <- "NA"
     Top.tag <- ""
@@ -1876,15 +1878,15 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
   else{
     Top.tag <- paste0("Top ", top)
   }
-  
+
   if(is.null(listNames)){
     listNames <- names(object@metadata$EnrichAnal[["results"]])
   }
-  
+
   p <- list()
   for (listname in listNames){
-    
-    
+
+
     data <- object@metadata$EnrichAnal[["results"]][[listname]][["Over_Under_Results"]]
 
     data_ord <- switch (Over_Under,
@@ -1898,21 +1900,21 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
                      dplyr::mutate(Pvalue = Pvalue_under)
               }
             )
-    
-    
+
+
     data_ord$Term <- factor(data_ord$Term, levels = data_ord$Term)
 
     Urn_effective <- data$Urn_effective[1]
     Trial_effective <- data$Trial_effective[1]
-    
+
     p[[listname]] <- ggplot2::ggplot(data = tail(data_ord, n=top), aes(x=sort(Trial_Success), y=Term, size=Urn_Success, color=Pvalue)) +
       geom_point(alpha=0.5) + scale_size(range = c(0.1, 10)) + scale_color_gradient(low="blue", high="red") +
-      ggtitle(paste0(listname, " : ",Over_Under," ", Top.tag, " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")")) 
-    
-    
-    
+      ggtitle(paste0(listname, " : ",Over_Under," ", Top.tag, " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")"))
+
+
+
   }
-  
+
   return(p)
-  
+
 }

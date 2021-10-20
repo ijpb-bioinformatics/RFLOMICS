@@ -10,7 +10,15 @@ QCNormalizationTabUI <- function(id){
   ns <- NS(id)
   tagList(
     fluidRow(
-      box(width = 12, title = "Data Filtering and Normalization", status = "warning", solidHeader = TRUE, "blabla"),
+      box(width = 12, title = "Data Filtering and Normalization", status = "warning", solidHeader = TRUE,
+
+          p("For each diagnostic plot, both raw and processed (filtered, normalized, ...) data are displayed with expertised default parameters."),
+          p("- You may first have a look at to default processed plots to eventually identify outliers sample"),
+          p("- You may check onto the ACP factorial map to see if samples group with the replicat of the same condition."),
+          p("- You may play with filtered parameters to see if it improved the grouping"),
+          p("- If not, you may remove outliers from the sample list, update the analysis and check again."),
+          p("- To quickly overview the % of variability which is associated to each design factors, go to PCA (2/2) ")
+      )
     ),
     fluidRow(
       box(width = 4, title = "Setting", status = "warning", solidHeader = TRUE,
@@ -149,7 +157,9 @@ QCNormalizationTab <- function(input, output, session, dataset){
                           tags$br(),
                           actionButton(session$ns("screenshotPCA_QC"),"Screenshot")))
         ),
-        tabPanel("Principal component analysis (2/2)", plotOutput(session$ns("QCdesignPCA")))
+        tabPanel("Principal component analysis (2/2)",
+                 plotOutput(session$ns("QCdesignPCA"))
+                 )
     )
 
     tabPanel.list <- list()

@@ -7,11 +7,13 @@ DiffExpAnalysisUI <- function(id){
 
   tagList(
     fluidRow(
-      box(title = span(tagList(icon("cogs"), "   edgeR ",a("(?)", href="https://bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf")  )),
+      box(title = "Instructions:",
           solidHeader = TRUE, status = "warning", width = 12,
-
-          "instructions... recommandation..."
-
+        p("Differential expression/abundance analysis is conducted for each hypothesis. There is just one option to set (the ajusted-pvalue cut-off, which is set to 5 % by default).
+        The results will appear in blocks (one per hypothesis) with 3 outputs:"),
+        p("- the distribution of pvalue's : which has to be validated", a("(some help to identify the good shapes)", href="Pvalue_distrib.pdf"),""),
+        p("- the MA plot (DE genes in red will varie with the p-value cutoff)"),
+        p("- the table of statistics per gene/protein/metabolite (Number of stats displayed will varie with the p-value cutoff)")
       )),
 
     ### parametres for Diff Analysis
@@ -53,7 +55,9 @@ DiffExpAnalysis <- function(input, output, session, dataset){
                            choices  = method,
                            selected = method),
 
-               materialSwitch(inputId = session$ns("clustermq"), label = "Cluster", value = FALSE, status = "success"),
+               materialSwitch(inputId = session$ns("clustermq"), label =  popify(actionLink("infoCluster",paste0("Cluster: (?)")),"",
+                                                                                 "If there is a huge number of contrasts, the calculation can be send to the cluster to be run in parrallel",options=list(container="body"))
+                              , value = FALSE, status = "success"),
               #selectInput(inputId = session$ns("clustermq"),
               #label   ="send job to cluster",
               #choices = list("no"=FALSE,"genotoul"=TRUE)),
@@ -193,12 +197,12 @@ DiffExpAnalysis <- function(input, output, session, dataset){
                      title = tags$h5(paste0(vect["tag"], " : ", vect["contrastName"],"  [#DE: ", stats$gDE," (up: ", stats$pgDEup,"%, ", "down: ", stats$pgDEdown,"%)]")),
 
                      tabsetPanel(
+
+                      ### pvalue plot ###
+                      tabPanel("Pvalue's distribution", renderPlot({ diff.plots$Pvalue.hist })),
+
                       ### MAplot
                       tabPanel("MA plot", renderPlot({ diff.plots$MA.plot })),
-
-                     ### pvalue plot ###
-                    tabPanel("Pvalue's distribution", renderPlot({ diff.plots$Pvalue.hist })),
-
                      ### DEF result table ###
                     tabPanel("Table",
                        ### DEF result table ###

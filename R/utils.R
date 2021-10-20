@@ -1,5 +1,5 @@
-#' @importFrom magrittr %>% 
-#' @export 
+#' @importFrom magrittr %>%
+#' @export
 magrittr::`%>%`
 
 
@@ -479,7 +479,10 @@ MA.plot <- function(data, Adj.pvalue.cutoff, pngFile=NULL){
 
   Abundance <- logFC <- Adj.pvalue <- NULL
   p <- ggplot2::ggplot(data=data, aes(x = Abundance, y=logFC, col=Adj.pvalue < Adj.pvalue.cutoff)) +
-    geom_point(alpha=0.4, size = 0.8) + scale_colour_manual(values=c("black","red")) + labs(color=paste("Adj.pvalue <=",Adj.pvalue.cutoff,sep=""))
+    geom_point(alpha=0.4, size = 0.8) +
+    scale_colour_manual(values=c("black","red")) +
+    labs(color=paste("Adj.pvalue <=",Adj.pvalue.cutoff,sep="")) +
+    geom_hline(yintercept = 0)
 
 
   if (! is.null(pngFile)){
@@ -1079,7 +1082,7 @@ returnContrastCoefficients <- function(contrast, colnamesGLMdesign, treatmentCon
 #' @export
 #' @examples
 #' @noRd
-#'  
+#'
 getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1], mergeType="union"){
 
   if (length(colnames) == 0 ){ return(NULL) }
@@ -1136,7 +1139,7 @@ try_rflomics <- function(expr) {
 #' @return coseqResults
 #' @export
 #' @noRd
-#' 
+#'
 runCoseq <- function(counts, K=2:20, replicates = 5, param.list, clustermq=FALSE){
 
             Results.1 <- list()
