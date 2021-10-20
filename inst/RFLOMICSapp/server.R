@@ -39,6 +39,8 @@ shinyServer(function(input, output, session) {
 
     # display set up model Item
     # if no error message
+    
+    inputModel <- list()
     observeEvent(inputData$loadData, {
       
       #continue only if message is true or warning
@@ -47,8 +49,10 @@ shinyServer(function(input, output, session) {
       })
 
       output$SetUpModelMenu <- renderMenu({
-        menuItem(text = "Experimental Design", tabName = "SetUpModel", icon = icon('vials'))
+        menuItem(text = "Experimental Design", tabName = "SetUpModel", icon = icon('vials'), selected = TRUE)
       })
+      
+      
     })
 
     # set GLM model
