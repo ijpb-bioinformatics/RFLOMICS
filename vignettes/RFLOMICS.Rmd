@@ -14,6 +14,19 @@ knitr::opts_chunk$set(
 )
 ```
 
+# Introduction:
+
+RFLOMICS is based on proven statistical methods and pipeline for RNAseq data analysis (1). 
+It is also based on functions allowing the automation of contrasts's writting in R (2).
+
+Data that will be used for this example have been provided by Loic Rajjou and Gwendal Cueff. They are included in the inst/ExampleFiles/ecoseed directory of the package. Briefly, A. thaliana's transcriptomes have been obtained in the context of the study of seed germination and vigor. In particular, the author were interested in the influence of temperature (high, medium and low) and imbibition (Dry: DI, early imbibition: EI and late imbibition: LI) on gene's expression. 
+
+(1) [Ilana Lambert, Christine Paysant-Le Roux, Stefano Colella, and Marie-Laure Martin-Magniette (2020)	DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. *Plant Methods* vol. 16, p. 68](http://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=pubmed&id=32426025&retmode=ref&cmd=prlinks)
+
+(2) [Christine Paysant-Le Roux (2020), packageContrast_2020, unpublished]
+
+(3) [Projet ecoseed (), ]
+
 
 # Run RFLOMICS
 
@@ -22,57 +35,150 @@ library(RFLOMICS)
 runApp()
 ```
 
-In the left side of interface the different tab Items and box will be appear as the analysis progresses to guide the user. 
+In the left side of interface the different tab menu will be appear as the analysis progresses to guide the user. 
 
 # Load Data
 
-In this section we start by set project name (its mandatory). Then we load the experimental design and different datasets.
+We start by set project name (its mandatory). Then we load the experimental design and different omics datasets.
 
+
+## Load Experimental Design 
+
+The experimental design file contains information about the readiness status of each sample (see link : vignette input ).
+As soon as this file is loaded, we can define the type (Biological factor : Bio; batch factor : batch; metadata information : meta) and reference level of each design factor.
+
+* *It is required to have minimum 1 biological factor (maximum 3 biological factors) and 1 batch factor. The order of the columns does not matter.*
+
+* *It possible to exclude samples from design. These samples will be excluded from the analysis even if they are present in the omics dataset matrix.*
 
 ![interface capture](figure3.jpg)
 
-## Load Design
-
-Import experimental plan (see input data vignette).
-Dès que on charge le plan experimental le contenu de ce fichier s'affiche sous forme de tableau avec la liste des diff modalité par facteur. Il faut definit les niv de ref pour chaque factor et le type de facteur.
-Il est imposer d'avoir au min 1 factor bio et un factor rep. et max 3factor bio et 2factor rep?!
-Il est aussi possible de déselectionner les nom dsample que on voudrais explure de l'analyse.
-
-ensuite il faut valider vos chois en cliquant sur valid factor set up.
-aussi tot une verification de la completrenss. avec un affichage graphique. Il est imposer est ce que le model soit complet mais tolere si le model est non equilibré . il est tout de même recommander d'avoir min 2 replicats.
-
 ## Load Omics data 
 
-suite a cela on pourait importet les données omics. Il faut choisir le type de omics puis loader la matrice des données correspondante (see input data). Il est aussi possible de charger les metadat. par defaut les donnes seront appeler par le nomdu omics suivie de set(i)
+For this tutoral we provide 3 datasets : RNAseq data (read counts), proteomics data (abundance of proteins), and metabolomics data (intensity of metabolites) (see link : vignette input). We must precise for each dataset its type of omics. We can give a suitable names to our dataset. By Default, they will be called respectively (set1, set2, set3).
 
-Pour rajouter un nv dataset il suffi de cliquer sur add data et charger les données comme expliquer précédemment.
+As soon as data was loaded the **RFlomics MultiAssayExperiment** object is created (see link : data management). The upset representation provide detail about sample intersection of different datasets.
 
-Il est possible de charger des datasert du plusieru du même type ou de omics diff du moement ou il derive du même design experimental.
-Il n'est pas oubliger que les donnee est le même nombre d'echantillon
-Seul les echantllons présent dans le desgin seront pris en compte
-un upset permet d'avoir une idee sur l'intersection des echantillons
-la desgn complet et equilibré de chaque dataset set sera tester au QC de chaque analyse
+## Completeness check
 
-l'interface offre une flexibilité 
+The design must be complete and as possible balanced. A **Complete design (mandatory)** mean that all possible combinations of biological factor's level (called groups) where presents. A **Balanced design (recommended)** has an equal number of observations (replicates) for all groups. 
 
-Dés que on clique sur load si on a plusier data set un upset representation s'affiche pour 
-# Set statistical model choose contrasts to test
+This constraint is checked and represented as graph (each square represent 1 group and each color level indicate the number of observations).
+
+```{r, fig.show="hold", out.width="50%", fig.align = "default", echo=FALSE}
+knitr::include_graphics(c("completBalanced.png", "completNonBalanced.png"))
+```
 
 
+# Set statistical framework
+
+Interface provides models written from the simplest one to the most complete one. Only the two orders interaction terms between the biological factors will appear. Batch factor will never appear in interaction terms. In our case we choose the complete model.
+
+All 'a priori' hypothesis (contrast) calculated from the chosen model are displayed (see link vignette contrast). The user must select those that correspond to the biological issues.
+
+In our case we are studying the effect of temperature on seed germination (transition from the state of dormancy to the state of germination vigor). For that we select 3 average contrasts (see image) :  
+
+This statistical framework will be applied on all loaded datasets.
 
 ![interface capture](figure2.jpg)
 
-
 # Omics data analysis
+
+3 Item menus appear in side bar menu that corresponds to the 3 loaded omics types.
+
+For each dataset, different steps of data analysis are proposed as a tab panels. This analysis steps must be performed sequentially. But we can switch between datasets. 
+However, you cannot perform a new task until the previous one is completed. It will have a progress bar that indicates that.
+
+## Data Exploratory
+
+In this tab panel we access a data quality and we perform the appropriate data filtering and processing according to the type of omics.
+
+By default, features with 0 count in all conditions are removed from the data.
+
+Specifically for each data we have possibility to exclude samples or to select a subset of samples to analyze, provided the completeness condition is met.
+
+### RNAseq analysis
+
+For RNAseq data, low expressed genes are filtered such that only genes whose cpm expression is greater than **"CPM cutoff"** in x samples are kept. The value of x is given by **"Filtering strategy"** (NbOfsample_over_cpm <= NbConditions). By default the data are filtered based on NbCondition strategy avec with CPM cutoff equel to 5. In this example, there are 9 conditions. So, the number of genes with a CPM less than 5 in at least 9 samples are removed. 
+
+```{r}
+# geneToKeep <- counts[rowSums(edgeR::cpm(counts) >= CPM_Cutoff) >= x, ]
+```
+
+
+To correct for differences in sequencing depths (library size), RFlomics propose one method for normalization, **"TMM method"** from edgeR package.
+
+```{r}
+# dge <- edgeR::DGEList(counts=counts, group=groups)
+# dge <- edgeR::calcNormFactors(dge, method="TMM")
+```
+
+In addition, PCA analysis aims to assess dataset homogeneity and determine the factors that explain the most variability within our dataset.
+The PCA are represented among to type of plot, classical representation with  
+
+
+Pour evaluer la qualité des données et l'ifficacité du filtre et de la normalisation 
+
+
+à droite on visualise les graphe de couverture des données avant et prés filtre et un résumer du nombre de gène filtrès et un tableau avec les coef de normalisation.
+analyse 
+
+![interface capture](figure1.jpg)
+
+### Prot or Metabo
+
+for these 2 omics choix methodo est le même...
+
+## Differiencial expression analysis
+
+On peut visualiser la list des contrast qui ont été selectionner 
+
+Pour les données RNAseq -> egeR
+
+```{r}
+
+# dge <- edgeR::estimateGLMCommonDisp(dge, design=model_matrix)
+# dge <- edgeR::estimateGLMTrendedDisp(dge, design=model_matrix)
+# dge <- edgeR::estimateGLMTagwiseDisp(dge, design=model_matrix)    
+# fit.f <- edgeR::glmFit(dge, design=model_matrix)
+# ResGlm <- edgeR::glmLRT(fit.f, contrast = contrast.i)
+  
+```
+
+
+Pour les données prot -> lima
+
+```{r class.source="bg-danger"}
+
+# fit <- limma::lmFit(count_matrix, model_matrix)   
+# ResGlm <- limma::contrasts.fit(fit, contrasts = contrast.i)
+
+```
+
+
+DAns la capture ci-dessou il sagit des données RNAseq
+
+
+le resultats apprait à droite. chaque collapsebox correspond au resultats d'1 contrast. 
+
+recommendation --> pvalue
+
+Par defaut tous les contrst sont taguer comme valid 
+
+Le upset permet de representer intersection entre les DE des différnet contrast validé.
 
 ![interface capture](figure1.jpg)
 
 
-## QC, Low counts filtering and normalization
+
+il faut rajouter heatmap
+
+![capture diff resultat 1 contrast](figure2.jpg)
+
+### Co-Expression analysis
+
+
+
 <!-- ![capture]() -->
-## Differiencial expression analysis
-<!-- ![capture]() -->
-## Co-Expression analysis
-<!-- ![capture]() -->
-## Annotation and enrichment analysis
+### Annotation and enrichment analysis
 <!-- ![capture]() -->

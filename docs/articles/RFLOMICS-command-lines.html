@@ -98,7 +98,7 @@
       <h1 data-toc-skip>RFLOMICS: Quick Guide to omics data analysis</h1>
                         <h4 data-toc-skip class="author">Delphine Charif and Nadia Bessoltane</h4>
             
-            <h4 data-toc-skip class="date">2021-10-06</h4>
+            <h4 data-toc-skip class="date">2021-10-12</h4>
       
       
       <div class="hidden name"><code>RFLOMICS-command-lines.Rmd</code></div>
@@ -231,19 +231,19 @@ Design checking’s result
  <span class="va">Design.formulae</span>
 <span class="co">#&gt; $`~Repeat + temperature + imbibition + temperature:imbibition`</span>
 <span class="co">#&gt; ~Repeat + temperature + imbibition + temperature:imbibition</span>
-<span class="co">#&gt; &lt;environment: 0x7fc4b1b7add0&gt;</span>
+<span class="co">#&gt; &lt;environment: 0x7fbf66f6f920&gt;</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $`~Repeat + temperature + imbibition`</span>
 <span class="co">#&gt; ~Repeat + temperature + imbibition</span>
-<span class="co">#&gt; &lt;environment: 0x7fc4b1b6a040&gt;</span>
+<span class="co">#&gt; &lt;environment: 0x7fbf65d6f8b0&gt;</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $`~Repeat + temperature`</span>
 <span class="co">#&gt; ~Repeat + temperature</span>
-<span class="co">#&gt; &lt;environment: 0x7fc4b1ba4f20&gt;</span>
+<span class="co">#&gt; &lt;environment: 0x7fbf66a55440&gt;</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $`~Repeat + imbibition`</span>
 <span class="co">#&gt; ~Repeat + imbibition</span>
-<span class="co">#&gt; &lt;environment: 0x7fc4b1b8a318&gt;</span></code></pre></div>
+<span class="co">#&gt; &lt;environment: 0x7fbf66fc96e0&gt;</span></code></pre></div>
 <p>In this example, the complete model with the interaction term describes the experiment.</p>
 <ul>
 <li>
@@ -261,101 +261,7 @@ Design checking’s result
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"> <span class="co"># Get all the possible contrasts from the complete model with interaction</span>
  <span class="va">Design</span> <span class="op">&lt;-</span> <span class="fu">getExpressionContrast</span><span class="op">(</span>object <span class="op">=</span> <span class="va">Design</span>, 
-                                 model.formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">Design.formulae</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; treatment factors names:</span>
-<span class="co">#&gt; [1] "temperature" "imbibition"</span>
- <span class="co"># Simple Contrasts</span>
- <span class="co"># knitr::kable( Design@Contrasts.List$simple[,-c(1:2)], caption = 'Simple Contrasts') </span>
-  <span class="va">Design</span><span class="op">@</span><span class="va">Contrasts.List</span><span class="op">$</span><span class="va">simple</span><span class="op">[</span>,<span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">)</span><span class="op">]</span>
-<span class="co">#&gt;                                                  contrastName   type</span>
-<span class="co">#&gt;  1:    (temperatureLow - temperatureElevated) in imbibitionLI simple</span>
-<span class="co">#&gt;  2: (temperatureMedium - temperatureElevated) in imbibitionLI simple</span>
-<span class="co">#&gt;  3:      (temperatureMedium - temperatureLow) in imbibitionLI simple</span>
-<span class="co">#&gt;  4:    (temperatureLow - temperatureElevated) in imbibitionEI simple</span>
-<span class="co">#&gt;  5: (temperatureMedium - temperatureElevated) in imbibitionEI simple</span>
-<span class="co">#&gt;  6:      (temperatureMedium - temperatureLow) in imbibitionEI simple</span>
-<span class="co">#&gt;  7:    (temperatureLow - temperatureElevated) in imbibitionDS simple</span>
-<span class="co">#&gt;  8: (temperatureMedium - temperatureElevated) in imbibitionDS simple</span>
-<span class="co">#&gt;  9:      (temperatureMedium - temperatureLow) in imbibitionDS simple</span>
-<span class="co">#&gt; 10:      (imbibitionEI - imbibitionLI) in temperatureElevated simple</span>
-<span class="co">#&gt; 11:           (imbibitionEI - imbibitionLI) in temperatureLow simple</span>
-<span class="co">#&gt; 12:        (imbibitionEI - imbibitionLI) in temperatureMedium simple</span>
-<span class="co">#&gt; 13:      (imbibitionDS - imbibitionLI) in temperatureElevated simple</span>
-<span class="co">#&gt; 14:           (imbibitionDS - imbibitionLI) in temperatureLow simple</span>
-<span class="co">#&gt; 15:        (imbibitionDS - imbibitionLI) in temperatureMedium simple</span>
-<span class="co">#&gt; 16:      (imbibitionDS - imbibitionEI) in temperatureElevated simple</span>
-<span class="co">#&gt; 17:           (imbibitionDS - imbibitionEI) in temperatureLow simple</span>
-<span class="co">#&gt; 18:        (imbibitionDS - imbibitionEI) in temperatureMedium simple</span>
-<span class="co">#&gt;               fixFactor</span>
-<span class="co">#&gt;  1:        imbibitionLI</span>
-<span class="co">#&gt;  2:        imbibitionLI</span>
-<span class="co">#&gt;  3:        imbibitionLI</span>
-<span class="co">#&gt;  4:        imbibitionEI</span>
-<span class="co">#&gt;  5:        imbibitionEI</span>
-<span class="co">#&gt;  6:        imbibitionEI</span>
-<span class="co">#&gt;  7:        imbibitionDS</span>
-<span class="co">#&gt;  8:        imbibitionDS</span>
-<span class="co">#&gt;  9:        imbibitionDS</span>
-<span class="co">#&gt; 10: temperatureElevated</span>
-<span class="co">#&gt; 11:      temperatureLow</span>
-<span class="co">#&gt; 12:   temperatureMedium</span>
-<span class="co">#&gt; 13: temperatureElevated</span>
-<span class="co">#&gt; 14:      temperatureLow</span>
-<span class="co">#&gt; 15:   temperatureMedium</span>
-<span class="co">#&gt; 16: temperatureElevated</span>
-<span class="co">#&gt; 17:      temperatureLow</span>
-<span class="co">#&gt; 18:   temperatureMedium</span>
- <span class="co"># Averaged Contrasts</span>
- <span class="co"># knitr::kable( Design@Contrasts.List$averaged[,-c(1:2)], caption = 'Averaged Contrasts')</span>
- <span class="va">Design</span><span class="op">@</span><span class="va">Contrasts.List</span><span class="op">$</span><span class="va">averaged</span><span class="op">[</span>,<span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">)</span><span class="op">]</span>
-<span class="co">#&gt;                                         contrastName type</span>
-<span class="co">#&gt; 1:    (temperatureLow - temperatureElevated) in mean mean</span>
-<span class="co">#&gt; 2: (temperatureMedium - temperatureElevated) in mean mean</span>
-<span class="co">#&gt; 3:      (temperatureMedium - temperatureLow) in mean mean</span>
-<span class="co">#&gt; 4:             (imbibitionEI - imbibitionLI) in mean mean</span>
-<span class="co">#&gt; 5:             (imbibitionDS - imbibitionLI) in mean mean</span>
-<span class="co">#&gt; 6:             (imbibitionDS - imbibitionEI) in mean mean</span>
-<span class="co">#&gt;                                                      meanIn</span>
-<span class="co">#&gt; 1:               imbibitionLI + imbibitionEI + imbibitionDS</span>
-<span class="co">#&gt; 2:               imbibitionLI + imbibitionEI + imbibitionDS</span>
-<span class="co">#&gt; 3:               imbibitionLI + imbibitionEI + imbibitionDS</span>
-<span class="co">#&gt; 4: temperatureElevated + temperatureLow + temperatureMedium</span>
-<span class="co">#&gt; 5: temperatureElevated + temperatureLow + temperatureMedium</span>
-<span class="co">#&gt; 6: temperatureElevated + temperatureLow + temperatureMedium</span>
- <span class="co"># Interaction Contrasts</span>
- <span class="co"># knitr::kable(Design@Contrasts.List$interaction[,-c(1:2,4)], caption = 'Interaction Contrasts')</span>
- <span class="va">Design</span><span class="op">@</span><span class="va">Contrasts.List</span><span class="op">$</span><span class="va">interaction</span><span class="op">[</span>,<span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span>,<span class="fl">4</span><span class="op">)</span><span class="op">]</span>
-<span class="co">#&gt;             groupInteraction</span>
-<span class="co">#&gt; 1: temperature vs imbibition</span>
-<span class="co">#&gt; 2: temperature vs imbibition</span>
-<span class="co">#&gt; 3: temperature vs imbibition</span>
-<span class="co">#&gt; 4: temperature vs imbibition</span>
-<span class="co">#&gt; 5: temperature vs imbibition</span>
-<span class="co">#&gt; 6: temperature vs imbibition</span>
-<span class="co">#&gt; 7: temperature vs imbibition</span>
-<span class="co">#&gt; 8: temperature vs imbibition</span>
-<span class="co">#&gt; 9: temperature vs imbibition</span>
-<span class="co">#&gt;                                                                                                             contrastName</span>
-<span class="co">#&gt; 1:       (temperatureLow - temperatureElevated) in imbibitionEI - (temperatureLow - temperatureElevated) in imbibitionLI</span>
-<span class="co">#&gt; 2: (temperatureMedium - temperatureElevated) in imbibitionEI - (temperatureMedium - temperatureElevated) in imbibitionLI</span>
-<span class="co">#&gt; 3:           (temperatureMedium - temperatureLow) in imbibitionEI - (temperatureMedium - temperatureLow) in imbibitionLI</span>
-<span class="co">#&gt; 4:       (temperatureLow - temperatureElevated) in imbibitionDS - (temperatureLow - temperatureElevated) in imbibitionLI</span>
-<span class="co">#&gt; 5: (temperatureMedium - temperatureElevated) in imbibitionDS - (temperatureMedium - temperatureElevated) in imbibitionLI</span>
-<span class="co">#&gt; 6:           (temperatureMedium - temperatureLow) in imbibitionDS - (temperatureMedium - temperatureLow) in imbibitionLI</span>
-<span class="co">#&gt; 7:       (temperatureLow - temperatureElevated) in imbibitionDS - (temperatureLow - temperatureElevated) in imbibitionEI</span>
-<span class="co">#&gt; 8: (temperatureMedium - temperatureElevated) in imbibitionDS - (temperatureMedium - temperatureElevated) in imbibitionEI</span>
-<span class="co">#&gt; 9:           (temperatureMedium - temperatureLow) in imbibitionDS - (temperatureMedium - temperatureLow) in imbibitionEI</span>
-<span class="co">#&gt;           type</span>
-<span class="co">#&gt; 1: interaction</span>
-<span class="co">#&gt; 2: interaction</span>
-<span class="co">#&gt; 3: interaction</span>
-<span class="co">#&gt; 4: interaction</span>
-<span class="co">#&gt; 5: interaction</span>
-<span class="co">#&gt; 6: interaction</span>
-<span class="co">#&gt; 7: interaction</span>
-<span class="co">#&gt; 8: interaction</span>
-<span class="co">#&gt; 9: interaction</span></code></pre></div>
+                                 model.formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">Design.formulae</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"> <span class="co"># Select The 2 firsts</span>
  <span class="va">Design.contrastList</span> <span class="op">&lt;-</span> <span class="va">Design</span><span class="op">@</span><span class="va">Contrasts.List</span>
@@ -384,13 +290,25 @@ Design checking’s result
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"> <span class="va">FlomicsMultiAssay</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/FlomicsMultiAssay.constructor.html">FlomicsMultiAssay.constructor</a></span><span class="op">(</span>inputs      <span class="op">=</span> <span class="va">ListofData</span>, 
                                                     Design      <span class="op">=</span> <span class="va">Design</span>, 
-                                                    projectName <span class="op">=</span> <span class="va">projectName</span><span class="op">)</span></code></pre></div>
+                                                    projectName <span class="op">=</span> <span class="va">projectName</span><span class="op">)</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Not all names in the primary column of the sampleMap</span>
+<span class="co">#&gt;  could be matched to the colData rownames; see $drops</span>
+<span class="co">#&gt; DataFrame with 1 row and 3 columns</span>
+<span class="co">#&gt;      assay       primary       colname</span>
+<span class="co">#&gt;   &lt;factor&gt;   &lt;character&gt;   &lt;character&gt;</span>
+<span class="co">#&gt; 1  RNAseq1 Elevated_LI_1 Elevated_LI_1</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Not all colnames in the ExperimentList are found in the </span>
+<span class="co">#&gt; sampleMap, dropping samples from ExperimentList...</span>
+<span class="co">#&gt; $RNAseq1</span>
+<span class="co">#&gt; [1] "Elevated_LI_1"</span></code></pre></div>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">FlomicsMultiAssay</span>
 <span class="co">#&gt; A MultiAssayExperiment object of 1 listed</span>
 <span class="co">#&gt;  experiment with a user-defined name and respective class.</span>
 <span class="co">#&gt;  Containing an ExperimentList class object of length 1:</span>
-<span class="co">#&gt;  [1] RNAseq1: SummarizedExperiment with 25014 rows and 27 columns</span>
+<span class="co">#&gt;  [1] RNAseq1: SummarizedExperiment with 25014 rows and 26 columns</span>
 <span class="co">#&gt; Functionality:</span>
 <span class="co">#&gt;  experiments() - obtain the ExperimentList instance</span>
 <span class="co">#&gt;  colData() - the primary/phenotype DataFrame</span>
@@ -432,8 +350,8 @@ Design checking’s result
 <p>We can obtain the number of genes which were filtred with this command:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">RNAseq.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">$</span><span class="va">FilteredFeatures</span><span class="op">)</span>
-<span class="co">#&gt; [1] 11597</span></code></pre></div>
-<p>11597 genes were filtered out.</p>
+<span class="co">#&gt; [1] 11821</span></code></pre></div>
+<p>11821 genes were filtered out.</p>
 <ul>
 <li>Run the TMM normalization method. Scaling factors are stored in the table below:</li>
 </ul>
@@ -546,11 +464,11 @@ Design checking’s result
 <span class="co"># results filering</span>
 <span class="va">RNAseq.SE</span> <span class="op">&lt;-</span>
   <span class="fu">FilterDiffAnalysis</span><span class="op">(</span><span class="va">RNAseq.SE</span>, Adj.pvalue.cutoff <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span>
-<span class="co">#&gt; [1] "(temperatureLow - temperatureElevated) in imbibitionLI"</span>
+<span class="co">#&gt; [1] "(temperatureLow - temperatureElevated) in mean"</span>
 <span class="co">#&gt; [1] "H1"</span>
-<span class="co">#&gt; [1] "(temperatureMedium - temperatureElevated) in imbibitionLI"</span>
+<span class="co">#&gt; [1] "(temperatureMedium - temperatureElevated) in mean"</span>
 <span class="co">#&gt; [1] "H2"</span>
-<span class="co">#&gt; [1] "(temperatureMedium - temperatureLow) in imbibitionLI"</span>
+<span class="co">#&gt; [1] "(temperatureMedium - temperatureLow) in mean"</span>
 <span class="co">#&gt; [1] "H3"</span>
 <span class="co"># results access</span>
 <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">RNAseq.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">)</span>
@@ -589,14 +507,14 @@ Design checking’s result
 
 <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/bind.html" class="external-link">bind_cols</a></span><span class="op">(</span> <span class="va">tmpRes</span><span class="op">[[</span><span class="st">"contrasts"</span><span class="op">]</span><span class="op">]</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tag"</span>, <span class="st">"contrastName"</span><span class="op">)</span><span class="op">]</span>,
                   <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="st">"Nb DE"</span> <span class="op">=</span> <span class="va">DE</span>, <span class="st">"Nb DEup"</span> <span class="op">=</span> <span class="va">DEup</span>, <span class="st">"Nb DEdown"</span> <span class="op">=</span> <span class="va">DEdown</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt;    tag                                              contrastName Nb.DE Nb.DEup</span>
-<span class="co">#&gt; 1:  H1    (temperatureLow - temperatureElevated) in imbibitionLI  6651  (52 %)</span>
-<span class="co">#&gt; 2:  H2 (temperatureMedium - temperatureElevated) in imbibitionLI  3097  (46 %)</span>
-<span class="co">#&gt; 3:  H3      (temperatureMedium - temperatureLow) in imbibitionLI  3294  (37 %)</span>
+<span class="co">#&gt;    tag                                      contrastName Nb.DE Nb.DEup</span>
+<span class="co">#&gt; 1:  H1    (temperatureLow - temperatureElevated) in mean  6808  (50 %)</span>
+<span class="co">#&gt; 2:  H2 (temperatureMedium - temperatureElevated) in mean  2397  (43 %)</span>
+<span class="co">#&gt; 3:  H3      (temperatureMedium - temperatureLow) in mean  3115  (48 %)</span>
 <span class="co">#&gt;    Nb.DEdown</span>
-<span class="co">#&gt; 1:    (48 %)</span>
-<span class="co">#&gt; 2:    (54 %)</span>
-<span class="co">#&gt; 3:    (63 %)</span></code></pre></div>
+<span class="co">#&gt; 1:    (50 %)</span>
+<span class="co">#&gt; 2:    (57 %)</span>
+<span class="co">#&gt; 3:    (52 %)</span></code></pre></div>
 <p>We can see that there are more genes differentially expressed between imbibition modalities than between temperature modalities except for low vs moderated.</p>
 <ul>
 <li>Run the DiffAnal.plot function to get the MAplot and the Pvalue distribution. By example,</li>
@@ -766,7 +684,7 @@ Design checking’s result
 <div id="annotation-and-enrichment-analysis" class="section level2">
 <h2 class="hasAnchor">
 <a href="#annotation-and-enrichment-analysis" class="anchor" aria-hidden="true"></a>Annotation and Enrichment analysis</h2>
-<p>To perform annotation and enrichment analysis, we need Reference file (see <a href="/private/var/folders/mn/95p840s571b4mgdjr6n330fr0000gp/T/RtmpEbqx08/temp_libpath14173db9c5ef/RFLOMICS//docs/articles/RFLOMICS-input-data.html">rflomics input data</a>.</p>
+<p>To perform annotation and enrichment analysis, we need Reference file (see <a href="/private/var/folders/mn/95p840s571b4mgdjr6n330fr0000gp/T/Rtmp8Zw5BS/temp_libpath69082cb3f7/RFLOMICS//docs/articles/RFLOMICS-input-data.html">rflomics input data</a>.</p>
 <p>Then we select a lists of DGEs and clusters to annotate. By default the annotation whill be done on all setected DGE lists and clusters.</p>
 <div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ListNames.diff</span>  <span class="op">&lt;-</span> <span class="va">RNAseq.SE</span><span class="op">@</span><span class="va">metadata</span><span class="op">$</span><span class="va">DiffExpAnal</span><span class="op">[[</span><span class="st">"contrasts"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">contrastName</span>
@@ -822,7 +740,7 @@ Design checking’s result
 <span class="co">#&gt;  collate  fr_FR.UTF-8                 </span>
 <span class="co">#&gt;  ctype    fr_FR.UTF-8                 </span>
 <span class="co">#&gt;  tz       Europe/Paris                </span>
-<span class="co">#&gt;  date     2021-10-06                  </span>
+<span class="co">#&gt;  date     2021-10-12                  </span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ─ Packages ───────────────────────────────────────────────────────────────────</span>
 <span class="co">#&gt;  package              * version    date       lib</span>
@@ -929,7 +847,7 @@ Design checking’s result
 <span class="co">#&gt;  RCurl                  1.98-1.5   2021-09-17 [2]</span>
 <span class="co">#&gt;  remotes                2.4.0      2021-06-02 [2]</span>
 <span class="co">#&gt;  reshape2               1.4.4      2020-04-09 [2]</span>
-<span class="co">#&gt;  RFLOMICS             * 0.0.0.9000 2021-10-06 [1]</span>
+<span class="co">#&gt;  RFLOMICS             * 0.0.0.9000 2021-10-12 [1]</span>
 <span class="co">#&gt;  rlang                  0.4.11     2021-04-30 [2]</span>
 <span class="co">#&gt;  rmarkdown              2.11       2021-09-14 [2]</span>
 <span class="co">#&gt;  Rmixmod                2.1.5      2020-06-14 [2]</span>
@@ -1102,7 +1020,7 @@ Design checking’s result
 <span class="co">#&gt;  CRAN (R 4.1.0)                </span>
 <span class="co">#&gt;  Bioconductor                  </span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; [1] /private/var/folders/mn/95p840s571b4mgdjr6n330fr0000gp/T/RtmpEbqx08/temp_libpath14173db9c5ef</span>
+<span class="co">#&gt; [1] /private/var/folders/mn/95p840s571b4mgdjr6n330fr0000gp/T/Rtmp8Zw5BS/temp_libpath69082cb3f7</span>
 <span class="co">#&gt; [2] /Library/Frameworks/R.framework/Versions/4.1/Resources/library</span></code></pre></div>
 </div>
   </div>
