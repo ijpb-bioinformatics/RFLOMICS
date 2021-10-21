@@ -1,35 +1,46 @@
 
-### `r contrast` results {.tabset}
 
-#### MA plots
+<details>
+  <summary>`r contrast`</summary>
+
 
 ```{r , echo=FALSE,out.width = "50%"}
-diff.plots <- DiffAnal.plot(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]], 
-                            hypothesis=contrast,
-                            Adj.pvalue.cutoff = FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff)
+
+
+diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=contrast, Adj.pvalue.cutoff = dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff)
+
+
+diff.plots$Pvalue.hist
 
 diff.plots$MA.plot
-```
 
-#### Pvalue plots
-
-```{r , echo=FALSE,out.width = "50%"}
-diff.plots$Pvalue.hist
 ```
 
 
-#### Tables
+```{r , results='asis', echo = FALSE, out.width = "70%"}
 
-```{r, echo=FALSE,include = FALSE}
-DT::datatable(matrix())
-```
+  reactable(dataset.SE@metadata[["DiffExpAnal"]][["DEF"]][[contrast]][1:100,],
+            defaultPageSize = 6, searchable = TRUE, paginationType = "simple",
+            columns = list(
+              logFC = colDef(
+                  style = function(value) {
+                      color <- if (value >= 0) {
+                        "#008000"
+                      } else if (value < 0) {
+                        "#e00000"
+                      }
+                      list(fontWeight = 600, color = color)
+                  }
+                )
+              )
+            )
 
-```{r , results='asis', echo = FALSE,out.width = "70%"}
-
-  cat(knitr::knit_print(DT::datatable(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["DEF"]][[contrast]][1:100,]), width = "100%"))
+  # DT::datatable(matrix())
+  # cat(knitr::knit_print(
+  #   DT::datatable(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["DEF"]][[contrast]][1:100,]), width = "100%"))
   
 ```
 
-
+</details>
 
 
