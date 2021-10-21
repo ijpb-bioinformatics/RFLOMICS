@@ -81,6 +81,11 @@ shinyServer(function(input, output, session) {
         need(validate.status == 0 ,message="ok")
       })
 
+          output$runReport <- renderUI({
+            
+            downloadButton(outputId = "report", label = "Generate report")
+          })
+      
           #### Item for each omics #####
           output$omics <- renderMenu({
             menu_list <- list()
@@ -206,10 +211,9 @@ shinyServer(function(input, output, session) {
     # Part8 : RMD REPORT
     ##########################################
 
-
   output$report <- downloadHandler(
     # For PDF output, change this to "report.pdf"
-    filename = "report.html",
+    filename = paste0(FlomicsMultiAssay@metadata$projectName, "_", format(Sys.time(), "%Y_%m_%d_%H_%M"), ".html"),
     content = function(file) {
       # Copy the report file to a temporary directory before processing it, in
       # case we don't have write permissions to the current working dir (which
@@ -236,10 +240,6 @@ shinyServer(function(input, output, session) {
                         params = params,
                         envir = new.env(parent = globalenv()))
 
-      # rmarkdown::render(tempReport, output_file = file,
-      #                   params = list( FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"),
-      #                                  pngDir = tempdir()),
-      #                   envir = new.env(parent = globalenv()))
     }
   )
 

@@ -28,7 +28,8 @@ sidebar <- dashboardSidebar(
               ),
   tags$br(),
   tags$br(),
-  downloadButton(outputId = "report", label = "Generate report")
+  uiOutput("runReport")
+  #downloadButton(outputId = "report", label = "Generate report")
 )
 
 body <- dashboardBody({
@@ -44,7 +45,6 @@ body <- dashboardBody({
                 coverPage
 
                # shinyDirButton(id = "dir0", label = "Input directory", title = "Upload"),
-
         ),
 
         #### Import data       ####
@@ -52,7 +52,6 @@ body <- dashboardBody({
         tabItem(tabName = "importData",
 
                 LoadOmicsDataUI("data")
-
         ),
 
         #### Set Up statistical model & hypothesis ####
@@ -61,8 +60,6 @@ body <- dashboardBody({
 
                 GLM_modelUI("model")
         )
-
-
     ),
 
     #### RNAseq Analysis  ####
