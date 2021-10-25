@@ -113,7 +113,7 @@ AnnotationEnrichment <- function(input, output, session, dataset){
         data <- dataset.SE@metadata$EnrichAnal[["results"]][[listname]][["Over_Under_Results"]]
         
         fluidRow(
-          column(12, 
+          column(9, 
                  box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = listname,
                      
                      ### pvalue plots
@@ -123,12 +123,12 @@ AnnotationEnrichment <- function(input, output, session, dataset){
                                       
                                   column(10,
                                         
-                                        renderPlot({ pvalue.enrichment.plot(data, "overrepresented", index = input$top.over)})
+                                        renderPlot({ Enrichment.plot(dataset.SE, Over_Under="overrepresented", top = input$top.over, listNames=listname) })
                                   ),
                                   column(2,
                                          
                                         radioGroupButtons(direction = "vertical", inputId = session$ns("top.over"), 
-                                                          label = "", choices = c("all",  "Top50"), justified = FALSE, selected = "Top50")
+                                                          label = "", choices = c("all",  50), justified = FALSE, selected = 50)
                                   ),
                                   verticalLayout(
                                     
@@ -145,11 +145,11 @@ AnnotationEnrichment <- function(input, output, session, dataset){
                              tabPanel(title = "underrepresented", 
                                       
                                   column(10,
-                                         renderPlot({ pvalue.enrichment.plot(data, "underrepresented", index = input$top.under)})
+                                         renderPlot({Enrichment.plot(dataset.SE, Over_Under="underrepresented", top = input$top.under, listNames=listname)})
                                   ),
                                   column(2,
                                          radioGroupButtons(direction = "vertical", inputId = session$ns("top.under"), 
-                                                           label = "", choices = c("all",  "Top50"), justified = FALSE , selected = "Top50")
+                                                           label = "", choices = c("all",  50), justified = FALSE , selected = 50)
                                   ),
                                   verticalLayout(
                                     

@@ -1909,9 +1909,7 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
 
     p[[listname]] <- ggplot2::ggplot(data = tail(data_ord, n=top), aes(x=sort(Trial_Success), y=Term, size=Urn_Success, color=Pvalue)) +
       geom_point(alpha=0.5) + scale_size(range = c(0.1, 10)) + scale_color_gradient(low="blue", high="red") +
-      ggtitle(paste0(listname, " : ",Over_Under," ", Top.tag, " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")"))
-
-
+      ggtitle(paste0(listname, " :\n ",Over_Under," ", Top.tag, " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")"))
 
   }
 
