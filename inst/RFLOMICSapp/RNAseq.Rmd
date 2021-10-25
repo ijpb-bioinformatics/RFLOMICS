@@ -1,13 +1,13 @@
 # `r data` analysis
 
-```{r condition, echo=FALSE}
+```{r , echo=FALSE}
 
 dataset.raw.SE <- FlomicsMultiAssay@ExperimentList[[data]]
 dataset.SE     <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]
 
 Diff.eval <- !is.null(dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]])
 CoEx.eval <- !is.null(dataset.SE@metadata[["CoExpAnal"]]$results)
-#Anot.eval <- 
+Annt.eval <- !is.null(dataset.SE@metadata[["EnrichAnal"]]$results)
 
 ```
 
@@ -19,9 +19,11 @@ DiCoExpress [@Lambert:2020ta]
 ## Description of dataset's processing
 
 
-```{r CheckDesign1, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE, echo=FALSE}
+```{r , fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE, echo=FALSE}
 
 check <- CheckExpDesignCompleteness(FlomicsMultiAssay@metadata$design, colnames(dataset.SE))
+check$plot
+
 
 NbGenes             <- length(names(dataset.raw.SE))
 NbGene.rowSums.zero <- length(dataset.raw.SE@metadata$rowSums.zero)
@@ -43,20 +45,27 @@ cut-off of `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff`
 The `r dataset.SE@metadata$Normalization$methode` normalization method 
 was applied and the scaling factors are stored in the table below:
 
-```{r NormCoeff, echo=FALSE, results="asis"}
-kable_styling(kable(dataset.SE@metadata$Normalization$coefNorm, row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
+```{r , echo=FALSE, results="asis"}
+
+DT::datatable(dataset.SE@metadata$Normalization$coefNorm, 
+              options = list(rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),
+              class = 'cell-border stripe')
+
+# kable_styling(kable(dataset.SE@metadata$Normalization$coefNorm, row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
+
 ```
 
 ### Distribution of library size befor/after processing
 
-```{r libSize, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+```{r , echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
 Library_size_barplot.plot(dataset.raw.SE)
 Library_size_barplot.plot(dataset.SE)
 ```
 
 ### Distribution of density befor/after processing
 
-```{r DensityPlot, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+```{r , echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+
 Data_Distribution_Density.plot(dataset.raw.SE)
 Data_Distribution_Density.plot(dataset.SE)
 ```
@@ -64,7 +73,7 @@ Data_Distribution_Density.plot(dataset.SE)
 
 ### Principal component analysis befor/after processing
 
-```{r QCdesign, echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE,out.width = "80%", eval=FALSE}
+```{r , echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE, out.width = "80%", eval=FALSE}
 #mvQCdesign(object = FlomicsMultiAssay,
 #           data   = data, PCA="raw", axis=5, 
 #           pngFile= NULL) 
@@ -86,7 +95,7 @@ with a cutoff set to `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff`.
 
 ### Summary
 
-```{r DiffExprRNA1,echo=FALSE,message=FALSE, out.width = "100%",warning=FALSE,  fig.show = "hold", eval=Diff.eval}
+```{r ,echo=FALSE,message=FALSE, out.width = "100%",warning=FALSE,  fig.show = "hold", eval=Diff.eval}
 
 tmpRes <- dataset.SE@metadata[["DiffExpAnal"]]
 DE <- vector()
@@ -105,8 +114,9 @@ for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
 ```
 
 
-```{r summaryRNADE, echo=FALSE, results="asis", eval=Diff.eval}
+```{r , echo=FALSE, results="asis", eval=Diff.eval}
 kable_styling(kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("Nb DE"=DE,"Nb DEup"=DEup,"Nb DEdown"=DEdown)), row.names=FALSE, caption=NULL, format="html"), font_size=12)
+
 ```
 
 
@@ -114,7 +124,7 @@ The following graph gives the number of common and specific differential express
 
 
 
-```{r DiffExprRNA2,echo=FALSE, message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "80%", echo=FALSE, eval=Diff.eval}
+```{r ,echo=FALSE, message=FALSE, warning=FALSE, fig.show = "hold", out.width = "80%", echo=FALSE, eval=Diff.eval}
 DEF_mat <- dataset.SE@metadata$DiffExpAnal[["mergeDEF"]]
 
 if(dim(DEF_mat)[2] > 2){
@@ -124,7 +134,7 @@ if(dim(DEF_mat)[2] > 2){
 
 ### Results per contrast
 
-```{r DiffPerContRNA, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE, eval=Diff.eval}
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.eval}
 
   out <- NULL
   
@@ -155,7 +165,7 @@ X technical replicates were performed from $K=i$ to $K=i$ (K=number of clusters)
 The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
 was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
 
-```{r Coexp, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE, eval=CoEx.eval}
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=CoEx.eval}
 
   out <- NULL
  
@@ -165,4 +175,30 @@ knitr::asis_output(out)
 
 ```
 
-`r  if(is.null(dataset.SE@metadata[["CoExpAnal"]]$results)) {"\\end{comment}"}`
+`r if(is.null(dataset.SE@metadata[["CoExpAnal"]]$results)) {"\\end{comment}"}`
+
+`r if(is.null(dataset.SE@metadata[["EnrichAnal"]]$results)) {"\\begin{comment}"}`
+
+## Annotation and Enrichment
+
+### Summary
+
+
+### Results per gene list
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE,  eval=Annt.eval}
+
+  out <- NULL
+  
+  for (listname  in  names(dataset.SE@metadata[["EnrichAnal"]]$results)){
+    
+      out <- c(out, knitr::knit_child("EnrichAnal_PerList.Rmd", quiet=TRUE))  
+      
+    }
+    
+knitr::asis_output(out)
+
+```
+
+`r if(is.null(dataset.SE@metadata[["EnrichAnal"]]$results))  {"\\end{comment}"}`
+

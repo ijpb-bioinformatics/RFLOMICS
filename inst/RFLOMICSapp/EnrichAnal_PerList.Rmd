@@ -1,0 +1,40 @@
+
+
+<details>
+  <summary>`r listname`</summary>
+
+
+```{r , echo=FALSE, out.width = "50%"}
+
+plot <- Enrichment.plot(dataset.SE, Over_Under="overrepresented", top = 50, listNames=listname)
+plot[[1]]
+
+plot <- Enrichment.plot(dataset.SE, Over_Under="underrepresented", top = 50, listNames=listname)
+plot[[1]]
+
+```
+
+
+```{r , results='asis', echo = FALSE, out.width = "70%"}
+
+  reactable(dataset.SE@metadata$EnrichAnal[["results"]][[listname]][["Over_Under_Results"]],
+            defaultPageSize = 6, searchable = TRUE, paginationType = "simple",
+            columns = list(
+              Decision = colDef(
+                  style = function(value) {
+                      color <- if (value == "overrepresented") {
+                        "#008000"
+                      } else if (value == "underrepresented") {
+                        "#e00000"
+                      }
+                      list(fontWeight = 600, color = color)
+                  }
+                )
+              )
+            )
+
+```
+
+</details>
+
+
