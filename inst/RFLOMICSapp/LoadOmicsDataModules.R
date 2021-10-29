@@ -8,39 +8,42 @@ LoadOmicsDataUI <- function(id){
 
   tagList(
 
-    # set project name
-    fluidRow(
-        box(width = 12, status = "warning", solidHeader = TRUE,
-            title = "Load omics data and experimental design",
-            column(4,
-                   textInput(inputId = ns("projectName"), label = "Project name"),
-            ))),
-
-
     fluidRow(
         # load exp design
         # display tab
-        box(width = 6, title = "Load experimental design", status = "warning",
-
-            # matrix count/abundance input
-            fileInput(inputId = ns("Experimental.Design.file"), label = "Import matrix of Experimental Design (txt)",
-                           accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
-            tags$br(),
-            # table visualisation
-            dataTableOutput(ns("ExpDesignTable")),
-            tags$br(),
-            #uiOutput(ns("ExpDesignTable")),
-            uiOutput(ns("GetdFactorRef")),
-            tags$br(),
-            tags$br(),
-            uiOutput(ns("CompletenessUI")),
+        box(width = 12, title = "Load experimental design", status = "warning", solidHeader = TRUE, 
+            fluidRow(
+              # ExpDesign
+              column(width = 6,
+                # load
+                fluidRow(
+                  # 1- set project name
+                  column(width = 6, textInput(inputId = ns("projectName"), label = "Project name")),
+                  # 2- matrix count/abundance input
+                  column(width = 6, fileInput(inputId = ns("Experimental.Design.file"), label = "Experimental Design (txt)",
+                                              accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")))
+                ),
+                fluidRow(
+                  #column(width = 6, uiOutput(ns("selectSamplesUI"))))
+                  uiOutput(ns("GetdFactorRef"))
+                )
+              ),
+              column(width = 6,
+                # 3- table visualisation
+                # DT::dataTableOutput(ns("ExpDesignTable"))),
+                textOutput("txt"),
+                uiOutput(ns("ExpDesignTable"))
+              )
             ),
+            fluidRow( column(width = 6, uiOutput(ns("ValidUI"))))
+            )
+        ),
+        fluidRow( uiOutput(ns("LoadDataUI"))),
+        fluidRow(
+          uiOutput(ns("CompletenessUI")),
+          uiOutput(ns("UpsetMAE"))
+        )
 
-        # load exp design
-        # display tab
-        uiOutput(ns("LoadDataUI")),
-        uiOutput(ns("UpsetMAE"))
-    )
   )
 
 }
@@ -63,33 +66,102 @@ LoadOmicsData <- function(input, output, session){
         print("# 1- Load experimental design...")
 
         ####### Display tab of exp design  ########
-        if(dim(ExpDesign.tbl)[2] > 5){ ExpDesign.tbl.affich <- ExpDesign.tbl[,1:5] }else{ ExpDesign.tbl.affich <- ExpDesign.tbl }
+        if(dim(ExpDesign.tbl)[2] > 5){
+          ExpDesign.tbl.affich <- ExpDesign.tbl[,1:5] 
+          
+        }else{
+          ExpDesign.tbl.affich <- ExpDesign.tbl }
 
-        # output$ExpDesignTable <- renderUI({
-        #   box(12, DT::renderDataTable( DT::datatable(ExpDesign.tbl, options = list(pageLength = 5, searching = FALSE)))   ) })
+        # display table
+        output$ExpDesignTable <- renderUI({
+          box(width = 12, background = "light-blue",
+            tags$b("The experimental design view :"),
+              
+            DT::renderDataTable( DT::datatable(data = ExpDesign.tbl.affich, filter = 'top', 
+                                               options = list( pageLength = 5, autoWidth = TRUE, dom = 'tp' )))
+                                               #caption = 'Table 1: This is a simple caption for the table.' 
+            )
+          })
+        
+        output$txt <- renderText({
+          data <- ExpDesign.tbl.affich[input$ExpDesignTable_rows_all,]
+          print(paste0("toto",dim(data)[1])) })
+        
+          
 
-        output$ExpDesignTable <- renderDataTable({ DT::datatable(ExpDesign.tbl.affich, options = list(pageLength = 5, searching = FALSE) ) })
+        # output$ExpDesignTable <- DT::renderDataTable({
+        #   DT::datatable(ExpDesign.tbl.affich, options = list(pageLength = 5, dom = 'tp') ) })
 
-        ####### Set up Design model ########
+        
+        # #### sample list  ####
+        # output$selectSamplesUI <- renderUI( {
+        #   
+        #   sampleList <- rownames(ExpDesign.tbl.affich)
+        #   
+        #   # sample list :
+        #   pickerInput(
+        #     inputId  = session$ns("selectSamples"),
+        #     label    = "Sample list :",
+        #     choices  = sampleList,
+        #     options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+        #     multiple = TRUE,
+        #     selected = sampleList)
+        # })
+
+        ####### set ref and type of each factor ########
         output$GetdFactorRef <- renderUI({
 
-          tagList(
-            # Construct the form to set the reference factor level
-            h4("Select the level of reference fo each design factor"),
-            fluidRow(
-              lapply(names(ExpDesign.tbl.affich), function(i) {
-                box(width=3,
-                    selectInput(session$ns(paste0("dF.RefLevel.", i)), i, choices = levels(as.factor(ExpDesign.tbl.affich[[i]])), selectize=FALSE, size=5))})),
-
-            # Construct the form to set the type of the factor (either biological or batch)
-            h4("Select the type of the design factor"),
-            fluidRow(
-              lapply(names(ExpDesign.tbl.affich), function(i) {
-                box(width=3,
-                    radioButtons(session$ns(paste0("dF.Type.", i)), label=NULL , choices = c("Bio","batch", "Meta"), selected = "Bio", inline = FALSE, width = 2, choiceNames = NULL, choiceValues = NULL))})),
-            actionButton(session$ns("ValidF"),"Valid factor set up")
+          # Valid colors are: red, yellow, aqua,
+          # blue, light-blue, green, navy, teal, 
+          # olive, lime, orange, fuchsia, purple, 
+          # maroon, black.
+          
+          box(width = 12, background = "green",
+              # List of samples and diff modalities of factors
+              tags$b("Select samples or/and modalities of factors :"),
+              fluidRow(
+                column(width= 12/(length(names(ExpDesign.tbl.affich))+1),
+                  # sample list :
+                  pickerInput(
+                    inputId  = session$ns("selectSamples"),
+                    label    = tags$span(style="color: black;","Samples"),
+                    choices  = rownames(ExpDesign.tbl.affich),
+                    options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+                    multiple = TRUE,
+                    selected = rownames(ExpDesign.tbl.affich))),
+              
+                  # lapply(names(ExpDesign.tbl.affich), function(i) {
+                  #   column(width= 12/(length(names(ExpDesign.tbl.affich))+1),
+                  #     # sample list :
+                  #     pickerInput(
+                  #       inputId  = session$ns(paste0("selectFactors.", i)),
+                  #       label    = tags$span(style="color: black;",i),
+                  #       choices  = levels(as.factor(ExpDesign.tbl.affich[[i]])),
+                  #       options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+                  #       multiple = TRUE,
+                  #       selected = levels(as.factor(ExpDesign.tbl.affich[[i]]))) )})
+                ),
+              
+              # Construct the form to set the reference factor level
+              tags$b("Select the type and the level of reference fo each design factor :"),
+              fluidRow(
+                lapply(names(ExpDesign.tbl.affich), function(i) {
+                  dplyr::filter(ExpDesign.tbl.affich, )
+                  column(width= 12/length(names(ExpDesign.tbl.affich)),
+                      selectInput(inputId = session$ns(paste0("dF.RefLevel.", i)), 
+                                  label   = tags$span(style="color: black;",i) ,
+                                  choices = levels(as.factor(ExpDesign.tbl.affich[[i]]))),
+                      
+                      radioButtons(session$ns(paste0("dF.Type.", i)), label=NULL , choices = c("Bio","batch", "Meta"), selected = "Bio", inline = FALSE, width = 2, choiceNames = NULL, choiceValues = NULL)
+              
+                      )
+                  })
+              )
           )
         })
+        
+          output$ValidUI <- renderUI({
+            actionButton(session$ns("ValidF"),"Valid factor set up") })
 
     })
 
@@ -117,8 +189,12 @@ LoadOmicsData <- function(input, output, session){
       }
       validate({ need(! is.null(input$Experimental.Design.file), message="Set a name") })
 
-      ExpDesign.tbl <- read.table(input$Experimental.Design.file$datapath,header = TRUE,row.names = 1, sep = "\t")
-
+      ExpDesign.tbl <- read.table(input$Experimental.Design.file$datapath,header = TRUE,row.names = 1, sep = "\t") %>% 
+        dplyr::mutate(dplyr::across(where(is.character), stringr::str_remove_all, pattern = fixed(" ")))
+      
+      rownames(ExpDesign.tbl) <- stringr::str_remove_all(string = rownames(ExpDesign.tbl), pattern = " ")
+      names(ExpDesign.tbl)    <- stringr::str_remove_all(string = names(ExpDesign.tbl),    pattern = " ")
+      
       ### Get the Type and ref of the factors that the users enter in the form
       dF.Type.dFac<-vector()
       dF.List.Name<-vector()
@@ -149,41 +225,12 @@ LoadOmicsData <- function(input, output, session){
       ## create Design object
       Design <<- ExpDesign.constructor(ExpDesign = ExpDesign.tbl, refList = dF.List.ref, typeList = dF.Type.dFac)
 
-      # => completeness
-      #### check experimental design : experimental design must be a complete and balanced.
-
-      print(paste0("# 2- Design Completeness Check..."))
-
-      completeCheckRes <- CheckExpDesignCompleteness(Design)
-      if(!is.null(completeCheckRes[["error"]])){
-        showModal(modalDialog(title = "Error message", completeCheckRes[["error"]]))
-
-      }
-
-      output$CompletenessUI <- renderUI({
-
-        box( width = 12, title = "Completeness",  status = "warning",
-
-             #print message
-             hr(),
-             # plot of count per condition
-             renderPlot( completeCheckRes[["plot"]] ),
-             hr(),
-             tags$i("You **must** have a **complete design** (i.e. all possible combinations of factor's level).
-                     **Balanced design** (presence of the same number of replicats for all
-                     possible combinations) is not required  but advised.
-                     You **must** also have at least one biological factor and 2 replicats")
-        )
-      })
-
-      # continue only if message is true or warning
-      validate({ need(is.null(completeCheckRes[["error"]]) ,message="ok") })
 
 
       ### display interface for load data
       output$LoadDataUI <- renderUI({
 
-        box(width = 6, title = "Load omic data", status = "warning",  height = NULL,
+        box(width = 12, title = "Load omic data", status = "warning",  height = NULL, solidHeader = TRUE,
             #h5("[warning] dataset with omics (type == none) was igored..."),
             fluidRow(
               column(2,
@@ -271,8 +318,6 @@ LoadOmicsData <- function(input, output, session){
 
           dataName <- paste0(omicType, ".", gsub("[[:space:]]", "", input[[paste0("DataName", k)]]))
 
-
-
           # check presence of dataname
           if(dataName == ""){
             showModal(modalDialog( title = "Error message", "Dataset names is required : dataset ", k ))
@@ -324,25 +369,59 @@ LoadOmicsData <- function(input, output, session){
       }
       validate({ need(is.null(FlomicsMultiAssay.try[["error"]]), message="error") })
 
+
+      
       FlomicsMultiAssay <<- FlomicsMultiAssay.try[["value"]]
 
       # FlomicsMultiAssay[, complete.cases(FlomicsMultiAssay), ]
       # colData(FlomicsMultiAssay)[!complete.cases(FlomicsMultiAssay),]
       # intersectColumns(FlomicsMultiAssay)
 
-
-
-
       # upset of all data
       output$UpsetMAE <- renderUI({
 
         if (length(names(FlomicsMultiAssay)) >1){
-          box(width = 6, status = "warning", renderPlot(upsetSamples(FlomicsMultiAssay)))}
+          box(width = 6, status = "warning", 
+              renderPlot(upsetSamples(FlomicsMultiAssay)),
+              hr(),
+              tags$i("**discription**")
+              )}
       })
+      
+      
+      # => completeness
+      #### check experimental design : experimental design must be a complete and balanced.
+      
+      print(paste0("# => Design Completeness Check..."))
+      
+      completeCheckRes <- CheckExpDesignCompleteness(Design)
+      if(!is.null(completeCheckRes[["error"]])){
+        showModal(modalDialog(title = "Error message", completeCheckRes[["error"]]))
+        
+      }
+      
+      output$CompletenessUI <- renderUI({
+        
+        box( width = 6,  status = "warning",
+             
+             # plot of count per condition
+             renderPlot( completeCheckRes[["plot"]] ),
+             hr(),
+             tags$i("You **must** have a **complete design** (i.e. all possible combinations of factor's level).
+                     **Balanced design** (presence of the same number of replicats for all
+                     possible combinations) is not required  but advised.
+                     You **must** also have at least one biological factor and 2 replicats")
+        )
+      })
+      
+      # continue only if message is true or warning
+      validate({ need(is.null(completeCheckRes[["error"]]) ,message="ok") })
+      
 
     })
 
-  return(input)
+    return(input)
+    
 
 }
 
@@ -351,8 +430,10 @@ LoadOmicsData <- function(input, output, session){
 
 read_ExpDesign <- function(input.file){
 
-  res <- try_rflomics(read.table(input.file, header = TRUE,row.names = 1, sep = "\t"))
-
+  res <- try_rflomics(read.table(input.file, header = TRUE,row.names = 1, sep = "\t")  %>% 
+         dplyr::mutate(dplyr::across(where(is.character), stringr::str_remove_all, pattern = fixed(" "))) %>% 
+         dplyr::mutate(dplyr::across(.cols = where(is.character), as.factor)))
+  
   # If an error occured
   if(!is.null(res[["error"]]))
   {
@@ -374,7 +455,11 @@ read_ExpDesign <- function(input.file){
       showModal(modalDialog( title = "Warning message", "The select input contains a large number of options"))
     }
 
-    return(res$value)
+    mat <- res$value
+    rownames(mat) <- stringr::str_remove_all(string = rownames(mat), pattern = " ")
+    names(mat)    <- stringr::str_remove_all(string = names(mat),    pattern = " ")
+    
+    return(mat)
   }
 }
 
