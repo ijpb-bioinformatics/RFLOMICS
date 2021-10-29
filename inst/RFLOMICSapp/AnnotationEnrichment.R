@@ -8,30 +8,12 @@ AnnotationEnrichmentUI <- function(id){
   tagList(  
     fluidRow(
       box(title = span(tagList(icon("cogs"), "   Enrichment analysis")),
-          solidHeader = TRUE, status = "warning", width = 12, )
+          solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = FALSE)
       ),
     ## parameters + input data
     fluidRow(
-      
-      box(title = span(tagList(icon("cogs"), "")), solidHeader = FALSE, status = "warning", width = 3, 
-
-        ## gene lists
-        uiOutput(ns("selectGeneListtoAnnot")),
-        
-        ## file with annotation (geneID, Term, Name, Domain/source)
-        fileInput(inputId = ns("annotationFile"), label = "Annotation file :", 
-                            accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
-        
-        ## choice of probability
-        selectInput(ns("EnrichMethod"), label = "Test :", 
-                           choices = list("Hypergeometric"="hypergeometric"),selected = "hypergeometric"),
-        
-        ## alpha threshold
-        numericInput(inputId = ns("Alpha_Enrichment"), label="P-value :", value=0.01 , min = 0, max=0.1, step = 0.01),
-                  actionButton(ns("runEnrich"),"Run")
-        
-      ),
-      uiOutput(ns("AnnotEnrichResults"))
+      column(3, uiOutput(ns("AnnotParamUI"))),
+      column(9, uiOutput(ns("AnnotEnrichResults")))
     )
 
   )
@@ -39,8 +21,8 @@ AnnotationEnrichmentUI <- function(id){
 
 AnnotationEnrichment <- function(input, output, session, dataset){
   
-  output$selectGeneListtoAnnot <- renderUI({
-    
+  output$AnnotParamUI <- renderUI({
+    ## gene lists
     ListNames.diff <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["contrasts"]]$contrastName
     ListNames.coseq <- names(FlomicsMultiAssay@ExperimentList[[ paste0(dataset,".filtred")]]@metadata$CoExpAnal[["clusters"]])
     
@@ -50,7 +32,7 @@ AnnotationEnrichment <- function(input, output, session, dataset){
     #   choiceNames = ListNames,
     #   choiceValues = ListNames
     # )
-    list(
+    box(title = span(tagList(icon("cogs"), "")), solidHeader = FALSE, status = "warning", width = 14,
       pickerInput(
         inputId = session$ns("GeneList.diff"),
         label = "Select DEG lists:", 
@@ -64,11 +46,22 @@ AnnotationEnrichment <- function(input, output, session, dataset){
         choices = ListNames.coseq, multiple = TRUE, selected = ListNames.coseq,
         options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
         
-      )
+      ),
+
+      ## file with annotation (geneID, Term, Name, Domain/source)
+      fileInput(inputId = session$ns("annotationFile"), label = "Annotation file :", 
+                accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
+      
+      ## choice of probability
+      selectInput(session$ns("EnrichMethod"), label = "Test :", 
+                  choices = list("Hypergeometric"="hypergeometric"),selected = "hypergeometric"),
+      
+      ## alpha threshold
+      numericInput(inputId = session$ns("Alpha_Enrichment"), label="P-value :", value=0.01 , min = 0, max=0.1, step = 0.01),
+      actionButton(session$ns("runEnrich"),"Run")
     )
+    
   })
-  
-  
   
   
   observeEvent(input$runEnrich, {
@@ -113,7 +106,7 @@ AnnotationEnrichment <- function(input, output, session, dataset){
         data <- dataset.SE@metadata$EnrichAnal[["results"]][[listname]][["Over_Under_Results"]]
         
         fluidRow(
-          column(9, 
+          column(12, 
                  box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = listname,
                      
                      ### pvalue plots
