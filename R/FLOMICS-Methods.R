@@ -714,6 +714,10 @@ setMethod(f="Library_size_barplot.plot",
               title <- "Raw data"
             }
 
+            if (object@metadata$omicType != "RNAseq"){
+              ylab <- "Sum of abundance"
+            }
+
             libSizeNorm <- data.frame ( "value" = pseudo , "samples"=names(pseudo)) %>% dplyr::full_join(object@metadata$Groups, by="samples")
 
             libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
@@ -772,7 +776,7 @@ setMethod(f="Data_Distribution_Density.plot",
                       # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
                       if(is.null(object@metadata$transform_method)){
                         pseudo <- SummarizedExperiment::assay(object)
-                        x_lab  <- "Protein abundance (?)"
+                        x_lab  <- "Protein abundance (XIC intensity)"
                         title  <- "Raw data"
 
                       }
@@ -781,14 +785,31 @@ setMethod(f="Data_Distribution_Density.plot",
                         # if log2 transformation was chosen
                         switch (object@metadata$transform_method,
                                 "log2" = {
-                                  pseudo <- SummarizedExperiment::assay(object)
+                                  pseudo <- log2(SummarizedExperiment::assay(object) +1 )
                                   x_lab  <- "Transformed protein abundance"
-                                  title  <- "Transformed data (method : log2)" },
+                                  title  <- "log2(Protein abundances + 1)" },
+
+                                "log1p" = {
+                                  pseudo <- log1p(SummarizedExperiment::assay(object))
+                                  x_lab  <- "Transformed protein abundance"
+                                  title  <- "log1p(Protein abundances)" },
+
+                                "log10" = {
+                                  pseudo <- log10(SummarizedExperiment::assay(object)+1)
+                                  x_lab  <- "Transformed protein abundance"
+                                  title  <- "log10(Protein abundances + 1)"
+                                },
+
+                                "squareroot" = {
+                                  pseudo <- sqrt(SummarizedExperiment::assay(object))
+                                  x_lab  <- "Transformed protein abundance"
+                                  title  <- "squareroot(Protein abundance)" },
+
 
                                 "none" = {
-                                  pseudo <- log2(SummarizedExperiment::assay(object) + 1)
+                                  pseudo <- SummarizedExperiment::assay(object)
                                   x_lab  <- "Transformed protein abundance"
-                                  title  <- "Transformed data (method : ?)"
+                                  title  <- "Protein abundance (XIC intensity)"
 
                                   }
                         )
@@ -809,22 +830,37 @@ setMethod(f="Data_Distribution_Density.plot",
                       # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
                       if(is.null(object@metadata$transform_method)){
                         pseudo <- SummarizedExperiment::assay(object)
-                        x_lab  <- "Metabolite abundance (?)"
+                        x_lab  <- "Metabolite abundance (XIC Intensity)"
                         title  <- "Raw data"
                       }
                       # after transformation
                       else{
-                        # if log2 transformation was chosen
+                        # if log10 transformation was chosen
                         switch( object@metadata$transform_method,
                                 "log2" = {
-                                  pseudo <- SummarizedExperiment::assay(object)
-                                  x_lab  <- "Transformed protein abundance"
-                                  title  <- "Transformed data (method : log2)"
+                                  pseudo <- log2(SummarizedExperiment::assay(object)+1)
+                                  x_lab  <- "Transformed Metabolite abundance"
+                                  title  <- "log2(Metabolites abundance + 1)" },
+
+                                "log1p" = {
+                                  pseudo <- log1p(SummarizedExperiment::assay(object))
+                                  x_lab  <- "Transformed Metabolite abundance"
+                                  title  <- "log1p(Metabolites abundance)" },
+
+                                "log10" = {
+                                  pseudo <- log10(SummarizedExperiment::assay(object)+1)
+                                  x_lab  <- "Transformed Metabolite abundance"
+                                  title  <- "log10(Metabolites abundance + 1)"
                                 },
+                                "squareroot" = {
+                                  pseudo <- sqrt(SummarizedExperiment::assay(object))
+                                  x_lab  <- "Transformed Metabolite abundance"
+                                  title  <- "sqrt(Metabolites abundance)" },
+
                                 "none" = {
-                                  pseudo <- log2(SummarizedExperiment::assay(object) + 1)
-                                  x_lab  <- "Transformed protein abundance"
-                                  title  <- "Transformed data (method : ?)"
+                                  pseudo <- SummarizedExperiment::assay(object)
+                                  x_lab  <- "Transformed Metabolite abundance"
+                                  title  <- "Raw data"
                                 }
                         )
                       }
@@ -981,6 +1017,12 @@ setMethod(f= "abundanceBoxplot",
               title  <- "Raw data"
             }
 
+            if(object@metadata$omicType != "RNAseq"){
+              pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
+              y_lab  <- "Abundance"
+              title  <- "Raw data"
+            }
+
             colnames(pseudo) <- c("feature", "samples", "value")
 
             pseudo_bis <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples")
@@ -1068,10 +1110,16 @@ setMethod(f="mvQCdesign",
           signature="MultiAssayExperiment",
           definition <- function(object, data, PCA=c("raw","norm"), axis=5, pngFile=NULL){
 
+            # Stop if the PCA object does not exist
             resPCA <- object[[data]]@metadata[["PCAlist"]][[PCA]]
+
+            if(is.null(resPCA)){
+              stop(paste0(PCA,"PCA does not exist for the ",data," data"))
+            }
+
             n_dFac <-  object@metadata$colDataStruc["n_dFac"]
 
-            # correspondance between coordinate and factor modalities thanks to the sample's name
+            # corespondance between coordinate and factor modalities thanks to the sample's name
             tab_tmp <- merge(as.data.frame(resPCA$ind$coord),as.data.frame(object@colData),by='row.names',all=TRUE)
 
             df <- list()
@@ -1086,13 +1134,13 @@ setMethod(f="mvQCdesign",
               for(j in 1:axis){
                 Dim=paste0("Dim.",j)
                 # select the coordinates and the factor columns
-                df[[j]] <- select(tab_tmp, all_of(FactorName),all_of(Dim)) %>%
-                  # sort by factor modalities then by coordinate
-                  arrange_(.,.dots=c(FactorName,Dim)) %>%
+                df[[j]] <- dplyr::select(tab_tmp, all_of(FactorName),all_of(Dim)) %>%
                   # rename
-                  rename(.,"Levels"=FactorName,"y"=starts_with("Dim.")) %>%
+                  dplyr::rename(.,"Levels"=FactorName,"y"=starts_with("Dim.")) %>%
+                  # sort by factor modalities then by coordinate
+                  dplyr::arrange(Levels,y) %>%
                   # add column
-                  mutate(.,"x"=1:nF,
+                  dplyr::mutate(.,"x"=1:nF,
                          "Axis"=rep(paste("PCA",j, "\n(",round(resPCA$eig[j,2],1),"%)",sep=""),nF),
                          "FactorN"=rep(FactorName,nF))
 
@@ -1204,10 +1252,25 @@ setMethod(f= "TransformData",
             assayTransform  <- SummarizedExperiment::assay(objectTransform)
 
             switch(transform_method,
+                   "log1p" = {
+                     SummarizedExperiment::assay(objectTransform) <- log1p(assayTransform)
+                     objectTransform@metadata[["transform_method"]] <- transform_method
+                   },
                    "log2" = {
-                     SummarizedExperiment::assay(objectTransform) <- log2(assayTransform)
+                     SummarizedExperiment::assay(objectTransform) <- log2(assayTransform+1)
                      objectTransform@metadata[["transform_method"]] <- transform_method
                      },
+
+                   "log10" = {
+                     SummarizedExperiment::assay(objectTransform) <- log10(assayTransform+1)
+                     objectTransform@metadata[["transform_method"]] <- transform_method
+                   },
+
+                   "squareroot" = {
+                     SummarizedExperiment::assay(objectTransform) <- sqrt(assayTransform)
+                     objectTransform@metadata[["transform_method"]] <- transform_method
+                     },
+
                    "none"= {
                      SummarizedExperiment::assay(objectTransform) <- assayTransform
                      objectTransform@metadata[["transform_method"]] <- transform_method

@@ -105,8 +105,8 @@ QCNormalizationTab <- function(input, output, session, dataset){
 
         radioButtons(
           inputId  =session$ns("dataTransform"),
-          label = "Does the data need to be transformed (log2) ?",
-          choices=c("yes"="log2","no"="none"),
+          label = "Does the data need to be transformed ?",
+          choices=c("log1p"="log1p","log2"="log2","log10"="log10","squareroot"="squareroot","no"="none"),
           selected="none"),
         hr(),
 
@@ -188,15 +188,38 @@ QCNormalizationTab <- function(input, output, session, dataset){
               tabPanel.list <- c(
                 list(
                   tabPanel("Data summary",
-                         column(12, uiOutput(session$ns("ProtMetaSummaryUI"))) )
+                         column(12, uiOutput(session$ns("ProtMetaSummaryUI"))) ),
+
+                  tabPanel("Sum of XIC",
+                           # library size plot
+                           #column(4, plotOutput(ns("LibSize"),   height = "400%")),
+                           tags$br(),
+                           tags$br(),
+                           column(12, plotOutput(session$ns("raw.LibSize")))),
+                  tabPanel("Distribution (boxplot)",
+                           tags$br(),
+                           tags$br(),
+                           column(width = 12, plotOutput(session$ns("norm.boxplot"))))
                 ),
+
                 tabPanel.default.list)
             },
             "metabolomics" = {
               tabPanel.list <- c(
                 list(
                   tabPanel("Data summary",
-                         column(12, uiOutput(session$ns("ProtMetaSummaryUI"))) )
+                         column(12, uiOutput(session$ns("ProtMetaSummaryUI"))) ),
+
+                  tabPanel("Sum of XIC",
+                           # library size plot
+                           #column(4, plotOutput(ns("LibSize"),   height = "400%")),
+                           tags$br(),
+                           tags$br(),
+                           column(12, plotOutput(session$ns("raw.LibSize")))),
+                  tabPanel("Distribution (boxplot)",
+                           tags$br(),
+                           tags$br(),
+                           column(width = 12, plotOutput(session$ns("norm.boxplot"))))
                 ),
                 tabPanel.default.list)
             }
@@ -306,6 +329,7 @@ QCNormalizationTab <- function(input, output, session, dataset){
     condGroup <- input$`rawData-condColorSelect`[1]
 
     RFLOMICS::plotPCA(FlomicsMultiAssay@ExperimentList[[dataset]], PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup)
+
   })
 
 
@@ -336,11 +360,15 @@ QCNormalizationTab <- function(input, output, session, dataset){
   # })
 
   #### PCA analysis QCdesign ####
-  output$QCdesignPCA <- renderPlot({
+     output$QCdesignPCA <- renderPlot({
 
-    mvQCdesign(FlomicsMultiAssay,data=dataset,PCA="raw", axis=5,
+       if(is.null(FlomicsMultiAssay@ExperimentList[[dataset]][["PCAlist"]][["raw"]])){
+       FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
+       }
+
+       mvQCdesign(FlomicsMultiAssay,data=dataset,PCA="raw", axis=5,
                pngFile=file.path(tempdir(), paste0(dataset,"_PCAdesignCoordRaw.png")))
-  })
+    })
 
   # #### PCA analysis QCdata ####
   # output$QCdata <- renderPlot({
@@ -409,6 +437,8 @@ QCNormalizationTab <- function(input, output, session, dataset){
       RFLOMICS::plotPCA(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]],
               PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
     })
+
+
 
   })
 

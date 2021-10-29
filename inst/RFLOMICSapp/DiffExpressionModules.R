@@ -121,15 +121,14 @@ DiffExpAnalysis <- function(input, output, session, dataset){
     progress$inc(1/10, detail = paste("Doing part ", 10,"%", sep=""))
     #----------------------#
 
-    # run diff analysis with select method
+    # run diff analysis with selected method
     dataset.SE <- RunDiffAnalysis(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], design = Design,
                                   contrastList = FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
                                   Adj.pvalue.method="BH",
                                   DiffAnalysisMethod=input$AnaDiffMethod,
                                   clustermq=input$clustermq)
 
-    if(isFALSE(dataset.SE@metadata$DiffExpAnal[["results"]]))
-    {
+    if(isFALSE(dataset.SE@metadata$DiffExpAnal[["results"]])){
       showModal(modalDialog( title = "Error message",
                              if(! is.null(dataset.SE@metadata$DiffExpAnal[["ErrorStats"]])){
                                renderDataTable(dataset.SE@metadata$DiffExpAnal[["ErrorStats"]],rownames = FALSE)
@@ -140,8 +139,6 @@ DiffExpAnalysis <- function(input, output, session, dataset){
       ))
     }
 
-
-
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
 
     if(is.null(dataset.SE@metadata$DiffExpAnal[["RawDEFres"]]))
@@ -151,7 +148,7 @@ DiffExpAnalysis <- function(input, output, session, dataset){
                                renderDataTable(dataset.SE@metadata$DiffExpAnal[["ErrorTab"]],rownames = FALSE)
                              }
                              else{
-                               as.character(dataset.SE@metadata$CoExpAnal[["error"]])
+                               as.character(dataset.SE@metadata$DiffExpAnal[["error"]])
                              }
       ))
     }
