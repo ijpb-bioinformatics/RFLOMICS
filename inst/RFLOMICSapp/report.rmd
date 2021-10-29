@@ -118,7 +118,7 @@ DT::datatable(loaded.data,
 
 # kable_styling(kable(loaded.data, row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
 
-if(length(unlist(FlomicsMultiAssay@metadata$omicList))){
+if(length(unlist(FlomicsMultiAssay@metadata$omicList)) > 2){
   
   upsetSamples(FlomicsMultiAssay[unlist(FlomicsMultiAssay@metadata$omicList),])
 }
