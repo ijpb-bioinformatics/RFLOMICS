@@ -8,7 +8,7 @@ CoSeqAnalysisUI <- function(id){
 
     fluidRow(
       box(title = span(tagList(icon("cogs"), "   CoSeq ",a("(see the guide)", href="https://www.bioconductor.org/packages/release/bioc/vignettes/coseq/inst/doc/coseq.html")  )),
-          solidHeader = TRUE, status = "warning", width = 12,
+          solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = FALSE,
           div(
             h4(tags$span("Parameters set up:", style = "color:orange")),
             p("You have first to choose between the ",tags$b("union")," or ",tags$b("intersection")," of your contrasts lists according to your biological question."),

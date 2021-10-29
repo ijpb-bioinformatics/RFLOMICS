@@ -8,7 +8,7 @@ DiffExpAnalysisUI <- function(id){
   tagList(
     fluidRow(
       box(title = "Instructions:",
-          solidHeader = TRUE, status = "warning", width = 12,
+          solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = FALSE,
         p("Differential expression/abundance analysis is conducted for each hypothesis. There is just one option to set (the ajusted-pvalue cut-off, which is set to 5 % by default).
         The results will appear in blocks (one per hypothesis) with 3 outputs:"),
         p("- the distribution of pvalue's : which has to be validated", a("(some help to identify the good shapes)", href="Pvalue_distrib.pdf"),""),

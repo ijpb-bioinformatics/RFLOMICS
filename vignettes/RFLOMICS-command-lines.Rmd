@@ -95,7 +95,7 @@ Design.Factors.Name <- names(ExpDesign)
 Design.Factors.Type <- c("batch","Bio","Bio")
 
 # Define the level of reference (factor modality) of each factor
-Design.Factors.Ref <- c("rep1","Medium","EI")
+Design.Factors.Ref <- c("rep1","Medium","DS")
 
 # remplacer les 2 derniers parametres par un dataframe? 
 # Design.Factors <- data.frame(Design.Factors.Name = c("Repeat", "temperature", "imbibition"),
@@ -164,17 +164,7 @@ categories: simple, averaged and interaction contrasts
  Design <- getExpressionContrast(object = Design, 
                                  model.formula = names(Design.formulae[1]))
  
- # Simple Contrasts
- # knitr::kable( Design@Contrasts.List$simple[,-c(1:2)], caption = 'Simple Contrasts') 
-  Design@Contrasts.List$simple[,-c(1:2)]
- 
- # Averaged Contrasts
- # knitr::kable( Design@Contrasts.List$averaged[,-c(1:2)], caption = 'Averaged Contrasts')
- Design@Contrasts.List$averaged[,-c(1:2)]
- 
- # Interaction Contrasts
- # knitr::kable(Design@Contrasts.List$interaction[,-c(1:2,4)], caption = 'Interaction Contrasts')
- Design@Contrasts.List$interaction[,-c(1:2,4)]
+
  
 ```
 

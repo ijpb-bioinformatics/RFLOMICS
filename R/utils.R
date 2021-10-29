@@ -1018,7 +1018,7 @@ computeGroupVector <- function(treatmentGroups, colnamesMatrixDesign, interactio
     toMatchList <- simples
     toMatchList <- paste("^", toMatchList, "$", sep = "")
     #toMatch <- paste("^", treatmentGroups, "$", sep = "")
-    pos <- grepl(toMatchList, x= colnamesMatrixDesign)
+    pos <- grepl(paste(toMatchList, collapse = "|"), x= colnamesMatrixDesign)
     groupVector <- as.numeric(pos)
     # for intercept
     groupVector[1] <- 1

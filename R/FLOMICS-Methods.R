@@ -260,9 +260,16 @@ setMethod(f="getExpressionContrast",
             names(treatmentFactorsList) <- FactorBioInDesign
 
             interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
+            
+            listOfContrastsDF <- list()
             # define all simple contrasts pairwise comparisons
+            
             allSimpleContrast_df <- defineAllSimpleContrasts(treatmentFactorsList)
-            listOfContrastsDF <- list(simple = allSimpleContrast_df)
+            # if 1 factor or more than 1 + interaction 
+            if(length(treatmentFactorsList) == 1 || !isFALSE(interactionPresent)){
+              
+              listOfContrastsDF[["simple"]] <- allSimpleContrast_df
+            }
 
             # define all simples contrast means
             # exists("allSimpleContrast_df", inherits = FALSE)
@@ -1965,9 +1972,7 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
 
     p[[listname]] <- ggplot2::ggplot(data = tail(data_ord, n=top), aes(x=sort(Trial_Success), y=Term, size=Urn_Success, color=Pvalue)) +
       geom_point(alpha=0.5) + scale_size(range = c(0.1, 10)) + scale_color_gradient(low="blue", high="red") +
-      ggtitle(paste0(listname, " : ",Over_Under," ", Top.tag, " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")"))
-
-
+      ggtitle(paste0(listname, " :\n ",Over_Under," ", Top.tag, " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")"))
 
   }
 

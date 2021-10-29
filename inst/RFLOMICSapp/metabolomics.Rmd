@@ -1,15 +1,25 @@
 
 # `r data` analysis
 
+```{r conditionMeta, echo=FALSE}
+
+dataset.raw.SE <- FlomicsMultiAssay@ExperimentList[[data]]
+dataset.SE     <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]
+
+Diff.eval <- !is.null(dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]])
+CoEx.eval <- !is.null(dataset.SE@metadata[["CoExpAnal"]]$results)
+
+```
 
 ## Workflow of reference 
 
 ### Dataset processing
 
 ```{r CheckDesignMeta, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
-check <- CheckExpDesignCompleteness(Design, colnames(FlomicsMultiAssay[[paste0(data,".filtrered")]]))
-NbProt <- length(names(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]))
-NbProtWoutNA <- dim(na.omit(assay(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]])))[1]
+check <- CheckExpDesignCompleteness(FlomicsMultiAssay@metadata$design, colnames(dataset.SE))
+
+NbProt <- length(names(dataset.SE))
+NbProtWoutNA <- dim(na.omit(assay(dataset.SE)))[1]
 ```
 
 * X samples were removed from the datasets.
@@ -20,8 +30,8 @@ NbProtWoutNA <- dim(na.omit(assay(FlomicsMultiAssay@ExperimentList[[paste0(data,
 ### Distribution of density befor/after transforamtion
 
 ```{r densityPlotMeta, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
-Data_Distribution_Density.plot(FlomicsMultiAssay@ExperimentList[[paste0(data)]])
-Data_Distribution_Density.plot(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]])
+Data_Distribution_Density.plot(FlomicsMultiAssay@ExperimentList[[paste0(dataset.SE)]])
+Data_Distribution_Density.plot(FlomicsMultiAssay@ExperimentList[[paste0(dataset.SE,".filtred")]])
 ```
 
 ### Sum of XIC
@@ -32,27 +42,27 @@ Library_size_barplot.plot(FlomicsMultiAssay@ExperimentList[[data]])
 
 ### Principal component analysis
 
-```{r PCAMetabo, echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE,out.width = "80%"}
+```{r PCAMetabo, echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE,out.width = "80%", eval=FALSE}
 mvQCdesign(object = FlomicsMultiAssay,
            data   = data, PCA="raw", axis=5, 
            pngFile= NULL) 
 ```
 
-`r if(is.null(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["contrasts"]])) {"\\begin{comment}"}`
+`r if(is.null(dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]])) {"\\begin{comment}"}`
 
 ## Differential expression 
 
-Differential expression analysis was carried out for each selected contrast thanks to the `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]$method` model. 
+Differential expression analysis was carried out for each selected contrast thanks to the `r dataset.SE@metadata[["DiffExpAnal"]]$method` model. 
 
-P-value of differential expressed metabolites were adjusted according to the `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]$Adj.pvalue.method` method
-with a cutoff set to `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff`.
+P-value of differential expressed metabolites were adjusted according to the `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.method` method
+with a cutoff set to `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff`.
 
 ### Results summary
 
 
-```{r DiffExprMetabo1,echo=FALSE,message=FALSE, out.width = "100%",warning=FALSE,  fig.show = "hold"}
+```{r DiffExprMetabo1,echo=FALSE,message=FALSE, out.width = "100%",warning=FALSE,  fig.show = "hold", eval=Diff.eval}
 
-tmpRes <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]]
+tmpRes <- dataset.SE@metadata[["DiffExpAnal"]]
 DE <- vector()
 DEup <- vector()
 DEdown <- vector()
@@ -67,24 +77,24 @@ for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
 }
 ```
 
-```{r DiffExprMetabo2, echo=FALSE, results="asis"}
+```{r DiffExprMetabo2, echo=FALSE, results="asis", eval=Diff.eval}
 kable_styling(kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("Nb DE"=DE,"Nb DEup"=DEup,"Nb DEdown"=DEdown)), row.names=TRUE, caption=NULL, format="html"), font_size=12)
 ```
 
 
-```{r DiffExprMetabo3,echo=FALSE, message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "80%", echo=FALSE}
+```{r DiffExprMetabo3,echo=FALSE, message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "80%", echo=FALSE, eval=Diff.eval}
 
-DEF_mat <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]]
+DEF_mat <- dataset.SE@metadata$DiffExpAnal[["mergeDEF"]]
 UpSetR::upset(DEF_mat, sets = (names(DEF_mat[,-1]))) 
 
 ```
 
 
-```{r DiffPerContMetabo, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
+```{r DiffPerContMetabo, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE, eval=Diff.eval}
 
   out <- NULL
   
-  for (contrast  in  FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["contrasts"]]$contrastName) {
+  for (contrast  in  dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]]$contrastName) {
     
       out <- c(out, knitr::knit_child("DiffExpAnal_PerContrast.Rmd", quiet=TRUE))  
       
@@ -94,22 +104,24 @@ knitr::asis_output(out)
 
 ```
 
-`r if(is.null(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["contrasts"]]))  {"\\end{comment}"}`
+`r if(is.null(dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]]))  {"\\begin{comment}"}`
 
+
+`r if(is.null(dataset.SE@metadata[["CoExpAnal"]]$results)) {"\\end{comment}"}`
 
 ## Co-expression
 
 
-Co-expression analysis was carried out on the `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$merge.type`
-of the following list of metabolites `r FlomicsMultiAssay[[paste0(data,".filtred")]]@metadata$CoExpAnal$gene.list.names`. 
-`r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$tools` was
-used to cluster them with the following parameters. The gaussian mixture models (`r paste0("model=",FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$GaussianModel,"")` was run on scaled by metabolits data to cluster them by expression profile rather than abundance.
-`r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$replicates.nb` technical replicates were performed with K=`r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$K.range`. 
+Co-expression analysis was carried out on the `r dataset.SE@metadata[["CoExpAnal"]]$merge.type`
+of the following list of metabolites `r dataset.SE@metadata$CoExpAnal$gene.list.names`. 
+`r dataset.SE@metadata[["CoExpAnal"]]$tools` was
+used to cluster them with the following parameters. The gaussian mixture models (`r paste0("model=",dataset.SE@metadata[["CoExpAnal"]]$GaussianModel,"")` was run on scaled by metabolits data to cluster them by expression profile rather than abundance.
+`r dataset.SE@metadata[["CoExpAnal"]]$replicates.nb` technical replicates were performed with K=`r dataset.SE@metadata[["CoExpAnal"]]$K.range`. 
 The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
-was `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$cluster.nb`.
+was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
 
 
-```{r CoexpMeta, message=FALSE, warning=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
+```{r CoexpMeta, message=FALSE, warning=FALSE, echo=FALSE, message=TRUE, warning=TRUE, eval=CoEx.eval}
 
   out <- NULL
  
@@ -119,4 +131,4 @@ knitr::asis_output(out)
 
 ```
 
-`r  if(isFALSE(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$results)) {"\\end{comment}"}`
+`r  if(is.null(dataset.SE@metadata[["CoExpAnal"]]$results)) {"\\end{comment}"}`
