@@ -13,16 +13,22 @@ NbProtWoutNA <- dim(na.omit(assay(FlomicsMultiAssay@ExperimentList[[paste0(data,
 ```
 
 * X samples were removed from the datasets.
-* The data were X transformed.
+* The data were `FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$transform_method` transformed.
 * The number of metabolite: `r NbProt`  
 * Number of metabolite with at least 1 NA: `r NbProt - NbProtWoutNA`
 
-### Distribution of density 
+### Distribution of density befor/after transforamtion
 
 ```{r densityPlotMeta, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+Data_Distribution_Density.plot(FlomicsMultiAssay@ExperimentList[[paste0(data)]])
 Data_Distribution_Density.plot(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]])
 ```
 
+### Sum of XIC
+
+```{r libSize, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+Library_size_barplot.plot(FlomicsMultiAssay@ExperimentList[[data]])
+```
 
 ### Principal component analysis
 

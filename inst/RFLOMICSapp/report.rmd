@@ -56,7 +56,7 @@ pngDir <- params$pngDir
 check <- CheckExpDesignCompleteness(Design)
 ```
 
-* The number of replicates per condition are:
+* The number of replicates per condition are: 
 
 ```{r checkDesignAsis, echo=FALSE, results="asis"}
 kable_styling(kable(check$count, row.names=FALSE, caption=NULL,  format="html"), font_size=12, full_width = F, position = "left")
