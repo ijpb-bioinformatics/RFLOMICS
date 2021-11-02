@@ -1,5 +1,6 @@
 # Packages
 
+library(plotly)
 library(DT)
 library(magrittr)
 library(coseq)

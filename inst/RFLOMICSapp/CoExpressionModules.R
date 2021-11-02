@@ -285,7 +285,11 @@ CoSeqAnalysis <- function(input, output, session, dataset){
                              fluidRow(
                                  ## plot selected cluster(s)
                                  renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, dataset.SE@metadata$Groups) }),
-
+                                 ## print datatable of metabolite
+                                 DT::renderDataTable(DT::datatable(as.data.frame(coseq.res@allResults[[1]]) %>%
+                                                   select(.,paste0("Cluster_",input$selectCluster)) %>%
+                                                   dplyr::filter(.,get(paste0("Cluster_",input$selectCluster))==1)),
+                                                   options = list(rownames = FALSE, pageLength = 10)),
                                  ## select cluster to plot
                                  checkboxGroupInput(inputId = session$ns("selectCluster"), label = "Select cluster(s) :",
                                                     choices  = 1:nb_cluster, selected = 1, inline = TRUE))})),

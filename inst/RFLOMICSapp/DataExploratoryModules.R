@@ -146,6 +146,8 @@ QCNormalizationTab <- function(input, output, session, dataset){
         tabPanel("Principal component analysis (1/2)",
                  tags$br(),
                  fluidRow(
+                   tags$br(),
+                   tags$br(),
                    column(width = 12,  plotOutput(session$ns("raw.PCAcoord"))),
                    column(width = 12,  plotOutput(session$ns("norm.PCAcoord")))
                  ),
@@ -219,7 +221,7 @@ QCNormalizationTab <- function(input, output, session, dataset){
                   tabPanel("Distribution (boxplot)",
                            tags$br(),
                            tags$br(),
-                           column(width = 12, plotOutput(session$ns("norm.boxplot"))))
+                           column(width = 12, plotlyOutput(session$ns("norm.boxplot"))))
                 ),
                 tabPanel.default.list)
             }
@@ -281,18 +283,29 @@ QCNormalizationTab <- function(input, output, session, dataset){
     Library_size_barplot.plot(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
   })
 
+  ## Try plotly for metabolomics data
+  if(FlomicsMultiAssay@ExperimentList[[dataset]]@metadata$omicType=="metabolomics"){
   #### boxplot only for RNAseq data ####
   # => raw
-  output$raw.boxplot <- renderPlot({
-
+  output$raw.boxplot <- renderPlotly({
     abundanceBoxplot(FlomicsMultiAssay@ExperimentList[[dataset]])
   })
+  }else{
+    output$raw.boxplot <- renderPlot({
+      abundanceBoxplot(FlomicsMultiAssay@ExperimentList[[dataset]])
+    })
+  }
 
+  if(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$omicType=="metabolomics"){
   # => norm
-  output$norm.boxplot <- renderPlot({
-
+  output$norm.boxplot <- renderPlotly({
     abundanceBoxplot(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
   })
+  }else{
+    output$norm.boxplot <- renderPlot({
+      abundanceBoxplot(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
+    })
+  }
 
   #### abundance distribution ####
   # => raw for all data

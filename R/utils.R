@@ -1234,7 +1234,8 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
   y_profiles <- list()
   for (i in 1:nb_cluster){
 
-    y_profiles[[i]] <- coseq.res@y_profiles[coseq.res@allResults[[nb_cluster-1]][,i] != 0,] %>%
+    #y_profiles[[i]] <- coseq.res@y_profiles[coseq.res@allResults[[nb_cluster-1]][,i] != 0,] %>%
+    y_profiles[[i]] <- coseq.res@y_profiles[coseq.res@allResults[[1]][,i] != 0,] %>%
       data.frame() %>% reshape2::melt() %>%  dplyr::rename(samples = variable) %>%
       dplyr::full_join(conds , by = "samples") %>% dplyr::mutate(cluster = i)
   }
