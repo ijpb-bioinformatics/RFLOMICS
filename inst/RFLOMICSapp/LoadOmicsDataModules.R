@@ -24,14 +24,13 @@ LoadOmicsDataUI <- function(id){
                                               accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")))
                 ),
                 fluidRow(
-                  #column(width = 6, uiOutput(ns("selectSamplesUI"))))
+                  uiOutput(ns("selectSamplesUI")),
                   uiOutput(ns("GetdFactorRef"))
                 )
               ),
               column(width = 6,
                 # 3- table visualisation
                 # DT::dataTableOutput(ns("ExpDesignTable"))),
-                textOutput("txt"),
                 uiOutput(ns("ExpDesignTable"))
               )
             ),
@@ -73,6 +72,8 @@ LoadOmicsData <- function(input, output, session){
           ExpDesign.tbl.affich <- ExpDesign.tbl }
 
         # display table
+        # output$ExpDesignTable <- DT::renderDataTable({
+        #   DT::datatable(ExpDesign.tbl.affich, options = list(pageLength = 5, dom = 'tp') ) })
         output$ExpDesignTable <- renderUI({
           box(width = 12, background = "light-blue",
             tags$b("The experimental design view :"),
@@ -83,76 +84,75 @@ LoadOmicsData <- function(input, output, session){
             )
           })
         
-        output$txt <- renderText({
-          data <- ExpDesign.tbl.affich[input$ExpDesignTable_rows_all,]
-          print(paste0("toto",dim(data)[1])) })
+        
+        # output$txt <- renderText({
+        #   data <- ExpDesign.tbl.affich[input$ExpDesignTable_rows_all,]
+        #   print(paste0("toto",dim(data)[1])) })
         
           
 
-        # output$ExpDesignTable <- DT::renderDataTable({
-        #   DT::datatable(ExpDesign.tbl.affich, options = list(pageLength = 5, dom = 'tp') ) })
+        
 
         
-        # #### sample list  ####
-        # output$selectSamplesUI <- renderUI( {
-        #   
-        #   sampleList <- rownames(ExpDesign.tbl.affich)
-        #   
-        #   # sample list :
-        #   pickerInput(
-        #     inputId  = session$ns("selectSamples"),
-        #     label    = "Sample list :",
-        #     choices  = sampleList,
-        #     options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-        #     multiple = TRUE,
-        #     selected = sampleList)
-        # })
+        #### sample list  ####
+        output$selectSamplesUI <- renderUI( {
+
+          sampleList <- rownames(ExpDesign.tbl.affich)
+
+          box(width = 12, background = "green", # Valid colors are: red, yellow, aqua, blue, light-blue, green, navy, teal, olive, lime, orange, fuchsia, purple, maroon, black.
+
+              # List of samples and diff modalities of factors
+              tags$b("Select samples or/and modalities of factors :"),
+              fluidRow(
+                  column(width= ceiling(12/(length(names(ExpDesign.tbl.affich))+1)),
+                    # sample list :
+                    pickerInput(
+                      inputId  = session$ns("selectSamples"),
+                      label    = tags$span(style="color: black;","Samples"),
+                      choices  = sampleList,
+                      options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+                      multiple = TRUE,
+                      selected = sampleList)
+                  ),
+                  
+                  # condition list
+                  lapply(names(ExpDesign.tbl.affich), function(i) {
+                    column(width= ceiling(12/(length(names(ExpDesign.tbl.affich))+1)),
+                      # sample list :
+                      pickerInput(
+                        inputId  = session$ns(paste0("selectFactors.", i)),
+                        label    = tags$span(style="color: black;",i),
+                        choices  = levels(as.factor(ExpDesign.tbl.affich[[i]])),
+                        options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+                        multiple = TRUE,
+                        selected = levels(as.factor(ExpDesign.tbl.affich[[i]]))))})
+              )
+          )
+        })
 
         ####### set ref and type of each factor ########
         output$GetdFactorRef <- renderUI({
 
-          # Valid colors are: red, yellow, aqua,
-          # blue, light-blue, green, navy, teal, 
-          # olive, lime, orange, fuchsia, purple, 
-          # maroon, black.
+          # filter samples
+          ExpDesign.tbl.flt <<- ExpDesign.tbl[input$selectSamples,] 
+          # filtering per conditions
+          for(i in names(ExpDesign.tbl.affich)) { 
+            ExpDesign.tbl.flt <<- dplyr::filter(ExpDesign.tbl.flt, get(i) %in% input[[paste0("selectFactors.", i)]])
+          }
           
           box(width = 12, background = "green",
-              # List of samples and diff modalities of factors
-              tags$b("Select samples or/and modalities of factors :"),
-              fluidRow(
-                column(width= 12/(length(names(ExpDesign.tbl.affich))+1),
-                  # sample list :
-                  pickerInput(
-                    inputId  = session$ns("selectSamples"),
-                    label    = tags$span(style="color: black;","Samples"),
-                    choices  = rownames(ExpDesign.tbl.affich),
-                    options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-                    multiple = TRUE,
-                    selected = rownames(ExpDesign.tbl.affich))),
-              
-                  # lapply(names(ExpDesign.tbl.affich), function(i) {
-                  #   column(width= 12/(length(names(ExpDesign.tbl.affich))+1),
-                  #     # sample list :
-                  #     pickerInput(
-                  #       inputId  = session$ns(paste0("selectFactors.", i)),
-                  #       label    = tags$span(style="color: black;",i),
-                  #       choices  = levels(as.factor(ExpDesign.tbl.affich[[i]])),
-                  #       options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-                  #       multiple = TRUE,
-                  #       selected = levels(as.factor(ExpDesign.tbl.affich[[i]]))) )})
-                ),
-              
+
               # Construct the form to set the reference factor level
               tags$b("Select the type and the level of reference fo each design factor :"),
               fluidRow(
                 lapply(names(ExpDesign.tbl.affich), function(i) {
-                  dplyr::filter(ExpDesign.tbl.affich, )
-                  column(width= 12/length(names(ExpDesign.tbl.affich)),
+                  column(width= round(12/length(names(ExpDesign.tbl.affich))),
                       selectInput(inputId = session$ns(paste0("dF.RefLevel.", i)), 
                                   label   = tags$span(style="color: black;",i) ,
-                                  choices = levels(as.factor(ExpDesign.tbl.affich[[i]]))),
+                                  choices = unique((ExpDesign.tbl.flt[[i]]))),
                       
-                      radioButtons(session$ns(paste0("dF.Type.", i)), label=NULL , choices = c("Bio","batch", "Meta"), selected = "Bio", inline = FALSE, width = 2, choiceNames = NULL, choiceValues = NULL)
+                      radioButtons(session$ns(paste0("dF.Type.", i)), label=NULL , choices = c("Bio","batch", "Meta"), 
+                                   selected = "Bio", inline = FALSE, width = 2, choiceNames = NULL, choiceValues = NULL)
               
                       )
                   })
@@ -189,11 +189,13 @@ LoadOmicsData <- function(input, output, session){
       }
       validate({ need(! is.null(input$Experimental.Design.file), message="Set a name") })
 
-      ExpDesign.tbl <- read.table(input$Experimental.Design.file$datapath,header = TRUE,row.names = 1, sep = "\t") %>% 
-        dplyr::mutate(dplyr::across(where(is.character), stringr::str_remove_all, pattern = fixed(" ")))
+      # ExpDesign.tbl <- read.table(input$Experimental.Design.file$datapath,header = TRUE,row.names = 1, sep = "\t") %>% 
+      #   dplyr::mutate(dplyr::across(where(is.character), stringr::str_remove_all, pattern = fixed(" ")))
+      # rownames(ExpDesign.tbl) <- stringr::str_remove_all(string = rownames(ExpDesign.tbl), pattern = " ")
+      # names(ExpDesign.tbl)    <- stringr::str_remove_all(string = names(ExpDesign.tbl),    pattern = " ")
       
-      rownames(ExpDesign.tbl) <- stringr::str_remove_all(string = rownames(ExpDesign.tbl), pattern = " ")
-      names(ExpDesign.tbl)    <- stringr::str_remove_all(string = names(ExpDesign.tbl),    pattern = " ")
+      ExpDesign.tbl <- ExpDesign.tbl.flt
+      
       
       ### Get the Type and ref of the factors that the users enter in the form
       dF.Type.dFac<-vector()
