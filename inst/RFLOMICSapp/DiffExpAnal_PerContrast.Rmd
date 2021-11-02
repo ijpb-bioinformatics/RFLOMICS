@@ -19,7 +19,7 @@ diff.plots$MA.plot
 
 ```{r , results='asis', echo = FALSE, out.width = "70%"}
 
-  reactable(dataset.SE@metadata[["DiffExpAnal"]][["DEF"]][[contrast]][1:100,],
+  reactable(dataset.SE@metadata[["DiffExpAnal"]][["DEF"]][[contrast]],
             defaultPageSize = 6, searchable = TRUE, paginationType = "simple",
             columns = list(
               logFC = colDef(

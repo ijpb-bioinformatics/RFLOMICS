@@ -23,28 +23,31 @@ NbProtWoutNA <- dim(na.omit(assay(dataset.SE)))[1]
 ```
 
 * X samples were removed from the datasets.
-* The data were `FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$transform_method` transformed.
+* The data were `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$transform_method` transformed.
 * The number of metabolite: `r NbProt`  
 * Number of metabolite with at least 1 NA: `r NbProt - NbProtWoutNA`
 
-### Distribution of density befor/after transforamtion
+### Distribution of density befor/after transformation
 
 ```{r densityPlotMeta, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
-Data_Distribution_Density.plot(FlomicsMultiAssay@ExperimentList[[paste0(dataset.SE)]])
-Data_Distribution_Density.plot(FlomicsMultiAssay@ExperimentList[[paste0(dataset.SE,".filtred")]])
+Data_Distribution_Density.plot(dataset.raw.SE)
+Data_Distribution_Density.plot(dataset.SE)
 ```
 
-### Sum of XIC
+### Boxplot and Sum of XIC  
 
 ```{r libSize, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
-Library_size_barplot.plot(FlomicsMultiAssay@ExperimentList[[data]])
+abundanceBoxplot(dataset.SE)
+Library_size_barplot.plot(dataset.raw.SE)
 ```
 
 ### Principal component analysis
 
-```{r PCAMetabo, echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE,out.width = "80%", eval=FALSE}
+Multivariate quality check of design. For each design factor (one color for each), and each PCA axis this function plot the coordinates of the sample in a PCA axis (y-axis) in an increasing order along the x-axis. It allows to have a quick view of the percent of variability associated to each factor.
+
+```{r PCAMetabo, echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE,out.width = "100%", eval=TRUE}
 mvQCdesign(object = FlomicsMultiAssay,
-           data   = data, PCA="raw", axis=5, 
+           data   = paste0(data,".filtred"), PCA="norm", axis=5, 
            pngFile= NULL) 
 ```
 
@@ -52,10 +55,16 @@ mvQCdesign(object = FlomicsMultiAssay,
 
 ## Differential expression 
 
-Differential expression analysis was carried out for each selected contrast thanks to the `r dataset.SE@metadata[["DiffExpAnal"]]$method` model. 
+Differential abundance of metabolites was carried out thanks to limma package.
 
-P-value of differential expressed metabolites were adjusted according to the `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.method` method
+ * The lmFit function was used to fit a linear model for each metabolites given the matrix
+model constructed during the epxerimental design setup.
+
+ * The selected contrasts were then computed from the fitted model and summary statistics were obtained via the contrasts.fit and eBayes functions (with the robust=T parameter). 
+
+ * P-value of differential expressed metabolites were adjusted according to the `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.method` method
 with a cutoff set to `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff`.
+
 
 ### Results summary
 
@@ -72,15 +81,18 @@ for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
    #hyp <- tmpRes[["contrasts"]][i,]$tag
    stats <- tmpRes[["stats"]][[contrastName]]
    DE[i] <- stats$gDE
-   DEup[i] <- paste(stats$gDEup,"(",stats$pgDEup," %)",sep="")
-   DEdown[i] <- paste(stats$gDEdown,"(",stats$pgDEdown," %)",sep="")
+   DEup[i] <- paste(stats$gDEup," (",stats$pgDEup," %)",sep="")
+   DEdown[i] <- paste(stats$gDEdown," (",stats$pgDEdown," %)",sep="")
 }
 ```
 
 ```{r DiffExprMetabo2, echo=FALSE, results="asis", eval=Diff.eval}
-kable_styling(kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("Nb DE"=DE,"Nb DEup"=DEup,"Nb DEdown"=DEdown)), row.names=TRUE, caption=NULL, format="html"), font_size=12)
+kable_styling(kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("Nb DE"=DE,"Nb DEup"=DEup,"Nb DEdown"=DEdown)), row.names=FALSE, caption=NULL, format="html"), font_size=12)
 ```
 
+The upSet graphic shows the number of DA metabolites (Barplot with Instersection Size) that are specifics to the constrast(s) selected in
+the metro card below the barplot. It may help to better view the specificity of the change in metabolite abundance in response to
+experimental factors.
 
 ```{r DiffExprMetabo3,echo=FALSE, message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "80%", echo=FALSE, eval=Diff.eval}
 
@@ -88,6 +100,14 @@ DEF_mat <- dataset.SE@metadata$DiffExpAnal[["mergeDEF"]]
 UpSetR::upset(DEF_mat, sets = (names(DEF_mat[,-1]))) 
 
 ```
+
+For each contrasts, 3 graphics are plotted:
+
+ * a distribution of pvalues graph 
+ 
+ * a MA plot: LogFC against average metabolite abundance
+ 
+ * a data.frame given the statistics of limma output by metabolite.
 
 
 ```{r DiffPerContMetabo, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE, eval=Diff.eval}
@@ -111,11 +131,10 @@ knitr::asis_output(out)
 
 ## Co-expression
 
-
 Co-expression analysis was carried out on the `r dataset.SE@metadata[["CoExpAnal"]]$merge.type`
 of the following list of metabolites `r dataset.SE@metadata$CoExpAnal$gene.list.names`. 
 `r dataset.SE@metadata[["CoExpAnal"]]$tools` was
-used to cluster them with the following parameters. The gaussian mixture models (`r paste0("model=",dataset.SE@metadata[["CoExpAnal"]]$GaussianModel,"")` was run on scaled by metabolits data to cluster them by expression profile rather than abundance.
+used to cluster them with the following parameters. The gaussian mixture models (`r paste0("model=",dataset.SE@metadata[["CoExpAnal"]]$GaussianModel,"")` was run on scaled by metabolite data to cluster them by expression profile rather than abundance.
 `r dataset.SE@metadata[["CoExpAnal"]]$replicates.nb` technical replicates were performed with K=`r dataset.SE@metadata[["CoExpAnal"]]$K.range`. 
 The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
 was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
@@ -129,6 +148,14 @@ was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
     
 knitr::asis_output(out)
 
+```
+
+### Data table
+
+```{r CoexpTable, echo=FALSE, results="asis"}
+DT::datatable(data.frame(dataset.SE@metadata[["CoExpAnal"]]$coseqResults@allResults[[1]]), 
+              options = list(rownames = TRUE, pageLength = 10, scrollX = T, dom = 'tip'),
+              class = 'cell-border stripe')
 ```
 
 `r  if(is.null(dataset.SE@metadata[["CoExpAnal"]]$results)) {"\\end{comment}"}`

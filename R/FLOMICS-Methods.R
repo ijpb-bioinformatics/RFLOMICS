@@ -260,14 +260,14 @@ setMethod(f="getExpressionContrast",
             names(treatmentFactorsList) <- FactorBioInDesign
 
             interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
-            
+
             listOfContrastsDF <- list()
             # define all simple contrasts pairwise comparisons
-            
+
             allSimpleContrast_df <- defineAllSimpleContrasts(treatmentFactorsList)
-            # if 1 factor or more than 1 + interaction 
+            # if 1 factor or more than 1 + interaction
             if(length(treatmentFactorsList) == 1 || !isFALSE(interactionPresent)){
-              
+
               listOfContrastsDF[["simple"]] <- allSimpleContrast_df
             }
 
@@ -1027,7 +1027,7 @@ setMethod(f= "abundanceBoxplot",
             if(object@metadata$omicType != "RNAseq"){
               pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
               y_lab  <- "Abundance"
-              title  <- "Raw data"
+              title  <- paste0("Transform data (method=",FlomicsMultiAssay@ExperimentList[[2]]@metadata$transform_method,")")
             }
 
             colnames(pseudo) <- c("feature", "samples", "value")
@@ -1037,11 +1037,10 @@ setMethod(f= "abundanceBoxplot",
             pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
 
             # boxplot
-            p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + ggplot2::geom_boxplot(aes(fill=groups)) +
-              theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + xlab("") + ylab(y_lab) + ggtitle(title)
-
+            p <- ggplot(pseudo_bis, aes(x=samples, y=value,label = feature)) + ggplot2::geom_boxplot(aes(fill=groups),outlier.colour = "red") +
+              theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + xlab("") + ylab(y_lab) + ggtitle(title) +
+              geom_point(alpha = 1/100,size=0)
             print(p)
-
           }
 )
 
@@ -1169,7 +1168,7 @@ setMethod(f="mvQCdesign",
                       axis.text.x=element_blank(),
                       axis.ticks.x=element_blank())
             })
-            p <- do.call(gridExtra::grid.arrange, out)
+            p <- do.call(gridExtra::grid.arrange, c(out,ncol=1))
             print(p)
 
 
