@@ -1473,11 +1473,11 @@ setMethod(f="RunDiffAnalysis",
 
             # move in ExpDesign Constructor
             model_matrix <- model.matrix(as.formula(design@Model.formula), data=as.data.frame(design@List.Factors))
-
-
+            rownames(model_matrix) <- rownames(Design@ExpDesign)
+            
             ListRes <- switch(DiffAnalysisMethod,
-                                        "edgeRglmfit"=try_rflomics(edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
-                                                                    model_matrix    = model_matrix,
+                           "edgeRglmfit"=try_rflomics(edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
+                                                                    model_matrix    = model_matrix[colnames(object),],
                                                                     group           = object@metadata$Normalization$coefNorm$group,
                                                                     lib.size        = object@metadata$Normalization$coefNorm$lib.size,
                                                                     norm.factors    = object@metadata$Normalization$coefNorm$norm.factors,
@@ -1485,8 +1485,8 @@ setMethod(f="RunDiffAnalysis",
                                                                     Contrasts.Coeff = design@Contrasts.Coeff,
                                                                     FDR             = 1,
                                                                     clustermq=clustermq)),
-                                          "limmalmFit"=try_rflomics(limma.AnaDiff(count_matrix      = SummarizedExperiment::assay(object),
-                                                                     model_matrix      = model_matrix,
+                             "limmalmFit"=try_rflomics(limma.AnaDiff(count_matrix      = SummarizedExperiment::assay(object),
+                                                                     model_matrix      = model_matrix[colnames(object),],
                                                                      Contrasts.Sel     = object@metadata$DiffExpAnal[["contrasts"]],
                                                                      Contrasts.Coeff   = design@Contrasts.Coeff,
                                                                      Adj.pvalue.cutoff = 1,
