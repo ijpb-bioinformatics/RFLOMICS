@@ -29,12 +29,14 @@ DiffExpAnalysisUI <- function(id){
 
 
 
-DiffExpAnalysis <- function(input, output, session, dataset){
+DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
   output$DiffParamUI <- renderUI({
 
+    #if(rea.values$dataAnalysis == FALSE) return()
+    
     MethodList <- c("glmfit (edgeR)"="edgeRglmfit", "lmFit (limma)"="limmalmFit")
-
+    
     method <- switch (FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$omicType,
                       "RNAseq"       = MethodList[1],
                       "proteomics"   = MethodList[2],
@@ -58,39 +60,10 @@ DiffExpAnalysis <- function(input, output, session, dataset){
                materialSwitch(inputId = session$ns("clustermq"), label =  popify(actionLink("infoCluster",paste0("Cluster: (?)")),"",
                                                                                  "If there is a huge number of contrasts, the calculation can be send to the cluster to be run in parrallel",options=list(container="body"))
                               , value = FALSE, status = "success"),
-              #selectInput(inputId = session$ns("clustermq"),
-              #label   ="send job to cluster",
-              #choices = list("no"=FALSE,"genotoul"=TRUE)),
 
-              actionButton(session$ns("runAnaDiff"),"Run"))
+               actionButton(session$ns("runAnaDiff"),"Run"))
   ))
 
-  })
-
-  # list of selected contrast
-  # output$contrastListUI <- renderUI({
-  #   pickerInput(
-  #     inputId = session$ns("contrastList"),
-  #     label = "Selected contrast :",
-  #     choices = FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
-  #     options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-  #     multiple = TRUE, selected = FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName )
-  # })
-
-
-  # chose of methods based on data type
-  output$AnaDiffMethodUI <- renderUI({
-
-    MethodList <- c("glmfit (edgeR)"="edgeRglmfit", "lmFit (limma)"="limmalmFit")
-
-    method <- switch (FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$omicType,
-                      "RNAseq"       = MethodList[1],
-                      "proteomics"   = MethodList[2],
-                      "metabolomics" = MethodList[2])
-
-    selectInput(session$ns("AnaDiffMethod"), label = "Method :",
-                choices  = method,
-                selected = method)
   })
 
   # Run the differential analysis for each contrast set
@@ -101,9 +74,10 @@ DiffExpAnalysis <- function(input, output, session, dataset){
   #         - Table of the DE genes
   #   -> combine data : union or intersection
   observeEvent(input$runAnaDiff, {
-    print(paste0("observeEvent",input$runAnaDiff))
 
-    # check list of genes
+    #rea.values[[dataset]]$analDiff <- TRUE
+    
+    # check list of genes 
     if(length(input$contrastList) == 0){
 
       showModal(modalDialog( title = "Error message", "Please select at least 1 hypothesis"))
@@ -122,11 +96,12 @@ DiffExpAnalysis <- function(input, output, session, dataset){
     #----------------------#
 
     # run diff analysis with selected method
-    dataset.SE <- RunDiffAnalysis(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], design = Design,
+    dataset.SE <- RunDiffAnalysis(object = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]], 
+                                  design = FlomicsMultiAssay@metadata$design,
                                   contrastList = FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
-                                  Adj.pvalue.method="BH",
-                                  DiffAnalysisMethod=input$AnaDiffMethod,
-                                  clustermq=input$clustermq)
+                                  Adj.pvalue.method = "BH",
+                                  DiffAnalysisMethod = input$AnaDiffMethod,
+                                  clustermq = input$clustermq)
 
     if(isFALSE(dataset.SE@metadata$DiffExpAnal[["results"]])){
       showModal(modalDialog( title = "Error message",
@@ -141,8 +116,8 @@ DiffExpAnalysis <- function(input, output, session, dataset){
 
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
 
-    if(is.null(dataset.SE@metadata$DiffExpAnal[["RawDEFres"]]))
-    {
+    if(is.null(dataset.SE@metadata$DiffExpAnal[["RawDEFres"]])){
+      
       showModal(modalDialog( title = "Error message",
                              if(! is.null(dataset.SE@metadata$DiffExpAnal[["ErrorTab"]])){
                                renderDataTable(dataset.SE@metadata$DiffExpAnal[["ErrorTab"]],rownames = FALSE)
@@ -166,7 +141,6 @@ DiffExpAnalysis <- function(input, output, session, dataset){
 
   }, ignoreInit = TRUE)
 
-
   observeEvent((input$Adj.pvalue.cutoff ), {
 
     print(paste("# 9bis- Filter Diff Analysis...", dataset))
@@ -176,9 +150,15 @@ DiffExpAnalysis <- function(input, output, session, dataset){
                                      Adj.pvalue.cutoff = input$Adj.pvalue.cutoff)
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
 
-    Contrasts.Sel <- Design@Contrasts.Sel
+    Contrasts.Sel <- FlomicsMultiAssay@metadata$design@Contrasts.Sel
 
     output$ContrastsResults <- renderUI({
+      
+      #if (rea.values[[dataset]]$analDiff == FALSE) return()
+      #if (rea.values$dataAnalysis == FALSE) return()
+      
+      #if (rea.values$diffAnal == FALSE) return()
+      
       list(
       lapply(1:length(Contrasts.Sel$contrast), function(i) {
 
@@ -215,44 +195,48 @@ DiffExpAnalysis <- function(input, output, session, dataset){
         )
       }),
 
-        fluidRow(
-          column(10),
-          column(2,
-                 actionButton(session$ns("validContrast"),"Validate"))
-        ))
+      fluidRow(
+        column(10),
+        column(2,
+               actionButton(session$ns("validContrast"),"Validate"))
+      ))
 
     })
-
-
-    # merge results on upset plot
+    
     output$ResultsMerge <- renderUI({
-
+      
+      
+      #if (rea.values[[dataset]]$analDiff == FALSE) return()
+      
       index <- sapply(Contrasts.Sel$tag, function(x){(input[[paste0("checkbox_",x)]])}) %>% unlist()
-
+      
       H_selected <- Contrasts.Sel$tag[index]
-
+      
       DEF_mat <- as.data.frame(dataset.SE@metadata$DiffExpAnal[["mergeDEF"]])
-
-      Validcontrasts <- dplyr::filter(Design@Contrasts.Sel, tag %in% H_selected)
+      
+      Validcontrasts <- dplyr::filter(FlomicsMultiAssay@metadata$design@Contrasts.Sel, tag %in% H_selected)
       FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]] <<- Validcontrasts
-
+      
       if (length(H_selected) > 1){
         fluidRow(
           column(10,
                  box(width=12,  status = "warning",
-
+                     
                      renderPlot({ UpSetR::upset(DEF_mat, sets = H_selected) })
                  )
           )
         )
       }
-
-
+      
+      
     })
+
 
   }, ignoreInit = TRUE)
 
-
+  # merge results on upset plot
+  
+  
   observeEvent(input$validContrast, {
 
   })

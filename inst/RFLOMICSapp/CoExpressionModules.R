@@ -39,7 +39,7 @@ CoSeqAnalysisUI <- function(id){
 
 # tags$a(href="www.rstudio.com", "Click here!")
 
-CoSeqAnalysis <- function(input, output, session, dataset){
+CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
 
   # co-expression parameters
   output$CoExpParamUI <- renderUI({
