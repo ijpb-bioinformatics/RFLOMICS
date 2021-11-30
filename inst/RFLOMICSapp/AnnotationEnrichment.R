@@ -19,7 +19,7 @@ AnnotationEnrichmentUI <- function(id){
   )
 }
 
-AnnotationEnrichment <- function(input, output, session, dataset){
+AnnotationEnrichment <- function(input, output, session, dataset, rea.values){
   
   output$AnnotParamUI <- renderUI({
     ## gene lists

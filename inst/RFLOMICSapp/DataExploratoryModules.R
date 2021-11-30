@@ -21,22 +21,35 @@ QCNormalizationTabUI <- function(id){
       )
     ),
     fluidRow(
-      box(width = 4, title = "Setting", status = "warning", solidHeader = TRUE,
-          uiOutput(ns("selectSamplesUI")),
-          uiOutput(ns("completenessUI")),
-          uiOutput(ns("paramUI"))
-          ),
-      box(width = 8, title = "Exploratory of Biological and Technical variability", solidHeader = TRUE, status = "warning",
-          uiOutput(ns("tabPanelUI"))
-          )
+      uiOutput(ns("configUI")),
+      uiOutput(ns("tabPanelUI"))
+      # box(width = 4, title = "Setting", status = "warning", solidHeader = TRUE,
+      #     uiOutput(ns("selectSamplesUI")),
+      #     uiOutput(ns("completenessUI")),
+      #     uiOutput(ns("paramUI"))
+      #     ),
+
     )
   )
 }
 
 
 
-QCNormalizationTab <- function(input, output, session, dataset){
+QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
+
+  
+  output$configUI <- renderUI({
+    
+    if(rea.values$loadData == FALSE) return()
+    
+    box(width = 4, title = "Setting", status = "warning", solidHeader = TRUE,
+        uiOutput(session$ns("selectSamplesUI")),
+        uiOutput(session$ns("completenessUI")),
+        uiOutput(session$ns("paramUI"))
+        )
+  })
+  
   #### sample list  ####
   output$selectSamplesUI <- renderUI( {
 
@@ -56,7 +69,7 @@ QCNormalizationTab <- function(input, output, session, dataset){
   output$completenessUI <- renderUI({
 
     SE <- FlomicsMultiAssay@ExperimentList[[dataset]]
-    completeCheckRes <<- CheckExpDesignCompleteness(Design, input$selectSamples)
+    completeCheckRes <<- CheckExpDesignCompleteness(session$userData$Design, input$selectSamples)
 
     if(!is.null(completeCheckRes[["error"]])){
       showModal(modalDialog(title = "Error message", completeCheckRes[["error"]]))
@@ -128,12 +141,17 @@ QCNormalizationTab <- function(input, output, session, dataset){
               "proteomics"   = { list(transform_method = "none") },
               "metabolomics" = { list(transform_method = "none") } )
 
-  FlomicsMultiAssay <<- process_data(FlomicsMultiAssay = FlomicsMultiAssay, dataset = dataset, samples = colnames(FlomicsMultiAssay@ExperimentList[[dataset]]), param.list = param.list)
+  FlomicsMultiAssay <<- process_data(FlomicsMultiAssay = FlomicsMultiAssay, dataset = dataset, 
+                                               samples = colnames(FlomicsMultiAssay@ExperimentList[[dataset]]), param.list = param.list)
 
-
+  
   ## Exploratory of Biological and Technical variability
   output$tabPanelUI <- renderUI({
 
+    if(rea.values$loadData == FALSE) return()
+    
+    #if(is.null(FlomicsMultiAssay)) return()
+    
     tabPanel.default.list <- list(
 
         tabPanel("Distribution (density)",
@@ -226,9 +244,10 @@ QCNormalizationTab <- function(input, output, session, dataset){
                 tabPanel.default.list)
             }
     )
-
+    
     # Exploratory of Biological and Technical variability
-    column(12, do.call(what = tabsetPanel, args = tabPanel.list))
+    box(width = 8, title = "Exploratory of Biological and Technical variability", solidHeader = TRUE, status = "warning",
+      column(12, do.call(what = tabsetPanel, args = tabPanel.list)))
   })
 
 
@@ -373,10 +392,10 @@ QCNormalizationTab <- function(input, output, session, dataset){
   # })
 
   #### PCA analysis QCdesign ####
-     output$QCdesignPCA <- renderPlot({
+  output$QCdesignPCA <- renderPlot({
 
        if(is.null(FlomicsMultiAssay@ExperimentList[[dataset]][["PCAlist"]][["raw"]])){
-       FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
+         FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
        }
 
        mvQCdesign(FlomicsMultiAssay,data=dataset,PCA="raw", axis=5,
@@ -394,6 +413,10 @@ QCNormalizationTab <- function(input, output, session, dataset){
 
 
   observeEvent(input$Update, {
+
+    FlomicsMultiAssay <<- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("DiffExpAnal", "CoExpAnal", "EnrichAnal"))
+    
+    #rea.values$dataAnalysis <- TRUE
 
     # update processing data
     # RNAseq : normalization
@@ -441,7 +464,8 @@ QCNormalizationTab <- function(input, output, session, dataset){
     #### PCA plot
     output$norm.PCAcoord <- renderPlot({
 
-      FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
+      FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<-  
+        RunPCA(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
 
       PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
       PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])

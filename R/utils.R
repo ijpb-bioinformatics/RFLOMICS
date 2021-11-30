@@ -961,8 +961,8 @@ defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteraction
   allInteractionsContrasts_df <- data.table::data.table(contrast = character(), groupComparison = factor(), groupInteraction = character(),
                                             outsideGroup = character(),contrastName = character(), type = character())
   # combn(names(treatmentFactorsList),2)
-  cat(paste("\ntreatment factors names:\n"))
-  print(as.character(names(treatmentFactorsList)))
+  # cat(paste("\ntreatment factors names:\n"))
+  # print(as.character(names(treatmentFactorsList)))
   vecFori <- combn(length(treatmentFactorsList),2)[1,]
   vecForj <- combn(length(treatmentFactorsList),2)[2,]
   for(k in seq_along(vecFori)){

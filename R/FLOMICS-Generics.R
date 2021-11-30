@@ -96,3 +96,8 @@ setGeneric(
   name="Enrichment.plot",
   def = function( object, ... ){standardGeneric("Enrichment.plot")}
 )
+
+setGeneric(
+  name="resetFlomicsMultiAssay",
+  def = function( object, ... ){standardGeneric("resetFlomicsMultiAssay")}
+)

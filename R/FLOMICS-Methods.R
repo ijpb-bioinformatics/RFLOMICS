@@ -1473,7 +1473,7 @@ setMethod(f="RunDiffAnalysis",
 
             # move in ExpDesign Constructor
             model_matrix <- model.matrix(as.formula(design@Model.formula), data=as.data.frame(design@List.Factors))
-            rownames(model_matrix) <- rownames(Design@ExpDesign)
+            rownames(model_matrix) <- rownames(design@ExpDesign)
             
             ListRes <- switch(DiffAnalysisMethod,
                            "edgeRglmfit"=try_rflomics(edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
@@ -1978,3 +1978,37 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
   return(p)
 
 }
+
+
+
+#' resetFlomicsMultiAssay
+#'
+#' @param object An object of class \link{MultiAssayExperiment}
+#' @param results vector of results names
+#' @return An object of class \link{MultiAssayExperiment}
+#' @export
+#' @exportMethod resetFlomicsMultiAssay
+#' @examples
+#' @noRd
+#' 
+setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment", 
+          
+          definition <- function(object, results){
+            
+            for(data in paste0(unlist(object@metadata$omicList), ".filtred")){
+        
+              if(!is.null(object[[data]])){
+                
+                dataset <- object[[data]]
+                
+                for(res in results){ 
+                  if(!is.null(dataset@metadata[[res]])){ dataset@metadata[[res]] <- NULL }
+                } 
+                
+                object[[data]] <- dataset
+              }
+              
+            }
+            
+            return(object)
+            })
