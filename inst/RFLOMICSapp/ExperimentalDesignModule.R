@@ -22,10 +22,22 @@ GLM_modelUI <- function(id){
 
 GLM_model <- function(input, output, session, rea.values){
   
+  
+    # reactive value for reinitialisation of UIoutput
+    local.rea.values <- reactiveValues()
+    
+    observe({
+      local.rea.values$contrast <- FALSE
+    })
+  
     # Construct the form to select the model
     output$SetModelFormula <- renderUI({
       
-      if (rea.values$loadData == FALSE) return()
+      #if (rea.values$model == FALSE) return()
+      
+      validate(
+        need(rea.values$model != FALSE, "Please load data")
+      )
       
       box(status = "warning", width = 12, solidHeader = TRUE, title = "Select a model formulae",
 
@@ -45,15 +57,10 @@ GLM_model <- function(input, output, session, rea.values){
     # => The model formulae is set and the interface to select the contrasts appear
     observeEvent(input$validModelFormula, {
       
-      rea.values$selectContrast <- FALSE
-      rea.values$dataAnalysis   <- FALSE
-      
-      
+      local.rea.values$contrast <- FALSE
+      rea.values$analysis <- FALSE
 
       FlomicsMultiAssay <<- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("DiffExpAnal", "CoExpAnal", "EnrichAnal"))
-      
-      
-      #rea.values$diffAnal <- FALSE
       
       print("# 3- Choice of statistical model...")
 
@@ -64,19 +71,19 @@ GLM_model <- function(input, output, session, rea.values){
       # => get list of expression contrast (hypothesis)
       session$userData$Design <- getExpressionContrast(object = session$userData$Design, model.formula = input$model.formulae)
       FlomicsMultiAssay@metadata$design <<- session$userData$Design
-
-      # => Set Model design matrix
-      # => Get and Display all the contrasts
       
-      rea.values$selectContrast <- TRUE
+      local.rea.values$contrast <- TRUE
       
     })
     
+
+    # => Get and Display all the contrasts
     #  => The contrasts have to be choosen
     output$SetContrasts <- renderUI({
       
-      if (rea.values$selectContrast == FALSE) return()
-      
+      if (rea.values$model == FALSE) return()
+      if (local.rea.values$contrast == FALSE) return()
+
       box(width=12, status = "warning", solidHeader = TRUE, title = "Select contrasts",
           
           tags$i("blabla..."),
@@ -84,29 +91,29 @@ GLM_model <- function(input, output, session, rea.values){
           br(),
           
           column(width = 12, 
-          lapply(names(session$userData$Design@Contrasts.List), function(contrastType) {
-            
-            vect        <- as.vector(session$userData$Design@Contrasts.List[[contrastType]]$contrast)
-            names(vect) <- as.vector(session$userData$Design@Contrasts.List[[contrastType]]$contrastName)
-            
-            pickerInput(
-              inputId  = session$ns(paste0("ContrastType",contrastType)),
-              label    = tags$span(style="color: black;", paste0(contrastType, "contrasts" )),
-              choices  = vect,
-              options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-              multiple = TRUE,
-              selected = NULL)
-            
-            # box(
-            #   checkboxGroupInput(inputId = session$ns(paste0("ContrastType",contrastType)),
-            #                      label   = paste0("Contrast type : ", contrastType), choices = vect)
-            # )
-          })
+                 lapply(names(session$userData$Design@Contrasts.List), function(contrastType) {
+                   
+                   vect        <- as.vector(session$userData$Design@Contrasts.List[[contrastType]]$contrast)
+                   names(vect) <- as.vector(session$userData$Design@Contrasts.List[[contrastType]]$contrastName)
+                   
+                   # pickerInput(
+                   #   inputId  = session$ns(paste0("ContrastType",contrastType)),
+                   #   label    = tags$span(style="color: black;", paste0(contrastType, "contrasts" )),
+                   #   choices  = vect,
+                   #   options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+                   #   multiple = TRUE,
+                   #   selected = NULL)
+                   
+                   box(
+                     checkboxGroupInput(inputId = session$ns(paste0("ContrastType",contrastType)),
+                                        label   = paste0("Contrast type : ", contrastType), choices = vect)
+                   )
+                 })
           ),
           br(),
           actionButton(session$ns("validContrasts"),"Valid contrast(s) choice(s)")
       )
-    })
+    })   
 
     # as soon as the "valid Contrasts" buttom has been clicked
     # => The selected contrasts are saved
@@ -114,6 +121,8 @@ GLM_model <- function(input, output, session, rea.values){
     observeEvent(input$validContrasts, {
 
       print("# 4- Choice of contrasts...")
+      
+      rea.values$analysis <- FALSE
       
       # reset analysis
 
@@ -148,7 +157,7 @@ GLM_model <- function(input, output, session, rea.values){
       session$userData$Design <- getContrastMatrix(object = session$userData$Design, contrastList = contrast.sel.vec)
       FlomicsMultiAssay@metadata$design <<- session$userData$Design
       
-      rea.values$dataAnalysis <- TRUE
+      rea.values$analysis <- TRUE
       
       Design <<- session$userData$Design
       
@@ -160,7 +169,7 @@ GLM_model <- function(input, output, session, rea.values){
       #   row.names(A) <- NULL
       #   print(A)
       # })
-    })
+    }, ignoreInit = TRUE)
 
     return(input)
   }

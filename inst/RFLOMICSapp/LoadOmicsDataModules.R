@@ -53,21 +53,19 @@ LoadOmicsDataUI <- function(id){
 
 LoadOmicsData <- function(input, output, session, rea.values){
 
-  
     observe({
+
+      rea.values$loadData <- FALSE
+      rea.values$model    <- FALSE
+      rea.values$analysis <- FALSE
       
-      rea.values$loadData    <- FALSE
-      
-      # design Item
-      rea.values$selectContrast <- FALSE
-      rea.values$dataAnalysis   <- FALSE
-      
+      FlomicsMultiAssay      <<- NULL
+      session$userData$Design <- NULL
       
       rea.values$validate.status <- 0
-      
-      
+
     })
-    local.rea.values <- reactiveValues(Plot = FALSE)
+    #local.rea.values <- reactiveValues(Plot = FALSE)
     
 
     ##########################################  
@@ -83,15 +81,21 @@ LoadOmicsData <- function(input, output, session, rea.values){
     observeEvent(input$Experimental.Design.file, {
 
         # reset 
-      rea.values$loadData    <- FALSE
-      rea.values$dataAnalysis   <- FALSE
-      
-        local.rea.values$Plot     <- FALSE
-        rea.values$selectModel    <- FALSE
-        rea.values$selectContrast <- FALSE
-        rea.values$DataExplor     <- FALSE
+        rea.values$loadData <- FALSE
+        rea.values$model    <- FALSE
+        rea.values$analysis <- FALSE
         
-        FlomicsMultiAssay <<- NULL
+        FlomicsMultiAssay      <<- NULL
+        session$userData$Design <- NULL
+        
+      # rea.values$dataAnalysis   <- FALSE
+      # 
+      #   local.rea.values$Plot     <- FALSE
+      #   rea.values$selectModel    <- FALSE
+      #   rea.values$selectContrast <- FALSE
+      #   rea.values$DataExplor     <- FALSE
+      #   
+      #   FlomicsMultiAssay <<- NULL
 
         # read and check design file
         ExpDesign.tbl <- read_ExpDesign(input.file = input$Experimental.Design.file$datapath)
@@ -239,17 +243,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     dataName.vec  <- c()
     observeEvent(input$addData, {
 
-      rea.values$loadData    <- FALSE
-      rea.values$dataAnalysis   <- FALSE
-      
-        rea.values$DataExplor     <- FALSE
-      
-        local.rea.values$Plot     <- FALSE
-        rea.values$selectModel    <- FALSE
-        rea.values$selectContrast <- FALSE
-        
-        FlomicsMultiAssay <<- NULL
-
         # add input select for new data
         addDataNum <<- addDataNum + 1
         output[[paste("toAddData", addDataNum, sep="")]] <- renderUI({
@@ -283,16 +276,20 @@ LoadOmicsData <- function(input, output, session, rea.values){
       ### load Design
       
       # reset objects and UI
-      #updateTabItems(session, "tabs", selected = "importData")
+      rea.values$loadData <- FALSE
+      rea.values$model    <- FALSE
+      rea.values$analysis <- FALSE
+
+      FlomicsMultiAssay        <<- NULL
+      session$userData$Design   <- NULL
       
-      rea.values$DataExplor     <- FALSE
-      rea.values$dataAnalysis   <- FALSE
-      
-      local.rea.values$Plot     <- FALSE
-      rea.values$selectContrast <- FALSE
-      
-      FlomicsMultiAssay <<- NULL
-      session$userData$Design <- NULL
+      # #updateTabItems(session, "tabs", selected = "importData")
+      # rea.values$DataExplor     <- FALSE
+      # rea.values$dataAnalysis   <- FALSE
+      # 
+      # local.rea.values$Plot     <- FALSE
+      # rea.values$selectContrast <- FALSE
+
       
       ### check project name
       if(input$projectName == ""){
@@ -414,6 +411,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
       
       FlomicsMultiAssay <<- FlomicsMultiAssay.try[["value"]]
+      
+      session$userData$FlomicsMultiAssay <- FlomicsMultiAssay
 
       # FlomicsMultiAssay[, complete.cases(FlomicsMultiAssay), ]
       # colData(FlomicsMultiAssay)[!complete.cases(FlomicsMultiAssay),]
@@ -422,7 +421,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
       # => completeness
       #### check experimental design : experimental design must be a complete and balanced.
       
-      print(paste0("# => Design Completeness Check..."))
+      print(paste0("#    => Design Completeness Check..."))
 
       completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$Design)
       FlomicsMultiAssay@metadata[["completeCheck"]] <<- completeCheckRes
@@ -435,13 +434,9 @@ LoadOmicsData <- function(input, output, session, rea.values){
       # continue only if message is true or warning
       validate({ need(is.null(completeCheckRes[["error"]]) ,message="") })
       
-      rea.values$selectModel <- TRUE
-      local.rea.values$Plot  <- TRUE
-      #rea.values$DataExplor  <- TRUE
-      
-      rea.values$loadData    <- TRUE
-      
-      
+      # 
+      rea.values$loadData <- TRUE
+      rea.values$model    <- TRUE
       
     })
     
@@ -474,9 +469,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
     # upset of all data
     output$UpsetMAE <- renderUI({
       
-     if (local.rea.values$Plot == FALSE) return()
-      
      # if (local.rea.values$Plot == FALSE) return()
+      if (rea.values$loadData == FALSE) return()
       if (length(unlist(FlomicsMultiAssay@metadata$omicList)) < 2) return()
       
       

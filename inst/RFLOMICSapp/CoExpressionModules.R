@@ -44,6 +44,10 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
   # co-expression parameters
   output$CoExpParamUI <- renderUI({
 
+    validate(
+      need(rea.values[[dataset]]$diffValid != FALSE, "Please run diff analysis")
+    )
+    
     # get good param :
     dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
 
@@ -224,8 +228,11 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
       need(length(input$select) != 0, message="Please select at least 1 DEG list")
     })
 
-
     print(paste("# 10- Co-expression analysis... ", dataset))
+    
+    rea.values[[dataset]]$coExpAnal <- TRUE
+    rea.values[[dataset]]$diffAnnot <- FALSE
+    #FlomicsMultiAssay <<- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("CoExpAnal"))
 
     #---- progress bar ----#
     progress <- shiny::Progress$new()
@@ -259,59 +266,53 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     }
 
     #---- progress bar ----#
-    progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep=""))
-    #----------------------#
-
-
-    output$CoExpResultUI <- renderUI({
-
-      # print coseq plots
-      plot.coseq.res <- dataset.SE@metadata$CoExpAnal[["plots"]]
-
-      box(title = "run clustering", status = "warning", solidHeader = TRUE, width = 14,
-
-          tabBox( id = "runClustering", width = 12,
-
-                  tabPanel("ICL",      renderPlot({ plot.coseq.res$ICL })),
-                  tabPanel("logLike",  renderPlot({ plot.coseq.res$logLike })),
-                  tabPanel("profiles", renderPlot({ plot.coseq.res$profiles })),
-                  tabPanel("boxplots", renderPlot({ plot.coseq.res$boxplots })),
-                  tabPanel("boxplots_bis",
-                           renderUI({
-
-                             nb_cluster <- dataset.SE@metadata$CoExpAnal[["cluster.nb"]]
-                             coseq.res  <- dataset.SE@metadata$CoExpAnal[["coseqResults"]]
-
-                             fluidRow(
-                                 ## plot selected cluster(s)
-                                 renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, dataset.SE@metadata$Groups) }),
-                                 ## print datatable of metabolite
-                                 DT::renderDataTable(DT::datatable(as.data.frame(coseq.res@allResults[[1]]) %>%
-                                                   select(.,paste0("Cluster_",input$selectCluster)) %>%
-                                                   dplyr::filter(.,get(paste0("Cluster_",input$selectCluster))==1)),
-                                                   options = list(rownames = FALSE, pageLength = 10)),
-                                 ## select cluster to plot
-                                 checkboxGroupInput(inputId = session$ns("selectCluster"), label = "Select cluster(s) :",
-                                                    choices  = 1:nb_cluster, selected = 1, inline = TRUE))})),
-
-                  tabPanel("probapost_boxplots",  renderPlot({ plot.coseq.res$probapost_boxplots })),
-                  tabPanel("probapost_barplots",  renderPlot({ plot.coseq.res$probapost_barplots })),
-                  tabPanel("probapost_histogram", renderPlot({ plot.coseq.res$probapost_histogram }))
-          )
-      )
-    })
-
-
-    #---- progress bar ----#
-    progress$inc(3/4, detail = paste("Doing part ", 75,"%", sep=""))
-    #----------------------#
-
-
-    #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
     #----------------------#
 
   }, ignoreInit = TRUE)
+  
+  
+  output$CoExpResultUI <- renderUI({
+    
+    if (rea.values[[dataset]]$coExpAnal == FALSE) return()
+    
+    # print coseq plots
+    dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
+    
+    plot.coseq.res <- dataset.SE@metadata$CoExpAnal[["plots"]]
+    
+    box(title = "run clustering", status = "warning", solidHeader = TRUE, width = 14,
+        
+        tabBox( id = "runClustering", width = 12,
+                
+                tabPanel("ICL",      renderPlot({ plot.coseq.res$ICL })),
+                tabPanel("logLike",  renderPlot({ plot.coseq.res$logLike })),
+                tabPanel("profiles", renderPlot({ plot.coseq.res$profiles })),
+                tabPanel("boxplots", renderPlot({ plot.coseq.res$boxplots })),
+                tabPanel("boxplots_bis",
+                         renderUI({
+                           
+                           nb_cluster <- dataset.SE@metadata$CoExpAnal[["cluster.nb"]]
+                           coseq.res  <- dataset.SE@metadata$CoExpAnal[["coseqResults"]]
+                           
+                           fluidRow(
+                             ## plot selected cluster(s)
+                             renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, dataset.SE@metadata$Groups) }),
+                             ## print datatable of metabolite
+                             DT::renderDataTable(DT::datatable(as.data.frame(coseq.res@allResults[[1]]) %>%
+                                                                 select(.,paste0("Cluster_",input$selectCluster)) %>%
+                                                                 dplyr::filter(.,get(paste0("Cluster_",input$selectCluster))==1)),
+                                                 options = list(rownames = FALSE, pageLength = 10)),
+                             ## select cluster to plot
+                             checkboxGroupInput(inputId = session$ns("selectCluster"), label = "Select cluster(s) :",
+                                                choices  = 1:nb_cluster, selected = 1, inline = TRUE))})),
+                
+                tabPanel("probapost_boxplots",  renderPlot({ plot.coseq.res$probapost_boxplots })),
+                tabPanel("probapost_barplots",  renderPlot({ plot.coseq.res$probapost_barplots })),
+                tabPanel("probapost_histogram", renderPlot({ plot.coseq.res$probapost_histogram }))
+        )
+    )
+  })
 }
 
 

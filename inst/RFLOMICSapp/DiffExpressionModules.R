@@ -18,22 +18,25 @@ DiffExpAnalysisUI <- function(id){
 
     ### parametres for Diff Analysis
     fluidRow(
-      column(3,uiOutput(ns("DiffParamUI"))),
-      column(9,uiOutput(ns("ContrastsResults")))),
-    tags$br(),
-    fluidRow(
-      column(3,uiOutput(ns("FilterPvalueUI"))),
-      column(9,uiOutput(ns("ResultsMerge"))))
+      column(3,uiOutput(ns("DiffParamUI")),
+               uiOutput(ns("FilterPvalueUI"))),
+      column(9,uiOutput(ns("ContrastsResults")),
+               tags$br(),
+               uiOutput(ns("ResultsMerge"))))
+    
   )
 }
 
 
 
 DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
-
+  
   output$DiffParamUI <- renderUI({
-
-    #if(rea.values$dataAnalysis == FALSE) return()
+    
+    validate(
+      need(rea.values$analysis != FALSE, "Please select contrast")
+    )
+    #if(rea.values$analysis == FALSE) return()
     
     MethodList <- c("glmfit (edgeR)"="edgeRglmfit", "lmFit (limma)"="limmalmFit")
     
@@ -74,8 +77,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   #         - Table of the DE genes
   #   -> combine data : union or intersection
   observeEvent(input$runAnaDiff, {
-
-    #rea.values[[dataset]]$analDiff <- TRUE
+    
+    #FlomicsMultiAssay <<- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("DiffExpAnal", "CoExpAnal", "EnrichAnal"))
     
     # check list of genes 
     if(length(input$contrastList) == 0){
@@ -87,6 +90,12 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     })
 
     print(paste("# 9- Diff Analysis...", dataset))
+    
+    rea.values[[dataset]]$diffAnal  <- TRUE
+    rea.values[[dataset]]$coExpAnal <- FALSE
+    rea.values[[dataset]]$diffAnnot <- FALSE
+    rea.values[[dataset]]$diffValid <- FALSE
+    
 
     #---- progress bar ----#
     progress <- shiny::Progress$new()
@@ -131,14 +140,19 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     #---- progress bar ----#
     progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep=""))
     #----------------------#
-
+    
     output$FilterPvalueUI <- renderUI({
-      box(title = NULL,status = "warning", width = 10,
+      
+      if (rea.values[[dataset]]$diffAnal == FALSE) return()
+      
+      box(title = NULL,status = "warning", width = 14,
           numericInput(inputId = session$ns("Adj.pvalue.cutoff"),
                    label="Adjusted pvalue cutoff :",
-                   value=0.05, 0, max=1, 0.01))
+                   value=0.05, 0, max=1, 0.01),
+          actionButton(session$ns("validContrast"),"Validate"))
     })
 
+    cat("Showing", input$runAnaDiff, "\n")
   }, ignoreInit = TRUE)
 
   observeEvent((input$Adj.pvalue.cutoff ), {
@@ -151,16 +165,13 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
 
     Contrasts.Sel <- FlomicsMultiAssay@metadata$design@Contrasts.Sel
-
+    
     output$ContrastsResults <- renderUI({
-      
-      #if (rea.values[[dataset]]$analDiff == FALSE) return()
-      #if (rea.values$dataAnalysis == FALSE) return()
-      
-      #if (rea.values$diffAnal == FALSE) return()
+
+      if (rea.values[[dataset]]$diffAnal == FALSE) return()
       
       list(
-      lapply(1:length(Contrasts.Sel$contrast), function(i) {
+        lapply(1:length(Contrasts.Sel$contrast), function(i) {
 
         vect     <- unlist(Contrasts.Sel[i,])
         res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
@@ -193,20 +204,14 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
           column(2,
                  checkboxInput(session$ns(paste0("checkbox_", vect[["tag"]])), "OK", value = TRUE))
         )
-      }),
-
-      fluidRow(
-        column(10),
-        column(2,
-               actionButton(session$ns("validContrast"),"Validate"))
-      ))
+      })
+      )
 
     })
     
     output$ResultsMerge <- renderUI({
       
-      
-      #if (rea.values[[dataset]]$analDiff == FALSE) return()
+      if (rea.values[[dataset]]$diffAnal == FALSE) return()
       
       index <- sapply(Contrasts.Sel$tag, function(x){(input[[paste0("checkbox_",x)]])}) %>% unlist()
       
@@ -218,14 +223,11 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]] <<- Validcontrasts
       
       if (length(H_selected) > 1){
-        fluidRow(
-          column(10,
-                 box(width=12,  status = "warning",
-                     
-                     renderPlot({ UpSetR::upset(DEF_mat, sets = H_selected) })
-                 )
-          )
-        )
+
+         box(width=12,  status = "warning",
+             
+             renderPlot({ UpSetR::upset(DEF_mat, sets = H_selected) })
+         )
       }
       
       
@@ -238,7 +240,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   
   
   observeEvent(input$validContrast, {
-
+      
+    rea.values[[dataset]]$diffValid <- TRUE
   })
 
   return(input)
