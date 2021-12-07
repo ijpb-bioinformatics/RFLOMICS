@@ -58,7 +58,8 @@ GLM_model <- function(input, output, session, rea.values){
     observeEvent(input$validModelFormula, {
       
       local.rea.values$contrast <- FALSE
-      rea.values$analysis <- FALSE
+      rea.values$analysis       <- FALSE
+      rea.values$Contrasts.Sel   <- NULL 
 
       FlomicsMultiAssay <<- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("DiffExpAnal", "CoExpAnal", "EnrichAnal"))
       
@@ -156,6 +157,8 @@ GLM_model <- function(input, output, session, rea.values){
       # define all the coefficients of selected contrasts and return a contrast matrix with contrast sample name and associated coefficients
       session$userData$Design <- getContrastMatrix(object = session$userData$Design, contrastList = contrast.sel.vec)
       FlomicsMultiAssay@metadata$design <<- session$userData$Design
+      
+      rea.values$Contrasts.Sel <- session$userData$Design@Contrasts.Sel
       
       rea.values$analysis <- TRUE
       

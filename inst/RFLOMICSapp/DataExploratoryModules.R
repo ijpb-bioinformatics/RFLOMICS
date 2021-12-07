@@ -143,7 +143,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
               "metabolomics" = { list(transform_method = "none") } )
 
   print("# 5- Compute PCA for raw counts")
-  FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
+  FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RFLOMICS::RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
   FlomicsMultiAssay <<- process_data(FlomicsMultiAssay = FlomicsMultiAssay, dataset = dataset, 
                                      samples = colnames(FlomicsMultiAssay@ExperimentList[[dataset]]), param.list = param.list)
 
@@ -423,9 +423,11 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$diffAnnot <- FALSE
     rea.values[[dataset]]$diffValid <- FALSE
 
-    #FlomicsMultiAssay@ExperimentList[[dataset]]@metadata$DiffExpAnal <<- NULL
-    #FlomicsMultiAssay@ExperimentList[[dataset]]@metadata$CoExpAnal   <<- NULL
-    #FlomicsMultiAssay@ExperimentList[[dataset]]@metadata$EnrichAnal  <<- NULL
+    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal <<- list()
+    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal   <<- list()
+    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpEnrichAnal  <<- list()
+    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpEnrichAnal  <<- list()
+    
     
     print("# 6.bis => Update data processing...")
     #FlomicsMultiAssay <<- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("DiffExpAnal", "CoExpAnal", "EnrichAnal"))

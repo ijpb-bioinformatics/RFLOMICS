@@ -18,7 +18,9 @@ shinyServer(function(input, output, session) {
     rea.values <- reactiveValues(
       loadData = FALSE,
       model    = FALSE,
-      analysis = FALSE
+      analysis = FALSE,
+      
+      contrastList = NULL
     )
     
     # Use reactive values for dynamic Items
@@ -328,10 +330,14 @@ shinyServer(function(input, output, session) {
           
           rea.values[[FlomicsMultiAssay@metadata$omicList[[omics]][[i]]]] <- reactiveValues(
             diffAnal   = FALSE,
+            diffValid  = FALSE,
             coExpAnal  = FALSE,
             diffAnnot  = FALSE,
-            diffValid  = FALSE,
-            coExpAnnot = FALSE
+            coExpAnnot = FALSE,
+            
+            DiffValidContrast = NULL,
+            CoExpClusterNames = NULL,
+            omicsType = omics
           )
           inputNorm <- callModule(module  = QCNormalizationTab, id = paste0(omics,i),
                                                       dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], 

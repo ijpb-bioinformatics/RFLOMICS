@@ -1852,7 +1852,7 @@ setMethod(f="runCoExpression",
 #' recommended in DiCoExpress workflow (see the paper in reference)
 #' @param object An object of class \link{SummarizedExperiment}
 #' @param CoExpListNames A list of clusters names.
-#' @param DiffListNames A list of differential expressed genes given as constrast names.
+#' @param from  "DiffExpAnal" or "CoExpAnal". default "DiffExpAnal"
 #' @param alpha The pvalue cut-off
 #' @param probaMethod The probabilistic method to use.
 #' @param annotation The gene annotation file.
@@ -1865,34 +1865,32 @@ setMethod(f="runAnnotationEnrichment",
           signature="SummarizedExperiment",
 
           definition <- function(object, annotation, alpha = 0.01, probaMethod = "hypergeometric",
-                                 DiffListNames  = object@metadata$DiffExpAnal[["contrasts"]]$contrastName,
-                                 CoExpListNames = names(object@metadata$CoExpAnal[["clusters"]])
-                                 ){
+                                 ListNames  = object@metadata$DiffExpAnal[["contrasts"]]$contrastName,
+                                 from = "DiffExpAnal" ){
 
             EnrichAnal <- list()
-            EnrichAnal[["list.names"]] <- c(CoExpListNames, DiffListNames)
+            EnrichAnal[["list.names"]] <- ListNames
             EnrichAnal[["alpha"]]      <- alpha
             EnrichAnal[["proba.test"]] <- probaMethod
 
 
             ## list of gene list to annotate
             geneLists <- list()
-            geneLists.diff <- list()
-            geneLists.diff <- lapply(DiffListNames, function(listname){
-
-              row.names(object@metadata$DiffExpAnal[["TopDEF"]][[listname]])
-            })
-            names(geneLists.diff) <- DiffListNames
-
-            geneLists.coseq <- list()
-            #geneLists.coseq <- lapply(CoExpListNames, function(listname){
-
-            geneLists.coseq <-  object@metadata[["CoExpAnal"]][["clusters"]][CoExpListNames]
-            #})
-            #names(geneLists.coseq) <- CoExpListNames
-
-            geneLists <- c(geneLists.diff, geneLists.coseq)
-
+            if(from == "DiffExpAnal") {
+              geneLists <- lapply(ListNames, function(listname){
+                
+                row.names(object@metadata$DiffExpAnal[["TopDEF"]][[listname]])
+              })
+              names(geneLists) <- ListNames
+            }
+            else if(from == "CoExpAnal"){
+              #geneLists.coseq <- lapply(CoExpListNames, function(listname){
+              
+              geneLists <-  object@metadata[["CoExpAnal"]][["clusters"]][ListNames]
+              #})
+              #names(geneLists.coseq) <- CoExpListNames
+            }
+            
 
             Results <- list()
 
@@ -1905,7 +1903,14 @@ setMethod(f="runAnnotationEnrichment",
 
             EnrichAnal[["results"]] <- Results
 
-            object@metadata$EnrichAnal <- EnrichAnal
+            if(from == "DiffExpAnal") {
+              
+              object@metadata[["DiffExpEnrichAnal"]] <- EnrichAnal
+            }
+            else if(from == "CoExpAnal"){
+              
+              object@metadata[["CoExpEnrichAnal"]] <- EnrichAnal
+            }
 
             return(object)
           })
@@ -1917,12 +1922,13 @@ setMethod(f="runAnnotationEnrichment",
 #' @param Over_Under "overrepresented" or "underrepresented" (default : overrepresented)
 #' @param top level of enriched terms to display
 #' @param listNames vector of DGEs or cluster names (default : all enriched lists)
+#' @param from  "DiffExpAnal" or "CoExpAnal". default "DiffExpAnal"
 #' @return plot
 #' @export
 #' @exportMethod Enrichment.plot
 #' @importFrom dplyr desc
 #' @examples
-Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepresented"), top = "all" , listNames=NULL){
+Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepresented"), top = "all" , listNames=NULL, from = c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
 
   Decision <- Pvalue_over <- Pvalue_under <- Pvalue <- NULL
   Term <- Domain <- Trial_Success <- scale_size <- tail <- NULL
@@ -1941,15 +1947,16 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
     Top.tag <- paste0("Top ", top)
   }
 
+  # if listNames is null we take all results
   if(is.null(listNames)){
-    listNames <- names(object@metadata$EnrichAnal[["results"]])
+    listNames <- names(object@metadata[[from]][["results"]])
   }
 
   p <- list()
   for (listname in listNames){
 
 
-    data <- object@metadata$EnrichAnal[["results"]][[listname]][["Over_Under_Results"]]
+    data <- object@metadata[[from]][["results"]][[listname]][["Over_Under_Results"]]
 
     data_ord <- switch (Over_Under,
             "overrepresented"  = {
@@ -1985,6 +1992,7 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
 #'
 #' @param object An object of class \link{MultiAssayExperiment}
 #' @param results vector of results names
+#' @param dataset dataset name. If dataset == NULL, all datasets will be reset
 #' @return An object of class \link{MultiAssayExperiment}
 #' @export
 #' @exportMethod resetFlomicsMultiAssay
@@ -1993,9 +2001,21 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
 #' 
 setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment", 
           
-          definition <- function(object, results){
+          definition <- function(object, results, datasets = NULL){
             
-            for(data in paste0(unlist(object@metadata$omicList), ".filtred")){
+            # if dataset is null we take all datasets presente in MultiAssayExperiment object
+            if(is.null(datasets)){
+              datasets <- paste0(unlist(object@metadata$omicList), ".filtred")
+            }
+            else{
+              # check if given dataset name include in datasets presente in MultiAssayExperiment object
+              if(!datasets %in% paste0(unlist(object@metadata$omicList), ".filtred")){
+                print("Warning : The given dataset name is not present in MultiAssayExperiment object")
+                return(object)
+              }
+            }
+            
+            for(data in datasets){
         
               if(!is.null(object[[data]])){
                 

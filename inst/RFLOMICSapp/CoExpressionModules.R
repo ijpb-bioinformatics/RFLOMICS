@@ -52,9 +52,8 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
 
     ##-> retrieve DEG lists and DEG valid lists
-    ListValidNames.diff   <- dataset.SE@metadata$DiffExpAnal[["Validcontrasts"]]$tag
-    ListNames.diff        <- dataset.SE@metadata$DiffExpAnal[["contrasts"]]$tag
-    names(ListNames.diff) <- dataset.SE@metadata$DiffExpAnal[["contrasts"]]$contrastName
+    ListNames.diff        <- dataset.SE@metadata$DiffExpAnal[["Validcontrasts"]]$tag
+    names(ListNames.diff) <- dataset.SE@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName
 
     ##-> option
     switch(dataset.SE@metadata$omicType,
@@ -111,7 +110,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                      choices  = ListNames.diff,
                      options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                      multiple = TRUE,
-                     selected = ListValidNames.diff))),
+                     selected = ListNames.diff))),
 
           # Select type of merge : union or intersection
           fluidRow(
@@ -218,6 +217,10 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
   # run coexpression analysis
   # coseq
   observeEvent(input$runCoSeq, {
+    
+    rea.values[[dataset]]$coExpAnal  <- FALSE
+    rea.values[[dataset]]$coExpAnnot <- FALSE
+    
 
     # check if no selected DGE list
     if(length(input$select) == 0){
@@ -230,15 +233,15 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
 
     print(paste("# 10- Co-expression analysis... ", dataset))
     
-    rea.values[[dataset]]$coExpAnal <- TRUE
-    rea.values[[dataset]]$diffAnnot <- FALSE
+    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal   <<- list()
+    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpEnrichAnal  <<- list()
     #FlomicsMultiAssay <<- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("CoExpAnal"))
 
     #---- progress bar ----#
     progress <- shiny::Progress$new()
     progress$set(message = "Run coseq", value = 0)
     on.exit(progress$close())
-    progress$inc(1/10, detail = paste("Doing part ", 10,"%", sep=""))
+    progress$inc(1/2, detail = paste("Doing part ", 10,"%", sep=""))
     #----------------------#
 
 
@@ -268,6 +271,8 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
     #----------------------#
+    
+    rea.values[[dataset]]$coExpAnal  <- TRUE
 
   }, ignoreInit = TRUE)
   

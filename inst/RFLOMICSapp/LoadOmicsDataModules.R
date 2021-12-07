@@ -59,6 +59,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
       rea.values$model    <- FALSE
       rea.values$analysis <- FALSE
       
+      rea.values$contrastMat  <- NULL 
       FlomicsMultiAssay      <<- NULL
       session$userData$Design <- NULL
       
@@ -85,6 +86,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
         rea.values$model    <- FALSE
         rea.values$analysis <- FALSE
         
+        rea.values$Contrasts.Sel <- NULL 
         FlomicsMultiAssay      <<- NULL
         session$userData$Design <- NULL
         
@@ -280,6 +282,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
       rea.values$model    <- FALSE
       rea.values$analysis <- FALSE
 
+      rea.values$Contrasts.Sel   <- NULL 
       FlomicsMultiAssay        <<- NULL
       session$userData$Design   <- NULL
       
