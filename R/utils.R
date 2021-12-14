@@ -477,13 +477,13 @@ globalVariables(names(data))
 #' @importFrom ggplot2 aes geom_point scale_colour_manual ggsave
 #' @examples
 #' @noRd
-MA.plot <- function(data, Adj.pvalue.cutoff, pngFile=NULL){
+MA.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, pngFile=NULL){
 
   Abundance <- logFC <- Adj.pvalue <- NULL
-  p <- ggplot2::ggplot(data=data, aes(x = Abundance, y=logFC, col=Adj.pvalue < Adj.pvalue.cutoff)) +
+  p <- ggplot2::ggplot(data=data, aes(x = Abundance, y=logFC, col= (Adj.pvalue < Adj.pvalue.cutoff & abs(logFC) > logFC.cutoff ))) +
     geom_point(alpha=0.4, size = 0.8) +
     scale_colour_manual(values=c("black","red")) +
-    labs(color=paste("Adj.pvalue <=",Adj.pvalue.cutoff,sep="")) +
+    labs(color=paste("Adj.pvalue <=",Adj.pvalue.cutoff,"\n", "|logFC| >", logFC.cutoff ,sep="")) +
     geom_hline(yintercept = 0)
 
 

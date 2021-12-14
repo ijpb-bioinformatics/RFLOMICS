@@ -1474,7 +1474,7 @@ setMethod(f="RunDiffAnalysis",
             # move in ExpDesign Constructor
             model_matrix <- model.matrix(as.formula(design@Model.formula), data=as.data.frame(design@List.Factors))
             rownames(model_matrix) <- rownames(design@ExpDesign)
-            
+
             ListRes <- switch(DiffAnalysisMethod,
                            "edgeRglmfit"=try_rflomics(edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
                                                                     model_matrix    = model_matrix[colnames(object),],
@@ -1531,18 +1531,20 @@ setMethod(f="RunDiffAnalysis",
 #'
 setMethod(f="FilterDiffAnalysis",
           signature="SummarizedExperiment",
-          definition <- function(object, Adj.pvalue.cutoff = 0.05){
+          definition <- function(object, Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0){
 
             if(is.null(object@metadata$DiffExpAnal[["RawDEFres"]])){
               stop("can't filter the DiffExpAnal object because it doesn't exist")
             }
 
             object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
+            object@metadata$DiffExpAnal[["abs.logFC.cutoff"]]  <- logFC.cutoff
 
             ## TopDEF: Top differential expressed features
             DEF_filtred <- lapply(1:length(object@metadata$DiffExpAnal[["DEF"]]),function(x){
               res <- object@metadata$DiffExpAnal[["DEF"]][[x]]
-              res <- res[res$Adj.pvalue <= Adj.pvalue.cutoff,]
+              keep <- res$Adj.pvalue <= Adj.pvalue.cutoff & abs(res$logFC) >= logFC.cutoff
+              res <- res[keep,]
               return(res)
             })
             names(DEF_filtred) <- names(object@metadata$DiffExpAnal[["RawDEFres"]])
@@ -1609,14 +1611,14 @@ setMethod(f="FilterDiffAnalysis",
 #' @examples
 setMethod(f="DiffAnal.plot",
           signature="SummarizedExperiment",
-          definition <- function(object, hypothesis,Adj.pvalue.cutoff = 0.05){
+          definition <- function(object, hypothesis,Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0){
 
             plots <- list()
 
             res      <- object@metadata$DiffExpAnal[["RawDEFres"]][[hypothesis]]
             resTable <- object@metadata$DiffExpAnal[["DEF"]][[hypothesis]]
 
-            plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff)
+            plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff)
             plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable)
 
             return(plots)
@@ -1878,19 +1880,19 @@ setMethod(f="runAnnotationEnrichment",
             geneLists <- list()
             if(from == "DiffExpAnal") {
               geneLists <- lapply(ListNames, function(listname){
-                
+
                 row.names(object@metadata$DiffExpAnal[["TopDEF"]][[listname]])
               })
               names(geneLists) <- ListNames
             }
             else if(from == "CoExpAnal"){
               #geneLists.coseq <- lapply(CoExpListNames, function(listname){
-              
+
               geneLists <-  object@metadata[["CoExpAnal"]][["clusters"]][ListNames]
               #})
               #names(geneLists.coseq) <- CoExpListNames
             }
-            
+
 
             Results <- list()
 
@@ -1904,11 +1906,11 @@ setMethod(f="runAnnotationEnrichment",
             EnrichAnal[["results"]] <- Results
 
             if(from == "DiffExpAnal") {
-              
+
               object@metadata[["DiffExpEnrichAnal"]] <- EnrichAnal
             }
             else if(from == "CoExpAnal"){
-              
+
               object@metadata[["CoExpEnrichAnal"]] <- EnrichAnal
             }
 
@@ -1998,11 +2000,11 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
 #' @exportMethod resetFlomicsMultiAssay
 #' @examples
 #' @noRd
-#' 
-setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment", 
-          
+#'
+setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
+
           definition <- function(object, results, datasets = NULL){
-            
+
             # if dataset is null we take all datasets presente in MultiAssayExperiment object
             if(is.null(datasets)){
               datasets <- paste0(unlist(object@metadata$omicList), ".filtred")
@@ -2014,21 +2016,21 @@ setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
                 return(object)
               }
             }
-            
+
             for(data in datasets){
-        
+
               if(!is.null(object[[data]])){
-                
+
                 dataset <- object[[data]]
-                
-                for(res in results){ 
+
+                for(res in results){
                   if(!is.null(dataset@metadata[[res]])){ dataset@metadata[[res]] <- NULL }
-                } 
-                
+                }
+
                 object[[data]] <- dataset
               }
-              
+
             }
-            
+
             return(object)
             })
