@@ -1,14 +1,13 @@
 CoSeqAnalysisUI <- function(id){
 
-
   #name space for id
   ns <- NS(id)
 
   tagList(
 
     fluidRow(
-      box(title = span(tagList(icon("cogs"), "   CoSeq ",a("(see the guide)", href="https://www.bioconductor.org/packages/release/bioc/vignettes/coseq/inst/doc/coseq.html")  )),
-          solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = FALSE,
+      box(title = span(tagList(icon("cogs"), "   ",a("CoSeq", href="https://www.bioconductor.org/packages/release/bioc/vignettes/coseq/inst/doc/coseq.html"), "(Scroll down for instructions)"  )),
+          solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
           div(
             h4(tags$span("Parameters set up:", style = "color:orange")),
             p("You have first to choose between the ",tags$b("union")," or ",tags$b("intersection")," of your contrasts lists according to your biological question."),
@@ -211,12 +210,13 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                                   colnames = input$select, mergeType = input$unionInter)})
 
   # display nbr of selected genes
-  output$mergeValue <- renderText({
-    print(paste(length(DEG_list()), "genes", sep =" ")) })
+  output$mergeValue <- renderText({ print(paste(length(DEG_list()), "genes", sep =" ")) })
 
   # run coexpression analysis
   # coseq
   observeEvent(input$runCoSeq, {
+    
+    print(paste0("# 9- CoExpression analysis... ", dataset ))
     
     rea.values[[dataset]]$coExpAnal  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
@@ -239,9 +239,9 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
 
     #---- progress bar ----#
     progress <- shiny::Progress$new()
-    progress$set(message = "Run coseq", value = 0)
+    progress$set(message = "Run coseq : ", value = 0)
     on.exit(progress$close())
-    progress$inc(1/2, detail = paste("Doing part ", 10,"%", sep=""))
+    progress$inc(1/2, detail = "In progress")
     #----------------------#
 
 
@@ -256,14 +256,14 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
 
     # If an error occured
-    if(isFALSE(dataset.SE@metadata$CoExpAnal[["results"]]))
-    {
+    if(isTRUE(dataset.SE@metadata$CoExpAnal[["error"]])){
+      
       showModal(modalDialog( title = "Error message",
                              if(! is.null(dataset.SE@metadata$CoExpAnal[["stats"]])){
-                             renderDataTable(dataset.SE@metadata$CoExpAnal[["stats"]],rownames = FALSE)
+                                renderDataTable(dataset.SE@metadata$CoExpAnal[["stats"]],rownames = FALSE)
                              }
                              else{
-                               as.character(dataset.SE@metadata$CoExpAnal[["error"]])
+                                as.character(dataset.SE@metadata$CoExpAnal[["error"]])
                              }
                              ))
     }
@@ -314,7 +314,11 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                 
                 tabPanel("probapost_boxplots",  renderPlot({ plot.coseq.res$probapost_boxplots })),
                 tabPanel("probapost_barplots",  renderPlot({ plot.coseq.res$probapost_barplots })),
-                tabPanel("probapost_histogram", renderPlot({ plot.coseq.res$probapost_histogram }))
+                tabPanel("probapost_histogram", renderPlot({ plot.coseq.res$probapost_histogram })),
+                tabPanel("summury", 
+                         DT::renderDataTable(DT::datatable(as.data.frame(dataset.SE@metadata$CoExpAnal[["stats"]])),
+                                             options = list(rownames = FALSE, pageLength = 10))
+                         )
         )
     )
   })
