@@ -214,8 +214,17 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                        DT::renderDataTable({
                          resTable <- local.rea.values$dataset.SE@metadata$DiffExpAnal[["DEF"]][[vect["contrastName"]]]
                          keep <- resTable$Adj.pvalue <= input$Adj.pvalue.cutoff & abs(resTable$logFC) >= input$abs.logFC.cutoff
-                         DT::datatable(round(resTable[keep,],5), options = list(rownames = FALSE, pageLength = 10))
+                         round(resTable[keep,],5) %>% DT::datatable(extensions = 'Buttons',
+                                        options = list(dom = 'Blfrtip',
+                                                      rownames = FALSE,
+                                                      pageLength = 10,
+                                                      buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                      lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All")))) %>%
+                           formatStyle('logFC',
+                                 backgroundColor = styleInterval(c(0, 0.01), c('green', 'white', 'red')),
+                                 fontWeight = 'bold')
                        })
+
                      )),
                )
         ),
