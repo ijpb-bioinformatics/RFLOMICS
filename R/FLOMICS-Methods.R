@@ -725,11 +725,13 @@ setMethod(f="Library_size_barplot.plot",
               ylab <- "Sum of abundance"
             }
 
-            libSizeNorm <- data.frame ( "value" = pseudo , "samples"=names(pseudo)) %>% dplyr::full_join(object@metadata$Groups, by="samples")
+            libSizeNorm <- data.frame ( "value" = pseudo , "samples"=names(pseudo)) %>% 
+              dplyr::full_join(object@metadata$Groups, by="samples") %>% 
+              dplyr::arrange(groups)
 
             libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
 
-            p <- ggplot(libSizeNorm, aes(x=samples,y=value, fill=groups)) + geom_bar( stat="identity" ) + ylab(ylab) +
+            p <- ggplot(libSizeNorm, aes(x=samples, y=value, fill=groups)) + geom_bar( stat="identity" ) + ylab(ylab) +
               theme(axis.text.x      = element_text(angle = 45, hjust = 1), legend.position  = "none") + labs(x = "") + ggtitle(title)
             #axis.text.x     = element_blank(),
             #axis.ticks      = element_blank())
@@ -1032,7 +1034,8 @@ setMethod(f= "abundanceBoxplot",
 
             colnames(pseudo) <- c("feature", "samples", "value")
 
-            pseudo_bis <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples")
+            pseudo_bis <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples") %>%
+              dplyr::arrange(groups)
 
             pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
 
