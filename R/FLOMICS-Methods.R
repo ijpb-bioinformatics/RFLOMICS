@@ -32,15 +32,41 @@
 #' @importFrom methods new
 ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 
+  # check ExpDesign dimension
+  if(dim(ExpDesign)[1] == 0 | dim(ExpDesign)[2] == 0){
+    stop("Error : ExpDesign matrix is impty!")
+  }
+  
+  # check refList length
+  if(length(refList) != length(names(ExpDesign))){
+    stop("Error : refList length different to dimension of ExpDesign matrix!")
+  }
+  
+  # check typeList length
+  if(length(typeList) != length(names(ExpDesign))){
+    stop("Error : typeList length different to dimension of ExpDesign matrix!")
+  }
+  
   # Create the List.Factors list with the choosen level of reference for each factor
-  dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
-
-    relevel(as.factor(ExpDesign[[i]]), ref=refList[i])
-  })
-  names(dF.List) <- names(ExpDesign)
-
-  # Factors.Type
+  names(refList)  <- names(ExpDesign)
   names(typeList) <- names(ExpDesign)
+  
+  for(i in c(names(typeList[typeList == "batch"]), names(typeList[typeList == "Bio"]))){
+    ExpDesign      <- dplyr::arrange(ExpDesign, get(i))
+    
+  }
+  
+  dF.List <- list()
+  for(i in names(ExpDesign)){
+    ExpDesign[[i]] <- relevel(as.factor(ExpDesign[[i]]), ref=refList[i])
+    dF.List[[i]]   <- ExpDesign[[i]]
+  }
+  # dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
+  # 
+  #   relevel(as.factor(ExpDesign[[i]]), ref=refList[i])
+  #   
+  # })
+  names(dF.List) <- names(ExpDesign)
 
   # Create the groups data.frame
   # groups <- tidyr::unite(as.data.frame(ExpDesign[typeList == "Bio"]), col="groups", sep="_", remove = TRUE) %>%
@@ -725,9 +751,8 @@ setMethod(f="Library_size_barplot.plot",
               ylab <- "Sum of abundance"
             }
 
-            libSizeNorm <- data.frame ( "value" = pseudo , "samples"=names(pseudo)) %>% 
-              dplyr::full_join(object@metadata$Groups, by="samples") %>% 
-              dplyr::arrange(groups)
+            libSizeNorm <-  dplyr::full_join(object@metadata$Groups, data.frame ("value" = pseudo , "samples"=names(pseudo)), by="samples") %>% 
+                            dplyr::group_by(groups)
 
             libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
 
@@ -1575,11 +1600,11 @@ setMethod(f="FilterDiffAnalysis",
 
             ## merge results in bin matrix
             DEF_list <- lapply(names(object@metadata$DiffExpAnal[["TopDEF"]]), function(x){
-              print(x)
+              #print(x)
               res <- object@metadata$DiffExpAnal[["TopDEF"]][[x]]
               tmp <- data.frame(DEF = rownames(res), bin = rep(1,length(rownames(res))))
               colnames(tmp) <- c("DEF", dplyr::filter(object@metadata$DiffExpAnal$contrasts, contrastName == x)$tag)
-              print(dplyr::filter(object@metadata$DiffExpAnal$contrasts, contrastName == x)$tag)
+              #print(dplyr::filter(object@metadata$DiffExpAnal$contrasts, contrastName == x)$tag)
               return(tmp)
             })
             names(DEF_list) <- names(object@metadata$DiffExpAnal[["TopDEF"]])

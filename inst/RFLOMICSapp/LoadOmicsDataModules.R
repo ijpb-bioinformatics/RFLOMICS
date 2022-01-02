@@ -1,5 +1,6 @@
-
-
+####
+#
+####
 
 LoadOmicsDataUI <- function(id){
 
@@ -27,14 +28,12 @@ LoadOmicsDataUI <- function(id){
               ),
               fluidRow(
                 column(width = 6, 
-                       uiOutput(ns("selectSamplesUI")), 
-                       uiOutput(ns("GetdFactorRef"))),
-                column(width = 6, uiOutput(ns("ExpDesignTable"))),
-                fluidRow(
-                  
-                )
+                       uiOutput(ns("selectSamplesUI"))#, 
+                       #uiOutput(ns("GetdFactorRef"))
+                       ),
+                column(width = 6, 
+                       uiOutput(ns("ExpDesignTable"))),
               )
-            #fluidRow( column(width = 6, uiOutput(ns("ValidUI"))))
             )
         ),
         fluidRow( uiOutput(outputId = ns("LoadDataUI"))),
@@ -53,6 +52,8 @@ LoadOmicsDataUI <- function(id){
 
 LoadOmicsData <- function(input, output, session, rea.values){
 
+  local.rea.values <- reactiveValues(plots = FALSE, ExpDesign = NULL, FactorList = NULL)
+  
     observe({
 
       rea.values$loadData <- FALSE
@@ -66,8 +67,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
       rea.values$validate.status <- 0
 
     })
-    #local.rea.values <- reactiveValues(Plot = FALSE)
-    
+
 
     ##########################################  
     # (1) load experimental design
@@ -85,123 +85,104 @@ LoadOmicsData <- function(input, output, session, rea.values){
         rea.values$loadData <- FALSE
         rea.values$model    <- FALSE
         rea.values$analysis <- FALSE
+        local.rea.values$plots <- FALSE
         
-        rea.values$Contrasts.Sel <- NULL 
+        rea.values$Contrasts.Sel <- NULL
+        
         FlomicsMultiAssay      <<- NULL
         session$userData$Design <- NULL
         
-      # rea.values$dataAnalysis   <- FALSE
-      # 
-      #   local.rea.values$Plot     <- FALSE
-      #   rea.values$selectModel    <- FALSE
-      #   rea.values$selectContrast <- FALSE
-      #   rea.values$DataExplor     <- FALSE
-      #   
-      #   FlomicsMultiAssay <<- NULL
 
         # read and check design file
         ExpDesign.tbl <- read_ExpDesign(input.file = input$Experimental.Design.file$datapath)
-
+        local.rea.values$ExpDesign <- ExpDesign.tbl
+        
         validate({ need(!is.null(ExpDesign.tbl), message="") })
 
         print("# 1- Load experimental design...")
 
         ####### Display tab of exp design  ########
-        if(dim(ExpDesign.tbl)[2] > 5){
-          ExpDesign.tbl.affich <- ExpDesign.tbl[,1:5] 
-          
-        }else{
-          ExpDesign.tbl.affich <- ExpDesign.tbl }
+        
+        # affich only the 5 firsts columns
+        if(dim(ExpDesign.tbl)[2] > 5){  ExpDesign.tbl.affich <- ExpDesign.tbl[,1:5] 
+        }else{                          ExpDesign.tbl.affich <- ExpDesign.tbl }
 
         # display table
-        # output$ExpDesignTable <- DT::renderDataTable({
-        #   DT::datatable(ExpDesign.tbl.affich, options = list(pageLength = 5, dom = 'tp') ) })
         output$ExpDesignTable <- renderUI({
           box(width = 12, background = "light-blue",
             tags$b("The experimental design view :"),
               
-            DT::renderDataTable( DT::datatable(data = ExpDesign.tbl.affich, filter = 'top', 
+            # DT::renderDataTable( DT::datatable(data = ExpDesign.tbl.affich, filter = 'top', 
+            #                                    options = list( pageLength = 5, autoWidth = TRUE, dom = 'tp' )))
+            #                                    #caption = 'Table 1: This is a simple caption for the table.' 
+            DT::renderDataTable( DT::datatable(data = ExpDesign.tbl.affich, 
                                                options = list( pageLength = 5, autoWidth = TRUE, dom = 'tp' )))
-                                               #caption = 'Table 1: This is a simple caption for the table.' 
             )
           })
         
-        
-        # output$txt <- renderText({
-        #   data <- ExpDesign.tbl.affich[input$ExpDesignTable_rows_all,]
-        #   print(paste0("toto",dim(data)[1])) })
-        
-        
-        
-        #### sample list  ####
-        output$selectSamplesUI <- renderUI( {
-
-          sampleList <- rownames(ExpDesign.tbl.affich)
-
-          box(width = 12, background = "green", # Valid colors are: red, yellow, aqua, blue, light-blue, green, navy, teal, olive, lime, orange, fuchsia, purple, maroon, black.
-
-              # List of samples and diff modalities of factors
-              tags$b("Select samples or/and modalities of factors :"),
-              fluidRow(
-                  column(width= ceiling(12/(length(names(ExpDesign.tbl.affich))+1)),
-                    # sample list :
-                    pickerInput(
-                      inputId  = session$ns("selectSamples"),
-                      label    = tags$span(style="color: black;","Samples"),
-                      choices  = sampleList,
-                      options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-                      multiple = TRUE,
-                      selected = sampleList)
-                  ),
-                  
-                  # condition list
-                  lapply(names(ExpDesign.tbl.affich), function(i) {
-                    column(width= ceiling(12/(length(names(ExpDesign.tbl.affich))+1)),
-                      # sample list :
-                      pickerInput(
-                        inputId  = session$ns(paste0("selectFactors.", i)),
-                        label    = tags$span(style="color: black;",i),
-                        choices  = levels(as.factor(ExpDesign.tbl.affich[[i]])),
-                        options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-                        multiple = TRUE,
-                        selected = levels(as.factor(ExpDesign.tbl.affich[[i]]))))})
-              )
+        #### order and select modality for each factor
+        output$selectSamplesUI <- renderUI({
+          
+          # condition list
+          box(width = 18, background = "green", # Valid colors are: red, yellow, aqua, blue, light-blue, green, navy, teal, olive, lime, orange, fuchsia, purple, maroon, black.
+            tags$b("The list and order of conditions :"),
+            fluidRow(  
+              lapply(names(ExpDesign.tbl.affich), function(i) {
+                
+                  column(width = round(12/length(names(ExpDesign.tbl.affich))),
+                       # sample list :
+                       # orderInput(inputId = session$ns(paste0("selectFactors.", i)), 
+                       #            label   = tags$span(style="color: black;",i) , 
+                       #            items   = levels(as.factor(ExpDesign.tbl.affich[[i]])))
+                       selectizeInput(inputId = session$ns(paste0("selectFactors.", i)), 
+                                      label   = tags$span(style="color: black;",i) ,
+                                      choices = levels(as.factor(ExpDesign.tbl.affich[[i]])), 
+                                      selected= levels(as.factor(ExpDesign.tbl.affich[[i]])), multiple = TRUE,
+                                      options = NULL))
+                }),
+                uiOutput(session$ns("GetdFactorRef")))
           )
         })
-
+        
         ####### set ref and type of each factor ########
         output$GetdFactorRef <- renderUI({
 
           # filter samples
-          ExpDesign.tbl.flt <<- ExpDesign.tbl[input$selectSamples,] 
+          #ExpDesign.tbl.flt <<- ExpDesign.tbl[input$selectSamples,] 
           # filtering per conditions
-          for(i in names(ExpDesign.tbl.affich)) { 
-            ExpDesign.tbl.flt <<- dplyr::filter(ExpDesign.tbl.flt, get(i) %in% input[[paste0("selectFactors.", i)]])
+          for(i in names(ExpDesign.tbl.affich)) {
+
+            # if select 1 modality or 0 for a Factor we exclude this factor
+            if(length(input[[paste0("selectFactors.", i)]]) > 0){
+              ExpDesign.tbl.affich <- dplyr::filter(ExpDesign.tbl.affich, get(i) %in% input[[paste0("selectFactors.", i)]])
+              ExpDesign.tbl.affich[[i]] <- factor(ExpDesign.tbl.affich[[i]], levels = input[[paste0("selectFactors.", i)]])
+            }
+              
+            if(length(input[[paste0("selectFactors.", i)]]) <= 1){
+              ExpDesign.tbl.affich <- dplyr::select(ExpDesign.tbl.affich, -all_of(i))
+            }
           }
           
-          box(width = 12, background = "green",
+          local.rea.values$ExpDesign <- ExpDesign.tbl.affich
+          
+          column(width = 12,
 
               # Construct the form to set the reference factor level
-              tags$b("Select the type and the level of reference fo each design factor :"),
+              tags$b("Set the type and the reference fo each design factor :"),
               fluidRow(
-                lapply(names(ExpDesign.tbl.affich), function(i) {
-                  column(width= round(12/length(names(ExpDesign.tbl.affich))),
-                      selectInput(inputId = session$ns(paste0("dF.RefLevel.", i)), 
-                                  label   = tags$span(style="color: black;",i) ,
-                                  choices = unique((ExpDesign.tbl.flt[[i]]))),
-                      
-                      radioButtons(session$ns(paste0("dF.Type.", i)), label=NULL , choices = c("Bio","batch", "Meta"), 
-                                   selected = "Bio", inline = FALSE, width = 2, choiceNames = NULL, choiceValues = NULL)
-              
-                      )
+                lapply(names(ExpDesign.tbl.affich), function(i){
+                    
+                    column(width= round(12/length(names(ExpDesign.tbl.affich))),
+                        selectInput(inputId = session$ns(paste0("dF.RefLevel.", i)), 
+                                    label   = tags$span(style="color: black;",i) ,
+                                    choices = levels(ExpDesign.tbl.affich[[i]])),
+                        
+                        radioButtons(session$ns(paste0("dF.Type.", i)), label=NULL , choices = c("Bio","batch", "Meta"), 
+                                     selected = "Bio", inline = FALSE, width = 2, choiceNames = NULL, choiceValues = NULL))
                   })
               )
           )
         })
-        
-          # output$ValidUI <- renderUI({
-          #   actionButton(session$ns("ValidF"),"Valid factor set up") })
-
     })
 
 
@@ -281,19 +262,14 @@ LoadOmicsData <- function(input, output, session, rea.values){
       rea.values$loadData <- FALSE
       rea.values$model    <- FALSE
       rea.values$analysis <- FALSE
-
       rea.values$Contrasts.Sel   <- NULL 
+      
       FlomicsMultiAssay        <<- NULL
       session$userData$Design   <- NULL
       
+      local.rea.values$plots <- FALSE
       # #updateTabItems(session, "tabs", selected = "importData")
-      # rea.values$DataExplor     <- FALSE
-      # rea.values$dataAnalysis   <- FALSE
-      # 
-      # local.rea.values$Plot     <- FALSE
-      # rea.values$selectContrast <- FALSE
 
-      
       ### check project name
       if(input$projectName == ""){
         showModal(modalDialog(title = "Error message", "project name is required"))
@@ -301,23 +277,19 @@ LoadOmicsData <- function(input, output, session, rea.values){
       validate({ need(input$projectName != "", message="project name is required") })
       
       
-      ### Experimental Design
+      ### check Experimental Design
       if(is.null(input$Experimental.Design.file)){
         showModal(modalDialog(title = "Error message", "Experimental Design is required"))
       }
       validate({ need(! is.null(input$Experimental.Design.file), message="Set a name") })
       
-      # ExpDesign.tbl <- read.table(input$Experimental.Design.file$datapath,header = TRUE,row.names = 1, sep = "\t") %>% 
-      #   dplyr::mutate(dplyr::across(where(is.character), stringr::str_remove_all, pattern = fixed(" ")))
-      # rownames(ExpDesign.tbl) <- stringr::str_remove_all(string = rownames(ExpDesign.tbl), pattern = " ")
-      # names(ExpDesign.tbl)    <- stringr::str_remove_all(string = names(ExpDesign.tbl),    pattern = " ")
       
-      ExpDesign.tbl <- ExpDesign.tbl.flt
+      ExpDesign.tbl <- local.rea.values$ExpDesign
       
       ### Get the Type and ref of the factors that the users enter in the form
-      dF.Type.dFac<-vector()
-      dF.List.Name<-vector()
-      dF.List.ref <-vector()
+      dF.Type.dFac <- vector()
+      dF.List.Name <- vector()
+      dF.List.ref  <- vector()
       
       rea.values$validate.status <- 0
       
@@ -338,12 +310,12 @@ LoadOmicsData <- function(input, output, session, rea.values){
         showModal(modalDialog(title = "Error message", "at least 1 batch factor"))}
       
       validate({ need((length(stringr::str_subset(dF.Type.dFac, "Bio"  )) %in% 1:3) &
-                        (length(stringr::str_subset(dF.Type.dFac, "batch")) != 0), message="") })
+                      (length(stringr::str_subset(dF.Type.dFac, "batch")) != 0), message="") })
       
       
       ## create Design object
       session$userData$Design <- ExpDesign.constructor(ExpDesign = ExpDesign.tbl, refList = dF.List.ref, typeList = dF.Type.dFac)
-      
+      Design <<- session$userData$Design
       #### load omics data
       ####
       print("# 2- Load omics data...")
@@ -428,18 +400,21 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
       completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$Design)
       FlomicsMultiAssay@metadata[["completeCheck"]] <<- completeCheckRes
+      local.rea.values$plots <- TRUE
+      rea.values$loadData <- TRUE
+      rea.values$model    <- TRUE
       
       if(!is.null(completeCheckRes[["error"]])){
+        rea.values$loadData <- FALSE
+        rea.values$model    <- FALSE
         showModal(modalDialog(title = "Error message", completeCheckRes[["error"]]))
-
       }
       
       # continue only if message is true or warning
-      validate({ need(is.null(completeCheckRes[["error"]]) ,message="") })
+      #validate({ need(is.null(completeCheckRes[["error"]]) ,message="") })
       
       # 
-      rea.values$loadData <- TRUE
-      rea.values$model    <- TRUE
+
       
     })
     
@@ -450,8 +425,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
     # completeness check
     output$CompletenessUI <- renderUI({
       
-      #if (local.rea.values$Plot == FALSE) return()
-      if (rea.values$loadData == FALSE) return()
+      if (local.rea.values$plots == FALSE) return()
+      #if (rea.values$loadData == FALSE) return()
       
       print(paste0("#    => Completeness plot..."))
       
@@ -472,8 +447,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
     # upset of all data
     output$UpsetMAE <- renderUI({
       
-     # if (local.rea.values$Plot == FALSE) return()
-      if (rea.values$loadData == FALSE) return()
+      if (local.rea.values$plots == FALSE) return()
+      #if (rea.values$loadData == FALSE) return()
       if (length(unlist(FlomicsMultiAssay@metadata$omicList)) < 2) return()
       
       
