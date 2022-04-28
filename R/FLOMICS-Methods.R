@@ -725,11 +725,13 @@ setMethod(f="Library_size_barplot.plot",
               ylab <- "Sum of abundance"
             }
 
-            libSizeNorm <- data.frame ( "value" = pseudo , "samples"=names(pseudo)) %>% dplyr::full_join(object@metadata$Groups, by="samples")
+            libSizeNorm <- data.frame ( "value" = pseudo , "samples"=names(pseudo)) %>% 
+              dplyr::full_join(object@metadata$Groups, by="samples") %>% 
+              dplyr::arrange(groups)
 
             libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
 
-            p <- ggplot(libSizeNorm, aes(x=samples,y=value, fill=groups)) + geom_bar( stat="identity" ) + ylab(ylab) +
+            p <- ggplot(libSizeNorm, aes(x=samples, y=value, fill=groups)) + geom_bar( stat="identity" ) + ylab(ylab) +
               theme(axis.text.x      = element_text(angle = 45, hjust = 1), legend.position  = "none") + labs(x = "") + ggtitle(title)
             #axis.text.x     = element_blank(),
             #axis.ticks      = element_blank())
@@ -1032,7 +1034,8 @@ setMethod(f= "abundanceBoxplot",
 
             colnames(pseudo) <- c("feature", "samples", "value")
 
-            pseudo_bis <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples")
+            pseudo_bis <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples") %>%
+              dplyr::arrange(groups)
 
             pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
 
@@ -1899,15 +1902,28 @@ setMethod(f="runAnnotationEnrichment",
 
 
             Results <- list()
-
+            count.na <- 0
             for(geneList in names(geneLists)){
-
-              Results[[geneList]] <- switch(probaMethod,
-                     "hypergeometric"=EnrichmentHyperG(annotation, geneLists[[geneList]], alpha = 0.01)
-                     )
+              
+              if(length( intersect(geneLists[[geneList]], annotation$geneID)) !=0 ){
+                  Results[[geneList]] <- switch(probaMethod,
+                         "hypergeometric"=EnrichmentHyperG(annotation, geneLists[[geneList]], alpha = 0.01)
+                         )
+              }
+              else{
+                  Results[[geneList]] <- NULL
+                  count.na <- count.na + 1
+              }
             }
 
-            EnrichAnal[["results"]] <- Results
+            if(count.na == length(names(geneLists))){
+              
+              EnrichAnal[["results"]] <- NULL
+            }
+            else{
+              EnrichAnal[["results"]] <- Results
+            }
+            
 
             if(from == "DiffExpAnal") {
 
@@ -1934,7 +1950,8 @@ setMethod(f="runAnnotationEnrichment",
 #' @exportMethod Enrichment.plot
 #' @importFrom dplyr desc
 #' @examples
-Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepresented"), top = "all" , listNames=NULL, from = c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
+Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepresented"), top = 50 , 
+                            domain=NULL, listNames=NULL, from = c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
 
   Decision <- Pvalue_over <- Pvalue_under <- Pvalue <- NULL
   Term <- Domain <- Trial_Success <- scale_size <- tail <- NULL
@@ -1962,7 +1979,7 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
   for (listname in listNames){
 
 
-    data <- object@metadata[[from]][["results"]][[listname]][["Over_Under_Results"]]
+    data <- object@metadata[[from]][["results"]][[listname]][["Over_Under_Results"]] %>% dplyr::filter(Domain %in% domain)
 
     data_ord <- switch (Over_Under,
             "overrepresented"  = {
@@ -1975,15 +1992,14 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
                      dplyr::mutate(Pvalue = Pvalue_under)
               }
             )
-
-
+    
     data_ord$Term <- factor(data_ord$Term, levels = data_ord$Term)
 
     Urn_effective <- data$Urn_effective[1]
     Trial_effective <- data$Trial_effective[1]
 
     p[[listname]] <- ggplot2::ggplot(data = tail(data_ord, n=top), aes(x=sort(Trial_Success), y=Term, size=Urn_Success, color=Pvalue)) +
-      geom_point(alpha=0.5) + scale_size(range = c(0.1, 10)) + scale_color_gradient(low="blue", high="red") +
+      geom_point(alpha=0.5) + scale_size(range = c(0.1, 10)) + scale_color_gradient(low="blue", high="red") + ylab("") + xlab("Count") +
       ggtitle(paste0(listname, " :\n ",Over_Under," ", Top.tag, " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")"))
 
   }

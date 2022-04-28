@@ -10,7 +10,8 @@ QCNormalizationTabUI <- function(id){
   ns <- NS(id)
   tagList(
     fluidRow(
-      box(width = 12, title = "Data Filtering and Normalization", status = "warning", solidHeader = TRUE, collapsible = TRUE, collapsed = FALSE,
+      box(title = span(tagList(icon("filter"), "     Data Filtering and Normalization ", tags$small("(Scroll down for instructions)"))), 
+          width = 12, status = "warning", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE,
 
           p("For each diagnostic plot, both raw and processed (filtered, normalized, ...) data are displayed with expertised default parameters."),
           p("- You may first have a look at to default processed plots to eventually identify outliers sample"),
