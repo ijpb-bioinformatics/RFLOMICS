@@ -212,20 +212,55 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                     tabPanel("Table",
                        ### DEF result table ###
                        DT::renderDataTable({
-                         resTable <- local.rea.values$dataset.SE@metadata$DiffExpAnal[["DEF"]][[vect["contrastName"]]]
-                         keep <- resTable$Adj.pvalue <= input$Adj.pvalue.cutoff & abs(resTable$logFC) >= input$abs.logFC.cutoff
-                         round(resTable[keep,],5) %>% DT::datatable(extensions = 'Buttons',
-                                        options = list(dom = 'Blfrtip',
+                         resTable <- local.rea.values$dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
+                         resTable %>% DT::datatable(extensions = 'Buttons',
+                                        options = list(dom = 'lfrtipB',
                                                       rownames = FALSE,
                                                       pageLength = 10,
                                                       buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
                                                       lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All")))) %>%
                            formatStyle('logFC',
-                                 backgroundColor = styleInterval(c(0, 0.01), c('green', 'white', 'red')),
-                                 fontWeight = 'bold')
-                       })
+                                 backgroundColor = styleInterval(c(0, 0.01), c('blue', 'white', 'red')),
+                                 fontWeight = 'bold') %>% formatSignif(columns = 1:dim(resTable)[2], digits = 3)
+                       })),
+                      tabPanel("Heatmap",
+                             renderUI({
+                             renderPlot({
+                             resTable <- local.rea.values$dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
+                             m.def <- assays(local.rea.values$dataset.SE)[[1]]
 
-                     )),
+                             # filter by DE
+                             m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
+
+                             # normalize count ?
+
+                             # Center by prot
+                             m.def.filter.center <- scale(m.def.filter,center=TRUE,scale=FALSE)
+                             column_split.value <- if(input[[paste0(vect["contrastName"],"-","condColorSelect")]] != "none"){
+                              FlomicsMultiAssay@metadata$design@Groups[,input[[paste0(vect["contrastName"],"-","condColorSelect")]]]
+                             }
+                             else{NULL}
+
+                             ComplexHeatmap::Heatmap(m.def.filter.center, name = "count or XIC",
+                                     show_row_names= ifelse( dim(m.def.filter.center)[1] > 50, FALSE, TRUE),
+                                     row_names_gp = gpar(fontsize = 8),
+                                     column_names_gp = gpar(fontsize = 12),
+                                     row_title_rot = 0 ,
+                                     clustering_method_columns = "ward.D2",
+                                     cluster_column_slice=FALSE,
+                                     column_split = column_split.value)
+                             })
+
+                             })
+                             ,
+                             ## select cluster to plot
+                             radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-","condColorSelect")),
+                                          label = 'Levels :',
+                                          choices = c("none",names(FlomicsMultiAssay@colData)),
+                                          selected = "none")
+                    )
+
+                     ),
                )
         ),
         column(2,

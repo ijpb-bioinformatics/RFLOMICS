@@ -29,7 +29,6 @@ NbProt <- length(names(dataset.SE))
 NbProtWoutNA <- dim(na.omit(assay(dataset.SE)))[1]
 ```
 
-* X samples were removed from the datasets.
 * The data were X transformed.
 * The number of proteins: `r NbProt`  
 * Number of proteins with at least 1 NA: `r NbProt - NbProtWoutNA`
@@ -120,7 +119,7 @@ Co-expression analysis was carried out on the `r dataset.SE@metadata[["CoExpAnal
 of the following list of proteins `r dataset.SE@metadata$CoExpAnal$gene.list.names`. 
 `r dataset.SE@metadata[["CoExpAnal"]]$tools` was
 used to cluster them with the following parameters. The gaussian mixture models (`r paste0("model=",dataset.SE@metadata[["CoExpAnal"]]$GaussianModel,"")` was run on scaled by proteins data to cluster them by expression profile rather than abundance.
-`r dataset.SE@metadata[["CoExpAnal"]]$replicates.nb` technical replicates were performed with K=`r dataset.SE@metadata[["CoExpAnal"]]$K.range`. 
+`r dataset.SE@metadata[["CoExpAnal"]]$replicates.nb` technical replicates were performed for each K in `r dataset.SE@metadata[["CoExpAnal"]]$K.range`. 
 The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
 was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
 

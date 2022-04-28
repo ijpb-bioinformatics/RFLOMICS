@@ -33,9 +33,7 @@ NbGene.low.counts   <- length(dataset.SE@metadata$FilteredFeatures)
 ### Filtering:
 
 * By default, gene with 0 count are removed from the data. 
-* The choosen filtering strategy is `r dataset.SE@metadata$FilteringOptions$Filter_Strategy` with a count per million of read (CPM)
-cut-off of `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff`  
-* X samples were removed from the datasets.
+* The choosen filtering strategy is `r dataset.SE@metadata$FilteringOptions$Filter_Strategy` with a count per million of read (CPM) cut-off of `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff`  
 * The number of genes: `r NbGenes`  
 * Number of genes with zero count: `r NbGene.rowSums.zero`
 * Number of genes filtered: `r NbGene.low.counts`
@@ -161,7 +159,7 @@ used to cluster genes.
 The gaussian mixture model was run on filtered (meanFilterCutoff was set to: `r dataset.SE@metadata[["CoExpAnal"]]$meanFilterCutoff`), 
 normalised (normalisation method was `r dataset.SE@metadata[["CoExpAnal"]]$normFactors`) 
 and transformed (transformation method: `r dataset.SE@metadata[["CoExpAnal"]]$transformation`) count data.
-X technical replicates were performed from $K=i$ to $K=i$ (K=number of clusters). 
+`r dataset.SE@metadata[["CoExpAnal"]]$replicates.nb` technical replicates were performed for each K in `r dataset.SE@metadata[["CoExpAnal"]]$K.range` (K=number of clusters). 
 The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
 was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
 

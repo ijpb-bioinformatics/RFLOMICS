@@ -14,7 +14,7 @@ QCNormalizationTabUI <- function(id){
 
           p("For each diagnostic plot, both raw and processed (filtered, normalized, ...) data are displayed with expertised default parameters."),
           p("- You may first have a look at to default processed plots to eventually identify outliers sample"),
-          p("- You may check onto the ACP factorial map to see if samples group with the replicat of the same condition."),
+          p("- You may check onto the ACP factorial map to control that samples group with the replicat of the same condition."),
           p("- You may play with filtered parameters to see if it improved the grouping"),
           p("- If not, you may remove outliers from the sample list, update the analysis and check again."),
           p("- To quickly overview the % of variability which is associated to each design factors, go to PCA (2/2) ")
@@ -38,19 +38,19 @@ QCNormalizationTabUI <- function(id){
 QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
   output$configUI <- renderUI({
-    
+
     validate(
       need(rea.values$model != FALSE, "Please load data")
     )
     # if(rea.values$loadData == FALSE) return()
-    
+
     box(width = 4, title = "Setting", status = "warning", solidHeader = TRUE,
         uiOutput(session$ns("selectSamplesUI")),
         uiOutput(session$ns("completenessUI")),
         uiOutput(session$ns("paramUI"))
         )
   })
-  
+
   #### sample list  ####
   output$selectSamplesUI <- renderUI( {
 
@@ -144,18 +144,18 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
   print("# 5- Compute PCA for raw counts")
   FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RFLOMICS::RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
-  FlomicsMultiAssay <<- process_data(FlomicsMultiAssay = FlomicsMultiAssay, dataset = dataset, 
+  FlomicsMultiAssay <<- process_data(FlomicsMultiAssay = FlomicsMultiAssay, dataset = dataset,
                                      samples = colnames(FlomicsMultiAssay@ExperimentList[[dataset]]), param.list = param.list)
 
-  
+
   ## Exploratory of Biological and Technical variability
   output$tabPanelUI <- renderUI({
 
     if(rea.values$model == FALSE) return()
-    
-    
+
+
     #if(is.null(FlomicsMultiAssay)) return()
-    
+
     tabPanel.default.list <- list(
 
         tabPanel("Distribution (density)",
@@ -248,7 +248,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
                 tabPanel.default.list)
             }
     )
-    
+
     # Exploratory of Biological and Technical variability
     box(width = 8, title = "Exploratory of Biological and Technical variability", solidHeader = TRUE, status = "warning",
       column(12, do.call(what = tabsetPanel, args = tabPanel.list)))
@@ -354,7 +354,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   callModule(RadioButtonsCondition, "rawData")
 
 
-    
+
 
   #### PCA plot  ####
   # => raw
@@ -417,7 +417,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
 
   observeEvent(input$Update, {
-    
+
     rea.values[[dataset]]$diffAnal  <- FALSE
     rea.values[[dataset]]$coExpAnal <- FALSE
     rea.values[[dataset]]$diffAnnot <- FALSE
@@ -427,11 +427,11 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal   <<- list()
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpEnrichAnal  <<- list()
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpEnrichAnal  <<- list()
-    
-    
+
+
     print("# 6.bis => Update data processing...")
     #FlomicsMultiAssay <<- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("DiffExpAnal", "CoExpAnal", "EnrichAnal"))
-    
+
     #rea.values$dataAnalysis <- TRUE
 
     # update processing data
