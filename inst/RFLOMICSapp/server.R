@@ -20,6 +20,7 @@ shinyServer(function(input, output, session) {
       model    = FALSE,
       analysis = FALSE,
       
+      datasetList  = NULL,
       contrastList = NULL
     )
     
@@ -100,115 +101,115 @@ shinyServer(function(input, output, session) {
       do.call(tabItems, items)
     })
     
-    lapply(1:10, function(i){
-      
-      output[[paste0("RNAseqAnalysisUI", i)]] <- renderUI({
+    observe({
+      lapply(names(rea.values$datasetList), function(omics){
         
-        tabsetPanel(
+        lapply(names(rea.values$datasetList[[omics]]), function(i){
           
-          #### Data Exploratory & QC ####
-          ###############################
-          tabPanel("Data Exploratory",
-                   tags$br(),
-                   tags$br(),
-                   
-                   QCNormalizationTabUI(paste0("RNAseq",i))
-                   
-          ),
-          
-          #### Diff analysis  ####
-          ######################################
-          tabPanel("Diff Gene Expression",
-                   tags$br(),
-                   tags$br(),
-                   DiffExpAnalysisUI(paste0("RNAseq",i))
-          ),
-          #### Co-expression analysis  ####
-          ######################################
-          tabPanel("Gene CoExpression",
-                   tags$br(),
-                   tags$br(),
-                   CoSeqAnalysisUI(paste0("RNAseq",i))
-                   #verbatimTextOutput("Asuivre")
-          ),
-          #### enrichment analysis  ####
-          ######################################
-          tabPanel("Annotation Enrichment",
-                   tags$br(),
-                   tags$br(),
-                   AnnotationEnrichmentUI(paste0("RNAseq",i))
+          switch (omics,
+            "RNAseq" = {output[[paste0("RNAseqAnalysisUI", i)]] <- renderUI({
+              
+              tabsetPanel(
+                
+                #### Data Exploratory & QC ####
+                ###############################
+                tabPanel("Data Exploratory",
+                         tags$br(),
+                         tags$br(),
+                         
+                         QCNormalizationTabUI(paste0("RNAseq",i))
+                         
+                ),
+                
+                #### Diff analysis  ####
+                ######################################
+                tabPanel("Diff Gene Expression",
+                         tags$br(),
+                         tags$br(),
+                         DiffExpAnalysisUI(paste0("RNAseq",i))
+                ),
+                #### Co-expression analysis  ####
+                ######################################
+                tabPanel("Gene CoExpression",
+                         tags$br(),
+                         tags$br(),
+                         CoSeqAnalysisUI(paste0("RNAseq",i))
+                         #verbatimTextOutput("Asuivre")
+                ),
+                #### enrichment analysis  ####
+                ######################################
+                tabPanel("Annotation Enrichment",
+                         tags$br(),
+                         tags$br(),
+                         AnnotationEnrichmentUI(paste0("RNAseq",i))
+                )
+              )
+            })},
+            "proteomics" = {output[[paste0("proteomicsAnalysisUI", i)]] <- renderUI({
+              tabsetPanel(
+                
+                #### Data Exploratory & QC ####
+                ###############################
+                tabPanel("Data Exploratory",
+                         tags$br(),
+                         tags$br(),
+                         
+                         QCNormalizationTabUI(paste0("proteomics",i))
+                ),
+                #### Diff analysis  ####
+                ######################################
+                tabPanel("Diff Prot Expression",
+                         tags$br(),
+                         tags$br(),
+                         DiffExpAnalysisUI(paste0("proteomics",i))
+                ),
+                #### Co-expression analysis  ####
+                ######################################
+                tabPanel("Proteins CoExpression",
+                         tags$br(),
+                         tags$br(),
+                         CoSeqAnalysisUI(paste0("proteomics",i))
+                         #verbatimTextOutput("Asuivre")
+                ),
+                #### enrichment analysis  ####
+                ######################################
+                tabPanel("Annotation Enrichment",
+                         tags$br(),
+                         tags$br(),
+                         AnnotationEnrichmentUI(paste0("proteomics",i))
+                )
+              )
+            })},
+            "metabolomics" = {output[[paste0("metabolomicsAnalysisUI", i)]] <- renderUI({
+              
+              tabsetPanel(
+                
+                #### Data Exploratory & QC ####
+                ###############################
+                tabPanel("Data Exploratory",
+                         tags$br(),
+                         tags$br(),
+                         
+                         QCNormalizationTabUI(paste0("metabolomics",i))
+                ),#### Diff analysis  ####
+                ######################################
+                tabPanel("Diff Metabo Expression",
+                         tags$br(),
+                         tags$br(),
+                         DiffExpAnalysisUI(paste0("metabolomics",i))
+                ),
+                #### Co-expression analysis  ####
+                ######################################
+                tabPanel("Metabolites CoExpression",
+                         tags$br(),
+                         tags$br(),
+                         CoSeqAnalysisUI(paste0("metabolomics",i))
+                         #verbatimTextOutput("Asuivre")
+                )
+              )
+            })},
           )
-          
-        )
-      })
-    })
-    lapply(1:10, function(j){  
-      
-      output[[paste0("proteomicsAnalysisUI", j)]] <- renderUI({
-        tabsetPanel(
-          
-          #### Data Exploratory & QC ####
-          ###############################
-          tabPanel("Data Exploratory",
-                   tags$br(),
-                   tags$br(),
-                   
-                   QCNormalizationTabUI(paste0("proteomics",j))
-          ),
-          #### Diff analysis  ####
-          ######################################
-          tabPanel("Diff Prot Expression",
-                   tags$br(),
-                   tags$br(),
-                   DiffExpAnalysisUI(paste0("proteomics",j))
-          ),
-          #### Co-expression analysis  ####
-          ######################################
-          tabPanel("Proteins CoExpression",
-                   tags$br(),
-                   tags$br(),
-                   CoSeqAnalysisUI(paste0("proteomics",j))
-                   #verbatimTextOutput("Asuivre")
-          ),
-          #### enrichment analysis  ####
-          ######################################
-          tabPanel("Annotation Enrichment",
-                   tags$br(),
-                   tags$br(),
-                   AnnotationEnrichmentUI(paste0("proteomics",j))
-          )
-        )
-      })
-    })
-    lapply(1:10, function(k){
-      
-      output[[paste0("metabolomicsAnalysisUI", k)]] <- renderUI({
-        
-        tabsetPanel(
-          
-          #### Data Exploratory & QC ####
-          ###############################
-          tabPanel("Data Exploratory",
-                   tags$br(),
-                   tags$br(),
-                   
-                   QCNormalizationTabUI(paste0("metabolomics",k))
-          ),#### Diff analysis  ####
-          ######################################
-          tabPanel("Diff Metabo Expression",
-                   tags$br(),
-                   tags$br(),
-                   DiffExpAnalysisUI(paste0("metabolomics",k))
-          ),
-          #### Co-expression analysis  ####
-          ######################################
-          tabPanel("Metabolites CoExpression",
-                   tags$br(),
-                   tags$br(),
-                   CoSeqAnalysisUI(paste0("metabolomics",k))
-                   #verbatimTextOutput("Asuivre")
-          )
-        )
+        })
       })
     })
 
@@ -253,15 +254,21 @@ shinyServer(function(input, output, session) {
       # display design menu
       output$SetUpModelMenu <- renderMenu({
         
+        validate({
+          need(rea.values$loadData == TRUE, message="")
+        })
         menuItem(text = "Experimental Design", tabName = "SetUpModel", icon = icon('vials'))
       })
 
-      
-    })
-
+    }, ignoreInit = TRUE)
+    
     # set GLM model
     # and select list of contrast to test
-    inputModel <- callModule(GLM_model, "model", rea.values)
+    observe({
+      inputModel <- callModule(GLM_model, "model", rea.values)
+    })
+   
+    
 
     ##########################################
     # Part3 : ANALYSE
@@ -271,34 +278,45 @@ shinyServer(function(input, output, session) {
     # display omics Item
     output$omics <- renderMenu({
       
-      if(rea.values$analysis == FALSE) return()
+      validate({
+        need(rea.values$analysis == TRUE, message="")
+      })
       
-      menu_list <- list()
-      menu_list <- list(
-        menu_list,
-        sidebarMenu(id = "sbm",
-                    
-                    #lapply(subitems(), function(omics){
-                    lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
-                      
-                      do.call(what = menuItem,
-                              args = c(text = paste0(omics, " Analysis"), tabName = paste0(omics, "Analysis"), icon = icon('chart-line'),
-                                       
-                                       lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
-                                         menuSubItem(text = paste0(FlomicsMultiAssay@metadata$omicList[[omics]][[i]]),
-                                                     tabName = paste0(omics, "Analysis", i), icon = icon('chart-area'))
-                                       })
-                              )
-                      )
-                    })
-        )
+      menuItem(text = "Omics Analysis", tabName = "OmicsAnalysis", icon = icon('chart-area'), startExpanded = TRUE,selected = TRUE,
+               #icon = icon('chart-line'), 
+           lapply(names(rea.values$datasetList), function(omics){
+             
+             lapply(names(rea.values$datasetList[[omics]]), function(i){
+                menuSubItem(text = rea.values$datasetList[[omics]][[i]],
+                            tabName = paste0(omics, "Analysis", i))
+              })
+           })
       )
-      sidebarMenu(.list = menu_list)
+      
+
+                   
+      
     })
+    
+    # observe({
+    #   
+    #   updateTabItems(session, "tabs", selected = paste0(names(FlomicsMultiAssay@metadata$omicList)[1], 
+    #                                                     "Analysis", 
+    #                                                     names(FlomicsMultiAssay@metadata$omicList[[1]])[1]))
+    # })
+    
+    
     # update Item menu
     #subitems(names(FlomicsMultiAssay@metadata$omicList))
     #updateTabItems(session, "sbm", selected = "SetUpModelMenu")
     
+    output$Integration <- renderMenu({
+      validate({
+        need(rea.values$analysis == TRUE, message="")
+      })
+      
+      menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'))  
+    })
     
     output$runReport <- renderUI({
       if(rea.values$analysis == FALSE) return()
@@ -307,28 +325,24 @@ shinyServer(function(input, output, session) {
     })
     
     
-    output$Integration <- renderMenu({
-      if(rea.values$analysis == FALSE) return()
-      
-      menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'))  
-    })
     
     # for each omics data type
     # and for each dataser
     # if no error message
     
-    observeEvent(inputModel$validContrasts, {
+    omics <- "RNAseq"
+    i <- 1
+    observe({
       
-      
+      if(rea.values$analysis == FALSE) return()
       ##########################################
       # Part3 : Data Exploratory
       ##########################################
-      #inputNorm <- list()
-      lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
-        
-        lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
+      lapply(names(rea.values$datasetList), function(omics){
+
+        lapply(names(rea.values$datasetList[[omics]]), function(i){
           
-          rea.values[[FlomicsMultiAssay@metadata$omicList[[omics]][[i]]]] <- reactiveValues(
+          rea.values[[rea.values$datasetList[[omics]][[i]]]] <- reactiveValues(
             diffAnal   = FALSE,
             diffValid  = FALSE,
             coExpAnal  = FALSE,
@@ -339,99 +353,38 @@ shinyServer(function(input, output, session) {
             CoExpClusterNames = NULL,
             omicsType = omics
           )
+          
+          ##########################################
+          # Part3 : Data Exploratory
+          ##########################################
           inputNorm <- callModule(module  = QCNormalizationTab, id = paste0(omics,i),
                                                       dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], 
                                                       rea.values = rea.values)
-          inputDiff <- callModule(module  = DiffExpAnalysis, id = paste0(omics, i), 
-                                                       dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], 
-                                                       rea.values = rea.values)
           
-          callModule(module  = CoSeqAnalysis, id = paste0(omics, i),
-                     dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
-      
-      
-          callModule(module  = AnnotationEnrichment, id = paste0(omics, i),
-                     dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
+          ##########################################
+          # Part5 :  Diff Analysis
+          ##########################################
+          inputDiff <- callModule(module  = DiffExpAnalysis, id = paste0(omics, i),
+                                                       dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]],
+                                                       rea.values = rea.values)
+
+          # ##########################################
+          # # Part6 : Co-Expression Analysis
+          # ##########################################
+          # callModule(module  = CoSeqAnalysis, id = paste0(omics, i),
+          #            dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
+          # 
+          # ##########################################
+          # # Part7 : Enrichment Analysis
+          # ##########################################
+          # callModule(module  = AnnotationEnrichment, id = paste0(omics, i),
+          #            dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
           
           
         })
       })
       
-    }, ignoreInit = TRUE)
-    
-    
-    
-    
-  #   observeEvent(inputModel$validContrasts, {
-  # 
-  # 
-  #   ##########################################
-  #   # Part3 : Data Exploratory
-  #   ##########################################
-  #   inputNorm <- list()
-  #   lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
-  # 
-  #     lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
-  #       
-  #       #rea.values[[FlomicsMultiAssay@metadata$omicList[[omics]][[i]]]] <- reactiveVal()
-  #       inputNorm[[paste0(omics, i)]] <- callModule(module  = QCNormalizationTab, id = paste0(omics,i),
-  #                                                   dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], 
-  #                                                   rea.values = rea.values)
-  #       })
-  #   })
-  # 
-  # #   ##########################################
-  # #   # Part5 :  Diff Analysis
-  # #   ##########################################
-  # # 
-  # #   inputDiff <- list()
-  # #   lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
-  # # 
-  # #     lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
-  # # 
-  # #       #observeEvent(inputModel$validContrasts, {
-  # # 
-  # #           inputDiff[[paste0(omics, i)]] <<- callModule(module  = DiffExpAnalysis, id = paste0(omics, i), 
-  # #                                                        dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], 
-  # #                                                        rea.values = rea.values)
-  # # 
-  # #       #})
-  # #     })
-  # #   })
-  # # 
-  # # 
-  # # ##########################################
-  # # # Part6 : Co-Expression Analysis
-  # # ##########################################
-  # #   lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
-  # # 
-  # #     lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
-  # # 
-  # #       observeEvent(inputDiff[[paste0(omics, i)]]$validContrast, {
-  # # 
-  # #         callModule(module = CoSeqAnalysis, id = paste0(omics, i),
-  # #                    dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
-  # #       }, ignoreInit = TRUE)
-  # #     })
-  # #   })
-  # # 
-  # # 
-  # #   ##########################################
-  # #   # Part7 : Enrichment Analysis
-  # #   ##########################################
-  # #   lapply(names(FlomicsMultiAssay@metadata$omicList), function(omics){
-  # # 
-  # #     lapply(names(FlomicsMultiAssay@metadata$omicList[[omics]]), function(i){
-  # # 
-  # #       observeEvent(inputDiff[[paste0(omics, i)]]$validContrast, {
-  # # 
-  # #         callModule(module = AnnotationEnrichment, id = paste0(omics, i),
-  # #                    dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
-  # #       })
-  # #     })
-  #   })
- 
-    
+    })
     
 
     ##########################################

@@ -264,7 +264,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     
     rea.values[[dataset]]$diffValid <- TRUE
     
-  })
+  }, ignoreInit = TRUE)
 
   return(input)
 }

@@ -38,6 +38,8 @@ QCNormalizationTabUI <- function(id){
 
 QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
+  print("#################################################")
+  
   output$configUI <- renderUI({
     
     validate(
@@ -418,6 +420,8 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
 
   observeEvent(input$Update, {
+    
+    print(paste0("Update ",input$Update))
     
     rea.values[[dataset]]$diffAnal  <- FALSE
     rea.values[[dataset]]$coExpAnal <- FALSE

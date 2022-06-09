@@ -88,6 +88,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
         local.rea.values$plots <- FALSE
         
         rea.values$Contrasts.Sel <- NULL
+        rea.values$datasetList   <- NULL
         
         FlomicsMultiAssay      <<- NULL
         session$userData$Design <- NULL
@@ -256,13 +257,15 @@ LoadOmicsData <- function(input, output, session, rea.values){
     # => upsetR
     observeEvent(input$loadData, {
 
+      print(paste0("loadData ", input$loadData))
       ### load Design
       
       # reset objects and UI
       rea.values$loadData <- FALSE
       rea.values$model    <- FALSE
       rea.values$analysis <- FALSE
-      rea.values$Contrasts.Sel   <- NULL 
+      rea.values$Contrasts.Sel <- NULL 
+      rea.values$datasetList   <- NULL
       
       FlomicsMultiAssay        <<- NULL
       session$userData$Design   <- NULL
@@ -402,7 +405,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
       FlomicsMultiAssay@metadata[["completeCheck"]] <<- completeCheckRes
       local.rea.values$plots <- TRUE
       rea.values$loadData <- TRUE
-      rea.values$model    <- TRUE
+      #rea.values$model    <- TRUE
       
       if(!is.null(completeCheckRes[["error"]])){
         rea.values$loadData <- FALSE
@@ -414,9 +417,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
       #validate({ need(is.null(completeCheckRes[["error"]]) ,message="") })
       
       # 
-
       
-    })
+    }, ignoreInit = TRUE)
     
     ##########################################  
     # (3) check data

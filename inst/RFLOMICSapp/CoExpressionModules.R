@@ -6,7 +6,7 @@ CoSeqAnalysisUI <- function(id){
   tagList(
 
     fluidRow(
-      box(title = span(tagList(icon("cogs"), "   ",a("CoSeq", href="https://www.bioconductor.org/packages/release/bioc/vignettes/coseq/inst/doc/coseq.html"), "(Scroll down for instructions)"  )),
+      box(title = span(tagList(icon('chart-line'), "   ",a("CoSeq", href="https://www.bioconductor.org/packages/release/bioc/vignettes/coseq/inst/doc/coseq.html"), "(Scroll down for instructions)"  )),
           solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
           div(
             h4(tags$span("Parameters set up:", style = "color:orange")),
