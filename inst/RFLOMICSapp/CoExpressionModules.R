@@ -23,11 +23,7 @@ CoSeqAnalysisUI <- function(id){
               half of K. In case of unsuccessful results, a detailed table of errors will appear."),
             h4(tags$span("Cluster option", style = "color:orange")),
             p("If you have a cluster account, you can configure a remote access to it
-              (", a("see config_file", href="install_clustermq.txt"),")","and speed up results obtention. Running coseq in local
-              is very time consuming for the moment as iterations (one K, one replicate) run one after
-              the other (ie. several hours for 5000 genes, a range of 20 K and 10 replicates),
-              Whereas iteration run in parallel onto the cluster (ie, 2 minutes for the same manip).
-              In this case, K and the number of genes have more influence on time"),
+              (", a("see config_file", href="install_clustermq.txt"),")","and speed up results obtention."),
       ))),
     ### parametres for Co-Exp
     fluidRow(
@@ -46,7 +42,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     validate(
       need(rea.values[[dataset]]$diffValid != FALSE, "Please run diff analysis")
     )
-    
+
     # get good param :
     dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
 
@@ -215,12 +211,12 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
   # run coexpression analysis
   # coseq
   observeEvent(input$runCoSeq, {
-    
+
     print(paste0("# 9- CoExpression analysis... ", dataset ))
-    
+
     rea.values[[dataset]]$coExpAnal  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
-    
+
 
     # check if no selected DGE list
     if(length(input$select) == 0){
@@ -232,7 +228,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     })
 
     print(paste("# 10- Co-expression analysis... ", dataset))
-    
+
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal   <<- list()
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpEnrichAnal  <<- list()
     #FlomicsMultiAssay <<- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("CoExpAnal"))
@@ -257,7 +253,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
 
     # If an error occured
     if(isTRUE(dataset.SE@metadata$CoExpAnal[["error"]])){
-      
+
       showModal(modalDialog( title = "Error message",
                              if(! is.null(dataset.SE@metadata$CoExpAnal[["stats"]])){
                                 renderDataTable(dataset.SE@metadata$CoExpAnal[["stats"]],rownames = FALSE)
@@ -271,51 +267,91 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
     #----------------------#
-    
+
     rea.values[[dataset]]$coExpAnal  <- TRUE
 
   }, ignoreInit = TRUE)
-  
-  
+
+
   output$CoExpResultUI <- renderUI({
-    
+
     if (rea.values[[dataset]]$coExpAnal == FALSE) return()
-    
+
     # print coseq plots
     dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
-    
+
+    # Extract results
     plot.coseq.res <- dataset.SE@metadata$CoExpAnal[["plots"]]
-    
+    nb_cluster <- dataset.SE@metadata$CoExpAnal[["cluster.nb"]]
+    coseq.res  <- dataset.SE@metadata$CoExpAnal[["coseqResults"]]
+    cluster.comp <- dataset.SE@metadata$CoExpAnal[["clusters"]]
+    topDEF <- dataset.SE@metadata$DiffExpAnal$mergeDEF
+
+    print(coseq.res)
+    # For each id, get its cluster
+    tab.clusters <- as.data.frame(ifelse(coseq.res@allResults[[names(nb_cluster)]] > 0.5, 1,0))
+    tab.clusters <-  rownames_to_column(tab.clusters,var="DEF")
+    Cluster.tab <- pivot_longer(data=tab.clusters,cols=2:(dim(tab.clusters)[2]),names_to="C",values_to="does.belong")
+
+    # For each id, get its FC for all Contrasts
+    tmp <- lapply(1:length(dataset.SE@metadata$DiffExpAnal$TopDEF),function(x){
+      tmp <- dataset.SE@metadata$DiffExpAnal$TopDEF[x]
+      df <- data.frame("id"=row.names(tmp[[1]]), "logFC"=tmp[[1]]$logFC)
+      names(df)=c("id",paste0("logFC.",filter(dataset.SE@metadata$DiffExpAnal$Validcontrasts,contrastName== names(tmp))$tag))
+      return(df)
+    })
+    FC.tmp <- tmp %>% purrr::reduce(full_join, by='id')
+    FC.tmp.mat <- as.matrix(FC.tmp[,-1])
+    dimnames(FC.tmp.mat)[[1]] <- FC.tmp$id
+
     box(title = "run clustering", status = "warning", solidHeader = TRUE, width = 14,
-        
+
         tabBox( id = "runClustering", width = 12,
-                
+
                 tabPanel("ICL",      renderPlot({ plot.coseq.res$ICL })),
-                tabPanel("logLike",  renderPlot({ plot.coseq.res$logLike })),
                 tabPanel("profiles", renderPlot({ plot.coseq.res$profiles })),
-                tabPanel("boxplots", renderPlot({ plot.coseq.res$boxplots })),
-                tabPanel("boxplots_bis",
-                         renderUI({
-                           
-                           nb_cluster <- dataset.SE@metadata$CoExpAnal[["cluster.nb"]]
-                           coseq.res  <- dataset.SE@metadata$CoExpAnal[["coseqResults"]]
-                           
-                           fluidRow(
-                             ## plot selected cluster(s)
-                             renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, dataset.SE@metadata$Groups) }),
-                             ## print datatable of metabolite
-                             DT::renderDataTable(DT::datatable(as.data.frame(coseq.res@allResults[[1]]) %>%
-                                                                 select(.,paste0("Cluster_",input$selectCluster)) %>%
-                                                                 dplyr::filter(.,get(paste0("Cluster_",input$selectCluster))==1)),
-                                                 options = list(rownames = FALSE, pageLength = 10)),
-                             ## select cluster to plot
-                             checkboxGroupInput(inputId = session$ns("selectCluster"), label = "Select cluster(s) :",
-                                                choices  = 1:nb_cluster, selected = 1, inline = TRUE))})),
-                
                 tabPanel("probapost_boxplots",  renderPlot({ plot.coseq.res$probapost_boxplots })),
                 tabPanel("probapost_barplots",  renderPlot({ plot.coseq.res$probapost_barplots })),
-                tabPanel("probapost_histogram", renderPlot({ plot.coseq.res$probapost_histogram })),
-                tabPanel("summury", 
+                tabPanel("boxplots",
+                         renderPlot({ plot.coseq.res$boxplots })
+                         # Heatmap of common DEF
+                         # renderPlot({ Heatmap(na.omit(FC.tmp.mat),
+                         #         row_split = filter(Cluster.tab,DEF %in% dimnames(na.omit(FC.tmp.mat))[[1]], does.belong == 1)$C,
+                         #         row_title_rot = 0,row_names_gp = gpar(fontsize = 8))})
+
+                         ),
+                tabPanel("boxplots_bis",
+                         renderUI({
+
+                           print(input$selectCluster)
+
+                           fluidRow(
+                             ## plot selected cluster(s)
+
+                             renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, dataset.SE@metadata$Groups) }),
+                             ## print datatable of metabolite
+                             # DT::renderDataTable(DT::datatable(as.data.frame(coseq.res@allResults[[1]]) %>%
+                             #                                     select(.,paste0("Cluster_",input$selectCluster)) %>%
+                            #                                     dplyr::filter(.,get(paste0("Cluster_",input$selectCluster))==1)),
+                             #                    options = list(rownames = FALSE, pageLength = 10)),
+                            renderPlot({ UpSetR::upset(dplyr::filter(topDEF , DEF %in% cluster.comp[[paste0("cluster.",input$selectCluster)]])) }))
+                         })
+                            ,
+                             ## select cluster to plot
+                            radioButtons(inputId = session$ns("selectCluster"), label = "Select cluster :",
+                                         choices  = 1:nb_cluster, selected = 1, inline = TRUE)
+                           ),
+                # tabPanel("probapost_histogram", renderPlot({ plot.coseq.res$probapost_histogram })),
+                tabPanel("clusters_composition",
+                         DT::renderDataTable(DT::datatable(tab.clusters),
+                                             extensions = 'Buttons',
+                                             options = list(dom = 'lfrtipB',
+                                                            rownames = FALSE,
+                                                            pageLength = 10,
+                                                            buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                            lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All"))
+                                                                              ))),
+                tabPanel("summary",
                          DT::renderDataTable(DT::datatable(as.data.frame(dataset.SE@metadata$CoExpAnal[["stats"]])),
                                              options = list(rownames = FALSE, pageLength = 10))
                          )

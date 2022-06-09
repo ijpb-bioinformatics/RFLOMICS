@@ -1502,7 +1502,7 @@ setMethod(f="RunDiffAnalysis",
             # move in ExpDesign Constructor
             model_matrix <- model.matrix(as.formula(design@Model.formula), data=as.data.frame(design@List.Factors))
             rownames(model_matrix) <- rownames(design@ExpDesign)
-            
+
             ListRes <- switch(DiffAnalysisMethod,
                            "edgeRglmfit"=try_rflomics(edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
                                                                     model_matrix    = model_matrix[colnames(object),],
@@ -1559,18 +1559,20 @@ setMethod(f="RunDiffAnalysis",
 #'
 setMethod(f="FilterDiffAnalysis",
           signature="SummarizedExperiment",
-          definition <- function(object, Adj.pvalue.cutoff = 0.05){
+          definition <- function(object, Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0){
 
             if(is.null(object@metadata$DiffExpAnal[["RawDEFres"]])){
               stop("can't filter the DiffExpAnal object because it doesn't exist")
             }
 
             object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
+            object@metadata$DiffExpAnal[["abs.logFC.cutoff"]]  <- logFC.cutoff
 
             ## TopDEF: Top differential expressed features
             DEF_filtred <- lapply(1:length(object@metadata$DiffExpAnal[["DEF"]]),function(x){
               res <- object@metadata$DiffExpAnal[["DEF"]][[x]]
-              res <- res[res$Adj.pvalue <= Adj.pvalue.cutoff,]
+              keep <- res$Adj.pvalue <= Adj.pvalue.cutoff & abs(res$logFC) >= logFC.cutoff
+              res <- res[keep,]
               return(res)
             })
             names(DEF_filtred) <- names(object@metadata$DiffExpAnal[["RawDEFres"]])
@@ -1637,14 +1639,14 @@ setMethod(f="FilterDiffAnalysis",
 #' @examples
 setMethod(f="DiffAnal.plot",
           signature="SummarizedExperiment",
-          definition <- function(object, hypothesis,Adj.pvalue.cutoff = 0.05){
+          definition <- function(object, hypothesis,Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0){
 
             plots <- list()
 
             res      <- object@metadata$DiffExpAnal[["RawDEFres"]][[hypothesis]]
             resTable <- object@metadata$DiffExpAnal[["DEF"]][[hypothesis]]
 
-            plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff)
+            plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff)
             plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable)
 
             return(plots)
@@ -1764,49 +1766,49 @@ setMethod(f="runCoExpression",
             CoExpAnal[["param"]] <- param.list
 
             # run coseq : on local machine or remote cluster
-            
+
             print("#     => coseq... ")
-            
+
             coseq.res.list <- list()
-            
+
             coseq.res.list <- switch (as.character(clustermq),
                     `FALSE` = {
-                      
+
                       try_rflomics(
                         runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
-                      
+
                     },
                     `TRUE` = {
-                      
+
                       try_rflomics(
                         runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
-                      
+
                     })
-            
+
             # If coseq could run (no problem with SSH connexion in case of clustermq=TRUE)
-            
+
             if(! is.null(coseq.res.list$value)){
 
                 CoExpAnal <- c(CoExpAnal, coseq.res.list$value)
-              
+
                 # print("#     => error management ")
-                # 
+                #
                 # # Create a table of jobs summary
                 # error.list <- unlist(lapply(coseq.res.list$value, function(x){
                 #   ifelse(is.null(x$error),"success",as.character(x$error))
                 # }))
-                # 
+                #
                 # K.list <- rep(K,each=replicates)
-                # 
+                #
                 # jobs.tab <- data.frame(K= K.list, error.message=as.factor(error.list))
-                # 
+                #
                 # jobs.tab.sum <- jobs.tab %>% dplyr::group_by(K,error.message) %>%
                 # dplyr::summarise(n=dplyr::n()) %>%  dplyr::mutate(prop.failed=round((n/replicates)*100)) %>%
                 # dplyr::filter(error.message != "success")
-                # 
+                #
                 # # If exists jobs.tab.sum
                 # if(dim(jobs.tab.sum)[1]>0){
-                # 
+                #
                 #   # Number of K for which p(success) > p(failed)
                 #   nK_success <- length(which(jobs.tab.sum$prop.failed < 50))
                 # }
@@ -1814,22 +1816,22 @@ setMethod(f="runCoExpression",
                 #   nK_success <- length(K)
                 # }
                 # print(nK_success)
-                # 
-                # 
+                #
+                #
                 # # If they are at least the half of K which succeed, valid results
                 # if( nK_success > round(length(K)/2)){
-                # 
+                #
                 #       print("#     => process results ")
                 #       # Generate the list of results
                 #       coseq.res.list[["value"]] <- lapply(coseq.res.list$value,function(x){x$value})
-                # 
+                #
                 #       list.tmp <- list()
                 #       list.tmp <<- coseq.res.list[["value"]]
-                #       
+                #
                 #       ICL.logLike.plot <- get.ICL.logLike.plot(coseq.res.list[["value"]])
-                # 
+                #
                 #       coseq.res <- ICL.logLike.plot$coseqObjectMinICL
-                #       
+                #
                 #       # plot
                 #       plot.coseq.res <- coseq::plot(coseq.res, conds = object@metadata$Groups$groups, collapse_reps="average",
                 #                                     graphs = c("profiles", "boxplots", "probapost_boxplots",
@@ -1837,24 +1839,24 @@ setMethod(f="runCoExpression",
                 #       CoExpAnal[["plots"]] <- plot.coseq.res
                 #       CoExpAnal[["plots"]][["ICL"]]     <- ICL.logLike.plot$ICL.p
                 #       CoExpAnal[["plots"]][["logLike"]] <- ICL.logLike.plot$logLike.p
-                #       
+                #
                 #       CoExpAnal[["results"]]      <- TRUE
                 #       CoExpAnal[["warning"]]      <- coseq.res.list$warning
                 #       CoExpAnal[["coseqResults"]] <- coseq.res
                 #       #CoExpAnal[["coseqResults"]] <- coseq.res.list$value
                 #       #coseq.res <- coseq.res.list$value
-                # 
+                #
                 #       # list of genes per cluster
                 #       clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
                 #         names(coseq::clusters(coseq.res)[coseq::clusters(coseq.res) == i])
                 #         })
                 #       CoExpAnal[["clusters"]] <- clusters
                 #       names(CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
-                # 
+                #
                 #       # nbr of cluster
                 #       nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
                 #       CoExpAnal[["cluster.nb"]] <- nb_cluster
-                # 
+                #
                 # }
                 # # Réinitialisation de l'objet CoExpAnal
                 # else{
@@ -1910,19 +1912,19 @@ setMethod(f="runAnnotationEnrichment",
             geneLists <- list()
             if(from == "DiffExpAnal") {
               geneLists <- lapply(ListNames, function(listname){
-                
+
                 row.names(object@metadata$DiffExpAnal[["TopDEF"]][[listname]])
               })
               names(geneLists) <- ListNames
             }
             else if(from == "CoExpAnal"){
               #geneLists.coseq <- lapply(CoExpListNames, function(listname){
-              
+
               geneLists <-  object@metadata[["CoExpAnal"]][["clusters"]][ListNames]
               #})
               #names(geneLists.coseq) <- CoExpListNames
             }
-            
+
 
             Results <- list()
             count.na <- 0
@@ -1949,11 +1951,11 @@ setMethod(f="runAnnotationEnrichment",
             
 
             if(from == "DiffExpAnal") {
-              
+
               object@metadata[["DiffExpEnrichAnal"]] <- EnrichAnal
             }
             else if(from == "CoExpAnal"){
-              
+
               object@metadata[["CoExpEnrichAnal"]] <- EnrichAnal
             }
 
@@ -2043,11 +2045,11 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
 #' @exportMethod resetFlomicsMultiAssay
 #' @examples
 #' @noRd
-#' 
-setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment", 
-          
+#'
+setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
+
           definition <- function(object, results, datasets = NULL){
-            
+
             # if dataset is null we take all datasets presente in MultiAssayExperiment object
             if(is.null(datasets)){
               datasets <- paste0(unlist(object@metadata$omicList), ".filtred")
@@ -2059,21 +2061,21 @@ setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
                 return(object)
               }
             }
-            
+
             for(data in datasets){
-        
+
               if(!is.null(object[[data]])){
-                
+
                 dataset <- object[[data]]
-                
-                for(res in results){ 
+
+                for(res in results){
                   if(!is.null(dataset@metadata[[res]])){ dataset@metadata[[res]] <- NULL }
-                } 
-                
+                }
+
                 object[[data]] <- dataset
               }
-              
+
             }
-            
+
             return(object)
             })

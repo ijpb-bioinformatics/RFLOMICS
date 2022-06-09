@@ -40,4 +40,6 @@ Imports:
     reshape2,
     shiny,
     utils,
-    kableExtra
+    kableExtra,
+    ComplexHeatmap
+    
