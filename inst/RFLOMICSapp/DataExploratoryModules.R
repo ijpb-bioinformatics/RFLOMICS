@@ -73,7 +73,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   output$completenessUI <- renderUI({
 
     SE <- FlomicsMultiAssay@ExperimentList[[dataset]]
-    completeCheckRes <<- CheckExpDesignCompleteness(session$userData$Design, input$selectSamples)
+    completeCheckRes <<- CheckExpDesignCompleteness(FlomicsMultiAssay, input$selectSamples)
 
     if(!is.null(completeCheckRes[["error"]])){
       showModal(modalDialog(title = "Error message", completeCheckRes[["error"]]))
