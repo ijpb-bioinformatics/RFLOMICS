@@ -368,17 +368,17 @@ shinyServer(function(input, output, session) {
                                                        dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]],
                                                        rea.values = rea.values)
 
-          # ##########################################
-          # # Part6 : Co-Expression Analysis
-          # ##########################################
-          # callModule(module  = CoSeqAnalysis, id = paste0(omics, i),
-          #            dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
-          # 
-          # ##########################################
-          # # Part7 : Enrichment Analysis
-          # ##########################################
-          # callModule(module  = AnnotationEnrichment, id = paste0(omics, i),
-          #            dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
+          ##########################################
+          # Part6 : Co-Expression Analysis
+          ##########################################
+          callModule(module  = CoSeqAnalysis, id = paste0(omics, i),
+                     dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
+
+          ##########################################
+          # Part7 : Enrichment Analysis
+          ##########################################
+          callModule(module  = AnnotationEnrichment, id = paste0(omics, i),
+                     dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
           
           
         })
