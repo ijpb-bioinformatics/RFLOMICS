@@ -237,7 +237,7 @@ setMethod(f="CheckExpDesignCompleteness",
 #' \item{averaged expression}
 #' }
 #' @param model.formula a model formula
-#' @return An object of class [\code{\link{ExpDesign-class}}]
+#' @return An object of class [\code{\link{MultiAssayExperiment-class}}]
 #' @exportMethod getExpressionContrast
 #'
 #' @examples
@@ -264,23 +264,25 @@ setMethod(f="CheckExpDesignCompleteness",
 #' @author Christine Paysant-Le Roux
 #'
 setMethod(f="getExpressionContrast",
-          signature="ExpDesign",
+          signature="MultiAssayExperiment",
           definition <- function(object, model.formula){
 
+            Design <- object@metadata$design
+            
             # model formula
             modelFormula <- formula(model.formula)
 
             #Design@Model.formula <- formula(model.formula)
-            object@Model.formula <- model.formula
+            Design@Model.formula <- model.formula
 
             # bio factor list in formulat
             labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
 
-            FactorBioInDesign <- intersect(names(object@Factors.Type[object@Factors.Type == "Bio"]), labelsIntoDesign)
+            FactorBioInDesign <- intersect(names(Design@Factors.Type[Design@Factors.Type == "Bio"]), labelsIntoDesign)
 
-            #BioFactors <- object@List.Factors[FactorBioInDesign]
+            #BioFactors <- Design@List.Factors[FactorBioInDesign]
 
-            treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(object@List.Factors[[x]]), sep="")})
+            treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(Design@List.Factors[[x]]), sep="")})
             names(treatmentFactorsList) <- FactorBioInDesign
 
             interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
@@ -320,9 +322,11 @@ setMethod(f="getExpressionContrast",
             #selectedContrasts <- returnSelectedContrasts(listOfContrastsDF)
 
             # replace interactive selection of contrasts by return all contrasts -> shiny
-            object@Contrasts.List  <- listOfContrastsDF
-            object@Contrasts.Coeff <- data.frame()
-            object@Contrasts.Sel   <- data.frame()
+            Design@Contrasts.List  <- listOfContrastsDF
+            Design@Contrasts.Coeff <- data.frame()
+            Design@Contrasts.Sel   <- data.frame()
+            
+            object@metadata$design <- Design 
 
             return(object)
           })
@@ -335,41 +339,43 @@ setMethod(f="getExpressionContrast",
 
 #' @title getContrastMatrix
 #' @description Define contrast matrix or contrast list with contrast name and contrast coefficients
-#' @param An object of class \link{ExpDesign-class}
+#' @param An object of class \link{MultiAssayExperiment-class}
 #' @param contrastList A vector of character of contrast
-#' @return An object of class \link{ExpDesign-class}
+#' @return An object of class \link{MultiAssayExperiment-class}
 #' @seealso getExpressionContrast
 #' @exportMethod getContrastMatrix
 #' @importFrom stats formula terms.formula
 #'
 #' @author Christine Paysant-Le Roux
 setMethod(f="getContrastMatrix",
-          signature="ExpDesign",
+          signature="MultiAssayExperiment",
           definition <- function(object, contrastList){
+            
+            Design <- object@metadata$design
 
             contrast <- contrastName <- type <- groupComparison <- NULL
 
             contrast.sel.list <- list()
-            contrast.sel.list <- lapply(names(object@Contrasts.List), function(contrastType) {
+            contrast.sel.list <- lapply(names(Design@Contrasts.List), function(contrastType) {
 
-              tmp <- object@Contrasts.List[[contrastType]] %>% dplyr::filter(contrast %in% contrastList) %>%
+              tmp <- Design@Contrasts.List[[contrastType]] %>% dplyr::filter(contrast %in% contrastList) %>%
                 dplyr::select(contrast, contrastName, type, groupComparison)
               return(tmp)
             })
-            object@Contrasts.Sel <- contrast.sel.list %>% purrr::reduce(rbind) %>% dplyr::mutate(tag = paste("H", 1:dim(.)[1], sep=""))
+            Design@Contrasts.Sel <- contrast.sel.list %>% purrr::reduce(rbind) %>% dplyr::mutate(tag = paste("H", 1:dim(.)[1], sep=""))
 
 
-            sampleData <-  object@ExpDesign
-            selectedContrasts <- object@Contrasts.Sel$contrast
+            sampleData <-  Design@ExpDesign
+            selectedContrasts <- Design@Contrasts.Sel$contrast
 
-            modelFormula <- formula(object@Model.formula)
+            modelFormula <- formula(Design@Model.formula)
             # bio factor list in formulat
             labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
-            FactorBioInDesign <- intersect(names(object@Factors.Type[object@Factors.Type == "Bio"]), labelsIntoDesign)
+            FactorBioInDesign <- intersect(names(Design@Factors.Type[Design@Factors.Type == "Bio"]), labelsIntoDesign)
 
-            #BioFactors <- object@List.Factors[FactorBioInDesign]
+            #BioFactors <- Design@List.Factors[FactorBioInDesign]
 
-            treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(object@List.Factors[[x]]), sep="")})
+            treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(Design@List.Factors[[x]]), sep="")})
             names(treatmentFactorsList) <- FactorBioInDesign
 
             treatmentCondenv <- new.env()
@@ -378,7 +384,7 @@ setMethod(f="getContrastMatrix",
             isThreeOrderInteraction <- any(attr(terms.formula(modelFormula),"order") == 3)
 
             # get model matrix
-            modelMatrix <- stats::model.matrix(modelFormula, data = object@List.Factors %>% as.data.frame())
+            modelMatrix <- stats::model.matrix(modelFormula, data = Design@List.Factors %>% as.data.frame())
             colnames(modelMatrix)[colnames(modelMatrix) == "(Intercept)"] <- "Intercept"
             # assign treatment conditions(group) to boolean vectors according to the design model matrix
             #treatmentCondenv <- new.env()
@@ -407,7 +413,9 @@ setMethod(f="getContrastMatrix",
             #contrastMatrix
             # contrastList <- as.list(as.data.frame(coefficientsMatrix))
 
-            object@Contrasts.Coeff <- contrastMatrix
+            Design@Contrasts.Coeff <- contrastMatrix
+            
+            object@metadata$design <- Design
             return(object)
           })
 
