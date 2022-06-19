@@ -104,23 +104,42 @@ Design.Factors.Ref <- c("rep1","Medium","DS")
 
 ```
 
-* Instantiate an object of class Design. 
-This object will contain all information about statistical framework.
+# Creating a Flomics **MultiAssayExperiment** object
 
-```{r refLevel}
+* All input data (abundance, metadata, statistical framework), choice about tools, parameters, threshold, and analysis results are managed in (by) the FlomicsMultiAssayExp object, an instance of the class MultiAssayExperiment (MAE). See the next paragraph to have a description. 
+This object is created by FlomicsMultiAssay.constructor method. This method takes in input : a list of lists (per dataset) of abundance matrices (and their metadata if it exist), and "Design" object.
 
-#Design <- ExpDesign.constructor(ExpDesign = ExpDesign, Design.Factors = Design.Factors)
+- Build a list of abundances :
+```{r list input }
 
-Design <- ExpDesign.constructor(ExpDesign = ExpDesign, refList = Design.Factors.Ref, typeList = Design.Factors.Type)
-
+ListofData <- list(
+  "RNAseq1"=list( "data"=geneCount,      "meta"=NULL, "omicType"="RNAseq"))
+  # "proteomics1"=  list( "data"=protAbundance,  "meta"=NULL, "omicType"="proteomics"),
+  # "Metabolomics1"=list( "data"= metaAbundance, "meta"=NULL, "omicType"="Metabolomics"))
 ```
+
+- Instantiate an object of class MultiAssayExperiment. 
+```{r creat MAE}
+
+ FlomicsMultiAssay <- FlomicsMultiAssay.constructor(inputs      = ListofData, 
+                                                    refList = Design.Factors.Ref, typeList = Design.Factors.Type,ExpDesign = ExpDesign,
+                                                    
+                                                    projectName = projectName)
+```
+
+
+```{r description}
+
+FlomicsMultiAssay
+```
+
 
 * Check the **completeness** of the design. You **must** have all possible combinations of factor's level. **Balanced design** is not required (presence of the same number of replicats for all possible combinations) but advised. You **must** also have at least one biological factor and 2 replicats.
 
 ```{r CheckDesign, fig.cap="Design checking's result",fig.small=TRUE}
   
   # check completeness
-  completeCheckRes <- CheckExpDesignCompleteness(Design)
+  completeCheckRes <- CheckExpDesignCompleteness(FlomicsMultiAssay)
 
   # plot
   completeCheckRes$plot
@@ -161,7 +180,7 @@ categories: simple, averaged and interaction contrasts
 ```{r viewContrast  }
 
  # Get all the possible contrasts from the complete model with interaction
- Design <- getExpressionContrast(object = Design, 
+ Design <- getExpressionContrast(object = FlomicsMultiAssay, 
                                  model.formula = names(Design.formulae[1]))
  
 
@@ -172,44 +191,17 @@ categories: simple, averaged and interaction contrasts
 
 
  # Select The 2 firsts
- Design.contrastList <- Design@Contrasts.List
+ Design.contrastList <- FlomicsMultiAssay@metadata$design@Contrasts.List
  #Design.contrastList$simple <- Design.contrastList$simple[c(1:9)]$contrast
  #Design.contrastList$averaged <- Design.contrastList$averaged[1:3]
  #Design.contrastList <- Design.contrastList[-3]
 
  # Set the coefficients
- Design <- getContrastMatrix(object = Design, contrastList = unlist(Design.contrastList))
+ Design <- getContrastMatrix(object = FlomicsMultiAssay, contrastList = unlist(Design.contrastList))
  
  
 ```
  
-# Creating a Flomics **MultiAssayExperiment** object
-
-* All input data (abundance, metadata, statistical framework), choice about tools, parameters, threshold, and analysis results are managed in (by) the FlomicsMultiAssayExp object, an instance of the class MultiAssayExperiment (MAE). See the next paragraph to have a description. 
-This object is created by FlomicsMultiAssay.constructor method. This method takes in input : a list of lists (per dataset) of abundance matrices (and their metadata if it exist), and "Design" object.
-
-- Build a list of abundances :
-```{r list input }
-
-ListofData <- list(
-  "RNAseq1"=list( "data"=geneCount,      "meta"=NULL, "omicType"="RNAseq"))
-  # "proteomics1"=  list( "data"=protAbundance,  "meta"=NULL, "omicType"="proteomics"),
-  # "Metabolomics1"=list( "data"= metaAbundance, "meta"=NULL, "omicType"="Metabolomics"))
-```
-
-- Instantiate an object of class MultiAssayExperiment. 
-```{r creat MAE}
-
- FlomicsMultiAssay <- FlomicsMultiAssay.constructor(inputs      = ListofData, 
-                                                    Design      = Design, 
-                                                    projectName = projectName)
-```
-
-
-```{r description}
-
-FlomicsMultiAssay
-```
 
 
 # Statistical analysis of RNAseq data:
@@ -222,7 +214,7 @@ RNAseq.raw.SE <-  FlomicsMultiAssay@ExperimentList[[data]]
 <!-- * dans le cas ou le nombre de samples dans la matrice ne correspond tous à fait aux samples decrits dans le design -->
 <!-- il faut faire une fonction pour aider l'utilisateur de retirer des samples facilement -->
 ```{r CheckExp }
-CheckCompleteness.dataset <- CheckExpDesignCompleteness(Design, colnames(RNAseq.raw.SE))
+CheckCompleteness.dataset <- CheckExpDesignCompleteness(FlomicsMultiAssay, colnames(RNAseq.raw.SE))
 
 CheckCompleteness.dataset$plot
 
