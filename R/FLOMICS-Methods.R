@@ -108,7 +108,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 #'  \item{is the design balanced ? presence of the same number of replicat for all possible combinations}
 #'  }
 #'  Completed design and at least on biological and one batch factors are required for using RFLOMICS workflow.
-#' @param An object of class \link{ExpDesign-class}
+#' @param An object of class \link{MultiAssayExperiment-class}
 #' @return a named list of two objects
 #' \itemize{
 #' \item{"count:"}{ a data.frame with the number of each possible combinations of levels for all factors.}
@@ -138,24 +138,26 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 #' CheckExpDesignCompleteness(Design.obj)
 
 setMethod(f="CheckExpDesignCompleteness",
-          signature="ExpDesign",
+          signature="MultiAssayExperiment",
           definition <- function(object, colnames=NULL){
 
+            Design <- object@metadata$design
+            
             # output list
             output <- list()
 
             # check presence of bio factors
-            if (! table(object@Factors.Type)["Bio"] %in% 1:3){
+            if (! table(Design@Factors.Type)["Bio"] %in% 1:3){
 
               stop("ERROR : no bio factor ! or nbr of bio factors exeed 3!")
 
               # message <- "noBio"
               #
-              # group_count  <- object@List.Factors[object@Factors.Type == "batch"] %>% as.data.frame() %>% table() %>% as.data.frame()
+              # group_count  <- Design@List.Factors[Design@Factors.Type == "batch"] %>% as.data.frame() %>% table() %>% as.data.frame()
               # names(group_count)[names(group_count) == "Freq"] <- "Count"
               # output[["count"]]   <- group_count
             }
-            if (table(object@Factors.Type)["batch"] == 0){
+            if (table(Design@Factors.Type)["batch"] == 0){
 
               stop("ERROR : no replicate!")
             }
@@ -163,11 +165,11 @@ setMethod(f="CheckExpDesignCompleteness",
             # count occurence of bio conditions
             if(is.null(colnames)){
 
-              ExpDesign <- object@ExpDesign
+              ExpDesign <- Design@ExpDesign
             }
             else{
 
-              ExpDesign <- dplyr::filter(object@ExpDesign, rownames(object@ExpDesign) %in% colnames)
+              ExpDesign <- dplyr::filter(Design@ExpDesign, rownames(Design@ExpDesign) %in% colnames)
             }
 
 
@@ -175,17 +177,17 @@ setMethod(f="CheckExpDesignCompleteness",
             #
             # BioFact.levels <- sapply(names(ExpDesign), function(x){
             #
-            #   levels(object@List.Factors[[x]])
+            #   levels(Design@List.Factors[[x]])
             # })
 
 
             dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
-              relevel(as.factor(ExpDesign[[i]]), ref=levels(object@List.Factors[[i]])[1])
+              relevel(as.factor(ExpDesign[[i]]), ref=levels(Design@List.Factors[[i]])[1])
             })
             names(dF.List) <- names(ExpDesign)
 
-            group_count  <- dF.List[object@Factors.Type == "Bio"] %>% as.data.frame() %>% table() %>% as.data.frame()
-            names(group_count) <- c(names(dF.List[object@Factors.Type == "Bio"]), "Count")
+            group_count  <- dF.List[Design@Factors.Type == "Bio"] %>% as.data.frame() %>% table() %>% as.data.frame()
+            names(group_count) <- c(names(dF.List[Design@Factors.Type == "Bio"]), "Count")
 
 
             # check presence of relicat / batch
@@ -195,10 +197,6 @@ setMethod(f="CheckExpDesignCompleteness",
 
             output[["error"]] <- NULL
             output[["warning"]] <- NULL
-
-            # message <- dplyr::if_else(min(group_count$Count) == 0 ,           "noCompl",
-            #            dplyr::if_else(length(unique(group_count$Count)) != 1, "noBalan",
-            #            dplyr::if_else(max(group_count$Count) < 3,             "lowRep" , "true")))
 
             if(min(group_count$Count) == 0){
               message <- "ERROR : The experimental design is not complete."
@@ -438,111 +436,6 @@ setMethod(f="getContrastMatrix",
 
 ###### FlomicsMultiAssay CLASS Constructor for managing omics DATA and RESULTS
 
-
-#' @title FlomicsMultiAssay.constructor Constructor for the class \link{MultiAssayExperiment-class}
-#' @description This function initializes an object of class \link{MultiAssayExperiment-class}
-#' from a list of omics data and an object of class \link{ExpDesign-class}.
-#' @param inputs A named list of omic dataset. Names must refer to the name of the omic dataset.
-#' An omics dataset must be itself a list of three objects:
-#' \itemize{
-#' \item{dataFile:}{the path to the omic data}
-#' \item{qcFile:}{the path to an optional quality check file}
-#' \item{omicType:}{Type of omic data type "None", "RNAseq", "proteomics" or "Metabolomics".}
-#' }
-#' @param Design An object of class \link{ExpDesign-class}
-#' @return An object of class \link{MultiAssayExperiment-class}
-#' @examples
-#' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""),header = TRUE,row.names = 1, sep = "\t")
-#'
-#' # Define the type of each factor
-#' Design.Factors.Type <- c("Bio","Bio","batch")
-#'
-#' # Define the reference modality for each factor
-#' Design.Factors.Ref <- c("WT","control","rep1")
-#'
-#' # Initialize an object of class ExpDesign
-#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.Factors.Ref,
-#'  typeList = Design.Factors.Type)
-#' Design.Factors.Name <- names(Design.File)
-#' Design.formulae <- GetModelFormulae(Factors.Name = Design.Factors.Name,Factors.Type=Design.Factors.Type)
-#' Design.formulae[[1]]
-#' Design.obj <- getExpressionContrast(object = Design.obj, model.formula = names(Design.formulae[1]))
-#' Design.contrastList <- lapply(Design.obj@Contrasts.List, function(x) {
-#' return(x[1:2]$contrast)
-#' })
-#' Design.obj <- getContrastMatrix(object = Design.obj, contrastList = unlist(Design.contrastList))
-#'
-#'  # Create a list of datasets
-#' ListofData <- list("RNAseq1"=list("dataFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_gene_counts.txt",sep=""),
-#' "qcFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_bioinfo_QC.txt",sep=""), "omicType"="RNAseq"))
-#' FlomicsMultiAssay.constructor(inputs = ListofData, Design=Design.obj)
-#'
-#' @name FlomicsMultiAssay.constructor
-#' @rdname FlomicsMultiAssay.constructor
-#' @export
-#'
-#'
-
-# FlomicsMultiAssay.constructor <- function(inputs, Design){
-#
-#   # if input == NULL
-#
-#   SummarizedExperimentList <- list()
-#   listmap  <- list()
-#   omicList <- list()
-#   k <- 0
-#   for (dataName in names(inputs)){
-#
-#     k <- k+1
-#
-#     ## construct SummarizedExperiment for each data
-#     abundance <- read.table(inputs[[dataName]][["dataFile"]], header = TRUE, row.names = 1)
-#
-#     if(!is.null(inputs[[dataName]][["qcFile"]])){
-#       print("# ... metadata QC...")
-#       QCmat <- read.table(inputs[[dataName]][["qcFile"]], header = TRUE)
-#     }
-#     else{
-#       QCmat <- data.frame(primary = colnames(abundance),
-#                           colname = colnames(abundance),
-#                           stringsAsFactors = FALSE)
-#     }
-#
-#     # groups
-#
-#     SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance=as.matrix(abundance)),
-#                                                                                        colData  = QCmat,
-#                                                                                        metadata = list(omicType = inputs[[dataName]][["omicType"]],
-#                                                                                                        Groups   = Design@Groups))
-#
-#     # metadata for sampleMap for MultiAssayExperiment
-#     listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
-#                                       colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
-#                                       stringsAsFactors = FALSE)
-#
-#     #
-#     omicType <- inputs[[dataName]][["omicType"]]
-#
-#     colnames <- c(names(omicList[[omicType]]), k)
-#     omicList[[omicType]] <- c(omicList[[omicType]] ,dataName)
-#     names(omicList[[omicType]]) <- colnames
-#
-#   }
-#
-#   FlomicsMultiAssay <- MultiAssayExperiment::MultiAssayExperiment(experiments = SummarizedExperimentList,
-#                                                                   colData     = Design@ExpDesign,
-#                                                                   sampleMap   = MultiAssayExperiment::listToMap(listmap),
-#                                                                   metadata    = list(design = Design,
-#                                                                                      colDataStruc = c(n_dFac = dim(Design@ExpDesign)[2], n_qcFac = 0),
-#                                                                                      omicList = omicList))
-#
-#   return(FlomicsMultiAssay)
-# }
-#
-# #
-# #
-
-
 #' @title FlomicsMultiAssay.constructor Constructor for the class \link{MultiAssayExperiment-class}
 #' @description This function initializes an object of class \link{MultiAssayExperiment-class}
 #' from a list of omics data and an object of class \link{ExpDesign-class}.
@@ -555,6 +448,12 @@ setMethod(f="getContrastMatrix",
 #' }
 #' @param Design An object of class \link{ExpDesign-class}
 #' @param projectName Project name
+#' @param ExpDesign a data.frame. Row names give the name of each sample which has been to be construct
+#' by combining factor's modality separated by a "_" (EX: WT_treated_rep1). Column names give the name of
+#' an experimental factor which is a vector of character storing the factor modality for each sample.
+#' @param refList A list of string giving the reference modality for each factor.
+#' @param typeList A vector of string indicating the type of each experimental factor. Two types of effect
+#' are required ("Bio" or "batch")
 #' @return An object of class \link{MultiAssayExperiment-class}
 #' @examples
 #' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""),header = TRUE,row.names = 1, sep = "\t")
@@ -588,10 +487,12 @@ setMethod(f="getContrastMatrix",
 #'
 #'
 
-FlomicsMultiAssay.constructor <- function(inputs, Design, projectName){
+FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refList , typeList){
 
-  # if input == NULL
-
+  # consctuct ExpDesign object
+  Design <- ExpDesign.constructor(ExpDesign = ExpDesign, refList = refList, typeList = typeList)
+  
+  
   SummarizedExperimentList <- list()
   listmap  <- list()
   omicList <- list()
