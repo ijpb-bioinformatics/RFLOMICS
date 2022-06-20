@@ -25,6 +25,7 @@ source("DataExploratoryModules.R")
 source("DiffExpressionModules.R")
 source("CoExpressionModules.R")
 source("AnnotationEnrichment.R")
+source("07_module_data_integration_MOFA.R")
 source("commonModules.R")
 source("coverPage.R")
 
