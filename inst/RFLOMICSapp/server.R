@@ -89,10 +89,19 @@ shinyServer(function(input, output, session) {
                   GLM_modelUI("model")
           )
         ),
-        
+        #### omics analysis ####
+        ########################
         itemsOmics,
         list(
-          tabItem(tabName = "OmicsIntegration",
+          
+          #### MOFA ####
+          ########################
+          tabItem(tabName = "withMOFA",
+                  uiOutput(outputId = "withMOFA_UI")
+          ),
+          #### MixOmics ####
+          ########################
+          tabItem(tabName = "withMixOmics",
                   h5("in coming :)")
           )
         )
@@ -212,6 +221,19 @@ shinyServer(function(input, output, session) {
         })
       })
     })
+    
+    #### MOFA data integration ####
+    ###############################
+    output$withMOFA_UI <- renderUI({
+      
+      MOFA_settingUI("mofaSetting")
+      
+    })
+        
+        
+        
+    
+    
 
     ########################################################################
     ######################### MAIN #########################################
@@ -282,7 +304,7 @@ shinyServer(function(input, output, session) {
         need(rea.values$analysis == TRUE, message="")
       })
       
-      menuItem(text = "Omics Analysis", tabName = "OmicsAnalysis", icon = icon('chart-area'), startExpanded = TRUE,selected = TRUE,
+      menuItem(text = "Omics Analysis", tabName = "OmicsAnalysis", icon = icon('chart-area'),
                #icon = icon('chart-line'), 
            lapply(names(rea.values$datasetList), function(omics){
              
@@ -309,15 +331,25 @@ shinyServer(function(input, output, session) {
     # update Item menu
     #subitems(names(FlomicsMultiAssay@metadata$omicList))
     #updateTabItems(session, "sbm", selected = "SetUpModelMenu")
+
     
+    #### Item for each data integration tools #####
+    # display tool Item
     output$Integration <- renderMenu({
+      
       validate({
         need(rea.values$analysis == TRUE, message="")
       })
       
-      menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'))  
+
+      menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'), startExpanded = FALSE,selected = FALSE,
+           menuSubItem(text = "Omics analyses summary", tabName = "omicsSum" ),
+           menuSubItem(text = "with MOFA", tabName = "withMOFA" ),
+           menuSubItem(text = "with MixOmics", tabName = "withMixOmics")
+      )
     })
     
+    #### Item for report #####
     output$runReport <- renderUI({
       if(rea.values$analysis == FALSE) return()
       
@@ -384,7 +416,10 @@ shinyServer(function(input, output, session) {
         })
       })
       
+      callModule(module = MOFA_setting, id = "mofaSetting", rea.values = rea.values)
+      
     })
+    
     
 
     ##########################################
