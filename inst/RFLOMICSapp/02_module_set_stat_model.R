@@ -62,6 +62,7 @@ GLM_model <- function(input, output, session, rea.values){
       rea.values$model         <- FALSE
       rea.values$analysis      <- FALSE
       rea.values$Contrasts.Sel <- NULL 
+      rea.values$datasetDiff   <- NULL
 
       FlomicsMultiAssay <<- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("DiffExpAnal", "CoExpAnal", "EnrichAnal"))
       
@@ -125,7 +126,8 @@ GLM_model <- function(input, output, session, rea.values){
       
       print(paste0("# 4- Choice of contrasts..."))
       
-      rea.values$analysis <- FALSE
+      rea.values$analysis    <- FALSE
+      rea.values$datasetDiff <- NULL
       # reset analysis
 
       FlomicsMultiAssay <<- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("DiffExpAnal", "CoExpAnal", "EnrichAnal"))

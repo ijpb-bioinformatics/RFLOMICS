@@ -427,7 +427,11 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$coExpAnal <- FALSE
     rea.values[[dataset]]$diffAnnot <- FALSE
     rea.values[[dataset]]$diffValid <- FALSE
-
+    
+    if (dataset %in% rea.values$datasetDiff){ 
+      rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
+      }
+    
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal <<- list()
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal   <<- list()
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpEnrichAnal  <<- list()

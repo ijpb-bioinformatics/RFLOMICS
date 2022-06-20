@@ -89,6 +89,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
         
         rea.values$Contrasts.Sel <- NULL
         rea.values$datasetList   <- NULL
+        rea.values$datasetDiff   <- NULL
         
         FlomicsMultiAssay      <<- NULL
         #session$userData$Design <- NULL
@@ -266,6 +267,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
       rea.values$analysis <- FALSE
       rea.values$Contrasts.Sel <- NULL 
       rea.values$datasetList   <- NULL
+      rea.values$datasetDiff   <- NULL
       
       FlomicsMultiAssay        <<- NULL
       #session$userData$Design   <- NULL
@@ -309,11 +311,11 @@ LoadOmicsData <- function(input, output, session, rea.values){
       if(! length(stringr::str_subset(dF.Type.dFac, "Bio")) %in% 1:3){
         showModal(modalDialog(title = "Error message", "1 to 3 bio factor(s)")) }
       
-      if(length(stringr::str_subset(dF.Type.dFac, "batch")) == 0){
-        showModal(modalDialog(title = "Error message", "at least 1 batch factor"))}
+      if(! length(stringr::str_subset(dF.Type.dFac, "batch")) %in% 1:2){
+        showModal(modalDialog(title = "Error message", "at least 1 batch factor (max = 2)"))}
       
       validate({ need((length(stringr::str_subset(dF.Type.dFac, "Bio"  )) %in% 1:3) &
-                      (length(stringr::str_subset(dF.Type.dFac, "batch")) != 0), message="") })
+                      (length(stringr::str_subset(dF.Type.dFac, "batch")) %in% 1:2), message="") })
       
       
       ## create Design object

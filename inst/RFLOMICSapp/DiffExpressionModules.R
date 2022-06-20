@@ -105,6 +105,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$diffAnnot  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
 
+    if (dataset %in% rea.values$datasetDiff){ 
+      rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
+      }
+    
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal <<- list()
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal   <<- list()
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpEnrichAnal  <<- list()
@@ -314,6 +318,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]] <<- rea.values[[dataset]]$DiffValidContrast
 
     rea.values[[dataset]]$diffValid <- TRUE
+    rea.values$datasetDiff <- unique(c(rea.values$datasetDiff , dataset))
 
     
   }, ignoreInit = TRUE)
