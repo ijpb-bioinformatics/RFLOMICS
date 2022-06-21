@@ -208,6 +208,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                     ### MAplot
                     tabPanel("MA plot", renderPlot({ diff.plots$MA.plot })),
 
+                    ### MAplot
+                    tabPanel("Volcano plot", renderPlot({ diff.plots$Volcano.plot })),
+
                     ### DEF result table ###
                     tabPanel("Table",
                        ### DEF result table ###
@@ -217,7 +220,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                         options = list(dom = 'lfrtipB',
                                                       rownames = FALSE,
                                                       pageLength = 10,
-                                                      buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                      buttons = c('csv', 'excel'),
                                                       lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All")))) %>%
                            formatStyle('logFC',
                                  backgroundColor = styleInterval(c(0, 0.01), c('blue', 'white', 'red')),
@@ -243,15 +246,16 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
                              ComplexHeatmap::Heatmap(m.def.filter.center, name = "count or XIC",
                                      show_row_names= ifelse( dim(m.def.filter.center)[1] > 50, FALSE, TRUE),
-                                     row_names_gp = gpar(fontsize = 8),
-                                     column_names_gp = gpar(fontsize = 12),
+                                     row_names_gp = grid::gpar(fontsize = 8),
+                                     column_names_gp = grid::gpar(fontsize = 12),
                                      row_title_rot = 0 ,
                                      clustering_method_columns = "ward.D2",
                                      cluster_column_slice=FALSE,
                                      column_split = column_split.value)
                              })
-
                              })
+                             ,
+                             renderText("legend")
                              ,
                              ## select cluster to plot
                              radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-","condColorSelect")),
@@ -315,7 +319,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
     rea.values[[dataset]]$diffValid <- TRUE
 
-    
+
   }, ignoreInit = TRUE)
 
 

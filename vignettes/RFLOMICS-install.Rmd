@@ -18,8 +18,9 @@ knitr::opts_chunk$set(
 library(RFLOMICS)
 ```
 
-# What is clutsermq
-[clustermq](https://github.com/mschubert/clustermq) is a R package...
+# What is clutstermq
+[clustermq](https://github.com/mschubert/clustermq) is a R package which allow to send functions calls as jobs on a computing cluster with a minimal interface provided by the Q function. 
+This package is used in RFLOMICS to speed up differential expression and co-expression analysis. 
 
 # clustermq configuration
 
@@ -79,6 +80,7 @@ II) Configure clustermq
 
      1) Create a file SSH.tmpl in your home directory on your LOCAL machine:
 
+```{bash, eval=FALSE}
 ssh -o "ExitOnForwardFailure yes" -f \
     -R {{ ctl_port }}:localhost:{{ local_port }} \
     -R {{ job_port }}:localhost:{{ fwd_port }} \
@@ -88,30 +90,35 @@ ssh -o "ExitOnForwardFailure yes" -f \
      R --no-save --no-restore -e \
      'clustermq:::ssh_proxy(ctl={{ ctl_port }}, job={{ job_port }})' \
      > {{ ssh_log | /dev/null }} 2>&1"
-     
+```     
+
 
      2) In your $HOME/.Rprofile on your LOCAL machine:
 
+```{bash, eval=FALSE}
     options(
     clustermq.scheduler = "ssh",
     clustermq.template = "/Users/dcharif/SSH.tmpl",
     clustermq.ssh.host = "dcharif@genologin.toulouse.inra.fr", # use your user and host, obviously
     clustermq.ssh.log = "/home/dcharif/cmq_ssh.log" # log for easier debugging
 )
-
+```
 
     3) In your $HOME/.Rprofile on GENOTOUL set the following options:
 
+```{bash, eval=FALSE}
 options(
     clustermq.scheduler = "slurm",
     clustermq.template = "/home/dcharif/clustermq.template",
     clustermq.defaults = list(bashenv="system/R-3.6.0")
 )
+```  
 
 #ou Q(..., template=list(bashenv="system/R-3.6.0"))
 
    4) In your $HOME directory on GENOTOUL, create the clustermq.template file
 
+```{bash, eval=FALSE}
 #!/bin/sh
 #SBATCH --job-name={{ job_name }}
 #SBATCH --partition=workq
@@ -125,7 +132,6 @@ module load {{ bashenv }}
 
 ulimit -v $(( 1024 * {{ memory | 4096 }} ))
 CMQ_AUTH={{ auth }} R --no-save --no-restore -e 'clustermq:::worker("{{ master}}")'
-
-
+```  
 
 

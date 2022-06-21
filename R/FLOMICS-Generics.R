@@ -101,3 +101,4 @@ setGeneric(
   name="resetFlomicsMultiAssay",
   def = function( object, ... ){standardGeneric("resetFlomicsMultiAssay")}
 )
+

@@ -41,5 +41,7 @@ Imports:
     shiny,
     utils,
     kableExtra,
-    ComplexHeatmap
+    ComplexHeatmap,
+    EnhancedVolcano
+    
     

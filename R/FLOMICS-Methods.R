@@ -36,35 +36,35 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
   if(dim(ExpDesign)[1] == 0 | dim(ExpDesign)[2] == 0){
     stop("Error : ExpDesign matrix is impty!")
   }
-  
+
   # check refList length
   if(length(refList) != length(names(ExpDesign))){
     stop("Error : refList length different to dimension of ExpDesign matrix!")
   }
-  
+
   # check typeList length
   if(length(typeList) != length(names(ExpDesign))){
     stop("Error : typeList length different to dimension of ExpDesign matrix!")
   }
-  
+
   # Create the List.Factors list with the choosen level of reference for each factor
   names(refList)  <- names(ExpDesign)
   names(typeList) <- names(ExpDesign)
-  
+
   for(i in c(names(typeList[typeList == "batch"]), names(typeList[typeList == "Bio"]))){
     ExpDesign      <- dplyr::arrange(ExpDesign, get(i))
-    
+
   }
-  
+
   dF.List <- list()
   for(i in names(ExpDesign)){
     ExpDesign[[i]] <- relevel(as.factor(ExpDesign[[i]]), ref=refList[i])
     dF.List[[i]]   <- ExpDesign[[i]]
   }
   # dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
-  # 
+  #
   #   relevel(as.factor(ExpDesign[[i]]), ref=refList[i])
-  #   
+  #
   # })
   names(dF.List) <- names(ExpDesign)
 
@@ -142,7 +142,7 @@ setMethod(f="CheckExpDesignCompleteness",
           definition <- function(object, colnames=NULL){
 
             Design <- object@metadata$design
-            
+
             # output list
             output <- list()
 
@@ -268,7 +268,7 @@ setMethod(f="getExpressionContrast",
           definition <- function(object, model.formula){
 
             Design <- object@metadata$design
-            
+
             # model formula
             modelFormula <- formula(model.formula)
 
@@ -325,8 +325,8 @@ setMethod(f="getExpressionContrast",
             Design@Contrasts.List  <- listOfContrastsDF
             Design@Contrasts.Coeff <- data.frame()
             Design@Contrasts.Sel   <- data.frame()
-            
-            object@metadata$design <- Design 
+
+            object@metadata$design <- Design
 
             return(object)
           })
@@ -350,7 +350,7 @@ setMethod(f="getExpressionContrast",
 setMethod(f="getContrastMatrix",
           signature="MultiAssayExperiment",
           definition <- function(object, contrastList){
-            
+
             Design <- object@metadata$design
 
             contrast <- contrastName <- type <- groupComparison <- NULL
@@ -414,7 +414,7 @@ setMethod(f="getContrastMatrix",
             # contrastList <- as.list(as.data.frame(coefficientsMatrix))
 
             Design@Contrasts.Coeff <- contrastMatrix
-            
+
             object@metadata$design <- Design
             return(object)
           })
@@ -499,8 +499,8 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 
   # consctuct ExpDesign object
   Design <- ExpDesign.constructor(ExpDesign = ExpDesign, refList = refList, typeList = typeList)
-  
-  
+
+
   SummarizedExperimentList <- list()
   listmap  <- list()
   omicList <- list()
@@ -660,7 +660,7 @@ setMethod(f="Library_size_barplot.plot",
               ylab <- "Sum of abundance"
             }
 
-            libSizeNorm <-  dplyr::full_join(object@metadata$Groups, data.frame ("value" = pseudo , "samples"=names(pseudo)), by="samples") %>% 
+            libSizeNorm <-  dplyr::full_join(object@metadata$Groups, data.frame ("value" = pseudo , "samples"=names(pseudo)), by="samples") %>%
                             dplyr::group_by(groups)
 
             libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
@@ -1555,7 +1555,8 @@ setMethod(f="DiffAnal.plot",
             res      <- object@metadata$DiffExpAnal[["RawDEFres"]][[hypothesis]]
             resTable <- object@metadata$DiffExpAnal[["DEF"]][[hypothesis]]
 
-            plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff)
+            plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff)
+            plots[["Volcano.plot"]]     <- Volcano.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff)
             plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable)
 
             return(plots)
@@ -1838,7 +1839,7 @@ setMethod(f="runAnnotationEnrichment",
             Results <- list()
             count.na <- 0
             for(geneList in names(geneLists)){
-              
+
               if(length( intersect(geneLists[[geneList]], annotation$geneID)) !=0 ){
                   Results[[geneList]] <- switch(probaMethod,
                          "hypergeometric"=EnrichmentHyperG(annotation, geneLists[[geneList]], alpha = 0.01)
@@ -1851,13 +1852,13 @@ setMethod(f="runAnnotationEnrichment",
             }
 
             if(count.na == length(names(geneLists))){
-              
+
               EnrichAnal[["results"]] <- NULL
             }
             else{
               EnrichAnal[["results"]] <- Results
             }
-            
+
 
             if(from == "DiffExpAnal") {
 
@@ -1884,7 +1885,7 @@ setMethod(f="runAnnotationEnrichment",
 #' @exportMethod Enrichment.plot
 #' @importFrom dplyr desc
 #' @examples
-Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepresented"), top = 50 , 
+Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepresented"), top = 50 ,
                             domain=NULL, listNames=NULL, from = c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
 
   Decision <- Pvalue_over <- Pvalue_under <- Pvalue <- NULL
@@ -1926,7 +1927,7 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
                      dplyr::mutate(Pvalue = Pvalue_under)
               }
             )
-    
+
     data_ord$Term <- factor(data_ord$Term, levels = data_ord$Term)
 
     Urn_effective <- data$Urn_effective[1]
