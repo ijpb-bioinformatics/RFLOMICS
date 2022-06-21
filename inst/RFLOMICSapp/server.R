@@ -21,7 +21,8 @@ shinyServer(function(input, output, session) {
       analysis = FALSE,
       
       datasetList  = NULL,
-      contrastList = NULL
+      contrastList = NULL,
+      datasetDiff  = NULL
     )
     
     # Use reactive values for dynamic Items
@@ -229,11 +230,6 @@ shinyServer(function(input, output, session) {
       MOFA_settingUI("mofaSetting")
       
     })
-        
-        
-        
-    
-    
 
     ########################################################################
     ######################### MAIN #########################################
@@ -338,7 +334,7 @@ shinyServer(function(input, output, session) {
     output$Integration <- renderMenu({
       
       validate({
-        need(rea.values$analysis == TRUE, message="")
+        need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >=2, message = "")
       })
       
 
@@ -361,8 +357,6 @@ shinyServer(function(input, output, session) {
     # for each omics data type
     # and for each dataser
     # if no error message
-    
-    omics <- "RNAseq"
     i <- 1
     observe({
       
@@ -382,8 +376,8 @@ shinyServer(function(input, output, session) {
             coExpAnnot = FALSE,
             
             DiffValidContrast = NULL,
-            CoExpClusterNames = NULL,
-            omicsType = omics
+            CoExpClusterNames = NULL
+            #omicsType = omics
           )
           
           ##########################################

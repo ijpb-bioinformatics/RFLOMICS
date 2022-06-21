@@ -32,8 +32,8 @@ MOFA_setting <- function(input, output, session, rea.values){
     # )
     
     # get good param :
-    listDataSet <- unlist(FlomicsMultiAssay@metadata$omicList)
-    names(listDataSet) <- unlist(FlomicsMultiAssay@metadata$omicList)
+    #listDataSet <- unlist(FlomicsMultiAssay@metadata$omicList)
+    #names(listDataSet) <- unlist(FlomicsMultiAssay@metadata$omicList)
     
     
     listOfContrast <- FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName
@@ -50,10 +50,10 @@ MOFA_setting <- function(input, output, session, rea.values){
                    pickerInput(
                      inputId  = session$ns("selectedData"),
                      label    = "Setect dataset:",
-                     choices  = listDataSet,
+                     choices  = rea.values$datasetDiff,
                      options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                      multiple = TRUE,
-                     selected = listDataSet))),
+                     selected = rea.values$datasetDiff))),
           
           fluidRow(
             column(12,
@@ -94,7 +94,7 @@ MOFA_setting <- function(input, output, session, rea.values){
           
           fluidRow(
             column(12,
-                   numericInput(inputId = session$ns("maxiter"), label="Max iteration :", value=1000, min = 1000, max=100))),
+                   numericInput(inputId = session$ns("maxiter"), label="Max iteration :", value=1000, min = 1000, max=1000))),
           
           fluidRow(
             column(4, actionButton(session$ns("runMOFA"),"Run")))
@@ -102,12 +102,31 @@ MOFA_setting <- function(input, output, session, rea.values){
   })
   
   
-  
-  
  
   observeEvent(input$runMOFA, {
     
-    # method MOFA
+    # check nbr dataset to integrate
+    # if less then 2 -> error message
+    if(length(input$selectedData) < 2){
+      
+      showModal(modalDialog( title = "Error message", "MOFA need at least 2 datasets!"))
+    }
+    validate({
+      need(length(input$selectedData) >= 2, message="MOFA need at least 2 datasets!")
+    })
+    
+    
+    # check nbr of contrast 
+    # if less then 1 -> error message
+    if(length(input$selectedContrast) == 0){
+      
+      showModal(modalDialog( title = "Error message", "Select at least one contast!"))
+    }
+    validate({
+      need(length(input$selectedContrast) != 0, message="Select at least one contast!")
+    })
+    
+    # run MOFA
     
     #!!!! lister les fonctions pour créer l'objet mofa
     
