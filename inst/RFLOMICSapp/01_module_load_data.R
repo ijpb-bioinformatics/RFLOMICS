@@ -469,7 +469,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
         print(paste0("#    => upset plot..."))
         
         box(width = 6, status = "warning", 
-            renderPlot( isolate({ upsetSamples(FlomicsMultiAssay[unlist(FlomicsMultiAssay@metadata$omicList),]) })),
+            renderPlot( isolate({ upsetSamples(FlomicsMultiAssay[ , , unlist(FlomicsMultiAssay@metadata$omicList)]) })),
             hr(),
             tags$i("**discription**")
         )
