@@ -562,7 +562,15 @@ process_data <- function(FlomicsMultiAssay, dataset, samples , param.list = list
          }
        )
 
-  FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <- SE.processed
+  SE.name <- paste0(dataset,".filtred")
+
+  if (SE.name %in% names(FlomicsMultiAssay)){
+    FlomicsMultiAssay <- FlomicsMultiAssay[,, -which(names(FlomicsMultiAssay) == SE.name)]
+  }
+  
+  FlomicsMultiAssay <- eval(parse(text = paste0('c( FlomicsMultiAssay ,', SE.name, ' = SE.processed )')))
+  
+  #FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <- SE.processed
   return(FlomicsMultiAssay)
 }
 

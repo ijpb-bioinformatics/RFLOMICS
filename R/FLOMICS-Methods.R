@@ -62,9 +62,9 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
     dF.List[[i]]   <- ExpDesign[[i]]
   }
   # dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
-  # 
+  #
   #   relevel(as.factor(ExpDesign[[i]]), ref=refList[i])
-  #   
+  #
   # })
   names(dF.List) <- names(ExpDesign)
   
@@ -1555,7 +1555,9 @@ setMethod(f="DiffAnal.plot",
             res      <- object@metadata$DiffExpAnal[["RawDEFres"]][[hypothesis]]
             resTable <- object@metadata$DiffExpAnal[["DEF"]][[hypothesis]]
             
-            plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff)
+            plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff)
+            plots[["Volcano.plot"]]     <- Volcano.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff)
+            
             plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable)
             
             return(plots)
@@ -1857,8 +1859,7 @@ setMethod(f="runAnnotationEnrichment",
             else{
               EnrichAnal[["results"]] <- Results
             }
-            
-            
+
             if(from == "DiffExpAnal") {
               
               object@metadata[["DiffExpEnrichAnal"]] <- EnrichAnal
@@ -1884,7 +1885,7 @@ setMethod(f="runAnnotationEnrichment",
 #' @exportMethod Enrichment.plot
 #' @importFrom dplyr desc
 #' @examples
-Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepresented"), top = 50 , 
+Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepresented"), top = 50 ,
                             domain=NULL, listNames=NULL, from = c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
   
   Decision <- Pvalue_over <- Pvalue_under <- Pvalue <- NULL
@@ -1916,26 +1917,27 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
     data <- object@metadata[[from]][["results"]][[listname]][["Over_Under_Results"]] %>% dplyr::filter(Domain %in% domain)
     
     data_ord <- switch (Over_Under,
-                        "overrepresented"  = {
-                          dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_over)) %>%
-                            dplyr::mutate(Pvalue = Pvalue_over)
-                          
-                        },
-                        "underrepresented" = {
-                          dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_under)) %>%
-                            dplyr::mutate(Pvalue = Pvalue_under)
-                        }
+                       
+      "overrepresented"  = {
+        dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_over)) %>%
+          dplyr::mutate(Pvalue = Pvalue_over)
+        
+      },
+    "underrepresented" = {
+      dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_under)) %>%
+        dplyr::mutate(Pvalue = Pvalue_under)
+    }
     )
-    
-    data_ord$Term <- factor(data_ord$Term, levels = data_ord$Term)
-    
-    Urn_effective <- data$Urn_effective[1]
-    Trial_effective <- data$Trial_effective[1]
-    
-    p[[listname]] <- ggplot2::ggplot(data = tail(data_ord, n=top), aes(x=sort(Trial_Success), y=Term, size=Urn_Success, color=Pvalue)) +
-      geom_point(alpha=0.5) + scale_size(range = c(0.1, 10)) + scale_color_gradient(low="blue", high="red") + ylab("") + xlab("Count") +
-      ggtitle(paste0(listname, " :\n ",Over_Under," ", Top.tag, " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")"))
-    
+
+data_ord$Term <- factor(data_ord$Term, levels = data_ord$Term)
+
+Urn_effective <- data$Urn_effective[1]
+Trial_effective <- data$Trial_effective[1]
+
+p[[listname]] <- ggplot2::ggplot(data = tail(data_ord, n=top), aes(x=sort(Trial_Success), y=Term, size=Urn_Success, color=Pvalue)) +
+  geom_point(alpha=0.5) + scale_size(range = c(0.1, 10)) + scale_color_gradient(low="blue", high="red") + ylab("") + xlab("Count") +
+  ggtitle(paste0(listname, " :\n ",Over_Under," ", Top.tag, " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")"))
+
   }
   
   return(p)

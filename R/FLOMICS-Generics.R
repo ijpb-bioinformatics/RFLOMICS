@@ -106,3 +106,4 @@ setGeneric(
   name="prepareMOFA",
   def = function( object, ... ){standardGeneric("prepareMOFA")}
 )
+

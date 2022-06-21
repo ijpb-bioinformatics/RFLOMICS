@@ -495,7 +495,22 @@ MA.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, pngFile=NULL){
 }
 
 
+Volcano.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, pngFile=NULL){
 
+  Abundance <- logFC <- Adj.pvalue <- NULL
+  p <- EnhancedVolcano::EnhancedVolcano(toptable = data,
+                  lab = rownames(data),
+                  x = 'logFC',
+                  y = 'Adj.pvalue',
+                  pCutoff = Adj.pvalue.cutoff,
+                  FCcutoff = logFC.cutoff)
+
+  if (! is.null(pngFile)){
+    ggsave(filename = pngFile, plot = p)
+  }
+
+  return(p)
+}
 
 
 
