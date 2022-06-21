@@ -19,6 +19,7 @@ library(ggplot2)
 library(reshape2)
 library(kableExtra)
 library(shinyBS)
+library(MOFA2) ## ADD
 source("00_module_common.R")
 source("01_module_load_data.R")
 source("02_module_set_stat_model.R")
