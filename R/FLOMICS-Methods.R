@@ -2012,44 +2012,61 @@ setMethod(f="prepareMOFA",
           signature="MultiAssayExperiment",
           
           definition <-  function(object, 
-                                  omicsToIntegrate = c("RNAseq", "proteomics", "metabolomics"), # y avait des trucs a changer ici
+                                  omicsToIntegrate = c("RNAseq", "proteomics", "metabolomics"), 
                                   rnaSeq_transfo = "limma (voom)", 
                                   # choice = c("raw", "DE"), 
                                   choice = "DE",
                                   contrast = "union",
                                   group = NULL){
             
+            # object <- FlomicsMultiAssay
+            # omicsToIntegrate = c("RNAseq", "proteomics")
+            # omicsToIntegrate = c("RNAseq.set1", "proteomics.set2")
+            # rnaSeq_transfo = "limma (voom)"
+            # choice = "DE"
+            # contrast = "union"
+            # group = NULL
+            
             # Checking for batch effects
+            cat("Checking for Batch effects\n")
             correct_batch <- FALSE
-            if(any(object@metadata$design@Factors.Type)=="batch"){
+            if(any(object@metadata$design@Factors.Type=="batch")){
               correct_batch <- TRUE
               colBatch <- names(object@metadata$design@Factors.Type)[object@metadata$design@Factors.Type=="batch"]
             }
+            cat(paste0("Correct for Batch: ", correct_batch, "\n"))
+        
             
             # Warnings/error
             # A prevoir : s'il n'y a qu'un type de omique, interruption ?
             # A prevoir : si la liste est vide, interruption
             
             object@ExperimentList <- object@ExperimentList[grep("filtred", names(object@ExperimentList))]
-            object@ExperimentList <- object@ExperimentList[grep(paste(omicsToIntegrate, collapse = "|"), names(object@ExperimentList))]
+            # object@ExperimentList <- object@ExperimentList[grep(paste(omicsToIntegrate, collapse = "|"), names(object@ExperimentList))]
+            object <- object[,,paste0(omicsToIntegrate, ".filtred")]
             
             # Transformation RNASeq using limma::voom
             if(length(grep("RNAseq", omicsToIntegrate)>0)){
               rnaDat <- object@ExperimentList[[grep("RNAseq", names(object@ExperimentList))]]
               assayTransform <- SummarizedExperiment::assay(rnaDat)
-              assayTransform <- assayTransform[, match(rownames(object@metadata$design@ExpDesign), colnames(assayTransform))]
+              # assayTransform <- assayTransform[, match(rownames(object@metadata$design@ExpDesign), colnames(assayTransform))]
               
               rnaDat@metadata[["transform_method_integration"]] <- "none"
               
               designMat <- model.matrix(as.formula(object@metadata$design@Model.formula), data = object@metadata$design@ExpDesign)
-              # Creer un DGElist. (pour avoir les calcnormfactors)
-              limmaRes <- limma::voom(counts = assayTransform, design =designMat) 
+              DGEObject = DGEList(counts = assayTransform, 
+                                  norm.factors = rnaDat@metadata$Normalization$coefNorm$norm.factors, 
+                                  lib.size = rnaDat@metadata$Normalization$coefNorm$lib.size, 
+                                  samples = object@metadata$design@ExpDesign)
+              limmaRes <- limma::voom(DGEObject, design =designMat) 
               
-              rnaDat@metadata[["integration_table"]] <- limmaRes$E
+              SummarizedExperiment::assay(rnaDat) <- limmaRes$E
+              
+              # rnaDat@metadata[["integration_table"]] <- limmaRes$E # au lieu de faire ca, remplacer direct le tableau !!
               rnaDat@metadata[["transform_results_all"]] <- limmaRes # changer l'appellation
-              rnaDat@metadata[["transform_method_integration"]] <- rnaSeq_transfo 
+              rnaDat@metadata[["transform_method_integration"]] <- rnaSeq_transfo
               
-              rnaDat@metadata[["correction_batch_method"]] <- "none" 
+              rnaDat@metadata[["correction_batch_method"]] <- "none"
               if(correct_batch) rnaDat <- rbe_function(object, rnaDat)
               
               rnaDat@metadata[["integration_choice"]] <- choice 
@@ -2061,13 +2078,20 @@ setMethod(f="prepareMOFA",
             
             # Transformation of proteomics/metabolomics data
             res <- lapply(omicsToIntegrate[omicsToIntegrate!="RNAseq"], FUN = function(omicName){
+              # omicName = "proteomics"
+              # objectRef =  object
               
               omicsDat <- object@ExperimentList[[grep(omicName, names(object@ExperimentList))]] 
+              
+              # omicsDat@metadata[["integration_table"]] <- SummarizedExperiment::assay(TransformData(omicsDat, omicsDat@metadata$transform_method))
+              # omicsDat@metadata[["integration_table"]] <- SummarizedExperiment::assay(omicsDat)
+              omicsDat@metadata[["transform_method_integration"]] <- omicsDat@metadata$transform_method 
+              
               omicsDat@metadata[["correction_batch_method"]] <- "none" 
               if(correct_batch) omicsDat <- rbe_function(object, omicsDat)
               
               omicsDat@metadata[["integration_choice"]] <- choice 
-              if(choice == "DE")  omicsDat = filter_DE_from_SE(omicsDat, contrast)
+              if(choice == "DE")  omicsDat <- filter_DE_from_SE(omicsDat, contrast)
               
               object@ExperimentList[[grep(omicName, names(object@ExperimentList))]] <<- omicsDat 
               
@@ -2075,7 +2099,11 @@ setMethod(f="prepareMOFA",
             })
             
             
-            MOFAObject <- MOFA_createObject(object, group = group)
+            MOFAObject <- MOFA2::create_mofa(object, 
+                                             group =  group, 
+                                             extract_metadata = TRUE)
+            # Probleme de dimnames qui ne sont pas les memes... 
+            # MOFAObject <- MOFA_createObject(object, group = group)
             
             return(MOFAObject)
           })

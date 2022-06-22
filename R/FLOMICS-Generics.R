@@ -107,3 +107,7 @@ setGeneric(
   def = function( object, ... ){standardGeneric("prepareMOFA")}
 )
 
+setGeneric(
+  name="run_MOFA_analysis",
+  def = function( object, ... ){standardGeneric("run_MOFA_analysis")}
+)
