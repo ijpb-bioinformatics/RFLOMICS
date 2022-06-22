@@ -137,6 +137,7 @@ MOFA_setting <- function(input, output, session, rea.values){
     # object.2 = MOFA_createObject(object.1, group = "temperature")
     # object.3 = MOFA_prepareObject(object.2, scale_views = TRUE, maxiter = 550, num_factors = 5) 
     
+    print(input$selectedData)
     untrainedMOFA <- prepareMOFA(FlomicsMultiAssay,
                            omicsToIntegrate = input$selectedData,
                            rnaSeq_transfo = input$RNAseqTransfo,
@@ -163,10 +164,10 @@ MOFA_setting <- function(input, output, session, rea.values){
           tabPanel("view1", "? min de nbr de dataset à integrer?; "),
           #tabPanel("view1", MOFA2::plot_factor_cor(FlomicsMultiAssay@metadata$MOFA_results$MOFAobject)),
           ### 
-          tabPanel("view2", FlomicsMultiAssay@metadata$MOFA_results),
+          # tabPanel("view2", FlomicsMultiAssay@metadata$MOFA_results),
           
           ### 
-          tabPanel("view3", MOFA2::plot_factor_cor(FlomicsMultiAssay@metadata$MOFA_results)),
+          # tabPanel("view3", MOFA2::plot_factor_cor(FlomicsMultiAssay@metadata$MOFA_results)),
           
           ### 
           tabPanel("view2", "titi")

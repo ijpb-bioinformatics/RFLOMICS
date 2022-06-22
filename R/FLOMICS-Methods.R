@@ -2119,32 +2119,33 @@ setMethod(f="prepareMOFA",
 #' @exportMethod run_MOFA_analysis
 #' @examples
 #'
-run_MOFA_analysis <- function(object,
-                              scale_views = FALSE,
-                              maxiter = 1000, 
-                              num_factors = 10, 
-                              ...){ # qu'est-ce qu'on propose a l'utilisateur ?
-  
-  data_opts <- get_default_data_options(object)
-  model_opts <- get_default_model_options(object)
-  train_opts <- get_default_training_options(object)
-  
-  data_opts$scale_views <- scale_views
-  train_opts$maxiter <- maxiter
-  model_opts$num_factors <- num_factors
-  
-  MOFAObject <- MOFA2::prepare_mofa(
-    object = object,
-    data_options = data_opts,
-    model_options = model_opts,
-    training_options = train_opts
-  )
-  
-  MOFAObject.trained <- MOFA2::run_mofa(MOFAObject, use_basilisk = TRUE)
-  # peut poser probleme au niveau python et mofapy. 
-  # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R. 
-  
-  return(MOFAObject.trained)
-}
+setMethod(f="run_MOFA_analysis",
+          signature="MOFA", definition <- function(object,
+                                                                   scale_views = FALSE,
+                                                                   maxiter = 1000, 
+                                                                   num_factors = 10, 
+                                                                   ...){
+            
+            data_opts <- get_default_data_options(object)
+            model_opts <- get_default_model_options(object)
+            train_opts <- get_default_training_options(object)
+            
+            data_opts$scale_views <- scale_views
+            train_opts$maxiter <- maxiter
+            model_opts$num_factors <- num_factors
+            
+            MOFAObject <- MOFA2::prepare_mofa(
+              object = object,
+              data_options = data_opts,
+              model_options = model_opts,
+              training_options = train_opts
+            )
+            
+            MOFAObject.trained <- MOFA2::run_mofa(MOFAObject, use_basilisk = TRUE)
+            # peut poser probleme au niveau python et mofapy. 
+            # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R. 
+            
+            return(MOFAObject.trained)
+          })
 
 
