@@ -110,6 +110,10 @@ MOFA_setting <- function(input, output, session, rea.values){
   
   observeEvent(input$runMOFA, {
     
+    local.rea.values$untrainedMOFA <- NULL # reactive ? # ADD 23/06
+    local.rea.values$runMOFA   <- FALSE
+    local.rea.values$resMOFA <- NULL
+    
     # check nbr dataset to integrate
     # if less then 2 -> error message
     if(length(input$selectedData) < 2){
@@ -135,22 +139,22 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     # run MOFA
     print(input$selectedData)
-    FlomicsMultiAssay@metadata[["MOFA_run"]] <- FALSE
     
-    untrainedMOFA <- prepareMOFA(FlomicsMultiAssay,
-                                 omicsToIntegrate = input$selectedData,
-                                 rnaSeq_transfo = input$RNAseqTransfo,
-                                 choice = "DE",
-                                 contrast = input$selectedContrast, 
-                                 group = NULL)
-    FlomicsMultiAssay@metadata[["MOFA_results"]] <<- run_MOFA_analysis(untrainedMOFA, 
-                                                                       scale_views = input$scaleViews,
-                                                                       maxiter = input$maxiter,
-                                                                       num_factors = input$numfactor) 
-    local.rea.values$resMOFA <- FlomicsMultiAssay@metadata[["MOFA_results"]]
+    local.rea.values$untrainedMOFA <- prepareMOFA(FlomicsMultiAssay,
+                                                  omicsToIntegrate = input$selectedData,
+                                                  rnaSeq_transfo = input$RNAseqTransfo,
+                                                  choice = "DE", 
+                                                  contrasts_names = input$selectedContrast,
+                                                  type = input$filtMode,
+                                                  group = NULL)
+    local.rea.values$resMOFA <- run_MOFA_analysis(local.rea.values$untrainedMOFA, 
+                                                  scale_views = input$scaleViews,
+                                                  maxiter = input$maxiter,
+                                                  num_factors = input$numfactor) 
+    FlomicsMultiAssay@metadata[["MOFA_results"]] <<- local.rea.values$resMOFA
     
-    FlomicsMultiAssay@metadata[["MOFA_run"]] <- TRUE
     local.rea.values$runMOFA   <- TRUE
+    FlomicsMultiAssay@metadata[["MOFA_run"]] <- local.rea.values$runMOFA
     
   }, ignoreInit = TRUE)
   
@@ -159,6 +163,11 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     if (local.rea.values$runMOFA == FALSE) return()
     
+    plot_height <- function() { # does not work ?
+      local.rea.values$plotHeight <- length(input$WeightsPlot_Factors_select)*10
+      return(local.rea.values$plotHeight)
+    }
+    
     box(width=14, solidHeader = TRUE, status = "warning",
         title = "MOFA results",
         
@@ -166,20 +175,20 @@ MOFA_setting <- function(input, output, session, rea.values){
           
           ###
           tabPanel("Overview", 
-                   renderPlot(MOFA2::plot_data_overview(FlomicsMultiAssay@metadata[["MOFA_results"]]))
+                   renderPlot(MOFA2::plot_data_overview(local.rea.values$resMOFA))
           ),
           ### 
           tabPanel("Factors Correlation", 
-                   renderPlot(MOFA2::plot_factor_cor(FlomicsMultiAssay@metadata[["MOFA_results"]]))
+                   renderPlot(MOFA2::plot_factor_cor(local.rea.values$resMOFA))
           ),
           ### 
           tabPanel("Explained Variance", 
                    fluidRow(
                      column(6, renderPlot({
-                       g1 <- MOFA2::plot_variance_explained(FlomicsMultiAssay@metadata[["MOFA_results"]], plot_total = TRUE)[[2]] # compute both per factor and per table by default.
+                       g1 <- MOFA2::plot_variance_explained(local.rea.values$resMOFA, plot_total = TRUE)[[2]] # compute both per factor and per table by default.
                        g1 + ggtitle("Total explained variance per omic data")
                      })),
-                     column(6, renderPlot(MOFA2::plot_variance_explained(FlomicsMultiAssay@metadata[["MOFA_results"]], x = "view", y = "factor")+ ggtitle("Explained variance by factors and omic data")))
+                     column(6, renderPlot(MOFA2::plot_variance_explained(local.rea.values$resMOFA, x = "view", y = "factor")+ ggtitle("Explained variance by factors and omic data")))
                    )),
           ### 
           tabPanel("Weights Plot", 
@@ -187,7 +196,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                      column(3, sliderInput(inputId = session$ns("WeightsPlot_Factors_select"),
                                            label = 'Factors:',
                                            min = 1, 
-                                           max = FlomicsMultiAssay@metadata[["MOFA_results"]]@dimensions$K, 
+                                           max = local.rea.values$resMOFA@dimensions$K, 
                                            value = 1:2, step = 1)
                      ),
                      column(2, numericInput(inputId = session$ns("nfeat_choice_WeightsPlot"),
@@ -203,28 +212,22 @@ MOFA_setting <- function(input, output, session, rea.values){
                    fluidRow(
                      renderPlot({
                        
-                       # plot_weights(FlomicsMultiAssay@metadata[["MOFA_results"]], 
-                       #              view = 1, 
-                       #              factor = 1,
-                       #              nfeatures = input$nfeat_choice_WeightsPlot,
-                       #              scale = input$scale_choice_WeightsPlot)
-                       
                        ggplot_list <- list()
                        for(i in min(input$WeightsPlot_Factors_select):max(input$WeightsPlot_Factors_select)){
-                         for(j in views_names(FlomicsMultiAssay@metadata[["MOFA_results"]])){
-                           ggplot_list[[length(ggplot_list)+1]] <- plot_weights(FlomicsMultiAssay@metadata[["MOFA_results"]],
-                                                                                 view = j,
-                                                                                 factor = i,
-                                                                                 nfeatures = input$nfeat_choice_WeightsPlot,
-                                                                                 scale = input$scale_choice_WeightsPlot) + ggtitle(paste0(j, " - Factor ", i))
+                         for(j in views_names(local.rea.values$resMOFA)){
+                           ggplot_list[[length(ggplot_list)+1]] <- plot_weights(local.rea.values$resMOFA,
+                                                                                view = j,
+                                                                                factor = i,
+                                                                                nfeatures = input$nfeat_choice_WeightsPlot,
+                                                                                scale = input$scale_choice_WeightsPlot) + ggtitle(paste0(j, " - Factor ", i))
                          }
                        }
-
+                       
                        ggpubr::ggarrange(plotlist = ggplot_list,
-                                         ncol = length(views_names(FlomicsMultiAssay@metadata[["MOFA_results"]])),
+                                         ncol = length(views_names(local.rea.values$resMOFA)),
                                          nrow = (max(input$WeightsPlot_Factors_select)-min(input$WeightsPlot_Factors_select)+1))
                        
-                     })
+                     }, execOnResize = TRUE) # width = 60, height = plot_height(), 
                      
                    )
           ),
@@ -236,13 +239,13 @@ MOFA_setting <- function(input, output, session, rea.values){
                      column(11, sliderInput(inputId = session$ns("Factors_select"),
                                             label = 'Factors:',
                                             min = 1, 
-                                            max = FlomicsMultiAssay@metadata[["MOFA_results"]]@dimensions$K, # pas forcement l'input, MOFA peut decider d'en enlever. 
+                                            max = local.rea.values$resMOFA@dimensions$K, # pas forcement l'input, MOFA peut decider d'en enlever. 
                                             value = c(1,2), step = 1)) 
                    ),
                    fluidRow(
                      column(11, 
                             DT::renderDataTable({
-                              resTable <- MOFA2::get_weights(FlomicsMultiAssay@metadata[["MOFA_results"]], views = "all", factors = input$Factors_select, abs = FALSE, scale = FALSE, as.data.frame = TRUE)
+                              resTable <- MOFA2::get_weights(local.rea.values$resMOFA, views = "all", factors = input$Factors_select, abs = FALSE, scale = FALSE, as.data.frame = TRUE)
                               
                               resTable %>% DT::datatable(extensions = 'Buttons',
                                                          options = list(dom = 'lfrtipB',
@@ -259,12 +262,12 @@ MOFA_setting <- function(input, output, session, rea.values){
                      column(1, numericInput(inputId = session$ns("factor_choice_heatmap"),
                                             label = "Factor:",
                                             min = 1,
-                                            max =  FlomicsMultiAssay@metadata[["MOFA_results"]]@dimensions$K,
+                                            max =  local.rea.values$resMOFA@dimensions$K,
                                             value = 1, step = 1)),
-                     column(3, radioButtons(inputId = session$ns("view_choice_heatmap"),
+                     column(2, radioButtons(inputId = session$ns("view_choice_heatmap"),
                                             label = "Data:",
-                                            choices = views_names(FlomicsMultiAssay@metadata[["MOFA_results"]]),
-                                            selected = views_names(FlomicsMultiAssay@metadata[["MOFA_results"]])[1]
+                                            choices = views_names(local.rea.values$resMOFA),
+                                            selected = views_names(local.rea.values$resMOFA)[1]
                      )),
                      column(2, numericInput(inputId = session$ns("nfeat_choice_heatmap"),
                                             label = "Features:",
@@ -272,28 +275,32 @@ MOFA_setting <- function(input, output, session, rea.values){
                                             max = 500,
                                             value = 50, # default in MOFA function.
                      )),
-                     column(1, radioButtons(inputId = session$ns("denoise_choice_heatmap"),
-                                            label = "Denoise:",
-                                            choices = c("TRUE", "FALSE"),
-                                            selected = "FALSE")),
+                     # column(1, radioButtons(inputId = session$ns("denoise_choice_heatmap"),
+                     #                        label = "Denoise:",
+                     #                        choices = c("TRUE", "FALSE"),
+                     #                        selected = "FALSE")),
+                     column(1,
+                            checkboxInput(inputId = session$ns("denoise_choice_heatmap"), label = "Denoise", value = FALSE, width = NULL)
+                     ),
                      column(2, radioButtons(inputId = session$ns("annot_samples"),
                                             label = "Annotation:",
                                             choices = c('none', 
-                                                        colnames(FlomicsMultiAssay@metadata$MOFA_results@samples_metadata %>% select(!c(sample, group)))),
+                                                        colnames(local.rea.values$resMOFA@samples_metadata %>% select(!c(sample, group)))),
                                             selected = "none"))
                      
                    ),
                    fluidRow(
                      # if(input$annot_samples == "none") input$annot_samples <- NULL
+                     
                      renderPlot({
                        annot_samples_values <- input$annot_samples
                        if(input$annot_samples == "none") annot_samples_values <- NULL
                        
                        observeEvent(input$view_choice_heatmap, {
-                         updateSliderInput(inputId = "nfeat_choice_heatmap", max = get_dimensions(FlomicsMultiAssay@metadata$MOFA_results)$D[input$view_choice_heatmap][[1]])
+                         updateSliderInput(inputId = "nfeat_choice_heatmap", max = get_dimensions(local.rea.values$resMOFA)$D[input$view_choice_heatmap][[1]])
                        })
                        
-                       res_heatmap <- MOFA2::plot_data_heatmap(FlomicsMultiAssay@metadata[["MOFA_results"]], 
+                       res_heatmap <- MOFA2::plot_data_heatmap(local.rea.values$resMOFA, 
                                                                factor = input$factor_choice_heatmap, 
                                                                view = input$view_choice_heatmap, 
                                                                features = input$nfeat_choice_heatmap,

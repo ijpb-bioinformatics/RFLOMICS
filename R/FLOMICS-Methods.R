@@ -1998,10 +1998,11 @@ setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
 #' @title prepareMOFA
 #'
 #' @param object An object of class \link{MultiAssayExperiment}
-#' @param omicsToIntegrate 
-#' @param rnaSeq_transfo 
-#' @param choice
-#' @param contrast
+#' @param omicsToIntegrate vector of names, refering to the ones in the ExperimentList of object. 
+#' @param rnaSeq_transfo only support limma (voom) for now. Transformation of the rnaSeq data from counts to continuous data. 
+#' @param choice DE filters the object to take only the DE omics. Expects to find all results of the DE analysis. 
+#' @param contrasts_names contrasts names for the selection of DE entities. 
+#' @param type one of union or intersection. 
 #' @param group Not implemented yet in the interface. Useful for MOFA2 run. 
 #' @return An untrained MOFA object
 #' @export
@@ -2016,15 +2017,18 @@ setMethod(f="prepareMOFA",
                                   rnaSeq_transfo = "limma (voom)", 
                                   # choice = c("raw", "DE"), 
                                   choice = "DE",
-                                  contrast = "union",
+                                  contrasts_names = "all",
+                                  type = "union",
                                   group = NULL){
             
             # object <- FlomicsMultiAssay
             # omicsToIntegrate = c("RNAseq", "proteomics")
             # omicsToIntegrate = c("RNAseq.set1", "proteomics.set2")
+            # omicsToIntegrate = c("proteomics.set1", "metabolomics.set2")
             # rnaSeq_transfo = "limma (voom)"
             # choice = "DE"
-            # contrast = "union"
+            # contrasts_names = c("(temperatureLow - temperatureElevated)", "(temperatureMedium - temperatureLow)")
+            # type = "union"
             # group = NULL
             
             # Checking for batch effects
@@ -2070,7 +2074,7 @@ setMethod(f="prepareMOFA",
               if(correct_batch) rnaDat <- rbe_function(object, rnaDat)
               
               rnaDat@metadata[["integration_choice"]] <- choice 
-              if(choice == "DE") rnaDat = filter_DE_from_SE(rnaDat, contrast)
+              if(choice == "DE") rnaDat = filter_DE_from_SE(rnaDat, contrasts_arg = contrasts_names, type)
               
               object@ExperimentList[[grep("RNAseq", names(object@ExperimentList))]] <- rnaDat
             }
@@ -2091,7 +2095,7 @@ setMethod(f="prepareMOFA",
               if(correct_batch) omicsDat <- rbe_function(object, omicsDat)
               
               omicsDat@metadata[["integration_choice"]] <- choice 
-              if(choice == "DE")  omicsDat <- filter_DE_from_SE(omicsDat, contrast)
+              if(choice == "DE")  omicsDat <- filter_DE_from_SE(omicsDat, contrasts_arg = contrasts_names, type)
               
               object@ExperimentList[[grep(omicName, names(object@ExperimentList))]] <<- omicsDat 
               
@@ -2121,10 +2125,10 @@ setMethod(f="prepareMOFA",
 #'
 setMethod(f="run_MOFA_analysis",
           signature="MOFA", definition <- function(object,
-                                                                   scale_views = FALSE,
-                                                                   maxiter = 1000, 
-                                                                   num_factors = 10, 
-                                                                   ...){
+                                                   scale_views = FALSE,
+                                                   maxiter = 1000, 
+                                                   num_factors = 10, 
+                                                   ...){
             
             data_opts <- get_default_data_options(object)
             model_opts <- get_default_model_options(object)
