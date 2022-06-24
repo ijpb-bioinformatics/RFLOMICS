@@ -1996,11 +1996,12 @@ setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
 
 
 #' @title prepareMOFA
-#'
-#' @param object An object of class \link{MultiAssayExperiment}
-#' @param omicsToIntegrate vector of names, refering to the ones in the ExperimentList of object. 
-#' @param rnaSeq_transfo only support limma (voom) for now. Transformation of the rnaSeq data from counts to continuous data. 
-#' @param choice DE filters the object to take only the DE omics. Expects to find all results of the DE analysis. 
+#' @description This function transforms a MultiAssayExperiment produced by rflomics into an untrained MOFA objects. It checks for batch effect to correct them prior to the integration. 
+#' It also transforms RNASeq counts data into continuous data. This is the first step into the integration. 
+#' @param object An object of class \link{MultiAssayExperiment}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param omicsToIntegrate vector of characters strings, referring to the names of the filtered table in 'object@ExperimentList'. 
+#' @param rnaSeq_transfo character string, only supports 'limma (voom)' for now. Transformation of the rnaSeq data from counts to continuous data. 
+#' @param choice character. If choice is set to 'DE', filters the object to take only the DE omics using differential analysis results stored in object. If choice is different than DE, no filtering is applied.
 #' @param contrasts_names contrasts names for the selection of DE entities. 
 #' @param type one of union or intersection. 
 #' @param group Not implemented yet in the interface. Useful for MOFA2 run. 
@@ -2037,23 +2038,18 @@ setMethod(f="prepareMOFA",
             if(any(object@metadata$design@Factors.Type=="batch")){
               correct_batch <- TRUE
               colBatch <- names(object@metadata$design@Factors.Type)[object@metadata$design@Factors.Type=="batch"]
+              cat(paste0("Correct for Batch: ", paste(colBatch, collapse = " "), "\n"))
+            }else{
+              cat("No batch effect found \n")
             }
-            cat(paste0("Correct for Batch: ", correct_batch, "\n"))
-        
-            
-            # Warnings/error
-            # A prevoir : s'il n'y a qu'un type de omique, interruption ?
-            # A prevoir : si la liste est vide, interruption
-            
+
             object@ExperimentList <- object@ExperimentList[grep("filtred", names(object@ExperimentList))]
-            # object@ExperimentList <- object@ExperimentList[grep(paste(omicsToIntegrate, collapse = "|"), names(object@ExperimentList))]
             object <- object[,,paste0(omicsToIntegrate, ".filtred")]
             
             # Transformation RNASeq using limma::voom
             if(length(grep("RNAseq", omicsToIntegrate)>0)){
               rnaDat <- object@ExperimentList[[grep("RNAseq", names(object@ExperimentList))]]
               assayTransform <- SummarizedExperiment::assay(rnaDat)
-              # assayTransform <- assayTransform[, match(rownames(object@metadata$design@ExpDesign), colnames(assayTransform))]
               
               rnaDat@metadata[["transform_method_integration"]] <- "none"
               
@@ -2065,8 +2061,6 @@ setMethod(f="prepareMOFA",
               limmaRes <- limma::voom(DGEObject, design =designMat) 
               
               SummarizedExperiment::assay(rnaDat) <- limmaRes$E
-              
-              # rnaDat@metadata[["integration_table"]] <- limmaRes$E # au lieu de faire ca, remplacer direct le tableau !!
               rnaDat@metadata[["transform_results_all"]] <- limmaRes # changer l'appellation
               rnaDat@metadata[["transform_method_integration"]] <- rnaSeq_transfo
               
@@ -2082,13 +2076,8 @@ setMethod(f="prepareMOFA",
             
             # Transformation of proteomics/metabolomics data
             res <- lapply(omicsToIntegrate[omicsToIntegrate!="RNAseq"], FUN = function(omicName){
-              # omicName = "proteomics"
-              # objectRef =  object
-              
+
               omicsDat <- object@ExperimentList[[grep(omicName, names(object@ExperimentList))]] 
-              
-              # omicsDat@metadata[["integration_table"]] <- SummarizedExperiment::assay(TransformData(omicsDat, omicsDat@metadata$transform_method))
-              # omicsDat@metadata[["integration_table"]] <- SummarizedExperiment::assay(omicsDat)
               omicsDat@metadata[["transform_method_integration"]] <- omicsDat@metadata$transform_method 
               
               omicsDat@metadata[["correction_batch_method"]] <- "none" 
@@ -2106,18 +2095,16 @@ setMethod(f="prepareMOFA",
             MOFAObject <- MOFA2::create_mofa(object, 
                                              group =  group, 
                                              extract_metadata = TRUE)
-            # Probleme de dimnames qui ne sont pas les memes... 
-            # MOFAObject <- MOFA_createObject(object, group = group)
             
             return(MOFAObject)
           })
 
 #' @title run_MOFA_analysis
-#'
+#' @description Runs a MOFA analysis based on an untrained MOFA object and user arguments. 
 #' @param object An untrained MOFA object
-#' @param scale_views 
-#' @param maxiter
-#' @param num_factors
+#' @param scale_views boolean. MOFA option to scale the views so they have the same variance. Default is FALSE.
+#' @param maxiter integer. MOFA option, maximum number of iterations to be considered if there it does not converge. Default is 1000. 
+#' @param num_factors integer. MOFA option, maximum number of factor to consider. Default is 10. 
 #' @return A trained MOFA object
 #' @export
 #' @exportMethod run_MOFA_analysis

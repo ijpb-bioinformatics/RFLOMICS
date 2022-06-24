@@ -10,11 +10,31 @@ MOFA_settingUI <- function(id){
   tagList(
     
     fluidRow(
-      box(title = span(tagList(icon('chart-line'), "   ",a("MOFA", href="https://biofam.github.io/MOFA2/"), tags$small("(Scroll down for instructions)")  )),
+      box(title = span(tagList(icon('chart-line'), "   ",a("MOFA+", href="https://biofam.github.io/MOFA2/"), tags$small("(Scroll down for instructions)")  )),
           solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
           div(      
             h4(tags$span("Parameters set up:", style = "color:orange")),
-            p("C'est la pour marquer des notes pour l'utilisateur")
+            p("You can chose which omics data you want to analyze together. It is required to have selected at least two to run an analysis."),
+            p("As of now, rflomics only allows you to run an analysis on filtered tables, taking into account differential analysis performed previously.
+            You can chose which contrast you want to take the DE genes from. You can select multiple ones (defaults select all the contrasts) 
+              and chose to perform the analysis on the union or intersection of the DE lists."),
+            p("RNASeq data, given in the form of counts, will be processed using limma::voom transformation. 
+              If you have indicated a batch effect when loading your data, it will be corrected in all datatables using limma::removebatcheffect before running MOFA."),
+            
+            h4(tags$span("Outputs:", style = "color:orange")),
+            p("- Data Overview: shows how many samples and omic features are left per table after applying all filters. These are the data on which MOFA is performed."),
+            p("- Factors correlation: shows the correlation between factors. It is essential that the factors are decorrelated between each other. If there is a correlation >0.5 in absolute value, 
+              the results of the analysis cannot be trusted."),
+            p("- Explained variance: two graphs are displayed in this section. 
+            The first graph is showing the total explained variance per omic table. 
+              The second one is a detailed version, showing the percentage of explained variance per feature per omic data."), 
+            # The percentage of explained variance cannot be compared between views."),
+            p("- Weights plot: displays the features weights, for selected factors, for each omic. 
+              You can scale the weights by checking the \"scale weight\" box. This will ensure weights are comprised between -1 and 1."),
+            p("- Weights table: table of weights per selected factors."),
+            p("- Heatmap: shows the data for the selected number of features, per factor and per omic. Original data is displayed by default. 
+              You can use the denoise option to show the reconstruction using factors and weights computed by MOFA2. 
+              The annotation parameter is used to place a color annotation on the sample, based on a metadata feature." ),
           ))),
     ### parametres for Co-Exp
     fluidRow(
@@ -275,10 +295,6 @@ MOFA_setting <- function(input, output, session, rea.values){
                                             max = 500,
                                             value = 50, # default in MOFA function.
                      )),
-                     # column(1, radioButtons(inputId = session$ns("denoise_choice_heatmap"),
-                     #                        label = "Denoise:",
-                     #                        choices = c("TRUE", "FALSE"),
-                     #                        selected = "FALSE")),
                      column(1,
                             checkboxInput(inputId = session$ns("denoise_choice_heatmap"), label = "Denoise", value = FALSE, width = NULL)
                      ),
@@ -292,24 +308,28 @@ MOFA_setting <- function(input, output, session, rea.values){
                    fluidRow(
                      # if(input$annot_samples == "none") input$annot_samples <- NULL
                      
-                     renderPlot({
-                       annot_samples_values <- input$annot_samples
-                       if(input$annot_samples == "none") annot_samples_values <- NULL
-                       
-                       observeEvent(input$view_choice_heatmap, {
-                         updateSliderInput(inputId = "nfeat_choice_heatmap", max = get_dimensions(local.rea.values$resMOFA)$D[input$view_choice_heatmap][[1]])
-                       })
-                       
-                       res_heatmap <- MOFA2::plot_data_heatmap(local.rea.values$resMOFA, 
-                                                               factor = input$factor_choice_heatmap, 
-                                                               view = input$view_choice_heatmap, 
-                                                               features = input$nfeat_choice_heatmap,
-                                                               denoise = input$denoise_choice_heatmap,
-                                                               annotation_samples = annot_samples_values)
-                       grid::grid.draw(res_heatmap)
-                     })
+                     column(12, # heatmap is too large with just renderPlot. 
+                            renderPlot({
+                              annot_samples_values <- input$annot_samples
+                              if(input$annot_samples == "none") annot_samples_values <- NULL
+                              
+                              observeEvent(input$view_choice_heatmap, {
+                                updateSliderInput(inputId = "nfeat_choice_heatmap", max = get_dimensions(local.rea.values$resMOFA)$D[input$view_choice_heatmap][[1]])
+                              })
+                              
+                              res_heatmap <- MOFA2::plot_data_heatmap(local.rea.values$resMOFA, 
+                                                                      factor = input$factor_choice_heatmap, 
+                                                                      view = input$view_choice_heatmap, 
+                                                                      features = input$nfeat_choice_heatmap,
+                                                                      denoise = input$denoise_choice_heatmap,
+                                                                      annotation_samples = annot_samples_values)
+                              grid::grid.draw(res_heatmap)
+                            }))
                    ) # fluidrow heatmap
-          ) # tabpanel heatmap
+          ), # tabpanel heatmap
+          tabPanel("Network",
+                   p("Work in progress :)")
+          ),         
         )# tabsetpanel 
     )#box
   })
