@@ -451,11 +451,14 @@ plotDistr <- function(abundances, dataType, transform_method){
 #' @importFrom ggplot2 geom_histogram
 #' @examples
 #' @noRd
-pvalue.plot <- function(data, pngFile=NULL){
+pvalue.plot <- function(data, hypothesis=hypothesis, pngFile=NULL){
 
   PValue <- NULL
 
-  p <- ggplot2::ggplot(data=data) + geom_histogram(aes(x=pvalue), bins = 200)
+  p <- ggplot2::ggplot(data=data) +
+    ggplot2::geom_histogram(aes(x=pvalue), bins = 200) +
+    ggplot2::labs(x = expression(p - value), y = "count", title = hypothesis )+
+    ggplot2::theme_bw(base_size = 10)
 
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
@@ -477,14 +480,37 @@ globalVariables(names(data))
 #' @importFrom ggplot2 aes geom_point scale_colour_manual ggsave
 #' @examples
 #' @noRd
-MA.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, pngFile=NULL){
+MA.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, pngFile=NULL){
 
+  # Abundance <- logFC <- Adj.pvalue <- NULL
+  # p <- ggplot2::ggplot(data=data, aes(x = Abundance, y=logFC, col= (Adj.pvalue < Adj.pvalue.cutoff & abs(logFC) > log2(FC.cutoff) ))) +
+  #   geom_point(alpha=0.4, size = 0.8) +
+  #   scale_colour_manual(values=c("black","red")) +
+  #   labs(color=paste("Adj.pvalue <=",Adj.pvalue.cutoff,"\n", "|FC| >", FC.cutoff ,sep="")) +
+  #   geom_hline(yintercept = 0)
+  #
+  #
+  # if (! is.null(pngFile)){
+  #   ggsave(filename = pngFile, plot = p)
+  # }
+  #
+  # return(p)
   Abundance <- logFC <- Adj.pvalue <- NULL
-  p <- ggplot2::ggplot(data=data, aes(x = Abundance, y=logFC, col= (Adj.pvalue < Adj.pvalue.cutoff & abs(logFC) > logFC.cutoff ))) +
-    geom_point(alpha=0.4, size = 0.8) +
-    scale_colour_manual(values=c("black","red")) +
-    labs(color=paste("Adj.pvalue <=",Adj.pvalue.cutoff,"\n", "|logFC| >", logFC.cutoff ,sep="")) +
-    geom_hline(yintercept = 0)
+  tmp <- select(data,"Abundance","logFC","Adj.pvalue") %>% rename(., baseMean=Abundance, log2FoldChange=logFC, padj=Adj.pvalue)
+  p <- ggpubr::ggmaplot(tmp, main = hypothesis,
+                       fdr = Adj.pvalue.cutoff, fc = FC.cutoff, size = 0.4,
+                       ylab = bquote(~Log[2] ~ "fold change"),
+                       xlab = bquote(~Log[2] ~ "mean expression"),
+                #       caption = paste("FC cutoff=",FC.cutoff, " and " ,"FDR cutoff=",Adj.pvalue.cutoff,sep=""),
+                        palette = c("#B31B21", "#1465AC", "grey30"),
+                         select.top.method=c("padj","fc"),
+                         legend = "bottom", top = 20,
+                         font.label = c("plain", 6),
+                         font.legend = c(11, "plain", "black"),
+                         font.main = c(11, "bold", "black"))
+                         #ggtheme = ggplot2::theme_minimal() )
+                       ggtheme =ggplot2::theme_bw(base_size = 10) +
+         labs(caption = paste("FC cutoff=",FC.cutoff, " and " ,"FDR cutoff=",Adj.pvalue.cutoff,sep=""))
 
 
   if (! is.null(pngFile)){
@@ -492,10 +518,13 @@ MA.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, pngFile=NULL){
   }
 
   return(p)
+
 }
 
 
-Volcano.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, pngFile=NULL){
+
+
+Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, pngFile=NULL){
 
   Abundance <- logFC <- Adj.pvalue <- NULL
   p <- EnhancedVolcano::EnhancedVolcano(toptable = data,
@@ -503,7 +532,25 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, pngFile=NULL){
                   x = 'logFC',
                   y = 'Adj.pvalue',
                   pCutoff = Adj.pvalue.cutoff,
-                  FCcutoff = logFC.cutoff)
+                  FCcutoff = FC.cutoff,
+                  axisLabSize=10,
+                  pointSize = 1.5,
+                  labSize = 2,
+                  title = hypothesis,
+                  titleLabSize=11,
+                  subtitle = "",
+                  subtitleLabSize = 8,
+                  caption = paste("FC cutoff=",FC.cutoff, " and " ,"FDR cutoff=",Adj.pvalue.cutoff,sep=""),
+                  legendPosition = "bottom",
+                  legendLabSize = 10,
+                  legendIconSize=1.5,
+                  captionLabSize=10,
+                  col = c('grey30', 'forestgreen', 'royalblue', 'red2'),
+                  colAlpha = 0.5,
+                  drawConnectors = TRUE,
+                  hline = c(10e-8),
+                  widthConnectors = 0.5)
+
 
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)

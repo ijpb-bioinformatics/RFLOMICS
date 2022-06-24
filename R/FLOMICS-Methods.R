@@ -1468,19 +1468,19 @@ setMethod(f="RunDiffAnalysis",
 #'
 setMethod(f="FilterDiffAnalysis",
           signature="SummarizedExperiment",
-          definition <- function(object, Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0){
+          definition <- function(object, Adj.pvalue.cutoff = 0.05, FC.cutoff = 1){
 
             if(is.null(object@metadata$DiffExpAnal[["RawDEFres"]])){
               stop("can't filter the DiffExpAnal object because it doesn't exist")
             }
 
             object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
-            object@metadata$DiffExpAnal[["abs.logFC.cutoff"]]  <- logFC.cutoff
+            object@metadata$DiffExpAnal[["abs.FC.cutoff"]]  <- FC.cutoff
 
             ## TopDEF: Top differential expressed features
             DEF_filtred <- lapply(1:length(object@metadata$DiffExpAnal[["DEF"]]),function(x){
               res <- object@metadata$DiffExpAnal[["DEF"]][[x]]
-              keep <- res$Adj.pvalue <= Adj.pvalue.cutoff & abs(res$logFC) >= logFC.cutoff
+              keep <- (res$Adj.pvalue <= Adj.pvalue.cutoff) & (abs(res$logFC) >= log2(FC.cutoff))
               res <- res[keep,]
               return(res)
             })
@@ -1548,16 +1548,16 @@ setMethod(f="FilterDiffAnalysis",
 #' @examples
 setMethod(f="DiffAnal.plot",
           signature="SummarizedExperiment",
-          definition <- function(object, hypothesis,Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0){
+          definition <- function(object, hypothesis,Adj.pvalue.cutoff = 0.05, FC.cutoff = 1){
 
             plots <- list()
 
             res      <- object@metadata$DiffExpAnal[["RawDEFres"]][[hypothesis]]
             resTable <- object@metadata$DiffExpAnal[["DEF"]][[hypothesis]]
 
-            plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff)
-            plots[["Volcano.plot"]]     <- Volcano.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff)
-            plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable)
+            plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, FC.cutoff = FC.cutoff, hypothesis=hypothesis)
+            plots[["Volcano.plot"]]     <- Volcano.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, FC.cutoff = FC.cutoff, hypothesis=hypothesis)
+            plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable,hypothesis=hypothesis)
 
             return(plots)
           })

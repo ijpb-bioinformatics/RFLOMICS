@@ -37,7 +37,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   output$instruction <- renderUI({
     box(title = span(tagList(icon("cogs"), "  ",  a(names(method), href="https://bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf"), "    (Scroll down for instructions)"  )),
         solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
-        p("Differential expression analysis is conducted for each hypothesis. There is just two options to set (the ajusted-pvalue cut-off and the |logFC| cut-off).
+        p("Differential expression analysis is conducted for each hypothesis. There is just two options to set (the ajusted-pvalue cut-off and the |FC| cut-off).
           The results will appear in blocks (one per hypothesis) with 3 outputs:"),
         p("- the distribution of pvalue's : which has to be validated", a("(some help to identify the good shapes)", href="Pvalue_distrib.pdf"),""),
         p("- the MA plot (DE genes in red will varie with the p-value cutoff)"),
@@ -105,10 +105,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$diffAnnot  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
 
-    if (dataset %in% rea.values$datasetDiff){ 
+    if (dataset %in% rea.values$datasetDiff){
       rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
       }
-    
+
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal <<- list()
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal   <<- list()
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpEnrichAnal  <<- list()
@@ -165,9 +165,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
           numericInput(inputId = session$ns("Adj.pvalue.cutoff"),
                    label="Adjusted pvalue cutoff :",
                    value=0.05, 0, max=1, 0.01),
-          numericInput(inputId = session$ns("abs.logFC.cutoff"),
-                       label="|logFC| cutoff :",
-                       value=0, 0, max=1000, 0.1),
+          numericInput(inputId = session$ns("abs.FC.cutoff"),
+                       label="|FC| cutoff :",
+                       value=1, 1, max=1000, 0.1),
           actionButton(session$ns("validContrast"),"Validate"))
     })
 
@@ -185,7 +185,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     ### adj_pvalue filtering by calling the RundDiffAnalysis method without filtering
     local.rea.values$dataset.SE <- FilterDiffAnalysis(object = local.rea.values$dataset.SE,
                                                       Adj.pvalue.cutoff = input$Adj.pvalue.cutoff,
-                                                      logFC.cutoff = input$abs.logFC.cutoff)
+                                                      FC.cutoff = input$abs.FC.cutoff)
 
     #Contrasts.Sel <<- local.rea.values$dataset.SE@metadata$DiffExpAnal$contrasts
 
@@ -197,7 +197,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       stats    <- local.rea.values$dataset.SE@metadata$DiffExpAnal[["stats"]][[vect["contrastName"]]]
 
       diff.plots <- DiffAnal.plot(local.rea.values$dataset.SE, hypothesis=vect["contrastName"],
-                                  Adj.pvalue.cutoff = input$Adj.pvalue.cutoff, logFC.cutoff = input$abs.logFC.cutoff)
+                                  Adj.pvalue.cutoff = input$Adj.pvalue.cutoff, FC.cutoff = input$abs.FC.cutoff)
 
       fluidRow(
         column(10,
@@ -210,10 +210,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                     tabPanel("Pvalue's distribution", renderPlot({ diff.plots$Pvalue.hist })),
 
                     ### MAplot
-                    tabPanel("MA plot", renderPlot({ diff.plots$MA.plot })),
+                    tabPanel("MA plot", renderPlot({ suppressMessages(diff.plots$MA.plot) })),
 
                     ### MAplot
-                    tabPanel("Volcano plot", renderPlot({ diff.plots$Volcano.plot })),
+                    tabPanel("Volcano plot", renderPlot({ suppressMessages(diff.plots$Volcano.plot) })),
 
                     ### DEF result table ###
                     tabPanel("Table",
@@ -227,7 +227,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                                       buttons = c('csv', 'excel'),
                                                       lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All")))) %>%
                            formatStyle('logFC',
-                                 backgroundColor = styleInterval(c(0, 0.01), c('blue', 'white', 'red')),
+                                 backgroundColor = styleInterval(c(0, 0.01), c('royalblue', 'white', 'red2')),
                                  fontWeight = 'bold') %>% formatSignif(columns = 1:dim(resTable)[2], digits = 3)
                        })),
                       tabPanel("Heatmap",
