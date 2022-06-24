@@ -496,21 +496,19 @@ MA.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, p
   #
   # return(p)
   Abundance <- logFC <- Adj.pvalue <- NULL
-  tmp <- select(data,"Abundance","logFC","Adj.pvalue") %>% rename(., baseMean=Abundance, log2FoldChange=logFC, padj=Adj.pvalue)
+  tmp <- select(data,"Abundance","logFC","Adj.pvalue") %>% rename(., baseMeanLog2=Abundance, log2FoldChange=logFC, padj=Adj.pvalue)
   p <- ggpubr::ggmaplot(tmp, main = hypothesis,
-                       fdr = Adj.pvalue.cutoff, fc = FC.cutoff, size = 0.4,
-                       ylab = bquote(~Log[2] ~ "fold change"),
-                       xlab = bquote(~Log[2] ~ "mean expression"),
-                #       caption = paste("FC cutoff=",FC.cutoff, " and " ,"FDR cutoff=",Adj.pvalue.cutoff,sep=""),
-                        palette = c("#B31B21", "#1465AC", "grey30"),
-                         select.top.method=c("padj","fc"),
-                         legend = "bottom", top = 20,
-                         font.label = c("plain", 6),
-                         font.legend = c(11, "plain", "black"),
-                         font.main = c(11, "bold", "black"))
-                         #ggtheme = ggplot2::theme_minimal() )
-                       ggtheme =ggplot2::theme_bw(base_size = 10) +
-         labs(caption = paste("FC cutoff=",FC.cutoff, " and " ,"FDR cutoff=",Adj.pvalue.cutoff,sep=""))
+                fdr = Adj.pvalue.cutoff, fc = FC.cutoff, size = 0.4,
+                ylab = bquote(~Log[2] ~ "fold change"),
+                xlab = bquote(~Log[2] ~ "mean expression"),
+                palette = c("#B31B21", "#1465AC", "grey30"),
+                select.top.method=c("padj","fc"),
+                legend = "bottom", top = 20,
+                font.label = c("plain", 7),
+                font.legend = c(11, "plain", "black"),
+                font.main = c(11, "bold", "black"),
+                caption = paste("FC cutoff=",FC.cutoff, " and " ,"FDR cutoff=",Adj.pvalue.cutoff,sep=""),
+                ggtheme = ggplot2::theme_linedraw())
 
 
   if (! is.null(pngFile)){
@@ -539,7 +537,7 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothes
                   title = hypothesis,
                   titleLabSize=11,
                   subtitle = "",
-                  subtitleLabSize = 8,
+                  subtitleLabSize = 10,
                   caption = paste("FC cutoff=",FC.cutoff, " and " ,"FDR cutoff=",Adj.pvalue.cutoff,sep=""),
                   legendPosition = "bottom",
                   legendLabSize = 10,
