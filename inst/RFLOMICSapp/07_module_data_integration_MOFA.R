@@ -11,8 +11,11 @@ MOFA_settingUI <- function(id){
     
     fluidRow(
       box(title = span(tagList(icon('chart-line'), "   ",a("MOFA", href="https://biofam.github.io/MOFA2/"), tags$small("(Scroll down for instructions)")  )),
-          solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE
-          )),
+          solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
+          div(      
+            h4(tags$span("Parameters set up:", style = "color:orange")),
+            p("C'est la pour marquer des notes pour l'utilisateur")
+          ))),
     ### parametres for Co-Exp
     fluidRow(
       column(3, uiOutput(ns("MOFA_ParamUI"))),
@@ -23,7 +26,7 @@ MOFA_settingUI <- function(id){
 # tags$a(href="www.rstudio.com", "Click here!")
 
 MOFA_setting <- function(input, output, session, rea.values){
-
+  
   # list of parameters  
   output$MOFA_ParamUI <- renderUI({
     
@@ -73,7 +76,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                    radioButtons(inputId = session$ns("filtMode"), label=NULL ,
                                 choices = c("union","intersection"),
                                 selected = "union", inline = FALSE))),
-            
+          
           # set parameters
           fluidRow(
             column(12,
@@ -81,7 +84,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                                label    = "RNAseq transfo :",
                                choices  = c("limma (voom)"),
                                selected = "limma (voom)"))),
-                   
+          
           fluidRow(
             column(12,
                    selectInput(session$ns("scaleViews"),
@@ -102,7 +105,7 @@ MOFA_setting <- function(input, output, session, rea.values){
   })
   
   
- 
+  
   observeEvent(input$runMOFA, {
     
     # check nbr dataset to integrate
@@ -134,31 +137,42 @@ MOFA_setting <- function(input, output, session, rea.values){
     # object.2 = MOFA_createObject(object.1, group = "temperature")
     # object.3 = MOFA_prepareObject(object.2, scale_views = TRUE, maxiter = 550, num_factors = 5) 
     
+    untrainedMOFA <- prepareMOFA(FlomicsMultiAssay,
+                           omicsToIntegrate = input$selectedData,
+                           rnaSeq_transfo = input$RNAseqTransfo,
+                           choice = "DE",
+                           contrast = input$selectedContrast, 
+                           group = NULL)
+    FlomicsMultiAssay@metadata[["MOFA_results"]] <<- run_MOFA_analysis(untrainedMOFA, 
+                                                                     scale_views = input$scaleViews,
+                                                                     maxiter = input$maxiter,
+                                                                     num_factors = input$numiter) # numiter a changer !!!
+    
     
   }, ignoreInit = TRUE)
   
   
   output$ResultViewUI <- renderUI({
-
-     box(width=14, solidHeader = TRUE, status = "warning",
-         title = "MOFA results",
-         
-         tabsetPanel(
-           
-           ###  ###
-           tabPanel("view1", "? min de nbr de dataset à integrer?; "),
-           #tabPanel("view1", MOFA2::plot_factor_cor(FlomicsMultiAssay@metadata$MOFA_results$MOFAobject)),
-           ### 
-           tabPanel("view2", "titi"),
-           
-           ### 
-           tabPanel("view2", "titi"),
-           
-           ### 
-           tabPanel("view2", "titi")
-         )
-     )
-
+    
+    box(width=14, solidHeader = TRUE, status = "warning",
+        title = "MOFA results",
+        
+        tabsetPanel(
+          
+          ###  ###
+          tabPanel("view1", "? min de nbr de dataset à integrer?; "),
+          #tabPanel("view1", MOFA2::plot_factor_cor(FlomicsMultiAssay@metadata$MOFA_results$MOFAobject)),
+          ### 
+          tabPanel("view2", FlomicsMultiAssay@metadata$MOFA_results),
+          
+          ### 
+          tabPanel("view3", MOFA2::plot_factor_cor(FlomicsMultiAssay@metadata$MOFA_results)),
+          
+          ### 
+          tabPanel("view2", "titi")
+        )
+    )
+    
   })
 }
 

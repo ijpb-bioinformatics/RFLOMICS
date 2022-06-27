@@ -74,7 +74,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 
   groups <- ExpDesign %>% as.data.frame() %>%
     dplyr::mutate(samples = rownames(.)) %>%
-            tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
+    tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
 
   Design = new(Class = "ExpDesign",
                ExpDesign=as.data.frame(ExpDesign),
@@ -539,7 +539,7 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
     SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance=as.matrix(matrix.filt)),
                                                                                        colData  = QCmat,
                                                                                        metadata = list(omicType = inputs[[dataName]][["omicType"]],
-                                                                                                         Groups = Design@Groups,
+                                                                                                       Groups = Design@Groups,
                                                                                                        rowSums.zero = genes_flt0))
     #names(assays(SummarizedExperimentList[[dataName]])) <- c(dataName)
 
@@ -560,8 +560,8 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 
 
   prepFlomicsMultiAssay <- MultiAssayExperiment::prepMultiAssay( ExperimentList = SummarizedExperimentList,
-                                           sampleMap      = MultiAssayExperiment::listToMap(listmap),
-                                           colData        = Design@ExpDesign, outFile = stdout())
+                                                                 sampleMap      = MultiAssayExperiment::listToMap(listmap),
+                                                                 colData        = Design@ExpDesign, outFile = stdout())
 
 
   FlomicsMultiAssay <- MultiAssayExperiment::MultiAssayExperiment(experiments = prepFlomicsMultiAssay$experiments,
@@ -661,7 +661,7 @@ setMethod(f="Library_size_barplot.plot",
             }
 
             libSizeNorm <-  dplyr::full_join(object@metadata$Groups, data.frame ("value" = pseudo , "samples"=names(pseudo)), by="samples") %>%
-                            dplyr::group_by(groups)
+              dplyr::group_by(groups)
 
             libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
 
@@ -754,7 +754,7 @@ setMethod(f="Data_Distribution_Density.plot",
                                   x_lab  <- "Transformed protein abundance"
                                   title  <- "Protein abundance (XIC intensity)"
 
-                                  }
+                                }
                         )
 
 
@@ -1084,8 +1084,8 @@ setMethod(f="mvQCdesign",
                   dplyr::arrange(Levels,y) %>%
                   # add column
                   dplyr::mutate(.,"x"=1:nF,
-                         "Axis"=rep(paste("PCA",j, "\n(",round(resPCA$eig[j,2],1),"%)",sep=""),nF),
-                         "FactorN"=rep(FactorName,nF))
+                                "Axis"=rep(paste("PCA",j, "\n(",round(resPCA$eig[j,2],1),"%)",sep=""),nF),
+                                "FactorN"=rep(FactorName,nF))
 
               }
               bigdf[[i]] <- dplyr::bind_rows(df)
@@ -1112,7 +1112,7 @@ setMethod(f="mvQCdesign",
             if(! is.null(pngFile)){
               ggplot2::ggsave(filename = pngFile,  plot = p)
             }
-})
+          })
 
 # copier coldataStruct dans metadata
 # tester que PCA existe
@@ -1149,10 +1149,10 @@ setMethod(f="mvQCdata",
             corA=list()
             VarAxis = list()
             for(i in 1:axis){
-            corA[[i]] <- cor(resPCA$ind$coord[,i],
-                             as.data.frame(object[[data]]@colData[,-c(1:2)]),
-                             method="spearman")
-            VarAxis[[i]] <- paste("\n(Var=",round(resPCA$eig[i,2],1),")",sep="")
+              corA[[i]] <- cor(resPCA$ind$coord[,i],
+                               as.data.frame(object[[data]]@colData[,-c(1:2)]),
+                               method="spearman")
+              VarAxis[[i]] <- paste("\n(Var=",round(resPCA$eig[i,2],1),")",sep="")
             }
 
             df = data.frame("QCparam"=rep(var,axis),
@@ -1202,7 +1202,7 @@ setMethod(f= "TransformData",
                    "log2" = {
                      SummarizedExperiment::assay(objectTransform) <- log2(assayTransform+1)
                      objectTransform@metadata[["transform_method"]] <- transform_method
-                     },
+                   },
 
                    "log10" = {
                      SummarizedExperiment::assay(objectTransform) <- log10(assayTransform+1)
@@ -1212,7 +1212,7 @@ setMethod(f= "TransformData",
                    "squareroot" = {
                      SummarizedExperiment::assay(objectTransform) <- sqrt(assayTransform)
                      objectTransform@metadata[["transform_method"]] <- transform_method
-                     },
+                   },
 
                    "none"= {
                      SummarizedExperiment::assay(objectTransform) <- assayTransform
@@ -1281,10 +1281,10 @@ setMethod(f= "FilterLowAbundance",
                    "NbConditions" = { keep <- rowSums(edgeR::cpm(assayFilt) >= CPM_Cutoff) >=  NbConditions },
                    "NbReplicates" = { keep <- rowSums(edgeR::cpm(assayFilt) >= CPM_Cutoff) >=  min(NbReplicate) },
                    "filterByExpr" = { dge  <- edgeR::DGEList(counts = assayFilt, genes = rownames(assayFilt))
-                                      #keep <- filterByExpr(dge, GLM_Model)
-                                      keep <- edgeR::filterByExpr(dge)
-                                      }
-                   )
+                   #keep <- filterByExpr(dge, GLM_Model)
+                   keep <- edgeR::filterByExpr(dge)
+                   }
+            )
 
             ## nbr of genes filtered
             genes_flt1  <- objectFilt[!keep]@NAMES
@@ -1413,33 +1413,33 @@ setMethod(f="RunDiffAnalysis",
             rownames(model_matrix) <- rownames(design@ExpDesign)
 
             ListRes <- switch(DiffAnalysisMethod,
-                           "edgeRglmfit"=try_rflomics(edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
-                                                                    model_matrix    = model_matrix[colnames(object),],
-                                                                    group           = object@metadata$Normalization$coefNorm$group,
-                                                                    lib.size        = object@metadata$Normalization$coefNorm$lib.size,
-                                                                    norm.factors    = object@metadata$Normalization$coefNorm$norm.factors,
-                                                                    Contrasts.Sel   = object@metadata$DiffExpAnal[["contrasts"]],
-                                                                    Contrasts.Coeff = design@Contrasts.Coeff,
-                                                                    FDR             = 1,
-                                                                    clustermq=clustermq)),
-                             "limmalmFit"=try_rflomics(limma.AnaDiff(count_matrix      = SummarizedExperiment::assay(object),
-                                                                     model_matrix      = model_matrix[colnames(object),],
-                                                                     Contrasts.Sel     = object@metadata$DiffExpAnal[["contrasts"]],
-                                                                     Contrasts.Coeff   = design@Contrasts.Coeff,
-                                                                     Adj.pvalue.cutoff = 1,
-                                                                     Adj.pvalue.method = Adj.pvalue.method,
-                                                                     clustermq=clustermq)))
+                              "edgeRglmfit"=try_rflomics(edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
+                                                                       model_matrix    = model_matrix[colnames(object),],
+                                                                       group           = object@metadata$Normalization$coefNorm$group,
+                                                                       lib.size        = object@metadata$Normalization$coefNorm$lib.size,
+                                                                       norm.factors    = object@metadata$Normalization$coefNorm$norm.factors,
+                                                                       Contrasts.Sel   = object@metadata$DiffExpAnal[["contrasts"]],
+                                                                       Contrasts.Coeff = design@Contrasts.Coeff,
+                                                                       FDR             = 1,
+                                                                       clustermq=clustermq)),
+                              "limmalmFit"=try_rflomics(limma.AnaDiff(count_matrix      = SummarizedExperiment::assay(object),
+                                                                      model_matrix      = model_matrix[colnames(object),],
+                                                                      Contrasts.Sel     = object@metadata$DiffExpAnal[["contrasts"]],
+                                                                      Contrasts.Coeff   = design@Contrasts.Coeff,
+                                                                      Adj.pvalue.cutoff = 1,
+                                                                      Adj.pvalue.method = Adj.pvalue.method,
+                                                                      clustermq=clustermq)))
 
 
 
             if(! is.null(ListRes$value)){
               if(! is.null(ListRes$value[["RawDEFres"]])){
-            object@metadata$DiffExpAnal[["results"]] <- TRUE
-            object@metadata$DiffExpAnal[["RawDEFres"]] <- ListRes$value[["RawDEFres"]]
-            object@metadata$DiffExpAnal[["DEF"]] <- ListRes$value[["TopDEF"]]
+                object@metadata$DiffExpAnal[["results"]] <- TRUE
+                object@metadata$DiffExpAnal[["RawDEFres"]] <- ListRes$value[["RawDEFres"]]
+                object@metadata$DiffExpAnal[["DEF"]] <- ListRes$value[["TopDEF"]]
               }else{
-              object@metadata$DiffExpAnal[["results"]] <- FALSE
-              object@metadata$DiffExpAnal[["ErrorStats"]] <- ListRes$value[["ErrorTab"]]
+                object@metadata$DiffExpAnal[["results"]] <- FALSE
+                object@metadata$DiffExpAnal[["ErrorStats"]] <- ListRes$value[["ErrorTab"]]
               }
             }else{
               object@metadata$DiffExpAnal[["results"]] <- FALSE
@@ -1497,13 +1497,13 @@ setMethod(f="FilterDiffAnalysis",
               gDEdown =  dim(dplyr::filter(object@metadata$DiffExpAnal[["TopDEF"]][[x]],logFC < 0))[1]
               pgDEdown =  round((gDEdown/gDE)*100,0)
               list(
-              "gN" = gN,
-              "gDE" =  gDE,
-              "pgDE" =  pgDE,
-              "gDEup" =  gDEup,
-              "pgDEup" =  pgDEup,
-              "gDEdown" =  gDEdown,
-              "pgDEdown" =  pgDEdown)
+                "gN" = gN,
+                "gDE" =  gDE,
+                "pgDE" =  pgDE,
+                "gDEup" =  gDEup,
+                "pgDEup" =  pgDEup,
+                "gDEdown" =  gDEdown,
+                "pgDEdown" =  pgDEdown)
             })
             names(stats_list) <- names(object@metadata$DiffExpAnal[["RawDEFres"]])
             object@metadata$DiffExpAnal[["stats"]] <- stats_list
@@ -1523,7 +1523,7 @@ setMethod(f="FilterDiffAnalysis",
             object@metadata$DiffExpAnal[["mergeDEF"]] <- DEF_list %>% purrr::reduce(dplyr::full_join, by="DEF") %>%
               dplyr::mutate_at(.vars = 2:(length(DEF_list)+1),
                                .funs = function(x){
-                                  dplyr::if_else(is.na(x), 0, 1)}) %>%
+                                 dplyr::if_else(is.na(x), 0, 1)}) %>%
               data.table::data.table()
 
             return(object)
@@ -1548,12 +1548,14 @@ setMethod(f="FilterDiffAnalysis",
 #' @examples
 setMethod(f="DiffAnal.plot",
           signature="SummarizedExperiment",
+
           definition <- function(object, hypothesis,Adj.pvalue.cutoff = 0.05, FC.cutoff = 1){
 
             plots <- list()
 
             res      <- object@metadata$DiffExpAnal[["RawDEFres"]][[hypothesis]]
             resTable <- object@metadata$DiffExpAnal[["DEF"]][[hypothesis]]
+
 
             plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, FC.cutoff = FC.cutoff, hypothesis=hypothesis)
             plots[["Volcano.plot"]]     <- Volcano.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, FC.cutoff = FC.cutoff, hypothesis=hypothesis)
@@ -1635,42 +1637,42 @@ setMethod(f="runCoExpression",
             param.list <- list("meanFilterCutoff"=NULL)
             switch (object@metadata$omicType,
 
-              "RNAseq" = {
-                param.list[["model"]]            <- model
-                param.list[["transformation"]]   <- "arcsin"
-                param.list[["normFactors"]]      <- "TMM"
-                param.list[["meanFilterCutoff"]] <- 50
-                param.list[["GaussianModel"]]    <- GaussianModel
+                    "RNAseq" = {
+                      param.list[["model"]]            <- model
+                      param.list[["transformation"]]   <- "arcsin"
+                      param.list[["normFactors"]]      <- "TMM"
+                      param.list[["meanFilterCutoff"]] <- 50
+                      param.list[["GaussianModel"]]    <- GaussianModel
 
-              },
-              "proteomics" = {
-                # Print the selected GaussianModel
-                print(paste("Use ",GaussianModel,sep=""))
-                print("Scale each protein (center=TRUE,scale = TRUE)")
-                CoExpAnal[["transformation.prot"]] <- "scaleProt"
-                counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
+                    },
+                    "proteomics" = {
+                      # Print the selected GaussianModel
+                      print(paste("Use ",GaussianModel,sep=""))
+                      print("Scale each protein (center=TRUE,scale = TRUE)")
+                      CoExpAnal[["transformation.prot"]] <- "scaleProt"
+                      counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
 
-                # param
-                param.list[["model"]]            <- model
-                param.list[["transformation"]]   <- "none"
-                param.list[["normFactors"]]      <- "none"
-                #param.list[["meanFilterCutoff"]] <- NULL
-                param.list[["GaussianModel"]]    <- GaussianModel
-              },
-              "metabolomics" = {
-                # Print the selected GaussianModel
-                print(paste("Use ",GaussianModel,sep=""))
-                print("Scale each metabolite (center=TRUE,scale = TRUE)")
-                CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
-                counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
+                      # param
+                      param.list[["model"]]            <- model
+                      param.list[["transformation"]]   <- "none"
+                      param.list[["normFactors"]]      <- "none"
+                      #param.list[["meanFilterCutoff"]] <- NULL
+                      param.list[["GaussianModel"]]    <- GaussianModel
+                    },
+                    "metabolomics" = {
+                      # Print the selected GaussianModel
+                      print(paste("Use ",GaussianModel,sep=""))
+                      print("Scale each metabolite (center=TRUE,scale = TRUE)")
+                      CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
+                      counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
 
-                # param
-                param.list[["model"]]            <- model
-                param.list[["transformation"]]   <- "none"
-                param.list[["normFactors"]]      <- "none"
-                #param.list[["meanFilterCutoff"]] <- NULL
-                param.list[["GaussianModel"]]    <- GaussianModel
-              }
+                      # param
+                      param.list[["model"]]            <- model
+                      param.list[["transformation"]]   <- "none"
+                      param.list[["normFactors"]]      <- "none"
+                      #param.list[["meanFilterCutoff"]] <- NULL
+                      param.list[["GaussianModel"]]    <- GaussianModel
+                    }
             )
 
             CoExpAnal[["param"]] <- param.list
@@ -1682,108 +1684,108 @@ setMethod(f="runCoExpression",
             coseq.res.list <- list()
 
             coseq.res.list <- switch (as.character(clustermq),
-                    `FALSE` = {
+                                      `FALSE` = {
 
-                      try_rflomics(
-                        runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
+                                        try_rflomics(
+                                          runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
 
-                    },
-                    `TRUE` = {
+                                      },
+                                      `TRUE` = {
 
-                      try_rflomics(
-                        runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
+                                        try_rflomics(
+                                          runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
 
-                    })
+                                      })
 
             # If coseq could run (no problem with SSH connexion in case of clustermq=TRUE)
 
             if(! is.null(coseq.res.list$value)){
 
-                CoExpAnal <- c(CoExpAnal, coseq.res.list$value)
+              CoExpAnal <- c(CoExpAnal, coseq.res.list$value)
 
-                # print("#     => error management ")
-                #
-                # # Create a table of jobs summary
-                # error.list <- unlist(lapply(coseq.res.list$value, function(x){
-                #   ifelse(is.null(x$error),"success",as.character(x$error))
-                # }))
-                #
-                # K.list <- rep(K,each=replicates)
-                #
-                # jobs.tab <- data.frame(K= K.list, error.message=as.factor(error.list))
-                #
-                # jobs.tab.sum <- jobs.tab %>% dplyr::group_by(K,error.message) %>%
-                # dplyr::summarise(n=dplyr::n()) %>%  dplyr::mutate(prop.failed=round((n/replicates)*100)) %>%
-                # dplyr::filter(error.message != "success")
-                #
-                # # If exists jobs.tab.sum
-                # if(dim(jobs.tab.sum)[1]>0){
-                #
-                #   # Number of K for which p(success) > p(failed)
-                #   nK_success <- length(which(jobs.tab.sum$prop.failed < 50))
-                # }
-                # else{
-                #   nK_success <- length(K)
-                # }
-                # print(nK_success)
-                #
-                #
-                # # If they are at least the half of K which succeed, valid results
-                # if( nK_success > round(length(K)/2)){
-                #
-                #       print("#     => process results ")
-                #       # Generate the list of results
-                #       coseq.res.list[["value"]] <- lapply(coseq.res.list$value,function(x){x$value})
-                #
-                #       list.tmp <- list()
-                #       list.tmp <<- coseq.res.list[["value"]]
-                #
-                #       ICL.logLike.plot <- get.ICL.logLike.plot(coseq.res.list[["value"]])
-                #
-                #       coseq.res <- ICL.logLike.plot$coseqObjectMinICL
-                #
-                #       # plot
-                #       plot.coseq.res <- coseq::plot(coseq.res, conds = object@metadata$Groups$groups, collapse_reps="average",
-                #                                     graphs = c("profiles", "boxplots", "probapost_boxplots",
-                #                                                "probapost_barplots", "probapost_histogram")) # , collapse_reps = "average"
-                #       CoExpAnal[["plots"]] <- plot.coseq.res
-                #       CoExpAnal[["plots"]][["ICL"]]     <- ICL.logLike.plot$ICL.p
-                #       CoExpAnal[["plots"]][["logLike"]] <- ICL.logLike.plot$logLike.p
-                #
-                #       CoExpAnal[["results"]]      <- TRUE
-                #       CoExpAnal[["warning"]]      <- coseq.res.list$warning
-                #       CoExpAnal[["coseqResults"]] <- coseq.res
-                #       #CoExpAnal[["coseqResults"]] <- coseq.res.list$value
-                #       #coseq.res <- coseq.res.list$value
-                #
-                #       # list of genes per cluster
-                #       clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
-                #         names(coseq::clusters(coseq.res)[coseq::clusters(coseq.res) == i])
-                #         })
-                #       CoExpAnal[["clusters"]] <- clusters
-                #       names(CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
-                #
-                #       # nbr of cluster
-                #       nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
-                #       CoExpAnal[["cluster.nb"]] <- nb_cluster
-                #
-                # }
-                # # Réinitialisation de l'objet CoExpAnal
-                # else{
-                #       CoExpAnal[["results"]] <- FALSE
-                #       CoExpAnal[["stats"]] <- jobs.tab.sum
-                #       #CoExpAnal[["warning"]] <- coseq.res.list$warning
-                # }
+              # print("#     => error management ")
+              #
+              # # Create a table of jobs summary
+              # error.list <- unlist(lapply(coseq.res.list$value, function(x){
+              #   ifelse(is.null(x$error),"success",as.character(x$error))
+              # }))
+              #
+              # K.list <- rep(K,each=replicates)
+              #
+              # jobs.tab <- data.frame(K= K.list, error.message=as.factor(error.list))
+              #
+              # jobs.tab.sum <- jobs.tab %>% dplyr::group_by(K,error.message) %>%
+              # dplyr::summarise(n=dplyr::n()) %>%  dplyr::mutate(prop.failed=round((n/replicates)*100)) %>%
+              # dplyr::filter(error.message != "success")
+              #
+              # # If exists jobs.tab.sum
+              # if(dim(jobs.tab.sum)[1]>0){
+              #
+              #   # Number of K for which p(success) > p(failed)
+              #   nK_success <- length(which(jobs.tab.sum$prop.failed < 50))
+              # }
+              # else{
+              #   nK_success <- length(K)
+              # }
+              # print(nK_success)
+              #
+              #
+              # # If they are at least the half of K which succeed, valid results
+              # if( nK_success > round(length(K)/2)){
+              #
+              #       print("#     => process results ")
+              #       # Generate the list of results
+              #       coseq.res.list[["value"]] <- lapply(coseq.res.list$value,function(x){x$value})
+              #
+              #       list.tmp <- list()
+              #       list.tmp <<- coseq.res.list[["value"]]
+              #
+              #       ICL.logLike.plot <- get.ICL.logLike.plot(coseq.res.list[["value"]])
+              #
+              #       coseq.res <- ICL.logLike.plot$coseqObjectMinICL
+              #
+              #       # plot
+              #       plot.coseq.res <- coseq::plot(coseq.res, conds = object@metadata$Groups$groups, collapse_reps="average",
+              #                                     graphs = c("profiles", "boxplots", "probapost_boxplots",
+              #                                                "probapost_barplots", "probapost_histogram")) # , collapse_reps = "average"
+              #       CoExpAnal[["plots"]] <- plot.coseq.res
+              #       CoExpAnal[["plots"]][["ICL"]]     <- ICL.logLike.plot$ICL.p
+              #       CoExpAnal[["plots"]][["logLike"]] <- ICL.logLike.plot$logLike.p
+              #
+              #       CoExpAnal[["results"]]      <- TRUE
+              #       CoExpAnal[["warning"]]      <- coseq.res.list$warning
+              #       CoExpAnal[["coseqResults"]] <- coseq.res
+              #       #CoExpAnal[["coseqResults"]] <- coseq.res.list$value
+              #       #coseq.res <- coseq.res.list$value
+              #
+              #       # list of genes per cluster
+              #       clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
+              #         names(coseq::clusters(coseq.res)[coseq::clusters(coseq.res) == i])
+              #         })
+              #       CoExpAnal[["clusters"]] <- clusters
+              #       names(CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
+              #
+              #       # nbr of cluster
+              #       nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
+              #       CoExpAnal[["cluster.nb"]] <- nb_cluster
+              #
+              # }
+              # # Réinitialisation de l'objet CoExpAnal
+              # else{
+              #       CoExpAnal[["results"]] <- FALSE
+              #       CoExpAnal[["stats"]] <- jobs.tab.sum
+              #       #CoExpAnal[["warning"]] <- coseq.res.list$warning
+              # }
             }
             else{
-                CoExpAnal[["results"]] <- FALSE
-                CoExpAnal[["stats"]]   <- NULL
-                CoExpAnal[["error"]]   <- coseq.res.list$error
+              CoExpAnal[["results"]] <- FALSE
+              CoExpAnal[["stats"]]   <- NULL
+              CoExpAnal[["error"]]   <- coseq.res.list$error
             }
 
             object@metadata$CoExpAnal <- CoExpAnal
             return(object)
-})
+          })
 
 
 # Pour utiliser la fonction repeatable(), "seed"  pourrait être ajouté en paramètre.
@@ -1841,13 +1843,13 @@ setMethod(f="runAnnotationEnrichment",
             for(geneList in names(geneLists)){
 
               if(length( intersect(geneLists[[geneList]], annotation$geneID)) !=0 ){
-                  Results[[geneList]] <- switch(probaMethod,
-                         "hypergeometric"=EnrichmentHyperG(annotation, geneLists[[geneList]], alpha = 0.01)
-                         )
+                Results[[geneList]] <- switch(probaMethod,
+                                              "hypergeometric"=EnrichmentHyperG(annotation, geneLists[[geneList]], alpha = 0.01)
+                )
               }
               else{
-                  Results[[geneList]] <- NULL
-                  count.na <- count.na + 1
+                Results[[geneList]] <- NULL
+                count.na <- count.na + 1
               }
             }
 
@@ -1858,7 +1860,6 @@ setMethod(f="runAnnotationEnrichment",
             else{
               EnrichAnal[["results"]] <- Results
             }
-
 
             if(from == "DiffExpAnal") {
 
@@ -1917,25 +1918,26 @@ Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepr
     data <- object@metadata[[from]][["results"]][[listname]][["Over_Under_Results"]] %>% dplyr::filter(Domain %in% domain)
 
     data_ord <- switch (Over_Under,
-            "overrepresented"  = {
-                     dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_over)) %>%
-                     dplyr::mutate(Pvalue = Pvalue_over)
 
-              },
-            "underrepresented" = {
-                     dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_under)) %>%
-                     dplyr::mutate(Pvalue = Pvalue_under)
-              }
-            )
+      "overrepresented"  = {
+        dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_over)) %>%
+          dplyr::mutate(Pvalue = Pvalue_over)
 
-    data_ord$Term <- factor(data_ord$Term, levels = data_ord$Term)
+      },
+    "underrepresented" = {
+      dplyr::filter(data, Decision == Over_Under) %>%  dplyr::arrange(desc(Pvalue_under)) %>%
+        dplyr::mutate(Pvalue = Pvalue_under)
+    }
+    )
 
-    Urn_effective <- data$Urn_effective[1]
-    Trial_effective <- data$Trial_effective[1]
+data_ord$Term <- factor(data_ord$Term, levels = data_ord$Term)
 
-    p[[listname]] <- ggplot2::ggplot(data = tail(data_ord, n=top), aes(x=sort(Trial_Success), y=Term, size=Urn_Success, color=Pvalue)) +
-      geom_point(alpha=0.5) + scale_size(range = c(0.1, 10)) + scale_color_gradient(low="blue", high="red") + ylab("") + xlab("Count") +
-      ggtitle(paste0(listname, " :\n ",Over_Under," ", Top.tag, " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")"))
+Urn_effective <- data$Urn_effective[1]
+Trial_effective <- data$Trial_effective[1]
+
+p[[listname]] <- ggplot2::ggplot(data = tail(data_ord, n=top), aes(x=sort(Trial_Success), y=Term, size=Urn_Success, color=Pvalue)) +
+  geom_point(alpha=0.5) + scale_size(range = c(0.1, 10)) + scale_color_gradient(low="blue", high="red") + ylab("") + xlab("Count") +
+  ggtitle(paste0(listname, " :\n ",Over_Under," ", Top.tag, " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")"))
 
   }
 
@@ -1988,4 +1990,134 @@ setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
             }
 
             return(object)
+          })
+
+
+######################## INTEGRATION USING MOFA ########################
+
+
+#' @title prepareMOFA
+#'
+#' @param object An object of class \link{MultiAssayExperiment}
+#' @param omicsToIntegrate
+#' @param rnaSeq_transfo
+#' @param choice
+#' @param contrast
+#' @param group Not implemented yet in the interface. Useful for MOFA2 run.
+#' @return An untrained MOFA object
+#' @export
+#' @exportMethod prepareMOFA
+#' @examples
+#'
+setMethod(f="prepareMOFA",
+          signature="MultiAssayExperiment",
+
+          definition <-  function(object,
+                                  omicsToIntegrate = c("RNAseq", "proteomics", "metabolomics"), # y avait des trucs a changer ici
+                                  rnaSeq_transfo = "limma (voom)",
+                                  # choice = c("raw", "DE"),
+                                  choice = "DE",
+                                  contrast = "union",
+                                  group = NULL){
+
+            # Checking for batch effects
+            correct_batch <- FALSE
+            if(any(object@metadata$design@Factors.Type)=="batch"){
+              correct_batch <- TRUE
+              colBatch <- names(object@metadata$design@Factors.Type)[object@metadata$design@Factors.Type=="batch"]
+            }
+
+            # Warnings/error
+            # A prevoir : s'il n'y a qu'un type de omique, interruption ?
+            # A prevoir : si la liste est vide, interruption
+
+            object@ExperimentList <- object@ExperimentList[grep("filtred", names(object@ExperimentList))]
+            object@ExperimentList <- object@ExperimentList[grep(paste(omicsToIntegrate, collapse = "|"), names(object@ExperimentList))]
+
+            # Transformation RNASeq using limma::voom
+            if(length(grep("RNAseq", omicsToIntegrate)>0)){
+              rnaDat <- object@ExperimentList[[grep("RNAseq", names(object@ExperimentList))]]
+              assayTransform <- SummarizedExperiment::assay(rnaDat)
+              assayTransform <- assayTransform[, match(rownames(object@metadata$design@ExpDesign), colnames(assayTransform))]
+
+              rnaDat@metadata[["transform_method_integration"]] <- "none"
+
+              designMat <- model.matrix(as.formula(object@metadata$design@Model.formula), data = object@metadata$design@ExpDesign)
+              # Creer un DGElist. (pour avoir les calcnormfactors)
+              limmaRes <- limma::voom(counts = assayTransform, design =designMat)
+
+              rnaDat@metadata[["integration_table"]] <- limmaRes$E
+              rnaDat@metadata[["transform_results_all"]] <- limmaRes # changer l'appellation
+              rnaDat@metadata[["transform_method_integration"]] <- rnaSeq_transfo
+
+              rnaDat@metadata[["correction_batch_method"]] <- "none"
+              if(correct_batch) rnaDat <- rbe_function(object, rnaDat)
+
+              rnaDat@metadata[["integration_choice"]] <- choice
+              if(choice == "DE") rnaDat = filter_DE_from_SE(rnaDat, contrast)
+
+              object@ExperimentList[[grep("RNAseq", names(object@ExperimentList))]] <- rnaDat
+            }
+
+
+            # Transformation of proteomics/metabolomics data
+            res <- lapply(omicsToIntegrate[omicsToIntegrate!="RNAseq"], FUN = function(omicName){
+
+              omicsDat <- object@ExperimentList[[grep(omicName, names(object@ExperimentList))]]
+              omicsDat@metadata[["correction_batch_method"]] <- "none"
+              if(correct_batch) omicsDat <- rbe_function(object, omicsDat)
+
+              omicsDat@metadata[["integration_choice"]] <- choice
+              if(choice == "DE")  omicsDat = filter_DE_from_SE(omicsDat, contrast)
+
+              object@ExperimentList[[grep(omicName, names(object@ExperimentList))]] <<- omicsDat
+
+              return(NULL)
             })
+
+
+            MOFAObject <- MOFA_createObject(object, group = group)
+
+            return(MOFAObject)
+          })
+
+#' @title run_MOFA_analysis
+#'
+#' @param object An untrained MOFA object
+#' @param scale_views
+#' @param maxiter
+#' @param num_factors
+#' @return A trained MOFA object
+#' @export
+#' @exportMethod run_MOFA_analysis
+#' @examples
+#'
+run_MOFA_analysis <- function(object,
+                              scale_views = FALSE,
+                              maxiter = 1000,
+                              num_factors = 10,
+                              ...){ # qu'est-ce qu'on propose a l'utilisateur ?
+
+  data_opts <- get_default_data_options(object)
+  model_opts <- get_default_model_options(object)
+  train_opts <- get_default_training_options(object)
+
+  data_opts$scale_views <- scale_views
+  train_opts$maxiter <- maxiter
+  model_opts$num_factors <- num_factors
+
+  MOFAObject <- MOFA2::prepare_mofa(
+    object = object,
+    data_options = data_opts,
+    model_options = model_opts,
+    training_options = train_opts
+  )
+
+  MOFAObject.trained <- MOFA2::run_mofa(MOFAObject, use_basilisk = TRUE)
+  # peut poser probleme au niveau python et mofapy.
+  # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R.
+
+  return(MOFAObject.trained)
+}
+
+

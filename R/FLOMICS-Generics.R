@@ -102,3 +102,8 @@ setGeneric(
   def = function( object, ... ){standardGeneric("resetFlomicsMultiAssay")}
 )
 
+setGeneric(
+  name="prepareMOFA",
+  def = function( object, ... ){standardGeneric("prepareMOFA")}
+)
+
