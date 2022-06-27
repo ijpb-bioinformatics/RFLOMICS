@@ -34,7 +34,7 @@ link to RFLOMICS-configure-cluster-access vignette
 ## Install RFLOMICS on your current version of R:
 
 ```{r, eval=FALSE}
-remotes::install_gitlab("")
+remotes::install_gitlab(repo="flomics/rflomics",host="https://forgemia.inra.fr/",branch = "develop.0.1")
 library(RFLOMICS)
 RFLOMICS::runApp()
 ```

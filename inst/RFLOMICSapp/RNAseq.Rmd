@@ -154,8 +154,7 @@ knitr::asis_output(out)
 
 Co-expression analysis was carried out on the `r dataset.SE@metadata[["CoExpAnal"]]$merge.type`
 of the following list of gene `r dataset.SE@metadata$CoExpAnal$gene.list.names`. 
-`r dataset.SE@metadata[["CoExpAnal"]]$tools` was
-used to cluster genes. 
+`r dataset.SE@metadata[["CoExpAnal"]]$tools` was used to cluster genes. 
 The gaussian mixture model was run on filtered (meanFilterCutoff was set to: `r dataset.SE@metadata[["CoExpAnal"]]$meanFilterCutoff`), 
 normalised (normalisation method was `r dataset.SE@metadata[["CoExpAnal"]]$normFactors`) 
 and transformed (transformation method: `r dataset.SE@metadata[["CoExpAnal"]]$transformation`) count data.
