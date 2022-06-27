@@ -260,7 +260,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                                             label = 'Factors:',
                                             min = 1, 
                                             max = local.rea.values$resMOFA@dimensions$K, # pas forcement l'input, MOFA peut decider d'en enlever. 
-                                            value = c(1,2), step = 1)) 
+                                            value = 1:2, step = 1)) 
                    ),
                    fluidRow(
                      column(11, 
@@ -275,7 +275,68 @@ MOFA_setting <- function(input, output, session, rea.values){
                                                                         lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All"))))
                             }))
                    )),
-          tabPanel("Heatmap",
+          tabPanel("Factor Plots",
+                   
+                   fluidRow(
+                   column(2, sliderInput(inputId = session$ns("factors_choices"),
+                                         label = 'Factors:',
+                                         min = 1, 
+                                         max = local.rea.values$resMOFA@dimensions$K, # pas forcement l'input, MOFA peut decider d'en enlever. 
+                                         value = 1:2, step = 1)),
+                   column(2, radioButtons(inputId = session$ns("color_by"),
+                                          label = "Color:",
+                                          choices = c('none', 
+                                                      colnames(local.rea.values$resMOFA@samples_metadata %>% select(!c(sample, group)))),
+                                          selected = "none")
+                   ),                           
+                   column(2, radioButtons(inputId = session$ns("shape_by"),
+                                          label = "Shape:",
+                                          choices = c('none', 
+                                                      colnames(local.rea.values$resMOFA@samples_metadata %>% select(!c(sample, group)))),
+                                          selected = "none")
+                   ),                                  
+                   column(2, radioButtons(inputId = session$ns("group_by"),
+                                          label = "Group by:",
+                                          choices = c('none', 
+                                                      colnames(local.rea.values$resMOFA@samples_metadata %>% select(!c(sample, group)))),
+                                          selected = "none")
+                   ),                           
+                   column(1,
+                          fluidRow(checkboxInput(inputId = session$ns("add_violin"), label = "Violin", value = FALSE, width = NULL)),
+                          fluidRow(checkboxInput(inputId = session$ns("add_boxplot"), label = "Boxplot", value = FALSE, width = NULL)),
+                          fluidRow(checkboxInput(inputId = session$ns("scale_scatter"), label = "Scale factors", value = FALSE, width = NULL))
+                   )),            
+                   fluidRow(
+                     column(11, 
+                            renderPlot({
+                              
+                              color_by_par <- input$color_by
+                              group_by_par <- input$group_by
+                              shape_by_par <- input$shape_by
+                              if(input$color_by == "none") color_by_par <- "group"
+                              if(input$group_by == "none") group_by_par <- "group"
+                              if(input$shape_by == "none") shape_by_par <- NULL
+                              dodge_par <- FALSE
+                              if(any(input$add_violin, input$add_boxplot)) dodge_par = TRUE
+                              
+                              
+                              plot_factor(local.rea.values$resMOFA,
+                                          factors = min(input$factors_choices):max(input$factors_choices), 
+                                          color_by = color_by_par,
+                                          group_by = group_by_par, 
+                                          shape_by = shape_by_par,
+                                          legend = TRUE,
+                                          add_violin = input$add_violin,
+                                          violin_alpha = 0.25, 
+                                          add_boxplot = input$add_boxplot,
+                                          boxplot_alpha = 0.25,
+                                          dodge = dodge_par,
+                                          scale = input$scale_scatter,
+                                          dot_size = 3) 
+                            })
+                     ))
+          ),
+        tabPanel("Heatmap",
                    
                    fluidRow(# buttons - choices for heatmap
                      
@@ -284,11 +345,13 @@ MOFA_setting <- function(input, output, session, rea.values){
                                             min = 1,
                                             max =  local.rea.values$resMOFA@dimensions$K,
                                             value = 1, step = 1)),
+                     column(1,),
                      column(2, radioButtons(inputId = session$ns("view_choice_heatmap"),
                                             label = "Data:",
                                             choices = views_names(local.rea.values$resMOFA),
                                             selected = views_names(local.rea.values$resMOFA)[1]
                      )),
+                     column(1,),
                      column(2, numericInput(inputId = session$ns("nfeat_choice_heatmap"),
                                             label = "Features:",
                                             min = 1,
@@ -298,6 +361,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                      column(1,
                             checkboxInput(inputId = session$ns("denoise_choice_heatmap"), label = "Denoise", value = FALSE, width = NULL)
                      ),
+                     column(1,),
                      column(2, radioButtons(inputId = session$ns("annot_samples"),
                                             label = "Annotation:",
                                             choices = c('none', 
