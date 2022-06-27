@@ -1480,7 +1480,7 @@ setMethod(f="FilterDiffAnalysis",
             ## TopDEF: Top differential expressed features
             DEF_filtred <- lapply(1:length(object@metadata$DiffExpAnal[["DEF"]]),function(x){
               res <- object@metadata$DiffExpAnal[["DEF"]][[x]]
-              keep <- (res$Adj.pvalue <= Adj.pvalue.cutoff) & (abs(res$logFC) >= log2(FC.cutoff))
+              keep <- (res$Adj.pvalue <= Adj.pvalue.cutoff) & (abs(res$logFC) >= log2(as.numeric(FC.cutoff)))
               res <- res[keep,]
               return(res)
             })
