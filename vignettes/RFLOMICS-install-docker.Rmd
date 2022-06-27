@@ -1,0 +1,42 @@
+---
+title: "RFLOMICS-install-docker"
+author: "Charif Dephine"
+date: "6/26/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+### Install Docker-desktop and git
+
+https://docs.docker.com/engine/install/
+https://git-scm.com/book/fr/v2/D%C3%A9marrage-rapide-Installation-de-Git
+
+### Linux 
+
+https://docs.docker.com/desktop/linux/install/
+
+```{bash, eval=FALSE}
+ 
+```
+
+### MacOSX
+
+- command line
+
+```{bash, eval=FALSE}
+
+```
+
+- via the Docker desktop interface
+
+### Windows
+
+- Docker desktop
+- restart
+- wsl2 update
+- capture ecran docker Desktop 

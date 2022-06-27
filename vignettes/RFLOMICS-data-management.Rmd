@@ -28,7 +28,7 @@ This object is created by FlomicsMultiAssay.constructor method. This method take
 Datasets are managed in the FlomicsMultiAssayExp object, an instance of the class MultiAssayExperiment (MAE).
 See the [MAE package vignette](https://www.bioconductor.org/packages/release/bioc/vignettes/MultiAssayExperiment/inst/doc/MultiAssayExperiment.html) for more details.
 
-![Example of a FlomicsMultiAssayExp object]( `r paste(path.package("RFLOMICS"),"/DevDoc/FMA_Struct.png",sep="")` )
+<!-- ![Example of a FlomicsMultiAssayExp object]( `r paste(path.package("RFLOMICS"),"/DevDoc/FMA_Struct.png",sep="")` ) -->
 
 In this example two datasets and a Design are managed into the MAE object. Design is positioned as @metada in the root of the object, as well as
 @colData and @SampleMap. The different datasets are stored in the @ExperimentList (which managed object of class SummarizedExperiment). 
