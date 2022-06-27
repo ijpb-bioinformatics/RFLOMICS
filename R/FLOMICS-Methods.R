@@ -1997,12 +1997,14 @@ setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
 
 
 #' @title prepareMOFA
-#'
-#' @param object An object of class \link{MultiAssayExperiment}
-#' @param omicsToIntegrate
-#' @param rnaSeq_transfo
-#' @param choice
-#' @param contrast
+#' @description This function transforms a MultiAssayExperiment produced by rflomics into an untrained MOFA objects. It checks for batch effect to correct them prior to the integration.
+#' It also transforms RNASeq counts data into continuous data. This is the first step into the integration.
+#' @param object An object of class \link{MultiAssayExperiment}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param omicsToIntegrate vector of characters strings, referring to the names of the filtered table in 'object@ExperimentList'.
+#' @param rnaSeq_transfo character string, only supports 'limma (voom)' for now. Transformation of the rnaSeq data from counts to continuous data.
+#' @param choice character. If choice is set to 'DE', filters the object to take only the DE omics using differential analysis results stored in object. If choice is different than DE, no filtering is applied.
+#' @param contrasts_names contrasts names for the selection of DE entities.
+#' @param type one of union or intersection.
 #' @param group Not implemented yet in the interface. Useful for MOFA2 run.
 #' @return An untrained MOFA object
 #' @export
@@ -2013,40 +2015,53 @@ setMethod(f="prepareMOFA",
           signature="MultiAssayExperiment",
 
           definition <-  function(object,
-                                  omicsToIntegrate = c("RNAseq", "proteomics", "metabolomics"), # y avait des trucs a changer ici
+                                  omicsToIntegrate = c("RNAseq", "proteomics", "metabolomics"),
                                   rnaSeq_transfo = "limma (voom)",
                                   # choice = c("raw", "DE"),
                                   choice = "DE",
-                                  contrast = "union",
+                                  contrasts_names = "all",
+                                  type = "union",
                                   group = NULL){
+            # object <- FlomicsMultiAssay
+            # omicsToIntegrate = c("RNAseq", "proteomics")
+            # omicsToIntegrate = c("RNAseq.set1", "proteomics.set2")
+            # omicsToIntegrate = c("proteomics.set1", "metabolomics.set2")
+            # rnaSeq_transfo = "limma (voom)"
+            # choice = "DE"
+            # contrasts_names = c("(temperatureLow - temperatureElevated)", "(temperatureMedium - temperatureLow)")
+            # type = "union"
+            # group = NULL
 
             # Checking for batch effects
+            cat("Checking for Batch effects\n")
             correct_batch <- FALSE
-            if(any(object@metadata$design@Factors.Type)=="batch"){
+            if(any(object@metadata$design@Factors.Type=="batch")){
               correct_batch <- TRUE
               colBatch <- names(object@metadata$design@Factors.Type)[object@metadata$design@Factors.Type=="batch"]
+              cat(paste0("Correct for Batch: ", paste(colBatch, collapse = " "), "\n"))
+            }else{
+              cat("No batch effect found \n")
             }
 
-            # Warnings/error
-            # A prevoir : s'il n'y a qu'un type de omique, interruption ?
-            # A prevoir : si la liste est vide, interruption
-
             object@ExperimentList <- object@ExperimentList[grep("filtred", names(object@ExperimentList))]
-            object@ExperimentList <- object@ExperimentList[grep(paste(omicsToIntegrate, collapse = "|"), names(object@ExperimentList))]
+            object <- object[,,paste0(omicsToIntegrate, ".filtred")]
 
             # Transformation RNASeq using limma::voom
             if(length(grep("RNAseq", omicsToIntegrate)>0)){
               rnaDat <- object@ExperimentList[[grep("RNAseq", names(object@ExperimentList))]]
               assayTransform <- SummarizedExperiment::assay(rnaDat)
-              assayTransform <- assayTransform[, match(rownames(object@metadata$design@ExpDesign), colnames(assayTransform))]
 
               rnaDat@metadata[["transform_method_integration"]] <- "none"
 
               designMat <- model.matrix(as.formula(object@metadata$design@Model.formula), data = object@metadata$design@ExpDesign)
-              # Creer un DGElist. (pour avoir les calcnormfactors)
-              limmaRes <- limma::voom(counts = assayTransform, design =designMat)
 
-              rnaDat@metadata[["integration_table"]] <- limmaRes$E
+              DGEObject = DGEList(counts = assayTransform,
+                                  norm.factors = rnaDat@metadata$Normalization$coefNorm$norm.factors,
+                                  lib.size = rnaDat@metadata$Normalization$coefNorm$lib.size,
+                                  samples = object@metadata$design@ExpDesign)
+              limmaRes <- limma::voom(DGEObject, design =designMat)
+
+              SummarizedExperiment::assay(rnaDat) <- limmaRes$E
               rnaDat@metadata[["transform_results_all"]] <- limmaRes # changer l'appellation
               rnaDat@metadata[["transform_method_integration"]] <- rnaSeq_transfo
 
@@ -2054,7 +2069,7 @@ setMethod(f="prepareMOFA",
               if(correct_batch) rnaDat <- rbe_function(object, rnaDat)
 
               rnaDat@metadata[["integration_choice"]] <- choice
-              if(choice == "DE") rnaDat = filter_DE_from_SE(rnaDat, contrast)
+              if(choice == "DE") rnaDat = filter_DE_from_SE(rnaDat, contrasts_arg = contrasts_names, type)
 
               object@ExperimentList[[grep("RNAseq", names(object@ExperimentList))]] <- rnaDat
             }
@@ -2064,11 +2079,13 @@ setMethod(f="prepareMOFA",
             res <- lapply(omicsToIntegrate[omicsToIntegrate!="RNAseq"], FUN = function(omicName){
 
               omicsDat <- object@ExperimentList[[grep(omicName, names(object@ExperimentList))]]
+              omicsDat@metadata[["transform_method_integration"]] <- omicsDat@metadata$transform_method
+
               omicsDat@metadata[["correction_batch_method"]] <- "none"
               if(correct_batch) omicsDat <- rbe_function(object, omicsDat)
 
               omicsDat@metadata[["integration_choice"]] <- choice
-              if(choice == "DE")  omicsDat = filter_DE_from_SE(omicsDat, contrast)
+              if(choice == "DE")  omicsDat <- filter_DE_from_SE(omicsDat, contrasts_arg = contrasts_names, type)
 
               object@ExperimentList[[grep(omicName, names(object@ExperimentList))]] <<- omicsDat
 
@@ -2076,48 +2093,53 @@ setMethod(f="prepareMOFA",
             })
 
 
-            MOFAObject <- MOFA_createObject(object, group = group)
+            MOFAObject <- MOFA2::create_mofa(object,
+                                             group =  group,
+                                             extract_metadata = TRUE)
 
             return(MOFAObject)
           })
 
 #' @title run_MOFA_analysis
-#'
+#' @description Runs a MOFA analysis based on an untrained MOFA object and user arguments.
 #' @param object An untrained MOFA object
-#' @param scale_views
-#' @param maxiter
-#' @param num_factors
+#' @param scale_views boolean. MOFA option to scale the views so they have the same variance. Default is FALSE.
+#' @param maxiter integer. MOFA option, maximum number of iterations to be considered if there it does not converge. Default is 1000.
+#' @param num_factors integer. MOFA option, maximum number of factor to consider. Default is 10.
 #' @return A trained MOFA object
 #' @export
 #' @exportMethod run_MOFA_analysis
 #' @examples
 #'
-run_MOFA_analysis <- function(object,
-                              scale_views = FALSE,
-                              maxiter = 1000,
-                              num_factors = 10,
-                              ...){ # qu'est-ce qu'on propose a l'utilisateur ?
 
-  data_opts <- get_default_data_options(object)
-  model_opts <- get_default_model_options(object)
-  train_opts <- get_default_training_options(object)
+setMethod(f="run_MOFA_analysis",
+          signature="MOFA", definition <- function(object,
+                                                   scale_views = FALSE,
+                                                   maxiter = 1000,
+                                                   num_factors = 10,
+                                                   ...){
 
-  data_opts$scale_views <- scale_views
-  train_opts$maxiter <- maxiter
-  model_opts$num_factors <- num_factors
+            data_opts <- get_default_data_options(object)
+            model_opts <- get_default_model_options(object)
+            train_opts <- get_default_training_options(object)
 
-  MOFAObject <- MOFA2::prepare_mofa(
-    object = object,
-    data_options = data_opts,
-    model_options = model_opts,
-    training_options = train_opts
-  )
+            data_opts$scale_views <- scale_views
+            train_opts$maxiter <- maxiter
+            model_opts$num_factors <- num_factors
 
-  MOFAObject.trained <- MOFA2::run_mofa(MOFAObject, use_basilisk = TRUE)
-  # peut poser probleme au niveau python et mofapy.
-  # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R.
+            MOFAObject <- MOFA2::prepare_mofa(
+              object = object,
+              data_options = data_opts,
+              model_options = model_opts,
+              training_options = train_opts
+            )
 
-  return(MOFAObject.trained)
-}
+            MOFAObject.trained <- MOFA2::run_mofa(MOFAObject, use_basilisk = TRUE)
+            # peut poser probleme au niveau python et mofapy.
+            # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R.
+
+            return(MOFAObject.trained)
+          })
+
 
 

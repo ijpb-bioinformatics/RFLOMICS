@@ -10,11 +10,31 @@ MOFA_settingUI <- function(id){
   tagList(
     
     fluidRow(
-      box(title = span(tagList(icon('chart-line'), "   ",a("MOFA", href="https://biofam.github.io/MOFA2/"), tags$small("(Scroll down for instructions)")  )),
+      box(title = span(tagList(icon('chart-line'), "   ",a("MOFA+", href="https://biofam.github.io/MOFA2/"), tags$small("(Scroll down for instructions)")  )),
           solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
           div(      
             h4(tags$span("Parameters set up:", style = "color:orange")),
-            p("C'est la pour marquer des notes pour l'utilisateur")
+            p("You can chose which omics data you want to analyze together. It is required to have selected at least two to run an analysis."),
+            p("As of now, rflomics only allows you to run an analysis on filtered tables, taking into account differential analysis performed previously.
+            You can chose which contrast you want to take the DE genes from. You can select multiple ones (defaults select all the contrasts) 
+              and chose to perform the analysis on the union or intersection of the DE lists."),
+            p("RNASeq data, given in the form of counts, will be processed using limma::voom transformation. 
+              If you have indicated a batch effect when loading your data, it will be corrected in all datatables using limma::removebatcheffect before running MOFA."),
+            
+            h4(tags$span("Outputs:", style = "color:orange")),
+            p("- Data Overview: shows how many samples and omic features are left per table after applying all filters. These are the data on which MOFA is performed."),
+            p("- Factors correlation: shows the correlation between factors. It is essential that the factors are decorrelated between each other. If there is a correlation >0.5 in absolute value, 
+              the results of the analysis cannot be trusted."),
+            p("- Explained variance: two graphs are displayed in this section. 
+            The first graph is showing the total explained variance per omic table. 
+              The second one is a detailed version, showing the percentage of explained variance per feature per omic data."), 
+            # The percentage of explained variance cannot be compared between views."),
+            p("- Weights plot: displays the features weights, for selected factors, for each omic. 
+              You can scale the weights by checking the \"scale weight\" box. This will ensure weights are comprised between -1 and 1."),
+            p("- Weights table: table of weights per selected factors."),
+            p("- Heatmap: shows the data for the selected number of features, per factor and per omic. Original data is displayed by default. 
+              You can use the denoise option to show the reconstruction using factors and weights computed by MOFA2. 
+              The annotation parameter is used to place a color annotation on the sample, based on a metadata feature." ),
           ))),
     ### parametres for Co-Exp
     fluidRow(
@@ -26,6 +46,8 @@ MOFA_settingUI <- function(id){
 # tags$a(href="www.rstudio.com", "Click here!")
 
 MOFA_setting <- function(input, output, session, rea.values){
+  
+  local.rea.values <- reactiveValues(runMOFA = FALSE) # init local reactive values
   
   # list of parameters  
   output$MOFA_ParamUI <- renderUI({
@@ -93,20 +115,24 @@ MOFA_setting <- function(input, output, session, rea.values){
                                selected = "TRUE"))),
           fluidRow(
             column(12,
-                   numericInput(inputId = session$ns("numiter"), label="num factors :", value=10, min = 10, max=10))),
+                   numericInput(inputId = session$ns("numfactor"), label="num factors :", value=10, min = 5, max=15))),
           
           fluidRow(
             column(12,
                    numericInput(inputId = session$ns("maxiter"), label="Max iteration :", value=1000, min = 1000, max=1000))),
           
           fluidRow(
-            column(4, actionButton(session$ns("runMOFA"),"Run")))
+            column(4, actionButton(session$ns("runMOFA"),"Run"))) ##### ACTION BUTTON
       ))
   })
   
   
   
   observeEvent(input$runMOFA, {
+    
+    local.rea.values$untrainedMOFA <- NULL # reactive ? # ADD 23/06
+    local.rea.values$runMOFA   <- FALSE
+    local.rea.values$resMOFA <- NULL
     
     # check nbr dataset to integrate
     # if less then 2 -> error message
@@ -129,50 +155,183 @@ MOFA_setting <- function(input, output, session, rea.values){
       need(length(input$selectedContrast) != 0, message="Select at least one contast!")
     })
     
+    # local.rea.values <- reactiveValues(runMOFA = FALSE) #### ????
+    
     # run MOFA
+    print(input$selectedData)
     
-    #!!!! lister les fonctions pour créer l'objet mofa
+    local.rea.values$untrainedMOFA <- prepareMOFA(FlomicsMultiAssay,
+                                                  omicsToIntegrate = input$selectedData,
+                                                  rnaSeq_transfo = input$RNAseqTransfo,
+                                                  choice = "DE", 
+                                                  contrasts_names = input$selectedContrast,
+                                                  type = input$filtMode,
+                                                  group = NULL)
+    local.rea.values$resMOFA <- run_MOFA_analysis(local.rea.values$untrainedMOFA, 
+                                                  scale_views = input$scaleViews,
+                                                  maxiter = input$maxiter,
+                                                  num_factors = input$numfactor) 
+    FlomicsMultiAssay@metadata[["MOFA_results"]] <<- local.rea.values$resMOFA
     
-    # object.1 = dataPrepareForIntegration(object = object, omicsToIntegrate = c("RNAseq", "proteomics"), choice = "DE", contrast = c("H1", "H2"))
-    # object.2 = MOFA_createObject(object.1, group = "temperature")
-    # object.3 = MOFA_prepareObject(object.2, scale_views = TRUE, maxiter = 550, num_factors = 5) 
-    
-    untrainedMOFA <- prepareMOFA(FlomicsMultiAssay,
-                           omicsToIntegrate = input$selectedData,
-                           rnaSeq_transfo = input$RNAseqTransfo,
-                           choice = "DE",
-                           contrast = input$selectedContrast, 
-                           group = NULL)
-    FlomicsMultiAssay@metadata[["MOFA_results"]] <<- run_MOFA_analysis(untrainedMOFA, 
-                                                                     scale_views = input$scaleViews,
-                                                                     maxiter = input$maxiter,
-                                                                     num_factors = input$numiter) # numiter a changer !!!
-    
+    local.rea.values$runMOFA   <- TRUE
+    FlomicsMultiAssay@metadata[["MOFA_run"]] <- local.rea.values$runMOFA
     
   }, ignoreInit = TRUE)
   
   
   output$ResultViewUI <- renderUI({
     
+    if (local.rea.values$runMOFA == FALSE) return()
+    
+    plot_height <- function() { # does not work ?
+      local.rea.values$plotHeight <- length(input$WeightsPlot_Factors_select)*10
+      return(local.rea.values$plotHeight)
+    }
+    
     box(width=14, solidHeader = TRUE, status = "warning",
         title = "MOFA results",
         
         tabsetPanel(
           
-          ###  ###
-          tabPanel("view1", "? min de nbr de dataset à integrer?; "),
-          #tabPanel("view1", MOFA2::plot_factor_cor(FlomicsMultiAssay@metadata$MOFA_results$MOFAobject)),
+          ###
+          tabPanel("Overview", 
+                   renderPlot(MOFA2::plot_data_overview(local.rea.values$resMOFA))
+          ),
           ### 
-          tabPanel("view2", FlomicsMultiAssay@metadata$MOFA_results),
+          tabPanel("Factors Correlation", 
+                   renderPlot(MOFA2::plot_factor_cor(local.rea.values$resMOFA))
+          ),
+          ### 
+          tabPanel("Explained Variance", 
+                   fluidRow(
+                     column(6, renderPlot({
+                       g1 <- MOFA2::plot_variance_explained(local.rea.values$resMOFA, plot_total = TRUE)[[2]] # compute both per factor and per table by default.
+                       g1 + ggtitle("Total explained variance per omic data")
+                     })),
+                     column(6, renderPlot(MOFA2::plot_variance_explained(local.rea.values$resMOFA, x = "view", y = "factor")+ ggtitle("Explained variance by factors and omic data")))
+                   )),
+          ### 
+          tabPanel("Weights Plot", 
+                   fluidRow(
+                     column(3, sliderInput(inputId = session$ns("WeightsPlot_Factors_select"),
+                                           label = 'Factors:',
+                                           min = 1, 
+                                           max = local.rea.values$resMOFA@dimensions$K, 
+                                           value = 1:2, step = 1)
+                     ),
+                     column(2, numericInput(inputId = session$ns("nfeat_choice_WeightsPlot"),
+                                            label = "Features:",
+                                            min = 1,
+                                            max = 500,
+                                            value = 10, # default in MOFA function.
+                     )),
+                     column(1,
+                            checkboxInput(inputId = session$ns("scale_choice_WeightsPlot"), label = "Scale Weights", value = FALSE, width = NULL)
+                     ),
+                   ),
+                   fluidRow(
+                     renderPlot({
+                       
+                       ggplot_list <- list()
+                       for(i in min(input$WeightsPlot_Factors_select):max(input$WeightsPlot_Factors_select)){
+                         for(j in views_names(local.rea.values$resMOFA)){
+                           ggplot_list[[length(ggplot_list)+1]] <- plot_weights(local.rea.values$resMOFA,
+                                                                                view = j,
+                                                                                factor = i,
+                                                                                nfeatures = input$nfeat_choice_WeightsPlot,
+                                                                                scale = input$scale_choice_WeightsPlot) + ggtitle(paste0(j, " - Factor ", i))
+                         }
+                       }
+                       
+                       ggpubr::ggarrange(plotlist = ggplot_list,
+                                         ncol = length(views_names(local.rea.values$resMOFA)),
+                                         nrow = (max(input$WeightsPlot_Factors_select)-min(input$WeightsPlot_Factors_select)+1))
+                       
+                     }, execOnResize = TRUE) # width = 60, height = plot_height(), 
+                     
+                   )
+          ),
           
           ### 
-          tabPanel("view3", MOFA2::plot_factor_cor(FlomicsMultiAssay@metadata$MOFA_results)),
-          
-          ### 
-          tabPanel("view2", "titi")
-        )
-    )
-    
+          tabPanel("Weights table",
+                   
+                   fluidRow(
+                     column(11, sliderInput(inputId = session$ns("Factors_select"),
+                                            label = 'Factors:',
+                                            min = 1, 
+                                            max = local.rea.values$resMOFA@dimensions$K, # pas forcement l'input, MOFA peut decider d'en enlever. 
+                                            value = c(1,2), step = 1)) 
+                   ),
+                   fluidRow(
+                     column(11, 
+                            DT::renderDataTable({
+                              resTable <- MOFA2::get_weights(local.rea.values$resMOFA, views = "all", factors = input$Factors_select, abs = FALSE, scale = FALSE, as.data.frame = TRUE)
+                              
+                              resTable %>% DT::datatable(extensions = 'Buttons',
+                                                         options = list(dom = 'lfrtipB',
+                                                                        rownames = FALSE,
+                                                                        pageLength = 10,
+                                                                        buttons = c('csv', 'excel'),
+                                                                        lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All"))))
+                            }))
+                   )),
+          tabPanel("Heatmap",
+                   
+                   fluidRow(# buttons - choices for heatmap
+                     
+                     column(1, numericInput(inputId = session$ns("factor_choice_heatmap"),
+                                            label = "Factor:",
+                                            min = 1,
+                                            max =  local.rea.values$resMOFA@dimensions$K,
+                                            value = 1, step = 1)),
+                     column(2, radioButtons(inputId = session$ns("view_choice_heatmap"),
+                                            label = "Data:",
+                                            choices = views_names(local.rea.values$resMOFA),
+                                            selected = views_names(local.rea.values$resMOFA)[1]
+                     )),
+                     column(2, numericInput(inputId = session$ns("nfeat_choice_heatmap"),
+                                            label = "Features:",
+                                            min = 1,
+                                            max = 500,
+                                            value = 50, # default in MOFA function.
+                     )),
+                     column(1,
+                            checkboxInput(inputId = session$ns("denoise_choice_heatmap"), label = "Denoise", value = FALSE, width = NULL)
+                     ),
+                     column(2, radioButtons(inputId = session$ns("annot_samples"),
+                                            label = "Annotation:",
+                                            choices = c('none', 
+                                                        colnames(local.rea.values$resMOFA@samples_metadata %>% select(!c(sample, group)))),
+                                            selected = "none"))
+                     
+                   ),
+                   fluidRow(
+                     # if(input$annot_samples == "none") input$annot_samples <- NULL
+                     
+                     column(12, # heatmap is too large with just renderPlot. 
+                            renderPlot({
+                              annot_samples_values <- input$annot_samples
+                              if(input$annot_samples == "none") annot_samples_values <- NULL
+                              
+                              observeEvent(input$view_choice_heatmap, {
+                                updateSliderInput(inputId = "nfeat_choice_heatmap", max = get_dimensions(local.rea.values$resMOFA)$D[input$view_choice_heatmap][[1]])
+                              })
+                              
+                              res_heatmap <- MOFA2::plot_data_heatmap(local.rea.values$resMOFA, 
+                                                                      factor = input$factor_choice_heatmap, 
+                                                                      view = input$view_choice_heatmap, 
+                                                                      features = input$nfeat_choice_heatmap,
+                                                                      denoise = input$denoise_choice_heatmap,
+                                                                      annotation_samples = annot_samples_values)
+                              grid::grid.draw(res_heatmap)
+                            }))
+                   ) # fluidrow heatmap
+          ), # tabpanel heatmap
+          tabPanel("Network",
+                   p("Work in progress :)")
+          ),         
+        )# tabsetpanel 
+    )#box
   })
 }
 

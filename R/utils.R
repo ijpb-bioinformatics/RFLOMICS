@@ -1673,38 +1673,50 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
 
 }
 
-######## ADDED 21/06/22 #############
+######## INTEGRATION WITH MOFA #############
 
 #' @title filter_DE_from_SE
 #'
 #' @param SEobject An object of class \link{SummarizedExperiment}
-#' @param contrast
+#' @param contrasts_arg
+#' @param type
 #' @return An object of class \link{SummarizedExperiment}
 #' @export
 #' @examples
+#' @noRd
 #'
-filter_DE_from_SE <- function(SEobject, contrast){
-  SEobject@metadata[["integration_contrast"]] <- contrast
-  if(contrast == "union") contrast <- colnames(SEobject@metadata$DiffExpAnal$mergeDEF %>% select(starts_with("H")))
 
-  if(contrast == "intersection"){
+filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
+  # SEobject <- FlomicsMultiAssay@ExperimentList$proteomics.set1.filtred
+  # contrasts_arg = c("H1", "H2")
+  # type = "intersection"
+  # contrasts_arg = c("(temperatureLow - temperatureElevated)", "(temperatureMedium - temperatureLow)")
+  SEobject@metadata[["integration_contrasts"]] <- contrasts
 
-    DETab <- SEobject@metadata$DiffExpAnal$mergeDEF %>%
-      dplyr::select(all_of(c("DEF", contrast))) %>%
+  tabCorresp <- SEobject@metadata$DiffExpAnal$contrasts %>% select(contrastName,tag)
+  if("all" %in% contrasts_arg)   contrasts_arg <- SEobject@metadata$DiffExpAnal$contrasts$contrastName
+
+  tabCorresp <- tabCorresp %>% filter(contrastName %in% contrasts_arg)
+  contrasts_select <- tabCorresp$tag
+
+  tab1 <- SEobject@metadata$DiffExpAnal$mergeDEF %>%
+    dplyr::select(all_of(c("DEF", contrasts_select)))
+
+  if(type == "intersection"){
+
+    DETab <-  tab1 %>%
       mutate(SUMCOL = select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
-      filter(SUMCOL==ncol())
+      filter(SUMCOL==length(contrasts_select))
 
   }else{
 
-    DETab <- SEobject@metadata$DiffExpAnal$mergeDEF %>%
-      dplyr::select(all_of(c("DEF", contrast))) %>%
+    DETab <- tab1 %>%
       mutate(SUMCOL = select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
-      filter(SUMCOLL>=1) #### VERIFIER CETTE SYNTAXE
+      filter(SUMCOL>=1) #### VERIFIER CETTE SYNTAXE
 
   }
 
-  SEobject@metadata[["integration_table"]] <- data.frame(SEobject@metadata[["integration_table"]]) %>%
-    dplyr::filter(rownames(SEobject@metadata[["integration_table"]]) %in% DETab$DEF)
+  SEobject <- SEobject[DETab$DEF,]
 
   return(SEobject)
 }
@@ -1721,10 +1733,15 @@ filter_DE_from_SE <- function(SEobject, contrast){
 #' @return An object of class \link{MultiAssayExperiment}
 #' @export
 #' @examples
+#' @noRd
 #'
 rbe_function = function(object, SEobject){
 
-  tableauTransforme <- SEobject@metadata[["integration_table"]]
+  # object = object
+  # SEobject = omicsDat
+
+  # tableauTransforme <- SEobject@metadata[["integration_table"]]
+  assayTransform <- SummarizedExperiment::assay(SEobject)
 
   colBatch <- names(object@metadata$design@Factors.Type)[object@metadata$design@Factors.Type=="batch"]
 
@@ -1733,9 +1750,10 @@ rbe_function = function(object, SEobject){
   designToPreserve <- model.matrix(as.formula(newFormula), data = object@metadata$design@ExpDesign)
 
   if(length(colBatch)==1){
-    rbeRes <- limma::removeBatchEffect(tableauTransforme, batch = object@metadata$design@ExpDesign[,colBatch], design = designToPreserve)
+    rbeRes <- limma::removeBatchEffect(assayTransform, batch = object@metadata$design@ExpDesign[,colBatch], design = designToPreserve)
   }else if(length(colBatch) == 2){
-    rbeRes <- limma::removeBatchEffect(tableauTransforme,
+
+    rbeRes <- limma::removeBatchEffect(assayTransform,
                                        batch = object@metadata$design@ExpDesign[,colBatch[1]],
                                        batch2 = object@metadata$design@ExpDesign[,colBatch[2]],
                                        design = designToPreserve)
@@ -1744,31 +1762,11 @@ rbe_function = function(object, SEobject){
   }
 
   SEobject@metadata[["correction_batch_method"]] <- "limma (removeBatchEffect)"
-  SEobject@metadata[["integration_table"]] <- rbeRes # on ecrase le tableau de resultats
+
+  # SEobject@metadata[["integration_table"]] <- rbeRes # on ecrase le tableau de resultats
+  SummarizedExperiment::assay(SEobject) <- rbeRes
+
 
   return(SEobject)
 }
-
-#' @title MOFA_createObject
-#'
-#' @param object An object of class \link{MultiAssayExperiment}
-#' @param group Not implemented in the interface yet.
-#' @return An untrained MOFA object
-#' @export
-#' @examples
-#'
-MOFA_createObject <- function(object, group = NULL){
-  # object = object.1
-  # group = "temperature"
-
-  list_transform_matrices <- lapply(names(object@ExperimentList), FUN = function(nam){
-    return(as.matrix(object@ExperimentList[[nam]]@metadata[["integration_table"]]))
-  })
-  names(list_transform_matrices) <- names(object@ExperimentList)
-  MOFAObject <- MOFA2::create_mofa(list_transform_matrices, group =  object@metadata$design@ExpDesign[, group], extract_metadata = FALSE)
-  MOFAObject@samples_metadata <- merge(MOFAObject@samples_metadata,  object@metadata$design@ExpDesign, by.x = "sample", by.y = "row.names")
-
-  return(MOFAObject)
-}
-
 
