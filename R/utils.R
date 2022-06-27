@@ -1678,40 +1678,39 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
 #' @title filter_DE_from_SE
 #'
 #' @param SEobject An object of class \link{SummarizedExperiment}
-#' @param contrast 
+#' @param contrast
 #' @return An object of class \link{SummarizedExperiment}
 #' @export
-#' @exportMethod filter_DE_from_SE
 #' @examples
 #'
 filter_DE_from_SE <- function(SEobject, contrast){
   SEobject@metadata[["integration_contrast"]] <- contrast
-  if(contrast == "union") contrast <- colnames(SEobject@metadata$DiffExpAnal$mergeDEF %>% select(starts_with("H"))) 
-  
+  if(contrast == "union") contrast <- colnames(SEobject@metadata$DiffExpAnal$mergeDEF %>% select(starts_with("H")))
+
   if(contrast == "intersection"){
-    
-    DETab <- SEobject@metadata$DiffExpAnal$mergeDEF %>% 
-      dplyr::select(all_of(c("DEF", contrast))) %>% 
-      mutate(SUMCOL = select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%  
+
+    DETab <- SEobject@metadata$DiffExpAnal$mergeDEF %>%
+      dplyr::select(all_of(c("DEF", contrast))) %>%
+      mutate(SUMCOL = select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
       filter(SUMCOL==ncol())
-    
+
   }else{
-    
-    DETab <- SEobject@metadata$DiffExpAnal$mergeDEF %>% 
-      dplyr::select(all_of(c("DEF", contrast))) %>% 
-      mutate(SUMCOL = select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%  
+
+    DETab <- SEobject@metadata$DiffExpAnal$mergeDEF %>%
+      dplyr::select(all_of(c("DEF", contrast))) %>%
+      mutate(SUMCOL = select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
       filter(SUMCOLL>=1) #### VERIFIER CETTE SYNTAXE
-    
+
   }
-  
-  SEobject@metadata[["integration_table"]] <- data.frame(SEobject@metadata[["integration_table"]]) %>% 
-    dplyr::filter(rownames(SEobject@metadata[["integration_table"]]) %in% DETab$DEF) 
-  
+
+  SEobject@metadata[["integration_table"]] <- data.frame(SEobject@metadata[["integration_table"]]) %>%
+    dplyr::filter(rownames(SEobject@metadata[["integration_table"]]) %in% DETab$DEF)
+
   return(SEobject)
 }
 
 
-# rbe_function : pour corriger sur le batch effect. 
+# rbe_function : pour corriger sur le batch effect.
 # object: l'objet flomics
 # SEtransform : le SE qui contient le tableau transforme (la case metadata[["transform_results"]])
 # A MODIFIER ON DOIT POUVOIR PRENDRE EN COMPTE TOUS LES BATCH EFFECTS
@@ -1721,56 +1720,54 @@ filter_DE_from_SE <- function(SEobject, contrast){
 #' @param SEobject An object of class \link{SummarizedExperiment}
 #' @return An object of class \link{MultiAssayExperiment}
 #' @export
-#' @exportMethod rbe_function
 #' @examples
 #'
 rbe_function = function(object, SEobject){
-  
+
   tableauTransforme <- SEobject@metadata[["integration_table"]]
-  
+
   colBatch <- names(object@metadata$design@Factors.Type)[object@metadata$design@Factors.Type=="batch"]
-  
-  newFormula <- gsub(pattern = paste(colBatch, collapse = "[+]|"), "", object@metadata$design@Model.formula) 
-  newFormula <- gsub(pattern = "~ [+] ", "~ ", newFormula) 
+
+  newFormula <- gsub(pattern = paste(colBatch, collapse = "[+]|"), "", object@metadata$design@Model.formula)
+  newFormula <- gsub(pattern = "~ [+] ", "~ ", newFormula)
   designToPreserve <- model.matrix(as.formula(newFormula), data = object@metadata$design@ExpDesign)
-  
+
   if(length(colBatch)==1){
     rbeRes <- limma::removeBatchEffect(tableauTransforme, batch = object@metadata$design@ExpDesign[,colBatch], design = designToPreserve)
   }else if(length(colBatch) == 2){
-    rbeRes <- limma::removeBatchEffect(tableauTransforme, 
-                                       batch = object@metadata$design@ExpDesign[,colBatch[1]], 
+    rbeRes <- limma::removeBatchEffect(tableauTransforme,
+                                       batch = object@metadata$design@ExpDesign[,colBatch[1]],
                                        batch2 = object@metadata$design@ExpDesign[,colBatch[2]],
                                        design = designToPreserve)
   }else{
     print("sorry, only 2 batches effect for now!!!") # trouver un moyen de prendre en compte automatiquement plusieurs batch factors. C'est moche.
   }
-  
+
   SEobject@metadata[["correction_batch_method"]] <- "limma (removeBatchEffect)"
   SEobject@metadata[["integration_table"]] <- rbeRes # on ecrase le tableau de resultats
-  
+
   return(SEobject)
 }
 
 #' @title MOFA_createObject
 #'
 #' @param object An object of class \link{MultiAssayExperiment}
-#' @param group Not implemented in the interface yet. 
+#' @param group Not implemented in the interface yet.
 #' @return An untrained MOFA object
 #' @export
-#' @exportMethod MOFA_createObject
 #' @examples
 #'
 MOFA_createObject <- function(object, group = NULL){
   # object = object.1
   # group = "temperature"
-  
+
   list_transform_matrices <- lapply(names(object@ExperimentList), FUN = function(nam){
     return(as.matrix(object@ExperimentList[[nam]]@metadata[["integration_table"]]))
   })
   names(list_transform_matrices) <- names(object@ExperimentList)
-  MOFAObject <- MOFA2::create_mofa(list_transform_matrices, group =  object@metadata$design@ExpDesign[, group], extract_metadata = FALSE) 
+  MOFAObject <- MOFA2::create_mofa(list_transform_matrices, group =  object@metadata$design@ExpDesign[, group], extract_metadata = FALSE)
   MOFAObject@samples_metadata <- merge(MOFAObject@samples_metadata,  object@metadata$design@ExpDesign, by.x = "sample", by.y = "row.names")
-  
+
   return(MOFAObject)
 }
 
