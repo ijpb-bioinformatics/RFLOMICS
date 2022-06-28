@@ -8,7 +8,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 abstract: > 
    <p style='text-align: justify;'> Here, we will walk through a multi-omics data analysis with the RFLOMICS package. 
-    We will see how to set up the statistical framework of the designed protocol: ie translate biological condition comparisons into contrasts, perform quality controls and statistical analysis of each omics dataset: ie. find differentially expressed genes/proteins/metabolites (DEF) per contrasts, identify clusters of co-expressed genes and perform a gene set enrichment analysis from lists of DEF or from clusters of co-expressed genes/proteins/metabolites. We will then perfom an integration thanks to MOFA2.</p>
+    We will see how to set up the statistical framework of the designed protocol: ie translate biological condition comparisons into contrasts, perform quality controls and statistical analysis of each omics dataset: ie. find differentially expressed genes/proteins/metabolites (DEF) per contrasts, identify clusters of co-expressed genes and perform a gene set enrichment analysis from lists of DEF or from clusters of co-expressed genes/proteins/metabolites. </p>
    
 ---
 
@@ -34,7 +34,7 @@ link to RFLOMICS-configure-cluster-access vignette
 ## Install RFLOMICS on your current version of R:
 
 ```{r, eval=FALSE}
-remotes::install_gitlab(repo="flomics/rflomics",host="https://forgemia.inra.fr/",branch = "develop.0.1")
+remotes::install_gitlab(repo="flomics/rflomics@develop.0.1",host="https://forgemia.inra.fr/")
 library(RFLOMICS)
 RFLOMICS::runApp()
 ```
@@ -45,9 +45,8 @@ In the left side of interface the different tab menu will appear as the analysis
 
 # Dataset example:
 
-Data that will be used for this vignette have been provided by Loic Rajjou and Gwendal Cueff. They are included in the inst/ExampleFiles/ecoseed directory of the package. Briefly, A. thaliana's transcriptom, metabolom and proteom have been 
-obtained in the context of the study of seed germination and vigor. 
-In particular, the author were interested by in the influence of temperature (high, medium and low) and imbibition stage (Dry: DI, early imbibition: EI and late imbibition: LI) 
+Data that will be used for this vignette have been provided by Pr. Loic Rajjou and Gwendal Cueff. They are included in the inst/ExampleFiles/ecoseed directory of the package. Briefly, A. thaliana's transcriptom, metabolom and proteom have been obtained in the context of the study of seed germination and vigor. 
+In particular, the author were interested by deciphering key entities involved in response to environmental stresses (on the mother plant): influence of temperature (high, medium and low) and imbibition stage (Dry: DI, early imbibition: EI and late imbibition: LI). see(https://www.uibk.ac.at/botany/ecoseed/home/)
 
 
 # Load Data

@@ -13,11 +13,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2-dev \
     libxt-dev \
     libssh2-1-dev \
-    openssh-server \
+    openssh-server\
     git-all \
     cmake \
     && apt-get update clean \
-    && rm -rf /var/lib/apt/lists/* 
+    && rm -rf /var/lib/apt/lists/*
 
 RUN echo "options(repos = c(CRAN = 'https://cran.rstudio.com/', Bioc = 'http://www.bioconductor.org/packages/release/bioc'), download.file.method = 'libcurl')" >> /usr/local/lib/R/etc/Rprofile.site
 
@@ -32,6 +32,9 @@ RUN Rscript -e 'BiocManager::install("SummarizedExperiment",version="3.14")'
 RUN Rscript -e 'BiocManager::install("pheatmap",version="3.14")'
 RUN Rscript -e 'BiocManager::install("coseq",version="3.14")'
 RUN Rscript -e 'BiocManager::install("BiocParallel",version="3.14")'
+RUN Rscript -e 'BiocManager::install("EnhancedVolcano",version = "3.14")'
+RUN Rscript -e 'BiocManager::install("ComplexHeatmap",upgrade="never", version = "3.14")'
+RUN Rscript -e 'BiocManager::install("MOFA2",upgrade="never", version = "3.14")'
 
 
 RUN Rscript -e 'remotes::install_version("shinyBS",upgrade="never", version = "0.61")'
@@ -45,6 +48,8 @@ RUN Rscript -e 'remotes::install_version("venn",upgrade="never", version = "1.10
 RUN Rscript -e 'remotes::install_version("gridExtra",upgrade="never", version = "2.3")'
 RUN Rscript -e 'remotes::install_version("plotly",upgrade="never", version = "4.10.0")'
 RUN Rscript -e 'remotes::install_version("UpSetR",upgrade="never", version = "1.4.0")'
+RUN Rscript -e 'remotes::install_version("ggpubr",upgrade="never", version = "0.4.0")'
+
 
 RUN Rscript -e 'remotes::install_version("reshape2",upgrade="never", version = "1.4.4")'
 RUN Rscript -e 'remotes::install_version("kableExtra",upgrade="never", version = "1.3.4")'
@@ -52,6 +57,7 @@ RUN Rscript -e 'remotes::install_version("kableExtra",upgrade="never", version =
 RUN Rscript -e 'remotes::install_version("clustermq",upgrade="never", version = "0.8.95.2")'
 
 RUN Rscript -e 'remotes::install_version("FactoMineR",upgrade="never", version = "2.4")'
+RUN Rscript -e 'remotes::install_version("statmod",version="1.4.36")'
 
 WORKDIR /home
 
@@ -65,4 +71,5 @@ RUN echo "local(options(shiny.port = 3838, shiny.host = '0.0.0.0'))" >> /usr/loc
 
 EXPOSE 3838
 
-CMD ["R","-e","library(RFLOMICS); shiny::runApp('inst/RFLOMICSapp')"]
+CMD ["R","-e","library(RFLOMICS); shiny::runApp()"]
+
