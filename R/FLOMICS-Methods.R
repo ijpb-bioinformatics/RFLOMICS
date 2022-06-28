@@ -727,21 +727,21 @@ methods::setMethod(f="Data_Distribution_Density.plot",
                       else{
                         # if log2 transformation was chosen
                         switch (object@metadata$transform_method,
-                                "log2" = {
-                                  pseudo <- log2(SummarizedExperiment::assay(object) +1 )
-                                  x_lab  <- "Transformed protein abundance"
-                                  title  <- "log2(Protein abundances + 1)" },
+                                # "log2" = {
+                                #   pseudo <- log2(SummarizedExperiment::assay(object) +1 )
+                                #   x_lab  <- "Transformed protein abundance"
+                                #   title  <- "log2(Protein abundances + 1)" },
 
                                 "log1p" = {
                                   pseudo <- log1p(SummarizedExperiment::assay(object))
                                   x_lab  <- "Transformed protein abundance"
                                   title  <- "log1p(Protein abundances)" },
 
-                                "log10" = {
-                                  pseudo <- log10(SummarizedExperiment::assay(object)+1)
-                                  x_lab  <- "Transformed protein abundance"
-                                  title  <- "log10(Protein abundances + 1)"
-                                },
+                                # "log10" = {
+                                #   pseudo <- log10(SummarizedExperiment::assay(object)+1)
+                                #   x_lab  <- "Transformed protein abundance"
+                                #   title  <- "log10(Protein abundances + 1)"
+                                # },
 
                                 "squareroot" = {
                                   pseudo <- sqrt(SummarizedExperiment::assay(object))
@@ -780,21 +780,21 @@ methods::setMethod(f="Data_Distribution_Density.plot",
                       else{
                         # if log10 transformation was chosen
                         switch( object@metadata$transform_method,
-                                "log2" = {
-                                  pseudo <- log2(SummarizedExperiment::assay(object)+1)
-                                  x_lab  <- "Transformed Metabolite abundance"
-                                  title  <- "log2(Metabolites abundance + 1)" },
+                                # "log2" = {
+                                #   pseudo <- log2(SummarizedExperiment::assay(object)+1)
+                                #   x_lab  <- "Transformed Metabolite abundance"
+                                #   title  <- "log2(Metabolites abundance + 1)" },
 
                                 "log1p" = {
                                   pseudo <- log1p(SummarizedExperiment::assay(object))
                                   x_lab  <- "Transformed Metabolite abundance"
                                   title  <- "log1p(Metabolites abundance)" },
 
-                                "log10" = {
-                                  pseudo <- log10(SummarizedExperiment::assay(object)+1)
-                                  x_lab  <- "Transformed Metabolite abundance"
-                                  title  <- "log10(Metabolites abundance + 1)"
-                                },
+                                # "log10" = {
+                                #   pseudo <- log10(SummarizedExperiment::assay(object)+1)
+                                #   x_lab  <- "Transformed Metabolite abundance"
+                                #   title  <- "log10(Metabolites abundance + 1)"
+                                # },
                                 "squareroot" = {
                                   pseudo <- sqrt(SummarizedExperiment::assay(object))
                                   x_lab  <- "Transformed Metabolite abundance"
@@ -820,115 +820,6 @@ methods::setMethod(f="Data_Distribution_Density.plot",
             print(p)
           }
 )
-
-
-
-
-
-#' #' @title Data_Distribution.plot
-#' #'
-#' #' @param object An object of class \link{SummarizedExperiment}
-#' #' @param plot Type of plot : boxplot ("boxplot") or density plot ("density")
-#' #' @exportMethod Data_Distribution.plot
-#' #' @export
-#' #' @return plot
-#' #' @rdname Data_Distribution.plot
-#' #' @examples
-#' #' @importFrom ggplot2 geom_density boxplot xlab
-#'
-#' setMethod(f="Data_Distribution.plot",
-#'           signature="SummarizedExperiment",
-#'           definition <- function(object, plot = "boxplot"){
-#'
-#'             switch (object@metadata$omicType,
-#'                     "RNAseq" = {
-#'
-#'                       # before normalization
-#'                       if(is.null(object@metadata[["Normalization"]]$coefNorm)){
-#'                         pseudo <- log2(SummarizedExperiment::assay(object) + 1) %>% reshape2::melt()
-#'                         y_lab  <- "log2(gene counts)"
-#'                         title  <- "Raw data"
-#'
-#'                       }
-#'                       # after normalization
-#'                       else{
-#'                         pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
-#'                                              scale=object@metadata[["Normalization"]]$coefNorm$norm.factors)+1) %>% reshape2::melt()
-#'                         y_lab  <- "log2(normalized gene counts)"
-#'                         title  <- "Filtered and normalized (TMM) data"
-#'                       }
-#'
-#'                     },
-#'                     "proteomics" = {
-#'                       # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
-#'                       if(is.null(object@metadata$transform_method)){
-#'                         pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
-#'                         x_lab  <- "Protein abundance (?)"
-#'                         title  <- "Raw data"
-#'
-#'                       }
-#'                       # after transformation
-#'                       else{
-#'                         # if log2 transformation was chosen
-#'                         switch (object@metadata$transform_method,
-#'                                 "log2" = {
-#'                                   pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
-#'                                   x_lab  <- "Transformed protein abundance"
-#'                                   title  <- "Transformed data (method : log2)" },
-#'
-#'                                 "none" = {
-#'                                   pseudo <- log2(SummarizedExperiment::assay(object) + 1) %>% reshape2::melt()
-#'                                   x_lab  <- "Transformed protein abundance"
-#'                                   title  <- "Transformed data (method : ?)" } )
-#'                       }
-#'                     },
-#'                     "metabolomics" = {
-#'                       # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
-#'                       if(is.null(object@metadata$transform_method)){
-#'                         pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
-#'                         x_lab  <- "Metabolite abundance (?)"
-#'                         title  <- "Raw data"
-#'                       }
-#'                       # after transformation
-#'                       else{
-#'                         # if log2 transformation was chosen
-#'                         switch( object@metadata$transform_method,
-#'                                 "log2" = {
-#'                                   pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
-#'                                   x_lab  <- "Transformed protein abundance"
-#'                                   title  <- "Transformed data (method : log2)" },
-#'                                 "none" = {
-#'                                   pseudo <- log2(SummarizedExperiment::assay(object) + 1) %>% reshape2::melt()
-#'                                   x_lab  <- "Transformed protein abundance"
-#'                                   title  <- "Transformed data (method : ?)" } )
-#'                       }
-#'                     }
-#'             )
-#'
-#'             colnames(pseudo) <- c("features", "samples", "value")
-#'             pseudo.gg <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples")
-#'
-#'             switch (plot,
-#'               "boxplot" = {
-#'                 #
-#'                 pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
-#'
-#'                 p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + ggplot2::geom_boxplot(aes(fill=groups)) +
-#'                   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + xlab("") + ylab(y_lab) + ggtitle(title)
-#'
-#'
-#'               },
-#'               "density" = {
-#'                   #
-#'                   p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + xlab(y_lab) +
-#'                     theme(legend.position='none') + ggtitle(title)
-#'               }
-#'             )
-#'
-#'             print(p)
-#'           }
-#' )
-
 
 
 
