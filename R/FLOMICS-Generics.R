@@ -1,113 +1,113 @@
 
-setGeneric(
+methods::setGeneric(
   name="mvQCdesign",
   def = function( object, ... ){standardGeneric("mvQCdesign")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="mvQCdata",
   def = function( object, ... ){standardGeneric("mvQCdata")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="RunNormalization",
   def = function( object, ... ){standardGeneric("RunNormalization")}
 )
 
 
-setGeneric(
+methods::setGeneric(
   name="RunDiffAnalysis",
   def = function( object, ... ){standardGeneric("RunDiffAnalysis")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="FilterDiffAnalysis",
   def = function( object, ... ){standardGeneric("FilterDiffAnalysis")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="abundanceBoxplot",
   def = function( object, ... ){standardGeneric("abundanceBoxplot")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="plotPCA",
   def = function( object, ... ){standardGeneric("plotPCA")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="TransformData",
   def = function( object, ... ){standardGeneric("TransformData")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="FilterLowAbundance",
   def = function( object, ... ){standardGeneric("FilterLowAbundance")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="RunPCA",
   def = function( object, ... ){standardGeneric("RunPCA")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="CheckExpDesignCompleteness",
   def = function( object, ... ){standardGeneric("CheckExpDesignCompleteness")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="getExpressionContrast",
   def = function( object, ... ){standardGeneric("getExpressionContrast")}
 )
 
 
-setGeneric(
+methods::setGeneric(
   name="getContrastMatrix",
   def = function( object, ... ){standardGeneric("getContrastMatrix")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="runAnnotationEnrichment",
   def = function( object, ... ){standardGeneric("runAnnotationEnrichment")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="runCoExpression",
   def = function( object, ... ){standardGeneric("runCoExpression")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="DiffAnal.plot",
   def = function( object, ... ){standardGeneric("DiffAnal.plot")}
 )
 
 
-setGeneric(
+methods::setGeneric(
   name="Data_Distribution_Density.plot",
   def = function( object, ... ){standardGeneric("Data_Distribution_Density.plot")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="Library_size_barplot.plot",
   def = function( object, ... ){standardGeneric("Library_size_barplot.plot")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="Enrichment.plot",
   def = function( object, ... ){standardGeneric("Enrichment.plot")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="resetFlomicsMultiAssay",
   def = function( object, ... ){standardGeneric("resetFlomicsMultiAssay")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="prepareMOFA",
   def = function( object, ... ){standardGeneric("prepareMOFA")}
 )
 
-setGeneric(
+methods::setGeneric(
   name="run_MOFA_analysis",
   def = function( object, ... ){standardGeneric("run_MOFA_analysis")}
 

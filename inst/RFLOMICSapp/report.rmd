@@ -73,7 +73,7 @@ Batch.fact <- FlomicsMultiAssay@metadata$design@Factors.Type[FlomicsMultiAssay@m
 ## Check completeness
 
 ```{r CheckDesignExp, echo=FALSE, message=TRUE, warning=TRUE, out.width = "50%"}
-check <- CheckExpDesignCompleteness(FlomicsMultiAssay@metadata$design)
+check <- CheckExpDesignCompleteness(FlomicsMultiAssay)
 
 check$plot
 ```

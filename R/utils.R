@@ -468,7 +468,7 @@ pvalue.plot <- function(data, hypothesis=hypothesis, pngFile=NULL){
 }
 
 
-globalVariables(names(data))
+utils::globalVariables(names(data))
 
 #' MA.plot
 #'
