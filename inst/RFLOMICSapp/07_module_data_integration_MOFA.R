@@ -171,10 +171,25 @@ MOFA_setting <- function(input, output, session, rea.values){
                                                   scale_views = input$scaleViews,
                                                   maxiter = input$maxiter,
                                                   num_factors = input$numfactor) 
+    
+    # test <- run_MOFA_analysis(FlomicsMultiAssay@metadata[["MOFA_untrained"]],
+    #                           scale_views = FALSE,
+    #                           maxiter = 1000,
+    #                           num_factors = 5)
+    # local.rea.values <- list()
+    local.rea.values$warnings <- NULL
+    if(!is.null(names(warnings()))){
+      local.rea.values$warnings <- names(warnings())
+    }else{local.rea.values$warnings <- "no warnings captured"}
+    # output <- list()
+    # output$warnings <- renderText({local.rea.values$warnings})
+    
+    FlomicsMultiAssay@metadata[["MOFA_untrained"]] <<- local.rea.values$untrainedMOFA
+    FlomicsMultiAssay@metadata[["MOFA_warnings"]] <<- local.rea.values$warnings
     FlomicsMultiAssay@metadata[["MOFA_results"]] <<- local.rea.values$resMOFA
     
     local.rea.values$runMOFA   <- TRUE
-    FlomicsMultiAssay@metadata[["MOFA_run"]] <- local.rea.values$runMOFA
+    # FlomicsMultiAssay@metadata[["MOFA_run"]] <- local.rea.values$runMOFA
     
   }, ignoreInit = TRUE)
   
@@ -195,7 +210,25 @@ MOFA_setting <- function(input, output, session, rea.values){
           
           ###
           tabPanel("Overview", 
-                   renderPlot(MOFA2::plot_data_overview(local.rea.values$resMOFA))
+                   column(6,
+                          renderPlot(MOFA2::plot_data_overview(local.rea.values$resMOFA) + ggtitle("Data Overview"))),
+                   # column(6,
+                   #        h4("Warnings:"),
+                   #        renderText(expr ={
+                   #          # if("no warning captured"%in%local.rea.values$warnings){
+                   #          #   print(local.rea.values$warnings)
+                   #          # }else{
+                   #          # warnsms <- paste(local.rea.values$warnings, collapse = "\n")
+                   #          # for(warns in local.rea.values$warnings) print(warns)
+                   #          # HTML(paste(local.rea.values$warnings, collapse = '<br/>'))
+                   #          HTML(paste(local.rea.values$warnings, collapse = ''))
+                   #          # print(paste(local.rea.values$warnings, collapse = "\n"))
+                   #          # for(i in 1:length(local.rea.values$warnings)){
+                   #          #   cat(local.rea.values$warnings[i])
+                   #          # }
+                   #          # }
+                   #        })
+                   # )
           ),
           ### 
           tabPanel("Factors Correlation", 
@@ -230,6 +263,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                      ),
                    ),
                    fluidRow(
+                     column(12,
                      renderPlot({
                        
                        ggplot_list <- list()
@@ -249,7 +283,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                        
                      }, execOnResize = TRUE) # width = 60, height = plot_height(), 
                      
-                   )
+                   ))
           ),
           
           ### 
