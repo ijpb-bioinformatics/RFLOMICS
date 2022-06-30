@@ -95,6 +95,12 @@ shinyServer(function(input, output, session) {
         itemsOmics,
         list(
           
+          #### analysis summary ####
+          ########################
+          tabItem(tabName = "omicsSum",
+                  uiOutput(outputId = "omicsSum_UI")
+          ),
+          
           #### MOFA ####
           ########################
           tabItem(tabName = "withMOFA",
@@ -223,6 +229,15 @@ shinyServer(function(input, output, session) {
       })
     })
     
+    #### analysis Summary ####
+    ###############################
+    output$omicsSum_UI <- renderUI({
+      
+      omics_data_analysis_summaryUI("omics")
+      
+    })
+    
+    
     #### MOFA data integration ####
     ###############################
     output$withMOFA_UI <- renderUI({
@@ -339,7 +354,7 @@ shinyServer(function(input, output, session) {
       
 
       menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'), startExpanded = FALSE,selected = FALSE,
-           menuSubItem(text = "Omics analyses summary", tabName = "omicsSum" ),
+           menuSubItem(text = "Dataset analysis summary", tabName = "omicsSum" ),
            menuSubItem(text = "with MOFA", tabName = "withMOFA" ),
            menuSubItem(text = "with MixOmics", tabName = "withMixOmics")
       )
@@ -409,6 +424,9 @@ shinyServer(function(input, output, session) {
           
         })
       })
+      
+      
+      callModule(module = omics_data_analysis_summary, id = "omics", rea.values = rea.values)
       
       callModule(module = MOFA_setting, id = "mofaSetting", rea.values = rea.values)
       
