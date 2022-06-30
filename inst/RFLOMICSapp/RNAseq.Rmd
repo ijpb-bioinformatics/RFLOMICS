@@ -21,7 +21,7 @@ DiCoExpress [@Lambert:2020ta]
 
 ```{r , fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE, echo=FALSE}
 
-check <- CheckExpDesignCompleteness(FlomicsMultiAssay@metadata$design, colnames(dataset.SE))
+check <- CheckExpDesignCompleteness(FlomicsMultiAssay)
 check$plot
 
 

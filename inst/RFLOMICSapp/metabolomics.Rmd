@@ -16,7 +16,7 @@ CoEx.eval <- !is.null(dataset.SE@metadata[["CoExpAnal"]]$results)
 ### Dataset processing
 
 ```{r CheckDesignMeta, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
-check <- CheckExpDesignCompleteness(FlomicsMultiAssay@metadata$design, colnames(dataset.SE))
+check <- CheckExpDesignCompleteness(FlomicsMultiAssay)
 
 NbProt <- length(names(dataset.SE))
 NbProtWoutNA <- dim(na.omit(assay(dataset.SE)))[1]

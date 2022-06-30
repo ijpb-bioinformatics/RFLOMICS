@@ -41,7 +41,7 @@
 #' @rdname ExpDesign-class
 #' @exportClass ExpDesign
 #'
-.ExpDesign <- setClass(
+.ExpDesign <- methods::setClass(
   Class="ExpDesign",
   slots=c(ExpDesign="data.frame",
           List.Factors="list",

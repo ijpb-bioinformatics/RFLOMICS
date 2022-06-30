@@ -20,9 +20,42 @@ https://git-scm.com/book/fr/v2/D%C3%A9marrage-rapide-Installation-de-Git
 
 https://docs.docker.com/desktop/linux/install/
 
+* clone RFLOMICS 
+
 ```{bash, eval=FALSE}
- 
+git clone --branch develop.0.1 https://forgemia.inra.fr/flomics/rflomics.git
 ```
+
+* Build Docker Image
+
+```{bash, eval=FALSE}
+cd RFLOMICS
+docker build --file=Dockerfile --tag=rflomics .
+```
+
+* Run Docker
+
+```{bash, eval=FALSE}
+docker run -it -p 3838:3838 -v ${HOME}:/root --name='rflomics' --cpus 8 rflomics
+```
+
+* Start/Stop 
+
+```{bash, eval=FALSE}
+docker stop rflomics
+```
+
+```{bash, eval=FALSE}
+docker start rflomics
+```
+
+* remove
+
+
+```{bash, eval=FALSE}
+docker rm rflomics
+```
+
 
 ### MacOSX
 
@@ -36,6 +69,7 @@ https://docs.docker.com/desktop/linux/install/
 
 ### Windows
 
+- 
 - Docker desktop
 - restart
 - wsl2 update

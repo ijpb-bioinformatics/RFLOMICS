@@ -137,7 +137,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 #' refList = Design.refList, typeList = Design.typeList)
 #' CheckExpDesignCompleteness(Design.obj)
 
-setMethod(f="CheckExpDesignCompleteness",
+methods::setMethod(f="CheckExpDesignCompleteness",
           signature="MultiAssayExperiment",
           definition <- function(object, colnames=NULL){
 
@@ -263,7 +263,7 @@ setMethod(f="CheckExpDesignCompleteness",
 #'
 #' @author Christine Paysant-Le Roux
 #'
-setMethod(f="getExpressionContrast",
+methods::setMethod(f="getExpressionContrast",
           signature="MultiAssayExperiment",
           definition <- function(object, model.formula){
 
@@ -347,7 +347,7 @@ setMethod(f="getExpressionContrast",
 #' @importFrom stats formula terms.formula
 #'
 #' @author Christine Paysant-Le Roux
-setMethod(f="getContrastMatrix",
+methods::setMethod(f="getContrastMatrix",
           signature="MultiAssayExperiment",
           definition <- function(object, contrastList){
 
@@ -591,7 +591,7 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 #' @exportMethod RunPCA
 #' @examples
 #'
-setMethod(f="RunPCA",
+methods::setMethod(f="RunPCA",
           signature="SummarizedExperiment",
           definition <- function(object){
 
@@ -628,7 +628,7 @@ setMethod(f="RunPCA",
 #' @importFrom ggplot2 ggplot geom_bar xlab ylab element_text ggtitle
 #'
 #' @examples
-setMethod(f="Library_size_barplot.plot",
+methods::setMethod(f="Library_size_barplot.plot",
           signature="SummarizedExperiment",
           definition <- function(object){
 
@@ -685,7 +685,7 @@ setMethod(f="Library_size_barplot.plot",
 #' @export
 #' @importFrom ggplot2 geom_density xlab
 
-setMethod(f="Data_Distribution_Density.plot",
+methods::setMethod(f="Data_Distribution_Density.plot",
           signature="SummarizedExperiment",
           definition <- function(object){
 
@@ -727,21 +727,21 @@ setMethod(f="Data_Distribution_Density.plot",
                       else{
                         # if log2 transformation was chosen
                         switch (object@metadata$transform_method,
-                                "log2" = {
-                                  pseudo <- log2(SummarizedExperiment::assay(object) +1 )
-                                  x_lab  <- "Transformed protein abundance"
-                                  title  <- "log2(Protein abundances + 1)" },
+                                # "log2" = {
+                                #   pseudo <- log2(SummarizedExperiment::assay(object) +1 )
+                                #   x_lab  <- "Transformed protein abundance"
+                                #   title  <- "log2(Protein abundances + 1)" },
 
                                 "log1p" = {
                                   pseudo <- log1p(SummarizedExperiment::assay(object))
                                   x_lab  <- "Transformed protein abundance"
                                   title  <- "log1p(Protein abundances)" },
 
-                                "log10" = {
-                                  pseudo <- log10(SummarizedExperiment::assay(object)+1)
-                                  x_lab  <- "Transformed protein abundance"
-                                  title  <- "log10(Protein abundances + 1)"
-                                },
+                                # "log10" = {
+                                #   pseudo <- log10(SummarizedExperiment::assay(object)+1)
+                                #   x_lab  <- "Transformed protein abundance"
+                                #   title  <- "log10(Protein abundances + 1)"
+                                # },
 
                                 "squareroot" = {
                                   pseudo <- sqrt(SummarizedExperiment::assay(object))
@@ -780,21 +780,21 @@ setMethod(f="Data_Distribution_Density.plot",
                       else{
                         # if log10 transformation was chosen
                         switch( object@metadata$transform_method,
-                                "log2" = {
-                                  pseudo <- log2(SummarizedExperiment::assay(object)+1)
-                                  x_lab  <- "Transformed Metabolite abundance"
-                                  title  <- "log2(Metabolites abundance + 1)" },
+                                # "log2" = {
+                                #   pseudo <- log2(SummarizedExperiment::assay(object)+1)
+                                #   x_lab  <- "Transformed Metabolite abundance"
+                                #   title  <- "log2(Metabolites abundance + 1)" },
 
                                 "log1p" = {
                                   pseudo <- log1p(SummarizedExperiment::assay(object))
                                   x_lab  <- "Transformed Metabolite abundance"
                                   title  <- "log1p(Metabolites abundance)" },
 
-                                "log10" = {
-                                  pseudo <- log10(SummarizedExperiment::assay(object)+1)
-                                  x_lab  <- "Transformed Metabolite abundance"
-                                  title  <- "log10(Metabolites abundance + 1)"
-                                },
+                                # "log10" = {
+                                #   pseudo <- log10(SummarizedExperiment::assay(object)+1)
+                                #   x_lab  <- "Transformed Metabolite abundance"
+                                #   title  <- "log10(Metabolites abundance + 1)"
+                                # },
                                 "squareroot" = {
                                   pseudo <- sqrt(SummarizedExperiment::assay(object))
                                   x_lab  <- "Transformed Metabolite abundance"
@@ -823,115 +823,6 @@ setMethod(f="Data_Distribution_Density.plot",
 
 
 
-
-
-#' #' @title Data_Distribution.plot
-#' #'
-#' #' @param object An object of class \link{SummarizedExperiment}
-#' #' @param plot Type of plot : boxplot ("boxplot") or density plot ("density")
-#' #' @exportMethod Data_Distribution.plot
-#' #' @export
-#' #' @return plot
-#' #' @rdname Data_Distribution.plot
-#' #' @examples
-#' #' @importFrom ggplot2 geom_density boxplot xlab
-#'
-#' setMethod(f="Data_Distribution.plot",
-#'           signature="SummarizedExperiment",
-#'           definition <- function(object, plot = "boxplot"){
-#'
-#'             switch (object@metadata$omicType,
-#'                     "RNAseq" = {
-#'
-#'                       # before normalization
-#'                       if(is.null(object@metadata[["Normalization"]]$coefNorm)){
-#'                         pseudo <- log2(SummarizedExperiment::assay(object) + 1) %>% reshape2::melt()
-#'                         y_lab  <- "log2(gene counts)"
-#'                         title  <- "Raw data"
-#'
-#'                       }
-#'                       # after normalization
-#'                       else{
-#'                         pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
-#'                                              scale=object@metadata[["Normalization"]]$coefNorm$norm.factors)+1) %>% reshape2::melt()
-#'                         y_lab  <- "log2(normalized gene counts)"
-#'                         title  <- "Filtered and normalized (TMM) data"
-#'                       }
-#'
-#'                     },
-#'                     "proteomics" = {
-#'                       # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
-#'                       if(is.null(object@metadata$transform_method)){
-#'                         pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
-#'                         x_lab  <- "Protein abundance (?)"
-#'                         title  <- "Raw data"
-#'
-#'                       }
-#'                       # after transformation
-#'                       else{
-#'                         # if log2 transformation was chosen
-#'                         switch (object@metadata$transform_method,
-#'                                 "log2" = {
-#'                                   pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
-#'                                   x_lab  <- "Transformed protein abundance"
-#'                                   title  <- "Transformed data (method : log2)" },
-#'
-#'                                 "none" = {
-#'                                   pseudo <- log2(SummarizedExperiment::assay(object) + 1) %>% reshape2::melt()
-#'                                   x_lab  <- "Transformed protein abundance"
-#'                                   title  <- "Transformed data (method : ?)" } )
-#'                       }
-#'                     },
-#'                     "metabolomics" = {
-#'                       # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
-#'                       if(is.null(object@metadata$transform_method)){
-#'                         pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
-#'                         x_lab  <- "Metabolite abundance (?)"
-#'                         title  <- "Raw data"
-#'                       }
-#'                       # after transformation
-#'                       else{
-#'                         # if log2 transformation was chosen
-#'                         switch( object@metadata$transform_method,
-#'                                 "log2" = {
-#'                                   pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
-#'                                   x_lab  <- "Transformed protein abundance"
-#'                                   title  <- "Transformed data (method : log2)" },
-#'                                 "none" = {
-#'                                   pseudo <- log2(SummarizedExperiment::assay(object) + 1) %>% reshape2::melt()
-#'                                   x_lab  <- "Transformed protein abundance"
-#'                                   title  <- "Transformed data (method : ?)" } )
-#'                       }
-#'                     }
-#'             )
-#'
-#'             colnames(pseudo) <- c("features", "samples", "value")
-#'             pseudo.gg <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples")
-#'
-#'             switch (plot,
-#'               "boxplot" = {
-#'                 #
-#'                 pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
-#'
-#'                 p <- ggplot(pseudo_bis, aes(x=samples, y=value)) + ggplot2::geom_boxplot(aes(fill=groups)) +
-#'                   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + xlab("") + ylab(y_lab) + ggtitle(title)
-#'
-#'
-#'               },
-#'               "density" = {
-#'                   #
-#'                   p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + xlab(y_lab) +
-#'                     theme(legend.position='none') + ggtitle(title)
-#'               }
-#'             )
-#'
-#'             print(p)
-#'           }
-#' )
-
-
-
-
 #' @title abundanceBoxplot
 #' @description This function produces boxplots from raw and normalized data matrix. One color by level
 #' of combination factor. It allows to detect outlier samples and to see the normalization
@@ -940,7 +831,7 @@ setMethod(f="Data_Distribution_Density.plot",
 #' @exportMethod abundanceBoxplot
 #' @rdname abundanceBoxplot
 #'
-setMethod(f= "abundanceBoxplot",
+methods::setMethod(f= "abundanceBoxplot",
           signature = "SummarizedExperiment",
           definition <- function(object){
 
@@ -993,7 +884,7 @@ setMethod(f= "abundanceBoxplot",
 #' @exportMethod plotPCA
 #' @examples
 #' @rdname plotPCA
-setMethod(f= "plotPCA",
+methods::setMethod(f= "plotPCA",
           signature = "SummarizedExperiment",
           definition <- function(object, PCA, PCs=c(1,2), condition="groups"){
 
@@ -1049,7 +940,7 @@ setMethod(f= "plotPCA",
 #'
 #' @rdname mvQCdesign
 
-setMethod(f="mvQCdesign",
+methods::setMethod(f="mvQCdesign",
           signature="MultiAssayExperiment",
           definition <- function(object, data, PCA=c("raw","norm"), axis=5, pngFile=NULL){
 
@@ -1135,7 +1026,7 @@ setMethod(f="mvQCdesign",
 #' @param pngFile The name of the png file for saving the plot.
 #' @exportMethod mvQCdata
 #' @rdname mvQCdata
-setMethod(f="mvQCdata",
+methods::setMethod(f="mvQCdata",
           signature="MultiAssayExperiment",
           definition <- function(object, data, PCA=c("raw","norm"),axis=3, pngFile=NULL){
 
@@ -1186,7 +1077,7 @@ setMethod(f="mvQCdata",
 #' @exportMethod TransformData
 #'
 #' @examples
-setMethod(f= "TransformData",
+methods::setMethod(f= "TransformData",
           signature = "SummarizedExperiment",
           definition <- function(object, transform_method = "log2"){
 
@@ -1258,7 +1149,7 @@ setMethod(f= "TransformData",
 #' @exportMethod FilterLowAbundance
 #' @seealso edgeR::filterByExpr
 #' @examples
-setMethod(f= "FilterLowAbundance",
+methods::setMethod(f= "FilterLowAbundance",
           signature = "SummarizedExperiment",
           definition <- function(object, Filter_Strategy = "NbConditions", CPM_Cutoff = 5){
 
@@ -1330,7 +1221,7 @@ setMethod(f= "FilterLowAbundance",
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @examples
 #'
-setMethod(f="RunNormalization",
+methods::setMethod(f="RunNormalization",
           signature="SummarizedExperiment",
           definition <- function(object, NormMethod){
 
@@ -1392,7 +1283,7 @@ setMethod(f="RunNormalization",
 #' @examples
 #'
 #'
-setMethod(f="RunDiffAnalysis",
+methods::setMethod(f="RunDiffAnalysis",
           signature="SummarizedExperiment",
           definition <- function(object, design, Adj.pvalue.method="BH",
                                  contrastList, DiffAnalysisMethod, clustermq=FALSE){
@@ -1466,7 +1357,7 @@ setMethod(f="RunDiffAnalysis",
 #'
 #' @examples
 #'
-setMethod(f="FilterDiffAnalysis",
+methods::setMethod(f="FilterDiffAnalysis",
           signature="SummarizedExperiment",
           definition <- function(object, Adj.pvalue.cutoff = 0.05, FC.cutoff = 1){
 
@@ -1546,7 +1437,7 @@ setMethod(f="FilterDiffAnalysis",
 #' @export
 #'
 #' @examples
-setMethod(f="DiffAnal.plot",
+methods::setMethod(f="DiffAnal.plot",
           signature="SummarizedExperiment",
 
           definition <- function(object, hypothesis,Adj.pvalue.cutoff = 0.05, FC.cutoff = 1){
@@ -1616,7 +1507,7 @@ setMethod(f="DiffAnal.plot",
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod runCoExpression
 #' @seealso \code{\link{coseq::coseq}}
-setMethod(f="runCoExpression",
+methods::setMethod(f="runCoExpression",
           signature="SummarizedExperiment",
           definition <- function(object, geneList, K=2:20, replicates=5, nameList, merge="union",
                                  model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation, normFactors, clustermq=FALSE){
@@ -1807,7 +1698,7 @@ setMethod(f="runCoExpression",
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod runAnnotationEnrichment
 #'
-setMethod(f="runAnnotationEnrichment",
+methods::setMethod(f="runAnnotationEnrichment",
           signature="SummarizedExperiment",
 
           definition <- function(object, annotation, alpha = 0.01, probaMethod = "hypergeometric",
@@ -1958,7 +1849,7 @@ p[[listname]] <- ggplot2::ggplot(data = tail(data_ord, n=top), aes(x=sort(Trial_
 #' @examples
 #' @noRd
 #'
-setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
+methods::setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
 
           definition <- function(object, results, datasets = NULL){
 
@@ -2011,7 +1902,7 @@ setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
 #' @exportMethod prepareMOFA
 #' @examples
 #'
-setMethod(f="prepareMOFA",
+methods::setMethod(f="prepareMOFA",
           signature="MultiAssayExperiment",
 
           definition <-  function(object,
@@ -2112,7 +2003,7 @@ setMethod(f="prepareMOFA",
 #' @examples
 #'
 
-setMethod(f="run_MOFA_analysis",
+methods::setMethod(f="run_MOFA_analysis",
           signature="MOFA", definition <- function(object,
                                                    scale_views = FALSE,
                                                    maxiter = 1000,
@@ -2134,7 +2025,7 @@ setMethod(f="run_MOFA_analysis",
               training_options = train_opts
             )
 
-            MOFAObject.trained <- MOFA2::run_mofa(MOFAObject, use_basilisk = TRUE)
+            MOFAObject.trained <- MOFA2::run_mofa(MOFAObject, use_basilisk = FALSE)
             # peut poser probleme au niveau python et mofapy.
             # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R.
 

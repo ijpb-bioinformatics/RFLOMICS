@@ -10,7 +10,7 @@ QCNormalizationTabUI <- function(id){
   ns <- NS(id)
   tagList(
     fluidRow(
-      box(title = span(tagList(icon("filter"), "     Data Filtering and Normalization ", tags$small("(Scroll down for instructions)"))), 
+      box(title = span(tagList(icon("filter"), "     Data Filtering and Normalization ", tags$small("(Scroll down for instructions)"))),
           width = 12, status = "warning", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE,
 
           p("For each diagnostic plot, both raw and processed (filtered, normalized, ...) data are displayed with expertised default parameters."),
@@ -39,7 +39,7 @@ QCNormalizationTabUI <- function(id){
 QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
   print("#################################################")
-  
+
   output$configUI <- renderUI({
 
     validate(
@@ -123,7 +123,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
         radioButtons(
           inputId  =session$ns("dataTransform"),
           label = "Does the data need to be transformed ?",
-          choices=c("log1p"="log1p","log2"="log2","log10"="log10","squareroot"="squareroot","no"="none"),
+          choices=c("log1p"="log1p","squareroot"="squareroot","no"="none"),
           selected="none"),
         hr(),
 
@@ -420,18 +420,18 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
 
   observeEvent(input$Update, {
-    
+
     print(paste0("Update ",input$Update))
-    
+
     rea.values[[dataset]]$diffAnal  <- FALSE
     rea.values[[dataset]]$coExpAnal <- FALSE
     rea.values[[dataset]]$diffAnnot <- FALSE
     rea.values[[dataset]]$diffValid <- FALSE
-    
-    if (dataset %in% rea.values$datasetDiff){ 
+
+    if (dataset %in% rea.values$datasetDiff){
       rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
       }
-    
+
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal <<- list()
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal   <<- list()
     FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpEnrichAnal  <<- list()
@@ -567,9 +567,9 @@ process_data <- function(FlomicsMultiAssay, dataset, samples , param.list = list
   if (SE.name %in% names(FlomicsMultiAssay)){
     FlomicsMultiAssay <- FlomicsMultiAssay[,, -which(names(FlomicsMultiAssay) == SE.name)]
   }
-  
+
   FlomicsMultiAssay <- eval(parse(text = paste0('c( FlomicsMultiAssay ,', SE.name, ' = SE.processed )')))
-  
+
   #FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <- SE.processed
   return(FlomicsMultiAssay)
 }
