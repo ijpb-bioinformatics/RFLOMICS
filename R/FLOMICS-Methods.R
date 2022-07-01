@@ -1780,7 +1780,7 @@ methods::setMethod(f="runAnnotationEnrichment",
 #' @exportMethod Enrichment.plot
 #' @importFrom dplyr desc
 #' @examples
-Enrichment.plot <- function(object, Over_Under = c("overrepresented", "underrepresented"), top = 50 ,
+Enrichment.plot <- function(object, Over_Under = "overrepresented", top = 50 ,
                             domain=NULL, listNames=NULL, from = c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
 
   Decision <- Pvalue_over <- Pvalue_under <- Pvalue <- NULL
