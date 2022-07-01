@@ -129,7 +129,7 @@ shinyServer(function(input, output, session) {
                 
                 #### Data Exploratory & QC ####
                 ###############################
-                tabPanel("Data Exploratory",
+                tabPanel("Pre-processing",
                          tags$br(),
                          tags$br(),
                          
@@ -139,14 +139,14 @@ shinyServer(function(input, output, session) {
                 
                 #### Diff analysis  ####
                 ######################################
-                tabPanel("Diff Gene Expression",
+                tabPanel("Differential analysis",
                          tags$br(),
                          tags$br(),
                          DiffExpAnalysisUI(paste0("RNAseq",i))
                 ),
                 #### Co-expression analysis  ####
                 ######################################
-                tabPanel("Gene CoExpression",
+                tabPanel("Co-expression analysis",
                          tags$br(),
                          tags$br(),
                          CoSeqAnalysisUI(paste0("RNAseq",i))
@@ -166,7 +166,7 @@ shinyServer(function(input, output, session) {
                 
                 #### Data Exploratory & QC ####
                 ###############################
-                tabPanel("Data Exploratory",
+                tabPanel("Pre-processing",
                          tags$br(),
                          tags$br(),
                          
@@ -174,14 +174,14 @@ shinyServer(function(input, output, session) {
                 ),
                 #### Diff analysis  ####
                 ######################################
-                tabPanel("Diff Prot Expression",
+                tabPanel("Differential analysis",
                          tags$br(),
                          tags$br(),
                          DiffExpAnalysisUI(paste0("proteomics",i))
                 ),
                 #### Co-expression analysis  ####
                 ######################################
-                tabPanel("Proteins CoExpression",
+                tabPanel("Co-expression analysis",
                          tags$br(),
                          tags$br(),
                          CoSeqAnalysisUI(paste0("proteomics",i))
@@ -202,21 +202,21 @@ shinyServer(function(input, output, session) {
                 
                 #### Data Exploratory & QC ####
                 ###############################
-                tabPanel("Data Exploratory",
+                tabPanel("Pre-processing",
                          tags$br(),
                          tags$br(),
                          
                          QCNormalizationTabUI(paste0("metabolomics",i))
                 ),#### Diff analysis  ####
                 ######################################
-                tabPanel("Diff Metabo Expression",
+                tabPanel("Differential analysis",
                          tags$br(),
                          tags$br(),
                          DiffExpAnalysisUI(paste0("metabolomics",i))
                 ),
                 #### Co-expression analysis  ####
                 ######################################
-                tabPanel("Metabolites CoExpression",
+                tabPanel("Co-expression analysis",
                          tags$br(),
                          tags$br(),
                          CoSeqAnalysisUI(paste0("metabolomics",i))
