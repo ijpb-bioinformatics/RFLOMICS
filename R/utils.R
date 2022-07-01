@@ -522,6 +522,19 @@ MA.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, p
 
 
 
+#' Title
+#'
+#' @param data
+#' @param Adj.pvalue.cutoff
+#' @param FC.cutoff
+#' @param hypothesis
+#' @param pngFile
+#'
+#' @return
+#' @export
+#' @noRd
+#' @examples
+#'
 Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, pngFile=NULL){
 
   Abundance <- logFC <- Adj.pvalue <- NULL

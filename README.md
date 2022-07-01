@@ -4,18 +4,17 @@
 # Introduction
 
 
-  The acquisition of **multi-omics data** in the context of **complex experimental design** is a widely used practice to 
-identify genes, proteins, metabolites and decipher the biological processes they are involved. The investigation of each omics layer 
-is a good first step to explore and extract relevant biological variability. The statistical integration could then
+<p style='text-align: justify;'>  The acquisition of **multi-omics data** in the context of **complex experimental design** is a widely used practice to 
+identify genes, proteins, metabolites and decipher the biological processes they are involved in. The investigation of each omics layer is a good first step to explore and extract relevant biological variability. The statistical integration could then
 be restrained to pertinent omics levels and features. Such analysis of heterogeneous data remains a technical 
 challenge with the needs of expert methods and parameters to take into account data specificity.
 Furthermore, applying different statistical methods from several tools is also a technical challenge in term of data management. 
-n this context, we developed RFLOMICS:  **R package coupled with a shiny application** dedicated to the management and analysis of multiple omics-datasets in the statistical framework of **vertical integration** of observations (i.e. analysis of omics data across experiments on the same individuals) see the figure below.
+In this context, we developed RFLOMICS:  **R package coupled with a shiny application** dedicated to the management and analysis of multiple omics-datasets in the statistical framework of **vertical integration** of observations (i.e. analysis of omics data across experiments on the same individuals) see the figure below. </p>
 
 <img src="man/figures/Rflomics_Integration.png" align="center" width="600"/> 
 
 
-RFLOMICS currently supports up to three types of omics: RNAseq, proteomics, and metabolomics. and 
+RFLOMICS currently supports up to three types of omics: RNAseq, proteomics, and metabolomics. 
 
 # Aims
 - Guarantee the relevance of the used methods and parameters (RNAseq workflow: [DicoExpress](https://plantmethods.biomedcentral.com/articles/10.1186/s13007-020-00611-7), [CATI Sysmics](https://sysmics.cati.inrae.fr/))
@@ -42,16 +41,12 @@ RFLOMICS currently supports up to three types of omics: RNAseq, proteomics, and 
 
   -> preprocessed matrix are expected for the moment (NA imputation, filtering)
 
-- Metabolomic (GC-MS mass spectrometry): matrix of metabolomic abundances based on XIC quantification Extracted ion chromatograms
+- Metabolomic (GC-MS mass spectrometry): matrix of metabolomic abundances based on XIC quantification (Extracted ion chromatograms)
 
   -> metabolite_id in line and individuals in column
 
   -> preprocessed matrix are expected for the moment (NA imputation, filtering)
 
-
-# Datasets example
-- ecoseed dataset: Data have been provided by Loic Rajjou and Gwendal Cueff. They are included in the inst/ExampleFiles/ecoseed directory of the package. Briefly, A. thaliana's transcriptoms, proteoms and metaboloms have been obtained in the context of the study of seed germination and vigor. In particular, the author were interested in the influence of temperature (high, medium and low) and imbibition (Dry: DI, early imbibition: EI and late imbibition: LI) on gene's expression.
-- [An example of report](RFLOMICSapp/www/ecoseed-report.html)
 
 # [Vignettes](docs/index.html)
 

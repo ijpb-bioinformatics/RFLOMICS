@@ -4,9 +4,9 @@ Version: 0.0.0.9000
 Authors@R: 
     c(person("Nadia", "Bessoltane",email = "nbessoltane@inrae.fr", role = c("aut", "cre")),
     person("Delphine", "Charif", email = "dcharif@inrae.fr", role = c("aut")),
-    person("Gwendal", "Cueff", email = "ccueff@inrae.fr", role = c("ctb")),
-    person("Audrey", "Hulot", email = "ahulot@inrae.fr", role = c("ctb")),
-    person("Christine", "Paysant-Leroux", email = "cpaysantleroux@inrae.fr", role = c("ctb")))
+    person("Gwendal", "Cueff", email = "ccueff@inrae.fr", role = c("aut")),
+    person("Audrey", "Hulot", email = "ahulot@inrae.fr", role = c("aut")),
+    person("Christine", "Paysant-Leroux", email = "cpaysantleroux@inrae.fr", role = c("aut")))
 Description: What the package does (one paragraph).
 Depends: R (>= 3.5.0)
 License: gpl-3 

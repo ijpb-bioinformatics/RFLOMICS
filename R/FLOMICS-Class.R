@@ -40,7 +40,7 @@
 #' @name ExpDesign-class
 #' @rdname ExpDesign-class
 #' @exportClass ExpDesign
-#'
+#' @noRd
 .ExpDesign <- methods::setClass(
   Class="ExpDesign",
   slots=c(ExpDesign="data.frame",
