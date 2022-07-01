@@ -2025,7 +2025,7 @@ methods::setMethod(f="run_MOFA_analysis",
               training_options = train_opts
             )
 
-            MOFAObject.trained <- MOFA2::run_mofa(MOFAObject, use_basilisk = FALSE)
+            MOFAObject.trained <- MOFA2::run_mofa(MOFAObject, use_basilisk = TRUE)
             # peut poser probleme au niveau python et mofapy.
             # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R.
 
