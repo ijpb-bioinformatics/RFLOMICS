@@ -27,6 +27,7 @@
 #' refList = Design.refList, typeList = Design.typeList)
 #' @name ExpDesign-Constructor
 #' @rdname ExpDesign-Constructor
+#' @noRd
 #' @export
 #' @importFrom stats relevel
 #' @importFrom methods new
@@ -136,6 +137,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 #' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File,
 #' refList = Design.refList, typeList = Design.typeList)
 #' CheckExpDesignCompleteness(Design.obj)
+#' @noRd
 
 methods::setMethod(f="CheckExpDesignCompleteness",
           signature="MultiAssayExperiment",
@@ -262,7 +264,7 @@ methods::setMethod(f="CheckExpDesignCompleteness",
 #' Design.obj <- getExpressionContrast(object = Design.obj, model.formula = names(Design.formulae[1]))
 #'
 #' @author Christine Paysant-Le Roux
-#'
+#' @noRd
 methods::setMethod(f="getExpressionContrast",
           signature="MultiAssayExperiment",
           definition <- function(object, model.formula){
@@ -345,7 +347,7 @@ methods::setMethod(f="getExpressionContrast",
 #' @seealso getExpressionContrast
 #' @exportMethod getContrastMatrix
 #' @importFrom stats formula terms.formula
-#'
+#' @noRd
 #' @author Christine Paysant-Le Roux
 methods::setMethod(f="getContrastMatrix",
           signature="MultiAssayExperiment",
@@ -492,7 +494,7 @@ methods::setMethod(f="getContrastMatrix",
 #' @name FlomicsMultiAssay.constructor
 #' @rdname FlomicsMultiAssay.constructor
 #' @export
-#'
+#' @noRd
 #'
 
 FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refList , typeList){
@@ -626,7 +628,7 @@ methods::setMethod(f="RunPCA",
 #' @return plot
 #' @export
 #' @importFrom ggplot2 ggplot geom_bar xlab ylab element_text ggtitle
-#'
+#' @noRd
 #' @examples
 methods::setMethod(f="Library_size_barplot.plot",
           signature="SummarizedExperiment",
@@ -686,6 +688,7 @@ methods::setMethod(f="Library_size_barplot.plot",
 #' @export
 #' @exportMethod Data_Distribution_plot
 #' @importFrom ggplot2 geom_density xlab
+#' @noRd
 
 methods::setMethod(f="Data_Distribution_plot",
           signature="SummarizedExperiment",
@@ -1186,7 +1189,7 @@ methods::setMethod(f="RunNormalization",
 #' \item{Adj.pvalue.cutoff: The threshold applied for the pvalue adjustment}
 #' \item{FDR: }{The false discovery rate given in input}
 #' \item{RawDEFres: }{a list giving for each contrast the raw results of the differential analysis method}
-#' \item{DEF: }{a list giving for each contrast a data.frame of non filtered differential expressed features}}
+#' \item{DEF: }{a list giving for each contrast a data.frame of non filtered differential expressed features}
 #' \item{TopDEF: }{a list giving for each contrast a data.frame of differential expressed features by Adj.pvalue.cutoff}
 #' \item{mergeDEF: }{A data frame indicating for each features in row, if it is DE in a given contrasts in column}
 #' }
@@ -1874,7 +1877,7 @@ methods::setMethod(f="run_MOFA_analysis",
               training_options = train_opts
             )
 
-            MOFAObject.trained <- MOFA2::run_mofa(MOFAObject, use_basilisk = FALSE)
+            MOFAObject.trained <- MOFA2::run_mofa(MOFAObject, use_basilisk = TRUE)
             # peut poser probleme au niveau python et mofapy.
             # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R.
 
