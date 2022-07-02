@@ -391,8 +391,8 @@ shinyServer(function(input, output, session) {
             coExpAnnot = FALSE,
             
             DiffValidContrast = NULL,
-            CoExpClusterNames = NULL
-            #omicsType = omics
+            CoExpClusterNames = NULL,
+            omicsType = omics
           )
           
           ##########################################
