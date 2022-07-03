@@ -11,21 +11,25 @@ CoEx.eval <- !is.null(dataset.SE@metadata[["CoExpAnal"]]$results)
 
 ```
 
-## Workflow of reference 
 
-### Dataset processing
+### Description of dataset's processing
 
 ```{r CheckDesignMeta, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
 check <- CheckExpDesignCompleteness(FlomicsMultiAssay)
 
-NbProt <- length(names(dataset.SE))
-NbProtWoutNA <- dim(na.omit(assay(dataset.SE)))[1]
+filt.summary <-  data.frame(c("# Metabolites (raw)",
+                              "# Metabolites (without NA)"),
+                            c(length(names(dataset.SE)),
+                              dim(na.omit(assay(dataset.SE)))[1]))
 ```
 
-* X samples were removed from the datasets.
 * The data were `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$transform_method` transformed.
-* The number of metabolite: `r NbProt`  
-* Number of metabolite with at least 1 NA: `r NbProt - NbProtWoutNA`
+* Summary of filtered metabolites.
+
+```{r}
+DT::datatable(filt.summary, options = list(colanmes=FALSE, rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),
+              class = 'cell-border stripe')
+```
 
 ### Distribution of density befor/after transformation
 
@@ -90,9 +94,6 @@ for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
 kable_styling(kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("Nb DE"=DE,"Nb DEup"=DEup,"Nb DEdown"=DEdown)), row.names=FALSE, caption=NULL, format="html"), font_size=12)
 ```
 
-The upSet graphic shows the number of DA metabolites (Barplot with Instersection Size) that are specifics to the constrast(s) selected in
-the metro card below the barplot. It may help to better view the specificity of the change in metabolite abundance in response to
-experimental factors.
 
 ```{r DiffExprMetabo3,echo=FALSE, message=FALSE, warning=FALSE,  fig.show = "hold", out.width = "80%", echo=FALSE, eval=Diff.eval}
 
@@ -101,14 +102,6 @@ UpSetR::upset(DEF_mat, sets = (names(DEF_mat[,-1])))
 
 ```
 
-For each contrasts, 3 graphics are plotted:
-
- * a distribution of pvalues graph 
- 
- * a MA plot: LogFC against average metabolite abundance
- 
- * a data.frame given the statistics of limma output by metabolite.
-
 
 ```{r DiffPerContMetabo, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE, eval=Diff.eval}
 
@@ -116,7 +109,7 @@ For each contrasts, 3 graphics are plotted:
   
   for (contrast  in  dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]]$contrastName) {
     
-      out <- c(out, knitr::knit_child("DiffExpAnal_PerContrast.Rmd", quiet=TRUE))  
+      out <- c(out, knitr::knit_child("report_04_diff_analysis_per_contrast.Rmd", quiet=TRUE))  
       
     }
     
@@ -144,7 +137,7 @@ was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
 
   out <- NULL
  
-      out <- c(out, knitr::knit_child("CoExpAnal.Rmd", quiet=TRUE))  
+      out <- c(out, knitr::knit_child("report_05_coexp_analysis.Rmd", quiet=TRUE))  
     
 knitr::asis_output(out)
 

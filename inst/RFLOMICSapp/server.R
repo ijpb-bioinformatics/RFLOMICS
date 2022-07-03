@@ -8,29 +8,29 @@ rm(list = ls())
 
 shinyServer(function(input, output, session) {
 
-    # This is to get the desired menuItem selected initially. 
+    # This is to get the desired menuItem selected initially.
     # selected=T seems not to work with a dynamic sidebarMenu.
     observeEvent(session, {
       updateTabItems(session = session, inputId = "tabs", selected = "coverPage")
     })
-    
+
     # reactive value for reinitialisation of UIoutput
     rea.values <- reactiveValues(
       loadData = FALSE,
       model    = FALSE,
       analysis = FALSE,
-      
+
       datasetList  = NULL,
       contrastList = NULL,
       datasetDiff  = NULL
     )
-    
+
     # Use reactive values for dynamic Items
     #subitems <- reactiveVal(value = NULL)
-    
+
     # dynamic sidebar menu #
     output$mysidebar <- renderUI({
-    
+
       tagList(
           sidebarMenu(id="tabs",
                       menuItem(text = "Welcome", tabName = "coverPage", icon = icon('dna'), selected = TRUE),
@@ -39,54 +39,54 @@ shinyServer(function(input, output, session) {
                       menuItemOutput(outputId = "omics"),
                       menuItemOutput(outputId = "Integration")
           ),
-          
+
           tags$br(),
           tags$br(),
           uiOutput("runReport")
-        
+
           #downloadButton(outputId = "report", label = "Generate report")
           )
     })
-    
+
     # dynamic content #
-    output$mycontent <- renderUI({ 
-      
+    output$mycontent <- renderUI({
+
       items.list <- list()
-      
+
       for(omics in c("RNAseq", "proteomics", "metabolomics")){
-        
-        items.list[[omics]] <-  lapply(1:10, function(i){ 
-          tabItem(tabName = paste0(omics, "Analysis", i), 
-                  uiOutput(paste0(omics, "AnalysisUI", i))) 
+
+        items.list[[omics]] <-  lapply(1:10, function(i){
+          tabItem(tabName = paste0(omics, "Analysis", i),
+                  uiOutput(paste0(omics, "AnalysisUI", i)))
         })
       }
-      
+
       itemsOmics <- purrr::reduce(items.list, c)
-      
+
       items <- c(
-        
+
         list(
-          
+
           #### Cover Page        ####
           ###########################
-          
+
           tabItem(tabName = "coverPage",
                   coverPage
-                  
+
                   # shinyDirButton(id = "dir0", label = "Input directory", title = "Upload"),
           ),
-          
+
           #### Import data       ####
           ###########################
           tabItem(tabName = "importData",
-                  
+
                   LoadOmicsDataUI("data")
           ),
-          
+
           #### Set Up statistical model & hypothesis ####
           ###############################################
           tabItem(tabName = "SetUpModel",
-                  
+
                   GLM_modelUI("model")
           )
         ),
@@ -94,13 +94,13 @@ shinyServer(function(input, output, session) {
         ########################
         itemsOmics,
         list(
-          
+
           #### analysis summary ####
           ########################
           tabItem(tabName = "omicsSum",
                   uiOutput(outputId = "omicsSum_UI")
           ),
-          
+
           #### MOFA ####
           ########################
           tabItem(tabName = "withMOFA",
@@ -112,31 +112,31 @@ shinyServer(function(input, output, session) {
                   h5("in coming :)")
           )
         )
-        
+
       )
       do.call(tabItems, items)
     })
-    
+
     observe({
       lapply(names(rea.values$datasetList), function(omics){
-        
+
         lapply(names(rea.values$datasetList[[omics]]), function(i){
-          
+
           switch (omics,
             "RNAseq" = {output[[paste0("RNAseqAnalysisUI", i)]] <- renderUI({
-              
+
               tabsetPanel(
-                
+
                 #### Data Exploratory & QC ####
                 ###############################
                 tabPanel("Data Exploratory",
                          tags$br(),
                          tags$br(),
-                         
+
                          QCNormalizationTabUI(paste0("RNAseq",i))
-                         
+
                 ),
-                
+
                 #### Diff analysis  ####
                 ######################################
                 tabPanel("Diff Gene Expression",
@@ -163,13 +163,13 @@ shinyServer(function(input, output, session) {
             })},
             "proteomics" = {output[[paste0("proteomicsAnalysisUI", i)]] <- renderUI({
               tabsetPanel(
-                
+
                 #### Data Exploratory & QC ####
                 ###############################
                 tabPanel("Data Exploratory",
                          tags$br(),
                          tags$br(),
-                         
+
                          QCNormalizationTabUI(paste0("proteomics",i))
                 ),
                 #### Diff analysis  ####
@@ -197,15 +197,15 @@ shinyServer(function(input, output, session) {
               )
             })},
             "metabolomics" = {output[[paste0("metabolomicsAnalysisUI", i)]] <- renderUI({
-              
+
               tabsetPanel(
-                
+
                 #### Data Exploratory & QC ####
                 ###############################
                 tabPanel("Data Exploratory",
                          tags$br(),
                          tags$br(),
-                         
+
                          QCNormalizationTabUI(paste0("metabolomics",i))
                 ),#### Diff analysis  ####
                 ######################################
@@ -228,27 +228,27 @@ shinyServer(function(input, output, session) {
         })
       })
     })
-    
+
     #### analysis Summary ####
     ###############################
     output$omicsSum_UI <- renderUI({
-      
+
       omics_data_analysis_summaryUI("omics")
-      
+
     })
-    
-    
+
+
     #### MOFA data integration ####
     ###############################
     output$withMOFA_UI <- renderUI({
-      
+
       MOFA_settingUI("mofaSetting")
-      
+
     })
 
     ########################################################################
     ######################### MAIN #########################################
-    
+
     ##########################################
     # Part0 : presentation page
     ##########################################
@@ -260,13 +260,13 @@ shinyServer(function(input, output, session) {
     ##########################################
     # Part1 : load data
     ##########################################
-    
+
     # load omics data and experimental design
     # set reference
     # set type of factor (bio/batch)
     # check design (complete and balanced)
     inputData <- callModule(LoadOmicsData, "data", rea.values)
-    
+
 
     ##########################################
     # Part2 : Set GLM model
@@ -276,9 +276,9 @@ shinyServer(function(input, output, session) {
     # if no error message
     inputModel <- list()
     observeEvent(inputData[["loadData"]], {
-      
+
       #subitems(NULL)
-      
+
       #continue only if message is true or warning
       validate({
         need(rea.values$validate.status == 0, message="set design step failed")
@@ -286,7 +286,7 @@ shinyServer(function(input, output, session) {
 
       # display design menu
       output$SetUpModelMenu <- renderMenu({
-        
+
         validate({
           need(rea.values$loadData == TRUE, message="")
         })
@@ -294,64 +294,64 @@ shinyServer(function(input, output, session) {
       })
 
     }, ignoreInit = TRUE)
-    
+
     # set GLM model
     # and select list of contrast to test
     observe({
       inputModel <- callModule(GLM_model, "model", rea.values)
     })
-   
-    
+
+
 
     ##########################################
     # Part3 : ANALYSE
     ##########################################
-    
+
     #### Item for each omics #####
     # display omics Item
     output$omics <- renderMenu({
-      
+
       validate({
         need(rea.values$analysis == TRUE, message="")
       })
-      
+
       menuItem(text = "Omics Analysis", tabName = "OmicsAnalysis", icon = icon('chart-area'),
-               #icon = icon('chart-line'), 
+               #icon = icon('chart-line'),
            lapply(names(rea.values$datasetList), function(omics){
-             
+
              lapply(names(rea.values$datasetList[[omics]]), function(i){
                 menuSubItem(text = rea.values$datasetList[[omics]][[i]],
                             tabName = paste0(omics, "Analysis", i))
               })
            })
       )
-      
 
-                   
-      
+
+
+
     })
-    
+
     # observe({
-    #   
-    #   updateTabItems(session, "tabs", selected = paste0(names(FlomicsMultiAssay@metadata$omicList)[1], 
-    #                                                     "Analysis", 
+    #
+    #   updateTabItems(session, "tabs", selected = paste0(names(FlomicsMultiAssay@metadata$omicList)[1],
+    #                                                     "Analysis",
     #                                                     names(FlomicsMultiAssay@metadata$omicList[[1]])[1]))
     # })
-    
-    
+
+
     # update Item menu
     #subitems(names(FlomicsMultiAssay@metadata$omicList))
     #updateTabItems(session, "sbm", selected = "SetUpModelMenu")
 
-    
+
     #### Item for each data integration tools #####
     # display tool Item
     output$Integration <- renderMenu({
-      
+
       validate({
         need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >=2, message = "")
       })
-      
+
 
       menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'), startExpanded = FALSE,selected = FALSE,
            menuSubItem(text = "Dataset analysis summary", tabName = "omicsSum" ),
@@ -359,22 +359,22 @@ shinyServer(function(input, output, session) {
            menuSubItem(text = "with MixOmics", tabName = "withMixOmics")
       )
     })
-    
+
     #### Item for report #####
     output$runReport <- renderUI({
       if(rea.values$analysis == FALSE) return()
-      
+
       downloadButton(outputId = "report", label = "Generate report")
     })
-    
-    
-    
+
+
+
     # for each omics data type
     # and for each dataser
     # if no error message
     i <- 1
     observe({
-      
+
       if(rea.values$analysis == FALSE) return()
       ##########################################
       # Part3 : Data Exploratory
@@ -382,26 +382,26 @@ shinyServer(function(input, output, session) {
       lapply(names(rea.values$datasetList), function(omics){
 
         lapply(names(rea.values$datasetList[[omics]]), function(i){
-          
+
           rea.values[[rea.values$datasetList[[omics]][[i]]]] <- reactiveValues(
             diffAnal   = FALSE,
             diffValid  = FALSE,
             coExpAnal  = FALSE,
             diffAnnot  = FALSE,
             coExpAnnot = FALSE,
-            
+
             DiffValidContrast = NULL,
             CoExpClusterNames = NULL
             #omicsType = omics
           )
-          
+
           ##########################################
           # Part3 : Data Exploratory
           ##########################################
           inputNorm <- callModule(module  = QCNormalizationTab, id = paste0(omics,i),
-                                                      dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], 
+                                                      dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]],
                                                       rea.values = rea.values)
-          
+
           ##########################################
           # Part5 :  Diff Analysis
           ##########################################
@@ -420,19 +420,19 @@ shinyServer(function(input, output, session) {
           ##########################################
           callModule(module  = AnnotationEnrichment, id = paste0(omics, i),
                      dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
-          
-          
+
+
         })
       })
-      
-      
+
+
       callModule(module = omics_data_analysis_summary, id = "omics", rea.values = rea.values)
-      
+
       callModule(module = MOFA_setting, id = "mofaSetting", rea.values = rea.values)
-      
+
     })
-    
-    
+
+
 
     ##########################################
     # Part8 : RMD REPORT
@@ -446,7 +446,7 @@ shinyServer(function(input, output, session) {
         # case we don't have write permissions to the current working dir (which
         # can happen when deployed).
 
-        tempReport <-  "report.Rmd" # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        tempReport <-  "report_main.Rmd" # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         #tempReport <- file.path(tempdir(), "report.Rmd")
         #file.copy("report.Rmd", tempReport, overwrite = TRUE)
@@ -478,4 +478,4 @@ shinyServer(function(input, output, session) {
     # # Update the query string
     # onBookmarked(updateQueryString)
  })
- 
+

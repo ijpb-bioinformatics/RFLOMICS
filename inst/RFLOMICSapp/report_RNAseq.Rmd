@@ -12,10 +12,6 @@ Annt.eval <- !is.null(dataset.SE@metadata[["EnrichAnal"]]$results)
 ```
 
 
-## Workflow of reference 
-
-DiCoExpress [@Lambert:2020ta]
-
 ## Description of dataset's processing
 
 
@@ -24,19 +20,27 @@ DiCoExpress [@Lambert:2020ta]
 check <- CheckExpDesignCompleteness(FlomicsMultiAssay)
 check$plot
 
-
-NbGenes             <- length(names(dataset.raw.SE))
-NbGene.rowSums.zero <- length(dataset.raw.SE@metadata$rowSums.zero)
-NbGene.low.counts   <- length(dataset.SE@metadata$FilteredFeatures)
+filt.summary <-  data.frame(c("# Genes (raw)",
+                              "# Genes (0 count)",
+                              "# Genes (low count)",
+                              "# Genes (keep)"),
+                            c(length(names(dataset.raw.SE)),
+                              length(dataset.raw.SE@metadata$rowSums.zero),
+                              length(dataset.SE@metadata$FilteredFeatures),
+                              ""))
+           
 ```
 
 ### Filtering:
 
-* By default, gene with 0 count are removed from the data. 
-* The choosen filtering strategy is `r dataset.SE@metadata$FilteringOptions$Filter_Strategy` with a count per million of read (CPM) cut-off of `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff`  
-* The number of genes: `r NbGenes`  
-* Number of genes with zero count: `r NbGene.rowSums.zero`
-* Number of genes filtered: `r NbGene.low.counts`
+* The choosen filtering strategy was `r dataset.SE@metadata$FilteringOptions$Filter_Strategy` with a count per million of read (CPM) cut-off of `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff` 
+* Summary of filtered genes.
+
+```{r}
+DT::datatable(filt.summary, options = list(colanmes=FALSE, rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),
+              class = 'cell-border stripe')
+```
+
 
 ### Normalization:
 
@@ -138,7 +142,7 @@ if(dim(DEF_mat)[2] > 2){
   
   for (contrast  in  dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]]$contrastName) {
     
-      out <- c(out, knitr::knit_child("DiffExpAnal_PerContrast.Rmd", quiet=TRUE))  
+      out <- c(out, knitr::knit_child("report_04_diff_analysis_per_contrast.Rmd", quiet=TRUE))  
       
     }
     
@@ -166,7 +170,7 @@ was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
 
   out <- NULL
  
-  out <- c(out, knitr::knit_child("CoExpAnal.Rmd", quiet=TRUE))  
+  out <- c(out, knitr::knit_child("report_05_coexp_analysis.Rmd", quiet=TRUE))  
     
 knitr::asis_output(out)
 
@@ -189,7 +193,7 @@ knitr::asis_output(out)
   
   for (listname  in  names(dataset.SE@metadata[["EnrichAnal"]]$results)){
     
-      out <- c(out, knitr::knit_child("EnrichAnal_PerList.Rmd", quiet=TRUE))  
+      out <- c(out, knitr::knit_child("report_06_annot_enrich_per_list.Rmd", quiet=TRUE))  
       
     }
     

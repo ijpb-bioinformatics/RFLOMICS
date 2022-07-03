@@ -239,9 +239,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                              # filter by DE
                              m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
 
-                             # normalize count ?
+                             # normalize count
 
-                             # Center by prot
+                             # Center
                              m.def.filter.center <- scale(m.def.filter,center=TRUE,scale=FALSE)
                              column_split.value <- if(input[[paste0(vect["contrastName"],"-","condColorSelect")]] != "none"){
                               FlomicsMultiAssay@metadata$design@Groups[,input[[paste0(vect["contrastName"],"-","condColorSelect")]]]
@@ -259,7 +259,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                              })
                              })
                              ,
-                             renderText("legend")
+                             renderText("Clustering method=ward.D2, center=TRUE, scale=FALSE")
                              ,
                              ## select cluster to plot
                              radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-","condColorSelect")),

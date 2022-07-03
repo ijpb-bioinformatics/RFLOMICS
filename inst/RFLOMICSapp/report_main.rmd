@@ -136,7 +136,7 @@ if(length(unlist(FlomicsMultiAssay@metadata$omicList)) > 2){
   out <- NULL
   for (omictype in names(FlomicsMultiAssay@metadata$omicList)){ 
     
-    child <- paste0(omictype, ".Rmd")
+    child <- paste0("report_",omictype, ".Rmd")
 
     for (data in  FlomicsMultiAssay@metadata$omicList[[omictype]]){
       

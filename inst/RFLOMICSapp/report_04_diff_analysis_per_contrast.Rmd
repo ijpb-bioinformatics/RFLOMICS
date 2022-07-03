@@ -6,16 +6,34 @@
 
 ```{r , echo=FALSE,out.width = "50%"}
 
+DiffAnal.plot(local.rea.values$dataset.SE, hypothesis=vect["contrastName"],
+                                  Adj.pvalue.cutoff = input$Adj.pvalue.cutoff, FC.cutoff = input$abs.FC.cutoff)
 
-diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=contrast, Adj.pvalue.cutoff = dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff)
+diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=contrast, Adj.pvalue.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["Adj.pvalue.cutoff"]], FC.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["abs.FC.cutoff"]])
+```
+### Results {.tabset}
 
+#### Pvalue
 
+```{r Diff1}
 diff.plots$Pvalue.hist
-
-diff.plots$MA.plot
-
 ```
 
+#### MAplot
+
+
+```{r }
+diff.plots$MA.plot
+```
+
+#### Volcano plot
+
+
+```{r }
+diff.plots$Volcano.plot
+```
+
+#### Table
 
 ```{r , results='asis', echo = FALSE, out.width = "70%"}
 
@@ -40,6 +58,8 @@ diff.plots$MA.plot
   #   DT::datatable(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["DEF"]][[contrast]][1:100,]), width = "100%"))
   
 ```
+
+
 
 </details>
 
