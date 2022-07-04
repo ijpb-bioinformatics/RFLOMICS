@@ -155,26 +155,47 @@ MOFA_setting <- function(input, output, session, rea.values){
       need(length(input$selectedContrast) != 0, message="Select at least one contast!")
     })
     
-    # local.rea.values <- reactiveValues(runMOFA = FALSE) #### ????
-    
     # run MOFA
     print(input$selectedData)
     
-    local.rea.values$untrainedMOFA <- prepareMOFA(FlomicsMultiAssay,
+    local.rea.values$preparedMOFA <- prepareMOFA(FlomicsMultiAssay,
                                                   omicsToIntegrate = input$selectedData,
                                                   rnaSeq_transfo = input$RNAseqTransfo,
                                                   choice = "DE", 
                                                   contrasts_names = input$selectedContrast,
                                                   type = input$filtMode,
                                                   group = NULL)
-    local.rea.values$resMOFA <- run_MOFA_analysis(local.rea.values$untrainedMOFA, 
-                                                  scale_views = input$scaleViews,
+    
+    local.rea.values$listResMOFA <- run_MOFA_analysis(local.rea.values$preparedMOFA, 
+                                                  scale_views = as.logical(input$scaleViews),
                                                   maxiter = input$maxiter,
                                                   num_factors = input$numfactor) 
+    
+    local.rea.values$untrainedMOFA <- local.rea.values$listResMOFA$MOFAObject.untrained
+    local.rea.values$resMOFA <- local.rea.values$listResMOFA$MOFAObject.trained
+    
+    
+    #### TODO Try to catch MOFA2 warnings and put them on the interface. DOES NOT WORK. 
+    # test <- run_MOFA_analysis(FlomicsMultiAssay@metadata[["MOFA_untrained"]],
+    #                           scale_views = FALSE,
+    #                           maxiter = 1000,
+    #                           num_factors = 5)
+    # local.rea.values <- list()
+    local.rea.values$warnings <- NULL
+    if(!is.null(names(warnings()))){
+      local.rea.values$warnings <- names(warnings())
+    }else{local.rea.values$warnings <- "no warnings captured"}
+    # output <- list()
+    # output$warnings <- renderText({local.rea.values$warnings})
+    #### End of catchning warnings.
+    
+    FlomicsMultiAssay@metadata[["MOFA_selected_contrasts"]] <<- input$selectedContrast
+    FlomicsMultiAssay@metadata[["MOFA_selected_filter"]] <<- input$filtMode
+    FlomicsMultiAssay@metadata[["MOFA_untrained"]] <<- local.rea.values$untrainedMOFA
+    FlomicsMultiAssay@metadata[["MOFA_warnings"]] <<- local.rea.values$warnings
     FlomicsMultiAssay@metadata[["MOFA_results"]] <<- local.rea.values$resMOFA
     
     local.rea.values$runMOFA   <- TRUE
-    FlomicsMultiAssay@metadata[["MOFA_run"]] <- local.rea.values$runMOFA
     
   }, ignoreInit = TRUE)
   
@@ -195,7 +216,25 @@ MOFA_setting <- function(input, output, session, rea.values){
           
           ###
           tabPanel("Overview", 
-                   renderPlot(MOFA2::plot_data_overview(local.rea.values$resMOFA))
+                   column(6,
+                          renderPlot(MOFA2::plot_data_overview(local.rea.values$resMOFA) + ggtitle("Data Overview"))),
+                   # column(6,
+                   #        h4("Warnings:"),
+                   #        renderText(expr ={
+                   #          # if("no warning captured"%in%local.rea.values$warnings){
+                   #          #   print(local.rea.values$warnings)
+                   #          # }else{
+                   #          # warnsms <- paste(local.rea.values$warnings, collapse = "\n")
+                   #          # for(warns in local.rea.values$warnings) print(warns)
+                   #          # HTML(paste(local.rea.values$warnings, collapse = '<br/>'))
+                   #          HTML(paste(local.rea.values$warnings, collapse = ''))
+                   #          # print(paste(local.rea.values$warnings, collapse = "\n"))
+                   #          # for(i in 1:length(local.rea.values$warnings)){
+                   #          #   cat(local.rea.values$warnings[i])
+                   #          # }
+                   #          # }
+                   #        })
+                   # )
           ),
           ### 
           tabPanel("Factors Correlation", 
@@ -230,6 +269,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                      ),
                    ),
                    fluidRow(
+                     column(12,
                      renderPlot({
                        
                        ggplot_list <- list()
@@ -249,7 +289,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                        
                      }, execOnResize = TRUE) # width = 60, height = plot_height(), 
                      
-                   )
+                   ))
           ),
           
           ### 
@@ -260,7 +300,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                                             label = 'Factors:',
                                             min = 1, 
                                             max = local.rea.values$resMOFA@dimensions$K, # pas forcement l'input, MOFA peut decider d'en enlever. 
-                                            value = c(1,2), step = 1)) 
+                                            value = 1:2, step = 1)) 
                    ),
                    fluidRow(
                      column(11, 
@@ -275,7 +315,68 @@ MOFA_setting <- function(input, output, session, rea.values){
                                                                         lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All"))))
                             }))
                    )),
-          tabPanel("Heatmap",
+          tabPanel("Factor Plots",
+                   
+                   fluidRow(
+                   column(2, sliderInput(inputId = session$ns("factors_choices"),
+                                         label = 'Factors:',
+                                         min = 1, 
+                                         max = local.rea.values$resMOFA@dimensions$K, # pas forcement l'input, MOFA peut decider d'en enlever. 
+                                         value = 1:2, step = 1)),
+                   column(2, radioButtons(inputId = session$ns("color_by"),
+                                          label = "Color:",
+                                          choices = c('none', 
+                                                      colnames(local.rea.values$resMOFA@samples_metadata %>% select(!c(sample, group)))),
+                                          selected = "none")
+                   ),                           
+                   column(2, radioButtons(inputId = session$ns("shape_by"),
+                                          label = "Shape:",
+                                          choices = c('none', 
+                                                      colnames(local.rea.values$resMOFA@samples_metadata %>% select(!c(sample, group)))),
+                                          selected = "none")
+                   ),                                  
+                   column(2, radioButtons(inputId = session$ns("group_by"),
+                                          label = "Group by:",
+                                          choices = c('none', 
+                                                      colnames(local.rea.values$resMOFA@samples_metadata %>% select(!c(sample, group)))),
+                                          selected = "none")
+                   ),                           
+                   column(1,
+                          fluidRow(checkboxInput(inputId = session$ns("add_violin"), label = "Violin", value = FALSE, width = NULL)),
+                          fluidRow(checkboxInput(inputId = session$ns("add_boxplot"), label = "Boxplot", value = FALSE, width = NULL)),
+                          fluidRow(checkboxInput(inputId = session$ns("scale_scatter"), label = "Scale factors", value = FALSE, width = NULL))
+                   )),            
+                   fluidRow(
+                     column(11, 
+                            renderPlot({
+                              
+                              color_by_par <- input$color_by
+                              group_by_par <- input$group_by
+                              shape_by_par <- input$shape_by
+                              if(input$color_by == "none") color_by_par <- "group"
+                              if(input$group_by == "none") group_by_par <- "group"
+                              if(input$shape_by == "none") shape_by_par <- NULL
+                              dodge_par <- FALSE
+                              if(any(input$add_violin, input$add_boxplot)) dodge_par = TRUE
+                              
+                              
+                              plot_factor(local.rea.values$resMOFA,
+                                          factors = min(input$factors_choices):max(input$factors_choices), 
+                                          color_by = color_by_par,
+                                          group_by = group_by_par, 
+                                          shape_by = shape_by_par,
+                                          legend = TRUE,
+                                          add_violin = input$add_violin,
+                                          violin_alpha = 0.25, 
+                                          add_boxplot = input$add_boxplot,
+                                          boxplot_alpha = 0.25,
+                                          dodge = dodge_par,
+                                          scale = input$scale_scatter,
+                                          dot_size = 3) 
+                            })
+                     ))
+          ),
+        tabPanel("Heatmap",
                    
                    fluidRow(# buttons - choices for heatmap
                      
@@ -284,11 +385,13 @@ MOFA_setting <- function(input, output, session, rea.values){
                                             min = 1,
                                             max =  local.rea.values$resMOFA@dimensions$K,
                                             value = 1, step = 1)),
+                     column(1,),
                      column(2, radioButtons(inputId = session$ns("view_choice_heatmap"),
                                             label = "Data:",
                                             choices = views_names(local.rea.values$resMOFA),
                                             selected = views_names(local.rea.values$resMOFA)[1]
                      )),
+                     column(1,),
                      column(2, numericInput(inputId = session$ns("nfeat_choice_heatmap"),
                                             label = "Features:",
                                             min = 1,
@@ -298,6 +401,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                      column(1,
                             checkboxInput(inputId = session$ns("denoise_choice_heatmap"), label = "Denoise", value = FALSE, width = NULL)
                      ),
+                     column(1,),
                      column(2, radioButtons(inputId = session$ns("annot_samples"),
                                             label = "Annotation:",
                                             choices = c('none', 
