@@ -586,8 +586,9 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 
 
 #' @title RunPCA
-#' @description This function performed a scaled principal component analysis on omic data stored in an object of class [\code{\link{MultiAssayExperiment-class}]
-#' Results are stored in the metadata slot.
+#' @description This function performs a principal component analysis on omic data (log2 and scaled)
+#' stored in an object of class [\code{\link{MultiAssayExperiment-class}]
+#' Results are stored in the metadata slot in the PCAlist object.
 #' @param object An object of class \link{SummarizedExperiment-class}.
 #' @return An object of class \link{SummarizedExperiment}
 #' @exportMethod RunPCA
@@ -951,6 +952,7 @@ methods::setMethod(f="mvQCdesign",
 #' @param PCA This argument indicates which type of PCA results to take: on raw ("raw") or normalized ("norm") data.
 #' @param pngFile The name of the png file for saving the plot.
 #' @exportMethod mvQCdata
+#' @noRd
 #' @rdname mvQCdata
 methods::setMethod(f="mvQCdata",
           signature="MultiAssayExperiment",
@@ -1050,7 +1052,7 @@ methods::setMethod(f= "TransformData",
 # Pourquoi ne pas avoir utilisée directement la fonction de edgeR ?
 
 #' @title FilterLowAbundance
-#' @description This function aims at removing genes/transcript from the count data matrix of an omic of type "RNAseq".
+#' @description This function aims at removing genes/transcripts from the count data matrix of an omic of type "RNAseq".
 #' by applying filtering criterion described in reference.
 #' By default, gene/transcript with 0 count are removed from the data. The function then
 #' computes the count per million or read (CPM) for each gene in each sample and gives by
@@ -1168,7 +1170,7 @@ methods::setMethod(f="RunNormalization",
 ## METHOD to perform differential analysis
 
 #' @title RunDiffAnalysis
-#' @description This method run a differential expression analysis
+#' @description This function run a differential expression analysis
 #' on an omic dataset stored in an object of class \link{SummarizedExperiment}
 #'
 #' @details
@@ -1273,10 +1275,11 @@ methods::setMethod(f="RunDiffAnalysis",
 ## METHOD to filter differential analysis
 
 #' @title FilterDiffAnalysis
-#' @description This method filter the result of a differential expression analysis
+#' @description This function filters the result of a differential expression analysis
 #' of an omic dataset of class \link{SummarizedExperiment}.
 #' @param SummarizedExperiment
 #' @param Adj.pvalue.cutoff The adjusted pvalue cut-off
+#' @param FC.cutoff The Fold change cut-off
 #' @return
 #' All the results are stored in the named list \code{DiffExpAnal} in the metadata slot of the
 #' given \code{SummarizedExperiment} object.
@@ -1362,12 +1365,12 @@ methods::setMethod(f="FilterDiffAnalysis",
 
 #' @title DiffAnal.plot
 #' @description
-#' This method draw a graph of p-values distribution,a MA plot and a Volcano Plot from the results of a differential analysis
-#' performed on omic datasets stored in an object of class \link{SummarizedExperiment}
+#' This function draws graphs to illustrate the differential analysis results: p-values distribution, MA plot and Volcano Plot.
+#' It takes an object of class \link{SummarizedExperiment}
 #' @param object An object of class \link{SummarizedExperiment}
-#' @param hypothesis The contrasts fo which the plots have to be drawn.
-#' @param Adj.pvalue.cutoff: The the adjusted pvalue cut-off
-#' @param abs.FC.cutoff: The Fold Change cut-off
+#' @param hypothesis The contrasts for which the plots have to be drawn.
+#' @param Adj.pvalue.cutoff: The adjusted p-values cut-off
+#' @param abs.FC.cutoff: The Fold-Change cut-off
 #' @return plot
 #' @exportMethod DiffAnal.plot
 #' @export
@@ -1398,17 +1401,15 @@ methods::setMethod(f="DiffAnal.plot",
 
 
 #' @title runCoExpression
-#' @description This is an interface method which performed co-expression/co-abundance analysis
-#' of omic-data.
-#' @details For instance, only the coseq function of the package coseq is proposed.
+#' @description This function performs a co-expression analysis on omics data.
+#' @details For instance, only the \link{coseq} function of the package \link{coseq} is proposed.
 #' For RNAseq data, parameters used are those recommended in DiCoExpress workflow (see the reference).
 #' This parameters are: \code{model="normal"}, \code{transformation="arcsin"}, \code{GaussianModel="Gaussian_pk_Lk_Ck"},
 #' \code{normFactors="TMM"}, \code{meanFilterCutoff = 50}
 #' For proteomic or metabolomic, data are scaled by protein or metabolite to groups them by expression
 #' profiles rather than by expression intensity.
 #' After data scaling, recommended parameters (from \code{coseq} developers) for co-expression analysis are:
-#' \code{model="normal"}, \code{transformation="none"}, \code{GaussianModel="Gaussian_pk_Lk_Ck"},
-#' \code{normFactors="none",  \code{meanFilterCutoff = NULL}
+#' \code{model="normal"}, \code{transformation="none"}, \code{normFactors="none",  \code{meanFilterCutoff = NULL}
 #'
 #' @return
 #' All the results are stored as a named list \code{CoExpAnal} in the metadata slot of a
