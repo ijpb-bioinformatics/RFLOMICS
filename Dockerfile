@@ -16,6 +16,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-server\
     git-all \
     cmake \
+    python3 \
+    python3-setuptools \
+    python3-dev \
+    python3-pip \
+    #   libfreetype6-dev \
+    #   libtiff5-dev \
+    #   libjpeg-dev \
+    #   libharfbuzz-dev \
+    #   libfribidi-dev \
     && apt-get update clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -60,6 +69,16 @@ RUN Rscript -e 'remotes::install_version("FactoMineR",upgrade="never", version =
 RUN Rscript -e 'remotes::install_version("statmod",version="1.4.36")'
 
 WORKDIR /home
+
+#ENV CONDA_DIR /opt/conda
+
+#RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && /bin/bash miniconda.sh -b -p /opt/conda
+
+#ENV PATH=$CONDA_DIR/bin:$PATH
+
+#RUN python3 -m pip install 'https://github.com/bioFAM/mofapy2/tarball/master'
+
+#RUN conda install -c bioconda bioconductor-MOFA2
 
 RUN git clone --branch  develop.0.1  https://forgemia.inra.fr/flomics/rflomics.git
 
