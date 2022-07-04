@@ -340,7 +340,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       FlomicsMultiAssay <- FlomicsMultiAssay[,, -which(names(FlomicsMultiAssay) == SE.name)]
     }
     
-    FlomicsMultiAssay <<- eval(parse(text = paste0('c( FlomicsMultiAssay ,', SE.name, ' = SE.processed )')))
+    FlomicsMultiAssay <<- eval(parse(text = paste0('c( FlomicsMultiAssay ,', SE.name, ' = processed.SE )')))
     
   }, ignoreInit = TRUE)
 
