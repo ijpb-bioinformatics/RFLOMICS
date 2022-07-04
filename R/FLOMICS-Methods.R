@@ -709,7 +709,7 @@ methods::setMethod(f="Data_Distribution_plot",
                         pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
                                              scale=object@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
                         x_lab  <- paste0("log2(",object@metadata$omicType, " data)")
-                        title  <- paste0("Filtered and normalized ", object@metadata$omicType, " (", 
+                        title  <- paste0("Filtered and normalized ", object@metadata$omicType, " (",
                                          object@metadata$Normalization$methode, ") data")
                       }
                     },
@@ -719,19 +719,19 @@ methods::setMethod(f="Data_Distribution_plot",
                         pseudo <- SummarizedExperiment::assay(object)
                         x_lab  <- paste0(object@metadata$omicType, " data")
                         title  <- paste0(object@metadata$omicType, " raw data")
-                        
+
                       }
                       # after transformation
                       else{
-                        
+
                         x_lab  <- paste0(object@metadata$omicType, " data")
                         title  <- paste0("Transformed ", object@metadata$omicType, " (" , object@metadata$transform_method, ") data")
-                        
+
                         switch (object@metadata$transform_method,
-                               
+
                                 "log1p" = {
                                   pseudo <- log1p(SummarizedExperiment::assay(object)) },
-                                
+
                                 "squareroot" = {
                                   pseudo <- sqrt(SummarizedExperiment::assay(object)) }
                                 # "log2" = {
@@ -747,19 +747,19 @@ methods::setMethod(f="Data_Distribution_plot",
                         pseudo <- SummarizedExperiment::assay(object)
                         x_lab  <- paste0(object@metadata$omicType, " data")
                         title  <- paste0(object@metadata$omicType, " raw data")
-                        
+
                       }
                       # after transformation
                       else{
-                        
+
                         x_lab  <- paste0(object@metadata$omicType, " data")
                         title  <- paste0("Transformed ", object@metadata$omicType, " (" , object@metadata$transform_method, ") data")
-                        
+
                         switch (object@metadata$transform_method,
-                                
+
                                 "log1p" = {
                                   pseudo <- log1p(SummarizedExperiment::assay(object)) },
-                                
+
                                 "squareroot" = {
                                   pseudo <- sqrt(SummarizedExperiment::assay(object)) }
                                 # "log2" = {
@@ -770,28 +770,28 @@ methods::setMethod(f="Data_Distribution_plot",
                       }
                     }
             )
-            
+
             pseudo.gg <- pseudo %>% reshape2::melt()
             colnames(pseudo.gg) <- c("features", "samples", "value")
-            
+
             pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples") %>%
               dplyr::arrange(groups)
-            
+
             pseudo.gg$samples <- factor(pseudo.gg$samples, levels = unique(pseudo.gg$samples))
-            
+
             switch (plot,
                     "density" = {
-                      p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + 
+                      p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) +
                         xlab(x_lab) + theme(legend.position='none') + ggtitle(title)
                     },
                     "boxplot" = {
-                      p <- ggplot(pseudo.gg, aes(x=samples, y=value,label = features)) + 
+                      p <- ggplot(pseudo.gg, aes(x=samples, y=value,label = features)) +
                         ggplot2::geom_boxplot(aes(fill=groups),outlier.colour = "red") +
-                        theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + 
+                        theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +
                         xlab("") + ylab(x_lab) + ggtitle(title) #+
                       #geom_point(alpha = 1/100,size=0)
                     })
-            
+
             print(p)
 
           }
@@ -1127,12 +1127,12 @@ methods::setMethod(f= "FilterLowAbundance",
 # Function non generique pour les autres data
 
 #' @title RunNormalization
-#' @description This function applied a normalization method on an omic data sets stored in an object of
+#' @description This function applied a normalization method on an omic dataset stored in an object of
 #' class \link{SummarizedExperiment}.
 #' \itemize{
 #' \item{For RNAseq data:}{the TMM function of edgeR is proposed by default, see the ref}
-#' \item{For Proteomic data:}{}
-#' \item{For Metabolomic data:}{}
+#' \item{For Proteomic data:}{No normalization}
+#' \item{For Metabolomic data:}{No normalization}
 #' }
 #' @param object An object of class \link{SummarizedExperiment}
 #' @param data The name of the data set for which the normalization has to be performed.
@@ -1177,6 +1177,7 @@ methods::setMethod(f="RunNormalization",
 #' \item{For RNAseq data: }{the \code{glmFit} function of the \code{edgeR} package}
 #' \item{For proteomic and metabolomic data: }{the \code{lmFit} function of the \code{limma} package}
 #' }
+#'
 #' Parameters used for RNAseq are those recommended in DiCoExpress workflow (see the paper in reference)
 #' @return
 #' All the results are stored as a named list \code{DiffExpAnal} in the metadata slot of a
@@ -1230,7 +1231,7 @@ methods::setMethod(f="RunDiffAnalysis",
             rownames(model_matrix) <- rownames(design@ExpDesign)
 
             ListRes <- switch(DiffAnalysisMethod,
-                              "edgeRglmfit"=try_rflomics(edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
+                              "edgeRglmfit"=RFLOMICS::try_rflomics(edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
                                                                        model_matrix    = model_matrix[colnames(object),],
                                                                        group           = object@metadata$Normalization$coefNorm$group,
                                                                        lib.size        = object@metadata$Normalization$coefNorm$lib.size,
@@ -1239,7 +1240,7 @@ methods::setMethod(f="RunDiffAnalysis",
                                                                        Contrasts.Coeff = design@Contrasts.Coeff,
                                                                        FDR             = 1,
                                                                        clustermq=clustermq)),
-                              "limmalmFit"=try_rflomics(limma.AnaDiff(count_matrix      = SummarizedExperiment::assay(object),
+                              "limmalmFit"=RFLOMICS::try_rflomics(limma.AnaDiff(count_matrix      = SummarizedExperiment::assay(object),
                                                                       model_matrix      = model_matrix[colnames(object),],
                                                                       Contrasts.Sel     = object@metadata$DiffExpAnal[["contrasts"]],
                                                                       Contrasts.Coeff   = design@Contrasts.Coeff,
@@ -1503,13 +1504,13 @@ methods::setMethod(f="runCoExpression",
             coseq.res.list <- switch (as.character(clustermq),
                                       `FALSE` = {
 
-                                        try_rflomics(
+                                        RFLOMICS::try_rflomics(
                                           runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
 
                                       },
                                       `TRUE` = {
 
-                                        try_rflomics(
+                                        RFLOMICS::try_rflomics(
                                           runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
 
                                       })
@@ -1861,30 +1862,30 @@ methods::setMethod(f="run_MOFA_analysis",
                                                    maxiter = 1000,
                                                    num_factors = 10,
                                                    ...){
-            
+
             # library(MOFA2)
             # object = FlomicsMultiAssay@metadata$MOFA_untrained
             # scale_views = TRUE
-            
+
             data_opts <- get_default_data_options(object)
             model_opts <- get_default_model_options(object)
             train_opts <- get_default_training_options(object)
-            
+
             data_opts$scale_views <- scale_views
             train_opts$maxiter <- maxiter
             model_opts$num_factors <- num_factors
-            
+
             MOFAObject.untrained <- MOFA2::prepare_mofa(
               object = object,
               data_options = data_opts,
               model_options = model_opts,
               training_options = train_opts
             )
-            
+
             MOFAObject.trained <- MOFA2::run_mofa(MOFAObject.untrained, use_basilisk = TRUE)
             # peut poser probleme au niveau python et mofapy.
             # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R.
-            
+
             return(list("MOFAObject.untrained" = MOFAObject.untrained, "MOFAObject.trained" = MOFAObject.trained))
           })
 

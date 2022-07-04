@@ -25,7 +25,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     #   libjpeg-dev \
     #   libharfbuzz-dev \
     #   libfribidi-dev \
-    && apt-get update clean \
     && rm -rf /var/lib/apt/lists/*
 
 RUN echo "options(repos = c(CRAN = 'https://cran.rstudio.com/', Bioc = 'http://www.bioconductor.org/packages/release/bioc'), download.file.method = 'libcurl')" >> /usr/local/lib/R/etc/Rprofile.site
