@@ -26,11 +26,6 @@ methods::setGeneric(
 )
 
 methods::setGeneric(
-  name="abundanceBoxplot",
-  def = function( object, ... ){standardGeneric("abundanceBoxplot")}
-)
-
-methods::setGeneric(
   name="plotPCA",
   def = function( object, ... ){standardGeneric("plotPCA")}
 )
@@ -83,8 +78,8 @@ methods::setGeneric(
 
 
 methods::setGeneric(
-  name="Data_Distribution_Density.plot",
-  def = function( object, ... ){standardGeneric("Data_Distribution_Density.plot")}
+  name="Data_Distribution_plot",
+  def = function( object, ... ){standardGeneric("Data_Distribution_plot")}
 )
 
 methods::setGeneric(

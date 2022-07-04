@@ -681,16 +681,18 @@ methods::setMethod(f="Library_size_barplot.plot",
 
 
 
-#' @title Data_Distribution_Density.plot
+#' @title Data_Distribution_plot
 #'
 #' @param object An object of class \link{SummarizedExperiment}
+#' @param plot plot type ("boxplot" or "density")
 #' @export
+#' @exportMethod Data_Distribution_plot
 #' @importFrom ggplot2 geom_density xlab
 #' @noRd
 
-methods::setMethod(f="Data_Distribution_Density.plot",
+methods::setMethod(f="Data_Distribution_plot",
           signature="SummarizedExperiment",
-          definition <- function(object){
+          definition <- function(object, plot = "boxplot"){
 
             switch (object@metadata$omicType,
                     "RNAseq" = {
@@ -698,182 +700,103 @@ methods::setMethod(f="Data_Distribution_Density.plot",
                       # before normalization
                       if(is.null(object@metadata[["Normalization"]]$coefNorm)){
                         pseudo <- log2(SummarizedExperiment::assay(object) + 1)
-                        y_lab  <- "log2(gene counts)"
-                        title  <- "Raw data"
+                        x_lab  <- paste0("log2(",object@metadata$omicType, " data)")
+                        title  <- paste0(object@metadata$omicType, " raw data")
 
                       }
                       # after normalization
                       else{
                         pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
                                              scale=object@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
-                        y_lab  <- "log2(normalized gene counts)"
-                        title  <- "Filtered and normalized (TMM) data"
+                        x_lab  <- paste0("log2(",object@metadata$omicType, " data)")
+                        title  <- paste0("Filtered and normalized ", object@metadata$omicType, " (", 
+                                         object@metadata$Normalization$methode, ") data")
                       }
-                      #
-                      pseudo.gg <- pseudo %>% reshape2::melt()
-                      colnames(pseudo.gg) <- c("features", "samples", "value")
-
-                      pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples")
-
-                      p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + xlab(y_lab) +
-                        theme(legend.position='none') + ggtitle(title)
                     },
                     "proteomics" = {
                       # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
-                      if(is.null(object@metadata$transform_method)){
+                      if(object@metadata$transform_method == "none" || is.null(object@metadata$transform_method)){
                         pseudo <- SummarizedExperiment::assay(object)
-                        x_lab  <- "Protein abundance (XIC intensity)"
-                        title  <- "Raw data"
-
+                        x_lab  <- paste0(object@metadata$omicType, " data")
+                        title  <- paste0(object@metadata$omicType, " raw data")
+                        
                       }
                       # after transformation
                       else{
-                        # if log2 transformation was chosen
+                        
+                        x_lab  <- paste0(object@metadata$omicType, " data")
+                        title  <- paste0("Transformed ", object@metadata$omicType, " (" , object@metadata$transform_method, ") data")
+                        
                         switch (object@metadata$transform_method,
-                                # "log2" = {
-                                #   pseudo <- log2(SummarizedExperiment::assay(object) +1 )
-                                #   x_lab  <- "Transformed protein abundance"
-                                #   title  <- "log2(Protein abundances + 1)" },
-
+                               
                                 "log1p" = {
-                                  pseudo <- log1p(SummarizedExperiment::assay(object))
-                                  x_lab  <- "Transformed protein abundance"
-                                  title  <- "log1p(Protein abundances)" },
-
-                                # "log10" = {
-                                #   pseudo <- log10(SummarizedExperiment::assay(object)+1)
-                                #   x_lab  <- "Transformed protein abundance"
-                                #   title  <- "log10(Protein abundances + 1)"
-                                # },
-
+                                  pseudo <- log1p(SummarizedExperiment::assay(object)) },
+                                
                                 "squareroot" = {
-                                  pseudo <- sqrt(SummarizedExperiment::assay(object))
-                                  x_lab  <- "Transformed protein abundance"
-                                  title  <- "squareroot(Protein abundance)" },
-
-
-                                "none" = {
-                                  pseudo <- SummarizedExperiment::assay(object)
-                                  x_lab  <- "Transformed protein abundance"
-                                  title  <- "Protein abundance (XIC intensity)"
-
-                                }
+                                  pseudo <- sqrt(SummarizedExperiment::assay(object)) }
+                                # "log2" = {
+                                #   pseudo <- log2(SummarizedExperiment::assay(object) +1 )},
+                                # "log10" = {
+                                #   pseudo <- log10(SummarizedExperiment::assay(object)+1)}
                         )
-
-
-
                       }
-                      #
-                      pseudo.gg <- pseudo %>% reshape2::melt()
-                      colnames(pseudo.gg) <- c("features", "samples", "value")
-
-                      pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples")
-
-                      p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + xlab(x_lab) +
-                        theme(legend.position='none') + ggtitle(title)
                     },
                     "metabolomics" = {
                       # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
-                      if(is.null(object@metadata$transform_method)){
+                      if(object@metadata$transform_method == "none" || is.null(object@metadata$transform_method)){
                         pseudo <- SummarizedExperiment::assay(object)
-                        x_lab  <- "Metabolite abundance (XIC Intensity)"
-                        title  <- "Raw data"
+                        x_lab  <- paste0(object@metadata$omicType, " data")
+                        title  <- paste0(object@metadata$omicType, " raw data")
+                        
                       }
                       # after transformation
                       else{
-                        # if log10 transformation was chosen
-                        switch( object@metadata$transform_method,
-                                # "log2" = {
-                                #   pseudo <- log2(SummarizedExperiment::assay(object)+1)
-                                #   x_lab  <- "Transformed Metabolite abundance"
-                                #   title  <- "log2(Metabolites abundance + 1)" },
-
+                        
+                        x_lab  <- paste0(object@metadata$omicType, " data")
+                        title  <- paste0("Transformed ", object@metadata$omicType, " (" , object@metadata$transform_method, ") data")
+                        
+                        switch (object@metadata$transform_method,
+                                
                                 "log1p" = {
-                                  pseudo <- log1p(SummarizedExperiment::assay(object))
-                                  x_lab  <- "Transformed Metabolite abundance"
-                                  title  <- "log1p(Metabolites abundance)" },
-
-                                # "log10" = {
-                                #   pseudo <- log10(SummarizedExperiment::assay(object)+1)
-                                #   x_lab  <- "Transformed Metabolite abundance"
-                                #   title  <- "log10(Metabolites abundance + 1)"
-                                # },
+                                  pseudo <- log1p(SummarizedExperiment::assay(object)) },
+                                
                                 "squareroot" = {
-                                  pseudo <- sqrt(SummarizedExperiment::assay(object))
-                                  x_lab  <- "Transformed Metabolite abundance"
-                                  title  <- "sqrt(Metabolites abundance)" },
-
-                                "none" = {
-                                  pseudo <- SummarizedExperiment::assay(object)
-                                  x_lab  <- "Transformed Metabolite abundance"
-                                  title  <- "Raw data"
-                                }
+                                  pseudo <- sqrt(SummarizedExperiment::assay(object)) }
+                                # "log2" = {
+                                #   pseudo <- log2(SummarizedExperiment::assay(object) +1 )},
+                                # "log10" = {
+                                #   pseudo <- log10(SummarizedExperiment::assay(object)+1)}
                         )
                       }
-                      #
-                      pseudo.gg <- pseudo %>% reshape2::melt()
-                      colnames(pseudo.gg) <- c("features", "samples", "value")
-
-                      pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples")
-
-                      p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + xlab(x_lab) +
-                        theme(legend.position='none') + ggtitle(title)
                     }
             )
-            print(p)
-          }
-)
-
-
-
-#' @title abundanceBoxplot
-#' @description This function produces boxplots from raw and normalized data matrix. One color by level
-#' of combination factor. It allows to detect outlier samples and to see the normalization
-#' effect.
-#' @param object An object of class \link{SummarizedExperiment-class}
-#' @exportMethod abundanceBoxplot
-#' @rdname abundanceBoxplot
-#' @noRd
-methods::setMethod(f= "abundanceBoxplot",
-          signature = "SummarizedExperiment",
-          definition <- function(object){
-
-            samples <- value <- NULL
-
-            # normalized data
-            if(! is.null(object@metadata$Normalization)){
-              pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
-                                   scale=object@metadata$Normalization$coefNorm$norm.factors)+1) %>% reshape2::melt()
-              y_lab  <- "log2(normalized gene counts)"
-              title  <- "Filtered and normalized (TMM) data"
-            }
-
-            else{
-              pseudo <- log2(SummarizedExperiment::assay(object)+1) %>% reshape2::melt()
-              y_lab  <- "log2( gene counts)"
-              title  <- "Raw data"
-            }
-
-            if(object@metadata$omicType != "RNAseq"){
-              pseudo <- SummarizedExperiment::assay(object) %>% reshape2::melt()
-              y_lab  <- "Abundance"
-              title  <- paste0("Transform data (method=",FlomicsMultiAssay@ExperimentList[[2]]@metadata$transform_method,")")
-            }
-
-            colnames(pseudo) <- c("feature", "samples", "value")
-
-            pseudo_bis <- dplyr::full_join(pseudo, object@metadata$Groups, by="samples") %>%
+            
+            pseudo.gg <- pseudo %>% reshape2::melt()
+            colnames(pseudo.gg) <- c("features", "samples", "value")
+            
+            pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples") %>%
               dplyr::arrange(groups)
-
-            pseudo_bis$samples <- factor(pseudo_bis$samples, levels = unique(pseudo_bis$samples))
-
-            # boxplot
-            p <- ggplot(pseudo_bis, aes(x=samples, y=value,label = feature)) + ggplot2::geom_boxplot(aes(fill=groups),outlier.colour = "red") +
-              theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + xlab("") + ylab(y_lab) + ggtitle(title) +
-              geom_point(alpha = 1/100,size=0)
+            
+            pseudo.gg$samples <- factor(pseudo.gg$samples, levels = unique(pseudo.gg$samples))
+            
+            switch (plot,
+                    "density" = {
+                      p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + 
+                        xlab(x_lab) + theme(legend.position='none') + ggtitle(title)
+                    },
+                    "boxplot" = {
+                      p <- ggplot(pseudo.gg, aes(x=samples, y=value,label = features)) + 
+                        ggplot2::geom_boxplot(aes(fill=groups),outlier.colour = "red") +
+                        theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + 
+                        xlab("") + ylab(x_lab) + ggtitle(title) #+
+                      #geom_point(alpha = 1/100,size=0)
+                    })
+            
             print(p)
+
           }
 )
+
 
 #' @title plotPCA
 #' @description This function plot the factorial map from a PCA object stored
@@ -904,9 +827,9 @@ methods::setMethod(f= "plotPCA",
             switch (PCA,
                     "raw"  = {title <- paste0("Raw ", object@metadata$omicType, " data")},
                     "norm" = {title <- switch (object@metadata$omicType,
-                                               "RNAseq" = {"Filtred and normalized (TMM) RNAseq data"},
-                                               "proteomics" = {"Transformed proteomics data (log2)"},
-                                               "metabolomics" = {"Transformed proteomics data (log2)"}
+                                               "RNAseq" = { paste0("Filtred and normalized ", object@metadata$omicType," data (", object@metadata$Normalization$methode, ")")  },
+                                               "proteomics" = {paste0("Transformed ", object@metadata$omicType," data (", object@metadata$transform_method, ")")},
+                                               "metabolomics" = {paste0("Transformed ", object@metadata$omicType," data (", object@metadata$transform_method, ")")}
                     )}
             )
 
@@ -1596,80 +1519,6 @@ methods::setMethod(f="runCoExpression",
             if(! is.null(coseq.res.list$value)){
 
               CoExpAnal <- c(CoExpAnal, coseq.res.list$value)
-
-              # print("#     => error management ")
-              #
-              # # Create a table of jobs summary
-              # error.list <- unlist(lapply(coseq.res.list$value, function(x){
-              #   ifelse(is.null(x$error),"success",as.character(x$error))
-              # }))
-              #
-              # K.list <- rep(K,each=replicates)
-              #
-              # jobs.tab <- data.frame(K= K.list, error.message=as.factor(error.list))
-              #
-              # jobs.tab.sum <- jobs.tab %>% dplyr::group_by(K,error.message) %>%
-              # dplyr::summarise(n=dplyr::n()) %>%  dplyr::mutate(prop.failed=round((n/replicates)*100)) %>%
-              # dplyr::filter(error.message != "success")
-              #
-              # # If exists jobs.tab.sum
-              # if(dim(jobs.tab.sum)[1]>0){
-              #
-              #   # Number of K for which p(success) > p(failed)
-              #   nK_success <- length(which(jobs.tab.sum$prop.failed < 50))
-              # }
-              # else{
-              #   nK_success <- length(K)
-              # }
-              # print(nK_success)
-              #
-              #
-              # # If they are at least the half of K which succeed, valid results
-              # if( nK_success > round(length(K)/2)){
-              #
-              #       print("#     => process results ")
-              #       # Generate the list of results
-              #       coseq.res.list[["value"]] <- lapply(coseq.res.list$value,function(x){x$value})
-              #
-              #       list.tmp <- list()
-              #       list.tmp <<- coseq.res.list[["value"]]
-              #
-              #       ICL.logLike.plot <- get.ICL.logLike.plot(coseq.res.list[["value"]])
-              #
-              #       coseq.res <- ICL.logLike.plot$coseqObjectMinICL
-              #
-              #       # plot
-              #       plot.coseq.res <- coseq::plot(coseq.res, conds = object@metadata$Groups$groups, collapse_reps="average",
-              #                                     graphs = c("profiles", "boxplots", "probapost_boxplots",
-              #                                                "probapost_barplots", "probapost_histogram")) # , collapse_reps = "average"
-              #       CoExpAnal[["plots"]] <- plot.coseq.res
-              #       CoExpAnal[["plots"]][["ICL"]]     <- ICL.logLike.plot$ICL.p
-              #       CoExpAnal[["plots"]][["logLike"]] <- ICL.logLike.plot$logLike.p
-              #
-              #       CoExpAnal[["results"]]      <- TRUE
-              #       CoExpAnal[["warning"]]      <- coseq.res.list$warning
-              #       CoExpAnal[["coseqResults"]] <- coseq.res
-              #       #CoExpAnal[["coseqResults"]] <- coseq.res.list$value
-              #       #coseq.res <- coseq.res.list$value
-              #
-              #       # list of genes per cluster
-              #       clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
-              #         names(coseq::clusters(coseq.res)[coseq::clusters(coseq.res) == i])
-              #         })
-              #       CoExpAnal[["clusters"]] <- clusters
-              #       names(CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
-              #
-              #       # nbr of cluster
-              #       nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
-              #       CoExpAnal[["cluster.nb"]] <- nb_cluster
-              #
-              # }
-              # # Réinitialisation de l'objet CoExpAnal
-              # else{
-              #       CoExpAnal[["results"]] <- FALSE
-              #       CoExpAnal[["stats"]] <- jobs.tab.sum
-              #       #CoExpAnal[["warning"]] <- coseq.res.list$warning
-              # }
             }
             else{
               CoExpAnal[["results"]] <- FALSE

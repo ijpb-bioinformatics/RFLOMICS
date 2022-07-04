@@ -1,5 +1,5 @@
 ####
-#
+# LOAD data module
 ####
 
 LoadOmicsDataUI <- function(id){
@@ -236,13 +236,13 @@ LoadOmicsData <- function(input, output, session, rea.values){
               column(2,
                      # omic type
                      selectInput(inputId=session$ns(paste0('omicType', addDataNum)), label='Omics', choices = c("None"="none", "RNAseq"="RNAseq", "Proteomics"="proteomics", "Metabolomics"="metabolomics"), selected = "none")),
-              column(4,
+              column(6,
                      # matrix count/abundance input
                      fileInput(inputId=session$ns(paste0("data", addDataNum)), "Feature count/abundance (txt)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
-              column(4,
-                     # metadata/QC bioinfo
-                     fileInput(inputId=session$ns(paste0("metadataQC", addDataNum)), "QC or metadata (txt)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
-              column(2,
+              # column(4,
+              #        # metadata/QC bioinfo
+              #        fileInput(inputId=session$ns(paste0("metadataQC", addDataNum)), "QC or metadata (txt)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
+              column(3,
                      # dataset Name
                      textInput(inputId=session$ns(paste0("DataName", addDataNum)), label="Dataset name", value=paste0("set", as.character(addDataNum))))
             ),
