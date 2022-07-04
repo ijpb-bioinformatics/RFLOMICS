@@ -446,7 +446,7 @@ shinyServer(function(input, output, session) {
         # case we don't have write permissions to the current working dir (which
         # can happen when deployed).
 
-        tempReport <-  "report_main.Rmd" # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        tempReport <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_main.Rmd") # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         #tempReport <- file.path(tempdir(), "report.Rmd")
         #file.copy("report.Rmd", tempReport, overwrite = TRUE)

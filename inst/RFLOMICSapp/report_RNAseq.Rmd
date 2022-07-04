@@ -67,8 +67,8 @@ Library_size_barplot.plot(dataset.SE)
 
 ```{r , echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
 
-Data_Distribution_Density.plot(dataset.raw.SE)
-Data_Distribution_Density.plot(dataset.SE)
+Data_Distribution_plot(dataset.raw.SE, plot = "boxplot")
+Data_Distribution_plot(dataset.SE, plot = "density")
 ```
 
 

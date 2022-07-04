@@ -34,8 +34,8 @@ DT::datatable(filt.summary, options = list(colnames=FALSE, rownames = FALSE, pag
 ### Distribution of density befor/after transformation
 
 ```{r densityPlotMeta, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
-Data_Distribution_Density.plot(dataset.raw.SE)
-Data_Distribution_Density.plot(dataset.SE)
+Data_Distribution_plot(dataset.raw.SE, plot = "boxplot")
+Data_Distribution_plot(dataset.SE, plot = "density")
 ```
 
 ### Boxplot and Sum of XIC  
