@@ -2106,7 +2106,7 @@ setMethod(f="prepareMOFA",
 #' @param scale_views boolean. MOFA option to scale the views so they have the same variance. Default is FALSE.
 #' @param maxiter integer. MOFA option, maximum number of iterations to be considered if there it does not converge. Default is 1000.
 #' @param num_factors integer. MOFA option, maximum number of factor to consider. Default is 10.
-#' @return A trained MOFA object
+#' @return A list with an untrained MOFA object (containing all options for the run) and a trained MOFA object
 #' @export
 #' @exportMethod run_MOFA_analysis
 #' @examples
@@ -2118,28 +2118,30 @@ setMethod(f="run_MOFA_analysis",
                                                    maxiter = 1000,
                                                    num_factors = 10,
                                                    ...){
-
+            
+            # library(MOFA2)
+            # object = FlomicsMultiAssay@metadata$MOFA_untrained
+            # scale_views = TRUE
+            
             data_opts <- get_default_data_options(object)
             model_opts <- get_default_model_options(object)
             train_opts <- get_default_training_options(object)
-
+            
             data_opts$scale_views <- scale_views
             train_opts$maxiter <- maxiter
             model_opts$num_factors <- num_factors
-
-            MOFAObject <- MOFA2::prepare_mofa(
+            
+            MOFAObject.untrained <- MOFA2::prepare_mofa(
               object = object,
               data_options = data_opts,
               model_options = model_opts,
               training_options = train_opts
             )
-
-            MOFAObject.trained <- MOFA2::run_mofa(MOFAObject, use_basilisk = TRUE)
+            
+            MOFAObject.trained <- MOFA2::run_mofa(MOFAObject.untrained, use_basilisk = TRUE)
             # peut poser probleme au niveau python et mofapy.
             # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R.
-
-            return(MOFAObject.trained)
+            
+            return(list("MOFAObject.untrained" = MOFAObject.untrained, "MOFAObject.trained" = MOFAObject.trained))
           })
-
-
 

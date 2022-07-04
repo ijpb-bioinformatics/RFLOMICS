@@ -155,23 +155,27 @@ MOFA_setting <- function(input, output, session, rea.values){
       need(length(input$selectedContrast) != 0, message="Select at least one contast!")
     })
     
-    # local.rea.values <- reactiveValues(runMOFA = FALSE) #### ????
-    
     # run MOFA
     print(input$selectedData)
     
-    local.rea.values$untrainedMOFA <- prepareMOFA(FlomicsMultiAssay,
+    local.rea.values$preparedMOFA <- prepareMOFA(FlomicsMultiAssay,
                                                   omicsToIntegrate = input$selectedData,
                                                   rnaSeq_transfo = input$RNAseqTransfo,
                                                   choice = "DE", 
                                                   contrasts_names = input$selectedContrast,
                                                   type = input$filtMode,
                                                   group = NULL)
-    local.rea.values$resMOFA <- run_MOFA_analysis(local.rea.values$untrainedMOFA, 
-                                                  scale_views = input$scaleViews,
+    
+    local.rea.values$listResMOFA <- run_MOFA_analysis(local.rea.values$preparedMOFA, 
+                                                  scale_views = as.logical(input$scaleViews),
                                                   maxiter = input$maxiter,
                                                   num_factors = input$numfactor) 
     
+    local.rea.values$untrainedMOFA <- local.rea.values$listResMOFA$MOFAObject.untrained
+    local.rea.values$resMOFA <- local.rea.values$listResMOFA$MOFAObject.trained
+    
+    
+    #### TODO Try to catch MOFA2 warnings and put them on the interface. DOES NOT WORK. 
     # test <- run_MOFA_analysis(FlomicsMultiAssay@metadata[["MOFA_untrained"]],
     #                           scale_views = FALSE,
     #                           maxiter = 1000,
@@ -183,13 +187,15 @@ MOFA_setting <- function(input, output, session, rea.values){
     }else{local.rea.values$warnings <- "no warnings captured"}
     # output <- list()
     # output$warnings <- renderText({local.rea.values$warnings})
+    #### End of catchning warnings.
     
+    FlomicsMultiAssay@metadata[["MOFA_selected_contrasts"]] <<- input$selectedContrast
+    FlomicsMultiAssay@metadata[["MOFA_selected_filter"]] <<- input$filtMode
     FlomicsMultiAssay@metadata[["MOFA_untrained"]] <<- local.rea.values$untrainedMOFA
     FlomicsMultiAssay@metadata[["MOFA_warnings"]] <<- local.rea.values$warnings
     FlomicsMultiAssay@metadata[["MOFA_results"]] <<- local.rea.values$resMOFA
     
     local.rea.values$runMOFA   <- TRUE
-    # FlomicsMultiAssay@metadata[["MOFA_run"]] <- local.rea.values$runMOFA
     
   }, ignoreInit = TRUE)
   
