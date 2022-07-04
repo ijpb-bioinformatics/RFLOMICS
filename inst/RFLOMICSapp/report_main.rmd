@@ -151,6 +151,9 @@ knitr::asis_output(out)
 
 `r if(length(FlomicsMultiAssay@metadata$omicList) == 0 ) {"\\end{comment}"}`
 
+<!-- Ajouter if pour test de MOFA2 results dans la table.
+Tous les attributs des tests sont retrouvables dans l'objet MOFA2 de rflomics -->
+
 # R Session
 
 ```{r session, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
