@@ -69,7 +69,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                model <- c("Normal","kmeans")
                Trans <- "none"
                normF <- "none"
-               Gaussian <- c("Gaussian_pk_Lk_Ck", "Gaussian_pk_Lk_Bk", "none")
+               Gaussian <- c("Gaussian_pk_Lk_Bk","Gaussian_pk_Lk_Ck",  "none")
                Scale <- TRUE
                },
 
@@ -79,7 +79,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                model <- c("Normal","kmeans")
                Trans <- "none"
                normF <- "none"
-               Gaussian <- c("Gaussian_pk_Lk_Ck", "Gaussian_pk_Lk_Bk", "none")
+               Gaussian <- c("Gaussian_pk_Lk_Bk", "Gaussian_pk_Lk_Ck","none")
                Scale <- TRUE
                })
 

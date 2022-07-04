@@ -15,19 +15,19 @@ Annt.eval <- !is.null(dataset.SE@metadata[["EnrichAnal"]]$results)
 ## Description of dataset's processing
 
 
-```{r , fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE, echo=FALSE}
+```{r , echo=FALSE , message=FALSE, warning=FALSE, echo=FALSE}
 
 check <- CheckExpDesignCompleteness(FlomicsMultiAssay)
 check$plot
 
-filt.summary <-  data.frame(c("# Genes (raw)",
-                              "# Genes (0 count)",
-                              "# Genes (low count)",
-                              "# Genes (keep)"),
-                            c(length(names(dataset.raw.SE)),
+filt.summary <-  data.frame("Status"=c("raw dataset",
+                              "0 count",
+                              "low count",
+                              "filtered sataset"),
+                            "Number of gene"=c(length(names(dataset.raw.SE)),
                               length(dataset.raw.SE@metadata$rowSums.zero),
                               length(dataset.SE@metadata$FilteredFeatures),
-                              ""))
+                              length(names(dataset.SE))))
            
 ```
 
@@ -36,9 +36,8 @@ filt.summary <-  data.frame(c("# Genes (raw)",
 * The choosen filtering strategy was `r dataset.SE@metadata$FilteringOptions$Filter_Strategy` with a count per million of read (CPM) cut-off of `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff` 
 * Summary of filtered genes.
 
-```{r}
-DT::datatable(filt.summary, options = list(colanmes=FALSE, rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),
-              class = 'cell-border stripe')
+```{r, echo=FALSE, message=TRUE, warning=TRUE}
+DT::datatable(filt.summary, options = list(colnames=FALSE, rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),class = 'cell-border stripe')
 ```
 
 

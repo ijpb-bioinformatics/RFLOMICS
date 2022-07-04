@@ -13,21 +13,21 @@ CoEx.eval <- !is.null(dataset.SE@metadata[["CoExpAnal"]]$results)
 
 ### Description of dataset's processing
 
-```{r CheckDesignProt, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+```{r CheckDesignProt, echo=FALSE, message=TRUE,  message=FALSE, warning=FALSE}
 check <- CheckExpDesignCompleteness(FlomicsMultiAssay)
 
-filt.summary <-  data.frame(c("# Proteins (raw)",
-                              "# Proteines (without NA)"),
-                            c(length(names(dataset.SE)),
-                              dim(na.omit(assay(dataset.SE)))[1]))
+filt.summary <-  data.frame("status"=c("raw dataset",
+                              "NA",
+                              "filtered dataset"),
+                            "Number of protein"=c(length(names(dataset.raw.SE)),
+                              length(names(dataset.raw.SE))-dim(na.omit(assay(dataset.SE)))[1],      length(names(dataset.SE))))
 ```
 
 * The data were `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$transform_method` transformed.
 * Summary of filtered proteins.
 
-```{r}
-DT::datatable(filt.summary, options = list(colanmes=FALSE, rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),
-              class = 'cell-border stripe')
+```{r , echo=FALSE, message=TRUE, warning=TRUE}
+DT::datatable(filt.summary, options = list(colnames=FALSE, rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),class = 'cell-border stripe')
 ```
 
 * The data were  transformed.

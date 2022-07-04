@@ -6,30 +6,27 @@
 
 ```{r , echo=FALSE,out.width = "50%"}
 
-DiffAnal.plot(local.rea.values$dataset.SE, hypothesis=vect["contrastName"],
-                                  Adj.pvalue.cutoff = input$Adj.pvalue.cutoff, FC.cutoff = input$abs.FC.cutoff)
-
 diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=contrast, Adj.pvalue.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["Adj.pvalue.cutoff"]], FC.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["abs.FC.cutoff"]])
 ```
 ### Results {.tabset}
 
 #### Pvalue
 
-```{r Diff1}
+```{r , echo=FALSE,out.width = "50%"}
 diff.plots$Pvalue.hist
 ```
 
 #### MAplot
 
 
-```{r }
+```{r , echo=FALSE,out.width = "50%"}
 diff.plots$MA.plot
 ```
 
 #### Volcano plot
 
 
-```{r }
+```{r , echo=FALSE,out.width = "50%"}
 diff.plots$Volcano.plot
 ```
 

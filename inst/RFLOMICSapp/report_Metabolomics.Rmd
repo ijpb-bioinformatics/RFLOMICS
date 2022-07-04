@@ -14,21 +14,21 @@ CoEx.eval <- !is.null(dataset.SE@metadata[["CoExpAnal"]]$results)
 
 ### Description of dataset's processing
 
-```{r CheckDesignMeta, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+```{r CheckDesignMeta, echo=FALSE, message=FALSE, warning=FALSE}
 check <- CheckExpDesignCompleteness(FlomicsMultiAssay)
 
-filt.summary <-  data.frame(c("# Metabolites (raw)",
-                              "# Metabolites (without NA)"),
-                            c(length(names(dataset.SE)),
-                              dim(na.omit(assay(dataset.SE)))[1]))
+filt.summary <-  data.frame("status"=c("raw dataset",
+                              "NA",
+                              "filtered dataset"),
+                            "Number of metabolite"=c(length(names(dataset.raw.SE)),
+                              length(names(dataset.raw.SE))-dim(na.omit(assay(dataset.SE)))[1],      length(names(dataset.SE))))
 ```
 
 * The data were `r FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$transform_method` transformed.
 * Summary of filtered metabolites.
 
-```{r}
-DT::datatable(filt.summary, options = list(colanmes=FALSE, rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),
-              class = 'cell-border stripe')
+```{r , echo=FALSE, message=TRUE, warning=TRUE}
+DT::datatable(filt.summary, options = list(colnames=FALSE, rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),class = 'cell-border stripe')
 ```
 
 ### Distribution of density befor/after transformation
@@ -49,7 +49,7 @@ Library_size_barplot.plot(dataset.raw.SE)
 
 Multivariate quality check of design. For each design factor (one color for each), and each PCA axis this function plot the coordinates of the sample in a PCA axis (y-axis) in an increasing order along the x-axis. It allows to have a quick view of the percent of variability associated to each factor.
 
-```{r PCAMetabo, echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE,out.width = "100%", eval=TRUE}
+```{r PCAMetabo, echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE,out.width = "100%", eval=FALSE}
 mvQCdesign(object = FlomicsMultiAssay,
            data   = paste0(data,".filtred"), PCA="norm", axis=5, 
            pngFile= NULL) 
@@ -141,14 +141,6 @@ was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
     
 knitr::asis_output(out)
 
-```
-
-### Data table
-
-```{r CoexpTable, echo=FALSE, results="asis"}
-DT::datatable(data.frame(dataset.SE@metadata[["CoExpAnal"]]$coseqResults@allResults[[1]]), 
-              options = list(rownames = TRUE, pageLength = 10, scrollX = T, dom = 'tip'),
-              class = 'cell-border stripe')
 ```
 
 `r  if(is.null(dataset.SE@metadata[["CoExpAnal"]]$results)) {"\\end{comment}"}`
