@@ -1766,7 +1766,7 @@ methods::setMethod(f="prepareMOFA",
                                   type = "union",
                                   group = NULL){
             # object <- FlomicsMultiAssay
-            # omicsToIntegrate = c("RNAseq", "proteomics")
+            # omicsToIntegrate = c("proteomics.set1", "metabolomics.set2")
             # omicsToIntegrate = c("RNAseq.set1", "proteomics.set2")
             # omicsToIntegrate = c("proteomics.set1", "metabolomics.set2")
             # rnaSeq_transfo = "limma (voom)"
@@ -1802,7 +1802,7 @@ methods::setMethod(f="prepareMOFA",
                                   norm.factors = rnaDat@metadata$Normalization$coefNorm$norm.factors,
                                   lib.size = rnaDat@metadata$Normalization$coefNorm$lib.size,
                                   samples = object@metadata$design@ExpDesign)
-              limmaRes <- limma::voom(DGEObject, design =designMat)
+              limmaRes <- limma::voom(DGEObject, design = designMat)
 
               SummarizedExperiment::assay(rnaDat) <- limmaRes$E
               rnaDat@metadata[["transform_results_all"]] <- limmaRes # changer l'appellation
@@ -1820,7 +1820,8 @@ methods::setMethod(f="prepareMOFA",
 
             # Transformation of proteomics/metabolomics data
             res <- lapply(omicsToIntegrate[omicsToIntegrate!="RNAseq"], FUN = function(omicName){
-
+              # omicName = "proteomics"
+              
               omicsDat <- object@ExperimentList[[grep(omicName, names(object@ExperimentList))]]
               omicsDat@metadata[["transform_method_integration"]] <- omicsDat@metadata$transform_method
 
