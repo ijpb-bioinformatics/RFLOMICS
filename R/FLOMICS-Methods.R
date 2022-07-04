@@ -1168,41 +1168,38 @@ methods::setMethod(f="RunNormalization",
 ## METHOD to perform differential analysis
 
 #' @title RunDiffAnalysis
-#' @description This is an interface method which run a differential analysis method on
-#' omic datasets stored in an object of class \link{SummarizedExperiment}.
-#' According to the type of omic and to a list of contrasts,
-#' a differential analysis method is applied to each contrasts (or hypothesis).
-#' Three methods are available according to the type of object:
+#' @description This method run a differential expression analysis
+#' on an omic dataset stored in an object of class \link{SummarizedExperiment}
+#'
+#' @details
+#' According to the type of omic dataset and to a list of contrasts,
+#' the differential analysis method is applied to each contrast.
+#' Two methods are available according to the type of object:
 #' \itemize{
-#' \item{For RNAseq data: }{the \code{glmFit} function of the \code{edgeR} package}
-#' \item{For proteomic and metabolomic data: }{the \code{lmFit} function of the \code{limma} package}
+#' \item{For RNAseq data: }{the \code{glmFit} function of the \code{edgeR} package} is applied
+#' \item{For proteomic and metabolomic data: }{the \code{lmFit} function of the \code{limma} package is applied}
 #' }
 #'
 #' Parameters used for RNAseq are those recommended in DiCoExpress workflow (see the paper in reference)
 #' @return
-#' All the results are stored as a named list \code{DiffExpAnal} in the metadata slot of a
+#' All the results are stored as a named list \code{DiffExpAnal} in the metadata slot of the
 #' given \code{SummarizedExperiment} object.
 #' Objects are:
 #' \itemize{
-#' \item{contrasts: }{The selected contrasts for which the differential analysis has been conducted}
-#' \item{method: }{The method used for the differential analysis}
+#' \item{contrasts: }{The selected contrasts for which the differential analysis has been run}
+#' \item{method: }{The method used for the differential expression analysis}
 #' \item{Adj.pvalue.method: The method applied for the pvalue adjustment}
-#' \item{Adj.pvalue.cutoff: The threshold applied for the pvalue adjustment}
-#' \item{FDR: }{The false discovery rate given in input}
 #' \item{RawDEFres: }{a list giving for each contrast the raw results of the differential analysis method}
 #' \item{DEF: }{a list giving for each contrast a data.frame of non filtered differential expressed features}
-#' \item{TopDEF: }{a list giving for each contrast a data.frame of differential expressed features by Adj.pvalue.cutoff}
-#' \item{mergeDEF: }{A data frame indicating for each features in row, if it is DE in a given contrasts in column}
 #' }
+#'
 #' @param object an object of class [\code\link{SummarizedExperiment}]
 #' @param design an object of class [\code{\link{ExpDesign-class}]
 #' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
 #' to run. Either "edgeRglmfit", "limmalmFit", ...
 #' @param contrastList The list of contrast to test
 #' @param Adj.pvalue.method The method choosen to adjust pvalue.
-#' @param Adj.pvalue.cutoff The adjusted pvalue cut-off
 #' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
-#' @param filter_only A boolean indicating whether only filter on DE results have to be applied (\code{filter_only=TRUE}). FALSE by default.
 #' @return An object of class [\code\link{SummarizedExperiment}]
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
@@ -1275,11 +1272,22 @@ methods::setMethod(f="RunDiffAnalysis",
 
 ## METHOD to filter differential analysis
 
-#' Title
-#'
+#' @title FilterDiffAnalysis
+#' @description This method filter the result of a differential expression analysis
+#' of an omic dataset of class \link{SummarizedExperiment}.
 #' @param SummarizedExperiment
-#'
+#' @param Adj.pvalue.cutoff The adjusted pvalue cut-off
 #' @return
+#' All the results are stored in the named list \code{DiffExpAnal} in the metadata slot of the
+#' given \code{SummarizedExperiment} object.
+#' Objects are:
+#' \itemize{
+#' \item{Adj.pvalue.cutoff: The threshold applied for the pvalue adjustment}
+#' \item{abs.FC.cutoff: }{The threshold applied for the Fold Change}
+#' \item{TopDEF: }{a list giving for each contrast a data.frame of filtered differential expressed features}
+#' }
+#'
+#'
 #' @exportMethod FilterDiffAnalysis
 #'
 #' @examples
@@ -1354,11 +1362,12 @@ methods::setMethod(f="FilterDiffAnalysis",
 
 #' @title DiffAnal.plot
 #' @description
-#' This is an interface method which draw a MAplot from the results of a differential analysis
+#' This method draw a graph of p-values distribution,a MA plot and a Volcano Plot from the results of a differential analysis
 #' performed on omic datasets stored in an object of class \link{SummarizedExperiment}
 #' @param object An object of class \link{SummarizedExperiment}
-#' @param data The name of the omic data for which the MAplot has to be drawn
-#' @param hypothesis The hypothesis for which the MAplot has to be drawn
+#' @param hypothesis The contrasts fo which the plots have to be drawn.
+#' @param Adj.pvalue.cutoff: The the adjusted pvalue cut-off
+#' @param abs.FC.cutoff: The Fold Change cut-off
 #' @return plot
 #' @exportMethod DiffAnal.plot
 #' @export

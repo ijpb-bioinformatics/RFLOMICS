@@ -63,6 +63,7 @@ RUN Rscript -e 'remotes::install_version("reshape2",upgrade="never", version = "
 RUN Rscript -e 'remotes::install_version("kableExtra",upgrade="never", version = "1.3.4")'
 
 RUN Rscript -e 'remotes::install_version("clustermq",upgrade="never", version = "0.8.95.2")'
+RUN Rscript -e 'remotes::install_version("devtools",upgrade="never", version = "2.4.3")'
 
 RUN Rscript -e 'remotes::install_version("FactoMineR",upgrade="never", version = "2.4")'
 RUN Rscript -e 'remotes::install_version("statmod",version="1.4.36")'
@@ -89,5 +90,5 @@ RUN echo "local(options(shiny.port = 3838, shiny.host = '0.0.0.0'))" >> /usr/loc
 
 EXPOSE 3838
 
-CMD ["R","-e","library(RFLOMICS); shiny::runApp()"]
+CMD ["R","-e","library(RFLOMICS); RFLOMICS::runExample()"]
 

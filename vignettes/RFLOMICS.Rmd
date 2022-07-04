@@ -51,7 +51,7 @@ docker build --file=Dockerfile --tag=rflomics .
 * Run Docker
 
 ```{bash, eval=FALSE}
-docker run -it -p 3838:3838 -v ${HOME}:/root --name='rflomics' --cpus 8 rflomics
+docker run -it -p 3838:3838 -v ${HOME}:/root --name='rflomics' --cpus 4 rflomics
 ```
 
 * Open a web navigator and paste this url: 
