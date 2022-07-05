@@ -1,4 +1,4 @@
-# `r data` analysis
+# `r data` 
 
 ```{r , echo=FALSE}
 
@@ -7,83 +7,100 @@ dataset.SE     <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]
 
 Diff.eval <- !is.null(dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]])
 CoEx.eval <- !is.null(dataset.SE@metadata[["CoExpAnal"]]$results)
-Annt.eval <- !is.null(dataset.SE@metadata[["EnrichAnal"]]$results)
+Diff.ann.eval <- !is.null(dataset.SE@metadata[["DiffExpAnal"]]$results)
+CoEx.ann.eval <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results)
 
 ```
 
+## Data pre-processing
 
-## Description of dataset's processing
+* The *unexpressed genes* are filtered-out by default: `r length(dataset.raw.SE@metadata$rowSums.zero)` filtred-out genes.
+* The *low expressed genes* (those with low counts) are filtred-out using the Counts Per Million (CPM) method with "`r dataset.SE@metadata$FilteringOptions$Filter_Strategy`" strategy and cut-off equal to `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff`: `r length(dataset.raw.SE@metadata$FilteredFeatures)` filtred-out genes.
+
+`r if(length(colnames(dataset.raw.SE)) - length(colnames(dataset.SE)) == 0) {"\\begin{comment}"}`
+
+* The *outlier samples* are removed: `r setdiff(colnames(dataset.raw.SE), colnames(dataset.SE))`.
+
+`r if(length(colnames(dataset.raw.SE)) - length(colnames(dataset.SE)) == 0) {"\\end{comment}"}`
 
 
-```{r , echo=FALSE , message=FALSE, warning=FALSE, echo=FALSE}
+```{r , echo=FALSE , message=FALSE, warning=FALSE, echo=FALSE, out.width = "70%"}
 
-check <- CheckExpDesignCompleteness(FlomicsMultiAssay)
+check <- CheckExpDesignCompleteness(FlomicsMultiAssay, colnames(FlomicsMultiAssay[[paste0(data,".filtred")]]))
 check$plot
 
-filt.summary <-  data.frame("Status"=c("raw dataset",
-                              "0 count",
-                              "low count",
-                              "filtered sataset"),
-                            "Number of gene"=c(length(names(dataset.raw.SE)),
-                              length(dataset.raw.SE@metadata$rowSums.zero),
-                              length(dataset.SE@metadata$FilteredFeatures),
-                              length(names(dataset.SE))))
+# filt.summary <-  data.frame("Status"=c("raw dataset",
+#                               "0 count",
+#                               "low count",
+#                               "filtered sataset"),
+#                             "Number of gene"=c(length(names(dataset.raw.SE)),
+#                               length(dataset.raw.SE@metadata$rowSums.zero),
+#                               length(dataset.SE@metadata$FilteredFeatures),
+#                               length(names(dataset.SE))))
            
 ```
 
-### Filtering:
-
-* The choosen filtering strategy was `r dataset.SE@metadata$FilteringOptions$Filter_Strategy` with a count per million of read (CPM) cut-off of `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff` 
-* Summary of filtered genes.
-
-```{r, echo=FALSE, message=TRUE, warning=TRUE}
+```{r, echo=FALSE, message=TRUE, warning=TRUE, eval=FALSE}
 DT::datatable(filt.summary, options = list(colnames=FALSE, rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),class = 'cell-border stripe')
 ```
 
-
-### Normalization:
-
-The `r dataset.SE@metadata$Normalization$methode` normalization method 
+* The `r dataset.SE@metadata$Normalization$methode` normalization method 
 was applied and the scaling factors are stored in the table below:
 
 ```{r , echo=FALSE, results="asis"}
 
 DT::datatable(dataset.SE@metadata$Normalization$coefNorm, 
-              options = list(rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),
+              options = list(rownames = TRUE, pageLength = 6, scrollX = T, dom = 'tip'),
               class = 'cell-border stripe')
 
 # kable_styling(kable(dataset.SE@metadata$Normalization$coefNorm, row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
 
 ```
 
-### Distribution of library size befor/after processing
+> QC plots
+
+* Histograms of the library size before/after pre-processing
 
 ```{r , echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
 Library_size_barplot.plot(dataset.raw.SE)
 Library_size_barplot.plot(dataset.SE)
 ```
 
-### Distribution of density befor/after processing
+* Distribution of gene counts before/after pre-processing : boxplot
 
 ```{r , echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
-
 Data_Distribution_plot(dataset.raw.SE, plot = "boxplot")
+Data_Distribution_plot(dataset.SE, plot = "boxplot")
+```
+
+* Distribution of gene counts before/after pre-processing : density
+
+```{r , echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+Data_Distribution_plot(dataset.raw.SE, plot = "density")
 Data_Distribution_plot(dataset.SE, plot = "density")
 ```
 
-
-### Principal component analysis befor/after processing
+* Principal component analysis before/after pre-processing
 
 ```{r , echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE, out.width = "80%", eval=FALSE}
-#mvQCdesign(object = FlomicsMultiAssay,
-#           data   = data, PCA="raw", axis=5, 
-#           pngFile= NULL) 
+
 mvQCdesign(object = FlomicsMultiAssay,
            data   = paste0(data,".filtred"), PCA="norm", axis=5, 
            pngFile= NULL) 
 ```
 
+```{r , echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE, out.width = "50%"}
 
+RFLOMICS::plotPCA(dataset.raw.SE, PCA="raw", PCs=c(1, 2), condition="groups")
+
+RFLOMICS::plotPCA(dataset.SE, PCA="norm", PCs=c(1, 2), condition="groups")
+```
+
+```{r , echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE, out.width = "50%"}
+
+RFLOMICS::plotPCA(dataset.raw.SE, PCA="raw", PCs=c(1, 3), condition="groups")
+RFLOMICS::plotPCA(dataset.SE, PCA="norm", PCs=c(1, 3), condition="groups")
+```
 
 `r if(is.null(dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]])) {"\\begin{comment}"}`
 
@@ -121,7 +138,7 @@ kable_styling(kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], d
 ```
 
 
-The following graph gives the number of common and specific differential expressed genes per testing hypotethis.
+The following graph gives the number of common and specific differential expressed genes per testing hypothesis.
 
 
 
@@ -133,7 +150,7 @@ if(dim(DEF_mat)[2] > 2){
 }
 ```
 
-### Results per contrast
+<!-- ### Results per contrast -->
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.eval}
 
@@ -150,20 +167,8 @@ knitr::asis_output(out)
 
 `r if(is.null(dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]])) {"\\end{comment}"}`
 
+
 `r if(is.null(dataset.SE@metadata[["CoExpAnal"]]$results))  {"\\begin{comment}"}`
-
-
-## Co-expression
-
-Co-expression analysis was carried out on the `r dataset.SE@metadata[["CoExpAnal"]]$merge.type`
-of the following list of gene `r dataset.SE@metadata$CoExpAnal$gene.list.names`. 
-`r dataset.SE@metadata[["CoExpAnal"]]$tools` was used to cluster genes. 
-The gaussian mixture model was run on filtered (meanFilterCutoff was set to: `r dataset.SE@metadata[["CoExpAnal"]]$meanFilterCutoff`), 
-normalised (normalisation method was `r dataset.SE@metadata[["CoExpAnal"]]$normFactors`) 
-and transformed (transformation method: `r dataset.SE@metadata[["CoExpAnal"]]$transformation`) count data.
-`r dataset.SE@metadata[["CoExpAnal"]]$replicates.nb` technical replicates were performed for each K in `r dataset.SE@metadata[["CoExpAnal"]]$K.range` (K=number of clusters). 
-The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
-was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=CoEx.eval}
 
@@ -177,28 +182,53 @@ knitr::asis_output(out)
 
 `r if(is.null(dataset.SE@metadata[["CoExpAnal"]]$results)) {"\\end{comment}"}`
 
-`r if(is.null(dataset.SE@metadata[["EnrichAnal"]]$results)) {"\\begin{comment}"}`
+`r if(is.null(dataset.SE@metadata[["DiffExpAnal"]]$results) && is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results)) {"\\begin{comment}"}`
 
 ## Annotation and Enrichment
 
-### Summary
+The Enrichment are performed using hypergeometric tests to find annotation terms that are specifically over or under-represented in a given list of genes with respect to a reference specified by an annotation file.
 
+`r if(is.null(dataset.SE@metadata[["DiffExpAnal"]]$results)) {"\\begin{comment}"}`
 
-### Results per gene list
+* On the lists of differential expressed genes
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE,  eval=Annt.eval}
+```{r , message=FALSE, warning=FALSE, echo=FALSE}
 
   out <- NULL
   
-  for (listname  in  names(dataset.SE@metadata[["EnrichAnal"]]$results)){
-    
-      out <- c(out, knitr::knit_child("report_06_annot_enrich_per_list.Rmd", quiet=TRUE))  
-      
-    }
+  annot <- "DiffExpEnrichAnal"
+  
+  for (listname  in  names(dataset.SE@metadata[[annot]]$results)){
+      out <- c(out, knitr::knit_child("report_06_annot_enrich_per_list.Rmd", quiet=TRUE))
+  }
     
 knitr::asis_output(out)
 
 ```
 
-`r if(is.null(dataset.SE@metadata[["EnrichAnal"]]$results))  {"\\end{comment}"}`
+`r if(is.null(dataset.SE@metadata[["DiffExpAnal"]]$results)) {"\\end{comment}"}`
+
+`r if(is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results)) {"\\begin{comment}"}`
+
+
+* On the co-expressed gene clusters
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE}
+
+  out <- NULL
+  
+  annot <- "CoExpEnrichAnal"
+
+  for (listname  in  names(dataset.SE@metadata[[annot]]$results)){
+      out <- c(out, knitr::knit_child("report_06_annot_enrich_per_list.Rmd", quiet=TRUE))
+  }
+    
+knitr::asis_output(out)
+
+```
+
+`r if(is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results)) {"\\end{comment}"}`
+
+
+`r if(is.null(dataset.SE@metadata[["DiffExpAnal"]]$results) && is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results))  {"\\end{comment}"}`
 

@@ -1,23 +1,39 @@
 
 
-<details>
-  <summary>`r listname`</summary>
+<!-- <details> -->
+<!--   <summary>`r listname`</summary> -->
+
+### `r listname` {.tabset}
+
+#### overrepresented plot
+
+```{r , echo=FALSE, out.width = "70%", message=FALSE, warning=FALSE}
 
 
-```{r , echo=FALSE, out.width = "50%"}
+Enrichment.plot(object = dataset.SE, listNames = listname, from = annot,
+                                                  Over_Under = "overrepresented",
+                                                  top = 50 )
 
-plot <- Enrichment.plot(dataset.SE, Over_Under="overrepresented", top = 50, listNames=listname)
-plot[[1]]
-
-plot <- Enrichment.plot(dataset.SE, Over_Under="underrepresented", top = 50, listNames=listname)
-plot[[1]]
+print(annot)
 
 ```
 
+#### underrepresented plot
+
+```{r , echo=FALSE, out.width = "70%", message=FALSE, warning=FALSE}
+
+
+Enrichment.plot(object = dataset.SE, listNames = listname, from = annot,
+                                                  Over_Under = "underrepresented",
+                                                  top = 50 )
+
+```
+
+#### table
 
 ```{r , results='asis', echo = FALSE, out.width = "70%"}
 
-  reactable(dataset.SE@metadata$EnrichAnal[["results"]][[listname]][["Over_Under_Results"]],
+  reactable(dataset.SE@metadata[[annot]][["results"]][[listname]][["Over_Under_Results"]],
             defaultPageSize = 6, searchable = TRUE, paginationType = "simple",
             columns = list(
               Decision = colDef(
@@ -35,6 +51,6 @@ plot[[1]]
 
 ```
 
-</details>
+<!-- </details> -->
 
 

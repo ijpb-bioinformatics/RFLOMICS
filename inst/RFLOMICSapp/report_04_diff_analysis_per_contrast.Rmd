@@ -1,14 +1,14 @@
 
 
-<details>
-  <summary>`r contrast`</summary>
+<!-- <details> -->
+<!--   <summary>`r contrast`</summary> -->
 
 
 ```{r , echo=FALSE,out.width = "50%"}
 
 diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=contrast, Adj.pvalue.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["Adj.pvalue.cutoff"]], FC.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["abs.FC.cutoff"]])
 ```
-### Results {.tabset}
+### `r contrast` {.tabset}
 
 #### Pvalue
 
@@ -58,6 +58,6 @@ diff.plots$Volcano.plot
 
 
 
-</details>
+<!-- </details> -->
 
 

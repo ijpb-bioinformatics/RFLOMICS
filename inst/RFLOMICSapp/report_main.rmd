@@ -1,6 +1,6 @@
 ---
-title: "`r FlomicsMultiAssay@metadata$projectName` project analysis"
-author: "Analysis performed by RFLOMICS package"
+title: "`r FlomicsMultiAssay@metadata$projectName` project"
+author: "Analyzes performed by RFLOMICS package"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 bibliography: bibliography.bib
 output: 
@@ -24,7 +24,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```
 
-```{r library, echo=FALSE}
+```{r library, echo=FALSE, message=FALSE, warning=FALSE}
 
 library(RFLOMICS)
 library(dplyr)
@@ -35,7 +35,6 @@ library(reactable)
 ```
 
 
-
 ```{r parameters, include=FALSE}
 
 load(params$FEdata)
@@ -43,16 +42,15 @@ pngDir <- params$pngDir
 
 ```
 
-
-# Experimental Design :
-
+# Design
+## Experimental plan
 
 <!-- ## Sample sheet overview -->
 
 ```{r Design, echo=FALSE, message=TRUE, warning=TRUE}
 
 DT::datatable(as.data.frame(FlomicsMultiAssay@colData), 
-              options = list(rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),
+              options = list(rownames = FALSE, pageLength = 6, scrollX = T, dom = 'tip'),
               class = 'cell-border stripe')
 
 ```
@@ -68,24 +66,38 @@ Batch.fact <- FlomicsMultiAssay@metadata$design@Factors.Type[FlomicsMultiAssay@m
 * `r paste0("Biological factor : ",  paste0(names(Bio.fact), collapse = ", "))`
 * `r paste0("Batch factor : ",  paste0(names(Batch.fact), collapse = ", "))`
 
+## Omics data
 
+```{r Sample table, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}
 
-## Check completeness
+loaded.data <- data.frame(datasets = sapply(names(FlomicsMultiAssay@metadata$omicList), 
+                              function(x){ paste0(FlomicsMultiAssay@metadata$omicList[[x]], collapse = ", ") }), 
+                          omics = names(FlomicsMultiAssay@metadata$omicList)) %>% as.data.table()
 
-```{r CheckDesignExp, echo=FALSE, message=TRUE, warning=TRUE, out.width = "50%"}
-check <- CheckExpDesignCompleteness(FlomicsMultiAssay)
+DT::datatable(loaded.data, 
+              options = list(rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),
+              class = 'cell-border stripe')
 
-check$plot
+# kable_styling(kable(loaded.data, row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
+
 ```
 
 
-* The number of replicates per condition are: 
+```{r upsetSamples, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}
 
-<!-- ```{r checkDesignAsis, echo=FALSE, results="asis", eval=FALSE} -->
-<!-- kable_styling(kable(check$count, row.names=FALSE, caption=NULL,  format="html"), font_size=12, full_width = F, position = "left") -->
-<!-- ``` -->
 
-## Set statistical framework
+if(length(unlist(FlomicsMultiAssay@metadata$omicList)) > 2){
+  
+  upsetSamples(FlomicsMultiAssay[unlist(FlomicsMultiAssay@metadata$omicList),])
+}
+
+
+#check <- CheckExpDesignCompleteness(FlomicsMultiAssay)
+
+#check$plot
+```
+
+## Statistical model
 
 * The statistical model written for the experiment is:  
 
@@ -95,41 +107,20 @@ check$plot
 
 * The selected contrast(s) is (are):
 
-```{r contrastSel, echo=FALSE, results="asis"}
+```{r contrastSel, echo=FALSE, results="asis", warning=FALSE, message=FALSE}
 
 DT::datatable(FlomicsMultiAssay@metadata$design@Contrasts.Sel[,c(5,2:3)], 
-              options = list(rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),
+              options = list(rownames = FALSE, pageLength = 6, scrollX = T, dom = 'tip'),
               class = 'cell-border stripe')
 
 # kable_styling(kable(FlomicsMultiAssay@metadata$design@Contrasts.Sel[,c(5,2:3)], 
 #                     row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
 ```
 
-# Datasets loaded:
 
-
-```{r upsetSamples, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}
-
-loaded.data <- data.frame(omics    = names(FlomicsMultiAssay@metadata$omicList),
-                          datasets = sapply(names(FlomicsMultiAssay@metadata$omicList), 
-                                            function(x){ paste0(FlomicsMultiAssay@metadata$omicList[[x]], collapse = ", ") }))
-
-DT::datatable(loaded.data, 
-              options = list(rownames = TRUE, pageLength = 10, scrollX = T, dom = 'tip'),
-              class = 'cell-border stripe')
-
-# kable_styling(kable(loaded.data, row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
-
-if(length(unlist(FlomicsMultiAssay@metadata$omicList)) > 2){
-  
-  upsetSamples(FlomicsMultiAssay[unlist(FlomicsMultiAssay@metadata$omicList),])
-}
-
-```
 
 
 `r if(length(FlomicsMultiAssay@metadata$omicList) ==0 ) {"\\begin{comment}"}`
-
 
 ```{r analysis, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
 
@@ -151,8 +142,22 @@ knitr::asis_output(out)
 
 `r if(length(FlomicsMultiAssay@metadata$omicList) == 0 ) {"\\end{comment}"}`
 
-<!-- Ajouter if pour test de MOFA2 results dans la table.
-Tous les attributs des tests sont retrouvables dans l'objet MOFA2 de rflomics -->
+
+`r if(is.null(FlomicsMultiAssay@metadata$MOFA_results)) {"\\begin{comment}"}`
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE,  eval=Annt.eval}
+
+  out <- NULL
+  
+  out <- c(out, knitr::knit_child("MOFA2_integration.Rmd", quiet=TRUE))
+    
+knitr::asis_output(out)
+
+```
+
+`r if(is.null(FlomicsMultiAssay@metadata$MOFA_results))  {"\\end{comment}"}`
+
+
 
 # R Session
 
