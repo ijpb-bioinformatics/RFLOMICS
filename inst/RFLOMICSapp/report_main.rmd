@@ -127,7 +127,8 @@ DT::datatable(FlomicsMultiAssay@metadata$design@Contrasts.Sel[,c(5,2:3)],
   out <- NULL
   for (omictype in names(FlomicsMultiAssay@metadata$omicList)){ 
     
-    child <- paste0("report_",omictype, ".Rmd")
+    # child <- paste0("report_",omictype, ".Rmd")
+    child <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_",omictype, ".Rmd") 
 
     for (data in  FlomicsMultiAssay@metadata$omicList[[omictype]]){
       

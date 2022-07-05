@@ -586,8 +586,9 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 
 
 #' @title RunPCA
-#' @description This function performed a scaled principal component analysis on omic data stored in an object of class [\code{\link{MultiAssayExperiment-class}]
-#' Results are stored in the metadata slot.
+#' @description This function performs a principal component analysis on omic data (log2 and scaled)
+#' stored in an object of class [\code{\link{MultiAssayExperiment-class}]
+#' Results are stored in the metadata slot in the PCAlist object.
 #' @param object An object of class \link{SummarizedExperiment-class}.
 #' @return An object of class \link{SummarizedExperiment}
 #' @exportMethod RunPCA
@@ -709,7 +710,7 @@ methods::setMethod(f="Data_Distribution_plot",
                         pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
                                              scale=object@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
                         x_lab  <- paste0("log2(",object@metadata$omicType, " data)")
-                        title  <- paste0("Filtered and normalized ", object@metadata$omicType, " (", 
+                        title  <- paste0("Filtered and normalized ", object@metadata$omicType, " (",
                                          object@metadata$Normalization$methode, ") data")
                       }
                     },
@@ -719,19 +720,19 @@ methods::setMethod(f="Data_Distribution_plot",
                         pseudo <- SummarizedExperiment::assay(object)
                         x_lab  <- paste0(object@metadata$omicType, " data")
                         title  <- paste0(object@metadata$omicType, " raw data")
-                        
+
                       }
                       # after transformation
                       else{
-                        
+
                         x_lab  <- paste0(object@metadata$omicType, " data")
                         title  <- paste0("Transformed ", object@metadata$omicType, " (" , object@metadata$transform_method, ") data")
-                        
+
                         switch (object@metadata$transform_method,
-                               
+
                                 "log1p" = {
                                   pseudo <- log1p(SummarizedExperiment::assay(object)) },
-                                
+
                                 "squareroot" = {
                                   pseudo <- sqrt(SummarizedExperiment::assay(object)) }
                                 # "log2" = {
@@ -747,19 +748,19 @@ methods::setMethod(f="Data_Distribution_plot",
                         pseudo <- SummarizedExperiment::assay(object)
                         x_lab  <- paste0(object@metadata$omicType, " data")
                         title  <- paste0(object@metadata$omicType, " raw data")
-                        
+
                       }
                       # after transformation
                       else{
-                        
+
                         x_lab  <- paste0(object@metadata$omicType, " data")
                         title  <- paste0("Transformed ", object@metadata$omicType, " (" , object@metadata$transform_method, ") data")
-                        
+
                         switch (object@metadata$transform_method,
-                                
+
                                 "log1p" = {
                                   pseudo <- log1p(SummarizedExperiment::assay(object)) },
-                                
+
                                 "squareroot" = {
                                   pseudo <- sqrt(SummarizedExperiment::assay(object)) }
                                 # "log2" = {
@@ -770,28 +771,28 @@ methods::setMethod(f="Data_Distribution_plot",
                       }
                     }
             )
-            
+
             pseudo.gg <- pseudo %>% reshape2::melt()
             colnames(pseudo.gg) <- c("features", "samples", "value")
-            
+
             pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples") %>%
               dplyr::arrange(groups)
-            
+
             pseudo.gg$samples <- factor(pseudo.gg$samples, levels = unique(pseudo.gg$samples))
-            
+
             switch (plot,
                     "density" = {
-                      p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + 
+                      p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) +
                         xlab(x_lab) + theme(legend.position='none') + ggtitle(title)
                     },
                     "boxplot" = {
-                      p <- ggplot(pseudo.gg, aes(x=samples, y=value,label = features)) + 
+                      p <- ggplot(pseudo.gg, aes(x=samples, y=value,label = features)) +
                         ggplot2::geom_boxplot(aes(fill=groups),outlier.colour = "red") +
-                        theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + 
+                        theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +
                         xlab("") + ylab(x_lab) + ggtitle(title) #+
                       #geom_point(alpha = 1/100,size=0)
                     })
-            
+
             print(p)
 
           }
@@ -951,6 +952,7 @@ methods::setMethod(f="mvQCdesign",
 #' @param PCA This argument indicates which type of PCA results to take: on raw ("raw") or normalized ("norm") data.
 #' @param pngFile The name of the png file for saving the plot.
 #' @exportMethod mvQCdata
+#' @noRd
 #' @rdname mvQCdata
 methods::setMethod(f="mvQCdata",
           signature="MultiAssayExperiment",
@@ -1050,7 +1052,7 @@ methods::setMethod(f= "TransformData",
 # Pourquoi ne pas avoir utilisée directement la fonction de edgeR ?
 
 #' @title FilterLowAbundance
-#' @description This function aims at removing genes/transcript from the count data matrix of an omic of type "RNAseq".
+#' @description This function aims at removing genes/transcripts from the count data matrix of an omic of type "RNAseq".
 #' by applying filtering criterion described in reference.
 #' By default, gene/transcript with 0 count are removed from the data. The function then
 #' computes the count per million or read (CPM) for each gene in each sample and gives by
@@ -1127,12 +1129,12 @@ methods::setMethod(f= "FilterLowAbundance",
 # Function non generique pour les autres data
 
 #' @title RunNormalization
-#' @description This function applied a normalization method on an omic data sets stored in an object of
+#' @description This function applied a normalization method on an omic dataset stored in an object of
 #' class \link{SummarizedExperiment}.
 #' \itemize{
 #' \item{For RNAseq data:}{the TMM function of edgeR is proposed by default, see the ref}
-#' \item{For Proteomic data:}{}
-#' \item{For Metabolomic data:}{}
+#' \item{For Proteomic data:}{No normalization}
+#' \item{For Metabolomic data:}{No normalization}
 #' }
 #' @param object An object of class \link{SummarizedExperiment}
 #' @param data The name of the data set for which the normalization has to be performed.
@@ -1168,40 +1170,38 @@ methods::setMethod(f="RunNormalization",
 ## METHOD to perform differential analysis
 
 #' @title RunDiffAnalysis
-#' @description This is an interface method which run a differential analysis method on
-#' omic datasets stored in an object of class \link{SummarizedExperiment}.
-#' According to the type of omic and to a list of contrasts,
-#' a differential analysis method is applied to each contrasts (or hypothesis).
-#' Three methods are available according to the type of object:
+#' @description This function run a differential expression analysis
+#' on an omic dataset stored in an object of class \link{SummarizedExperiment}
+#'
+#' @details
+#' According to the type of omic dataset and to a list of contrasts,
+#' the differential analysis method is applied to each contrast.
+#' Two methods are available according to the type of object:
 #' \itemize{
-#' \item{For RNAseq data: }{the \code{glmFit} function of the \code{edgeR} package}
-#' \item{For proteomic and metabolomic data: }{the \code{lmFit} function of the \code{limma} package}
+#' \item{For RNAseq data: }{the \code{glmFit} function of the \code{edgeR} package} is applied
+#' \item{For proteomic and metabolomic data: }{the \code{lmFit} function of the \code{limma} package is applied}
 #' }
+#'
 #' Parameters used for RNAseq are those recommended in DiCoExpress workflow (see the paper in reference)
 #' @return
-#' All the results are stored as a named list \code{DiffExpAnal} in the metadata slot of a
+#' All the results are stored as a named list \code{DiffExpAnal} in the metadata slot of the
 #' given \code{SummarizedExperiment} object.
 #' Objects are:
 #' \itemize{
-#' \item{contrasts: }{The selected contrasts for which the differential analysis has been conducted}
-#' \item{method: }{The method used for the differential analysis}
+#' \item{contrasts: }{The selected contrasts for which the differential analysis has been run}
+#' \item{method: }{The method used for the differential expression analysis}
 #' \item{Adj.pvalue.method: The method applied for the pvalue adjustment}
-#' \item{Adj.pvalue.cutoff: The threshold applied for the pvalue adjustment}
-#' \item{FDR: }{The false discovery rate given in input}
 #' \item{RawDEFres: }{a list giving for each contrast the raw results of the differential analysis method}
 #' \item{DEF: }{a list giving for each contrast a data.frame of non filtered differential expressed features}
-#' \item{TopDEF: }{a list giving for each contrast a data.frame of differential expressed features by Adj.pvalue.cutoff}
-#' \item{mergeDEF: }{A data frame indicating for each features in row, if it is DE in a given contrasts in column}
 #' }
+#'
 #' @param object an object of class [\code\link{SummarizedExperiment}]
 #' @param design an object of class [\code{\link{ExpDesign-class}]
 #' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
 #' to run. Either "edgeRglmfit", "limmalmFit", ...
 #' @param contrastList The list of contrast to test
 #' @param Adj.pvalue.method The method choosen to adjust pvalue.
-#' @param Adj.pvalue.cutoff The adjusted pvalue cut-off
 #' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
-#' @param filter_only A boolean indicating whether only filter on DE results have to be applied (\code{filter_only=TRUE}). FALSE by default.
 #' @return An object of class [\code\link{SummarizedExperiment}]
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
@@ -1230,7 +1230,7 @@ methods::setMethod(f="RunDiffAnalysis",
             rownames(model_matrix) <- rownames(design@ExpDesign)
 
             ListRes <- switch(DiffAnalysisMethod,
-                              "edgeRglmfit"=try_rflomics(edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
+                              "edgeRglmfit"=RFLOMICS::try_rflomics(edgeR.AnaDiff(count_matrix    = SummarizedExperiment::assay(object),
                                                                        model_matrix    = model_matrix[colnames(object),],
                                                                        group           = object@metadata$Normalization$coefNorm$group,
                                                                        lib.size        = object@metadata$Normalization$coefNorm$lib.size,
@@ -1239,7 +1239,7 @@ methods::setMethod(f="RunDiffAnalysis",
                                                                        Contrasts.Coeff = design@Contrasts.Coeff,
                                                                        FDR             = 1,
                                                                        clustermq=clustermq)),
-                              "limmalmFit"=try_rflomics(limma.AnaDiff(count_matrix      = SummarizedExperiment::assay(object),
+                              "limmalmFit"=RFLOMICS::try_rflomics(limma.AnaDiff(count_matrix      = SummarizedExperiment::assay(object),
                                                                       model_matrix      = model_matrix[colnames(object),],
                                                                       Contrasts.Sel     = object@metadata$DiffExpAnal[["contrasts"]],
                                                                       Contrasts.Coeff   = design@Contrasts.Coeff,
@@ -1274,11 +1274,23 @@ methods::setMethod(f="RunDiffAnalysis",
 
 ## METHOD to filter differential analysis
 
-#' Title
-#'
+#' @title FilterDiffAnalysis
+#' @description This function filters the result of a differential expression analysis
+#' of an omic dataset of class \link{SummarizedExperiment}.
 #' @param SummarizedExperiment
-#'
+#' @param Adj.pvalue.cutoff The adjusted pvalue cut-off
+#' @param FC.cutoff The Fold change cut-off
 #' @return
+#' All the results are stored in the named list \code{DiffExpAnal} in the metadata slot of the
+#' given \code{SummarizedExperiment} object.
+#' Objects are:
+#' \itemize{
+#' \item{Adj.pvalue.cutoff: The threshold applied for the pvalue adjustment}
+#' \item{abs.FC.cutoff: }{The threshold applied for the Fold Change}
+#' \item{TopDEF: }{a list giving for each contrast a data.frame of filtered differential expressed features}
+#' }
+#'
+#'
 #' @exportMethod FilterDiffAnalysis
 #'
 #' @examples
@@ -1353,11 +1365,12 @@ methods::setMethod(f="FilterDiffAnalysis",
 
 #' @title DiffAnal.plot
 #' @description
-#' This is an interface method which draw a MAplot from the results of a differential analysis
-#' performed on omic datasets stored in an object of class \link{SummarizedExperiment}
+#' This function draws graphs to illustrate the differential analysis results: p-values distribution, MA plot and Volcano Plot.
+#' It takes an object of class \link{SummarizedExperiment}
 #' @param object An object of class \link{SummarizedExperiment}
-#' @param data The name of the omic data for which the MAplot has to be drawn
-#' @param hypothesis The hypothesis for which the MAplot has to be drawn
+#' @param hypothesis The contrasts for which the plots have to be drawn.
+#' @param Adj.pvalue.cutoff: The adjusted p-values cut-off
+#' @param abs.FC.cutoff: The Fold-Change cut-off
 #' @return plot
 #' @exportMethod DiffAnal.plot
 #' @export
@@ -1388,17 +1401,15 @@ methods::setMethod(f="DiffAnal.plot",
 
 
 #' @title runCoExpression
-#' @description This is an interface method which performed co-expression/co-abundance analysis
-#' of omic-data.
-#' @details For instance, only the coseq function of the package coseq is proposed.
+#' @description This function performs a co-expression analysis on omics data.
+#' @details For instance, only the \link{coseq} function of the package \link{coseq} is proposed.
 #' For RNAseq data, parameters used are those recommended in DiCoExpress workflow (see the reference).
 #' This parameters are: \code{model="normal"}, \code{transformation="arcsin"}, \code{GaussianModel="Gaussian_pk_Lk_Ck"},
 #' \code{normFactors="TMM"}, \code{meanFilterCutoff = 50}
 #' For proteomic or metabolomic, data are scaled by protein or metabolite to groups them by expression
 #' profiles rather than by expression intensity.
 #' After data scaling, recommended parameters (from \code{coseq} developers) for co-expression analysis are:
-#' \code{model="normal"}, \code{transformation="none"}, \code{GaussianModel="Gaussian_pk_Lk_Ck"},
-#' \code{normFactors="none",  \code{meanFilterCutoff = NULL}
+#' \code{model="normal"}, \code{transformation="none"}, \code{normFactors="none",  \code{meanFilterCutoff = NULL}
 #'
 #' @return
 #' All the results are stored as a named list \code{CoExpAnal} in the metadata slot of a
@@ -1503,13 +1514,13 @@ methods::setMethod(f="runCoExpression",
             coseq.res.list <- switch (as.character(clustermq),
                                       `FALSE` = {
 
-                                        try_rflomics(
+                                        RFLOMICS::try_rflomics(
                                           runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
 
                                       },
                                       `TRUE` = {
 
-                                        try_rflomics(
+                                        RFLOMICS::try_rflomics(
                                           runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
 
                                       })
@@ -1766,7 +1777,7 @@ methods::setMethod(f="prepareMOFA",
                                   type = "union",
                                   group = NULL){
             # object <- FlomicsMultiAssay
-            # omicsToIntegrate = c("RNAseq", "proteomics")
+            # omicsToIntegrate = c("proteomics.set1", "metabolomics.set2")
             # omicsToIntegrate = c("RNAseq.set1", "proteomics.set2")
             # omicsToIntegrate = c("proteomics.set1", "metabolomics.set2")
             # rnaSeq_transfo = "limma (voom)"
@@ -1802,7 +1813,7 @@ methods::setMethod(f="prepareMOFA",
                                   norm.factors = rnaDat@metadata$Normalization$coefNorm$norm.factors,
                                   lib.size = rnaDat@metadata$Normalization$coefNorm$lib.size,
                                   samples = object@metadata$design@ExpDesign)
-              limmaRes <- limma::voom(DGEObject, design =designMat)
+              limmaRes <- limma::voom(DGEObject, design = designMat)
 
               SummarizedExperiment::assay(rnaDat) <- limmaRes$E
               rnaDat@metadata[["transform_results_all"]] <- limmaRes # changer l'appellation
@@ -1820,7 +1831,8 @@ methods::setMethod(f="prepareMOFA",
 
             # Transformation of proteomics/metabolomics data
             res <- lapply(omicsToIntegrate[omicsToIntegrate!="RNAseq"], FUN = function(omicName){
-
+              # omicName = "proteomics"
+              
               omicsDat <- object@ExperimentList[[grep(omicName, names(object@ExperimentList))]]
               omicsDat@metadata[["transform_method_integration"]] <- omicsDat@metadata$transform_method
 
@@ -1861,30 +1873,30 @@ methods::setMethod(f="run_MOFA_analysis",
                                                    maxiter = 1000,
                                                    num_factors = 10,
                                                    ...){
-            
+
             # library(MOFA2)
             # object = FlomicsMultiAssay@metadata$MOFA_untrained
             # scale_views = TRUE
-            
+
             data_opts <- get_default_data_options(object)
             model_opts <- get_default_model_options(object)
             train_opts <- get_default_training_options(object)
-            
+
             data_opts$scale_views <- scale_views
             train_opts$maxiter <- maxiter
             model_opts$num_factors <- num_factors
-            
+
             MOFAObject.untrained <- MOFA2::prepare_mofa(
               object = object,
               data_options = data_opts,
               model_options = model_opts,
               training_options = train_opts
             )
-            
+
             MOFAObject.trained <- MOFA2::run_mofa(MOFAObject.untrained, use_basilisk = TRUE)
             # peut poser probleme au niveau python et mofapy.
             # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R.
-            
+
             return(list("MOFAObject.untrained" = MOFAObject.untrained, "MOFAObject.trained" = MOFAObject.trained))
           })
 

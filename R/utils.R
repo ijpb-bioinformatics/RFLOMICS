@@ -1701,10 +1701,11 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
 
 filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
   # SEobject <- FlomicsMultiAssay@ExperimentList$proteomics.set1.filtred
+  # SEobject <- object@ExperimentList[[grep("RNAseq", names(object@ExperimentList))]]
   # contrasts_arg = c("H1", "H2")
   # type = "intersection"
   # contrasts_arg = c("(temperatureLow - temperatureElevated)", "(temperatureMedium - temperatureLow)")
-  SEobject@metadata[["integration_contrasts"]] <- contrasts
+  # SEobject@metadata[["integration_contrasts"]] <- contrasts
 
   tabCorresp <- SEobject@metadata$DiffExpAnal$contrasts %>% select(contrastName,tag)
   if("all" %in% contrasts_arg)   contrasts_arg <- SEobject@metadata$DiffExpAnal$contrasts$contrastName
@@ -1725,7 +1726,7 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
 
     DETab <- tab1 %>%
       mutate(SUMCOL = select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
-      filter(SUMCOL>=1) #### VERIFIER CETTE SYNTAXE
+      filter(SUMCOL>=1) 
 
   }
 
@@ -1753,26 +1754,27 @@ rbe_function = function(object, SEobject){
   # object = object
   # SEobject = omicsDat
 
-  # tableauTransforme <- SEobject@metadata[["integration_table"]]
   assayTransform <- SummarizedExperiment::assay(SEobject)
 
   colBatch <- names(object@metadata$design@Factors.Type)[object@metadata$design@Factors.Type=="batch"]
 
   newFormula <- gsub(pattern = paste(colBatch, collapse = "[+]|"), "", object@metadata$design@Model.formula)
   newFormula <- gsub(pattern = "~ [+] ", "~ ", newFormula)
-  designToPreserve <- model.matrix(as.formula(newFormula), data = object@metadata$design@ExpDesign)
+  # designToPreserve <- model.matrix(as.formula(newFormula), data = object@metadata$design@ExpDesign)
+  designToPreserve <- model.matrix(as.formula(newFormula), data = SEobject@metadata$Groups)
 
   if(length(colBatch)==1){
-    rbeRes <- limma::removeBatchEffect(assayTransform, batch = object@metadata$design@ExpDesign[,colBatch], design = designToPreserve)
-  }else if(length(colBatch) == 2){
+    rbeRes <- limma::removeBatchEffect(assayTransform, batch = SEobject@metadata$Groups[,colBatch], design = designToPreserve)
+  }else if(length(colBatch) >= 2){
 
     rbeRes <- limma::removeBatchEffect(assayTransform,
-                                       batch = object@metadata$design@ExpDesign[,colBatch[1]],
-                                       batch2 = object@metadata$design@ExpDesign[,colBatch[2]],
+                                       batch = SEobject@metadata$Groups[,colBatch[1]],
+                                       batch2 = SEobject@metadata$Groups[,colBatch[2]],
                                        design = designToPreserve)
-  }else{
-    print("sorry, only 2 batches effect for now!!!") # trouver un moyen de prendre en compte automatiquement plusieurs batch factors. C'est moche.
   }
+  # else{
+  if(length(colBatch) > 2) print("sorry, only 2 batches effect for now!!!") # trouver un moyen de prendre en compte automatiquement plusieurs batch factors. C'est moche.
+  # }
 
   SEobject@metadata[["correction_batch_method"]] <- "limma (removeBatchEffect)"
 

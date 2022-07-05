@@ -115,7 +115,7 @@ if(dim(DEF_mat)[2] > 2){
   
   for (contrast  in  dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]]$contrastName) {
     
-      out <- c(out, knitr::knit_child("report_04_diff_analysis_per_contrast.Rmd", quiet=TRUE))  
+      out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_04_diff_analysis_per_contrast.Rmd"), quiet=TRUE))  
       
     }
     
@@ -132,8 +132,8 @@ knitr::asis_output(out)
 ```{r , message=FALSE, warning=FALSE, echo=FALSE, message=TRUE, warning=TRUE, eval=CoEx.eval}
 
   out <- NULL
- 
-      out <- c(out, knitr::knit_child("report_05_coexp_analysis.Rmd", quiet=TRUE))  
+
+      out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_05_coexp_analysis.Rmd"), quiet=TRUE))  
     
 knitr::asis_output(out)
 
