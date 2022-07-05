@@ -145,7 +145,7 @@ knitr::asis_output(out)
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE,  eval=Annt.eval}
 
-  out <- NULL 
+  out <- NULL
   
   out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","MOFA2_integration.Rmd"), quiet=TRUE))
     
