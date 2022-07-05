@@ -86,13 +86,13 @@ As soon as this file is loaded, we can define the type (Biological factor : Bio;
 
 * *It possible to exclude samples from design. These samples will be excluded from the analysis even if they are present in the omics dataset matrix.*
 
-![interface capture](Images/Capture_Load-Data.jpg){width=80%}
-
 ## 2-3 Load Omics data
 
 <p style='text-align: justify;'> For this tutorial we provide 3 datasets: RNAseq data (read counts), proteomics data (abundance of proteins), and metabolomics data (intensity of metabolites) (see link : vignette input). We must specify for each dataset its type of omics. We can give a suitable name to our dataset. By Default, they will be called respectively (set1, set2, set3).
 
 As soon as the data are loaded the **RFlomics MultiAssayExperiment** object is created (see link : data management). The upset representation provides details about sample intersection of different datasets. </p>
+
+![ ](Images/Capture_Load-Data.png){width=80%}
 
 ## 2-4 Completeness check
 
@@ -104,7 +104,6 @@ This constraint is checked and represented as graph (each square represent 1 gro
 knitr::include_graphics(c("Images/completBalanced.png", "Images/completNonBalanced.png"))
 ```
 
-
 # 3. Set the statistical framework
 
 <p style='text-align: justify;'> The interface provides models written from the simplest one to the most complete one. Only the second orders interaction terms between the biological factors will appear. Batch factor will never appear in interaction terms. In our case we choose the complete model.
@@ -115,7 +114,7 @@ In our case we are studying the effect of temperature on seed germination (trans
 
 This statistical framework will be applied on all loaded datasets. </p>
 
-![interface capture](Images/Capture_Experimental-Design.jpg){width=80%}
+![ ](Images/Capture_Experimental-Design.png){width=80%}
 
 # 4. Omics data analysis
 
@@ -156,14 +155,11 @@ For RNAses data the QC graphs are:
 - Data Summary: 
 - Distribution: 
 - Distribution density
-- Principal component analysis (1/2)
-- Principal component analysis (2/2)
+- Principal component analysis
 
-### Proteomic data
+![ ](Images/capture_data_process_rnaseq.png){width=80%}
 
-
-
-### Metabolomic data
+### Proteomics or Metabolomics data
 
 
 
@@ -194,7 +190,7 @@ by False Discovery Rate (BH) cut-off. Graphs will be automatically updated.
 - You have to **validate** to save the cut-off thresholds but also the contrasts' result selection  and pass
 to the co-expression analysis or to the annotation enrichment step.
  
- 
+![ ](Images/capture_diff_analysis.png){width=80%}
  
 ## 4-3 Coexpression analysis
 
@@ -221,9 +217,14 @@ The ability to run the clustering analysis on a cluster is offered by sliding th
    
   - A table of jobs summary is also given. It groups error messages by K.  
 
+![ ](Images/capture_coexpression.png){width=80%}
+
 ## 4-4 Annotation and Enrichment analysis
 
 Then we select a lists of DGEs and clusters to annotate. By default the annotation will be done on all selected DGE lists and clusters.
+
+![ ](Images/capture_annotation.png){width=80%}
+
 
 # 5. Integration
 

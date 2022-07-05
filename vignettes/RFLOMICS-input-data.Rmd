@@ -89,9 +89,9 @@ DT::datatable(metaAbundance[1:10, 1:5])
 
 ```
 
-![image](Input1.png)
+![image](Images/Input1.png)
 
-![image](Input2.png)
+![image](Images/Input2.png)
 
 ## Annotation
 
