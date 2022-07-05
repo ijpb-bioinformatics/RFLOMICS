@@ -7,14 +7,14 @@
 
 #### overrepresented plot
 
-```{r , echo=FALSE, out.width = "70%", message=FALSE, warning=FALSE}
+```{r , echo=FALSE, out.width = "50%", message=FALSE, warning=FALSE}
 
-
-Enrichment.plot(object = dataset.SE, listNames = listname, from = annot,
+for(domain in unique(dataset.SE@metadata[[annot]]$results[[listname]]$Over_Under_Results$Domain)){
+p <- Enrichment.plot(object = dataset.SE, listNames = listname, from = annot,
                                                   Over_Under = "overrepresented",
-                                                  top = 50 )
-
-print(annot)
+                                                  top = 50 , domain = domain)
+print(p)
+}
 
 ```
 
@@ -22,10 +22,12 @@ print(annot)
 
 ```{r , echo=FALSE, out.width = "70%", message=FALSE, warning=FALSE}
 
-
-Enrichment.plot(object = dataset.SE, listNames = listname, from = annot,
-                                                  Over_Under = "underrepresented",
-                                                  top = 50 )
+for(domain in unique(dataset.SE@metadata[[annot]]$results[[listname]]$Over_Under_Results$Domain)){
+  p <- Enrichment.plot(object = dataset.SE, listNames = listname, from = annot,
+                                                    Over_Under = "underrepresented",
+                                                    top = 50 , domain = domain)
+  print(p)
+}
 
 ```
 

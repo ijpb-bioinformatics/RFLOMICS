@@ -117,9 +117,6 @@ DT::datatable(FlomicsMultiAssay@metadata$design@Contrasts.Sel[,c(5,2:3)],
 #                     row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
 ```
 
-
-
-
 `r if(length(FlomicsMultiAssay@metadata$omicList) ==0 ) {"\\begin{comment}"}`
 
 ```{r analysis, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
@@ -150,7 +147,7 @@ knitr::asis_output(out)
 
   out <- NULL
   
-  out <- c(out, knitr::knit_child("MOFA2_integration.Rmd", quiet=TRUE))
+  out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","MOFA2_integration.Rmd"), quiet=TRUE))
     
 knitr::asis_output(out)
 
