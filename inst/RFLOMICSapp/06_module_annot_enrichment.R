@@ -25,7 +25,7 @@ AnnotationEnrichmentUI <- function(id){
 
 AnnotationEnrichment <- function(input, output, session, dataset, rea.values){
   
-  local.rea.values <- reactiveValues(dataset.SE = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]])
+  local.rea.values <- reactiveValues(dataset.SE = NULL)
   
   output$AnnotParamUI <- renderUI({
     
@@ -34,7 +34,8 @@ AnnotationEnrichment <- function(input, output, session, dataset, rea.values){
     )
     
     ## gene lists
-    ListNames.diff  <- FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName
+    
+    ListNames.diff  <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName
     
     # multiInput(
     #   inputId = session$ns("GeneList.diff"),
@@ -84,7 +85,7 @@ AnnotationEnrichment <- function(input, output, session, dataset, rea.values){
     
     if(rea.values[[dataset]]$coExpAnal == FALSE) return()
     
-    ListNames.coseq <- names(FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["clusters"]])
+    ListNames.coseq <- names(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["clusters"]])
     
     pickerInput(
       inputId = session$ns("GeneList.coseq"), label = "Select Clusters :",
@@ -102,6 +103,8 @@ AnnotationEnrichment <- function(input, output, session, dataset, rea.values){
     on.exit(progress$close())
     progress$inc(1/10, detail = "in progress...")
     #----------------------#
+    
+    local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
     
     rea.values[[dataset]]$diffAnnot  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
@@ -137,7 +140,7 @@ AnnotationEnrichment <- function(input, output, session, dataset, rea.values){
     # 
     
     # reduce ref to genes presente in matrix count after filtering
-    annotation <- dplyr::filter(annotation , geneID %in% names(FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]))
+    annotation <- dplyr::filter(annotation , geneID %in% names(local.rea.values$dataset.SE))
     
     #check if ref correspond to features in lists
     if(dim(annotation)[1] == 0){
@@ -158,8 +161,7 @@ AnnotationEnrichment <- function(input, output, session, dataset, rea.values){
     #----------------------#
     
     ## run annotation
-    local.rea.values$dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
-    
+
     if(length(input$GeneList.diff) != 0){
       
       local.rea.values$dataset.SE <- runAnnotationEnrichment(local.rea.values$dataset.SE, annotation= annotation, 
@@ -178,7 +180,7 @@ AnnotationEnrichment <- function(input, output, session, dataset, rea.values){
       rea.values[[dataset]]$coExpAnnot <- TRUE
     }
     
-    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- local.rea.values$dataset.SE
+    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- local.rea.values$dataset.SE
     
     
     #---- progress bar ----#

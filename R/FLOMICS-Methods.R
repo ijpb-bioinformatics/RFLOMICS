@@ -1387,8 +1387,8 @@ methods::setMethod(f="DiffAnal.plot",
             resTable <- object@metadata$DiffExpAnal[["DEF"]][[hypothesis]]
 
 
-            plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, FC.cutoff = FC.cutoff, hypothesis=hypothesis)
-            plots[["Volcano.plot"]]     <- Volcano.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, FC.cutoff = FC.cutoff, hypothesis=hypothesis)
+            plots[["MA.plot"]]          <- MA.plot(     data = resTable, Adj.pvalue.cutoff = as.numeric(Adj.pvalue.cutoff), FC.cutoff = as.numeric(FC.cutoff), hypothesis=hypothesis)
+            plots[["Volcano.plot"]]     <- Volcano.plot(data = resTable, Adj.pvalue.cutoff = as.numeric(Adj.pvalue.cutoff), FC.cutoff = as.numeric(FC.cutoff), hypothesis=hypothesis)
             plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable,hypothesis=hypothesis)
 
             return(plots)
@@ -1842,7 +1842,7 @@ methods::setMethod(f="prepareMOFA",
               omicsDat@metadata[["integration_choice"]] <- choice
               if(choice == "DE")  omicsDat <- filter_DE_from_SE(omicsDat, contrasts_arg = contrasts_names, type)
 
-              object@ExperimentList[[grep(omicName, names(object@ExperimentList))]] <<- omicsDat
+              object@ExperimentList[[grep(omicName, names(object@ExperimentList))]] <- omicsDat
 
               return(NULL)
             })

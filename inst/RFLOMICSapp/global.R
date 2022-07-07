@@ -30,7 +30,5 @@ source("06_module_annot_enrichment.R")
 source("07_module_data_integration_MOFA.R")
 source("coverPage.R")
 
-SupportedOmics <- c("RNAseq", "proteomics", "metabolomics")
-
 #enableBookmarking(store = "server")
 

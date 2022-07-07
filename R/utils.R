@@ -166,10 +166,10 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
           warn <- err <- NULL
           value <- withCallingHandlers(
             tryCatch(expr,
-                     error    =function(e){ err <<- e
+                     error    =function(e){ err <- e
                      NULL
                      }),
-            warning =function(w){ warn <<- w
+            warning =function(w){ warn <- w
             invokeRestart("muffleWarning")}
           )
           list(value=value, warning=warn, error=err)
@@ -273,10 +273,10 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
         warn <- err <- NULL
         value <- withCallingHandlers(
           tryCatch(expr,
-                   error    =function(e){ err <<- e
+                   error    =function(e){ err <- e
                    NULL
                    }),
-          warning =function(w){ warn <<- w
+          warning =function(w){ warn <- w
           invokeRestart("muffleWarning")}
         )
         list(value=value, warning=warn, error=err)
@@ -1197,10 +1197,10 @@ try_rflomics <- function(expr) {
   warn <- err <- NULL
   value <- withCallingHandlers(
         tryCatch(expr,
-                 error    =function(e){ err <<- e
+                 error    =function(e){ err <- e
                                         NULL
                                         }),
-                  warning =function(w){ warn <<- w
+                  warning =function(w){ warn <- w
                                         invokeRestart("muffleWarning")}
         )
         list(value=value, warning=warn, error=err)
@@ -1405,10 +1405,10 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
         warn <- err <- NULL
         value <- withCallingHandlers(
           tryCatch(expr,
-                   error    =function(e){ err <<- e
+                   error    =function(e){ err <- e
                    NULL
                    }),
-          warning =function(w){ warn <<- w
+          warning =function(w){ warn <- w
           invokeRestart("muffleWarning")}
         )
         list(value=value, warning=warn, error=err)
@@ -1423,9 +1423,6 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
     }
     coseq.res.list <- clustermq::Q(fx, x=iter, export=param.list, n_jobs=nbr_iter, pkgs="coseq")
     names(coseq.res.list) <- c(1:nbr_iter)
-
-    coseq.res.clust <<- coseq.res.list
-
 
     CoExpAnal <- list()
 
@@ -1517,8 +1514,6 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list){
 
 
   names(coseq.res.list) <- c(1:replicates)
-
-  coseq.res.res <<- coseq.res.list
 
   CoExpAnal <- list()
 

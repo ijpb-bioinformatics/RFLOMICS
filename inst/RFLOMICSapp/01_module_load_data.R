@@ -61,8 +61,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
       rea.values$analysis <- FALSE
 
       rea.values$contrastMat  <- NULL
-      FlomicsMultiAssay      <<- NULL
-      #session$userData$Design <- NULL
+      #FlomicsMultiAssay      <<- NULL
+      session$userData$FlomicsMultiAssay <- NULL
 
       rea.values$validate.status <- 0
 
@@ -91,7 +91,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
         rea.values$datasetList   <- NULL
         rea.values$datasetDiff   <- NULL
 
-        FlomicsMultiAssay      <<- NULL
+        session$userData$FlomicsMultiAssay      <- NULL
         #session$userData$Design <- NULL
 
 
@@ -269,7 +269,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
       rea.values$datasetList   <- NULL
       rea.values$datasetDiff   <- NULL
 
-      FlomicsMultiAssay        <<- NULL
+      session$userData$FlomicsMultiAssay        <- NULL
       #session$userData$Design   <- NULL
 
       local.rea.values$plots <- FALSE
@@ -399,9 +399,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
 
 
-      FlomicsMultiAssay <<- FlomicsMultiAssay.try[["value"]]
-
-      session$userData$FlomicsMultiAssay <- FlomicsMultiAssay
+      session$userData$FlomicsMultiAssay <- FlomicsMultiAssay.try[["value"]]
 
       # FlomicsMultiAssay[, complete.cases(FlomicsMultiAssay), ]
       # colData(FlomicsMultiAssay)[!complete.cases(FlomicsMultiAssay),]
@@ -412,8 +410,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
       print(paste0("#    => Design Completeness Check..."))
 
-      completeCheckRes <- CheckExpDesignCompleteness(object = FlomicsMultiAssay)
-      FlomicsMultiAssay@metadata[["completeCheck"]] <<- completeCheckRes
+      completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
+      session$userData$FlomicsMultiAssay@metadata[["completeCheck"]] <- completeCheckRes
       local.rea.values$plots <- TRUE
       rea.values$loadData <- TRUE
       #rea.values$model    <- TRUE
@@ -447,7 +445,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
            # plot of count per condition
            renderPlot(
-             isolate({ FlomicsMultiAssay@metadata[["completeCheck"]][["plot"]] })
+             isolate({ session$userData$FlomicsMultiAssay@metadata[["completeCheck"]][["plot"]] })
              ),
            hr(),
            tags$i("You **must** have a **complete design** (i.e. all possible combinations of factor's level).
@@ -462,14 +460,14 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
       if (local.rea.values$plots == FALSE) return()
       #if (rea.values$loadData == FALSE) return()
-      if (length(unlist(FlomicsMultiAssay@metadata$omicList)) < 2) return()
+      if (length(unlist(session$userData$FlomicsMultiAssay@metadata$omicList)) < 2) return()
 
 
-      #if (length(names(FlomicsMultiAssay)) >1){
+      #if (length(names(session$userData$FlomicsMultiAssay)) >1){
         print(paste0("#    => upset plot..."))
 
         box(width = 6, status = "warning",
-            renderPlot( isolate({ upsetSamples(FlomicsMultiAssay[ , , unlist(FlomicsMultiAssay@metadata$omicList)]) })),
+            renderPlot( isolate({ upsetSamples(session$userData$FlomicsMultiAssay[ , , unlist(session$userData$FlomicsMultiAssay@metadata$omicList)]) })),
             hr(),
             tags$i("**discription**")
         )

@@ -2,8 +2,8 @@
 
 ```{r , echo=FALSE}
 
-dataset.raw.SE <- FlomicsMultiAssay@ExperimentList[[data]]
-dataset.SE     <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]
+dataset.raw.SE <- rflomics.MAE@ExperimentList[[data]]
+dataset.SE     <- rflomics.MAE@ExperimentList[[paste0(data,".filtred")]]
 
 Diff.eval <- !is.null(dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]])
 CoEx.eval <- !is.null(dataset.SE@metadata[["CoExpAnal"]]$results)
@@ -26,7 +26,7 @@ CoEx.ann.eval <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results)
 
 ```{r , echo=FALSE , message=FALSE, warning=FALSE, echo=FALSE, out.width = "70%"}
 
-check <- CheckExpDesignCompleteness(FlomicsMultiAssay, colnames(FlomicsMultiAssay[[paste0(data,".filtred")]]))
+check <- CheckExpDesignCompleteness(rflomics.MAE, colnames(rflomics.MAE[[paste0(data,".filtred")]]))
 check$plot
 
 # filt.summary <-  data.frame("Status"=c("raw dataset",
@@ -84,7 +84,7 @@ Data_Distribution_plot(dataset.SE, plot = "density")
 
 ```{r , echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE, out.width = "80%", eval=FALSE}
 
-mvQCdesign(object = FlomicsMultiAssay,
+mvQCdesign(object = rflomics.MAE,
            data   = paste0(data,".filtred"), PCA="norm", axis=5, 
            pngFile= NULL) 
 ```

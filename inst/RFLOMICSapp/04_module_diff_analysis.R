@@ -28,8 +28,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
   # list of tools for diff analysis
   MethodList <- c("glmfit (edgeR)"="edgeRglmfit", "lmFit (limma)"="limmalmFit")
-
-  method <- switch (FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$omicType,
+  
+  method <- switch (rea.values[[dataset]]$omicsType,
                     "RNAseq"       = MethodList[1],
                     "proteomics"   = MethodList[2],
                     "metabolomics" = MethodList[2])
@@ -51,7 +51,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     validate(
       need(rea.values$analysis != FALSE, "Please select contrast")
     )
-
+    
     box(title = span(tagList(icon("sliders-h"), "  ", "Setting")), width = 14, status = "warning",
 
         fluidRow(column(12,
@@ -59,8 +59,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                pickerInput(
                    inputId  = session$ns("contrastList"),
                    label    = "Selected contrast :",
-                   choices  = FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
-                   multiple = TRUE, selected = FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName ),
+                   choices  = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
+                   multiple = TRUE, selected = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName),
 
                # method for Diff analysis
                selectInput(inputId  = session$ns("AnaDiffMethod"), label = "Method :",
@@ -97,6 +97,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       need(length(input$contrastList) != 0, message="Please select at least 1 hypothesis")
     })
 
+    local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
+    
     print(paste("# 9- Diff Analysis...", dataset))
 
     rea.values[[dataset]]$diffAnal   <- FALSE
@@ -109,10 +111,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
       }
 
-    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal <<- list()
-    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal   <<- list()
-    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpEnrichAnal  <<- list()
-    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpEnrichAnal  <<- list()
+    local.rea.values$dataset.SE@metadata$DiffExpAnal <- list()
+    local.rea.values$dataset.SE@metadata$CoExpAnal   <- list()
+    local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal  <- list()
+    local.rea.values$dataset.SE@metadata$CoExpEnrichAnal  <- list()
 
     #---- progress bar ----#
     progress <- shiny::Progress$new()
@@ -124,9 +126,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
 
     # run diff analysis with selected method
-    local.rea.values$dataset.SE <- RunDiffAnalysis(object =             FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]],
-                                                   design =             FlomicsMultiAssay@metadata$design,
-                                                   contrastList =       FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
+    local.rea.values$dataset.SE <- RunDiffAnalysis(object =             local.rea.values$dataset.SE,
+                                                   design =             session$userData$FlomicsMultiAssay@metadata$design,
+                                                   contrastList =       session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
                                                    Adj.pvalue.method =  "BH",
                                                    DiffAnalysisMethod = input$AnaDiffMethod,
                                                    clustermq =          input$clustermq)
@@ -155,21 +157,11 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       ))
     }
 
+    session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]] <- local.rea.values$dataset.SE
+    
     rea.values[[dataset]]$diffAnal <- TRUE
 
-    output$FilterPvalueUI <- renderUI({
-
-      if (rea.values[[dataset]]$diffAnal == FALSE) return()
-
-      box(title = NULL,status = "warning", width = 14,
-          numericInput(inputId = session$ns("Adj.pvalue.cutoff"),
-                   label="Adjusted pvalue cutoff :",
-                   value=0.05, 0, max=1, 0.01),
-          numericInput(inputId = session$ns("abs.FC.cutoff"),
-                       label="|FC| cutoff :",
-                       value=1, 1, max=1000, 0.1),
-          actionButton(session$ns("validContrast"),"Validate"))
-    })
+    
 
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
@@ -177,6 +169,21 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
   }, ignoreInit = TRUE)
 
+  # filterin param
+  output$FilterPvalueUI <- renderUI({
+    
+    if (rea.values[[dataset]]$diffAnal == FALSE) return()
+    
+    box(title = NULL,status = "warning", width = 14,
+        numericInput(inputId = session$ns("Adj.pvalue.cutoff"),
+                     label="Adjusted pvalue cutoff :",
+                     value=0.05, 0, max=1, 0.01),
+        numericInput(inputId = session$ns("abs.FC.cutoff"),
+                     label="|FC| cutoff :",
+                     value=1, 1, max=1000, 0.1),
+        actionButton(session$ns("validContrast"),"Validate"))
+  })
+  
   # display results per contrast
   output$ContrastsResults <- renderUI({
 
@@ -187,7 +194,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                                       Adj.pvalue.cutoff = input$Adj.pvalue.cutoff,
                                                       FC.cutoff = input$abs.FC.cutoff)
 
-    #Contrasts.Sel <<- local.rea.values$dataset.SE@metadata$DiffExpAnal$contrasts
+    #Contrasts.Sel <- local.rea.values$dataset.SE@metadata$DiffExpAnal$contrasts
 
     list(
       lapply(1:length(rea.values$Contrasts.Sel$contrast), function(i) {
@@ -244,7 +251,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                              # Center
                              m.def.filter.center <- scale(m.def.filter,center=TRUE,scale=FALSE)
                              column_split.value <- if(input[[paste0(vect["contrastName"],"-","condColorSelect")]] != "none"){
-                              FlomicsMultiAssay@metadata$design@Groups[,input[[paste0(vect["contrastName"],"-","condColorSelect")]]]
+                              session$userData$FlomicsMultiAssay@metadata$design@Groups[,input[[paste0(vect["contrastName"],"-","condColorSelect")]]]
                              }
                              else{NULL}
 
@@ -264,7 +271,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                              ## select cluster to plot
                              radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-","condColorSelect")),
                                           label = 'Levels :',
-                                          choices = c("none",names(FlomicsMultiAssay@colData)),
+                                          choices = c("none",names(session$userData$FlomicsMultiAssay@colData)),
                                           selected = "none")
                     )
 
@@ -293,7 +300,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
     rea.values[[dataset]]$DiffValidContrast <- dplyr::filter(rea.values$Contrasts.Sel, tag %in% H_selected)
 
-    # Validcontrasts <- dplyr::filter(FlomicsMultiAssay@metadata$design@Contrasts.Sel, tag %in% H_selected)
+    # Validcontrasts <- dplyr::filter(session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel, tag %in% H_selected)
 
     if (length(H_selected) > 1){
 
@@ -317,10 +324,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$coExpAnnot <- FALSE
 
     # filter DEG according pvalue adj cut-off
-    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- local.rea.values$dataset.SE
 
-    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]] <<- rea.values[[dataset]]$DiffValidContrast
-
+    local.rea.values$dataset.SE@metadata$DiffExpAnal[["Validcontrasts"]] <- rea.values[[dataset]]$DiffValidContrast
+    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- local.rea.values$dataset.SE
+    
     rea.values[[dataset]]$diffValid <- TRUE
     rea.values$datasetDiff <- unique(c(rea.values$datasetDiff , dataset))
 

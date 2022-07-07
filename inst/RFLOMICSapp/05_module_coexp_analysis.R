@@ -36,22 +36,21 @@ CoSeqAnalysisUI <- function(id){
 
 CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
 
+  local.rea.values <- reactiveValues(dataset.SE = NULL)
+    
   # co-expression parameters
-  output$CoExpParamUI <- renderUI({
+  output$CoExpParamUI <- renderUI({ 
 
     validate(
       need(rea.values[[dataset]]$diffValid != FALSE, "Please run diff analysis")
     )
 
-    # get good param :
-    dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
-
     ##-> retrieve DEG lists and DEG valid lists
-    ListNames.diff        <- dataset.SE@metadata$DiffExpAnal[["Validcontrasts"]]$tag
-    names(ListNames.diff) <- dataset.SE@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName
+    ListNames.diff        <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]]$tag
+    names(ListNames.diff) <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName
 
     ##-> option
-    switch(dataset.SE@metadata$omicType,
+    switch(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$omicType,
 
            "RNAseq" = {
                warning <- ""
@@ -175,7 +174,6 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     ))
   })
 
-
   # update K value (min max)
   observeEvent( input$K.values ,{
 
@@ -193,16 +191,13 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
       `TRUE`={
         updateSliderInput(session, "K.values", value = c(min, max),
                           min=2, max=30, step = 1)
-      }
-    }
-  )
-})
-
-
+        }
+      })
+    })
 
   # get list of DGE to process
   DEG_list <- reactive({
-    getDEGlist_for_coseqAnalysis( matrix   = FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]],
+    getDEGlist_for_coseqAnalysis( matrix   = session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]],
                                   colnames = input$select, mergeType = input$unionInter)})
 
   # display nbr of selected genes
@@ -217,7 +212,8 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$coExpAnal  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
 
-
+    local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
+    
     # check if no selected DGE list
     if(length(input$select) == 0){
 
@@ -229,9 +225,9 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
 
     print(paste("# 10- Co-expression analysis... ", dataset))
 
-    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpAnal   <<- list()
-    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]@metadata$CoExpEnrichAnal  <<- list()
-    #FlomicsMultiAssay <<- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("CoExpAnal"))
+    local.rea.values$dataset.SE@metadata$CoExpAnal   <- list()
+    local.rea.values$dataset.SE@metadata$CoExpEnrichAnal  <- list()
+    #FlomicsMultiAssay <- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("CoExpAnal"))
 
     #---- progress bar ----#
     progress <- shiny::Progress$new()
@@ -242,24 +238,22 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
 
 
     # run coseq
-    dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
-
-    dataset.SE <- runCoExpression(object=dataset.SE, geneList=DEG_list(), merge=input$unionInter, nameList=input$select,
+    local.rea.values$dataset.SE <- runCoExpression(object=local.rea.values$dataset.SE, geneList=DEG_list(), merge=input$unionInter, nameList=input$select,
                                   K=input$K.values[1]:input$K.values[2], replicates = input$iter,
                                   model  = input$model, transformation=input$transfo, normFactors=input$norm,
                                   GaussianModel =input$GaussianModel, clustermq = input$clustermqCoseq)
 
-    FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]] <<- dataset.SE
+    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- local.rea.values$dataset.SE
 
     # If an error occured
-    if(isTRUE(dataset.SE@metadata$CoExpAnal[["error"]])){
+    if(isTRUE(local.rea.values$dataset.SE@metadata$CoExpAnal[["error"]])){
 
       showModal(modalDialog( title = "Error message",
-                             if(! is.null(dataset.SE@metadata$CoExpAnal[["stats"]])){
-                                renderDataTable(dataset.SE@metadata$CoExpAnal[["stats"]],rownames = FALSE)
+                             if(! is.null(local.rea.values$dataset.SE@metadata$CoExpAnal[["stats"]])){
+                                renderDataTable(local.rea.values$dataset.SE@metadata$CoExpAnal[["stats"]],rownames = FALSE)
                              }
                              else{
-                                as.character(dataset.SE@metadata$CoExpAnal[["error"]])
+                                as.character(local.rea.values$dataset.SE@metadata$CoExpAnal[["error"]])
                              }
                              ))
     }
@@ -277,27 +271,25 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
 
     if (rea.values[[dataset]]$coExpAnal == FALSE) return()
 
-    # print coseq plots
-    dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
-
-    # Extract results
-    plot.coseq.res <- dataset.SE@metadata$CoExpAnal[["plots"]]
-    nb_cluster <- dataset.SE@metadata$CoExpAnal[["cluster.nb"]]
-    coseq.res  <- dataset.SE@metadata$CoExpAnal[["coseqResults"]]
-    cluster.comp <- dataset.SE@metadata$CoExpAnal[["clusters"]]
-    topDEF <- dataset.SE@metadata$DiffExpAnal$mergeDEF
-
-    print(coseq.res)
-    # For each id, get its cluster
-    tab.clusters <- as.data.frame(ifelse(coseq.res@allResults[[names(nb_cluster)]] > 0.5, 1,0))
-    tab.clusters <-  rownames_to_column(tab.clusters,var="DEF")
-    Cluster.tab <- pivot_longer(data=tab.clusters,cols=2:(dim(tab.clusters)[2]),names_to="C",values_to="does.belong")
-
-    # For each id, get its FC for all Contrasts
-    tmp <- lapply(1:length(dataset.SE@metadata$DiffExpAnal$TopDEF),function(x){
-      tmp <- dataset.SE@metadata$DiffExpAnal$TopDEF[x]
-      df <- data.frame("id"=row.names(tmp[[1]]), "logFC"=tmp[[1]]$logFC)
-      names(df)=c("id",paste0("logFC.",filter(dataset.SE@metadata$DiffExpAnal$Validcontrasts,contrastName== names(tmp))$tag))
+      # Extract results
+      plot.coseq.res <- local.rea.values$dataset.SE@metadata$CoExpAnal[["plots"]]
+      nb_cluster     <- local.rea.values$dataset.SE@metadata$CoExpAnal[["cluster.nb"]]
+      coseq.res      <- local.rea.values$dataset.SE@metadata$CoExpAnal[["coseqResults"]]
+      cluster.comp   <- local.rea.values$dataset.SE@metadata$CoExpAnal[["clusters"]]
+      topDEF         <- local.rea.values$dataset.SE@metadata$DiffExpAnal$mergeDEF
+  
+      print(coseq.res)
+      # For each id, get its cluster
+      tab.clusters <- as.data.frame(ifelse(coseq.res@allResults[[names(nb_cluster)]] > 0.5, 1,0))
+      tab.clusters <-  rownames_to_column(tab.clusters,var="DEF")
+      Cluster.tab <- pivot_longer(data=tab.clusters,cols=2:(dim(tab.clusters)[2]),names_to="C",values_to="does.belong")
+  
+      # For each id, get its FC for all Contrasts
+      tmp <- lapply(1:length(local.rea.values$dataset.SE@metadata$DiffExpAnal$TopDEF),function(x){
+      tmp <- local.rea.values$dataset.SE@metadata$DiffExpAnal$TopDEF[x]
+      df  <- data.frame("id"=row.names(tmp[[1]]), "logFC"=tmp[[1]]$logFC)
+      names(df)=c("id",paste0("logFC.",filter(local.rea.values$dataset.SE@metadata$DiffExpAnal$Validcontrasts, 
+                                              contrastName== names(tmp))$tag))
       return(df)
     })
     FC.tmp <- tmp %>% purrr::reduce(full_join, by='id')
@@ -328,7 +320,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                            fluidRow(
                              ## plot selected cluster(s)
 
-                             renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, dataset.SE@metadata$Groups) }),
+                             renderPlot({ coseq.y_profile.one.plot(coseq.res, input$selectCluster, local.rea.values$dataset.SE@metadata$Groups) }),
                              ## print datatable of metabolite
                              # DT::renderDataTable(DT::datatable(as.data.frame(coseq.res@allResults[[1]]) %>%
                              #                                     select(.,paste0("Cluster_",input$selectCluster)) %>%
@@ -352,7 +344,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                                                             lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All"))
                                                                               ))),
                 tabPanel("summary",
-                         DT::renderDataTable(DT::datatable(as.data.frame(dataset.SE@metadata$CoExpAnal[["stats"]])),
+                         DT::renderDataTable(DT::datatable(as.data.frame(local.rea.values$dataset.SE@metadata$CoExpAnal[["stats"]])),
                                              options = list(rownames = FALSE, pageLength = 10))
                          )
         )

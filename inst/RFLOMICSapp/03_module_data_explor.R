@@ -42,12 +42,14 @@ QCNormalizationTabUI <- function(id){
 
 QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
-  local.rea.values <- reactiveValues(dataset.processed.SE = NULL)
+  local.rea.values <- reactiveValues(dataset.processed.SE = NULL, 
+                                     dataset.raw.SE = NULL)
 
+  #local.rea.values$dataset.raw.SE <- session$userData$FlomicsMultiAssay[[dataset]]
   #### sample list  ####
   output$selectSamplesUI <- renderUI( {
 
-    sampleList <- colnames(FlomicsMultiAssay@ExperimentList[[dataset]])
+    sampleList <- colnames(session$userData$FlomicsMultiAssay[[dataset]])
       # sample list :
       pickerInput(
         inputId  = session$ns("selectSamples"),
@@ -61,8 +63,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   #### check completeness ####
   output$completenessUI <- renderUI({
 
-    SE <- FlomicsMultiAssay@ExperimentList[[dataset]]
-    completeCheckRes <<- CheckExpDesignCompleteness(FlomicsMultiAssay, input$selectSamples)
+    completeCheckRes <- CheckExpDesignCompleteness(session$userData$FlomicsMultiAssay, input$selectSamples)
 
     if(!is.null(completeCheckRes[["error"]])){
       showModal(modalDialog(title = "Error message", completeCheckRes[["error"]]))
@@ -126,7 +127,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
         actionButton(session$ns("Update"),"Update")
     )
 
-    switch (FlomicsMultiAssay@ExperimentList[[dataset]]@metadata$omicType,
+    switch (session$userData$FlomicsMultiAssay[[dataset]]@metadata$omicType,
             "RNAseq"       = { paramRNAseq.list },
             "proteomics"   = { paramProtMeta.list },
             "metabolomics" = { paramProtMeta.list }
@@ -144,10 +145,10 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     
     tagList(
       
-      box(title = length(names(FlomicsMultiAssay@ExperimentList[[dataset]])), 
+      box(title = length(names(session$userData$FlomicsMultiAssay[[dataset]])), 
           width = 6, background = "maroon", "nbr of entities before filtering"
       ),
-      box( title = length(names(FlomicsMultiAssay@ExperimentList[[paste0(dataset, ".filtred")]])), 
+      box( title = length(names(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]])), 
            width = 6, background = "light-blue", "nbr of entities after filtering"
       )
     )
@@ -159,11 +160,11 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     tagList(
       
       box(
-        title = length(FlomicsMultiAssay@ExperimentList[[dataset]]@metadata$rowSums.zero), 
-        width = 6, background = "fuchsia", "nbr of 0 count genes"
+        title = length(session$userData$FlomicsMultiAssay[[dataset]]@metadata$rowSums.zero), 
+        width = 6, background = "fuchsia", "nbr of unexpressed genes"
       ),
-      box(title = length(FlomicsMultiAssay@ExperimentList[[paste0(dataset, ".filtred")]]@metadata$FilteredFeatures), 
-          width = 6, background = "purple", "nbr of low count genes"
+      box(title = length(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$FilteredFeatures), 
+          width = 6, background = "purple", "nbr of low expressed genes"
       )
     )
     
@@ -171,29 +172,29 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   #### processing data with default param
   # RNAseq : normalization
   # prot/meta : transformation
-  param.list <- switch( FlomicsMultiAssay@ExperimentList[[dataset]]@metadata$omicType,
+  param.list <- switch( session$userData$FlomicsMultiAssay[[dataset]]@metadata$omicType,
               "RNAseq"       = { list(Filter_Strategy = "NbConditions", CPM_Cutoff = 5, NormMethod = "TMM") },
               "proteomics"   = { list(transform_method = "none") },
               "metabolomics" = { list(transform_method = "none") } )
 
   print("# 5- Compute PCA for raw counts")
-  FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RFLOMICS::RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
+  session$userData$FlomicsMultiAssay[[dataset]] <-  RFLOMICS::RunPCA(session$userData$FlomicsMultiAssay[[dataset]])
+  session$userData$FlomicsMultiAssay[[dataset]] <- session$userData$FlomicsMultiAssay[[dataset]]
   
   # run pre-preprocessing
   print(paste0("# 6- Data processing... ", dataset))
-  SE.processed <- process_data(SE = FlomicsMultiAssay@ExperimentList[[dataset]], dataset = dataset,
-                               samples = colnames(FlomicsMultiAssay@ExperimentList[[dataset]]), param.list = param.list)
-  local.rea.values$dataset.processed.SE <- SE.processed
+  SE.processed <- process_data(SE = session$userData$FlomicsMultiAssay[[dataset]], dataset = dataset,
+                               samples = colnames(session$userData$FlomicsMultiAssay[[dataset]]), param.list = param.list)
+  session$userData$FlomicsMultiAssay@ExperimentList[[paste0(dataset, ".filtred")]] <- SE.processed
   
-  ## add new SE with processed data
   SE.name <- paste0(dataset,".filtred")
 
   # remove SE processed if existe
-  if (SE.name %in% names(FlomicsMultiAssay)){
-    FlomicsMultiAssay <- FlomicsMultiAssay[,, -which(names(FlomicsMultiAssay) == SE.name)]
+  if (SE.name %in% names(session$userData$FlomicsMultiAssay)){
+    session$userData$FlomicsMultiAssay <- session$userData$FlomicsMultiAssay[,, -which(names(session$userData$FlomicsMultiAssay) == SE.name)]
   }
 
-  FlomicsMultiAssay <<- eval(parse(text = paste0('c( FlomicsMultiAssay ,', SE.name, ' = SE.processed )')))
+  session$userData$FlomicsMultiAssay <- eval(parse(text = paste0('c( session$userData$FlomicsMultiAssay ,', SE.name, ' = SE.processed )')))
 
   
   #### Exploratory of Biological and Technical variability
@@ -238,7 +239,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     )
 
     tabPanel.list <- list()
-     switch(FlomicsMultiAssay@ExperimentList[[dataset]]@metadata$omicType,
+     switch(session$userData$FlomicsMultiAssay[[dataset]]@metadata$omicType,
             "RNAseq" = {
               tabPanel.list <- c(
                 list(
@@ -268,25 +269,25 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   # library size plot only for RNAseq data
   output$raw.LibSize <- renderPlot({
 
-    Library_size_barplot.plot(FlomicsMultiAssay@ExperimentList[[dataset]])
+    Library_size_barplot.plot(session$userData$FlomicsMultiAssay[[dataset]])
   })
   
   # value (count/intensity) distribution (boxplot/density)
   output$raw.boxplot <- renderPlot({
-    Data_Distribution_plot(FlomicsMultiAssay@ExperimentList[[dataset]], plot = "boxplot")
+    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[dataset]], plot = "boxplot")
   })
   output$raw.CountDist <- renderPlot({
-    Data_Distribution_plot(FlomicsMultiAssay@ExperimentList[[dataset]], plot = "density")
+    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[dataset]], plot = "density")
   })
   
   # PCA plot
   output$raw.PCAcoord <- renderPlot({
-    #FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
+    #session$userData$FlomicsMultiAssay[[dataset]] <-  RunPCA(session$userData$FlomicsMultiAssay[[dataset]])
     PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
     PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])
     condGroup <- input$`rawData-condColorSelect`[1]
     
-    RFLOMICS::plotPCA(FlomicsMultiAssay@ExperimentList[[dataset]], PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup)
+    RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[dataset]], PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup)
     
   })
   
@@ -307,10 +308,10 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
       }
 
-    # local.rea.values$dataset.processed.SE@metadata$DiffExpAnal       <- list()
-    # local.rea.values$dataset.processed.SE@metadata$CoExpAnal         <- list()
-    # local.rea.values$dataset.processed.SE@metadata$DiffExpEnrichAnal <- list()
-    # local.rea.values$dataset.processed.SE@metadata$CoExpEnrichAnal   <- list()
+    # session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$DiffExpAnal       <- list()
+    # session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$CoExpAnal         <- list()
+    # session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$DiffExpEnrichAnal <- list()
+    # session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$CoExpEnrichAnal   <- list()
 
 
     # new selected param
@@ -328,19 +329,19 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     )
     
     print(paste0("# 6- Data processing... ", dataset))
-    processed.SE <- process_data(SE = FlomicsMultiAssay@ExperimentList[[dataset]], dataset = dataset, samples = input$selectSamples, param.list = param.list)
+    processed.SE <- process_data(SE = session$userData$FlomicsMultiAssay[[dataset]], dataset = dataset, samples = input$selectSamples, param.list = param.list)
 
-    local.rea.values$dataset.processed.SE <- processed.SE
+    session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]] <- processed.SE
     
     ## add new SE with processed data
     SE.name <- paste0(dataset,".filtred")
     
     # remove SE processed if existe
-    if (SE.name %in% names(FlomicsMultiAssay)){
-      FlomicsMultiAssay <- FlomicsMultiAssay[,, -which(names(FlomicsMultiAssay) == SE.name)]
+    if (SE.name %in% names(session$userData$FlomicsMultiAssay)){
+      session$userData$FlomicsMultiAssay <- session$userData$FlomicsMultiAssay[,, -which(names(session$userData$FlomicsMultiAssay) == SE.name)]
     }
     
-    FlomicsMultiAssay <<- eval(parse(text = paste0('c( FlomicsMultiAssay ,', SE.name, ' = processed.SE )')))
+    session$userData$FlomicsMultiAssay <- eval(parse(text = paste0('c( session$userData$FlomicsMultiAssay ,', SE.name, ' = processed.SE )')))
     
   }, ignoreInit = TRUE)
 
@@ -351,46 +352,46 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     
     if(rea.values[[dataset]]$omicsType != "RNAseq") return()
     
-    Library_size_barplot.plot(local.rea.values$dataset.processed.SE)
+    Library_size_barplot.plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]])
   })
   
   # value (count/intensity) distribution (boxplot/density)
   output$norm.boxplot <- renderPlot({
-    if(rea.values[[dataset]]$omicsType != "RNAseq" && local.rea.values$dataset.processed.SE@metadata$transform_method == "none") return()
+    if(rea.values[[dataset]]$omicsType != "RNAseq" && session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$transform_method == "none") return()
     
-    Data_Distribution_plot(local.rea.values$dataset.processed.SE, plot = "boxplot")
+    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]], plot = "boxplot")
   })
   
   output$norm.CountDist <- renderPlot({
-    if(rea.values[[dataset]]$omicsType != "RNAseq" && local.rea.values$dataset.processed.SE@metadata$transform_method == "none") return()
+    if(rea.values[[dataset]]$omicsType != "RNAseq" && session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$transform_method == "none") return()
     
-    Data_Distribution_plot(local.rea.values$dataset.processed.SE, plot = "density")
+    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]], plot = "density")
   })
   
   # PCA plot
   output$norm.PCAcoord <- renderPlot({
     
-    if(rea.values[[dataset]]$omicsType != "RNAseq" && local.rea.values$dataset.processed.SE@metadata$transform_method == "none") return()
-    #FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
+    if(rea.values[[dataset]]$omicsType != "RNAseq" && session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$transform_method == "none") return()
+    #session$userData$FlomicsMultiAssay[[dataset]] <-  RunPCA(session$userData$FlomicsMultiAssay[[dataset]])
     PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
     PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])
     condGroup <- input$`rawData-condColorSelect`[1]
 
-    RFLOMICS::plotPCA(local.rea.values$dataset.processed.SE, PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
+    RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]], PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
 
   })
   
 
     # 
     # # => display only for normalized RNAseq data
-    # if (local.rea.values$dataset.processed.SE@metadata$omicType == "RNAseq"){
+    # if (session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$omicType == "RNAseq"){
     #   output$norm.PCAcoord <- renderPlot({
-    #     #local.rea.values$dataset.processed.SE <<-  RunPCA(local.rea.values$dataset.processed.SE)
+    #     #session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]] <-  RunPCA(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]])
     #     PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
     #     PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])
     #     condGroup <- input$`rawData-condColorSelect`[1]
     #     
-    #     RFLOMICS::plotPCA(local.rea.values$dataset.processed.SE, PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
+    #     RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]], PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
     #   })
     # }
     # 
@@ -411,18 +412,18 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     # #### PCA analysis QCdesign ####
     # output$QCdesignPCA <- renderPlot({
     #   
-    #   # if(is.null(FlomicsMultiAssay@ExperimentList[[dataset]][["PCAlist"]][["raw"]])){
-    #   #   FlomicsMultiAssay@ExperimentList[[dataset]] <<-  RunPCA(FlomicsMultiAssay@ExperimentList[[dataset]])
+    #   # if(is.null(session$userData$FlomicsMultiAssay[[dataset]][["PCAlist"]][["raw"]])){
+    #   #   session$userData$FlomicsMultiAssay[[dataset]] <-  RunPCA(session$userData$FlomicsMultiAssay[[dataset]])
     #   # }
     #   
-    #   mvQCdesign(FlomicsMultiAssay,data=dataset,PCA="raw", axis=5,
+    #   mvQCdesign(session$userData$FlomicsMultiAssay,data=dataset,PCA="raw", axis=5,
     #              pngFile=file.path(tempdir(), paste0(dataset,"_PCAdesignCoordRaw.png")))
     # })
     
     # #### PCA analysis QCdata ####
     # output$QCdata <- renderPlot({
     #
-    #   mvQCdata(FlomicsMultiAssay,data=dataset,PCA="raw",axis=5,
+    #   mvQCdata(session$userData$FlomicsMultiAssay,data=dataset,PCA="raw",axis=5,
     #            pngFile=file.path(tempdir(), paste0(dataset,"_PCAmetaCorrRaw.png")))
     # })
     

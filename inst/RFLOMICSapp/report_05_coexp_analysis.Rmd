@@ -20,13 +20,6 @@ par(mar = c(4, 4, .5, .1))
 plot.coseq.res$ICL 
 ```
 
-<!-- #### logLike  -->
-
-<!-- ```{r ,echo=FALSE} -->
-<!-- #plot.coseq.res <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$plots -->
-<!-- par(mar = c(4, 4, .5, .1)) -->
-<!-- plot.coseq.res$logLike -->
-<!-- ``` -->
 
 ### profiles  
 
@@ -45,7 +38,6 @@ plot.coseq.res$boxplots
 ### probapost_boxplots 
 
 ```{r , echo=FALSE}
-#plot.coseq.res <- FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["CoExpAnal"]]$plots
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$probapost_boxplots 
 ```

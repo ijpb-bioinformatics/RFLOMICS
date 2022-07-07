@@ -57,11 +57,11 @@ MOFA_setting <- function(input, output, session, rea.values){
     # )
     
     # get good param :
-    #listDataSet <- unlist(FlomicsMultiAssay@metadata$omicList)
-    #names(listDataSet) <- unlist(FlomicsMultiAssay@metadata$omicList)
+    #listDataSet <- unlist(session$userData$FlomicsMultiAssay@metadata$omicList)
+    #names(listDataSet) <- unlist(session$userData$FlomicsMultiAssay@metadata$omicList)
     
     
-    listOfContrast <- FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName
+    listOfContrast <- session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName
     # set param in interface
     tagList(
       
@@ -132,7 +132,7 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     local.rea.values$untrainedMOFA <- NULL # reactive ? # ADD 23/06
     local.rea.values$runMOFA   <- FALSE
-    local.rea.values$resMOFA <- NULL
+    local.rea.values$resMOFA   <- NULL
     
     # check nbr dataset to integrate
     # if less then 2 -> error message
@@ -158,7 +158,7 @@ MOFA_setting <- function(input, output, session, rea.values){
     # run MOFA
     print(input$selectedData)
     
-    local.rea.values$preparedMOFA <- prepareMOFA(FlomicsMultiAssay,
+    local.rea.values$preparedMOFA <- prepareMOFA(session$userData$FlomicsMultiAssay,
                                                   omicsToIntegrate = input$selectedData,
                                                   rnaSeq_transfo = input$RNAseqTransfo,
                                                   choice = "DE", 
@@ -176,7 +176,7 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     
     #### TODO Try to catch MOFA2 warnings and put them on the interface. DOES NOT WORK. 
-    # test <- run_MOFA_analysis(FlomicsMultiAssay@metadata[["MOFA_untrained"]],
+    # test <- run_MOFA_analysis(session$userData$FlomicsMultiAssay@metadata[["MOFA_untrained"]],
     #                           scale_views = FALSE,
     #                           maxiter = 1000,
     #                           num_factors = 5)
@@ -189,11 +189,11 @@ MOFA_setting <- function(input, output, session, rea.values){
     # output$warnings <- renderText({local.rea.values$warnings})
     #### End of catchning warnings.
     
-    FlomicsMultiAssay@metadata[["MOFA_selected_contrasts"]] <<- input$selectedContrast
-    FlomicsMultiAssay@metadata[["MOFA_selected_filter"]] <<- input$filtMode
-    FlomicsMultiAssay@metadata[["MOFA_untrained"]] <<- local.rea.values$untrainedMOFA
-    FlomicsMultiAssay@metadata[["MOFA_warnings"]] <<- local.rea.values$warnings
-    FlomicsMultiAssay@metadata[["MOFA_results"]] <<- local.rea.values$resMOFA
+    session$userData$FlomicsMultiAssay@metadata[["MOFA_selected_contrasts"]] <- input$selectedContrast
+    session$userData$FlomicsMultiAssay@metadata[["MOFA_selected_filter"]] <- input$filtMode
+    session$userData$FlomicsMultiAssay@metadata[["MOFA_untrained"]] <- local.rea.values$untrainedMOFA
+    session$userData$FlomicsMultiAssay@metadata[["MOFA_warnings"]] <- local.rea.values$warnings
+    session$userData$FlomicsMultiAssay@metadata[["MOFA_results"]] <- local.rea.values$resMOFA
     
     local.rea.values$runMOFA   <- TRUE
     

@@ -372,7 +372,6 @@ shinyServer(function(input, output, session) {
     # for each omics data type
     # and for each dataser
     # if no error message
-    i <- 1
     observe({
 
       if(rea.values$analysis == FALSE) return()
@@ -399,27 +398,27 @@ shinyServer(function(input, output, session) {
           # Part3 : Data Exploratory
           ##########################################
           inputNorm <- callModule(module  = QCNormalizationTab, id = paste0(omics,i),
-                                                      dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]],
+                                                      dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]],
                                                       rea.values = rea.values)
 
           ##########################################
           # Part5 :  Diff Analysis
           ##########################################
           inputDiff <- callModule(module  = DiffExpAnalysis, id = paste0(omics, i),
-                                                       dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]],
+                                                       dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]],
                                                        rea.values = rea.values)
 
           ##########################################
           # Part6 : Co-Expression Analysis
           ##########################################
           callModule(module  = CoSeqAnalysis, id = paste0(omics, i),
-                     dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
+                     dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
 
           ##########################################
           # Part7 : Enrichment Analysis
           ##########################################
           callModule(module  = AnnotationEnrichment, id = paste0(omics, i),
-                     dataset = FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
+                     dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
 
 
         })
@@ -440,12 +439,16 @@ shinyServer(function(input, output, session) {
 
     output$report <- downloadHandler(
       # For PDF output, change this to "report.pdf"
-      filename = paste0(FlomicsMultiAssay@metadata$projectName, "_", format(Sys.time(), "%Y_%m_%d_%H_%M"), ".html"),
+      
+      filename = function(){
+        projectName <- session$userData$FlomicsMultiAssay@metadata$projectName
+        paste0(projectName, "_", format(Sys.time(), "%Y_%m_%d_%H_%M"), ".html")
+        },
       content = function(file) {
         # Copy the report file to a temporary directory before processing it, in
         # case we don't have write permissions to the current working dir (which
         # can happen when deployed).
-
+        print(paste0("# ??- Creat html report... ", file))
         tempReport <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report.Rmd") # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         #tempReport <- file.path(tempdir(), "report.Rmd")
@@ -453,10 +456,15 @@ shinyServer(function(input, output, session) {
 
         # TEST
         # save FE object in .Rdata and load it during report execution
-        save(FlomicsMultiAssay,file=file.path(tempdir(), "FlomicsMultiAssay.RData"))
+        projectName  <- session$userData$FlomicsMultiAssay@metadata$projectName
+        rflomics.MAE <- session$userData$FlomicsMultiAssay
+        RData.name   <- paste0(projectName, ".MAE.RData")
+        save(rflomics.MAE, file=file.path(tempdir(), RData.name))
 
         # Set up parameters to pass to Rmd document
-        params <- list( FEdata = file.path(tempdir(), "FlomicsMultiAssay.RData"),
+        print(file.path(tempdir(), RData.name))
+        params <- list( FEdata = file.path(tempdir(), RData.name),
+                        title  = paste0(projectName, "project"),
                         pngDir = tempdir())
 
         print(tempdir())

@@ -1,5 +1,5 @@
 ---
-title: "`r FlomicsMultiAssay@metadata$projectName` project"
+title: "`r params$title` project"
 author: "Analyzes performed by RFLOMICS package"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 bibliography: bibliography.bib
@@ -16,6 +16,7 @@ output:
 params: 
   pngDir: NA
   FEdata: NA
+  title: NA
 ---
 
 
@@ -49,7 +50,7 @@ pngDir <- params$pngDir
 
 ```{r Design, echo=FALSE, message=TRUE, warning=TRUE}
 
-DT::datatable(as.data.frame(FlomicsMultiAssay@colData), 
+DT::datatable(as.data.frame(rflomics.MAE@colData), 
               options = list(rownames = FALSE, pageLength = 6, scrollX = T, dom = 'tip'),
               class = 'cell-border stripe')
 
@@ -58,8 +59,8 @@ DT::datatable(as.data.frame(FlomicsMultiAssay@colData),
 
 ```{r factors, echo=FALSE, message=TRUE, warning=TRUE}
 
-Bio.fact   <- FlomicsMultiAssay@metadata$design@Factors.Type[FlomicsMultiAssay@metadata$design@Factors.Type == "Bio"]
-Batch.fact <- FlomicsMultiAssay@metadata$design@Factors.Type[FlomicsMultiAssay@metadata$design@Factors.Type == "batch"]
+Bio.fact   <- rflomics.MAE@metadata$design@Factors.Type[rflomics.MAE@metadata$design@Factors.Type == "Bio"]
+Batch.fact <- rflomics.MAE@metadata$design@Factors.Type[rflomics.MAE@metadata$design@Factors.Type == "batch"]
 
 ```
 
@@ -70,9 +71,9 @@ Batch.fact <- FlomicsMultiAssay@metadata$design@Factors.Type[FlomicsMultiAssay@m
 
 ```{r Sample table, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}
 
-loaded.data <- data.frame(datasets = sapply(names(FlomicsMultiAssay@metadata$omicList), 
-                              function(x){ paste0(FlomicsMultiAssay@metadata$omicList[[x]], collapse = ", ") }), 
-                          omics = names(FlomicsMultiAssay@metadata$omicList)) %>% as.data.table()
+loaded.data <- data.frame(datasets = sapply(names(rflomics.MAE@metadata$omicList), 
+                              function(x){ paste0(rflomics.MAE@metadata$omicList[[x]], collapse = ", ") }), 
+                          omics = names(rflomics.MAE@metadata$omicList)) %>% as.data.table()
 
 DT::datatable(loaded.data, 
               options = list(rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),
@@ -86,13 +87,13 @@ DT::datatable(loaded.data,
 ```{r upsetSamples, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}
 
 
-if(length(unlist(FlomicsMultiAssay@metadata$omicList)) > 2){
+if(length(unlist(rflomics.MAE@metadata$omicList)) > 2){
   
-  upsetSamples(FlomicsMultiAssay[unlist(FlomicsMultiAssay@metadata$omicList),])
+  upsetSamples(rflomics.MAE[unlist(rflomics.MAE@metadata$omicList),])
 }
 
 
-#check <- CheckExpDesignCompleteness(FlomicsMultiAssay)
+#check <- CheckExpDesignCompleteness(rflomics.MAE)
 
 #check$plot
 ```
@@ -102,32 +103,32 @@ if(length(unlist(FlomicsMultiAssay@metadata$omicList)) > 2){
 * The statistical model written for the experiment is:  
 
 ```
-`r FlomicsMultiAssay@metadata$design@Model.formula`
+`r rflomics.MAE@metadata$design@Model.formula`
 ```
 
 * The selected contrast(s) is (are):
 
 ```{r contrastSel, echo=FALSE, results="asis", warning=FALSE, message=FALSE}
 
-DT::datatable(FlomicsMultiAssay@metadata$design@Contrasts.Sel[,c(5,2:3)], 
+DT::datatable(rflomics.MAE@metadata$design@Contrasts.Sel[,c(5,2:3)], 
               options = list(rownames = FALSE, pageLength = 6, scrollX = T, dom = 'tip'),
               class = 'cell-border stripe')
 
-# kable_styling(kable(FlomicsMultiAssay@metadata$design@Contrasts.Sel[,c(5,2:3)], 
+# kable_styling(kable(rflomics.MAE@metadata$design@Contrasts.Sel[,c(5,2:3)], 
 #                     row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
 ```
 
-`r if(length(FlomicsMultiAssay@metadata$omicList) ==0 ) {"\\begin{comment}"}`
+`r if(length(rflomics.MAE@metadata$omicList) ==0 ) {"\\begin{comment}"}`
 
 ```{r analysis, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
 
   out <- NULL
-  for (omictype in names(FlomicsMultiAssay@metadata$omicList)){ 
+  for (omictype in names(rflomics.MAE@metadata$omicList)){ 
     
     # child <- paste0("report_",omictype, ".Rmd")
     child <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_",omictype, ".Rmd") 
 
-    for (data in  FlomicsMultiAssay@metadata$omicList[[omictype]]){
+    for (data in  rflomics.MAE@metadata$omicList[[omictype]]){
       
       out <- c(out, knitr::knit_child(child, quiet=TRUE))  
     }
@@ -138,10 +139,10 @@ knitr::asis_output(out)
 
 ```
 
-`r if(length(FlomicsMultiAssay@metadata$omicList) == 0 ) {"\\end{comment}"}`
+`r if(length(rflomics.MAE@metadata$omicList) == 0 ) {"\\end{comment}"}`
 
 
-`r if(is.null(FlomicsMultiAssay@metadata$MOFA_results)) {"\\begin{comment}"}`
+`r if(is.null(rflomics.MAE@metadata$MOFA_results)) {"\\begin{comment}"}`
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE}
 
@@ -153,7 +154,7 @@ knitr::asis_output(out)
 
 ```
 
-`r if(is.null(FlomicsMultiAssay@metadata$MOFA_results))  {"\\end{comment}"}`
+`r if(is.null(rflomics.MAE@metadata$MOFA_results))  {"\\end{comment}"}`
 
 
 

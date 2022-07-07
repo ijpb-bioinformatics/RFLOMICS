@@ -47,8 +47,8 @@ GLM_model <- function(input, output, session, rea.values){
 
 
           selectInput( inputId = session$ns("model.formulae"), label = "",
-                       choices = rev(names(GetModelFormulae(Factors.Name=names(FlomicsMultiAssay@metadata$design@List.Factors),
-                                                            Factors.Type=FlomicsMultiAssay@metadata$design@Factors.Type))),
+                       choices = rev(names(GetModelFormulae(Factors.Name=names(session$userData$FlomicsMultiAssay@metadata$design@List.Factors),
+                                                            Factors.Type=session$userData$FlomicsMultiAssay@metadata$design@Factors.Type))),
                        selectize=FALSE,size=5),
           actionButton(session$ns("validModelFormula"),"Valid model choice")
       )
@@ -64,16 +64,16 @@ GLM_model <- function(input, output, session, rea.values){
       rea.values$Contrasts.Sel <- NULL
       rea.values$datasetDiff   <- NULL
 
-      FlomicsMultiAssay <<- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("DiffExpAnal", "CoExpAnal", "EnrichAnal"))
+      session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(object=session$userData$FlomicsMultiAssay, results=c("DiffExpAnal", "CoExpAnal", "EnrichAnal"))
 
       print("# 3- Choice of statistical model...")
 
       # => Set the model formulae
-      FlomicsMultiAssay@metadata$design@Model.formula <- input$model.formulae
+      session$userData$FlomicsMultiAssay@metadata$design@Model.formula <- input$model.formulae
       print(paste0("#    => ", input$model.formulae))
 
       # => get list of expression contrast (hypothesis)
-      FlomicsMultiAssay <<- getExpressionContrast(object = FlomicsMultiAssay, model.formula = input$model.formulae)
+      session$userData$FlomicsMultiAssay <- getExpressionContrast(object = session$userData$FlomicsMultiAssay, model.formula = input$model.formulae)
 
       rea.values$model <- TRUE
 
@@ -93,10 +93,10 @@ GLM_model <- function(input, output, session, rea.values){
           br(),
 
           column(width = 12,
-                 lapply(names(FlomicsMultiAssay@metadata$design@Contrasts.List), function(contrastType) {
+                 lapply(names(session$userData$FlomicsMultiAssay@metadata$design@Contrasts.List), function(contrastType) {
 
-                   vect        <- as.vector(FlomicsMultiAssay@metadata$design@Contrasts.List[[contrastType]]$contrast)
-                   names(vect) <- as.vector(FlomicsMultiAssay@metadata$design@Contrasts.List[[contrastType]]$contrastName)
+                   vect        <- as.vector(session$userData$FlomicsMultiAssay@metadata$design@Contrasts.List[[contrastType]]$contrast)
+                   names(vect) <- as.vector(session$userData$FlomicsMultiAssay@metadata$design@Contrasts.List[[contrastType]]$contrastName)
 
                    # pickerInput(
                    #   inputId  = session$ns(paste0("ContrastType",contrastType)),
@@ -130,13 +130,13 @@ GLM_model <- function(input, output, session, rea.values){
       rea.values$datasetDiff <- NULL
       # reset analysis
 
-      FlomicsMultiAssay <<- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("DiffExpAnal", "CoExpAnal", "EnrichAnal"))
+      session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(object=session$userData$FlomicsMultiAssay, results=c("DiffExpAnal", "CoExpAnal", "EnrichAnal"))
 
       #rea.values$validate.status <- 0
 
       #get list of selected contrast data frames with expression, name and type
       contrastList <- list()
-      contrastList <- lapply(names(FlomicsMultiAssay@metadata$design@Contrasts.List), function(contrastType) {
+      contrastList <- lapply(names(session$userData$FlomicsMultiAssay@metadata$design@Contrasts.List), function(contrastType) {
 
           input[[paste0("ContrastType",contrastType)]]
       })
@@ -158,14 +158,14 @@ GLM_model <- function(input, output, session, rea.values){
       print(paste0("#    => ", contrast.sel.vec))
 
       # define all the coefficients of selected contrasts and return a contrast matrix with contrast sample name and associated coefficients
-      FlomicsMultiAssay <<- getContrastMatrix(object = FlomicsMultiAssay, contrastList = contrast.sel.vec)
+      session$userData$FlomicsMultiAssay <- getContrastMatrix(object = session$userData$FlomicsMultiAssay, contrastList = contrast.sel.vec)
       #rea.values$FlomicsMultiAssay <- FlomicsMultiAssay
 
-      rea.values$Contrasts.Sel <- FlomicsMultiAssay@metadata$design@Contrasts.Sel
+      rea.values$Contrasts.Sel <- session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel
 
       rea.values$analysis <- TRUE
 
-      rea.values$datasetList <- FlomicsMultiAssay@metadata$omicList
+      rea.values$datasetList <- session$userData$FlomicsMultiAssay@metadata$omicList
 
       # # à supprimer à la fin du dev
       # output$printContrast <- renderPrint({

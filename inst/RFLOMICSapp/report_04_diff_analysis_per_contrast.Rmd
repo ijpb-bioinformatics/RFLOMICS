@@ -50,9 +50,7 @@ diff.plots$Volcano.plot
               )
             )
 
-  # DT::datatable(matrix())
-  # cat(knitr::knit_print(
-  #   DT::datatable(FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata[["DiffExpAnal"]][["DEF"]][[contrast]][1:100,]), width = "100%"))
+ 
   
 ```
 
