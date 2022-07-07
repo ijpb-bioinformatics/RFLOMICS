@@ -130,10 +130,22 @@ MOFA_setting <- function(input, output, session, rea.values){
   
   observeEvent(input$runMOFA, {
     
+    # TODO put everything into one metadata list slot
+    # TODO reinitialize everything when the person runs mofa.
+    
     local.rea.values$untrainedMOFA <- NULL # reactive ? # ADD 23/06
     local.rea.values$runMOFA   <- FALSE
-    local.rea.values$resMOFA   <- NULL
+
+    local.rea.values$resMOFA <- NULL
+    local.rea.values$preparedMOFA <- NULL
+    local.rea.values$listResMOFA <- NULL
     
+    session$userData$FlomicsMultiAssay@metadata[["MOFA_selected_contrasts"]] <<- NULL
+    session$userData$FlomicsMultiAssay@metadata[["MOFA_selected_filter"]] <<- NULL
+    session$userData$FlomicsMultiAssay@metadata[["MOFA_untrained"]] <<- NULL
+    session$userData$FlomicsMultiAssay@metadata[["MOFA_warnings"]] <<- NULL
+    session$userData$FlomicsMultiAssay@metadata[["MOFA_results"]] <<- NULL
+
     # check nbr dataset to integrate
     # if less then 2 -> error message
     if(length(input$selectedData) < 2){

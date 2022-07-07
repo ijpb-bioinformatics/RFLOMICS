@@ -1,14 +1,24 @@
+`r if(is.null(FlomicsMultiAssay@metadata$MOFA_results)) {"\\begin{comment}"}`
+
 # MOFA Integration
+
+```{r}
+MOFARes <- rflomics.MAE@metadata$MOFA_results
+```
+
 
 ## Settings
 
-* MOFA2  R package was used to perform data unsupervised integration, on <span style="color:blue">`r paste(MOFA2::views_names(rflomics.MAE@metadata$MOFA_results), collapse = ", ")`</span> datatables.
+* MOFA2  R package was used to perform data unsupervised integration, on <span style="color:blue">`r paste(MOFA2::views_names(MOFARes), collapse = ", ")`</span> datatables.
 * Selected contrasts: `r cat(paste(paste0("\t * ", rflomics.MAE@metadata$MOFA_selected_contrasts), collapse = " \n "))` 
+
 <!-- TODO The above does not work... -->
 * Taking the <span style="color:blue">`r rflomics.MAE@metadata$MOFA_selected_filter`</span> of lists of DE features lead to the following analysis setting: 
 
 ```{r, fig.width=6.5, fig.height = 5, fig.align="center"}
-MOFA2::plot_data_overview(rflomics.MAE@metadata$MOFA_results)
+
+MOFA2::plot_data_overview(MOFARes)
+
 ```
 
 * Options for the run:
@@ -24,23 +34,25 @@ MOFA2::plot_data_overview(rflomics.MAE@metadata$MOFA_results)
 ### Correlation between factors
 
 ```{r}
-mat_cor <- stats::cor(MOFA2::get_factors(rflomics.MAE@metadata$MOFA_results)[[1]])
+
+mat_cor <- stats::cor(MOFA2::get_factors(MOFARes)[[1]])
 mat_cor <- mat_cor - diag(mat_cor)
 ```
 
-* Number of computed factors: `r rflomics.MAE@metadata$MOFA_results@dimensions$K` 
+* Number of computed factors: `r MOFARes@dimensions$K` 
 * Is there a correlation >0.5 between two factors? `r ifelse(any(mat_cor>0.5), "YES, be careful, the results are unreliable.", "No.")`
 
 ```{r, fig.width=4.5, fig.height = 4, fig.align="center"}
-MOFA2::plot_factor_cor(rflomics.MAE@metadata$MOFA_results)
+MOFA2::plot_factor_cor(MOFARes)
 ```
 
 ### Explained Variance
 
 ```{r, fig.width = 10, fig.height = 4, fig.align = "center"}
-g1 <- MOFA2::plot_variance_explained(rflomics.MAE@metadata$MOFA_results, plot_total = TRUE)[[2]] + # compute both per factor and per table by default.
+
+g1 <- MOFA2::plot_variance_explained(MOFARes, plot_total = TRUE)[[2]] + # compute both per factor and per table by default.
   ggplot2::ggtitle("Total explained variance per omic data")
-g2 <- MOFA2::plot_variance_explained(rflomics.MAE@metadata$MOFA_results, x = "view", y = "factor") + ggplot2::ggtitle("Explained variance by factors and omic data")
+g2 <- MOFA2::plot_variance_explained(MOFARes, x = "view", y = "factor") + ggplot2::ggtitle("Explained variance by factors and omic data")
 
 ggpubr::ggarrange(g1, g2, ncol = 2)
 ```
@@ -50,10 +62,10 @@ ggpubr::ggarrange(g1, g2, ncol = 2)
 The following image shows the weights of the features for each table and each factors for all factors that explain at least 5\% of the variance in any table. 
 
 ```{r}
-VarExp = MOFA2::get_variance_explained(rflomics.MAE@metadata$MOFA_results)$r2_per_factor$group1
+VarExp = MOFA2::get_variance_explained(MOFARes)$r2_per_factor$group1
 FactNum = apply(VarExp, 1, FUN = function(vect) any(vect>5)) # Percentage
 f.height = 5+2*length(which(FactNum))
-f.width = 5+2*length(MOFA2::views_names(rflomics.MAE@metadata$MOFA_results))
+f.width = 5+2*length(MOFA2::views_names(MOFARes))
 # f.width = 15
 # f.height = 15
 ```
@@ -61,13 +73,15 @@ f.width = 5+2*length(MOFA2::views_names(rflomics.MAE@metadata$MOFA_results))
 ```{r, fig.height = f.height, fig.width=f.width, fig.align = "center"}
 ggplot_list <- list()
 for(i in which(FactNum)){
-  for(j in MOFA2::views_names(rflomics.MAE@metadata$MOFA_results)){
-    # ggplot_list[[length(ggplot_list)+1]] <- MOFA2::plot_weights(rflomics.MAE@metadata$MOFA_results,
+
+  for(j in MOFA2::views_names(MOFARes)){
+    # ggplot_list[[length(ggplot_list)+1]] <- MOFA2::plot_weights(MOFARes,
     #                                                      view = j,
     #                                                      factor = i,
     #                                                      nfeatures = 10, 
     #                                                      scale = TRUE) + ggplot2::ggtitle(paste0(j, " - Factor ", i))
-        ggplot_list[[length(ggplot_list)+1]] <- MOFA2::plot_top_weights(rflomics.MAE@metadata$MOFA_results,
+
+        ggplot_list[[length(ggplot_list)+1]] <- MOFA2::plot_top_weights(MOFARes,
                                                          view = j,
                                                          factor = i,
                                                          nfeatures = 10, 
@@ -76,7 +90,7 @@ for(i in which(FactNum)){
 }
 
 ggpubr::ggarrange(plotlist = ggplot_list,
-                  ncol = length(MOFA2::views_names(rflomics.MAE@metadata$MOFA_results)),
+                  ncol = length(MOFA2::views_names(MOFARes)),
                   nrow = length(FactNum[FactNum]))
 ```
 
@@ -86,10 +100,10 @@ For all views, these heatmap show the 10 first features in term of weights for t
 
 ```{r, fig.width = 15, fig.height = 5, fig.show = "hide"}
 list_heat_views = list()
-for(nam in MOFA2::views_names(rflomics.MAE@metadata$MOFA_results)){
+for(nam in MOFA2::views_names(MOFARes)){
   list_heat_views[[nam]] <- list()
-  list_heat_views[[nam]][[1]] <- MOFA2::plot_data_heatmap(rflomics.MAE@metadata$MOFA_results, view = nam, factor = 1, features = 10, main = paste0(nam, " - Factor 1"), cellheight = 20, cellwidth = 12)$gtable
-  list_heat_views[[nam]][[2]]  <- MOFA2::plot_data_heatmap(rflomics.MAE@metadata$MOFA_results, view = nam, factor = 2, features = 10, main = paste0(nam, " - Factor 2"), cellheight = 20, cellwidth = 12)$gtable
+  list_heat_views[[nam]][[1]] <- MOFA2::plot_data_heatmap(MOFARes, view = nam, factor = 1, features = 10, main = paste0(nam, " - Factor 1"), cellheight = 20, cellwidth = 12)$gtable
+  list_heat_views[[nam]][[2]]  <- MOFA2::plot_data_heatmap(MOFARes, view = nam, factor = 2, features = 10, main = paste0(nam, " - Factor 2"), cellheight = 20, cellwidth = 12)$gtable
 }
 ```
 
@@ -98,3 +112,5 @@ res = lapply(list_heat_views, FUN = function(liste){
   gridExtra::grid.arrange(grobs = liste, ncol = 2)
 })
 ```
+
+`r if(is.null(FlomicsMultiAssay@metadata$MOFA_results))  {"\\end{comment}"}`
