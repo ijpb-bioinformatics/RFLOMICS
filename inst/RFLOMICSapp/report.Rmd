@@ -140,10 +140,7 @@ knitr::asis_output(out)
 
 `r if(length(FlomicsMultiAssay@metadata$omicList) == 0 ) {"\\end{comment}"}`
 
-
-`r if(is.null(FlomicsMultiAssay@metadata$MOFA_results)) {"\\begin{comment}"}`
-
-```{r , message=FALSE, warning=FALSE, echo=FALSE}
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval = !is.null(FlomicsMultiAssay@metadata$MOFA_results), hide = is.null(FlomicsMultiAssay@metadata$MOFA_results) }
 
   out <- NULL
   
@@ -152,10 +149,6 @@ knitr::asis_output(out)
 knitr::asis_output(out)
 
 ```
-
-`r if(is.null(FlomicsMultiAssay@metadata$MOFA_results))  {"\\end{comment}"}`
-
-
 
 # R Session
 
