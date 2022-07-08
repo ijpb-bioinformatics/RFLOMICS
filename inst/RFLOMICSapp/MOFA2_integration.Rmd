@@ -1,4 +1,4 @@
-`r if(is.null(FlomicsMultiAssay@metadata$MOFA_results)) {"\\begin{comment}"}`
+`r if(is.null(rflomics.MAE@metadata$MOFA_results)) {"\\begin{comment}"}`
 
 # MOFA Integration
 
@@ -113,4 +113,4 @@ res = lapply(list_heat_views, FUN = function(liste){
 })
 ```
 
-`r if(is.null(FlomicsMultiAssay@metadata$MOFA_results))  {"\\end{comment}"}`
+`r if(is.null(rflomics.MAE@metadata$MOFA_results))  {"\\end{comment}"}`
