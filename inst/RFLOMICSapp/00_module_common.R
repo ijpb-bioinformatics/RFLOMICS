@@ -52,7 +52,7 @@ RadioButtonsCondition <- function(input, output, session){
   # select factors for color PCA plot
   output$condColor <- renderUI({
 
-    condition <- c("groups",names(FlomicsMultiAssay@colData))
+    condition <- c("groups",names(session$userData$FlomicsMultiAssay@colData))
     radioButtons(inputId = session$ns("condColorSelect"),
                  label = 'Levels :',
                  choices = condition,
@@ -83,7 +83,7 @@ omics_data_analysis_summary <- function(input, output, session, rea.values){
     
     summaryProcess.df <- lapply(rea.values$datasetDiff, function(dataset){
       
-      c(paste(dataset, "filtred", sep = "."), dim(FlomicsMultiAssay[[dataset]]) - dim(FlomicsMultiAssay[[paste(dataset, "filtred", sep = ".")]]))
+      c(paste(dataset, "filtred", sep = "."), dim(session$userData$FlomicsMultiAssay[[dataset]]) - dim(session$userData$FlomicsMultiAssay[[paste(dataset, "filtred", sep = ".")]]))
     }) %>% purrr::reduce(rbind) %>% data.table()
     names(summaryProcess.df) <- c("dataset", "rm_entities", "rm_samples")
     
@@ -97,7 +97,7 @@ omics_data_analysis_summary <- function(input, output, session, rea.values){
   
   output$mofaPlot <- renderPlot({ 
 
-    MAE.filtred.Diff <- FlomicsMultiAssay[,, paste(rea.values$datasetDiff, "filtred", sep = ".")]
+    MAE.filtred.Diff <- session$userData$FlomicsMultiAssay[,, paste(rea.values$datasetDiff, "filtred", sep = ".")]
     MAE.MOFA <- MOFA2::create_mofa_from_MultiAssayExperiment(MAE.filtred.Diff)
     MOFA2::plot_data_overview(MAE.MOFA)
   })
@@ -106,10 +106,10 @@ omics_data_analysis_summary <- function(input, output, session, rea.values){
   
     
     summaryDiff.df <- lapply( paste(rea.values$datasetDiff, "filtred", sep = "."), function(dataset){
-      lapply(names(FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats), function(contrast){  
+      lapply(names(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats), function(contrast){  
         
-        c(dataset, contrast, paste0(FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats[[contrast]][["gDEup"]], "/", 
-                                    FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats[[contrast]][["gDEdown"]]) )
+        c(dataset, contrast, paste0(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats[[contrast]][["gDEup"]], "/", 
+                                    session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats[[contrast]][["gDEdown"]]) )
         
       }) %>% purrr::reduce(rbind)
       

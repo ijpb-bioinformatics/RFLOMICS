@@ -62,7 +62,7 @@ RFLOMICS::plotPCA(dataset.raw.SE, PCA="raw", PCs=c(1, 3), condition="groups")
 RFLOMICS::plotPCA(dataset.SE, PCA="norm", PCs=c(1, 3), condition="groups")
 ```
 
-`r if(is.null(dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]])) {"\\begin{comment}"}`
+`r if(is.null(dataset.SE@metadata[["DiffExpAnal"]][["Validcontrasts"]])) {"\\begin{comment}"}`
 
 ## Differential expression analysis
 
@@ -122,7 +122,7 @@ knitr::asis_output(out)
 
 ```
 
-`r if(is.null(dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]])) {"\\end{comment}"}`
+`r if(is.null(dataset.SE@metadata[["DiffExpAnal"]][["Validcontrasts"]])) {"\\end{comment}"}`
 
 
 

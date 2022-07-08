@@ -45,9 +45,8 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   local.rea.values <- reactiveValues(dataset.processed.SE = NULL, 
                                      dataset.raw.SE = NULL)
 
-  #local.rea.values$dataset.raw.SE <- session$userData$FlomicsMultiAssay[[dataset]]
   #### sample list  ####
-  output$selectSamplesUI <- renderUI( {
+  output$selectSamplesUI <- renderUI({
 
     sampleList <- colnames(session$userData$FlomicsMultiAssay[[dataset]])
       # sample list :
@@ -148,7 +147,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       box(title = length(names(session$userData$FlomicsMultiAssay[[dataset]])), 
           width = 6, background = "maroon", "nbr of entities before filtering"
       ),
-      box( title = length(names(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]])), 
+      box( title = length(names(local.rea.values$dataset.processed.SE)), 
            width = 6, background = "light-blue", "nbr of entities after filtering"
       )
     )
@@ -163,7 +162,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
         title = length(session$userData$FlomicsMultiAssay[[dataset]]@metadata$rowSums.zero), 
         width = 6, background = "fuchsia", "nbr of unexpressed genes"
       ),
-      box(title = length(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$FilteredFeatures), 
+      box(title = length(local.rea.values$dataset.processed.SE@metadata$FilteredFeatures), 
           width = 6, background = "purple", "nbr of low expressed genes"
       )
     )
@@ -186,6 +185,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   SE.processed <- process_data(SE = session$userData$FlomicsMultiAssay[[dataset]], dataset = dataset,
                                samples = colnames(session$userData$FlomicsMultiAssay[[dataset]]), param.list = param.list)
   session$userData$FlomicsMultiAssay@ExperimentList[[paste0(dataset, ".filtred")]] <- SE.processed
+  local.rea.values$dataset.processed.SE <- SE.processed
   
   SE.name <- paste0(dataset,".filtred")
 
@@ -308,11 +308,10 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
       }
 
-    # session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$DiffExpAnal       <- list()
-    # session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$CoExpAnal         <- list()
-    # session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$DiffExpEnrichAnal <- list()
-    # session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$CoExpEnrichAnal   <- list()
-
+    session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$DiffExpAnal       <- list()
+    session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$CoExpAnal         <- list()
+    session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$DiffExpEnrichAnal <- list()
+    session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$CoExpEnrichAnal   <- list()
 
     # new selected param
     param.list <- list()
@@ -333,6 +332,8 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
     session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]] <- processed.SE
     
+    local.rea.values$dataset.processed.SE <- processed.SE
+    
     ## add new SE with processed data
     SE.name <- paste0(dataset,".filtred")
     
@@ -352,46 +353,46 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     
     if(rea.values[[dataset]]$omicsType != "RNAseq") return()
     
-    Library_size_barplot.plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]])
+    Library_size_barplot.plot(local.rea.values$dataset.processed.SE)
   })
   
   # value (count/intensity) distribution (boxplot/density)
   output$norm.boxplot <- renderPlot({
-    if(rea.values[[dataset]]$omicsType != "RNAseq" && session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$transform_method == "none") return()
+    if(rea.values[[dataset]]$omicsType != "RNAseq" && local.rea.values$dataset.processed.SE@metadata$transform_method == "none") return()
     
-    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]], plot = "boxplot")
+    Data_Distribution_plot(local.rea.values$dataset.processed.SE, plot = "boxplot")
   })
   
   output$norm.CountDist <- renderPlot({
-    if(rea.values[[dataset]]$omicsType != "RNAseq" && session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$transform_method == "none") return()
+    if(rea.values[[dataset]]$omicsType != "RNAseq" && local.rea.values$dataset.processed.SE@metadata$transform_method == "none") return()
     
-    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]], plot = "density")
+    Data_Distribution_plot(local.rea.values$dataset.processed.SE, plot = "density")
   })
   
   # PCA plot
   output$norm.PCAcoord <- renderPlot({
     
-    if(rea.values[[dataset]]$omicsType != "RNAseq" && session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$transform_method == "none") return()
+    if(rea.values[[dataset]]$omicsType != "RNAseq" && local.rea.values$dataset.processed.SE@metadata$transform_method == "none") return()
     #session$userData$FlomicsMultiAssay[[dataset]] <-  RunPCA(session$userData$FlomicsMultiAssay[[dataset]])
     PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
     PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])
     condGroup <- input$`rawData-condColorSelect`[1]
 
-    RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]], PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
+    RFLOMICS::plotPCA(local.rea.values$dataset.processed.SE, PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
 
   })
   
 
     # 
     # # => display only for normalized RNAseq data
-    # if (session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]@metadata$omicType == "RNAseq"){
+    # if (local.rea.values$dataset.processed.SE@metadata$omicType == "RNAseq"){
     #   output$norm.PCAcoord <- renderPlot({
-    #     #session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]] <-  RunPCA(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]])
+    #     #local.rea.values$dataset.processed.SE <-  RunPCA(local.rea.values$dataset.processed.SE)
     #     PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
     #     PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])
     #     condGroup <- input$`rawData-condColorSelect`[1]
     #     
-    #     RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]], PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
+    #     RFLOMICS::plotPCA(local.rea.values$dataset.processed.SE, PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
     #   })
     # }
     # 
