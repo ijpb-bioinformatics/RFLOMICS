@@ -42,7 +42,7 @@ LoadOmicsDataUI <- function(id){
 
         fluidRow(
           uiOutput(ns("CompletenessUI")),
-          uiOutput(ns("UpsetMAE"))
+          uiOutput(ns("summaryMAE"))
         )
 
   )
@@ -456,7 +456,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     })
 
     # upset of all data
-    output$UpsetMAE <- renderUI({
+    output$summaryMAE <- renderUI({
 
       if (local.rea.values$plots == FALSE) return()
       #if (rea.values$loadData == FALSE) return()
@@ -467,7 +467,23 @@ LoadOmicsData <- function(input, output, session, rea.values){
         print(paste0("#    => upset plot..."))
 
         box(width = 6, status = "warning",
-            renderPlot( isolate({ upsetSamples(session$userData$FlomicsMultiAssay[ , , unlist(session$userData$FlomicsMultiAssay@metadata$omicList)]) })),
+            renderPlot( isolate({ 
+              
+              nb_entities <-lapply(session$userData$FlomicsMultiAssay@ExperimentList, function(SE){ dim(SE)[1] }) %>% unlist()
+              
+              data <- data.frame(nb_entities = nb_entities, assay = names(nb_entities)) %>% 
+                dplyr::full_join(data.frame(sampleMap(session$userData$FlomicsMultiAssay)), by="assay") %>%
+                dplyr::mutate(y.axis = paste0(assay, "\n", "n=", nb_entities))
+              
+              
+              ggplot(data, aes(x=primary, y=y.axis)) +
+                geom_tile(aes(fill = y.axis), colour = "grey50") + 
+                theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+                      panel.background = element_blank(), axis.ticks = element_blank(), legend.position="none",
+                      axis.text.x = element_blank()) + 
+                xlab(paste0("Samples (n=", length(unique(sampleMap(session$userData$FlomicsMultiAssay)$primary)), ")")) +
+                ylab("")
+              })),
             hr(),
             tags$i("**discription**")
         )
