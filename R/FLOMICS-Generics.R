@@ -107,3 +107,9 @@ methods::setGeneric(
   def = function( object, ... ){standardGeneric("run_MOFA_analysis")}
 
 )
+
+methods::setGeneric(
+  name="Datasets_overview_plot",
+  def = function( object, ... ){standardGeneric("Datasets_overview_plot")}
+  
+)

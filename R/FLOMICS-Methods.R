@@ -110,6 +110,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 #'  }
 #'  Completed design and at least on biological and one batch factors are required for using RFLOMICS workflow.
 #' @param An object of class \link{MultiAssayExperiment-class}
+#' @param sampleList list of samples to check.
 #' @return a named list of two objects
 #' \itemize{
 #' \item{"count:"}{ a data.frame with the number of each possible combinations of levels for all factors.}
@@ -141,47 +142,36 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 
 methods::setMethod(f="CheckExpDesignCompleteness",
           signature="MultiAssayExperiment",
-          definition <- function(object, colnames=NULL){
+          definition <- function(object, sampleList=NULL){
 
+            
+            
             Design <- object@metadata$design
 
             # output list
             output <- list()
+            output[["error"]] <- NULL
+            output[["warning"]] <- NULL
+            
 
             # check presence of bio factors
             if (! table(Design@Factors.Type)["Bio"] %in% 1:3){
 
-              stop("ERROR : no bio factor ! or nbr of bio factors exeed 3!")
+              output[["error"]] <- "ERROR : no bio factor ! or nbr of bio factors exeed 3!"
 
-              # message <- "noBio"
-              #
-              # group_count  <- Design@List.Factors[Design@Factors.Type == "batch"] %>% as.data.frame() %>% table() %>% as.data.frame()
-              # names(group_count)[names(group_count) == "Freq"] <- "Count"
-              # output[["count"]]   <- group_count
             }
             if (table(Design@Factors.Type)["batch"] == 0){
 
-              stop("ERROR : no replicate!")
+              output[["error"]] <- "ERROR : no replicate!"
             }
 
             # count occurence of bio conditions
-            if(is.null(colnames)){
-
-              ExpDesign <- Design@ExpDesign
+            if(is.null(sampleList)){
+              tmp <- sampleMap(object) %>% data.frame()
+              sampleList <- lapply(unique(tmp$assay), function(dataset){filter(tmp, assay == dataset)$primary }) %>% 
+                purrr::reduce(intersect)
             }
-            else{
-
-              ExpDesign <- dplyr::filter(Design@ExpDesign, rownames(Design@ExpDesign) %in% colnames)
-            }
-
-
-            # bio.fact.names <- names(ExpDesign)
-            #
-            # BioFact.levels <- sapply(names(ExpDesign), function(x){
-            #
-            #   levels(Design@List.Factors[[x]])
-            # })
-
+            ExpDesign <- dplyr::filter(Design@ExpDesign, rownames(Design@ExpDesign) %in% sampleList)
 
             dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
               relevel(as.factor(ExpDesign[[i]]), ref=levels(Design@List.Factors[[i]])[1])
@@ -197,9 +187,7 @@ methods::setMethod(f="CheckExpDesignCompleteness",
             # check if design is balanced
             # check nbr of replicats
 
-            output[["error"]] <- NULL
-            output[["warning"]] <- NULL
-
+           
             if(min(group_count$Count) == 0){
               message <- "ERROR : The experimental design is not complete."
               output[["error"]] <- message
@@ -208,15 +196,16 @@ methods::setMethod(f="CheckExpDesignCompleteness",
               message <- "WARNING : The experimental design is complete but not balanced."
               output[["warning"]] <- message
             }
-            else if(max(group_count$Count) < 3){
-              message <- "WARNING : 3 biological replicates are needed."
-              output[["warning"]] <- message
+            else if(max(group_count$Count) < 2){
+              message <- "ERROR : You need at least 2 biological replicates."
+              output[["error"]] <- message
             }
             else{
               message <- "The experimental design is complete and balanced."
             }
 
             #plot
+            print(group_count)
             output[["plot"]] <- plotExperimentalDesign(group_count, message=message)
 
             return(output)
@@ -225,6 +214,39 @@ methods::setMethod(f="CheckExpDesignCompleteness",
 # print output
 # warining -> warning
 # false -> stop
+
+
+
+#' @title Datasets overview plot
+#' @description This function plot overview of loaded datasets aligned per sample (n=number of entities (genes/metabolites/proteins); k=number of samples) 
+#' @param An object of class \link{MultiAssayExperiment-class}
+#' @exportMethod Datasets_overview_plot
+#' @return plot
+
+methods::setMethod(f="Datasets_overview_plot",
+                   signature="MultiAssayExperiment",
+                   definition <- function(object){
+  
+  if (class(rflomics.MAE) != "MultiAssayExperiment") stop("ERROR : object is not MultiAssayExperiment class.")
+  if (length(object@ExperimentList) == 0) stop("ERROR : object@ExperimentList is NULL")
+
+  nb_entities <-lapply(object@ExperimentList, function(SE){ dim(SE)[1] }) %>% unlist()
+  
+  data <- data.frame(nb_entities = nb_entities, assay = names(nb_entities)) %>% 
+    dplyr::full_join(data.frame(sampleMap(object)), by="assay") %>%
+    dplyr::mutate(y.axis = paste0(assay, "\n", "n=", nb_entities))
+  
+  p <- ggplot(data, aes(x=primary, y=y.axis)) +
+    geom_tile(aes(fill = y.axis), colour = "grey50") + 
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          panel.background = element_blank(), axis.ticks = element_blank(), legend.position="none",
+          axis.text.x = element_blank()) + 
+    xlab(paste0("Samples (k=", length(unique(sampleMap(object)$primary)), ")")) +
+    ylab("")
+  
+  print(p)
+
+})
 
 
 ###### METHOD which generate the contrasts expression
