@@ -1,14 +1,9 @@
-pandoc: 2.11.4
-pkgdown: 1.6.1.9001
-pkgdown_sha: 632889250b23aae88d6b3adcc0afd48160cb17ca
+pandoc: 2.14.0.3
+pkgdown: 2.0.5
+pkgdown_sha: ~
 articles:
-  RFLOMICS-benchmark-coseq: RFLOMICS-benchmark-coseq.html
-  RFLOMICS-command-lines: RFLOMICS-command-lines.html
-  RFLOMICS-contrast: RFLOMICS-contrast.html
-  RFLOMICS-data-management: RFLOMICS-data-management.html
+  RFLOMICS-configure-cluster-access: RFLOMICS-configure-cluster-access.html
   RFLOMICS-input-data: RFLOMICS-input-data.html
-  RFLOMICS-install: RFLOMICS-install.html
-  RFLOMICS-output-results: RFLOMICS-output-results.html
   RFLOMICS: RFLOMICS.html
-last_built: 2021-10-12T14:34Z
+last_built: 2022-07-04T08:42Z
 
