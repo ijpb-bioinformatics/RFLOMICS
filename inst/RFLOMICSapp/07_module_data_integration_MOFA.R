@@ -227,6 +227,7 @@ MOFA_setting <- function(input, output, session, rea.values){
         tabsetPanel(
           
           ###
+          # ---- Tab panel Factors Overview ----
           tabPanel("Overview", 
                    column(6,
                           renderPlot(MOFA2::plot_data_overview(local.rea.values$resMOFA) + ggtitle("Data Overview"))),
@@ -249,10 +250,12 @@ MOFA_setting <- function(input, output, session, rea.values){
                    # )
           ),
           ### 
+          # ---- Tab panel Factors Correlation ----
           tabPanel("Factors Correlation", 
                    renderPlot(MOFA2::plot_factor_cor(local.rea.values$resMOFA))
           ),
           ### 
+          # ---- Tab panel Explained Variance ----
           tabPanel("Explained Variance", 
                    fluidRow(
                      column(6, renderPlot({
@@ -262,6 +265,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                      column(6, renderPlot(MOFA2::plot_variance_explained(local.rea.values$resMOFA, x = "view", y = "factor")+ ggtitle("Explained variance by factors and omic data")))
                    )),
           ### 
+          # ---- Tab panel Weights Plot ----
           tabPanel("Weights Plot", 
                    fluidRow(
                      column(3, sliderInput(inputId = session$ns("WeightsPlot_Factors_select"),
@@ -305,6 +309,7 @@ MOFA_setting <- function(input, output, session, rea.values){
           ),
           
           ### 
+          # ---- Tab panel Weights table ----
           tabPanel("Weights table",
                    
                    fluidRow(
@@ -327,6 +332,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                                                                         lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All"))))
                             }))
                    )),
+          # ---- Tab panel Factor Plots ----
           tabPanel("Factor Plots",
                    
                    fluidRow(
@@ -388,6 +394,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                             })
                      ))
           ),
+          # ---- Tab panel Heatmap ----
         tabPanel("Heatmap",
                    
                    fluidRow(# buttons - choices for heatmap
