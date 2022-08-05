@@ -322,7 +322,8 @@ MOFA_setting <- function(input, output, session, rea.values){
                    fluidRow(
                      column(11, 
                             DT::renderDataTable({
-                              resTable <- MOFA2::get_weights(local.rea.values$resMOFA, views = "all", factors = input$Factors_select, abs = FALSE, scale = FALSE, as.data.frame = TRUE)
+                              resTable <- MOFA2::get_weights(local.rea.values$resMOFA, views = "all", factors = min(input$Factors_select):max(input$Factors_select),
+                                                             abs = FALSE, scale = FALSE, as.data.frame = TRUE)
                               
                               resTable %>% DT::datatable(extensions = 'Buttons',
                                                          options = list(dom = 'lfrtipB',
@@ -330,7 +331,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                                                                         pageLength = 10,
                                                                         buttons = c('csv', 'excel'),
                                                                         lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All"))))
-                            }))
+                            }, server = FALSE))
                    )),
           # ---- Tab panel Factor Plots ----
           tabPanel("Factor Plots",
