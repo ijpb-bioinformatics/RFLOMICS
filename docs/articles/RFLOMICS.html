@@ -116,22 +116,22 @@
 <ul>
 <li>Run Docker</li>
 </ul>
-<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-it</span> <span class="at">-p</span> 3838:3838 <span class="at">-v</span> <span class="va">${HOME}</span>:/root <span class="at">--name</span><span class="op">=</span><span class="st">'rflomics'</span> <span class="at">--cpus</span> 8 rflomics</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-it</span> <span class="at">-p</span> 3838:3838 <span class="at">-v</span> <span class="va">${HOME}</span>:/root <span class="at">--name</span><span class="op">=</span><span class="st">'rflomics'</span> <span class="at">--cpus</span> 4 rflomics</span></code></pre></div>
 <ul>
 <li>Open a web navigator and paste this url:</li>
 </ul>
 <div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">http://0.0.0.0:3838</span></span></code></pre></div>
-<p>In the left side of interface the different tab menu will appear as the analysis progresses to guide the user.</p>
+<p>On the left side of interface, the different tab menu will appear as the analysis progresses to guide the user.</p>
 </div>
 <div class="section level2">
 <h2 id="load-data">2. Load Data<a class="anchor" aria-label="anchor" href="#load-data"></a>
 </h2>
-<p>We start by set project name (its mandatory). Then we load the experimental design and the different omics datasets.</p>
+<p>We start by setting a project name (it is mandatory). Then we load the experimental design and the different omics datasets.</p>
 <div class="section level3">
 <h3 id="dataset-example-description">2-1 Dataset example description:<a class="anchor" aria-label="anchor" href="#dataset-example-description"></a>
 </h3>
 <p style="text-align: justify;">
-Data that will be used for this vignette have been provided by Pr. Loic Rajjou and Gwendal Cueff. They are included in the inst/ExampleFiles/ecoseed directory of the package. Briefly, A. thaliana’s transcriptom, metabolom and proteom have been obtained in the context of the study of seed germination and vigor. In particular, the author were interested by deciphering key entities involved in response to environmental stresses (on the mother plant): influence of temperature (high, medium and low) and imbibition stage (Dry: DI, early imbibition: EI and late imbibition: LI). see(<a href="https://www.uibk.ac.at/botany/ecoseed/home/" class="external-link uri">https://www.uibk.ac.at/botany/ecoseed/home/</a>)
+The data used for this vignette have been provided by Pr. Loic Rajjou and Gwendal Cueff. They are included in the inst/ExampleFiles/ecoseed directory of the package. Briefly, A. thaliana’s transcriptome, metabolome and proteome have been obtained in the context of the study of seed germination and vigor. In particular, the authors were interested in deciphering key entities involved in response to environmental stresses (on the mother plant): influences of temperature (high, medium and low) and imbibition stage (Dry: DI, early imbibition: EI and late imbibition: LI). See(<a href="https://www.uibk.ac.at/botany/ecoseed/home/" class="external-link uri">https://www.uibk.ac.at/botany/ecoseed/home/</a>)
 </p>
 </div>
 <div class="section level3">
@@ -142,25 +142,23 @@ Data that will be used for this vignette have been provided by Pr. Loic Rajjou a
 <li><p><em>It is required to have minimum 1 biological factor (maximum 3 biological factors) and 1 batch factor. The order of the columns does not matter.</em></p></li>
 <li><p><em>It possible to exclude samples from design. These samples will be excluded from the analysis even if they are present in the omics dataset matrix.</em></p></li>
 </ul>
-<div class="figure">
-<img src="Images/Capture_Load-Data.jpg" style="width:80.0%" alt=""><p class="caption">interface capture</p>
-</div>
 </div>
 <div class="section level3">
 <h3 id="load-omics-data">2-3 Load Omics data<a class="anchor" aria-label="anchor" href="#load-omics-data"></a>
 </h3>
 <p style="text-align: justify;">
 </p>
-<p>For this tutorial we provide 3 datasets : RNAseq data (read counts), proteomics data (abundance of proteins), and metabolomics data (intensity of metabolites) (see link : vignette input). We must precise for each dataset its type of omics. We can give a suitable names to our dataset. By Default, they will be called respectively (set1, set2, set3).</p>
-As soon as data was loaded the <strong>RFlomics MultiAssayExperiment</strong> object is created (see link : data management). The upset representation provide detail about sample intersection of different datasets.
+<p>For this tutorial we provide 3 datasets: RNAseq data (read counts), proteomics data (abundance of proteins), and metabolomics data (intensity of metabolites) (see link : vignette input). We must specify for each dataset its type of omics. We can give a suitable name to our dataset. By Default, they will be called respectively (set1, set2, set3).</p>
+As soon as the data are loaded the <strong>RFlomics MultiAssayExperiment</strong> object is created (see link : data management). The upset representation provides details about sample intersection of different datasets.
 
+<p><img src="Images/Capture_Load-Data.png" style="width:80.0%"></p>
 </div>
 <div class="section level3">
 <h3 id="completeness-check">2-4 Completeness check<a class="anchor" aria-label="anchor" href="#completeness-check"></a>
 </h3>
 <p style="text-align: justify;">
 </p>
-<p>The design must be complete and as possible balanced. A <strong>Complete design (mandatory)</strong> mean that all possible combinations of biological factor’s level (called groups) where presents. A <strong>Balanced design (recommended)</strong> has an equal number of observations (replicates) for all groups.</p>
+<p>The design must be complete and as possible balanced. A <strong>Complete design (mandatory)</strong> mean that all possible combinations of biological factor’s level (called groups) are presents. A <strong>Balanced design (recommended)</strong> has an equal number of observations (replicates) for all groups.</p>
 This constraint is checked and represented as graph (each square represent 1 group and each color level indicate the number of observations).
 
 <p><img src="Images/completBalanced.png" width="50%"><img src="Images/completNonBalanced.png" width="50%"></p>
@@ -171,34 +169,32 @@ This constraint is checked and represented as graph (each square represent 1 gro
 </h2>
 <p style="text-align: justify;">
 </p>
-<p>Interface provides models written from the simplest one to the most complete one. Only the two orders interaction terms between the biological factors will appear. Batch factor will never appear in interaction terms. In our case we choose the complete model.</p>
+<p>The interface provides models written from the simplest one to the most complete one. Only the second orders interaction terms between the biological factors will appear. Batch factor will never appear in interaction terms. In our case we choose the complete model.</p>
 <p>All ‘a priori’ hypothesis (contrast) calculated from the chosen model are displayed (see link vignette contrast). The user must select those that correspond to the biological issues.</p>
-<p>In our case we are studying the effect of temperature on seed germination (transition from the state of dormancy to the state of germination vigor). For that we select 3 average contrasts (see image) :</p>
+<p>In our case we are studying the effect of temperature on seed germination (transition from the state of dormancy to the state of germination vigor). For that we select 3 average contrasts (see image):</p>
 This statistical framework will be applied on all loaded datasets.
 
-<div class="figure">
-<img src="Images/Capture_Experimental-Design.jpg" style="width:80.0%" alt=""><p class="caption">interface capture</p>
-</div>
+<p><img src="Images/Capture_Experimental-Design.png" style="width:80.0%"></p>
 </div>
 <div class="section level2">
 <h2 id="omics-data-analysis">4. Omics data analysis<a class="anchor" aria-label="anchor" href="#omics-data-analysis"></a>
 </h2>
-<p>3 Item menus appear in side bar menu that corresponds to the 3 loaded omics types.</p>
-<p>For each dataset, different steps of data analysis are proposed as a tab panels. This analysis steps must be performed sequentially. But we can switch between datasets. However, you cannot perform a new task until the previous one is completed. It will have a progress bar that indicates that.</p>
+<p>Once the contrasts are chosen, 3 Item menus appear in the side bar menu that correspond to the 3 loaded omics types.</p>
+<p>For each dataset, different steps of data analysis are proposed as a tab panel. These analysis steps must be performed sequentially. It is possible to switch between datasets. However, you cannot perform a new task until the previous one is completed. A progress bar will be display indicating the progress status.</p>
 <div class="section level3">
 <h3 id="data-exploratory">4-1 Data Exploratory<a class="anchor" aria-label="anchor" href="#data-exploratory"></a>
 </h3>
-<p>In this tab panel we access a data quality and we perform the appropriate data filtering and processing according to the type of omics.</p>
+<p>In this tab panel we access a data quality control screen and we perform the appropriate data filtering and processing according to the type of omics.</p>
 <p>By default, features with 0 count in all conditions are removed from the data.</p>
-<p>Specifically for each data we have possibility to exclude samples or to select a subset of samples to analyze, provided the completeness condition is met.</p>
+<p>Specifically for each data we have hte possibility to exclude samples or to select a subset of samples to analyze, provided the completeness condition is met.</p>
 <p>The effect of data filtering or sample removing step can be explored thanks to many QC graphs. For each QC, a graph is build on each raw data and filtered data to allow the comparison.</p>
 <div class="section level4">
 <h4 id="rnaseq-data">RNAseq data<a class="anchor" aria-label="anchor" href="#rnaseq-data"></a>
 </h4>
-<p>For RNAseq data, low expressed genes are filtered such that only genes whose cpm expression is greater than <strong>“CPM cutoff”</strong> in x samples are kept. The value of x is given by <strong>“Filtering strategy”</strong> (NbOfsample_over_cpm &lt;= NbConditions). By default the data are filtered based on NbCondition strategy avec with CPM cutoff equel to 5. In this example, there are 9 conditions. So, the number of genes with a CPM less than 5 in at least 9 samples are removed.</p>
+<p>For RNAseq data, low expressed genes are filtered such that only genes whose cpm expression is greater than <strong>“CPM cutoff”</strong> in x samples are kept. The value of x is given by <strong>“Filtering strategy”</strong> (NbOfsample_over_cpm &lt;= NbConditions). By default the data are filtered based on NbCondition strategy with CPM cutoff equal to 5. In this example, there are 9 conditions. So, the number of genes with a CPM less than 5 in at least 9 samples are removed.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># geneToKeep &lt;- counts[rowSums(edgeR::cpm(counts) &gt;= CPM_Cutoff) &gt;= x, ]</span></span></code></pre></div>
-<p>To correct for differences in sequencing depths (library size), RFlomics propose one method for normalization, <strong>“TMM method”</strong> from edgeR package.</p>
+<p>To correct for differences in sequencing depths (library size), RFlomics proposes one method for normalization, <strong>“TMM method”</strong> from edgeR package.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># dge &lt;- edgeR::DGEList(counts=counts, group=groups)</span></span>
 <span><span class="co"># dge &lt;- edgeR::calcNormFactors(dge, method="TMM")</span></span></code></pre></div>
@@ -208,16 +204,12 @@ This statistical framework will be applied on all loaded datasets.
 <li>Data Summary:</li>
 <li>Distribution:</li>
 <li>Distribution density</li>
-<li>Principal component analysis (1/2)</li>
-<li>Principal component analysis (2/2)</li>
+<li>Principal component analysis</li>
 </ul>
+<p><img src="Images/capture_data_process_rnaseq.png" style="width:80.0%"></p>
 </div>
 <div class="section level4">
-<h4 id="proteomic-data">Proteomic data<a class="anchor" aria-label="anchor" href="#proteomic-data"></a>
-</h4>
-</div>
-<div class="section level4">
-<h4 id="metabolomic-data">Metabolomic data<a class="anchor" aria-label="anchor" href="#metabolomic-data"></a>
+<h4 id="proteomics-or-metabolomics-data">Proteomics or Metabolomics data<a class="anchor" aria-label="anchor" href="#proteomics-or-metabolomics-data"></a>
 </h4>
 </div>
 </div>
@@ -227,13 +219,13 @@ This statistical framework will be applied on all loaded datasets.
 <p>In this tab panel, we can run the differential expression analysis. The analysis is run by contrast.<br>
 For RNAseq data, the <strong>glmFit()</strong> function from the <strong>edgeR</strong> package is used whereas for proteomic and metabolomic data, the <strong>lmFit()</strong> function from <strong>limma</strong> packages is used. The ability to run analysis on a cluster is offered by sliding the cluster button (see RFLOMICS-configure-cluster-access vignette)</p>
 <p>Results will appear in two components: a scrolling menu will give the results of the analysis by contrat and, at the bottom of the panel, the intersecting sets of the lists of DEG is given thanks to the <strong>UpSetR()</strong> function.</p>
-<p>Each results has to bee validate:</p>
+<p>Each results has to bee validated:</p>
 <ul>
 <li>You <strong>have to</strong> to check the Pvalue distribution for each contrast and validate it (<strong>ok checkbox</strong>).
 <ul>
 <li>If the distribution is uniform: it is ok. a few genes are DE and the FDR will find them.</li>
-<li>If the distribution as a peak near 0 and then is uniform: it is also ok. The higher is the peak, the higher is the number of DE genes. FDR correction can be applied.</li>
-<li>If the distribution has 2 peaks one near 0 and one near 1 or just one peak near 1, it is not a good news ! You have to understand what’s happened.</li>
+<li>If the distribution as a peak near 0 and then is uniform: it is also ok. The higher the peak, the higher the number of DE genes. FDR correction can be applied.</li>
+<li>If the distribution has 2 peaks one near 0 and one near 1 or just one peak near 1, it is not a good news! You have to understand what’s happened.</li>
 </ul>
 </li>
 </ul>
@@ -241,44 +233,104 @@ For RNAseq data, the <strong>glmFit()</strong> function from the <strong>edgeR</
 <embed src="Images/Pvalue_distrib.pdf" style="width:80.0%"></embed><p class="caption">Pvalue-Distrib</p>
 </div>
 <ul>
-<li><p>You can filter diferentially expressed genes/proeins/metabolites either by fold change (<strong>|FC|</strong>) or by False Discovery Rate (BH) cut-off. Graphs will be automatically updated.</p></li>
-<li><p>You have to <strong>validate</strong> to save the cut-off thresholds but also the contrast’s result selection and pass to the co-expression analysis or to the annotation enrichment step.</p></li>
+<li><p>You can filter differentially expressed genes/proteins/metabolites either by fold change (<strong>|FC|</strong>) or by False Discovery Rate (BH) cut-off. Graphs will be automatically updated.</p></li>
+<li><p>You have to <strong>validate</strong> to save the cut-off thresholds but also the contrasts’ result selection and pass to the co-expression analysis or to the annotation enrichment step.</p></li>
 </ul>
+<p><img src="Images/capture_diff_analysis.png" style="width:80.0%"></p>
 </div>
 <div class="section level3">
 <h3 id="coexpression-analysis">4-3 Coexpression analysis<a class="anchor" aria-label="anchor" href="#coexpression-analysis"></a>
 </h3>
 <ul>
-<li><p>In this tab panel, choice is given to merge (<strong>union</strong>) or intersect (<strong>intersection</strong>) the list of diferentially expressed genes/proeins/metabolites associated to contrasts.</p></li>
+<li><p>In this tab panel, choice is given to merge (<strong>union</strong>) or intersect (<strong>intersection</strong>) the lists of differentially expressed genes/proteins/metabolites associated to contrasts.</p></li>
 <li>
-<p>Co-expression analysis is done thanks to the <strong>coseq</strong> package with a set of optimal parameters.</p>
+<p>Co-expression analysis is done using to the <strong>coseq</strong> package with a set of optimal parameters.</p>
 <ul>
-<li>For <strong>RNAseq</strong>, data transformation method is set to the <strong>arcsin</strong> function and normalization method to <strong>TMM</strong>. No scale is done for this data. <strong>gaussian mixture model</strong> is used to decipher the different profils of gene expression with a set of parameters to estimate fixed to (Gaussian_pK_Lk_Ck).</li>
-<li>For <strong>proteomics/metabolomics</strong> data, scaling will be done by proteins/metabolites. Another sets of parameters estimation is also proposed for the modeling of gene expression profile: (Gaussian_pK_Lk_Bk). It has to be used, if the other one doesn’t fit.</li>
+<li>For <strong>RNAseq</strong>, data transformation method is set to the <strong>arcsin</strong> function and normalization method to <strong>TMM</strong>. No scaling is done for these data. <strong>gaussian mixture model</strong> is used to decipher the different profiles of gene expression with a set of parameters to estimate fixed to (Gaussian_pK_Lk_Ck).</li>
+<li>For <strong>proteomics/metabolomics</strong> data, scaling is done on proteins/metabolites. Another sets of parameters estimation is also proposed for the modeling of gene expression profile: (Gaussian_pK_Lk_Bk). It has to be used, if the other one doesn’t fit.</li>
 </ul>
 </li>
 </ul>
-<p>The number of technical replicates to perform (<strong>iter</strong>) for each <strong>K</strong> which is the number of expression’s profile into which the DEG have to be cut, can be first set to 2 to precise the range of K and then put to a minimum of 20 replicates per K.</p>
+<p>The number of technical replicates to perform (<strong>iter</strong>) for each <strong>K</strong> which is the number of expressions’ profile into which the DEG have to be cut, can be first set to 2 to precise the range of K and then put to a minimum of 20 replicates per K.</p>
 <p>The ability to run the clustering analysis on a cluster is offered by sliding the Cluster button (see Rflomics_configure-cluster-access).</p>
 <ul>
 <li>
 <p>Results description (see <a href="https://www.bioconductor.org/packages/release/bioc/vignettes/coseq/inst/doc/coseq.html" class="external-link">CoSeq</a>)</p>
 <ul>
-<li><p>Results can be explored with severals plots proposed by <strong>coseq</strong>. The ICL graph has been slightly modified to show all the range of the ICL values for a given K.</p></li>
+<li><p>Results can be explored with several plots proposed by <strong>coseq</strong>. The ICL graph has been slightly modified to show all the range of the ICL values for a given K.</p></li>
 <li><p>A table of jobs summary is also given. It groups error messages by K.</p></li>
 </ul>
 </li>
 </ul>
+<p><img src="Images/capture_coexpression.png" style="width:80.0%"></p>
 </div>
 <div class="section level3">
 <h3 id="annotation-and-enrichment-analysis">4-4 Annotation and Enrichment analysis<a class="anchor" aria-label="anchor" href="#annotation-and-enrichment-analysis"></a>
 </h3>
-<p>Then we select a lists of DGEs and clusters to annotate. By default the annotation whill be done on all setected DGE lists and clusters.</p>
+<p>Then we select a lists of DGEs and clusters to annotate. By default the annotation will be done on all selected DGE lists and clusters.</p>
+<p><img src="Images/capture_annotation.png" style="width:80.0%"></p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="integration">5. Integration:<a class="anchor" aria-label="anchor" href="#integration"></a>
+<h2 id="integration">5. Integration<a class="anchor" aria-label="anchor" href="#integration"></a>
 </h2>
+<p style="text-align: justify;">
+Once at least two lists of DE genes are validated in the differental analysis tabs, the Integration step will appear in the side bar menu. Three sub menus are available.
+</p>
+<div class="section level3">
+<h3 id="dataset-analysis-summary">5-1 Dataset analysis summary<a class="anchor" aria-label="anchor" href="#dataset-analysis-summary"></a>
+</h3>
+<p style="text-align: justify;">
+This panel summarizes the effects of the filtering steps on the selected datasets and the results of the differential anlayses. The first row shows how many samples and entities are left in each table. The integration will be performed on these datasets. The second row shows the number of DE entities for each selected contrast and for each table, with the distinction between up-regulated and down-regulated entities.
+</p>
+</div>
+<div class="section level3">
+<h3 id="mofa">5-2 MOFA<a class="anchor" aria-label="anchor" href="#mofa"></a>
+</h3>
+<p style="text-align: justify;">
+This integration analysis is performed using the <strong>MOFA2</strong> R-package. It is an unsupervised method that searches for latent factors to decompose the variance of the data, similarly to a PCA, but applied to a multi-dataset situation. The interpretation of the results is also very similar to those of a PCA: the most interesting factors are the one explaining more variance, whether it’s on several dataset or just one table. It also gives weights to the features of each table, for each factor. This is interesting in case a factor can be <strong>a posteriori</strong> linked to a covariate (in our case, the temperature seems linked to the first factor, the features used to build this factor are to be considered very relevant in the analysis).
+</p>
+<div class="figure">
+<img src="Images/MOFA_temperaturelinked.png" style="width:80.0%" alt=""><p class="caption">MOFA results on the ecoseed datasets</p>
+</div>
+<p style="text-align: justify;">
+MOFA allows for an unbalanced design, so it can be used even if some samples were deleted in the previous steps.
+</p>
+<p style="text-align: justify;">
+The user can select which tables they want to integrate, then the lists of contrasts they want to select the DE entities from. The union or the intersection of these lists can then be used for the analysis.
+</p>
+<p style="text-align: justify;">
+As of now, the function used in this step only takes gaussian data. The RNASeq data, given in the form of counts, have to be transformed to fit the process. This is done with the <strong>voom</strong> transformation from the <strong>limma</strong> R package.
+</p>
+<p style="text-align: justify;">
+As recommended by MOFA FAQ, batch effects are removed before applying the function, using <strong>removebatcheffect</strong> from <strong>limma</strong>. See <a href="https://biofam.github.io/MOFA2/faq.html" class="external-link">MOFA-FAQ</a>. For now, only two batch effects can be removed.
+</p>
+<p style="text-align: justify;">
+The user can chose to scale or not each tables, with the scale views argument, then set the number of factors to be computed and finally the maximum iterations for the MOFA run. We recommend that the user do not change the number of iterations.
+</p>
+<p style="text-align: justify;">
+Once everything is set, you can run the analysis by clicking on the run button. Several figure are provided by the interface once the analysis is done:
+</p>
+<ul>
+<li>Overview: gives an overview of the data, with the number of samples and the number of entities selected for the analysis. This can be a good step to check if the number of features in each table is in the same range.</li>
+<li>Factors Correlation: this is an important graph to check the validity of the results. It presents the correlation between all factors. If a correlation is greater than 0.5 (except for the diagonal), then the results cannot be trusted. It can be because of an inadequate normalization step. You can also check here if the number of factors you asked for has been computed. In some cases, when the user asks for a two great number of factors, MOFA removes the factors that explain 0% of variance in all tables.</li>
+<li>Explained variance: in this panel, two graphs are displayed
+<ul>
+<li>The first one shows the total explained variance for each table.</li>
+<li>The second one is the decomposition of the first for each factors. You can see here which factors are specific to a datatable and which are using features from all the tables.</li>
+</ul>
+</li>
+<li>Weights plot and Weights table: can be used to check the important features used to build each factor.</li>
+<li>Factor plot: in this panel, the samples are displayed according to their factor score. Several options are offered to the user to modify the graph and check for any association between a factor and a covariate.</li>
+<li>Heatmap: Can only be displayed for each dataset and each factor. Allow to represent the original data or the factor-weight combination (denoise set to TRUE) of the most important features (weight wise) used to built a factor. Metadata can be used to annotate the heatamp.</li>
+<li>Network: not available yet!</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="mixomics">5-3 MixOmics<a class="anchor" aria-label="anchor" href="#mixomics"></a>
+</h3>
+<p>Work in progress!</p>
+</div>
 </div>
   </div>
 

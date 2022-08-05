@@ -82,7 +82,14 @@
   </ul>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="https://forgemia.inra.fr/flomics/rflomics" class="external-link">
+    <span class="fa fa-gitlab"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -92,7 +99,7 @@
 
       
 
-      </header><script src="RFLOMICS-install_files/header-attrs-2.11/header-attrs.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>RFLOMICS-install</h1>
@@ -107,29 +114,28 @@
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">RFLOMICS</span><span class="op">)</span></code></pre></div>
-<div id="what-is-clutsermq" class="section level1">
-<h1 class="hasAnchor">
-<a href="#what-is-clutsermq" class="anchor" aria-hidden="true"></a>What is clutsermq</h1>
-<p><a href="https://github.com/mschubert/clustermq" class="external-link">clustermq</a> is a R package…</p>
+<div class="section level2">
+<h2 id="what-is-clustermq">What is clustermq ?<a class="anchor" aria-label="anchor" href="#what-is-clustermq"></a>
+</h2>
+<p><a href="https://github.com/mschubert/clustermq" class="external-link">clustermq</a> is a R package which allow to send functions calls as jobs on a computing cluster with a minimal interface provided by the Q function. This package is used (optionnaly) in RFLOMICS to run differential expression and co-expression analysis on a computing cluster. To turn on this option, you have to configure your environment as explained below.</p>
 </div>
-<div id="clustermq-configuration" class="section level1">
-<h1 class="hasAnchor">
-<a href="#clustermq-configuration" class="anchor" aria-hidden="true"></a>clustermq configuration</h1>
+<div class="section level2">
+<h2 id="clustermq-configuration">clustermq configuration<a class="anchor" aria-label="anchor" href="#clustermq-configuration"></a>
+</h2>
 <ul>
-<li>Create bioinfo <a href="http://bioinfo.genotoul.fr/index.php/ask-for/create-an-account-2/" class="external-link">account</a>
-</li>
+<li>Create an <a href="http://bioinfo.genotoul.fr/index.php/ask-for/create-an-account-2/" class="external-link">account</a> on the genotoul bioinformatic platform.</li>
 <li>Clustermq is installed on R 4.1.1 version. Thus egdeR and Coseq packages.</li>
 </ul>
-<div id="set-up-ssh-keys-for-password-less-login-on-genotoul" class="section level2">
-<h2 class="hasAnchor">
-<a href="#set-up-ssh-keys-for-password-less-login-on-genotoul" class="anchor" aria-hidden="true"></a>Set up SSH keys for password-less login on Genotoul</h2>
+<div class="section level3">
+<h3 id="set-up-ssh-keys-for-password-less-login-on-genotoul">Set up SSH keys for password-less login on Genotoul<a class="anchor" aria-label="anchor" href="#set-up-ssh-keys-for-password-less-login-on-genotoul"></a>
+</h3>
 <ol style="list-style-type: decimal">
 <li>Generate a ssh key in local</li>
 </ol>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh-keygen</span> <span class="at">-t</span> rsa</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh-keygen</span> -t rsa</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;</span>!-- <span class="ex">Enter</span> file in which to save the key <span class="er">(</span><span class="ex">/home/dcharif/.ssh/id_rsa</span><span class="kw">)</span><span class="bu">:</span> <span class="at">--</span><span class="op">&gt;</span></span></code></pre></div>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;</span>!<span class="ex">--</span> Enter file in which to save the key (/home/User/.ssh/id_rsa)<span class="bu">:</span> --<span class="op">&gt;</span></span></code></pre></div>
 <p>=&gt; Enter without changing the default location</p>
 <p>Enter passphrase (empty for no passphrase):</p>
 <p>=&gt; Enter 2 times and let empty</p>
@@ -137,55 +143,64 @@
 <ol start="2" style="list-style-type: decimal">
 <li>Copy the public key to genotoul This command will put your public key to the authorized_keys file on genotoul.</li>
 </ol>
-<p>$ ssh-copy-id <a href="mailto:dcharif@genologin.toulouse.inra.fr" class="email">dcharif@genologin.toulouse.inra.fr</a> The authenticity of host ‘Server’s IP address’ can’t be established. RSA key fingerprint is … Are you sure you want to continue connecting (yes/no)?</p>
-<p>=&gt; enter yes =&gt; enter your password</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ssh-copy-id</span> user@genologin.toulouse.inra.fr</span></code></pre></div>
+<p>The authenticity of host ‘Server’s IP address’ can’t be established. RSA key fingerprint is … Are you sure you want to continue connecting (yes/no)?</p>
+<p>=&gt; enter yes</p>
+<p>=&gt; enter your password</p>
 <ol start="3" style="list-style-type: decimal">
 <li>Try to connect know and verify that your password is no more asked</li>
 </ol>
-<p>$ ssh <a href="mailto:dcharif@genologin.toulouse.inra.fr" class="email">dcharif@genologin.toulouse.inra.fr</a></p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>$ <span class="fu">ssh</span> user@genologin.toulouse.inra.fr</span></code></pre></div>
 <p><a href="https://www.hostinger.fr/tutoriels/generer-cle-ssh/" class="external-link uri">https://www.hostinger.fr/tutoriels/generer-cle-ssh/</a></p>
 </div>
-<div id="on-own-computer" class="section level2">
-<h2 class="hasAnchor">
-<a href="#on-own-computer" class="anchor" aria-hidden="true"></a>On own computer</h2>
+<div class="section level3">
+<h3 id="in-local-on-your-machine">In LOCAL (on your machine)<a class="anchor" aria-label="anchor" href="#in-local-on-your-machine"></a>
+</h3>
+<pre><code> 1) Create a SSH.tmpl file in your home directory:</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> -o <span class="st">"ExitOnForwardFailure yes"</span> -f <span class="kw">\</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-R</span> {{ ctl_port }}:<span class="ex">localhost</span>:{{ local_port }} <span class="kw">\</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-R</span> {{ job_port }}:<span class="ex">localhost</span>:{{ fwd_port }} <span class="kw">\</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    {<span class="kw">{</span> <span class="ex">ssh_host</span> <span class="kw">}</span>} <span class="kw">\</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"source /etc/profile\</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="st">     module load {{ bashenv }}\</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="st">     R --no-save --no-restore -e \</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="st">     'clustermq:::ssh_proxy(ctl={{ ctl_port }}, job={{ job_port }})' \</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="st">     &gt; {{ ssh_log | /dev/null }} 2&gt;&amp;1"</span></span></code></pre></div>
+<pre><code> 2) Set the following options in your $HOME/.Rprofile :</code></pre>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>    <span class="ex">options</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="ex">clustermq.scheduler</span> = <span class="st">"ssh"</span>,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="ex">clustermq.template</span> = <span class="st">"~/SSH.tmpl"</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="ex">clustermq.ssh.host</span> = <span class="st">"user@genologin.toulouse.inra.fr"</span>, # use your user and host, obviously</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">clustermq.ssh.log</span> = <span class="st">"/home/user/cmq_ssh.log"</span>, # log for easier debugging</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="ex">clustermq.defaults</span> = list(bashenv=<span class="st">"system/R-4.1.1_gcc-9.3.0"</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
 </div>
-<div id="on-cluster-genotoul-server-slurm" class="section level2">
-<h2 class="hasAnchor">
-<a href="#on-cluster-genotoul-server-slurm" class="anchor" aria-hidden="true"></a>On cluster (genotoul server : SLURM)</h2>
-<ol start="2" style="list-style-type: upper-roman">
-<li>
-<p>Configure clustermq</p>
-<ol style="list-style-type: decimal">
-<li>Create a file SSH.tmpl in your home directory on your LOCAL machine:</li>
-</ol>
-</li>
-</ol>
-<p>ssh -o “ExitOnForwardFailure yes” -f<br>
--R {{ ctl_port }}:localhost:{{ local_port }}<br>
--R {{ job_port }}:localhost:{{ fwd_port }}<br>
-{{ ssh_host }}<br>
-“source /etc/profile<br>
-module load {{ bashenv }}<br>
-R –no-save –no-restore -e<br>
-‘clustermq:::ssh_proxy(ctl={{ ctl_port }}, job={{ job_port }})’<br>
-&gt; {{ ssh_log | /dev/null }} 2&gt;&amp;1”</p>
-<pre><code> 2) In your $HOME/.Rprofile on your LOCAL machine:
-
-options(
-clustermq.scheduler = "ssh",
-clustermq.template = "/Users/dcharif/SSH.tmpl",
-clustermq.ssh.host = "dcharif@genologin.toulouse.inra.fr", # use your user and host, obviously
-clustermq.ssh.log = "/home/dcharif/cmq_ssh.log" # log for easier debugging</code></pre>
-<p>)</p>
-<pre><code>3) In your $HOME/.Rprofile on GENOTOUL set the following options:</code></pre>
-<p>options( clustermq.scheduler = “slurm”, clustermq.template = “/home/dcharif/clustermq.template”, clustermq.defaults = list(bashenv=“system/R-3.6.0”) )</p>
-<p>#ou Q(…, template=list(bashenv=“system/R-3.6.0”))</p>
+<div class="section level3">
+<h3 id="on-the-cluster-ex-genotoul-server-with-slurm">On the cluster (Ex: GENOTOUL server with SLURM)<a class="anchor" aria-label="anchor" href="#on-the-cluster-ex-genotoul-server-with-slurm"></a>
+</h3>
+<pre><code>3) Set the following options in your $HOME/.Rprofile :</code></pre>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">options</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="ex">clustermq.scheduler</span> = <span class="st">"slurm"</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="ex">clustermq.template</span> = <span class="st">"/home/user/clustermq.template"</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">clustermq.defaults</span> = list(bashenv=<span class="st">"R-4.1.1_gcc-9.3.0"</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
 <ol start="4" style="list-style-type: decimal">
-<li>In your $HOME directory on GENOTOUL, create the clustermq.template file</li>
+<li>Create the clustermq.template in your $HOME directory</li>
 </ol>
-<p>#!/bin/sh #SBATCH –job-name={{ job_name }} #SBATCH –partition=workq #SBATCH –output={{ log_file | /dev/null }} # you can add .%a for array index #SBATCH –error={{ log_file | /dev/null }} #SBATCH –mem-per-cpu={{ memory | 4096 }} #SBATCH –array=1-{{ n_jobs }} #SBATCH –<a href="mailto:mail-user=delphine.charif@inra.fr" class="email">mail-user=delphine.charif@inra.fr</a></p>
-<p>module load {{ bashenv }}</p>
-<p>ulimit -v $(( 1024 * {{ memory | 4096 }} )) CMQ_AUTH={{ auth }} R –no-save –no-restore -e ‘clustermq:::worker(“{{ master}}”)’</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/sh</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --job-name={{ job_name }}</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --partition=workq</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --output={{ log_file | /dev/null }} # you can add .%a for array index</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --error={{ log_file | /dev/null }}</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --mem-per-cpu={{ memory | 4096 }}</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --array=1-{{ n_jobs }}</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --mail-user=user@inrae.fr</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="ex">module</span> load {{ bashenv }}</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="bu">ulimit</span> -v <span class="va">$((</span> 1024 * {{ memory | 4096 }} <span class="va">))</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="va">CMQ_AUTH=</span>{<span class="kw">{</span> <span class="ex">auth</span> <span class="kw">}</span>} <span class="ex">R</span> --no-save --no-restore -e <span class="st">'clustermq:::worker("{{ master}}")'</span></span></code></pre></div>
 </div>
 </div>
   </div>
@@ -202,12 +217,12 @@ clustermq.ssh.log = "/home/dcharif/cmq_ssh.log" # log for easier debugging</code
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by First Last.</p>
+<p>Developed by Nadia Bessoltane, Delphine Charif.</p>
 </div>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link external-link">pkgdown</a> 1.6.1.9001.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer>

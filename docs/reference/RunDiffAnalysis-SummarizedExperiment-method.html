@@ -89,34 +89,27 @@
 to run. Either "edgeRglmfit", "limmalmFit", ...}
 
 {clustermq}{A boolean indicating whether the constrasts have to be computed in local or in a distant machine}
-
-{Adj.pvalue.cutoff}{The adjusted pvalue cut-off}
-
-{filter_only}{A boolean indicating whether only filter on DE results have to be applied (<code>filter_only=TRUE</code>). FALSE by default.}
 }
 {
-All the results are stored as a named list <code>DiffExpAnal</code> in the metadata slot of a
+All the results are stored as a named list <code>DiffExpAnal</code> in the metadata slot of the
 given <code>SummarizedExperiment</code> object.
-Objects are:</p><ul><li><p>contrasts: The selected contrasts for which the differential analysis has been conducted</p></li>
-<li><p>method: The method used for the differential analysis</p></li>
+Objects are:</p><ul><li><p>contrasts: The selected contrasts for which the differential analysis has been run</p></li>
+<li><p>method: The method used for the differential expression analysis</p></li>
 <li><p>Adj.pvalue.method: The method applied for the pvalue adjustment</p></li>
-<li><p>Adj.pvalue.cutoff: The threshold applied for the pvalue adjustment</p></li>
-<li><p>FDR: The false discovery rate given in input</p></li>
 <li><p>RawDEFres: a list giving for each contrast the raw results of the differential analysis method</p></li>
 <li><p>DEF: a list giving for each contrast a data.frame of non filtered differential expressed features</p></li>
-<li><p>TopDEF: a list giving for each contrast a data.frame of differential expressed features by Adj.pvalue.cutoff</p></li>
-<li><p>mergeDEF: A data frame indicating for each features in row, if it is DE in a given contrasts in column</p></li>
 </ul><p>An object of class [SummarizedExperiment]</p></dd>
 
-</dl><p>This is an interface method which run a differential analysis method on
-omic datasets stored in an object of class SummarizedExperiment.
-According to the type of omic and to a list of contrasts,
-a differential analysis method is applied to each contrasts (or hypothesis).
-Three methods are available according to the type of object:
-</p><ul><li><p>For RNAseq data: the <code>glmFit</code> function of the <code>edgeR</code> package</p></li>
-<li><p>For proteomic and metabolomic data: the <code>lmFit</code> function of the <code>limma</code> package</p></li>
-</ul>
-Parameters used for RNAseq are those recommended in DiCoExpress workflow (see the paper in reference)
+</dl><p>This function run a differential expression analysis
+on an omic dataset stored in an object of class SummarizedExperiment</p>
+
+
+<p>According to the type of omic dataset and to a list of contrasts,
+the differential analysis method is applied to each contrast.
+Two methods are available according to the type of object:
+</p><ul><li><p>For RNAseq data: the <code>glmFit</code> function of the <code>edgeR</code> package is applied</p></li>
+<li><p>For proteomic and metabolomic data: the <code>lmFit</code> function of the <code>limma</code> package is applied</p></li>
+</ul>Parameters used for RNAseq are those recommended in DiCoExpress workflow (see the paper in reference)
 
 
 <p>Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).</p>

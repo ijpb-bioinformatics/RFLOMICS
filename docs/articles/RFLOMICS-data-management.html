@@ -59,7 +59,7 @@
       <a href="../articles/RFLOMICS-contrast.html">RFLOMICS contrast</a>
     </li>
     <li>
-      <a href="../articles/RFLOMICS-install.html">RFLOMICS install</a>
+      <a href="../articles/RFLOMICS-configure-cluster-access.html">RFLOMICS install</a>
     </li>
     <li>
       <a href="../articles/RFLOMICS-data-management.html">RFLOMICS data management</a>
@@ -82,7 +82,14 @@
   </ul>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="https://forgemia.inra.fr/flomics/rflomics" class="external-link">
+    <span class="fa fa-gitlab"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -92,7 +99,7 @@
 
       
 
-      </header><script src="RFLOMICS-data-management_files/header-attrs-2.11/header-attrs.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>RFLOMICS-data-management</h1>
@@ -108,14 +115,12 @@
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">RFLOMICS</span><span class="op">)</span>
 <span class="co">#load(FlomicsMultiAssayExp)</span></code></pre></div>
-<div id="datasets-managing-in-r" class="section level2">
-<h2 class="hasAnchor">
-<a href="#datasets-managing-in-r" class="anchor" aria-hidden="true"></a>Datasets managing in R:</h2>
+<div class="section level2">
+<h2 id="datasets-managing-in-r">Datasets managing in R:<a class="anchor" aria-label="anchor" href="#datasets-managing-in-r"></a>
+</h2>
 <p>All input data (abundance, metadata, statistical framework), choice about tools, parameters, threshold, and analysis results are managed in (by) the FlomicsMultiAssayExp object, an instance of the class MultiAssayExperiment (MAE). See the next paragraph to have a description. This object is created by FlomicsMultiAssay.constructor method. This method takes in input : a list of lists (per dataset) of abundance matrices (and their metadata if it exist), and “Design” object.</p>
 <p>Datasets are managed in the FlomicsMultiAssayExp object, an instance of the class MultiAssayExperiment (MAE). See the <a href="https://www.bioconductor.org/packages/release/bioc/vignettes/MultiAssayExperiment/inst/doc/MultiAssayExperiment.html" class="external-link">MAE package vignette</a> for more details.</p>
-<div class="figure">
-<img src="../../../../../../../../../../../private/var/folders/mn/95p840s571b4mgdjr6n330fr0000gp/T/Rtmp8Zw5BS/temp_libpath69082cb3f7/RFLOMICS/DevDoc/FMA_Struct.png" alt=""><p class="caption">Example of a FlomicsMultiAssayExp object</p>
-</div>
+<!-- ![Example of a FlomicsMultiAssayExp object]( /private/var/folders/3n/0b9t4wyd4tz30h9p6nlgqq300000gp/T/RtmpkKEMjY/temp_libpath1263b5097dcc9/RFLOMICS/DevDoc/FMA_Struct.png ) -->
 <p>In this example two datasets and a Design are managed into the MAE object. Design is positioned as <span class="citation">@metada</span> in the root of the object, as well as <span class="citation">@colData</span> and <span class="citation">@SampleMap</span>. The different datasets are stored in the <span class="citation">@ExperimentList</span> (which managed object of class SummarizedExperiment). Each object has 3 slots: * colData (in case of change of the global Design) * assays: the matrix * metadata: It will store all the results of the different analysis methods. By example, for the datasetName.filtred object: + filteredFeatures: will contain the results of the FilterLowAbundance method. + PCAlist: the results of PCA which have been done on the dataset. + normalisation: the parameters and output of the RunNormalization method. + contrasts: the list of contrast that have been choosed to analyse the dataset. + DiffExpAnal: the parameters and output of the RunDiffAnalysis method. + CoExpAnal: the parameters and output of the runCoExpression method. + EnrichAnal: the parameters and output of the EnrichAnal method.</p>
 </div>
   </div>
@@ -132,12 +137,12 @@
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by First Last.</p>
+<p>Developed by Nadia Bessoltane, Delphine Charif, Gwendal Cueff, Audrey Hulot, Christine Paysant-Leroux.</p>
 </div>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link external-link">pkgdown</a> 1.6.1.9001.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer>
