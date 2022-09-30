@@ -1701,32 +1701,32 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
   # type = "intersection"
   # contrasts_arg = c("(temperatureLow - temperatureElevated)", "(temperatureMedium - temperatureLow)")
   # SEobject@metadata[["integration_contrasts"]] <- contrasts
-
-  tabCorresp <- SEobject@metadata$DiffExpAnal$contrasts %>% select(contrastName,tag)
+  
+  tabCorresp <- SEobject@metadata$DiffExpAnal$contrasts %>% dplyr::select(contrastName, tag)
   if("all" %in% contrasts_arg)   contrasts_arg <- SEobject@metadata$DiffExpAnal$contrasts$contrastName
-
-  tabCorresp <- tabCorresp %>% filter(contrastName %in% contrasts_arg)
+  
+  tabCorresp <- tabCorresp %>% dplyr::filter(contrastName %in% contrasts_arg)
   contrasts_select <- tabCorresp$tag
-
+  
   tab1 <- SEobject@metadata$DiffExpAnal$mergeDEF %>%
     dplyr::select(all_of(c("DEF", contrasts_select)))
-
+  
   if(type == "intersection"){
-
+    
     DETab <-  tab1 %>%
-      mutate(SUMCOL = select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
+      mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
       filter(SUMCOL==length(contrasts_select))
-
+    
   }else{
-
+    
     DETab <- tab1 %>%
-      mutate(SUMCOL = select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
+      mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
       filter(SUMCOL>=1) 
-
+    
   }
-
+  
   SEobject <- SEobject[DETab$DEF,]
-
+  
   return(SEobject)
 }
 
@@ -1734,7 +1734,7 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
 # rbe_function : pour corriger sur le batch effect.
 # object: l'objet flomics
 # SEtransform : le SE qui contient le tableau transforme (la case metadata[["transform_results"]])
-# A MODIFIER ON DOIT POUVOIR PRENDRE EN COMPTE TOUS LES BATCH EFFECTS
+# TODO A MODIFIER ON DOIT POUVOIR PRENDRE EN COMPTE TOUS LES BATCH EFFECTS
 #' @title rbe_function
 #'
 #' @param object An object of class \link{MultiAssayExperiment}

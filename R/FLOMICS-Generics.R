@@ -98,8 +98,8 @@ methods::setGeneric(
 )
 
 methods::setGeneric(
-  name="prepareMOFA",
-  def = function( object, ... ){standardGeneric("prepareMOFA")}
+  name="prepareForIntegration",
+  def = function( object, ... ){standardGeneric("prepareForIntegration")}
 )
 
 methods::setGeneric(

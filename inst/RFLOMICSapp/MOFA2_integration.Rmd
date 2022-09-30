@@ -1,4 +1,6 @@
-`r if(is.null(FlomicsMultiAssay@metadata$MOFA_results)) {"\\begin{comment}"}`
+```{r MOFA_chunk_options, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
 
 # MOFA Integration
 
@@ -6,19 +8,16 @@
 MOFARes <- rflomics.MAE@metadata$MOFA_results
 ```
 
-
 ## Settings
 
 * MOFA2  R package was used to perform data unsupervised integration, on <span style="color:blue">`r paste(MOFA2::views_names(MOFARes), collapse = ", ")`</span> datatables.
-* Selected contrasts: `r cat(paste(paste0("\t * ", rflomics.MAE@metadata$MOFA_selected_contrasts), collapse = " \n "))` 
+* Selected contrasts: `r cat(paste(paste0("\t [*] ", rflomics.MAE@metadata$MOFA_selected_contrasts), collapse = " \n "))` 
 
 <!-- TODO The above does not work... -->
 * Taking the <span style="color:blue">`r rflomics.MAE@metadata$MOFA_selected_filter`</span> of lists of DE features lead to the following analysis setting: 
 
 ```{r, fig.width=6.5, fig.height = 5, fig.align="center"}
-
 MOFA2::plot_data_overview(MOFARes)
-
 ```
 
 * Options for the run:
@@ -34,7 +33,6 @@ MOFA2::plot_data_overview(MOFARes)
 ### Correlation between factors
 
 ```{r}
-
 mat_cor <- stats::cor(MOFA2::get_factors(MOFARes)[[1]])
 mat_cor <- mat_cor - diag(mat_cor)
 ```
@@ -49,7 +47,6 @@ MOFA2::plot_factor_cor(MOFARes)
 ### Explained Variance
 
 ```{r, fig.width = 10, fig.height = 4, fig.align = "center"}
-
 g1 <- MOFA2::plot_variance_explained(MOFARes, plot_total = TRUE)[[2]] + # compute both per factor and per table by default.
   ggplot2::ggtitle("Total explained variance per omic data")
 g2 <- MOFA2::plot_variance_explained(MOFARes, x = "view", y = "factor") + ggplot2::ggtitle("Explained variance by factors and omic data")
@@ -112,5 +109,3 @@ res = lapply(list_heat_views, FUN = function(liste){
   gridExtra::grid.arrange(grobs = liste, ncol = 2)
 })
 ```
-
-`r if(is.null(FlomicsMultiAssay@metadata$MOFA_results))  {"\\end{comment}"}`
