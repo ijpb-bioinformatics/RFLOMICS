@@ -100,8 +100,8 @@ MixOmics_setting <- function(input, output, session, rea.values){
                    column(5, checkboxInput(inputId = session$ns("sparsity"), label = "Sparse analysis", value = FALSE, width = NULL)),
                    numericInput(inputId = session$ns("ncomp"), label = "Number of component", value = 2, min = 1, max= 5),
                    numericInput(inputId = session$ns("cases_to_try"), label = "Tuning cases", value = 2, min = 1, max= 5),
-                   numericInput(inputId = session$ns("link_datasets"), label = "Link between datasets", value = 0.5, min = 0, max= 1),
-                   numericInput(inputId = session$ns("link_response"), label = "Link to response", value = 0.5, min = 0, max= 1)
+                   numericInput(inputId = session$ns("link_datasets"), label = "Link between datasets", value = 1, min = 0, max= 1),
+                   numericInput(inputId = session$ns("link_response"), label = "Link to response", value = 1, min = 0, max= 1)
             ))
       ),
       # box(title = span(tagList(icon("sliders-h"), "  ", "")), width = 4, status = "warning",
@@ -152,6 +152,24 @@ MixOmics_setting <- function(input, output, session, rea.values){
     local.rea.values$multipleBlocks <- FALSE
     local.rea.values$tuning <- FALSE
     
+    
+    ### TESTS TO DELETE
+    # load("inst/ExamplesFiles/FlomicsMultiAssay.RData")
+    # preparedMixOmics <- prepareForIntegration(FlomicsMultiAssay,
+    #                                           omicsToIntegrate = c("proteomics.set1", "metabolomics.set2"),
+    #                                           rnaSeq_transfo = "",
+    #                                           choice = "DE",
+    #                                           contrasts_names = c("(temperatureLow - temperatureElevated) in mean",
+    #                                                               "(temperatureMedium - temperatureElevated) in mean"),
+    #                                           type = "union",
+    #                                           group = NULL,
+    #                                           method = "MixOmics")
+    
+    ## choice of function according to user selection
+    
+    # selectedResponse = c("temperature", "imbibition") # TODO DELETE
+    # Y = as.data.frame(preparedMixOmics$metadata) %>% dplyr::select(all_of(selectedResponse))  # TODO DELETE
+
     # input <- list()
     # input$sparsity = TRUE
     # input$Tuning = TRUE
@@ -160,8 +178,10 @@ MixOmics_setting <- function(input, output, session, rea.values){
     # input$scale_views = TRUE
     # input$link_datasets=1
     # input$link_response = 1
-    # # local.rea.values$preparedMixOmics <- preparedMixOmics
-    # # local.rea.values$Y = Y
+    # # input$selectedResponse = c("temperature", "imbibition")
+    # input$selectedResponse = c("temperature")
+    # local.rea.values$preparedMixOmics <- preparedMixOmics
+    # local.rea.values$Y = Y
     
     session$userData$FlomicsMultiAssay@metadata[["MixOmics_results"]] <<- NULL
     
@@ -175,8 +195,39 @@ MixOmics_setting <- function(input, output, session, rea.values){
                                                                group = NULL,
                                                                method = "MixOmics")
     
-    local.rea.values$Y = data.frame(local.rea.values$preparedMixOmics$metadata, stringsAsFactors = TRUE) %>% 
+    
+    # TODO : ranger tout ca dans une fonction   
+    
+    # TODO : check this, c'est un peu etrange d'avoir eu a reordonner les lignes dans prepareForIntegration
+    # du coup ca demande de le faire aussi pour Y
+    # TODO : ca marche pas dans block.spls...
+    local.rea.values$Y <- data.frame(local.rea.values$preparedMixOmics$metadata, stringsAsFactors = TRUE) %>% 
+      rownames_to_column(var = "rowNam") %>%
+      arrange(rowNam) %>% 
+      column_to_rownames(var = "rowNam") %>%
       dplyr::select(all_of(input$selectedResponse)) 
+    
+    # local.rea.values$Y <- data.frame(nutrimouse$diet, nutrimouse$genotype, nutrimouse$lipid$`C14.0`)
+    # rownames(local.rea.values$Y) = paste("Row", 1:nrow(local.rea.values$Y))
+    # Is this a discriminant analysis?
+    if(ncol(local.rea.values$Y) == 1 && is.factor(local.rea.values$Y[,1])){
+      local.rea.values$dis_anal <- TRUE
+      local.rea.values$Y <- local.rea.values$Y[,1]
+    }else{
+      local.rea.values$dis_anal <- FALSE
+      rowNam <- rownames(local.rea.values$Y) 
+      YFactors <- do.call("cbind", lapply(1:ncol(local.rea.values$Y), FUN = function(j){
+        if(is.factor(local.rea.values$Y[,j])){
+          mat_return <- unmap(local.rea.values$Y[,j])
+          colnames(mat_return) <- attr(mat_return, "levels")
+          return(mat_return)
+        }
+      }))
+
+      local.rea.values$Y <- cbind(local.rea.values$Y %>% select_if(is.numeric), YFactors)
+      local.rea.values$Y <- apply(local.rea.values$Y, 2, as.numeric)
+      rownames(local.rea.values$Y ) <- rowNam
+    }
     
     # Design matrix
     local.rea.values$Design_mat <- matrix(input$link_datasets, 
@@ -186,20 +237,18 @@ MixOmics_setting <- function(input, output, session, rea.values){
       local.rea.values$Design_mat[nrow(local.rea.values$Design_mat), ] <- input$link_response
     diag(local.rea.values$Design_mat) <- 0
     
-    # Is this a discriminant analysis?
-    if(ncol(local.rea.values$Y) == 1 && is.factor(local.rea.values$Y[,1])){
-      local.rea.values$dis_anal <- TRUE
-      local.rea.values$Y <- local.rea.values$Y[,1]
-    }
-    
-    # What function to use for the analysis
+    # What function to use for the analysis (can't be sparse if there is a continous response)
     local.rea.values$functionName = "pls"
     if(local.rea.values$dis_anal) local.rea.values$functionName <- paste0(local.rea.values$functionName, "da")
-    if(input$sparsity) local.rea.values$functionName <- paste0("s", local.rea.values$functionName)
+    if(input$sparsity && !is.numeric(local.rea.values$Y)) local.rea.values$functionName <- paste0("s", local.rea.values$functionName)
     if(length(local.rea.values$preparedMixOmics$blocks)>1) local.rea.values$functionName <- paste0("block.", local.rea.values$functionName)
     
     # Model Tuning (if required, for sparsity)
-    if(input$sparsity && local.rea.values$dis_anal){ # no tune.block.spls so far...
+    if(input$sparsity && local.rea.values$dis_anal && local.rea.values$functionName != "block.spls"){ # no tune.block.spls so far, there is one for spls
+      # It is a bit weird to consider tuning with folds when there is very few samples per condition
+      # Add a warning or something when it's the case ?
+      # Also consider adding a warning when the number of feature is still very high even after differential analysis
+      
       local.rea.values$tune_function <- paste0("tune.", local.rea.values$functionName)
       
       local.rea.values$test_keepX <- lapply(local.rea.values$preparedMixOmics$blocks, FUN = function(dat){
@@ -228,30 +277,29 @@ MixOmics_setting <- function(input, output, session, rea.values){
                                        ncomp = input$ncomp,
                                        scale = input$scale_views)
     if(length(local.rea.values$preparedMixOmics$blocks)>1) local.rea.values$list_args$design = local.rea.values$Design_mat
-    if(input$sparsity) local.rea.values$list_args$keepX <-  local.rea.values$keepX
+    if(input$sparsity && local.rea.values$functionName != "block.spls") local.rea.values$list_args$keepX <-  local.rea.values$keepX
     
     local.rea.values$MixOmics_res <- do.call(get(local.rea.values$functionName), local.rea.values$list_args)
+    ## Fin de la fonction a creer
+    
+    
+    ##### TO DELETE 30/09/22 problem with names
+    # A = local.rea.values$preparedMixOmics$blocks
+    # A[[length(A)+1]] = local.rea.values$Y
+    # ind.names=lapply(A,rownames)
+    # # ind.names=lapply(unlist(list(local.rea.values$preparedMixOmics$blocks, local.rea.values$Y), recursive = FALSE), rownames)
+    # 
+    # check = sapply(1:length(A),function(j){identical(ind.names[[1]],
+    #                                                  ind.names[[j]])})
+    # check
+    # 
+    # if(sum(check) != length(check))   
+    # message("Please check the rownames of the data, there seems to be some  discrepancies")
     
     session$userData$FlomicsMultiAssay@metadata[["MixOmics_results"]] <<- local.rea.values$MixOmics_res
     
     local.rea.values$runMixOmics <- TRUE
-    
-    ### TESTS TO DELETE
-    # preparedMixOmics <- prepareForIntegration(FlomicsMultiAssay,
-    #                                           omicsToIntegrate = c("proteomics.set1", "metabolomics.set2"),
-    #                                           rnaSeq_transfo = "",
-    #                                           choice = "DE",
-    #                                           contrasts_names = c("(temperatureLow - temperatureElevated) in mean",
-    #                                                               "(temperatureMedium - temperatureElevated) in mean"),
-    #                                           type = "union",
-    #                                           group = NULL,
-    #                                           method = "MixOmics")
-    
-    ## choice of function according to user selection
-    
-    # selectedResponse = "temperature" # TODO DELETE
-    # Y = as.data.frame(preparedMixOmics$metadata) %>% dplyr::select(all_of(selectedResponse))  # TODO DELETE
-    
+
   })
   
   ## Output results
@@ -379,10 +427,10 @@ MixOmics_setting <- function(input, output, session, rea.values){
                                           max =  1,
                                           value = 0.5, step = 0.05)),
                    column(9 , renderPlot(mixOmics::network(mat = local.rea.values$MixOmics_res, 
-                                                            # comp = 1:2, 
-                                                            blocks = 1:length(input$selectedData),
-                                                            cutoff = input$Network_cutoff, 
-                                                            shape.node = c("rectangle", "rectangle"))))
+                                                           # comp = 1:2, 
+                                                           blocks = 1:length(input$selectedData),
+                                                           cutoff = input$Network_cutoff, 
+                                                           shape.node = c("rectangle", "rectangle"))))
           ), 
           # ---- Tab  Panel CircosPlot & cimPlot ----
           # conditionalPanel(condition = "is(local.real.values$MixOmics_res, 'block.splsda')",
@@ -393,7 +441,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
                                           max =  1,
                                           value = 0.5, step = 0.05)),
                    column(9, renderPlot(mixOmics::circosPlot(local.rea.values$MixOmics_res,
-                                                              cutoff = input$Circos_cutoff))),
+                                                             cutoff = input$Circos_cutoff))),
           ),
           tabPanel("CimPlot",
                    column(3,),
