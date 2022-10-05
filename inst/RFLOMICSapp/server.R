@@ -5,6 +5,9 @@ library(shinyFiles)
 
 rm(list = ls())
 
+#### ADDED 220805 - Increasing maximum possible size of loaded files (default is only 5MB)
+# https://stackoverflow.com/questions/18037737/how-to-change-maximum-upload-size-exceeded-restriction-in-shiny-and-save-user
+options(shiny.maxRequestSize=30*1024^2) # 30 MB limit. 
 
 shinyServer(function(input, output, session) {
 

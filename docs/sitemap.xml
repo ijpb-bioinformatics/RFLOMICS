@@ -22,10 +22,16 @@
     <loc>/articles/RFLOMICS-input-data.html</loc>
   </url>
   <url>
+    <loc>/articles/RFLOMICS-install-docker.html</loc>
+  </url>
+  <url>
     <loc>/articles/RFLOMICS-install.html</loc>
   </url>
   <url>
     <loc>/articles/RFLOMICS-output-results.html</loc>
+  </url>
+  <url>
+    <loc>/articles/RFLOMICS-vignette-Interface.html</loc>
   </url>
   <url>
     <loc>/articles/RFLOMICS.html</loc>
@@ -40,6 +46,7 @@
     <loc>/index.html</loc>
   </url>
   <url>
+<<<<<<< HEAD
     <loc>/reference/CheckExpDesignCompleteness-ExpDesign-method.html</loc>
   </url>
   <url>
@@ -49,40 +56,18 @@
     <loc>/reference/Data_Distribution_Density.plot-SummarizedExperiment-method.html</loc>
   </url>
   <url>
+=======
+>>>>>>> 1e88d12a8df39c83311271174d5f1b11d8885cd4
     <loc>/reference/DiffAnal.plot-SummarizedExperiment-method.html</loc>
   </url>
   <url>
     <loc>/reference/Enrichment.plot.html</loc>
   </url>
   <url>
-    <loc>/reference/EnrichmentHyperG.html</loc>
-  </url>
-  <url>
-    <loc>/reference/ExpDesign-Constructor.html</loc>
-  </url>
-  <url>
-    <loc>/reference/ExpDesign-class.html</loc>
-  </url>
-  <url>
     <loc>/reference/FilterDiffAnalysis-SummarizedExperiment-method.html</loc>
   </url>
   <url>
     <loc>/reference/FilterLowAbundance-SummarizedExperiment-method.html</loc>
-  </url>
-  <url>
-    <loc>/reference/FlomicsMultiAssay.constructor.html</loc>
-  </url>
-  <url>
-    <loc>/reference/GetDesignFromNames.html</loc>
-  </url>
-  <url>
-    <loc>/reference/GetModelFormulae.html</loc>
-  </url>
-  <url>
-    <loc>/reference/Library_size_barplot.plot-SummarizedExperiment-method.html</loc>
-  </url>
-  <url>
-    <loc>/reference/MA.plot.html</loc>
   </url>
   <url>
     <loc>/reference/RunDiffAnalysis-SummarizedExperiment-method.html</loc>
@@ -94,12 +79,10 @@
     <loc>/reference/RunPCA-SummarizedExperiment-method.html</loc>
   </url>
   <url>
-    <loc>/reference/TMM.Normalization.html</loc>
-  </url>
-  <url>
     <loc>/reference/TransformData-SummarizedExperiment-method.html</loc>
   </url>
   <url>
+<<<<<<< HEAD
     <loc>/reference/abundanceBoxplot.html</loc>
   </url>
   <url>
@@ -151,40 +134,30 @@
     <loc>/reference/getExpressionContrast-MultiAssayExperiment-method.html</loc>
   </url>
   <url>
+=======
+>>>>>>> 1e88d12a8df39c83311271174d5f1b11d8885cd4
     <loc>/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/limma.AnaDiff.html</loc>
-  </url>
-  <url>
-    <loc>/reference/mvQCdata.html</loc>
-  </url>
-  <url>
     <loc>/reference/mvQCdesign.html</loc>
-  </url>
-  <url>
-    <loc>/reference/plotDistr.html</loc>
-  </url>
-  <url>
-    <loc>/reference/plotExperimentalDesign.html</loc>
   </url>
   <url>
     <loc>/reference/plotPCA.html</loc>
   </url>
   <url>
     <loc>/reference/prepareMOFA-MultiAssayExperiment-method.html</loc>
+<<<<<<< HEAD
   </url>
   <url>
     <loc>/reference/pvalue.enrichment.plot.html</loc>
   </url>
   <url>
     <loc>/reference/pvalue.plot.html</loc>
+=======
+>>>>>>> 1e88d12a8df39c83311271174d5f1b11d8885cd4
   </url>
   <url>
     <loc>/reference/reexports.html</loc>
-  </url>
-  <url>
-    <loc>/reference/returnContrastCoefficients.html</loc>
   </url>
   <url>
     <loc>/reference/runAnnotationEnrichment-SummarizedExperiment-method.html</loc>
@@ -193,6 +166,7 @@
     <loc>/reference/runCoExpression-SummarizedExperiment-method.html</loc>
   </url>
   <url>
+<<<<<<< HEAD
     <loc>/reference/runCoseq.html</loc>
   </url>
   <url>
@@ -203,5 +177,8 @@
   </url>
   <url>
     <loc>/reference/try_rflomics.html</loc>
+=======
+    <loc>/reference/run_MOFA_analysis-MOFA-method.html</loc>
+>>>>>>> 1e88d12a8df39c83311271174d5f1b11d8885cd4
   </url>
 </urlset>

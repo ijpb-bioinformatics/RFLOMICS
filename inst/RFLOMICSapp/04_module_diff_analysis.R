@@ -242,7 +242,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                            formatStyle('logFC',
                                  backgroundColor = styleInterval(c(0, 0.01), c('royalblue', 'white', 'red2')),
                                  fontWeight = 'bold') %>% formatSignif(columns = 1:dim(resTable)[2], digits = 3)
-                       })),
+                       }, server = FALSE)),
                       tabPanel("Heatmap",
                              renderUI({
                              renderPlot({
