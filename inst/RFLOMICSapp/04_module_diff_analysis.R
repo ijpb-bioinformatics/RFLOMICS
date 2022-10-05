@@ -52,6 +52,12 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       need(rea.values$analysis != FALSE, "Please select contrast")
     )
     
+    #design must be complete
+    validate(
+      need(rea.values[[dataset]]$compCheck != FALSE, session$userData$FlomicsMultiAssay@metadata$completeCheck[["error"]])
+    )
+    
+    
     box(title = span(tagList(icon("sliders-h"), "  ", "Setting")), width = 14, status = "warning",
 
         fluidRow(column(12,

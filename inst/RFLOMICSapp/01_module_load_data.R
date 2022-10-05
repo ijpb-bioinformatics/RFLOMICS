@@ -19,20 +19,19 @@ LoadOmicsDataUI <- function(id){
                   # 1- set project name
                   column(width = 4, textInput(inputId = ns("projectName"), label = "Project name")),
                   # 2- matrix count/abundance input
-                  column(width = 8, fileInput(inputId = ns("Experimental.Design.file"), label = "Experimental Design (txt)",
+                  column(width = 8, fileInput(inputId = ns("Experimental.Design.file"), label = "Experimental Design (tsv)",
                                               accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
                   # #metadata
-                  # column(width = 4, fileInput(inputId = ns("metadata.file"), label = "metadata (txt)",
+                  # column(width = 4, fileInput(inputId = ns("metadata.file"), label = "metadata (tsv)",
                   #                             accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")))
                 )
               ),
               fluidRow(
-                column(width = 6,
-                       uiOutput(ns("selectSamplesUI"))#,
-                       #uiOutput(ns("GetdFactorRef"))
+                column(width = 12,
+                       uiOutput(ns("ExpDesignTable"))
                        ),
-                column(width = 6,
-                       uiOutput(ns("ExpDesignTable"))),
+                column(width = 12,
+                       uiOutput(ns("selectSamplesUI"))),
               )
             )
         ),
@@ -111,8 +110,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
         # display table
         output$ExpDesignTable <- renderUI({
-          box(width = 12, background = "light-blue",
-            tags$b("The experimental design view :"),
+          box(width = 12, background = "light-blue", solidHeader = TRUE, collapsible = TRUE, 
+              collapsed = TRUE, title = "Overview of experimental design table", 
 
             # DT::renderDataTable( DT::datatable(data = ExpDesign.tbl.affich, filter = 'top',
             #                                    options = list( pageLength = 5, autoWidth = TRUE, dom = 'tp' )))
@@ -126,7 +125,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
         output$selectSamplesUI <- renderUI({
 
           # condition list
-          box(width = 18, background = "green", # Valid colors are: red, yellow, aqua, blue, light-blue, green, navy, teal, olive, lime, orange, fuchsia, purple, maroon, black.
+          box(width = 12, background = "green", # Valid colors are: red, yellow, aqua, blue, light-blue, green, navy, teal, olive, lime, orange, fuchsia, purple, maroon, black.
             tags$b("The list and order of conditions :"),
             fluidRow(
               lapply(names(ExpDesign.tbl.affich), function(i) {
@@ -200,11 +199,11 @@ LoadOmicsData <- function(input, output, session, rea.values){
           fluidRow(
             column(2,
                    # omic type
-                   selectInput(inputId = session$ns('omicType1'), label='Omics', choices = c("None"="none", "RNAseq"="RNAseq", "Proteomics"="proteomics", "Metabolomics"="metabolomics"), selected = "none")
+                   selectInput(inputId = session$ns('omicType1'), label='Omic type', choices = c("None"="none", "RNAseq"="RNAseq", "Proteomics"="proteomics", "Metabolomics"="metabolomics"), selected = "none")
             ),
             column(6,
                    # matrix count/abundance input
-                   fileInput(inputId = session$ns("data1"), "omics count/abundance (Ex.)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
+                   fileInput(inputId = session$ns("data1"), "Dataset matrix (tsv)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
             ),
             # column(4,
             #        # metadata/QC bioinfo
@@ -235,13 +234,13 @@ LoadOmicsData <- function(input, output, session, rea.values){
             fluidRow(
               column(2,
                      # omic type
-                     selectInput(inputId=session$ns(paste0('omicType', addDataNum)), label='Omics', choices = c("None"="none", "RNAseq"="RNAseq", "Proteomics"="proteomics", "Metabolomics"="metabolomics"), selected = "none")),
+                     selectInput(inputId=session$ns(paste0('omicType', addDataNum)), label='Omic type', choices = c("None"="none", "RNAseq"="RNAseq", "Proteomics"="proteomics", "Metabolomics"="metabolomics"), selected = "none")),
               column(6,
                      # matrix count/abundance input
-                     fileInput(inputId=session$ns(paste0("data", addDataNum)), "Feature count/abundance (txt)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
+                     fileInput(inputId=session$ns(paste0("data", addDataNum)), "Dataset matrix (tsv)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
               # column(4,
               #        # metadata/QC bioinfo
-              #        fileInput(inputId=session$ns(paste0("metadataQC", addDataNum)), "QC or metadata (txt)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
+              #        fileInput(inputId=session$ns(paste0("metadataQC", addDataNum)), "QC or metadata (tsv)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
               column(3,
                      # dataset Name
                      textInput(inputId=session$ns(paste0("DataName", addDataNum)), label="Dataset name", value=paste0("set", as.character(addDataNum))))
@@ -258,7 +257,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     # => upsetR
     observeEvent(input$loadData, {
 
-      print(paste0("loadData ", input$loadData))
+      #print(paste0("loadData ", input$loadData))
       ### load Design
 
       # reset objects and UI
@@ -410,20 +409,20 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
       print(paste0("#    => Design Completeness Check..."))
 
-      completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
-      session$userData$FlomicsMultiAssay@metadata[["completeCheck"]] <- completeCheckRes
+      local.rea.values$completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
+      #session$userData$FlomicsMultiAssay@metadata[["completeCheck"]] <- completeCheckRes
       local.rea.values$plots <- TRUE
       rea.values$loadData <- TRUE
       #rea.values$model    <- TRUE
 
-      if(!is.null(completeCheckRes[["error"]])){
-        rea.values$loadData <- FALSE
-        rea.values$model    <- FALSE
-        showModal(modalDialog(title = "Error message", completeCheckRes[["error"]]))
+      if(!is.null(local.rea.values$completeCheckRes[["error"]])){
+        #rea.values$loadData <- FALSE
+        #rea.values$model    <- FALSE
+        showModal(modalDialog(title = "Error message", local.rea.values$completeCheckRes[["error"]]))
       }
 
       # continue only if message is true or warning
-      #validate({ need(is.null(completeCheckRes[["error"]]) ,message="") })
+      #validate({ need(is.null(local.rea.values$completeCheckRes[["error"]]) ,message="") })
 
       #
 
@@ -441,11 +440,11 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
       print(paste0("#    => Completeness plot..."))
 
-      box( width = 6,  status = "warning",
+      box( width = 6,  status = "warning", title = "Completeness check", solidHeader = TRUE,
 
            # plot of count per condition
            renderPlot(
-             isolate({ session$userData$FlomicsMultiAssay@metadata[["completeCheck"]][["plot"]] })
+             isolate({ local.rea.values$completeCheckRes[["plot"]] })
              ),
            hr(),
            tags$i("You **must** have a **complete design** (i.e. all possible combinations of factor's level).
@@ -460,32 +459,11 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
       if (local.rea.values$plots == FALSE) return()
       #if (rea.values$loadData == FALSE) return()
-      if (length(unlist(session$userData$FlomicsMultiAssay@metadata$omicList)) < 2) return()
+      
+        print(paste0("#    => overview plot..."))
 
-
-      #if (length(names(session$userData$FlomicsMultiAssay)) >1){
-        print(paste0("#    => upset plot..."))
-
-        box(width = 6, status = "warning",
-            renderPlot( isolate({ 
-              
-              nb_entities <-lapply(session$userData$FlomicsMultiAssay@ExperimentList, function(SE){ dim(SE)[1] }) %>% unlist()
-              
-              data <- data.frame(nb_entities = nb_entities, assay = names(nb_entities)) %>% 
-                dplyr::full_join(data.frame(sampleMap(session$userData$FlomicsMultiAssay)), by="assay") %>%
-                dplyr::mutate(y.axis = paste0(assay, "\n", "n=", nb_entities))
-              
-              
-              ggplot(data, aes(x=primary, y=y.axis)) +
-                geom_tile(aes(fill = y.axis), colour = "grey50") + 
-                theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-                      panel.background = element_blank(), axis.ticks = element_blank(), legend.position="none",
-                      axis.text.x = element_blank()) + 
-                xlab(paste0("Samples (n=", length(unique(sampleMap(session$userData$FlomicsMultiAssay)$primary)), ")")) +
-                ylab("")
-              })),
-            hr(),
-            tags$i("**discription**")
+        box(width = 6, status = "warning", title = "Dataset(s) overview", solidHeader = TRUE,
+            renderPlot( isolate({ RFLOMICS::Datasets_overview_plot(session$userData$FlomicsMultiAssay) })),
         )
         #}
     })

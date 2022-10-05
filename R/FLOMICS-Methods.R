@@ -110,6 +110,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 #'  }
 #'  Completed design and at least on biological and one batch factors are required for using RFLOMICS workflow.
 #' @param An object of class \link{MultiAssayExperiment-class}
+#' @param sampleList list of samples to check.
 #' @return a named list of two objects
 #' \itemize{
 #' \item{"count:"}{ a data.frame with the number of each possible combinations of levels for all factors.}
@@ -141,50 +142,40 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 
 methods::setMethod(f="CheckExpDesignCompleteness",
           signature="MultiAssayExperiment",
-          definition <- function(object, colnames=NULL){
+          definition <- function(object, sampleList=NULL){
 
             Design <- object@metadata$design
 
             # output list
             output <- list()
+            output[["error"]] <- NULL
+            output[["warning"]] <- NULL
+            
 
             # check presence of bio factors
             if (! table(Design@Factors.Type)["Bio"] %in% 1:3){
 
-              stop("ERROR : no bio factor ! or nbr of bio factors exeed 3!")
+              output[["error"]] <- "ERROR : no bio factor ! or nbr of bio factors exeed 3!"
 
-              # message <- "noBio"
-              #
-              # group_count  <- Design@List.Factors[Design@Factors.Type == "batch"] %>% as.data.frame() %>% table() %>% as.data.frame()
-              # names(group_count)[names(group_count) == "Freq"] <- "Count"
-              # output[["count"]]   <- group_count
             }
             if (table(Design@Factors.Type)["batch"] == 0){
 
-              stop("ERROR : no replicate!")
+              output[["error"]] <- "ERROR : no replicate!"
             }
 
             # count occurence of bio conditions
-            if(is.null(colnames)){
-
-              ExpDesign <- Design@ExpDesign
+            if(is.null(sampleList)){
+              # tmp <- sampleMap(object) %>% data.frame()
+              # sampleList <- lapply(unique(tmp$assay), function(dataset){filter(tmp, assay == dataset)$primary }) %>%
+              #   purrr::reduce(dplyr::union)
+              
+              sampleList <- sampleMap(object)$primary
             }
-            else{
-
-              ExpDesign <- dplyr::filter(Design@ExpDesign, rownames(Design@ExpDesign) %in% colnames)
-            }
-
-
-            # bio.fact.names <- names(ExpDesign)
-            #
-            # BioFact.levels <- sapply(names(ExpDesign), function(x){
-            #
-            #   levels(Design@List.Factors[[x]])
-            # })
-
+            ExpDesign <- dplyr::filter(Design@ExpDesign, rownames(Design@ExpDesign) %in% sampleList)
 
             dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
-              relevel(as.factor(ExpDesign[[i]]), ref=levels(Design@List.Factors[[i]])[1])
+              factor(ExpDesign[[i]], levels=unique(ExpDesign[[i]]))
+              #relevel(ExpDesign[[i]], ref=levels(Design@List.Factors[[i]])[1])
             })
             names(dF.List) <- names(ExpDesign)
 
@@ -197,34 +188,65 @@ methods::setMethod(f="CheckExpDesignCompleteness",
             # check if design is balanced
             # check nbr of replicats
 
-            output[["error"]] <- NULL
-            output[["warning"]] <- NULL
-
+           
             if(min(group_count$Count) == 0){
               message <- "ERROR : The experimental design is not complete."
+              output[["error"]] <- message
+            }
+            else if(min(group_count$Count) == 1){
+              message <- "ERROR : You need at least 2 biological replicates."
               output[["error"]] <- message
             }
             else if(length(unique(group_count$Count)) != 1){
               message <- "WARNING : The experimental design is complete but not balanced."
               output[["warning"]] <- message
             }
-            else if(max(group_count$Count) < 3){
-              message <- "WARNING : 3 biological replicates are needed."
-              output[["warning"]] <- message
-            }
             else{
               message <- "The experimental design is complete and balanced."
             }
 
-            #plot
+            ### plot
             output[["plot"]] <- plotExperimentalDesign(group_count, message=message)
-
+            output[["counts"]] <- group_count
             return(output)
           })
 
 # print output
 # warining -> warning
 # false -> stop
+
+
+
+#' @title Datasets overview plot
+#' @description This function plot overview of loaded datasets aligned per sample (n=number of entities (genes/metabolites/proteins); k=number of samples) 
+#' @param An object of class \link{MultiAssayExperiment-class}
+#' @exportMethod Datasets_overview_plot
+#' @return plot
+
+methods::setMethod(f="Datasets_overview_plot",
+                   signature="MultiAssayExperiment",
+                   definition <- function(object){
+  
+  if (class(object) != "MultiAssayExperiment") stop("ERROR : object is not MultiAssayExperiment class.")
+  if (length(object@ExperimentList) == 0) stop("ERROR : object@ExperimentList is NULL")
+
+  nb_entities <-lapply(object@ExperimentList, function(SE){ dim(SE)[1] }) %>% unlist()
+  
+  data <- data.frame(nb_entities = nb_entities, assay = names(nb_entities)) %>% 
+    dplyr::full_join(data.frame(sampleMap(object)), by="assay") %>%
+    dplyr::mutate(y.axis = paste0(assay, "\n", "n=", nb_entities))
+  
+  p <- ggplot(data, aes(x=primary, y=y.axis)) +
+    geom_tile(aes(fill = y.axis), colour = "grey50") + 
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          panel.background = element_blank(), axis.ticks = element_blank(), legend.position="none",
+          axis.text.x = element_text(angle = -90, hjust = -0.5, vjust = 0.5)) + 
+    xlab(paste0("Samples (k=", length(unique(sampleMap(object)$primary)), ")")) +
+    ylab("")
+  
+  print(p)
+
+})
 
 
 ###### METHOD which generate the contrasts expression
@@ -541,7 +563,7 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
     SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance=as.matrix(matrix.filt)),
                                                                                        colData  = QCmat,
                                                                                        metadata = list(omicType = inputs[[dataName]][["omicType"]],
-                                                                                                       Groups = Design@Groups,
+                                                                                                       Groups = dplyr::filter(Design@Groups, samples %in% colnames(as.matrix(matrix.filt))),
                                                                                                        rowSums.zero = genes_flt0))
     #names(assays(SummarizedExperimentList[[dataName]])) <- c(dataName)
 
@@ -639,7 +661,7 @@ methods::setMethod(f="Library_size_barplot.plot",
             warnning <- NULL
 
             if (object@metadata$omicType != "RNAseq"){
-              warnning <- "WARNING : data are not RNAseq!"
+              stop("WARNING : data are not RNAseq!")
             }
 
             abundances <- SummarizedExperiment::assay(object)
@@ -649,18 +671,12 @@ methods::setMethod(f="Library_size_barplot.plot",
             if(! is.null(object@metadata$Normalization)){
               pseudo  <- scale(SummarizedExperiment::assay(object), center=FALSE,
                                scale=object@metadata$Normalization$coefNorm$norm.factors) %>% colSums(., na.rm = TRUE)
-              ylab <- "Total normalized read count per sample"
-              title <- "Filtered and normalized (TMM) data"
+              title <- paste0("Filtered and normalized (",object@metadata$Normalization$methode, ") data")
             }
             # raw data
             else{
               pseudo  <- SummarizedExperiment::assay(object) %>% colSums(., na.rm = TRUE)
-              ylab <- "Total read count per sample (method : TMM)"
               title <- "Raw data"
-            }
-
-            if (object@metadata$omicType != "RNAseq"){
-              ylab <- "Sum of abundance"
             }
 
             libSizeNorm <-  dplyr::full_join(object@metadata$Groups, data.frame ("value" = pseudo , "samples"=names(pseudo)), by="samples") %>%
@@ -669,7 +685,7 @@ methods::setMethod(f="Library_size_barplot.plot",
             libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
 
             p <- ggplot(libSizeNorm, aes(x=samples, y=value, fill=groups)) + geom_bar( stat="identity" ) + ylab(ylab) +
-              theme(axis.text.x      = element_text(angle = 45, hjust = 1), legend.position  = "none") + labs(x = "") + ggtitle(title)
+              theme(axis.text.x      = element_text(angle = 45, hjust = 1), legend.position  = "none") + labs(x = "", y = "Total read count per sample") + ggtitle(title)
             #axis.text.x     = element_blank(),
             #axis.ticks      = element_blank())
             #legend.key.size = unit(0.3, "cm"))

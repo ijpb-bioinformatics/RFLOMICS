@@ -43,8 +43,21 @@ QCNormalizationTabUI <- function(id){
 QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
   local.rea.values <- reactiveValues(dataset.processed.SE = NULL, 
-                                     dataset.raw.SE = NULL)
-
+                                     dataset.raw.SE = NULL,
+                                     compCheck = TRUE,
+                                     message = "")
+  
+  ### check completeness
+  completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay,
+                                                 sampleList = colnames(session$userData$FlomicsMultiAssay[[dataset]]))
+  # stock message in MAE
+  session$userData$FlomicsMultiAssay@metadata$completeCheck[["error"]]   <- completeCheckRes[["error"]]
+  session$userData$FlomicsMultiAssay@metadata$completeCheck[["warning"]] <- completeCheckRes[["warning"]]
+  # reactive values
+  rea.values[[dataset]]$compCheck <- TRUE
+  if(!is.null(completeCheckRes[["error"]])){ rea.values[[dataset]]$compCheck <- FALSE }
+  
+  
   #### sample list  ####
   output$selectSamplesUI <- renderUI({
 
@@ -58,19 +71,20 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
         multiple = TRUE,
         selected = sampleList)
   })
-
+  
   #### check completeness ####
   output$completenessUI <- renderUI({
-
+    
     completeCheckRes <- CheckExpDesignCompleteness(session$userData$FlomicsMultiAssay, input$selectSamples)
-
+    
+    local.rea.values$compCheck <- TRUE
+    
     if(!is.null(completeCheckRes[["error"]])){
+      local.rea.values$compCheck <- FALSE
+      local.rea.values$message   <- completeCheckRes[["error"]]
+      
       showModal(modalDialog(title = "Error message", completeCheckRes[["error"]]))
-
     }
-    # continue only if message is true or warning
-    validate({ need(is.null(completeCheckRes[["error"]]) ,message="ok") })
-
     list(
          # plot of count per condition
          renderPlot( completeCheckRes[["plot"]])
@@ -296,6 +310,16 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
     #print(paste0("Update ",input$Update))
 
+    # continue only if message is true or warning
+    #completeCheckRes <- CheckExpDesignCompleteness(session$userData$FlomicsMultiAssay, input$selectSamples)
+    
+    if(isFALSE(local.rea.values$compCheck)){
+      showModal(modalDialog(title = "Error message", local.rea.values$message))
+    }
+    validate({ need(!isFALSE(local.rea.values$compCheck), message=local.rea.values$message) })
+    
+    rea.values[[dataset]]$compCheck <- TRUE
+    
     # re-initialize reactive values
     rea.values[[dataset]]$diffAnal  <- FALSE
     rea.values[[dataset]]$coExpAnal <- FALSE
