@@ -410,13 +410,13 @@ LoadOmicsData <- function(input, output, session, rea.values){
       print(paste0("#    => Design Completeness Check..."))
 
 #<<<<<<< HEAD
-      # local.rea.values$completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
+      local.rea.values$completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
       # #session$userData$FlomicsMultiAssay@metadata[["completeCheck"]] <- completeCheckRes
 #=======
       # print(session$userData$FlomicsMultiAssay) ## DEBUG 05/08/22 TO DELETE 
       
-      completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
-      session$userData$FlomicsMultiAssay@metadata[["completeCheck"]] <- completeCheckRes
+      # completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
+      # session$userData$FlomicsMultiAssay@metadata[["completeCheck"]] <- completeCheckRes
 #>>>>>>> 1e88d12a8df39c83311271174d5f1b11d8885cd4
       local.rea.values$plots <- TRUE
       rea.values$loadData <- TRUE
