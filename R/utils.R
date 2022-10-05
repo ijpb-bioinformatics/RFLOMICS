@@ -584,132 +584,170 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothes
 #' @export
 #' @importFrom ggplot2 aes_string labs element_rect geom_rect scale_x_continuous scale_y_continuous facet_grid
 #' @noRd
-#' @author Christine Paysant-Le Roux
 plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
   if (names(counts)[ncol(counts)] != "Count"){
     stop("the last column of the input data frame must be labelled Count")
   }
-  if(ncol(counts) == 5){
-    x <- names(counts)[1]
-    y <- names(counts)[2]
-    row <- names(counts)[3]
-    col <- names(counts)[4]
-  } else if(ncol(counts) == 4){
-    x <- names(counts)[1]
-    y <- names(counts)[2]
-    row <- names(counts)[3]
-    col <- NULL
-  } else if(ncol(counts) == 3){
-    x <- names(counts)[1]
-    y <- names(counts)[2]
-    row <- NULL
-    col <- NULL
-  } else if(ncol(counts) == 2){
-    x <- NULL
-    y <- names(counts)[1]
-    row <- NULL
-    col <- NULL
-  } else {
+  if(ncol(counts) < 2){
     stop("data frame with less than 2 columns")
   }
-  # rename two first column names of counts with x and y
-  if(!is.null(x)){
-    x_lab <- names(counts)[names(counts)==x]
-    names(counts)[names(counts)==x] <- 'x'
-  } else {
-    x_lab <- ""
-    counts$x <- rep(1, nrow(counts))
-  }
-
-  y_lab = names(counts)[names(counts)==y]
-  names(counts)[names(counts)==y] <- 'y'
-  # get the levels of one factor
-  getFactorLevels <- function(counts, factorVar){
-    if(!is.numeric(counts[[factorVar]])){
-      counts[[factorVar]] = factor(counts[[factorVar]])
-      x_vals = as.character(levels(counts[[factorVar]]))
-    }else{
-      x_vals = as.character(sort(unique(counts[[factorVar]])))
-    }
-    return(x_vals)
-  }
-  x_vals <- getFactorLevels(counts, "x")
-  # recode factor with integer (1 for the first level, 2 for the second level, etc)
-  counts$x = as.numeric(factor(counts$x))
-  y_vals <- getFactorLevels(counts, "y")
-  counts$y = as.numeric(factor(counts$y))
-  # cell border size
-  if(length(unique(counts$y))>length(unique(counts$x))){
-    cell_border_size = cell_border_size/length(unique(counts$y))
-  }else{
-    cell_border_size = cell_border_size/length(unique(counts$x))
-  }
-  # for row or col (for faceting)
-  # replace colname with variable name and each level with the paste of the factor name, =, the factor level
-  replaceRowOrColIntoCounts <- function(counts, facetingVariable, newColumnName){
-    if(!is.factor(counts[,names(counts)== facetingVariable])){
-      counts[,names(counts) == facetingVariable] = factor(counts[,names(counts) == facetingVariable])
-    }
-    levels(counts[,names(counts) == facetingVariable]) = paste(
-      names(counts)[names(counts) == facetingVariable]
-      , levels(counts[,names(counts) == facetingVariable])
-      , sep = ' = '
-    )
-    names(counts)[names(counts) == facetingVariable] = newColumnName
-    return(counts)
-  }
-
-  if(!is.null(row)){
-    counts <- replaceRowOrColIntoCounts (counts, row, "row")
-  }
-  if(!is.null(col)){
-    counts <- replaceRowOrColIntoCounts (counts, col, "col")
-  }
-  # calculate parameters for geom_rect
-  # xmin - (required) left edge of rectangle
-  # xmax - (required) right edge of rectangle
-  # ymin - (required) bottom edge of rectangle
-  # ymax - (required) top edge of rectangle
-  counts$ymin = counts$y-.5
-  counts$ymax = counts$y+.5
-  counts$xmin = counts$x-.5
-  counts$xmax = counts$x+.5
-
-  counts$Count <- as.factor(counts$Count)
-
-  p <- ggplot2::ggplot( data = counts, aes_string(ymin = 'ymin', ymax = 'ymax', xmin = 'xmin', xmax = 'xmax' , fill = 'Count')) + geom_rect() + labs(x=x_lab,y=y_lab) + ggtitle(message)
-  p <- p + theme(
-    panel.grid.major = element_blank()
-    , panel.grid.minor = element_blank()
-    , legend.background = element_rect(colour='transparent',fill='transparent')
-  )
-  if(cell_border_size>0){
-    p = p + geom_rect(
-      size = cell_border_size
-      , colour = 'grey90'
-      , show.legend = FALSE
-    )
-  }
-  p = p + scale_x_continuous(
-    breaks = sort(unique(counts$x))
-    , labels = x_vals
-  )
-  p = p + scale_y_continuous(
-    breaks = sort(unique(counts$y))
-    , labels = y_vals
-  )
-  if(!is.null(row)){
-    if(!is.null(col)){
-      p = p + facet_grid(row~col)
-    }
-    else{
-      p = p + facet_grid(row~.)
-    }
-  }else{
-    if(!is.null(col)){
-      p = p + facet_grid(.~col)
-    }
-  }
+  # if(ncol(counts) == 5){
+  #   x <- names(counts)[1]
+  #   y <- names(counts)[2]
+  #   row <- names(counts)[3]
+  #   col <- names(counts)[4]
+  # } else if(ncol(counts) == 4){
+  #   x <- names(counts)[1]
+  #   y <- names(counts)[2]
+  #   row <- names(counts)[3]
+  #   col <- NULL
+  # } else if(ncol(counts) == 3){
+  #   x <- names(counts)[1]
+  #   y <- names(counts)[2]
+  #   row <- NULL
+  #   col <- NULL
+  # } else if(ncol(counts) == 2){
+  #   x <- NULL
+  #   y <- names(counts)[1]
+  #   row <- NULL
+  #   col <- NULL
+  # } else {
+  #   stop("data frame with less than 2 columns")
+  # }
+  # # rename two first column names of counts with x and y
+  # if(!is.null(x)){
+  #   x_lab <- names(counts)[names(counts)==x]
+  #   names(counts)[names(counts)==x] <- 'x'
+  # } else {
+  #   x_lab <- ""
+  #   counts$x <- rep(1, nrow(counts))
+  # }
+  # 
+  # y_lab = names(counts)[names(counts)==y]
+  # names(counts)[names(counts)==y] <- 'y'
+  # # get the levels of one factor
+  # getFactorLevels <- function(counts, factorVar){
+  #   if(!is.numeric(counts[[factorVar]])){
+  #     counts[[factorVar]] = factor(counts[[factorVar]])
+  #     x_vals = as.character(levels(counts[[factorVar]]))
+  #   }else{
+  #     x_vals = as.character(sort(unique(counts[[factorVar]])))
+  #   }
+  #   return(x_vals)
+  # }
+  # x_vals <- getFactorLevels(counts, "x")
+  # # recode factor with integer (1 for the first level, 2 for the second level, etc)
+  # counts$x = as.numeric(factor(counts$x))
+  # y_vals <- getFactorLevels(counts, "y")
+  # counts$y = as.numeric(factor(counts$y))
+  # # cell border size
+  # if(length(unique(counts$y))>length(unique(counts$x))){
+  #   cell_border_size = cell_border_size/length(unique(counts$y))
+  # }else{
+  #   cell_border_size = cell_border_size/length(unique(counts$x))
+  # }
+  # # for row or col (for faceting)
+  # # replace colname with variable name and each level with the paste of the factor name, =, the factor level
+  # replaceRowOrColIntoCounts <- function(counts, facetingVariable, newColumnName){
+  #   if(!is.factor(counts[,names(counts)== facetingVariable])){
+  #     counts[,names(counts) == facetingVariable] = factor(counts[,names(counts) == facetingVariable])
+  #   }
+  #   levels(counts[,names(counts) == facetingVariable]) = paste(
+  #     names(counts)[names(counts) == facetingVariable]
+  #     , levels(counts[,names(counts) == facetingVariable])
+  #     , sep = ' = '
+  #   )
+  #   names(counts)[names(counts) == facetingVariable] = newColumnName
+  #   return(counts)
+  # }
+  # 
+  # if(!is.null(row)){
+  #   counts <- replaceRowOrColIntoCounts (counts, row, "row")
+  # }
+  # if(!is.null(col)){
+  #   counts <- replaceRowOrColIntoCounts (counts, col, "col")
+  # }
+  # # calculate parameters for geom_rect
+  # # xmin - (required) left edge of rectangle
+  # # xmax - (required) right edge of rectangle
+  # # ymin - (required) bottom edge of rectangle
+  # # ymax - (required) top edge of rectangle
+  # counts$ymin = counts$y-.5
+  # counts$ymax = counts$y+.5
+  # counts$xmin = counts$x-.5
+  # counts$xmax = counts$x+.5
+  # 
+  # counts$Count <- as.factor(counts$Count)
+  # 
+  # p <- ggplot2::ggplot( data = counts, aes_string(ymin = 'ymin', ymax = 'ymax', xmin = 'xmin', xmax = 'xmax' , fill = 'Count')) + geom_rect() + labs(x=x_lab,y=y_lab) + ggtitle(message)
+  # p <- p + theme(
+  #   panel.grid.major = element_blank()
+  #   , panel.grid.minor = element_blank()
+  #   , legend.background = element_rect(colour='transparent',fill='transparent')
+  # )
+  # if(cell_border_size>0){
+  #   p = p + geom_rect(
+  #     size = cell_border_size
+  #     , colour = 'grey90'
+  #     , show.legend = FALSE
+  #   )
+  # }
+  # p = p + scale_x_continuous(
+  #   breaks = sort(unique(counts$x))
+  #   , labels = x_vals
+  # )
+  # p = p + scale_y_continuous(
+  #   breaks = sort(unique(counts$y))
+  #   , labels = y_vals
+  # )
+  # if(!is.null(row)){
+  #   if(!is.null(col)){
+  #     p = p + facet_grid(row~col)
+  #   }
+  #   else{
+  #     p = p + facet_grid(row~.)
+  #   }
+  # }else{
+  #   if(!is.null(col)){
+  #     p = p + facet_grid(.~col)
+  #   }
+  # }
+  
+  #add color column
+  # #00BA38
+  counts <- counts %>% dplyr::mutate(status = dplyr::if_else(Count > 2 , "pass", dplyr::if_else(Count == 2 , "warning", "error")))
+  
+  #list of factor names
+  factors <- names(counts)[1:(dim(counts)[2]-2)]
+  
+  col.panel <- c("pass", "warning", "error")
+  names(col.panel) <- c("#00BA38", "orange", "red")
+  
+  col.panel.u <- col.panel[col.panel %in% unique(counts$status)]
+  
+  switch (length(factors),
+          "1" = { p <- ggplot(counts ,aes_string(x = factors[1], y = 1)) + theme(axis.text.y = element_blank()) + ylab("") },
+          "2" = { p <- ggplot(counts ,aes_string(x = factors[1], y = factors[2])) },
+          "3" = { 
+            #get factor with min conditions -> to select for "facet_grid" 
+            factors.l <- lapply(factors, function(x){ length(unique(counts[[x]])) }) %>% unlist()
+            names(factors.l) <- factors
+            factor.min <- names(factors.l[factors.l == min(factors.l)][1])
+            
+            factors <- factors[factors != factor.min]
+            
+            #add column to rename facet_grid
+            counts <- counts %>% dplyr::mutate(grid = paste0(factor.min, "=",get(factor.min)))
+            
+            p <- ggplot(counts ,aes_string(x = factors[1], y = factors[2])) +
+              facet_grid(grid~.) })
+  
+  p <- p + geom_tile(aes(fill = status), color = "white", size = 1, width = 1, height = 1)  + geom_text(aes(label = Count)) + 
+    scale_fill_manual(values = names(col.panel.u), breaks = col.panel.u) + 
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+          axis.ticks = element_blank(), axis.text.x=element_text(angle=90, hjust=1)) +
+    ggtitle(message)
+  
   return(p)
 }
 

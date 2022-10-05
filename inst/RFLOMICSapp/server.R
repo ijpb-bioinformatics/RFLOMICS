@@ -388,6 +388,9 @@ shinyServer(function(input, output, session) {
             coExpAnal  = FALSE,
             diffAnnot  = FALSE,
             coExpAnnot = FALSE,
+            
+            compCheck  = TRUE,
+            message    = "",
 
             DiffValidContrast = NULL,
             CoExpClusterNames = NULL,
@@ -475,6 +478,10 @@ shinyServer(function(input, output, session) {
                           params = params,
                           envir = new.env(parent = globalenv()))
 
+        rea.values$outdir <- dirname(file)
+        
+        print(dirname(file))
+        
       }
     )
 

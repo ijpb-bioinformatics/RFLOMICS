@@ -144,8 +144,6 @@ methods::setMethod(f="CheckExpDesignCompleteness",
           signature="MultiAssayExperiment",
           definition <- function(object, sampleList=NULL){
 
-            
-            
             Design <- object@metadata$design
 
             # output list
@@ -167,14 +165,17 @@ methods::setMethod(f="CheckExpDesignCompleteness",
 
             # count occurence of bio conditions
             if(is.null(sampleList)){
-              tmp <- sampleMap(object) %>% data.frame()
-              sampleList <- lapply(unique(tmp$assay), function(dataset){filter(tmp, assay == dataset)$primary }) %>% 
-                purrr::reduce(intersect)
+              # tmp <- sampleMap(object) %>% data.frame()
+              # sampleList <- lapply(unique(tmp$assay), function(dataset){filter(tmp, assay == dataset)$primary }) %>%
+              #   purrr::reduce(dplyr::union)
+              
+              sampleList <- sampleMap(object)$primary
             }
             ExpDesign <- dplyr::filter(Design@ExpDesign, rownames(Design@ExpDesign) %in% sampleList)
 
             dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
-              relevel(as.factor(ExpDesign[[i]]), ref=levels(Design@List.Factors[[i]])[1])
+              factor(ExpDesign[[i]], levels=unique(ExpDesign[[i]]))
+              #relevel(ExpDesign[[i]], ref=levels(Design@List.Factors[[i]])[1])
             })
             names(dF.List) <- names(ExpDesign)
 
@@ -192,22 +193,21 @@ methods::setMethod(f="CheckExpDesignCompleteness",
               message <- "ERROR : The experimental design is not complete."
               output[["error"]] <- message
             }
+            else if(min(group_count$Count) == 1){
+              message <- "ERROR : You need at least 2 biological replicates."
+              output[["error"]] <- message
+            }
             else if(length(unique(group_count$Count)) != 1){
               message <- "WARNING : The experimental design is complete but not balanced."
               output[["warning"]] <- message
-            }
-            else if(max(group_count$Count) < 2){
-              message <- "ERROR : You need at least 2 biological replicates."
-              output[["error"]] <- message
             }
             else{
               message <- "The experimental design is complete and balanced."
             }
 
-            #plot
-            print(group_count)
+            ### plot
             output[["plot"]] <- plotExperimentalDesign(group_count, message=message)
-
+            output[["counts"]] <- group_count
             return(output)
           })
 
@@ -227,7 +227,7 @@ methods::setMethod(f="Datasets_overview_plot",
                    signature="MultiAssayExperiment",
                    definition <- function(object){
   
-  if (class(rflomics.MAE) != "MultiAssayExperiment") stop("ERROR : object is not MultiAssayExperiment class.")
+  if (class(object) != "MultiAssayExperiment") stop("ERROR : object is not MultiAssayExperiment class.")
   if (length(object@ExperimentList) == 0) stop("ERROR : object@ExperimentList is NULL")
 
   nb_entities <-lapply(object@ExperimentList, function(SE){ dim(SE)[1] }) %>% unlist()
@@ -240,7 +240,7 @@ methods::setMethod(f="Datasets_overview_plot",
     geom_tile(aes(fill = y.axis), colour = "grey50") + 
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
           panel.background = element_blank(), axis.ticks = element_blank(), legend.position="none",
-          axis.text.x = element_blank()) + 
+          axis.text.x = element_text(angle = -90, hjust = -0.5, vjust = 0.5)) + 
     xlab(paste0("Samples (k=", length(unique(sampleMap(object)$primary)), ")")) +
     ylab("")
   
@@ -563,7 +563,7 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
     SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance=as.matrix(matrix.filt)),
                                                                                        colData  = QCmat,
                                                                                        metadata = list(omicType = inputs[[dataName]][["omicType"]],
-                                                                                                       Groups = Design@Groups,
+                                                                                                       Groups = dplyr::filter(Design@Groups, samples %in% colnames(as.matrix(matrix.filt))),
                                                                                                        rowSums.zero = genes_flt0))
     #names(assays(SummarizedExperimentList[[dataName]])) <- c(dataName)
 
@@ -661,7 +661,7 @@ methods::setMethod(f="Library_size_barplot.plot",
             warnning <- NULL
 
             if (object@metadata$omicType != "RNAseq"){
-              warnning <- "WARNING : data are not RNAseq!"
+              stop("WARNING : data are not RNAseq!")
             }
 
             abundances <- SummarizedExperiment::assay(object)
@@ -671,18 +671,12 @@ methods::setMethod(f="Library_size_barplot.plot",
             if(! is.null(object@metadata$Normalization)){
               pseudo  <- scale(SummarizedExperiment::assay(object), center=FALSE,
                                scale=object@metadata$Normalization$coefNorm$norm.factors) %>% colSums(., na.rm = TRUE)
-              ylab <- "Total normalized read count per sample"
-              title <- "Filtered and normalized (TMM) data"
+              title <- paste0("Filtered and normalized (",object@metadata$Normalization$methode, ") data")
             }
             # raw data
             else{
               pseudo  <- SummarizedExperiment::assay(object) %>% colSums(., na.rm = TRUE)
-              ylab <- "Total read count per sample (method : TMM)"
               title <- "Raw data"
-            }
-
-            if (object@metadata$omicType != "RNAseq"){
-              ylab <- "Sum of abundance"
             }
 
             libSizeNorm <-  dplyr::full_join(object@metadata$Groups, data.frame ("value" = pseudo , "samples"=names(pseudo)), by="samples") %>%
@@ -691,7 +685,7 @@ methods::setMethod(f="Library_size_barplot.plot",
             libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
 
             p <- ggplot(libSizeNorm, aes(x=samples, y=value, fill=groups)) + geom_bar( stat="identity" ) + ylab(ylab) +
-              theme(axis.text.x      = element_text(angle = 45, hjust = 1), legend.position  = "none") + labs(x = "") + ggtitle(title)
+              theme(axis.text.x      = element_text(angle = 45, hjust = 1), legend.position  = "none") + labs(x = "", y = "Total read count per sample") + ggtitle(title)
             #axis.text.x     = element_blank(),
             #axis.ticks      = element_blank())
             #legend.key.size = unit(0.3, "cm"))

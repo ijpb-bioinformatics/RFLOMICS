@@ -27,12 +27,11 @@ LoadOmicsDataUI <- function(id){
                 )
               ),
               fluidRow(
-                column(width = 6,
-                       uiOutput(ns("selectSamplesUI"))#,
-                       #uiOutput(ns("GetdFactorRef"))
+                column(width = 12,
+                       uiOutput(ns("ExpDesignTable"))
                        ),
-                column(width = 6,
-                       uiOutput(ns("ExpDesignTable"))),
+                column(width = 12,
+                       uiOutput(ns("selectSamplesUI"))),
               )
             )
         ),
@@ -111,8 +110,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
         # display table
         output$ExpDesignTable <- renderUI({
-          box(width = 12, background = "light-blue",
-            tags$b("The experimental design view :"),
+          box(width = 12, background = "light-blue", solidHeader = TRUE, collapsible = TRUE, 
+              collapsed = TRUE, title = "Overview of experimental design table", 
 
             # DT::renderDataTable( DT::datatable(data = ExpDesign.tbl.affich, filter = 'top',
             #                                    options = list( pageLength = 5, autoWidth = TRUE, dom = 'tp' )))
@@ -126,7 +125,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
         output$selectSamplesUI <- renderUI({
 
           # condition list
-          box(width = 18, background = "green", # Valid colors are: red, yellow, aqua, blue, light-blue, green, navy, teal, olive, lime, orange, fuchsia, purple, maroon, black.
+          box(width = 12, background = "green", # Valid colors are: red, yellow, aqua, blue, light-blue, green, navy, teal, olive, lime, orange, fuchsia, purple, maroon, black.
             tags$b("The list and order of conditions :"),
             fluidRow(
               lapply(names(ExpDesign.tbl.affich), function(i) {
@@ -417,8 +416,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
       #rea.values$model    <- TRUE
 
       if(!is.null(local.rea.values$completeCheckRes[["error"]])){
-        rea.values$loadData <- FALSE
-        rea.values$model    <- FALSE
+        #rea.values$loadData <- FALSE
+        #rea.values$model    <- FALSE
         showModal(modalDialog(title = "Error message", local.rea.values$completeCheckRes[["error"]]))
       }
 
