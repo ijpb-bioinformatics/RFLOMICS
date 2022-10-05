@@ -10,6 +10,9 @@
     <loc>/articles/RFLOMICS-command-lines.html</loc>
   </url>
   <url>
+    <loc>/articles/RFLOMICS-configure-cluster-access.html</loc>
+  </url>
+  <url>
     <loc>/articles/RFLOMICS-contrast.html</loc>
   </url>
   <url>
@@ -38,6 +41,9 @@
   </url>
   <url>
     <loc>/reference/CheckExpDesignCompleteness-ExpDesign-method.html</loc>
+  </url>
+  <url>
+    <loc>/reference/CheckExpDesignCompleteness-MultiAssayExperiment-method.html</loc>
   </url>
   <url>
     <loc>/reference/Data_Distribution_Density.plot-SummarizedExperiment-method.html</loc>
@@ -133,10 +139,16 @@
     <loc>/reference/getContrastMatrix-ExpDesign-method.html</loc>
   </url>
   <url>
+    <loc>/reference/getContrastMatrix-MultiAssayExperiment-method.html</loc>
+  </url>
+  <url>
     <loc>/reference/getDEGlist_for_coseqAnalysis.html</loc>
   </url>
   <url>
     <loc>/reference/getExpressionContrast-ExpDesign-method.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getExpressionContrast-MultiAssayExperiment-method.html</loc>
   </url>
   <url>
     <loc>/reference/index.html</loc>
@@ -160,6 +172,9 @@
     <loc>/reference/plotPCA.html</loc>
   </url>
   <url>
+    <loc>/reference/prepareMOFA-MultiAssayExperiment-method.html</loc>
+  </url>
+  <url>
     <loc>/reference/pvalue.enrichment.plot.html</loc>
   </url>
   <url>
@@ -179,6 +194,9 @@
   </url>
   <url>
     <loc>/reference/runCoseq.html</loc>
+  </url>
+  <url>
+    <loc>/reference/run_MOFA_analysis-MOFA-method.html</loc>
   </url>
   <url>
     <loc>/reference/simpleContrastForOneFactor.html</loc>
