@@ -34,7 +34,7 @@ diff.plots$Volcano.plot
 
 ```{r , results='asis', echo = FALSE, out.width = "70%"}
 
-  reactable(dataset.SE@metadata[["DiffExpAnal"]][["DEF"]][[contrast]],
+  reactable(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],
             defaultPageSize = 6, searchable = TRUE, paginationType = "simple",
             columns = list(
               logFC = colDef(
