@@ -107,3 +107,9 @@ methods::setGeneric(
   def = function( object, ... ){standardGeneric("run_MOFA_analysis")}
 
 )
+
+methods::setGeneric(
+  name="run_MixOmics_analysis",
+  def = function( object, ... ){standardGeneric("run_MixOmics_analysis")}
+  
+)

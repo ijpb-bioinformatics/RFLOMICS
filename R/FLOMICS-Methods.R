@@ -1901,3 +1901,115 @@ methods::setMethod(f="run_MOFA_analysis",
             return(list("MOFAObject.untrained" = MOFAObject.untrained, "MOFAObject.trained" = MOFAObject.trained))
           })
 
+######################## INTEGRATION USING MixOMICS ########################
+
+#' @title run_MixOmics_analysis
+#' @description TODO
+#' @param object TODO
+#' @param scale_views TODO
+#' @param selectedResponse TODO
+#' @param ncomp TODO
+#' @param link_dataset TODO
+#' @param link_response TODO
+#' @param sparsity TODO
+#' @param cases_to_try TODO
+#' @return TODO
+#' @export
+#' @exportMethod run_MixOmics_analysis
+#' @examples
+#'
+
+methods::setMethod(f="run_MixOmics_analysis",
+                   signature="list", definition <- function(object,
+                                                            scale_views = FALSE,
+                                                            selectedResponse = NULL,
+                                                            ncomp = 2,
+                                                            link_datasets = 1,
+                                                            link_response = 1,
+                                                            sparsity = FALSE,
+                                                            cases_to_try = 5,
+                                                            ...){
+                     
+                     list_res = list()
+                     dis_anal = FALSE # is this a discriminant analysis
+                     
+                     # TODO : check this, c'est un peu etrange d'avoir eu a reordonner les lignes dans prepareForIntegration
+                     # du coup ca demande de le faire aussi pour Y
+                     # TODO : faudrait le faire directement dans preparedList ?
+                     Y <- data.frame(object$metadata, stringsAsFactors = TRUE) %>% 
+                       rownames_to_column(var = "rowNam") %>%
+                       arrange(rowNam) %>% 
+                       column_to_rownames(var = "rowNam") %>%
+                       dplyr::select(all_of(selectedResponse)) 
+                     
+                     # Y <- data.frame(nutrimouse$diet, nutrimouse$genotype, nutrimouse$lipid$`C14.0`)
+                     # rownames(Y) = paste("Row", 1:nrow(Y))
+                     # Is this a discriminant analysis?
+                     if(ncol(Y) == 1 && is.factor(Y[,1])){
+                       dis_anal <- TRUE
+                       Y <- Y[,1]
+                     }else{
+                       rowNam <- rownames(Y) 
+                       YFactors <- do.call("cbind", lapply(1:ncol(Y), FUN = function(j){
+                         if(is.factor(Y[,j])){
+                           mat_return <- unmap(Y[,j])
+                           colnames(mat_return) <- attr(mat_return, "levels")
+                           return(mat_return)
+                         }
+                       }))
+                       
+                       Y <- cbind(Y %>% select_if(is.numeric), YFactors)
+                       Y <- apply(Y, 2, as.numeric)
+                       rownames(Y ) <- rowNam
+                     }
+                     
+                     # Design matrix
+                     Design_mat <- matrix(link_datasets, 
+                                          nrow = length(object$blocks)+1,
+                                          ncol = length(object$blocks)+1)
+                     Design_mat[, ncol(Design_mat)] = 
+                       Design_mat[nrow(Design_mat), ] <- link_response
+                     diag(Design_mat) <- 0
+                     
+                     # What function to use for the analysis (can't be sparse if there is a continous response)
+                     functionName = "pls"
+                     if(dis_anal) functionName <- paste0(functionName, "da")
+                     if(sparsity && !is.numeric(Y)) functionName <- paste0("s", functionName)
+                     if(length(object$blocks)>1) functionName <- paste0("block.", functionName)
+                     
+                     # Model Tuning (if required, for sparsity)
+                     if(sparsity && dis_anal && functionName != "block.spls"){ # no tune.block.spls so far, there is one for spls
+                       # It is a bit weird to consider tuning with folds when there is very few samples per condition
+                       # Add a warning or something when it's the case?
+                       # Also consider adding a warning when the number of feature is still very high even after differential analysis
+                       
+                       tune_function <- paste0("tune.", functionName)
+                       
+                       test_keepX <- lapply(object$blocks, FUN = function(dat){
+                         ceiling(seq(from = ceiling(0.1*ncol(dat)), to = ncol(dat), length.out = cases_to_try))
+                       })
+                       
+                       list_tuning_args <- list(X = object$blocks,
+                                                Y = Y,
+                                                ncomp = ncomp,
+                                                scale = scale_views,
+                                                test.keepX = test_keepX,
+                                                folds = min(nrow(Y)-1, 10))
+                       if(length(object$blocks)>1) list_tuning_args$design = Design_mat
+                       
+                       list_res$tuning_res  <- do.call(get(tune_function), list_tuning_args)
+                     }
+                     
+                     # Model fitting
+                     
+                     list_args <- list(X = object$blocks,
+                                       Y = Y,
+                                       ncomp = ncomp,
+                                       scale = scale_views)
+                     if(length(object$blocks)>1) list_args$design = Design_mat
+                     if(sparsity && !functionName %in% c("block.spls", "block.pls")) list_args$keepX <- list_res$tuning_res$choice.keepX
+                     
+                     list_res$analysis_res <- do.call(get(functionName), list_args)
+                     
+                     return(list_res)
+                   })
