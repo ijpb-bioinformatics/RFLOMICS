@@ -1,0 +1,58 @@
+## Differential expression analysis
+
+Differential expression analysis was carried out for each selected contrast thanks to the `r dataset.SE@metadata[["DiffExpAnal"]]$method` model. 
+
+P-value of differential expressed `r omics.dic[[omictype]][["variableName"]]` were adjusted according to the `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.method` method
+with a cutoff set to `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff`.
+
+### Summary
+
+```{r ,echo=FALSE,message=FALSE, out.width = "100%",warning=FALSE,  fig.show = "hold", eval=Diff.eval}
+
+tmpRes <- dataset.SE@metadata[["DiffExpAnal"]]
+DE <- vector()
+DEup <- vector()
+DEdown <- vector()
+
+for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
+   contrastName <- tmpRes[["contrasts"]][i,]$contrastName
+   #hyp <- tmpRes[["contrasts"]][i,]$tag
+   stats <- tmpRes[["stats"]][[contrastName]]
+   DE[i] <- stats$gDE
+   DEup[i] <- paste(stats$gDEup,"(",stats$pgDEup," %)",sep="")
+   DEdown[i] <- paste(stats$gDEdown,"(",stats$pgDEdown," %)",sep="")
+}
+
+```
+
+
+```{r , echo=FALSE, results="asis", eval=Diff.eval}
+kable_styling(kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("Nb DE"=DE,"Nb DEup"=DEup,"Nb DEdown"=DEdown)), row.names=FALSE, caption=NULL, format="html"), font_size=12)
+
+```
+
+
+The following graph gives the number of common and specific differential expressed `r omics.dic[[omictype]][["variableName"]]` per testing hypothesis.
+
+
+```{r ,echo=FALSE, message=FALSE, warning=FALSE, fig.show = "hold", out.width = "80%", echo=FALSE, eval=Diff.eval}
+DEF_mat <- dataset.SE@metadata$DiffExpAnal[["mergeDEF"]]
+
+if(dim(DEF_mat)[2] > 2){
+  UpSetR::upset(DEF_mat, sets = (names(DEF_mat[,-1]))) 
+}
+```
+
+<!-- ### Results per contrast -->
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.eval}
+
+  out <- NULL
+  
+  for (contrast  in  dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]]$contrastName) {
+      out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_04_diff_analysis_per_contrast.Rmd"), quiet=TRUE))  
+      
+    }
+    
+knitr::asis_output(out)
+```

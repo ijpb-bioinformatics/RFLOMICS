@@ -1,0 +1,23 @@
+## Annotation and Enrichment : `r annot`
+
+The Enrichment are performed using hypergeometric tests to find annotation terms that are specifically over or under-represented in a given list of `r omics.dic[[omictype]][["variableName"]]` with respect to a reference specified by an annotation file.
+
+### summary
+
+blabla
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE}
+
+  out <- NULL
+  
+
+  for (listname  in  names(dataset.SE@metadata[[annot]]$results)){
+      out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_per_list.Rmd"), quiet=TRUE))
+  }
+    
+knitr::asis_output(out)
+
+```
+
+
+

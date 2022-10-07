@@ -1,0 +1,100 @@
+## Data pre-processing
+
+```{r , echo=FALSE , message=FALSE, warning=FALSE, echo=FALSE, out.width = "70%"}
+
+dataset.raw.SE <- rflomics.MAE@ExperimentList[[data]]
+dataset.SE     <- rflomics.MAE@ExperimentList[[paste0(data,".filtred")]]
+
+# 
+check <- CheckExpDesignCompleteness(rflomics.MAE, colnames(rflomics.MAE[[paste0(data,".filtred")]]))
+check$plot
+           
+```
+
+`r if(length(colnames(dataset.raw.SE)) - length(colnames(dataset.SE)) == 0) {"\\begin{comment}"}`
+
+* The *outlier samples* are removed: `r setdiff(colnames(dataset.raw.SE), colnames(dataset.SE))`.
+
+`r if(length(colnames(dataset.raw.SE)) - length(colnames(dataset.SE)) == 0) {"\\end{comment}"}`
+
+<!-- RNAseq data cas -->
+
+`r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
+
+* The *unexpressed genes* are filtered-out by default: `r length(dataset.raw.SE@metadata$rowSums.zero)` filtred-out genes.
+* The *low expressed genes* (those with low counts) are filtred-out using the Counts Per Million (CPM) method with "`r dataset.SE@metadata$FilteringOptions$Filter_Strategy`" strategy and cut-off equal to `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff`: `r length(dataset.raw.SE@metadata$FilteredFeatures)` filtred-out genes.
+
+* The `r dataset.SE@metadata$Normalization$methode` normalization method 
+was applied and the scaling factors are stored in the table below:
+
+`r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
+
+<!-- proteomics or metabolomics data cas -->
+
+`r if(dataset.raw.SE@metadata$omicType == "RNAseq") {"\\begin{comment}"}`
+
+* The data are transformed using `r rflomics.MAE@ExperimentList[[paste0(data,".filtred")]]@metadata$transform_method`.
+
+`r if(dataset.raw.SE@metadata$omicType == "RNAseq") {"\\end{comment}"}`
+
+
+
+```{r, echo=FALSE, message=TRUE, warning=TRUE, eval=FALSE}
+
+# filt.summary <-  data.frame("Status"=c("raw dataset",
+#                               "0 count",
+#                               "low count",
+#                               "filtered sataset"),
+#                             "Number of gene"=c(length(names(dataset.raw.SE)),
+#                               length(dataset.raw.SE@metadata$rowSums.zero),
+#                               length(dataset.SE@metadata$FilteredFeatures),
+#                               length(names(dataset.SE))))
+
+DT::datatable(filt.summary, options = list(colnames=FALSE, rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),class = 'cell-border stripe')
+```
+
+
+
+> QC plots
+
+`r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
+
+* Histograms of the library size before/after pre-processing
+
+```{r , echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE, eval=(dataset.raw.SE@metadata$omicType == "RNAseq")}
+
+Library_size_barplot.plot(dataset.raw.SE)
+Library_size_barplot.plot(dataset.SE)
+
+```
+
+`r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
+
+* Distribution of feature counts before/after pre-processing : boxplot
+
+```{r , echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+Data_Distribution_plot(dataset.raw.SE, plot = "boxplot")
+Data_Distribution_plot(dataset.SE, plot = "boxplot")
+```
+
+* Distribution of feature counts before/after pre-processing : density
+
+```{r , echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+Data_Distribution_plot(dataset.raw.SE, plot = "density")
+Data_Distribution_plot(dataset.SE, plot = "density")
+```
+
+* Principal component analysis before/after pre-processing
+
+```{r , echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE, out.width = "50%"}
+
+RFLOMICS::plotPCA(dataset.raw.SE, PCA="raw", PCs=c(1, 2), condition="groups")
+
+RFLOMICS::plotPCA(dataset.SE, PCA="norm", PCs=c(1, 2), condition="groups")
+```
+
+```{r , echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE, out.width = "50%"}
+
+RFLOMICS::plotPCA(dataset.raw.SE, PCA="raw", PCs=c(1, 3), condition="groups")
+RFLOMICS::plotPCA(dataset.SE, PCA="norm", PCs=c(1, 3), condition="groups")
+```

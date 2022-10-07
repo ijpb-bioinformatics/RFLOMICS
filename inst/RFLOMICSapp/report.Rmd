@@ -43,92 +43,29 @@ pngDir <- params$pngDir
 
 ```
 
-# Design
-## Experimental plan
+<!-- Experimental design -->
 
-<!-- ## Sample sheet overview -->
+```{r , message=FALSE, warning=FALSE, echo=FALSE}
 
-```{r Design, echo=FALSE, message=TRUE, warning=TRUE}
-
-DT::datatable(as.data.frame(rflomics.MAE@colData), 
-              options = list(rownames = FALSE, pageLength = 6, scrollX = T, dom = 'tip'),
-              class = 'cell-border stripe')
-
-```
-
-
-```{r factors, echo=FALSE, message=TRUE, warning=TRUE}
-
-Bio.fact   <- rflomics.MAE@metadata$design@Factors.Type[rflomics.MAE@metadata$design@Factors.Type == "Bio"]
-Batch.fact <- rflomics.MAE@metadata$design@Factors.Type[rflomics.MAE@metadata$design@Factors.Type == "batch"]
+  out <- NULL
+ 
+  out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_02_design.Rmd"), quiet=TRUE))  
+    
+knitr::asis_output(out)
 
 ```
 
-* `r paste0("Biological factor : ",  paste0(names(Bio.fact), collapse = ", "))`
-* `r paste0("Batch factor : ",  paste0(names(Batch.fact), collapse = ", "))`
+<!-- single omics analysis -->
 
-## Omics data
-
-```{r Sample table, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}
-
-loaded.data <- data.frame(datasets = sapply(names(rflomics.MAE@metadata$omicList), 
-                              function(x){ paste0(rflomics.MAE@metadata$omicList[[x]], collapse = ", ") }), 
-                          omics = names(rflomics.MAE@metadata$omicList)) %>% as.data.table()
-
-DT::datatable(loaded.data, 
-              options = list(rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),
-              class = 'cell-border stripe')
-
-# kable_styling(kable(loaded.data, row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
-
-```
-
-
-```{r upsetSamples, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}
-
-
-if(length(unlist(rflomics.MAE@metadata$omicList)) > 2){
-  
-  upsetSamples(rflomics.MAE[unlist(rflomics.MAE@metadata$omicList),])
-}
-
-
-#check <- CheckExpDesignCompleteness(rflomics.MAE)
-
-#check$plot
-```
-
-## Statistical model
-
-* The statistical model written for the experiment is:  
-
-```
-`r rflomics.MAE@metadata$design@Model.formula`
-```
-
-* The selected contrast(s) is (are):
-
-```{r contrastSel, echo=FALSE, results="asis", warning=FALSE, message=FALSE}
-
-DT::datatable(rflomics.MAE@metadata$design@Contrasts.Sel[,c(5,2:3)], 
-              options = list(rownames = FALSE, pageLength = 6, scrollX = T, dom = 'tip'),
-              class = 'cell-border stripe')
-
-# kable_styling(kable(rflomics.MAE@metadata$design@Contrasts.Sel[,c(5,2:3)], 
-#                     row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
-```
-
-`r if(length(rflomics.MAE@metadata$omicList) ==0 ) {"\\begin{comment}"}`
-
-```{r analysis, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
+```{r analysis, message=FALSE, warning=FALSE, echo=FALSE, eval=(length(rflomics.MAE@metadata$omicList) != 0 )}
 
   out <- NULL
   for (omictype in names(rflomics.MAE@metadata$omicList)){ 
-    
-    # child <- paste0("report_",omictype, ".Rmd")
-    child <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_",omictype, ".Rmd") 
 
     for (data in  rflomics.MAE@metadata$omicList[[omictype]]){
+      
+      # child <- paste0("report_",omictype, ".Rmd")
+      child <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_01_omics.Rmd") 
       
       out <- c(out, knitr::knit_child(child, quiet=TRUE))  
     }
@@ -139,8 +76,9 @@ knitr::asis_output(out)
 
 ```
 
-`r if(length(rflomics.MAE@metadata$omicList) == 0 ) {"\\end{comment}"}`
+<!-- data integration  -->
 
+<!-- ## with MOFA -->
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE, eval = !is.null(rflomics.MAE@metadata$MOFA_results), hide = is.null(rflomics.MAE@metadata$MOFA_results) }
 
@@ -151,6 +89,9 @@ knitr::asis_output(out)
 knitr::asis_output(out)
 
 ```
+
+<!-- ## with MixOmix -->
+
 
 # R Session
 

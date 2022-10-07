@@ -1,0 +1,79 @@
+# `r data` 
+
+```{r , echo=FALSE, message=FALSE, warning=FALSE}
+
+dataset.raw.SE <- rflomics.MAE@ExperimentList[[data]]
+dataset.SE     <- rflomics.MAE@ExperimentList[[paste0(data,".filtred")]]
+
+Diff.eval      <- !is.null(dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]])
+CoEx.eval      <- !is.null(dataset.SE@metadata[["CoExpAnal"]]$results)
+Diff.ann.eval  <- !is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]]$results)
+CoEx.ann.eval  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results)
+
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+out <- NULL
+
+out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_03_data_explor.Rmd"),
+                                quiet=TRUE))  
+    
+knitr::asis_output(out)
+
+```
+
+<!-- differential analysis -->
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, eval=Diff.eval}
+
+out <- NULL
+
+out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_04_diff_analysis.Rmd"), 
+                                quiet=TRUE))  
+    
+knitr::asis_output(out)
+
+```
+
+<!-- enrichement analysis on DE G/P/M lists -->
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.ann.eval}
+
+out <- NULL
+annot <- "DiffExpEnrichAnal"
+
+out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich.Rmd"), 
+                                quiet=TRUE))  
+    
+knitr::asis_output(out)
+
+```
+
+<!-- co-expression analysis -->
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=CoEx.eval}
+
+out <- NULL
+
+out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_05_coexp_analysis.Rmd"), 
+                                quiet=TRUE))  
+    
+knitr::asis_output(out)
+
+```
+
+<!-- enrichement analysis on cluster -->
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=CoEx.ann.eval}
+
+
+annot <- "CoExpEnrichAnal"
+out <- NULL
+
+out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich.Rmd"), quiet=TRUE))  
+    
+knitr::asis_output(out)
+
+```
