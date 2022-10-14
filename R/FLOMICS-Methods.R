@@ -150,7 +150,7 @@ methods::setMethod(f="CheckExpDesignCompleteness",
             output <- list()
             output[["error"]] <- NULL
             output[["warning"]] <- NULL
-            
+
 
             # check presence of bio factors
             if (! table(Design@Factors.Type)["Bio"] %in% 1:3){
@@ -168,7 +168,7 @@ methods::setMethod(f="CheckExpDesignCompleteness",
               # tmp <- sampleMap(object) %>% data.frame()
               # sampleList <- lapply(unique(tmp$assay), function(dataset){filter(tmp, assay == dataset)$primary }) %>%
               #   purrr::reduce(dplyr::union)
-              
+
               sampleList <- sampleMap(object)$primary
             }
             ExpDesign <- dplyr::filter(Design@ExpDesign, rownames(Design@ExpDesign) %in% sampleList)
@@ -188,7 +188,7 @@ methods::setMethod(f="CheckExpDesignCompleteness",
             # check if design is balanced
             # check nbr of replicats
 
-           
+
             if(min(group_count$Count) == 0){
               message <- "ERROR : The experimental design is not complete."
               output[["error"]] <- message
@@ -218,7 +218,7 @@ methods::setMethod(f="CheckExpDesignCompleteness",
 
 
 #' @title Datasets overview plot
-#' @description This function plot overview of loaded datasets aligned per sample (n=number of entities (genes/metabolites/proteins); k=number of samples) 
+#' @description This function plot overview of loaded datasets aligned per sample (n=number of entities (genes/metabolites/proteins); k=number of samples)
 #' @param An object of class \link{MultiAssayExperiment-class}
 #' @exportMethod Datasets_overview_plot
 #' @return plot
@@ -226,24 +226,24 @@ methods::setMethod(f="CheckExpDesignCompleteness",
 methods::setMethod(f="Datasets_overview_plot",
                    signature="MultiAssayExperiment",
                    definition <- function(object){
-  
+
   if (class(object) != "MultiAssayExperiment") stop("ERROR : object is not MultiAssayExperiment class.")
   if (length(object@ExperimentList) == 0) stop("ERROR : object@ExperimentList is NULL")
 
   nb_entities <-lapply(object@ExperimentList, function(SE){ dim(SE)[1] }) %>% unlist()
-  
-  data <- data.frame(nb_entities = nb_entities, assay = names(nb_entities)) %>% 
+
+  data <- data.frame(nb_entities = nb_entities, assay = names(nb_entities)) %>%
     dplyr::full_join(data.frame(sampleMap(object)), by="assay") %>%
     dplyr::mutate(y.axis = paste0(assay, "\n", "n=", nb_entities))
-  
+
   p <- ggplot(data, aes(x=primary, y=y.axis)) +
-    geom_tile(aes(fill = y.axis), colour = "grey50") + 
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+    geom_tile(aes(fill = y.axis), colour = "grey50") +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank(), axis.ticks = element_blank(), legend.position="none",
-          axis.text.x = element_text(angle = -90, hjust = -0.5, vjust = 0.5)) + 
+          axis.text.x = element_text(angle = -90, hjust = -0.5, vjust = 0.5)) +
     xlab(paste0("Samples (k=", length(unique(sampleMap(object)$primary)), ")")) +
     ylab("")
-  
+
   print(p)
 
 })
@@ -725,7 +725,7 @@ methods::setMethod(f="Data_Distribution_plot",
                         pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
                                              scale=object@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
                         x_lab  <- paste0("log2(",object@metadata$omicType, " data)")
-                        title  <- paste0("Filtered and normalized ", object@metadata$omicType, " (", 
+                        title  <- paste0("Filtered and normalized ", object@metadata$omicType, " (",
                                          object@metadata$Normalization$methode, ") data")
                       }
                     },
@@ -735,19 +735,19 @@ methods::setMethod(f="Data_Distribution_plot",
                         pseudo <- SummarizedExperiment::assay(object)
                         x_lab  <- paste0(object@metadata$omicType, " data")
                         title  <- paste0(object@metadata$omicType, " raw data")
-                        
+
                       }
                       # after transformation
                       else{
-                        
+
                         x_lab  <- paste0(object@metadata$omicType, " data")
                         title  <- paste0("Transformed ", object@metadata$omicType, " (" , object@metadata$transform_method, ") data")
-                        
+
                         switch (object@metadata$transform_method,
-                               
+
                                 "log1p" = {
                                   pseudo <- log1p(SummarizedExperiment::assay(object)) },
-                                
+
                                 "squareroot" = {
                                   pseudo <- sqrt(SummarizedExperiment::assay(object)) }
                                 # "log2" = {
@@ -763,19 +763,19 @@ methods::setMethod(f="Data_Distribution_plot",
                         pseudo <- SummarizedExperiment::assay(object)
                         x_lab  <- paste0(object@metadata$omicType, " data")
                         title  <- paste0(object@metadata$omicType, " raw data")
-                        
+
                       }
                       # after transformation
                       else{
-                        
+
                         x_lab  <- paste0(object@metadata$omicType, " data")
                         title  <- paste0("Transformed ", object@metadata$omicType, " (" , object@metadata$transform_method, ") data")
-                        
+
                         switch (object@metadata$transform_method,
-                                
+
                                 "log1p" = {
                                   pseudo <- log1p(SummarizedExperiment::assay(object)) },
-                                
+
                                 "squareroot" = {
                                   pseudo <- sqrt(SummarizedExperiment::assay(object)) }
                                 # "log2" = {
@@ -786,28 +786,28 @@ methods::setMethod(f="Data_Distribution_plot",
                       }
                     }
             )
-            
+
             pseudo.gg <- pseudo %>% reshape2::melt()
             colnames(pseudo.gg) <- c("features", "samples", "value")
-            
+
             pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples") %>%
               dplyr::arrange(groups)
-            
+
             pseudo.gg$samples <- factor(pseudo.gg$samples, levels = unique(pseudo.gg$samples))
-            
+
             switch (plot,
                     "density" = {
-                      p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) + 
+                      p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) +
                         xlab(x_lab) + theme(legend.position='none') + ggtitle(title)
                     },
                     "boxplot" = {
-                      p <- ggplot(pseudo.gg, aes(x=samples, y=value,label = features)) + 
+                      p <- ggplot(pseudo.gg, aes(x=samples, y=value,label = features)) +
                         ggplot2::geom_boxplot(aes(fill=groups),outlier.colour = "red") +
-                        theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") + 
+                        theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +
                         xlab("") + ylab(x_lab) + ggtitle(title) #+
                       #geom_point(alpha = 1/100,size=0)
                     })
-            
+
             print(p)
 
           }
@@ -1696,7 +1696,7 @@ Trial_effective <- data$Trial_effective[1]
 
 p[[listname]] <- ggplot2::ggplot(data = tail(data_ord, n=top), aes(x=sort(Trial_Success), y=Term, size=Urn_Success, color=Pvalue)) +
   geom_point(alpha=0.5) + scale_size(range = c(0.1, 10)) + scale_color_gradient(low="blue", high="red") + ylab("") + xlab("Count") +
-  ggtitle(paste0(listname, " :\n ",Over_Under," ", Top.tag, " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")"))
+  ggtitle(paste0(listname, " :\n ",Over_Under," ", Top.tag, "terms in ", domain , "\n", " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")"))
 
   }
 
@@ -1837,7 +1837,7 @@ methods::setMethod(f="prepareMOFA",
             # Transformation of proteomics/metabolomics data
             res <- lapply(omicsToIntegrate[omicsToIntegrate!="RNAseq"], FUN = function(omicName){
               # omicName = "proteomics"
-              
+
               omicsDat <- object@ExperimentList[[grep(omicName, names(object@ExperimentList))]]
               omicsDat@metadata[["transform_method_integration"]] <- omicsDat@metadata$transform_method
 
@@ -1878,30 +1878,30 @@ methods::setMethod(f="run_MOFA_analysis",
                                                    maxiter = 1000,
                                                    num_factors = 10,
                                                    ...){
-            
+
             # library(MOFA2)
             # object = FlomicsMultiAssay@metadata$MOFA_untrained
             # scale_views = TRUE
-            
+
             data_opts <- get_default_data_options(object)
             model_opts <- get_default_model_options(object)
             train_opts <- get_default_training_options(object)
-            
+
             data_opts$scale_views <- scale_views
             train_opts$maxiter <- maxiter
             model_opts$num_factors <- num_factors
-            
+
             MOFAObject.untrained <- MOFA2::prepare_mofa(
               object = object,
               data_options = data_opts,
               model_options = model_opts,
               training_options = train_opts
             )
-            
+
             MOFAObject.trained <- MOFA2::run_mofa(MOFAObject.untrained, use_basilisk = TRUE)
             # peut poser probleme au niveau python et mofapy.
             # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R.
-            
+
             return(list("MOFAObject.untrained" = MOFAObject.untrained, "MOFAObject.trained" = MOFAObject.trained))
           })
 
