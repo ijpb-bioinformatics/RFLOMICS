@@ -1,13 +1,23 @@
 
-
 <!-- <details> -->
 <!--   <summary>`r listname`</summary> -->
+
+```{r , echo=FALSE , message=FALSE, warning=FALSE}
+# create export data
+listnameDir <- paste0(annotDir,"/",contrastName2contrastDir(listname),"/")
+dir.create(path=listnameDir)
+
+knitr::opts_chunk$set(
+  fig.path=listnameDir
+)
+```
+
 
 ### `r listname` {.tabset}
 
 #### overrepresented plot
 
-```{r , echo=FALSE, out.width = "50%", message=FALSE, warning=FALSE}
+```{r over_represented_Domain_top50, echo=FALSE, out.width = "50%", message=FALSE, warning=FALSE,}
 
 for(domain in unique(dataset.SE@metadata[[annot]]$results[[listname]]$Over_Under_Results$Domain)){
 p <- Enrichment.plot(object = dataset.SE, listNames = listname, from = annot,
@@ -20,7 +30,7 @@ print(p)
 
 #### underrepresented plot
 
-```{r , echo=FALSE, out.width = "70%", message=FALSE, warning=FALSE}
+```{r under_represented_Domain_top50, echo=FALSE, out.width = "70%", message=FALSE, warning=FALSE}
 
 for(domain in unique(dataset.SE@metadata[[annot]]$results[[listname]]$Over_Under_Results$Domain)){
   p <- Enrichment.plot(object = dataset.SE, listNames = listname, from = annot,
@@ -51,6 +61,9 @@ for(domain in unique(dataset.SE@metadata[[annot]]$results[[listname]]$Over_Under
               )
             )
 
+  write.table(dataset.SE@metadata[[annot]][["results"]][[listname]][["Over_Under_Results"]],
+             file=paste0(listnameDir,"Table_of_Over_Under_Represented_Domain.txt"),
+             sep="\t",quote=FALSE,col.names=TRUE,row.names=FALSE)
 ```
 
 <!-- </details> -->
