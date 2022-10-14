@@ -14,7 +14,7 @@ output:
     number_sections: true
     theme: united
 params: 
-  pngDir: NA
+  outDir: NA
   FEdata: NA
   title: NA
 ---
@@ -22,7 +22,7 @@ params:
 
 ```{r , include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
+options(knitr.duplicate.label = "allow")
 ```
 
 ```{r library, echo=FALSE, message=FALSE, warning=FALSE}
@@ -39,9 +39,16 @@ library(reactable)
 ```{r parameters, include=FALSE}
 
 load(params$FEdata)
-pngDir <- params$pngDir
-
+outDir <- params$outDir
+projectName <- params$title
 ```
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE}
+# Create a directory to store all the results (tables and figures) of the project in a tmpdir
+# user may download this results as an archive from the shiny interface
+dir.create(path=outDir)
+```
+
 
 <!-- Experimental design -->
 
@@ -101,5 +108,6 @@ devtools::session_info()
 
 
 # Bibliographie
+
 
 
