@@ -1,10 +1,10 @@
 
 <!-- <details> -->
-<!--   <summary>`r listname`</summary> -->
 
 ```{r , echo=FALSE , message=FALSE, warning=FALSE}
+
 # create export data
-listnameDir <- paste0(annotDir,"/",contrastName2contrastDir(listname),"/")
+listnameDir <- paste0(annotDir,"/", contrastName2contrastDir(listname),"/",domain,"/")
 dir.create(path=listnameDir)
 
 knitr::opts_chunk$set(
@@ -15,37 +15,35 @@ knitr::opts_chunk$set(
 
 ### `r listname` {.tabset}
 
-#### overrepresented plot
+#### `r domain` {.tabset}
 
-```{r over_represented_Domain_top50, echo=FALSE, out.width = "50%", message=FALSE, warning=FALSE,}
+##### overrepresented plot
 
-for(domain in unique(dataset.SE@metadata[[annot]]$results[[listname]]$Over_Under_Results$Domain)){
+```{r top50_over_represented_terms, echo=FALSE, out.width = "50%", message=FALSE, warning=FALSE,}
+
 p <- Enrichment.plot(object = dataset.SE, listNames = listname, from = annot,
                                                   Over_Under = "overrepresented",
                                                   top = 50 , domain = domain)
 print(p)
-}
 
 ```
 
-#### underrepresented plot
+##### underrepresented plot
 
-```{r under_represented_Domain_top50, echo=FALSE, out.width = "70%", message=FALSE, warning=FALSE}
+```{r top50_under_represented_terms, echo=FALSE, out.width = "70%", message=FALSE, warning=FALSE}
 
-for(domain in unique(dataset.SE@metadata[[annot]]$results[[listname]]$Over_Under_Results$Domain)){
   p <- Enrichment.plot(object = dataset.SE, listNames = listname, from = annot,
                                                     Over_Under = "underrepresented",
                                                     top = 50 , domain = domain)
   print(p)
-}
 
 ```
 
-#### table
+##### table
 
 ```{r , results='asis', echo = FALSE, out.width = "70%"}
 
-  reactable(dataset.SE@metadata[[annot]][["results"]][[listname]][["Over_Under_Results"]],
+  reactable(dplyr::filter(dataset.SE@metadata[[annot]][["results"]][[listname]][["Over_Under_Results"]],Domain==domain),
             defaultPageSize = 6, searchable = TRUE, paginationType = "simple",
             columns = list(
               Decision = colDef(
@@ -61,11 +59,12 @@ for(domain in unique(dataset.SE@metadata[[annot]]$results[[listname]]$Over_Under
               )
             )
 
-  write.table(dataset.SE@metadata[[annot]][["results"]][[listname]][["Over_Under_Results"]],
-             file=paste0(listnameDir,"Table_of_Over_Under_Represented_Domain.txt"),
+  write.table(dplyr::filter(dataset.SE@metadata[[annot]][["results"]][[listname]][["Over_Under_Results"]],Domain==domain),
+             file=paste0(listnameDir,"Table_of_Over_Under_Represented_terms.txt"),
              sep="\t",quote=FALSE,col.names=TRUE,row.names=FALSE)
 ```
 
 <!-- </details> -->
+
 
 

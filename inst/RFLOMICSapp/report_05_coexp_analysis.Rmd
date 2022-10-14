@@ -1,5 +1,15 @@
 ## Co-expression {.tabset}
 
+```{r , echo=FALSE , message=FALSE, warning=FALSE}
+coexpDir <- paste0(dataDir,"/","03-Coexpression_analysis/")
+dir.create(path=coexpDir)
+
+knitr::opts_chunk$set(
+  fig.path=coexpDir
+)
+```
+
+
 Co-expression analysis was carried out on the `r dataset.SE@metadata[["CoExpAnal"]]$merge.type`
 of the following list of gene `r dataset.SE@metadata$CoExpAnal$gene.list.names`. 
 `r dataset.SE@metadata[["CoExpAnal"]]$tools` was used to cluster genes. 
@@ -14,7 +24,7 @@ was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
 ### ICL 
 
 
-```{r , echo=FALSE}
+```{r ICL, echo=FALSE}
 plot.coseq.res <- dataset.SE@metadata[["CoExpAnal"]]$plots
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$ICL 
@@ -23,37 +33,38 @@ plot.coseq.res$ICL
 
 ### profiles  
 
-```{r , echo=FALSE}
+```{r profiles, echo=FALSE}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$profiles 
 ```
 
 ### boxplots
 
-```{r , echo=FALSE}
+```{r boxplots_profile, echo=FALSE}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$boxplots
 ```
 
 ### probapost_boxplots 
 
-```{r , echo=FALSE}
+```{r boxplots_proba, echo=FALSE}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$probapost_boxplots 
 ```
 
 ### probapost_barplots
 
-```{r , echo=FALSE}
+```{r barplots_probapost, echo=FALSE}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$probapost_barplots
 ```
 
 ### probapost_barplots
 
-```{r , echo=FALSE}
+```{r histogram_probapost, echo=FALSE}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$probapost_histogram
 ```   
+
 
 
