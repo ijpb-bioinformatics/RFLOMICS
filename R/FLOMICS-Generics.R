@@ -47,6 +47,6 @@ setGeneric(
 )
 
 setGeneric(
-  name="SetModelMatrix",
-  def = function( object, ... ){standardGeneric("SetModelMatrix")}
+  name="SetModelMatrixAndContrasts",
+  def = function( object, ... ){standardGeneric("SetModelMatrixAndContrasts")}
 )
