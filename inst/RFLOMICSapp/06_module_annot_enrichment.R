@@ -1,0 +1,365 @@
+AnnotationEnrichmentUI <- function(id){
+  
+  options(shiny.maxRequestSize = 3000*1024^2)
+  
+  #name space for id
+  ns <- NS(id)
+  
+  tagList(  
+    fluidRow(
+      box(title = span(tagList(icon("chart-pie"), "   Enrichment analysis ", tags$small("(Scroll down for instructions)"))),
+          solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
+          p("..."))
+      ),
+    ## parameters + input data
+    fluidRow(
+      column(3, uiOutput(ns("AnnotParamUI"))#, valueBoxOutput(ns("Urn_effective"), width = 12)
+             ),
+      column(9, uiOutput(ns("AnnotDiffResults"))),
+      column(9, uiOutput(ns("AnnotCoExpResults")))#,
+      #column(9, uiOutput(ns("mergeAnnotUI")))
+    )
+
+  )
+}
+
+AnnotationEnrichment <- function(input, output, session, dataset, rea.values){
+  
+  local.rea.values <- reactiveValues(dataset.SE = NULL)
+  
+  output$AnnotParamUI <- renderUI({
+    
+    validate(
+      need(rea.values[[dataset]]$diffValid != FALSE, "Please run diff analysis and validate your chose...")
+    )
+    
+    ## gene lists
+    
+    ListNames.diff  <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName
+    
+    # multiInput(
+    #   inputId = session$ns("GeneList.diff"),
+    #   label = "Select DEG to Coseq :", 
+    #   choiceNames = ListNames,
+    #   choiceValues = ListNames
+    # )
+    box(title = span(tagList(icon("sliders-h"), "  ", "Setting")), width = 14, status = "warning",
+            
+        # select DEG list
+        pickerInput(
+          inputId = session$ns("GeneList.diff"), label = "Select DEG lists:", 
+          choices = ListNames.diff, multiple = TRUE, selected = ListNames.diff,
+          options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+          
+        ),
+        
+        # select clusters
+        uiOutput(session$ns("GeneList.coseqUI")),
+        # pickerInput(
+        #   inputId = session$ns("GeneList.coseq"), label = "Select Clusters :",
+        #   choices = ListNames.coseq, multiple = TRUE, selected = ListNames.coseq,
+        #   options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+        # ),
+        
+        hr(),
+        ## file with annotation (geneID, Term, Name, Domain/source)
+        fileInput(inputId = session$ns("annotationFile"), label = "Annotation file :", 
+                  accept  = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
+        
+        # ## match gene names TAIR ID 
+        # fileInput(inputId = session$ns("geneName_geneID"), label = "match Gene IDs, Gene names :", 
+        #           accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
+        
+        ## choice of probability
+        selectInput(inputId = session$ns("EnrichMethod"), label = "Test :", 
+                    choices = list("Hypergeometric"="hypergeometric"),selected = "hypergeometric"),
+        
+        ## alpha threshold
+        numericInput(inputId = session$ns("Alpha_Enrichment"), label="P-value :", value = 0.01 , min = 0, max = 0.1, step = 0.01),
+        actionButton(inputId = session$ns("runEnrich"),"Run")
+    )
+    
+  })
+  
+  output$GeneList.coseqUI <- renderUI({
+    
+    if(rea.values[[dataset]]$coExpAnal == FALSE) return()
+    
+    ListNames.coseq <- names(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["clusters"]])
+    
+    pickerInput(
+      inputId = session$ns("GeneList.coseq"), label = "Select Clusters :",
+      choices = ListNames.coseq, multiple = TRUE, selected = ListNames.coseq,
+      options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+    )
+  })
+  
+  
+  observeEvent(input$runEnrich, {
+    
+    #---- progress bar ----#
+    progress <- shiny::Progress$new()
+    progress$set(message = "Run Annot", value = 0)
+    on.exit(progress$close())
+    progress$inc(1/10, detail = "in progress...")
+    #----------------------#
+    
+    local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
+    
+    rea.values[[dataset]]$diffAnnot  <- FALSE
+    rea.values[[dataset]]$coExpAnnot <- FALSE
+    
+    # check list of genes
+    if(length(c(input$GeneList.diff, input$GeneList.coseq )) == 0){
+      
+      showModal(modalDialog( title = "Error message", "Please select at least 1 gene list."))
+    }
+    validate({ 
+      need(length(c(input$GeneList.diff, input$GeneList.coseq )) != 0, message="Please select at least 1 gene list") 
+    })
+    
+    # check annotation file
+    if(is.null(input$annotationFile$datapath)){
+      
+      showModal(modalDialog( title = "Error message", "need annotation file."))
+    }
+    validate({ 
+      need(!is.null(input$annotationFile$datapath), message="need annotation file") 
+    })
+    
+    annotation <- fread(file = input$annotationFile$datapath, sep="\t", header = TRUE)
+    
+    if(length(intersect(c("geneID", "Term", "Name", "Domain"), colnames(annotation))) < 4){
+      
+      showModal(modalDialog( title = "Error message", "The header of the annotation file does not match (see input vignette)..."))
+    }
+    validate({ 
+      need(length(intersect(c("geneID", "Term", "Name", "Domain"), colnames(annotation))) == 4, message="The header of the annotation file does not match (see input vignette)...") 
+    })
+    
+    # 
+    
+    # reduce ref to genes presente in matrix count after filtering
+    annotation <- dplyr::filter(annotation , geneID %in% names(local.rea.values$dataset.SE))
+    
+    #check if ref correspond to features in lists
+    if(dim(annotation)[1] == 0){
+      showModal(modalDialog( title = "Error message", "There is no correspondence between the feature lists and the annotation file"))
+    }
+    validate({ 
+      need(dim(annotation)[1] != 0, message="There is no correspondence between the feature lists and the annotation file") 
+    })
+    
+    # output$Urn_effective <- renderValueBox({
+    #     valueBox(value = length(unique(annotation$geneID)), subtitle = NULL, icon = NULL, color = "yellow")
+    #   })
+    
+    print(paste("# 11- Enrichment Analysis...", dataset))
+    
+    #---- progress bar ----#
+    progress$inc(1/5, detail = paste("Doing part ", 50,"%", sep=""))
+    #----------------------#
+    
+    ## run annotation
+
+    if(length(input$GeneList.diff) != 0){
+      
+      local.rea.values$dataset.SE <- runAnnotationEnrichment(local.rea.values$dataset.SE, annotation= annotation, 
+                                            ListNames=input$GeneList.diff, from="DiffExpAnal", 
+                                            alpha = input$Alpha_Enrichment, probaMethod = input$EnrichMethod)
+      
+      rea.values[[dataset]]$diffAnnot <- TRUE
+    }
+    
+    if(length(input$GeneList.coseq) != 0){
+      
+      local.rea.values$dataset.SE <- runAnnotationEnrichment(local.rea.values$dataset.SE, annotation= annotation, 
+                                            ListNames=input$GeneList.coseq, from="CoExpAnal", 
+                                            alpha = input$Alpha_Enrichment, probaMethod = input$EnrichMethod)
+      
+      rea.values[[dataset]]$coExpAnnot <- TRUE
+    }
+    
+    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- local.rea.values$dataset.SE
+    
+    
+    #---- progress bar ----#
+    progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
+    #----------------------#
+    })
+
+  ## print results
+  output$AnnotDiffResults <- renderUI({
+    
+    if(rea.values[[dataset]]$diffAnnot == FALSE) return()
+    
+    #dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
+    
+    # check if result is empty
+    if(is.null(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]])){
+      
+      showModal(modalDialog( title = "Error message", "There is no correspondence between the feature lists and the annotation file"))
+    }
+    validate({ 
+      need(!is.null(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]]), message="There is no correspondence between the feature lists and the annotation file") 
+    })
+    
+    # foreach gene list selected (contrast)
+    lapply(names(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]]), function(listname) {
+      
+      # if result is empty
+      if(is.null(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]][[listname]])){
+        
+        box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = listname, 
+            "There is no correspondence between the feature list and the annotation file !"
+            )
+            
+      }else{
+      
+        # display result for each list
+        data <- local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]][[listname]][["Over_Under_Results"]]
+        
+        fluidRow(
+          
+             box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = listname, 
+                 
+                 verticalLayout(
+                     renderPlot({ Enrichment.plot(object = local.rea.values$dataset.SE, listNames = listname, 
+                                                  from =       "DiffExpEnrichAnal",
+                                                  Over_Under = input[[paste0(listname, "-Over_Under")]],
+                                                  top =        input[[paste0(listname, "-top.over")]],
+                                                  domain =     input[[paste0(listname, "-domain")]]) }),
+                     fluidRow(
+                       column(3,
+                              numericInput(inputId = session$ns(paste0(listname, "-top.over")), label="Top genes :" , value=50 , 
+                                           min = 20, max=length(unique(data$Term)), step = 20)),
+                       column(4,
+                         radioButtons(inputId = session$ns(paste0(listname, "-domain")), label="Domain" ,
+                                           choices = unique(data$Domain), selected = unique(data$Domain)[1], inline = FALSE, width = 1.5)),
+                       column(5,
+                         radioButtons(inputId = session$ns(paste0(listname, "-Over_Under")), label="" ,
+                                      choices = unique(data$Decision), selected = unique(data$Decision)[1], inline = FALSE, width = 1.5))
+                        )),
+                  hr(),
+                  verticalLayout(
+
+                    tags$br(),
+                    ## DEG result table ###
+                    DT::renderDataTable({
+
+                      DT::datatable(dplyr::filter(data, Decision == input[[paste0(listname, "-Over_Under")]], 
+                                                        Domain   == input[[paste0(listname, "-domain")]]),
+                                    options = list(rownames = TRUE, pageLength = 5, lengthMenu = c(5,10, 15, 20), scrollX = T))
+                      })
+                  )
+             )
+          )
+        }
+    })
+  })
+  
+  output$AnnotCoExpResults <- renderUI({
+    
+    if(rea.values[[dataset]]$coExpAnnot == FALSE) return()
+    
+    #dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
+    
+    
+    # check if result is empty
+    if(is.null(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]])){
+      
+      showModal(modalDialog( title = "Error message", "There is no correspondence between the feature lists and the annotation file"))
+    }
+    validate({ 
+      need(!is.null(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]]), message="There is no correspondence between the feature lists and the annotation file") 
+    })
+    
+    # foreach gene list selected (contrast)
+    lapply(names(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]]), function(listname) {
+      
+      # if result is empty
+      if(is.null(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]][[listname]])){
+        
+        box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = listname, 
+            "There is no correspondence between the feature list and the annotation file !"
+        )
+        
+      }else{
+        
+        data <- local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]][[listname]][["Over_Under_Results"]]
+        
+        fluidRow(
+         
+          box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = listname, 
+              
+              verticalLayout(
+                renderPlot({ Enrichment.plot(dataset.SE, listNames=listname, from="CoExpEnrichAnal",
+                                             Over_Under = input[[paste0(listname, "-Over_Under")]],
+                                             top =        input[[paste0(listname, "-top.over")]],
+                                             domain =     input[[paste0(listname, "-domain")]]) }),
+                fluidRow(
+                  column(3,
+                         numericInput(inputId = session$ns(paste0(listname, "-top.over")), label="Top genes :" , value=50 , 
+                                      min = 20, max=length(unique(data$Term)), step = 20)),
+                  column(4,
+                         radioButtons(inputId = session$ns(paste0(listname, "-domain")), label="Domain" ,
+                                      choices = unique(data$Domain), selected = unique(data$Domain)[1], inline = FALSE, width = 1.5)),
+                  column(5,
+                         radioButtons(inputId = session$ns(paste0(listname, "-Over_Under")), label="" ,
+                                      choices = unique(data$Decision), selected = unique(data$Decision)[1], inline = FALSE, width = 1.5))
+                )),
+              hr(),
+              verticalLayout(
+                
+                tags$br(),
+                ## DEG result table ###
+                DT::renderDataTable({
+                  
+                  DT::datatable(dplyr::filter(data, Decision == input[[paste0(listname, "-Over_Under")]], 
+                                              Domain   == input[[paste0(listname, "-domain")]]),
+                                options = list(rownames = TRUE, pageLength = 5, lengthMenu = c(5,10, 15, 20), scrollX = T))
+                })
+              )
+          ) 
+        )
+      }
+    })
+  })
+  
+  # output$mergeAnnotUI <- renderUI({
+  #   
+  #   if(rea.values[[dataset]]$diffAnnot == FALSE & rea.values[[dataset]]$coExpAnnot == FALSE) return()
+  #   
+  #   #dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
+  #   
+  #   mergeAnnotDiff <- lapply(names(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal$result), function(x){
+  #                     Term.list <- local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal$results[[x]]$Over_Under_Results$Term %>% as.data.frame()
+  #                     names(Term.list) <- "Term"
+  #                     Term.list[[x]] <- 1:dim(Term.list)[1]
+  #                     return(Term.list)}) %>% 
+  #     purrr::reduce(dplyr::full_join, by = "Term") %>% 
+  #     dplyr::mutate_at(.vars = 2:(length(names(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal$result))+1), .funs = function(x){ dplyr::if_else(is.na(x), 0, 1)}) 
+  # 
+  #   if(!is.null(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal)){
+  #     
+  #     mergeAnnotCoEx <- lapply(names(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal$result), function(x){
+  #       Term.list <- local.rea.values$dataset.SE@metadata$CoExpEnrichAnal$results[[x]]$Over_Under_Results$Term %>% as.data.frame()
+  #       names(Term.list) <- "Term"
+  #       Term.list[[x]] <- 1:dim(Term.list)[1]
+  #       return(Term.list)}) %>% 
+  #       purrr::reduce(dplyr::full_join, by = "Term") %>% 
+  #       dplyr::mutate_at(.vars = 2:(length(names(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal$result))+1), .funs = function(x){ dplyr::if_else(is.na(x), 0, 1)}) 
+  #     
+  #     mergeAnnot <- dplyr::full_join(mergeAnnotDiff, mergeAnnotCoEx, by = "Term")
+  #     
+  #   }else{
+  #     mergeAnnot <- mergeAnnotDiff
+  #   }
+  #   
+  #   if (dim(mergeAnnot)[2] > 1){
+  #       box(width=12,  status = "warning", renderPlot({ UpSetR::upset(mergeAnnot) }))
+  #    }
+  #   })
+}
+    
+    

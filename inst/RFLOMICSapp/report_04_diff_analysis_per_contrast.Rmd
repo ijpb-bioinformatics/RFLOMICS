@@ -1,0 +1,79 @@
+
+
+<!-- <details> -->
+<!--   <summary>`r contrast`</summary> -->
+
+
+```{r , echo=FALSE , message=FALSE, warning=FALSE}
+
+# Create a directory to store the results by contrast
+tmp <- dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]]
+
+contrastDir <- paste0(anaDiffDir,"/", tmp$tag[which(tmp$contrastName == contrast)], "_" , contrastName2contrastDir(contrast),"/")
+                      
+dir.create(path=contrastDir)
+
+knitr::opts_chunk$set(
+  fig.path=contrastDir
+)
+```
+
+```{r , echo=FALSE,out.width = "50%"}
+
+diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=contrast, Adj.pvalue.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["Adj.pvalue.cutoff"]], FC.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["abs.FC.cutoff"]])
+```
+### `r contrast` {.tabset}
+
+#### Pvalue
+
+```{r pvalues_distrib, echo=FALSE,out.width = "50%"}
+diff.plots$Pvalue.hist
+```
+
+#### MAplot
+
+
+```{r MA_plot, echo=FALSE,out.width = "50%"}
+diff.plots$MA.plot
+```
+
+#### Volcano plot
+
+
+```{r volcano_plot, echo=FALSE,out.width = "50%"}
+diff.plots$Volcano.plot
+```
+
+#### Table
+
+```{r , results='asis', echo = FALSE, out.width = "70%"}
+
+  reactable(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],
+            defaultPageSize = 6, searchable = TRUE, paginationType = "simple",
+            columns = list(
+              logFC = colDef(
+                  style = function(value) {
+                      color <- if (value >= 0) {
+                        "#008000"
+                      } else if (value < 0) {
+                        "#e00000"
+                      }
+                      list(fontWeight = 600, color = color)
+                  }
+                )
+              )
+            )
+
+ write.table(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],
+             file=paste0(contrastDir,"Table_of_DE_",omics.dic[[omictype]][["variableName"]],"_pvalmax_",
+                         dataset.SE@metadata[["DiffExpAnal"]][["Adj.pvalue.cutoff"]],"_FCmin_",
+                         dataset.SE@metadata[["DiffExpAnal"]][["abs.FC.cutoff"]],".txt"),
+             sep="\t",quote=FALSE,col.names=TRUE,row.names=FALSE)
+  
+```
+
+
+
+<!-- </details> -->
+
+
