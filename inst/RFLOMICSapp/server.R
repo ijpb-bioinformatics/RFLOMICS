@@ -101,23 +101,23 @@ shinyServer(function(input, output, session) {
         itemsOmics,
         list(
 
-          #### analysis summary ####
-          ########################
-          tabItem(tabName = "omicsSum",
-                  uiOutput(outputId = "omicsSum_UI")
-          ),
+          # #### analysis summary ####
+          # ########################
+          # tabItem(tabName = "omicsSum",
+          #         uiOutput(outputId = "omicsSum_UI")
+          # ),
 
-          #### MOFA ####
-          ########################
-          tabItem(tabName = "withMOFA",
-                  uiOutput(outputId = "withMOFA_UI")
-          ),
-          #### MixOmics ####
-          ########################
-          tabItem(tabName = "withMixOmics",
-                  # h5("in coming :)")
-                  uiOutput(outputId = "withMixOmics_UI") #### CHANGED 15/09/2022
-          )
+          # #### MOFA ####
+          # ########################
+          # tabItem(tabName = "withMOFA",
+          #         uiOutput(outputId = "withMOFA_UI")
+          # ),
+          # #### MixOmics ####
+          # ########################
+          # tabItem(tabName = "withMixOmics",
+          #         # h5("in coming :)")
+          #         uiOutput(outputId = "withMixOmics_UI") #### CHANGED 15/09/2022
+          # )
         )
 
       )
@@ -245,22 +245,22 @@ shinyServer(function(input, output, session) {
     })
 
 
-    #### MOFA data integration ####
-    ###############################
-    output$withMOFA_UI <- renderUI({
-
-      MOFA_settingUI("mofaSetting")
-
-    })
+    # #### MOFA data integration ####
+    # ###############################
+    # output$withMOFA_UI <- renderUI({
+    # 
+    #   MOFA_settingUI("mofaSetting")
+    # 
+    # })
     
-    ### ADDED 15/09/22
-    #### MixOmics data integration ####
-    ###################################
-    output$withMixOmics_UI <- renderUI({
-      
-      MixOmics_settingUI("mixomicsSetting")
-      
-    })
+    # ### ADDED 15/09/22
+    # #### MixOmics data integration ####
+    # ###################################
+    # output$withMixOmics_UI <- renderUI({
+    #   
+    #   MixOmics_settingUI("mixomicsSetting")
+    #   
+    # })
 
     ########################################################################
     ######################### MAIN #########################################
@@ -356,20 +356,20 @@ shinyServer(function(input, output, session) {
     #updateTabItems(session, "sbm", selected = "SetUpModelMenu")
 
 
-    #### Item for each data integration tools #####
-    # display tool Item
-    output$Integration <- renderMenu({
-
-      validate({
-        need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >= 2, message = "")
-      })
-
-      menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'), startExpanded = FALSE,selected = FALSE,
-           menuSubItem(text = "Dataset analysis summary", tabName = "omicsSum" ),
-           menuSubItem(text = "with MOFA", tabName = "withMOFA" ),
-           menuSubItem(text = "with MixOmics", tabName = "withMixOmics")
-      )
-    })
+    # #### Item for each data integration tools #####
+    # # display tool Item
+    # output$Integration <- renderMenu({
+    # 
+    #   validate({
+    #     need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >= 2, message = "")
+    #   })
+    # 
+    #   menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'), startExpanded = FALSE,selected = FALSE,
+    #        menuSubItem(text = "Dataset analysis summary", tabName = "omicsSum" ),
+    #        menuSubItem(text = "with MOFA", tabName = "withMOFA" ),
+    #        menuSubItem(text = "with MixOmics", tabName = "withMixOmics")
+    #   )
+    # })
 
     #### Item for report #####
     output$runReport <- renderUI({
@@ -447,12 +447,12 @@ shinyServer(function(input, output, session) {
       })
 
 
-      callModule(module = omics_data_analysis_summary, id = "omics", rea.values = rea.values)
+      #callModule(module = omics_data_analysis_summary, id = "omics", rea.values = rea.values)
 
-      callModule(module = MOFA_setting, id = "mofaSetting", rea.values = rea.values)
+      #callModule(module = MOFA_setting, id = "mofaSetting", rea.values = rea.values)
       
       ### ADDED 15/09/2022
-      callModule(module = MixOmics_setting, id = "mixomicsSetting", rea.values = rea.values)
+      #callModule(module = MixOmics_setting, id = "mixomicsSetting", rea.values = rea.values)
 
     })
 
