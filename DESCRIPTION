@@ -49,4 +49,7 @@ Imports:
     ComplexHeatmap,
     EnhancedVolcano,
     ggpubr,
-    MOFA2
+    MOFA2,
+    qgraph,
+    colourpicker,
+    mixOmics

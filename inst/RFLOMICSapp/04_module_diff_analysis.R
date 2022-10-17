@@ -215,7 +215,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     list(
       lapply(1:length(rea.values$Contrasts.Sel$contrast), function(i) {
       
-      dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
+      dataset.SE <- local.rea.values$dataset.SE
       vect     <- unlist(rea.values$Contrasts.Sel[i,])
       res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
       stats    <- dataset.SE@metadata$DiffExpAnal[["stats"]][[vect["contrastName"]]]
