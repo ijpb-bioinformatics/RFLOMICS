@@ -29,7 +29,7 @@ Batch.fact <- rflomics.MAE@metadata$design@Factors.Type[rflomics.MAE@metadata$de
 
 loaded.data <- data.frame(datasets = sapply(names(rflomics.MAE@metadata$omicList), 
                               function(x){ paste0(rflomics.MAE@metadata$omicList[[x]], collapse = ", ") }), 
-                          omics = names(rflomics.MAE@metadata$omicList)) %>% as.data.table()
+                          omics = names(rflomics.MAE@metadata$omicList)) %>% data.table::as.data.table()
 
 DT::datatable(loaded.data, 
               options = list(rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),

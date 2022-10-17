@@ -7,7 +7,7 @@ rm(list = ls())
 
 #### ADDED 220805 - Increasing maximum possible size of loaded files (default is only 5MB)
 # https://stackoverflow.com/questions/18037737/how-to-change-maximum-upload-size-exceeded-restriction-in-shiny-and-save-user
-options(shiny.maxRequestSize=30*1024^2) # 30 MB limit. 
+options(shiny.maxRequestSize=30*1024^2) # 30 MB limit.
 
 shinyServer(function(input, output, session) {
 
@@ -23,6 +23,7 @@ shinyServer(function(input, output, session) {
       model    = FALSE,
       analysis = FALSE,
       resetAna = FALSE,
+      report = FALSE,
 
       datasetList  = NULL,
       contrastList = NULL,
@@ -47,8 +48,8 @@ shinyServer(function(input, output, session) {
 
           tags$br(),
           tags$br(),
-          uiOutput("runReport")
-
+          uiOutput("runReport"),
+          uiOutput("downloadResults")
           #downloadButton(outputId = "report", label = "Generate report")
           )
     })
@@ -114,7 +115,8 @@ shinyServer(function(input, output, session) {
           #### MixOmics ####
           ########################
           tabItem(tabName = "withMixOmics",
-                  h5("in coming :)")
+                  # h5("in coming :)")
+                  uiOutput(outputId = "withMixOmics_UI") #### CHANGED 15/09/2022
           )
         )
 
@@ -250,6 +252,15 @@ shinyServer(function(input, output, session) {
       MOFA_settingUI("mofaSetting")
 
     })
+    
+    ### ADDED 15/09/22
+    #### MixOmics data integration ####
+    ###################################
+    output$withMixOmics_UI <- renderUI({
+      
+      MixOmics_settingUI("mixomicsSetting")
+      
+    })
 
     ########################################################################
     ######################### MAIN #########################################
@@ -367,6 +378,13 @@ shinyServer(function(input, output, session) {
       downloadButton(outputId = "report", label = "Generate report")
     })
 
+    #### Item to download Results #####
+    output$downloadResults <- renderUI({
+      if(rea.values$report == FALSE) return()
+
+      downloadButton(outputId = "download", label = "Download results")
+    })
+
 
 
     # for each omics data type
@@ -389,7 +407,7 @@ shinyServer(function(input, output, session) {
             coExpAnal  = FALSE,
             diffAnnot  = FALSE,
             coExpAnnot = FALSE,
-            
+
             compCheck  = TRUE,
             message    = "",
             
@@ -432,6 +450,9 @@ shinyServer(function(input, output, session) {
       callModule(module = omics_data_analysis_summary, id = "omics", rea.values = rea.values)
 
       callModule(module = MOFA_setting, id = "mofaSetting", rea.values = rea.values)
+      
+      ### ADDED 15/09/2022
+      callModule(module = MixOmics_setting, id = "mixomicsSetting", rea.values = rea.values)
 
     })
 
@@ -443,7 +464,7 @@ shinyServer(function(input, output, session) {
 
     output$report <- downloadHandler(
       # For PDF output, change this to "report.pdf"
-      
+
       filename = function(){
         projectName <- session$userData$FlomicsMultiAssay@metadata$projectName
         paste0(projectName, "_", format(Sys.time(), "%Y_%m_%d_%H_%M"), ".html")
@@ -463,13 +484,15 @@ shinyServer(function(input, output, session) {
         projectName  <- session$userData$FlomicsMultiAssay@metadata$projectName
         rflomics.MAE <- session$userData$FlomicsMultiAssay
         RData.name   <- paste0(projectName, ".MAE.RData")
-        save(rflomics.MAE, file=file.path(tempdir(), RData.name))
+        outDir <- file.path(tempdir(),paste0(format(Sys.time(),"%Y_%m_%d"),"_",projectName))
+        dir.create(path=outDir)
+        save(rflomics.MAE, file=file.path(outDir, RData.name))
 
         # Set up parameters to pass to Rmd document
-        print(file.path(tempdir(), RData.name))
-        params <- list( FEdata = file.path(tempdir(), RData.name),
+        print(file.path(outDir, RData.name))
+        params <- list( FEdata = file.path(outDir, RData.name),
                         title  = paste0(projectName, "project"),
-                        pngDir = tempdir())
+                        outDir = outDir)
 
         print(tempdir())
         # Knit the document, passing in the `params` list, and eval it in a
@@ -480,12 +503,37 @@ shinyServer(function(input, output, session) {
                           envir = new.env(parent = globalenv()))
 
         rea.values$outdir <- dirname(file)
-        
+        rea.values$report <- TRUE
+
         print(dirname(file))
-        
+
       }
     )
 
+    ##########################################
+    # Part9 : Download results as an archive
+    ##########################################
+
+    output$download <- downloadHandler(
+      # For PDF output, change this to "report.pdf"
+
+      filename = function(){
+        outDir <- paste0(format(Sys.time(),"%Y_%m_%d"),"_",session$userData$FlomicsMultiAssay@metadata$projectName)
+        paste0(outDir,".tar.gz")
+      },
+      content = function(file) {
+        # tar(tarfile = file,
+        #     files = paste0(tempdir(),"/",format(Sys.time(),"%Y_%m_%d"),"_",session$userData$FlomicsMultiAssay@metadata$projectName),
+        #     compression = c("gzip"),extra_flags=paste0("-C ",tempdir()))
+
+        # linux
+         system(paste0("tar -C",
+                      tempdir(),
+                      " -czvf ",
+                      file,
+                      " ",
+                      paste0(format(Sys.time(),"%Y_%m_%d"),"_",session$userData$FlomicsMultiAssay@metadata$projectName)))
+})
     # # Automatically bookmark every time an input changes
     # observe({
     #   reactiveValuesToList(input)

@@ -1,6 +1,13 @@
 # `r data` 
 
 ```{r , echo=FALSE, message=FALSE, warning=FALSE}
+# Create a directory to report each dataset results
+dataDir <- paste0(outDir,"/",data)
+dir.create(path=dataDir)
+```
+
+
+```{r , echo=FALSE, message=FALSE, warning=FALSE}
 
 dataset.raw.SE <- rflomics.MAE@ExperimentList[[data]]
 dataset.SE     <- rflomics.MAE@ExperimentList[[paste0(data,".filtred")]]

@@ -622,7 +622,7 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
   #   x_lab <- ""
   #   counts$x <- rep(1, nrow(counts))
   # }
-  # 
+  #
   # y_lab = names(counts)[names(counts)==y]
   # names(counts)[names(counts)==y] <- 'y'
   # # get the levels of one factor
@@ -660,7 +660,7 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
   #   names(counts)[names(counts) == facetingVariable] = newColumnName
   #   return(counts)
   # }
-  # 
+  #
   # if(!is.null(row)){
   #   counts <- replaceRowOrColIntoCounts (counts, row, "row")
   # }
@@ -676,9 +676,9 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
   # counts$ymax = counts$y+.5
   # counts$xmin = counts$x-.5
   # counts$xmax = counts$x+.5
-  # 
+  #
   # counts$Count <- as.factor(counts$Count)
-  # 
+  #
   # p <- ggplot2::ggplot( data = counts, aes_string(ymin = 'ymin', ymax = 'ymax', xmin = 'xmin', xmax = 'xmax' , fill = 'Count')) + geom_rect() + labs(x=x_lab,y=y_lab) + ggtitle(message)
   # p <- p + theme(
   #   panel.grid.major = element_blank()
@@ -712,42 +712,42 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
   #     p = p + facet_grid(.~col)
   #   }
   # }
-  
+
   #add color column
   # #00BA38
   counts <- counts %>% dplyr::mutate(status = dplyr::if_else(Count > 2 , "pass", dplyr::if_else(Count == 2 , "warning", "error")))
-  
+
   #list of factor names
   factors <- names(counts)[1:(dim(counts)[2]-2)]
-  
+
   col.panel <- c("pass", "warning", "error")
   names(col.panel) <- c("#00BA38", "orange", "red")
-  
+
   col.panel.u <- col.panel[col.panel %in% unique(counts$status)]
-  
+
   switch (length(factors),
           "1" = { p <- ggplot(counts ,aes_string(x = factors[1], y = 1)) + theme(axis.text.y = element_blank()) + ylab("") },
           "2" = { p <- ggplot(counts ,aes_string(x = factors[1], y = factors[2])) },
-          "3" = { 
-            #get factor with min conditions -> to select for "facet_grid" 
+          "3" = {
+            #get factor with min conditions -> to select for "facet_grid"
             factors.l <- lapply(factors, function(x){ length(unique(counts[[x]])) }) %>% unlist()
             names(factors.l) <- factors
             factor.min <- names(factors.l[factors.l == min(factors.l)][1])
-            
+
             factors <- factors[factors != factor.min]
-            
+
             #add column to rename facet_grid
             counts <- counts %>% dplyr::mutate(grid = paste0(factor.min, "=",get(factor.min)))
-            
+
             p <- ggplot(counts ,aes_string(x = factors[1], y = factors[2])) +
               facet_grid(grid~.) })
-  
-  p <- p + geom_tile(aes(fill = status), color = "white", size = 1, width = 1, height = 1)  + geom_text(aes(label = Count)) + 
-    scale_fill_manual(values = names(col.panel.u), breaks = col.panel.u) + 
+
+  p <- p + geom_tile(aes(fill = status), color = "white", size = 1, width = 1, height = 1)  + geom_text(aes(label = Count)) +
+    scale_fill_manual(values = names(col.panel.u), breaks = col.panel.u) +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           axis.ticks = element_blank(), axis.text.x=element_text(angle=90, hjust=1)) +
     ggtitle(message)
-  
+
   return(p)
 }
 
@@ -1739,32 +1739,31 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
   # type = "intersection"
   # contrasts_arg = c("(temperatureLow - temperatureElevated)", "(temperatureMedium - temperatureLow)")
   # SEobject@metadata[["integration_contrasts"]] <- contrasts
-
-  tabCorresp <- SEobject@metadata$DiffExpAnal$contrasts %>% select(contrastName,tag)
+  
+  tabCorresp <- SEobject@metadata$DiffExpAnal$contrasts %>% dplyr::select(contrastName, tag)
   if("all" %in% contrasts_arg)   contrasts_arg <- SEobject@metadata$DiffExpAnal$contrasts$contrastName
-
-  tabCorresp <- tabCorresp %>% filter(contrastName %in% contrasts_arg)
+  
+  tabCorresp <- tabCorresp %>% dplyr::filter(contrastName %in% contrasts_arg)
   contrasts_select <- tabCorresp$tag
-
+  
   tab1 <- SEobject@metadata$DiffExpAnal$mergeDEF %>%
     dplyr::select(all_of(c("DEF", contrasts_select)))
-
+  
   if(type == "intersection"){
-
+    
     DETab <-  tab1 %>%
-      mutate(SUMCOL = select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
+      mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
       filter(SUMCOL==length(contrasts_select))
-
+    
   }else{
-
+    
     DETab <- tab1 %>%
-      mutate(SUMCOL = select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
+      mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
       filter(SUMCOL>=1) 
-
   }
-
+  
   SEobject <- SEobject[DETab$DEF,]
-
+  
   return(SEobject)
 }
 
@@ -1772,7 +1771,7 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
 # rbe_function : pour corriger sur le batch effect.
 # object: l'objet flomics
 # SEtransform : le SE qui contient le tableau transforme (la case metadata[["transform_results"]])
-# A MODIFIER ON DOIT POUVOIR PRENDRE EN COMPTE TOUS LES BATCH EFFECTS
+# TODO A MODIFIER ON DOIT POUVOIR PRENDRE EN COMPTE TOUS LES BATCH EFFECTS
 #' @title rbe_function
 #'
 #' @param object An object of class \link{MultiAssayExperiment}
@@ -1818,3 +1817,31 @@ rbe_function = function(object, SEobject){
   return(SEobject)
 }
 
+
+## contrastName to name of contrast directory
+# Exemple:
+# contrastName
+# "(temperatureMedium - temperatureElevated) in imbibitionEI - (temperatureMedium - temperatureElevated) in imbibitionDS"
+# contrastDir
+# "temperatureMedium-temperatureElevated_in_imbibitionEI_vs_temperatureMedium-temperatureElevated_in_imbibitionDS"
+
+#' Title
+#'
+#' @param a string: contrastName
+#'
+#' @return a string: contrastDir
+#'
+#' @export
+#' @examples
+#' @noRd
+contrastName2contrastDir <- function(contrastName){
+  # remplacement des comparaisons centrales
+  tmp <- stringr::str_replace_all(contrastName,"[:blank:]-[:blank:]\\(","_vs_")
+  # remplacement des comparaisons dans les parenthèses
+  tmp <- str_replace_all(tmp,"[:blank:]-[:blank:]","-")
+  # suppression des parenthèses
+  tmp <- str_remove_all(tmp,c("\\(|\\)"))
+  # remplcement des espaces par des _
+  tmp <- str_replace_all(tmp,"[:blank:]","_")
+  return(tmp)
+}

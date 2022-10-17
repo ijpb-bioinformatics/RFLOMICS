@@ -98,8 +98,8 @@ methods::setGeneric(
 )
 
 methods::setGeneric(
-  name="prepareMOFA",
-  def = function( object, ... ){standardGeneric("prepareMOFA")}
+  name="prepareForIntegration",
+  def = function( object, ... ){standardGeneric("prepareForIntegration")}
 )
 
 methods::setGeneric(
@@ -111,5 +111,9 @@ methods::setGeneric(
 methods::setGeneric(
   name="Datasets_overview_plot",
   def = function( object, ... ){standardGeneric("Datasets_overview_plot")}
-  
+)
+
+methods::setGeneric(
+  name="run_MixOmics_analysis",
+  def = function( object, ... ){standardGeneric("run_MixOmics_analysis")}
 )
