@@ -1,0 +1,113 @@
+---
+title: "`r params$title` project"
+author: "Analyzes performed by RFLOMICS package"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+bibliography: bibliography.bib
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: true
+    number_sections: true
+    theme: united
+params: 
+  outDir: NA
+  FEdata: NA
+  title: NA
+---
+
+
+```{r , include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(knitr.duplicate.label = "allow")
+```
+
+```{r library, echo=FALSE, message=FALSE, warning=FALSE}
+
+library(RFLOMICS)
+library(dplyr)
+library(ggplot2)
+library(DT)
+library(reactable)
+
+```
+
+
+```{r parameters, include=FALSE}
+
+load(params$FEdata)
+outDir <- params$outDir
+projectName <- params$title
+```
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE}
+# Create a directory to store all the results (tables and figures) of the project in a tmpdir
+# user may download this results as an archive from the shiny interface
+dir.create(path=outDir)
+```
+
+
+<!-- Experimental design -->
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE}
+
+  out <- NULL
+ 
+  out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_02_design.Rmd"), quiet=TRUE))  
+    
+knitr::asis_output(out)
+
+```
+
+<!-- single omics analysis -->
+
+```{r analysis, message=FALSE, warning=FALSE, echo=FALSE, eval=(length(rflomics.MAE@metadata$omicList) != 0 )}
+
+  out <- NULL
+  for (omictype in names(rflomics.MAE@metadata$omicList)){ 
+
+    for (data in  rflomics.MAE@metadata$omicList[[omictype]]){
+      
+      # child <- paste0("report_",omictype, ".Rmd")
+      child <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_01_omics.Rmd") 
+      
+      out <- c(out, knitr::knit_child(child, quiet=TRUE))  
+    }
+    
+  }
+
+knitr::asis_output(out)
+
+```
+
+<!-- data integration  -->
+
+<!-- ## with MOFA -->
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval = !is.null(rflomics.MAE@metadata$MOFA_results), hide = is.null(rflomics.MAE@metadata$MOFA_results) }
+
+  out <- NULL
+  
+  out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","MOFA2_integration.Rmd"), quiet=TRUE))
+    
+knitr::asis_output(out)
+
+```
+
+<!-- ## with MixOmix -->
+
+
+# R Session
+
+```{r session, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
+devtools::session_info()
+```
+
+
+# Bibliographie
+
+
+

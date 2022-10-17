@@ -1,0 +1,29 @@
+url: ~
+template:
+  params:
+    bootswatch: flatly
+  
+  
+navbar:
+  structure:
+    left: [intro, reference, articles, tutorials, news]
+    right: [gitlab]
+  components:
+    intro:
+      text: Get started
+      href: articles/RFLOMICS.html
+    reference:
+      text: Reference
+      href: reference/index.html
+    articles:
+      text: Articles
+      menu:
+      - text: RFLOMICS input data
+        href: articles/RFLOMICS-input-data.html
+      - text: RFLOMICS remote computing
+        href: articles/RFLOMICS-configure-cluster-access.html
+    gitlab:
+      icon: fa-gitlab
+      href: https://forgemia.inra.fr/flomics/rflomics
+      aria-label: Gitlab
+      

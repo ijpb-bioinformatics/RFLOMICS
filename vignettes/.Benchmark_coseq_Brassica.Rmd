@@ -1,0 +1,167 @@
+---
+title: "Benchmark_coseq_Brassica.Rmd"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+Design.File <- read.table(file= "/Users/dcharif/Desktop/dicoexpress-master/Data/Brassica_napus_TARGET.txt",
+                           header = TRUE,row.names = 1, sep = "\t")
+Design.Factors.Name <- names(Design.File)
+Design.Factors.Name
+Design.Factors.Type <- c("Bio","Bio","batch")
+Design.Factors.Ref <- c("Root","NoSi","R1")
+Design <- ExpDesign.constructor(ExpDesign = Design.File, 
+                                 projectName = "Design.Name", 
+                                  refList = Design.Factors.Ref, 
+                                  typeList = Design.Factors.Type)
+
+Design.formulae <- GetModelFormulae(Factors.Name = Design.Factors.Name,
+                                     Factors.Type=Design.Factors.Type)
+
+Design.formulae  
+ Design <- getExpressionContrast(object = Design, 
+                                     model.formula = names(Design.formulae[1]))
+ Design.contrastList <- Design@Contrasts.List
+ #Design.contrastList$simple <- Design.contrastList$simple[c(1:9)]$contrast
+ #Design.contrastList$averaged <- Design.contrastList$averaged[1:3]
+ #Design.contrastList <- Design.contrastList[-3]
+
+ # Set the coefficients
+Design <- getContrastMatrix(object = Design, 
+                                 contrastList = unlist(Design.contrastList))
+ 
+ ListofData <- list(
+  "RNAseq1"=list(
+    "dataFile"="/Users/dcharif/Desktop/dicoexpress-master/Data/Brassica_napus_COUNTS.txt",
+    "qcFile"=NULL, "omicType"="RNAseq"))
+ 
+FlomicsMultiAssay <- FlomicsMultiAssay.constructor(inputs = ListofData, Design=Design)
+
+ data="RNAseq1"
+ 
+FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]] <-
+  FilterLowAbundance(
+    FlomicsMultiAssay@ExperimentList[[data]],
+    Filter_Strategy = "NbConditions",
+    CPM_Cutoff = 5
+  )
+ 
+FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]] <-
+  RunNormalization(FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]], 
+                   NormMethod = "TMM")
+ 
+FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]] <-
+  RunDiffAnalysis(
+    FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]],
+    design = Design,
+    contrastList = Design@Contrasts.Sel$contrastName,
+    Adj.pvalue.method = "BH",
+    DiffAnalysisMethod = "edgeRglmfit",
+    clustermq = TRUE
+  )
+ 
+FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]]@metadata[["DiffExpAnal"]][["contrasts"]]
+ 
+FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]] <-
+  FilterDiffAnalysis(FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]],
+                     Adj.pvalue.cutoff = 0.05)
+ 
+ 
+DEG_list <- getDEGlist_for_coseqAnalysis(
+        matrix    = FlomicsMultiAssay@ExperimentList[[paste0(data,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]],
+        colnames  = c("H1","H2","H3"),
+        mergeType = "union")
+ 
+  nameList="List1"
+
+  counts = SummarizedExperiment::assay(FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]])[DEG_list[1:5000],]
+
+  param.list=list()
+                param.list[["model"]]            <- "Normal"
+                param.list[["transformation"]]   <- "arcsin"
+                param.list[["normFactors"]]      <- "TMM"
+                param.list[["meanFilterCutoff"]] <- 50
+                param.list[["GaussianModel"]]    <- "Gaussian_pk_Lk_Ck"
+
+res=list()                
+s.time=list()
+j=1
+
+
+for (i in c(1,5,10)){
+  print(i)
+  print(j)
+  #res[[3]] <- runCoseq(counts, K=5:15, replicates=i, param.list=param.list , clustermq=FALSE)
+s.time[[j]] <- system.time(runCoseq(counts, K=5:15, replicates=i, param.list=param.list , clustermq=FALSE))
+j<-j+1
+}
+
+s.time1000.local <- s.time
+
+for (i in c(1,5,10,20)){
+  print(i)
+  print(j)
+  #res[[3]] <- runCoseq(counts, K=5:15, replicates=i, param.list=param.list , clustermq=FALSE)
+s.time5000[[j]] <- system.time(runCoseq(counts, K=5:15, replicates=i, param.list=param.list , clustermq=FALSE))
+j<-j+1
+}
+
+s.time5000.local <- s.time5000
+
+
+counts = SummarizedExperiment::assay(FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]])[DEG_list[1:5000],]
+
+for (i in c(1,5,10,20)){
+  print(i)
+  print(j)
+  #res[[3]] <- runCoseq(counts, K=5:15, replicates=i, param.list=param.list , clustermq=FALSE)
+s.time5000[[j]] <- system.time(runCoseq(counts, K=5:15, replicates=i, param.list=param.list , clustermq=TRUE))
+j<-j+1
+}
+tmp5000_clustermq <- as.data.frame(t(as.data.frame(lapply(s.time5000,as.vector))))
+dimnames(tmp5000_clustermq)=list(c(1,5,10,20),c("user","system","elapsed","user.cum","system.cum"))
+tmp5000_clustermq$nK=rep(11,4)
+tmp5000_clustermq$nG=rep(5000,4)
+
+s.time10000_clustermq = list()
+
+counts = SummarizedExperiment::assay(FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]])[DEG_list[1:10000],]
+
+for (i in c(1,5,10,20,30)){
+  print(i)
+  print(j)
+  #res[[3]] <- runCoseq(counts, K=5:15, replicates=i, param.list=param.list , clustermq=FALSE)
+s.time10000_clustermq[[j]] <- system.time(runCoseq(counts, K=5:25, replicates=i, param.list=param.list , clustermq=TRUE))
+j<-j+1
+}
+
+tmp10000_clustermq <- as.data.frame(t(as.data.frame(lapply(s.time10000,as.vector))))
+dimnames(tmp10000_clustermq)=list(c(1,5,10,20,30),c("user","system","elapsed","user.cum","system.cum"))
+tmp10000_clustermq$nK=rep(21,5)
+tmp10000_clustermq$nGene=rep(10000,5)
+
+
+counts = SummarizedExperiment::assay(FlomicsMultiAssay@ExperimentList[[paste0(data, ".filtred")]])[DEG_list[1:20000],]
+
+for (i in c(1,5,10,20,30)){
+  print(i)
+  print(j)
+  #res[[3]] <- runCoseq(counts, K=5:15, replicates=i, param.list=param.list , clustermq=FALSE)
+s.time20000_clustermq[[j]] <- system.time(runCoseq(counts, K=5:25, replicates=i, param.list=param.list , clustermq=TRUE))
+j<-j+1
+}
+
+tmp20000_clustermq <- as.data.frame(t(as.data.frame(lapply(s.time20000,as.vector))))
+dimnames(tmp20000_clustermq)=list(c(1,5,10,20,30),c("user","system","elapsed","user.cum","system.cum"))
+tmp20000_clustermq$nK=rep(21,5)
+tmp20000_clustermq$nGene=rep(20000,5)
+
+
+```
+
