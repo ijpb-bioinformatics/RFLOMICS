@@ -12,3 +12,4 @@ NAMESPACE # ????
 inst/ExamplesFiles
 inst/DevDoc/
 NAMESPACE
+.gitignore
