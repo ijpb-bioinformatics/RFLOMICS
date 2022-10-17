@@ -47,16 +47,24 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
   output$DiffParamUI <- renderUI({
 
-    #we must select list of contrast to test
+    #we must run process before
     validate(
-      need(rea.values$analysis != FALSE, "Please select contrast")
+      need(rea.values[[dataset]]$process != FALSE, "Please run data processing")
     )
+    
+    validate(
+      need(!is.null(rea.values$Contrasts.Sel), "Please run data processing toto")
+    )
+    
+    # #we must select list of contrast to test
+    # validate(
+    #   need(rea.values$analysis != FALSE, "Please select contrast")
+    # )
     
     #design must be complete
     validate(
       need(rea.values[[dataset]]$compCheck != FALSE, session$userData$FlomicsMultiAssay@metadata$completeCheck[["error"]])
     )
-    
     
     box(title = span(tagList(icon("sliders-h"), "  ", "Setting")), width = 14, status = "warning",
 
@@ -193,8 +201,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   # display results per contrast
   output$ContrastsResults <- renderUI({
 
-    if (rea.values[[dataset]]$diffAnal == FALSE) return()
-
+    #if (rea.values[[dataset]]$diffAnal == FALSE) return()
+    if (rea.values[[dataset]]$diffAnal == FALSE || 
+        is.null(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal)) return()
+    
     ### adj_pvalue filtering by calling the RundDiffAnalysis method without filtering
     local.rea.values$dataset.SE <- FilterDiffAnalysis(object = local.rea.values$dataset.SE,
                                                       Adj.pvalue.cutoff = input$Adj.pvalue.cutoff,
@@ -204,12 +214,13 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
     list(
       lapply(1:length(rea.values$Contrasts.Sel$contrast), function(i) {
-
+      
+      dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
       vect     <- unlist(rea.values$Contrasts.Sel[i,])
-      res      <- local.rea.values$dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
-      stats    <- local.rea.values$dataset.SE@metadata$DiffExpAnal[["stats"]][[vect["contrastName"]]]
+      res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
+      stats    <- dataset.SE@metadata$DiffExpAnal[["stats"]][[vect["contrastName"]]]
 
-      diff.plots <- DiffAnal.plot(local.rea.values$dataset.SE, hypothesis=vect["contrastName"],
+      diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=vect["contrastName"],
                                   Adj.pvalue.cutoff = input$Adj.pvalue.cutoff, FC.cutoff = input$abs.FC.cutoff)
 
       fluidRow(
@@ -232,7 +243,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                     tabPanel("Table",
                        ### DEF result table ###
                        DT::renderDataTable({
-                         resTable <- local.rea.values$dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
+                         resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
                          resTable %>% DT::datatable(extensions = 'Buttons',
                                         options = list(dom = 'lfrtipB',
                                                       rownames = FALSE,
@@ -246,7 +257,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                       tabPanel("Heatmap",
                              renderUI({
                              renderPlot({
-                             resTable <- local.rea.values$dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
+                             resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
                              m.def <- assays(local.rea.values$dataset.SE)[[1]]
 
                              # filter by DE
@@ -295,9 +306,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   # merge results on upset plot
   output$ResultsMerge <- renderUI({
 
-    if (rea.values[[dataset]]$diffAnal == FALSE) return()
-
-
+    if (rea.values[[dataset]]$diffAnal == FALSE) return()  
+    
+    # dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
+    
     index <- sapply(rea.values$Contrasts.Sel$tag, function(x){(input[[paste0("checkbox_",x)]])}) %>% unlist()
 
     H_selected <- rea.values$Contrasts.Sel$tag[index]
@@ -305,8 +317,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     DEF_mat <- as.data.frame(local.rea.values$dataset.SE@metadata$DiffExpAnal[["mergeDEF"]])
 
     rea.values[[dataset]]$DiffValidContrast <- dplyr::filter(rea.values$Contrasts.Sel, tag %in% H_selected)
-
-    # Validcontrasts <- dplyr::filter(session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel, tag %in% H_selected)
 
     if (length(H_selected) > 1){
 

@@ -564,9 +564,11 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
                                                                                        colData  = QCmat,
                                                                                        metadata = list(omicType = inputs[[dataName]][["omicType"]],
                                                                                                        Groups = dplyr::filter(Design@Groups, samples %in% colnames(as.matrix(matrix.filt))),
-                                                                                                       rowSums.zero = genes_flt0))
-    #names(assays(SummarizedExperimentList[[dataName]])) <- c(dataName)
+                                                                                                      rowSums.zero = genes_flt0))
 
+    #### run PCA for raw count 
+    SummarizedExperimentList[[dataName]] <- RFLOMICS::RunPCA(SummarizedExperimentList[[dataName]])
+    
     # metadata for sampleMap for MultiAssayExperiment
     listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
                                       colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
@@ -580,9 +582,7 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
     names(omicList[[omicType]]) <- colnames
 
   }
-
-
-
+  
   prepFlomicsMultiAssay <- MultiAssayExperiment::prepMultiAssay( ExperimentList = SummarizedExperimentList,
                                                                  sampleMap      = MultiAssayExperiment::listToMap(listmap),
                                                                  colData        = Design@ExpDesign, outFile = stdout())
@@ -593,7 +593,6 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
                                                                   sampleMap   = prepFlomicsMultiAssay$sampleMap,
                                                                   metadata    = list(colDataStruc = c(n_dFac = dim(prepFlomicsMultiAssay$colData)[2], n_qcFac = 0),
                                                                                      omicList = omicList, projectName = projectName, design = Design))
-
 
 
   return(FlomicsMultiAssay)

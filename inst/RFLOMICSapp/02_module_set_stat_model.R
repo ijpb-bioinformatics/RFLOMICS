@@ -64,8 +64,8 @@ GLM_model <- function(input, output, session, rea.values){
       rea.values$Contrasts.Sel <- NULL
       rea.values$datasetDiff   <- NULL
 
-      session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(object=session$userData$FlomicsMultiAssay, results=c("DiffExpAnal", "CoExpAnal", "EnrichAnal"))
-
+      session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(object=session$userData$FlomicsMultiAssay, 
+                                                                   results = c("DiffExpAnal", "CoExpAnal", "DiffExpEnrichAnal", "CoExpEnrichAnal"))
       print("# 3- Choice of statistical model...")
 
       # => Set the model formulae
@@ -130,8 +130,11 @@ GLM_model <- function(input, output, session, rea.values){
       rea.values$datasetDiff <- NULL
       # reset analysis
 
-      session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(object=session$userData$FlomicsMultiAssay, results=c("DiffExpAnal", "CoExpAnal", "EnrichAnal"))
+      toto_1 <<- session$userData$FlomicsMultiAssay
+      session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(object  = session$userData$FlomicsMultiAssay, 
+                                                                   results = c("DiffExpAnal", "CoExpAnal", "DiffExpEnrichAnal", "CoExpEnrichAnal"))
 
+      toto_2 <<- session$userData$FlomicsMultiAssay
       #rea.values$validate.status <- 0
 
       #get list of selected contrast data frames with expression, name and type
@@ -162,19 +165,10 @@ GLM_model <- function(input, output, session, rea.values){
       #rea.values$FlomicsMultiAssay <- FlomicsMultiAssay
 
       rea.values$Contrasts.Sel <- session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel
+      
 
       rea.values$analysis <- TRUE
 
-      rea.values$datasetList <- session$userData$FlomicsMultiAssay@metadata$omicList
-
-      # # à supprimer à la fin du dev
-      # output$printContrast <- renderPrint({
-      #
-      #   #Design@Contrasts.Coeff
-      #   A <- FlomicsMultiAssay@metadata$design@Contrasts.Coeff
-      #   row.names(A) <- NULL
-      #   print(A)
-      # })
     }, ignoreInit = TRUE)
 
     return(input)

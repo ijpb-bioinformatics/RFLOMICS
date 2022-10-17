@@ -156,7 +156,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
             column(8,
                    sliderInput(session$ns("K.values"), label = "Number of clusters :", min=2, max=30, value=c(2,10), step=1)),
             column(4,
-                   numericInput(inputId = session$ns("iter"), label="Replicat :", value=10, 2, max=20, 1))),
+                   numericInput(inputId = session$ns("iter"), label="Replicat :", value=2, 2, max=20, 1))),
 
 
           fluidRow(

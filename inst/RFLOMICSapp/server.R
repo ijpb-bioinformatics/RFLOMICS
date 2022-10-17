@@ -22,9 +22,11 @@ shinyServer(function(input, output, session) {
       loadData = FALSE,
       model    = FALSE,
       analysis = FALSE,
+      resetAna = FALSE,
 
       datasetList  = NULL,
       contrastList = NULL,
+      Contrasts.Sel= NULL,
       datasetDiff  = NULL
     )
 
@@ -328,10 +330,6 @@ shinyServer(function(input, output, session) {
               })
            })
       )
-
-
-
-
     })
 
     # observe({
@@ -352,9 +350,8 @@ shinyServer(function(input, output, session) {
     output$Integration <- renderMenu({
 
       validate({
-        need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >=2, message = "")
+        need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >= 2, message = "")
       })
-
 
       menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'), startExpanded = FALSE,selected = FALSE,
            menuSubItem(text = "Dataset analysis summary", tabName = "omicsSum" ),
@@ -377,7 +374,7 @@ shinyServer(function(input, output, session) {
     # if no error message
     observe({
 
-      if(rea.values$analysis == FALSE) return()
+      #if(rea.values$analysis == FALSE) return()
       ##########################################
       # Part3 : Data Exploratory
       ##########################################
@@ -386,6 +383,7 @@ shinyServer(function(input, output, session) {
         lapply(names(rea.values$datasetList[[omics]]), function(i){
 
           rea.values[[rea.values$datasetList[[omics]][[i]]]] <- reactiveValues(
+            process    = FALSE,
             diffAnal   = FALSE,
             diffValid  = FALSE,
             coExpAnal  = FALSE,
@@ -394,7 +392,7 @@ shinyServer(function(input, output, session) {
             
             compCheck  = TRUE,
             message    = "",
-
+            
             DiffValidContrast = NULL,
             CoExpClusterNames = NULL,
             omicsType = omics

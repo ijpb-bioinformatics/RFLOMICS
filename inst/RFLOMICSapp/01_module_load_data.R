@@ -267,6 +267,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
       rea.values$Contrasts.Sel <- NULL
       rea.values$datasetList   <- NULL
       rea.values$datasetDiff   <- NULL
+      rea.values$Contrasts.Sel <- NULL
 
       session$userData$FlomicsMultiAssay        <- NULL
       #session$userData$Design   <- NULL
@@ -431,7 +432,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
       # continue only if message is true or warning
       #validate({ need(is.null(local.rea.values$completeCheckRes[["error"]]) ,message="") })
 
-      #
+      # 
+      rea.values$datasetList   <- session$userData$FlomicsMultiAssay@metadata$omicList
 
     }, ignoreInit = TRUE)
 
