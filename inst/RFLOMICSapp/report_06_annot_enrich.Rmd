@@ -1,0 +1,34 @@
+## Annotation and Enrichment : `r annot`
+
+```{r , echo=FALSE , message=FALSE, warning=FALSE}
+annotDir <- paste0(dataDir,"/","04-Enrichment_analysis/")
+dir.create(path=annotDir)
+
+knitr::opts_chunk$set(
+  fig.path=annotDir
+)
+```
+
+The Enrichment are performed using hypergeometric tests to find annotation terms that are specifically over or under-represented in a given list of `r omics.dic[[omictype]][["variableName"]]` with respect to a reference specified by an annotation file.
+
+### summary
+
+blabla
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE}
+
+  out <- NULL
+  
+
+  for (listname  in  names(dataset.SE@metadata[[annot]]$results)){
+      for(domain in unique(dataset.SE@metadata[[annot]]$results[[listname]]$Over_Under_Results$Domain)){
+      out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_per_list_per_Domain.Rmd"), quiet=TRUE))
+  }
+}
+    
+knitr::asis_output(out)
+
+```
+
+
+
