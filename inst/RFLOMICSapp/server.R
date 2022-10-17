@@ -113,7 +113,8 @@ shinyServer(function(input, output, session) {
           #### MixOmics ####
           ########################
           tabItem(tabName = "withMixOmics",
-                  h5("in coming :)")
+                  # h5("in coming :)")
+                  uiOutput(outputId = "withMixOmics_UI") #### CHANGED 15/09/2022
           )
         )
 
@@ -248,6 +249,15 @@ shinyServer(function(input, output, session) {
 
       MOFA_settingUI("mofaSetting")
 
+    })
+    
+    ### ADDED 15/09/22
+    #### MixOmics data integration ####
+    ###################################
+    output$withMixOmics_UI <- renderUI({
+      
+      MixOmics_settingUI("mixomicsSetting")
+      
     })
 
     ########################################################################
@@ -442,6 +452,9 @@ shinyServer(function(input, output, session) {
       callModule(module = omics_data_analysis_summary, id = "omics", rea.values = rea.values)
 
       callModule(module = MOFA_setting, id = "mofaSetting", rea.values = rea.values)
+      
+      ### ADDED 15/09/2022
+      callModule(module = MixOmics_setting, id = "mixomicsSetting", rea.values = rea.values)
 
     })
 

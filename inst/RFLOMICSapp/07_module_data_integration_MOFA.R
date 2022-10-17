@@ -14,10 +14,10 @@ MOFA_settingUI <- function(id){
           solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
           div(      
             h4(tags$span("Parameters set up:", style = "color:orange")),
-            p("You can chose which omics data you want to analyze together. It is required to have selected at least two to run an analysis."),
+            p("You can choose which omics data you want to analyze together. It is required to have selected at least two to run an analysis."),
             p("As of now, rflomics only allows you to run an analysis on filtered tables, taking into account differential analysis performed previously.
-            You can chose which contrast you want to take the DE genes from. You can select multiple ones (defaults select all the contrasts) 
-              and chose to perform the analysis on the union or intersection of the DE lists."),
+            You can choose which contrast you want to take the DE genes from. You can select multiple ones (defaults select all the contrasts) 
+              and choose to perform the analysis on the union or intersection of the DE lists."),
             p("RNASeq data, given in the form of counts, will be processed using limma::voom transformation. 
               If you have indicated a batch effect when loading your data, it will be corrected in all datatables using limma::removebatcheffect before running MOFA."),
             
@@ -36,7 +36,7 @@ MOFA_settingUI <- function(id){
               You can use the denoise option to show the reconstruction using factors and weights computed by MOFA2. 
               The annotation parameter is used to place a color annotation on the sample, based on a metadata feature." ),
           ))),
-    ### parametres for Co-Exp
+    ### parametres 
     fluidRow(
       column(3, uiOutput(ns("MOFA_ParamUI"))),
       column(9, uiOutput(ns("ResultViewUI"))))
@@ -52,15 +52,6 @@ MOFA_setting <- function(input, output, session, rea.values){
   # list of parameters  
   output$MOFA_ParamUI <- renderUI({
     
-    # validate(
-    #   need(rea.values[[dataset]]$diffValid != FALSE, "Please run diff analysis")
-    # )
-    
-    # get good param :
-    #listDataSet <- unlist(session$userData$FlomicsMultiAssay@metadata$omicList)
-    #names(listDataSet) <- unlist(session$userData$FlomicsMultiAssay@metadata$omicList)
-    
-    
     listOfContrast <- session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName
     # set param in interface
     tagList(
@@ -74,7 +65,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                    
                    pickerInput(
                      inputId  = session$ns("selectedData"),
-                     label    = "Setect dataset:",
+                     label    = "Select dataset:",
                      choices  = rea.values$datasetDiff,
                      options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                      multiple = TRUE,
@@ -85,7 +76,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                    
                    pickerInput(
                      inputId  = session$ns("selectedContrast"),
-                     label    = "Setect contrast:",
+                     label    = "Select contrast:",
                      choices  = listOfContrast,
                      options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                      multiple = TRUE,
@@ -135,7 +126,7 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     local.rea.values$untrainedMOFA <- NULL # reactive ? # ADD 23/06
     local.rea.values$runMOFA   <- FALSE
-
+    
     local.rea.values$resMOFA <- NULL
     local.rea.values$preparedMOFA <- NULL
     local.rea.values$listResMOFA <- NULL
@@ -145,22 +136,20 @@ MOFA_setting <- function(input, output, session, rea.values){
     session$userData$FlomicsMultiAssay@metadata[["MOFA_untrained"]] <<- NULL
     session$userData$FlomicsMultiAssay@metadata[["MOFA_warnings"]] <<- NULL
     session$userData$FlomicsMultiAssay@metadata[["MOFA_results"]] <<- NULL
-
+    
     # check nbr dataset to integrate
     # if less then 2 -> error message
     if(length(input$selectedData) < 2){
-      
-      showModal(modalDialog( title = "Error message", "MOFA need at least 2 datasets!"))
+      showModal(modalDialog( title = "Error message", "MOFA needs at least 2 datasets!"))
     }
     validate({
-      need(length(input$selectedData) >= 2, message="MOFA need at least 2 datasets!")
+      need(length(input$selectedData) >= 2, message="MOFA needs at least 2 datasets!")
     })
     
     
     # check nbr of contrast 
     # if less then 1 -> error message
     if(length(input$selectedContrast) == 0){
-      
       showModal(modalDialog( title = "Error message", "Select at least one contast!"))
     }
     validate({
@@ -168,20 +157,20 @@ MOFA_setting <- function(input, output, session, rea.values){
     })
     
     # run MOFA
-    print(input$selectedData)
+    # print(input$selectedData)
     
-    local.rea.values$preparedMOFA <- prepareMOFA(session$userData$FlomicsMultiAssay,
-                                                  omicsToIntegrate = input$selectedData,
-                                                  rnaSeq_transfo = input$RNAseqTransfo,
-                                                  choice = "DE", 
-                                                  contrasts_names = input$selectedContrast,
-                                                  type = input$filtMode,
-                                                  group = NULL)
+    local.rea.values$preparedMOFA <- prepareForIntegration(session$userData$FlomicsMultiAssay,
+                                                 omicsToIntegrate = input$selectedData,
+                                                 rnaSeq_transfo = input$RNAseqTransfo,
+                                                 choice = "DE", 
+                                                 contrasts_names = input$selectedContrast,
+                                                 type = input$filtMode,
+                                                 group = NULL, method = "MOFA")
     
     local.rea.values$listResMOFA <- run_MOFA_analysis(local.rea.values$preparedMOFA, 
-                                                  scale_views = as.logical(input$scaleViews),
-                                                  maxiter = input$maxiter,
-                                                  num_factors = input$numfactor) 
+                                                      scale_views = as.logical(input$scaleViews),
+                                                      maxiter = input$maxiter,
+                                                      num_factors = input$numfactor) 
     
     local.rea.values$untrainedMOFA <- local.rea.values$listResMOFA$MOFAObject.untrained
     local.rea.values$resMOFA <- local.rea.values$listResMOFA$MOFAObject.trained
@@ -220,6 +209,8 @@ MOFA_setting <- function(input, output, session, rea.values){
       local.rea.values$plotHeight <- length(input$WeightsPlot_Factors_select)*10
       return(local.rea.values$plotHeight)
     }
+    
+    colorPal_choices <- c("Greens", "Purples", "Oranges", "Reds", "Greys", "Blues")
     
     box(width=14, solidHeader = TRUE, status = "warning",
         title = "MOFA results",
@@ -286,26 +277,26 @@ MOFA_setting <- function(input, output, session, rea.values){
                    ),
                    fluidRow(
                      column(12,
-                     renderPlot({
-                       
-                       ggplot_list <- list()
-                       for(i in min(input$WeightsPlot_Factors_select):max(input$WeightsPlot_Factors_select)){
-                         for(j in views_names(local.rea.values$resMOFA)){
-                           ggplot_list[[length(ggplot_list)+1]] <- plot_weights(local.rea.values$resMOFA,
-                                                                                view = j,
-                                                                                factor = i,
-                                                                                nfeatures = input$nfeat_choice_WeightsPlot,
-                                                                                scale = input$scale_choice_WeightsPlot) + ggtitle(paste0(j, " - Factor ", i))
-                         }
-                       }
-                       
-                       ggpubr::ggarrange(plotlist = ggplot_list,
-                                         ncol = length(views_names(local.rea.values$resMOFA)),
-                                         nrow = (max(input$WeightsPlot_Factors_select)-min(input$WeightsPlot_Factors_select)+1))
-                       
-                     }, execOnResize = TRUE) # width = 60, height = plot_height(), 
-                     
-                   ))
+                            renderPlot({
+                              
+                              ggplot_list <- list()
+                              for(i in min(input$WeightsPlot_Factors_select):max(input$WeightsPlot_Factors_select)){
+                                for(j in views_names(local.rea.values$resMOFA)){
+                                  ggplot_list[[length(ggplot_list)+1]] <- plot_weights(local.rea.values$resMOFA,
+                                                                                       view = j,
+                                                                                       factor = i,
+                                                                                       nfeatures = input$nfeat_choice_WeightsPlot,
+                                                                                       scale = input$scale_choice_WeightsPlot) + ggtitle(paste0(j, " - Factor ", i))
+                                }
+                              }
+                              
+                              ggpubr::ggarrange(plotlist = ggplot_list,
+                                                ncol = length(views_names(local.rea.values$resMOFA)),
+                                                nrow = (max(input$WeightsPlot_Factors_select)-min(input$WeightsPlot_Factors_select)+1))
+                              
+                            }, execOnResize = TRUE) # width = 60, height = plot_height(), 
+                            
+                     ))
           ),
           
           ### 
@@ -337,34 +328,34 @@ MOFA_setting <- function(input, output, session, rea.values){
           tabPanel("Factor Plots",
                    
                    fluidRow(
-                   column(2, sliderInput(inputId = session$ns("factors_choices"),
-                                         label = 'Factors:',
-                                         min = 1, 
-                                         max = local.rea.values$resMOFA@dimensions$K, # pas forcement l'input, MOFA peut decider d'en enlever. 
-                                         value = 1:2, step = 1)),
-                   column(2, radioButtons(inputId = session$ns("color_by"),
-                                          label = "Color:",
-                                          choices = c('none', 
-                                                      colnames(local.rea.values$resMOFA@samples_metadata %>% select(!c(sample, group)))),
-                                          selected = "none")
-                   ),                           
-                   column(2, radioButtons(inputId = session$ns("shape_by"),
-                                          label = "Shape:",
-                                          choices = c('none', 
-                                                      colnames(local.rea.values$resMOFA@samples_metadata %>% select(!c(sample, group)))),
-                                          selected = "none")
-                   ),                                  
-                   column(2, radioButtons(inputId = session$ns("group_by"),
-                                          label = "Group by:",
-                                          choices = c('none', 
-                                                      colnames(local.rea.values$resMOFA@samples_metadata %>% select(!c(sample, group)))),
-                                          selected = "none")
-                   ),                           
-                   column(1,
-                          fluidRow(checkboxInput(inputId = session$ns("add_violin"), label = "Violin", value = FALSE, width = NULL)),
-                          fluidRow(checkboxInput(inputId = session$ns("add_boxplot"), label = "Boxplot", value = FALSE, width = NULL)),
-                          fluidRow(checkboxInput(inputId = session$ns("scale_scatter"), label = "Scale factors", value = FALSE, width = NULL))
-                   )),            
+                     column(2, sliderInput(inputId = session$ns("factors_choices"),
+                                           label = 'Factors:',
+                                           min = 1, 
+                                           max = local.rea.values$resMOFA@dimensions$K, # pas forcement l'input, MOFA peut decider d'en enlever. 
+                                           value = 1:2, step = 1)),
+                     column(2, radioButtons(inputId = session$ns("color_by"),
+                                            label = "Color:",
+                                            choices = c('none', 
+                                                        colnames(local.rea.values$resMOFA@samples_metadata %>% dplyr::select(!c(sample, group)))),
+                                            selected = "none")
+                     ),                           
+                     column(2, radioButtons(inputId = session$ns("shape_by"),
+                                            label = "Shape:",
+                                            choices = c('none', 
+                                                        colnames(local.rea.values$resMOFA@samples_metadata %>% dplyr::select(!c(sample, group)))),
+                                            selected = "none")
+                     ),                                  
+                     column(2, radioButtons(inputId = session$ns("group_by"),
+                                            label = "Group by:",
+                                            choices = c('none', 
+                                                        colnames(local.rea.values$resMOFA@samples_metadata %>% dplyr::select(!c(sample, group)))),
+                                            selected = "none")
+                     ),                           
+                     column(1,
+                            fluidRow(checkboxInput(inputId = session$ns("add_violin"), label = "Violin", value = FALSE, width = NULL)),
+                            fluidRow(checkboxInput(inputId = session$ns("add_boxplot"), label = "Boxplot", value = FALSE, width = NULL)),
+                            fluidRow(checkboxInput(inputId = session$ns("scale_scatter"), label = "Scale factors", value = FALSE, width = NULL))
+                     )),            
                    fluidRow(
                      column(11, 
                             renderPlot({
@@ -396,7 +387,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                      ))
           ),
           # ---- Tab panel Heatmap ----
-        tabPanel("Heatmap",
+          tabPanel("Heatmap",
                    
                    fluidRow(# buttons - choices for heatmap
                      
@@ -425,7 +416,8 @@ MOFA_setting <- function(input, output, session, rea.values){
                      column(2, radioButtons(inputId = session$ns("annot_samples"),
                                             label = "Annotation:",
                                             choices = c('none', 
-                                                        colnames(local.rea.values$resMOFA@samples_metadata %>% select(!c(sample, group)))),
+                                                        colnames(local.rea.values$resMOFA@samples_metadata %>% 
+                                                                   dplyr::select(!c(sample, group)))),
                                             selected = "none"))
                      
                    ),
@@ -438,7 +430,9 @@ MOFA_setting <- function(input, output, session, rea.values){
                               if(input$annot_samples == "none") annot_samples_values <- NULL
                               
                               observeEvent(input$view_choice_heatmap, {
-                                updateSliderInput(inputId = "nfeat_choice_heatmap", max = get_dimensions(local.rea.values$resMOFA)$D[input$view_choice_heatmap][[1]])
+                                updateSliderInput(session, 
+                                                  inputId = "nfeat_choice_heatmap", 
+                                                  max = get_dimensions(local.rea.values$resMOFA)$D[input$view_choice_heatmap][[1]])
                               })
                               
                               res_heatmap <- MOFA2::plot_data_heatmap(local.rea.values$resMOFA, 
@@ -452,8 +446,152 @@ MOFA_setting <- function(input, output, session, rea.values){
                    ) # fluidrow heatmap
           ), # tabpanel heatmap
           tabPanel("Network",
-                   p("Work in progress :)")
-          ),         
+                   
+                   fluidRow(# buttons - choices for network
+                     # p("Work in progress :)"), 
+                     
+                     column(1, numericInput(inputId = session$ns("factor_choice_network"),
+                                            label = "Factor:",
+                                            min = 1,
+                                            max =  local.rea.values$resMOFA@dimensions$K,
+                                            value = 1, step = 1)),
+                     column(2, numericInput(inputId = session$ns("abs_weight_network"),
+                                            label = "Absolute Weight:",
+                                            min = 0.05,
+                                            max = 1,
+                                            value = 0.8, 
+                                            step = 0.05
+                     )),                   
+                     column(2, numericInput(inputId = session$ns("abs_min_cor_network"),
+                                            label = "Minimum absolute \n correlation to display:",
+                                            min = 0.05,
+                                            max = 1,
+                                            value = 0.5, 
+                                            step = 0.05
+                     )),
+                     column(2, radioButtons(inputId = session$ns("network_layout"),
+                                            label = "Layout:",
+                                            choices = c("Spring", "Circle", "Circle + omics"),
+                                            selected = "Circle + omics"
+                     )),
+                     column(1,  fluidRow(colourInput(inputId = session$ns("posCol"),
+                                                     label = "Positive Edges Color:",
+                                                     value = "red",
+                                                     showColour = c("background"),
+                                                     palette = c("square"),
+                                                     allowedCols = NULL,
+                                                     allowTransparent = FALSE,
+                                                     returnName = FALSE,
+                                                     closeOnClick = FALSE)),
+                            fluidRow(colourInput(inputId = session$ns("negCol"),
+                                                 label = "Negative Edges Color:",
+                                                 value = "green",
+                                                 showColour = c("background"),
+                                                 palette = c("square"),
+                                                 allowedCols = NULL,
+                                                 allowTransparent = FALSE,
+                                                 returnName = FALSE,
+                                                 closeOnClick = FALSE)),
+                     ),
+                     column(2,  lapply(1:length(views_names(local.rea.values$resMOFA)), function(i) {
+                       selectInput(paste0("colors_", views_names(local.rea.values$resMOFA)[i]),
+                                   label = views_names(local.rea.values$resMOFA)[i],
+                                   choices = colorPal_choices,
+                                   multiple = FALSE, 
+                                   selected = colorPal_choices[i]
+                       )})
+                     )),
+                   
+                   fluidRow(
+                     column(12,
+                            renderPlot({
+                              # load("inst/ExamplesFiles/FlomicsMultiAssay.RData")
+                              # local.rea.values <- list() ; input <- list()
+                              # local.rea.values$resMOFA <- FlomicsMultiAssay@metadata$MOFA_results
+                              # input$factor_choice_network <- 1
+                              # input$abs_weight_network <- 0.5
+                              # input$network_layout <- "Circle"
+                              # input$abs_min_cor_network <- 0.5
+                              # input$posCol <- "red"
+                              # input$negCol <- "green"
+                              # input$colors_proteomics.set1.filtred <- brewer.pal(5, "Blues")
+                              # input$colors_metabolomics.set2.filtred <- brewer.pal(5, "Oranges")
+                              
+                              
+                              # Correlation matrix is done on all ZW, not on the selected factor. 
+                              data_reconst_list <- lapply(get_weights(local.rea.values$resMOFA), FUN = function(mat){
+                                get_factors(local.rea.values$resMOFA)$group1 %*% t(mat)})
+                              data_reconst <- do.call(cbind, data_reconst_list)
+                              cor_mat <- stats::cor(data_reconst)
+                              
+                              features_metadata <- do.call(rbind, lapply(1:length(get_weights(local.rea.values$resMOFA)), FUN = function(i){
+                                # mat_weights <- data.frame(apply(get_weights(local.rea.values$resMOFA)[[i]], 2, FUN = function(vect) vect/max(vect)))
+                                mat_weights <- data.frame(get_weights(local.rea.values$resMOFA, scale = TRUE)[[i]])
+                                mat_weights$Table <- names(get_weights(local.rea.values$resMOFA))[i]
+                                return(mat_weights)
+                              }))
+                              
+                              factor_selected <- paste0("Factor", input$factor_choice_network)
+                              
+                              feature_filtered <- features_metadata %>% 
+                                rownames_to_column("EntityName") %>%
+                                mutate(F_selected = abs(get(factor_selected))) %>% 
+                                arrange(desc(abs(F_selected))) %>% 
+                                group_by(Table) %>% 
+                                filter(abs(F_selected)>input$abs_weight_network)
+                              
+                              # feature_filtered$Color <- cut(feature_filtered$F_selected, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1))
+                              # feature_filtered$Color2 <- apply(feature_filtered, 1, FUN = function())
+                              
+                              feature_filtered <- feature_filtered %>% group_by(Table) %>% 
+                                mutate(Color = cut(F_selected, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1))) %>%
+                                mutate(Color2 = input[[paste0("colors_", unique(Table))]]) %>%
+                                mutate(Color3 = unlist(input[[paste0("colors_", unique(Table))]])[as.numeric(Color)])
+                              
+                              feature_filtered <<- feature_filtered
+                              save(feature_filtered, file = "feature_filtered.RData")
+                              
+                              layout_arg <- tolower(input$network_layout)
+                              if(tolower(layout_arg) == tolower("Circle + omics")){
+                                layout_arg <- "groups"
+                              }
+                              
+                              # transparency_vect <- 155+100*abs(feature_filtered[,colnames(feature_filtered) == factor_selected]) # doesn't work
+                              # scores_vect <- cut(abs(unlist(feature_filtered[,colnames(feature_filtered) == factor_selected])), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c(1, 2, 3, 4))
+                              
+                              
+                              cor_display <- cor_mat[rownames(cor_mat) %in% feature_filtered$EntityName, colnames(cor_mat)%in% feature_filtered$EntityName]
+                              qgraph_plot <- qgraph(cor_display, minimum = input$abs_min_cor_network, 
+                                                    shape = "rectangle", labels = rownames(cor_display), vsize2 = 2, 
+                                                    vsize = sapply(rownames(cor_display), nchar)*1.1, esize = 2, layout = layout_arg,
+                                                    groups = gsub("[.]filtred", "", features_metadata$Table[match(rownames(cor_display), rownames(features_metadata))]),
+                                                    posCol = input$posCol, negCol = input$negCol, details = FALSE,  legend = FALSE,
+                                                    color = feature_filtered$Color3)
+                              qgraph_plot <- recordPlot()
+                              
+                              # legend_matrix = do.call("rbind", input[grep("colors", names(input))])
+                              
+                              
+                              
+                              legend_matrix <- do.call("rbind", lapply(views_names(local.rea.values$resMOFA), FUN = function(nam) input[[paste0("colors_", nam)]]))
+                              colnames(legend_matrix) <- c("(0,0.2]", "(0.2,0.4]", "(0.4,0.6]", "(0.6,0.8]", "(0.8, 1]")
+                              rownames(legend_matrix) <- gsub("[.]filtred|colors_", "", rownames(legend_matrix))
+                              legend.reshape <- reshape2::melt(legend_matrix)
+                              
+                              gg.legend <-  ggplot(legend.reshape, aes(x = Var2, y = Var1)) + 
+                                geom_tile(fill = legend.reshape$value) + xlab("") + ylab("") + 
+                                theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(), axis.ticks=element_blank())
+                              
+                              # Heatmap(legend_matrix, col = legend_matrix, cluster_columns = FALSE, cluster_rows = FALSE, column_names_rot = 0, column_order = 1:5,
+                              #         column_names_centered = TRUE, column_names_side = "top", show_heatmap_legend = FALSE)
+                              
+                              gg.legend <- ggpubr::ggarrange(gg.legend, nrow = 3, ncol = 1) 
+                              ggpubr::ggarrange(plotlist = list(qgraph_plot, gg.legend), nrow = 1, ncol = 2, widths = c(3, 1))
+                              
+                            }) # renderplot
+                     )# column
+                   ) # Fluidrow network
+          ) # tabpanel network,         
         )# tabsetpanel 
     )#box
   })
