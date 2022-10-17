@@ -129,7 +129,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
   
   ## observe the button run mixOmics
   observeEvent(input$runMixOmics, {
-
+    
     local.rea.values$runMixOmics   <- FALSE
     local.rea.values$preparedMixOmics  <- NULL
     local.rea.values$resMixOmics <- NULL
@@ -232,6 +232,36 @@ MixOmics_setting <- function(input, output, session, rea.values){
                    })),
                    
                    
+                   
+          ),
+          # ---- Tab panel Explained Variance ----
+          tabPanel("Explained Variance",
+                   column(6, renderPlot({
+                     dat_explained <- reshape2::melt(do.call("rbind", local.rea.values$MixOmics_res$analysis_res$prop_expl_var))
+                     colnames(dat_explained) <- c("Dataset", "Component", "Percentage of explained variance")
+                     dat_explained$`Percentage of explained variance` <- dat_explained$`Percentage of explained variance`*100
+                     
+                     print(dat_explained)
+                     
+                     dat_comb <- dat_explained %>% 
+                       dplyr::group_by(Dataset) %>% 
+                       dplyr::summarise("Cumulative Explained Variance" = sum(`Percentage of explained variance`))
+                     
+                     print(dat_comb)
+                     
+                     ggplot2::ggplot(dat_comb, aes(x = Dataset, y = `Cumulative Explained Variance`)) +
+                       geom_col() + 
+                       theme_classic() +
+                       theme(
+                         axis.text = element_text(size = 12),
+                         axis.line = element_blank(),
+                         axis.ticks =  element_blank(),
+                         strip.text = element_text(size = 12),
+                       ) + ylab("")   
+                     
+                     
+                   })),
+                   
                    column(6 , renderPlot({
                      # local.rea.values$MixOmics_res$analysis_res = TCGA.block.splsda
                      dat_explained <- reshape2::melt(do.call("rbind", local.rea.values$MixOmics_res$analysis_res$prop_expl_var))
@@ -251,7 +281,8 @@ MixOmics_setting <- function(input, output, session, rea.values){
                        scale_fill_gradientn(colors=c("gray97","darkblue"), guide="colorbar", limits=c(min(dat_explained$`Percentage of explained variance`),
                                                                                                       max(dat_explained$`Percentage of explained variance`)))
                      
-                   }))   
+                   })),
+                   
           ),
           # ---- Tab panel Individuals ----
           tabPanel("Individuals",
