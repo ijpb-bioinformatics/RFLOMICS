@@ -68,7 +68,12 @@ diff.plots$Volcano.plot
              file=paste0(contrastDir,"Table_of_DE_",omics.dic[[omictype]][["variableName"]],"_pvalmax_",
                          dataset.SE@metadata[["DiffExpAnal"]][["Adj.pvalue.cutoff"]],"_FCmin_",
                          dataset.SE@metadata[["DiffExpAnal"]][["abs.FC.cutoff"]],".txt"),
-             sep="\t",quote=FALSE,col.names=TRUE,row.names=FALSE)
+             sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
+ 
+write.table(dataset.SE@metadata[["DiffExpAnal"]][["DEF"]][[contrast]],
+             file=paste0(contrastDir,"Table_of_non_filtering_",omics.dic[[omictype]][["variableName"]],".txt"),
+             sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
+
   
 ```
 
