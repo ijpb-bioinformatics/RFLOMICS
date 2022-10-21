@@ -248,18 +248,18 @@ shinyServer(function(input, output, session) {
     # #### MOFA data integration ####
     # ###############################
     # output$withMOFA_UI <- renderUI({
-    # 
+    #
     #   MOFA_settingUI("mofaSetting")
-    # 
+    #
     # })
-    
+
     # ### ADDED 15/09/22
     # #### MixOmics data integration ####
     # ###################################
     # output$withMixOmics_UI <- renderUI({
-    #   
+    #
     #   MixOmics_settingUI("mixomicsSetting")
-    #   
+    #
     # })
 
     ########################################################################
@@ -359,11 +359,11 @@ shinyServer(function(input, output, session) {
     # #### Item for each data integration tools #####
     # # display tool Item
     # output$Integration <- renderMenu({
-    # 
+    #
     #   validate({
     #     need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >= 2, message = "")
     #   })
-    # 
+    #
     #   menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'), startExpanded = FALSE,selected = FALSE,
     #        menuSubItem(text = "Dataset analysis summary", tabName = "omicsSum" ),
     #        menuSubItem(text = "with MOFA", tabName = "withMOFA" ),
@@ -410,7 +410,7 @@ shinyServer(function(input, output, session) {
 
             compCheck  = TRUE,
             message    = "",
-            
+
             DiffValidContrast = NULL,
             CoExpClusterNames = NULL,
             omicsType = omics
@@ -450,7 +450,7 @@ shinyServer(function(input, output, session) {
       #callModule(module = omics_data_analysis_summary, id = "omics", rea.values = rea.values)
 
       #callModule(module = MOFA_setting, id = "mofaSetting", rea.values = rea.values)
-      
+
       ### ADDED 15/09/2022
       #callModule(module = MixOmics_setting, id = "mixomicsSetting", rea.values = rea.values)
 
@@ -500,6 +500,8 @@ shinyServer(function(input, output, session) {
         # from the code in this app).
         rmarkdown::render(tempReport, output_file = file,
                           params = params,
+                          knit_root_dir=tempdir(),
+                          intermediates_dir=tempdir(),
                           envir = new.env(parent = globalenv()))
 
         rea.values$outdir <- dirname(file)
