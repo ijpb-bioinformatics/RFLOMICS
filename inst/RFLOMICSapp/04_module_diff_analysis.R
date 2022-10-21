@@ -28,7 +28,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
   # list of tools for diff analysis
   MethodList <- c("glmfit (edgeR)"="edgeRglmfit", "lmFit (limma)"="limmalmFit")
-  
+
   method <- switch (rea.values[[dataset]]$omicsType,
                     "RNAseq"       = MethodList[1],
                     "proteomics"   = MethodList[2],
@@ -51,21 +51,21 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     validate(
       need(rea.values[[dataset]]$process != FALSE, "Please run data processing")
     )
-    
+
     validate(
       need(!is.null(rea.values$Contrasts.Sel), "Please run data processing toto")
     )
-    
+
     # #we must select list of contrast to test
     # validate(
     #   need(rea.values$analysis != FALSE, "Please select contrast")
     # )
-    
+
     #design must be complete
     validate(
       need(rea.values[[dataset]]$compCheck != FALSE, session$userData$FlomicsMultiAssay@metadata$completeCheck[["error"]])
     )
-    
+
     box(title = span(tagList(icon("sliders-h"), "  ", "Setting")), width = 14, status = "warning",
 
         fluidRow(column(12,
@@ -112,7 +112,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     })
 
     local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
-    
+
     print(paste("# 9- Diff Analysis...", dataset))
 
     rea.values[[dataset]]$diffAnal   <- FALSE
@@ -172,10 +172,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     }
 
     session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]] <- local.rea.values$dataset.SE
-    
+
     rea.values[[dataset]]$diffAnal <- TRUE
 
-    
+
 
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
@@ -185,26 +185,26 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
   # filterin param
   output$FilterPvalueUI <- renderUI({
-    
+
     if (rea.values[[dataset]]$diffAnal == FALSE) return()
-    
+
     box(title = NULL,status = "warning", width = 14,
         numericInput(inputId = session$ns("Adj.pvalue.cutoff"),
                      label="Adjusted pvalue cutoff :",
                      value=0.05, 0, max=1, 0.01),
         numericInput(inputId = session$ns("abs.FC.cutoff"),
                      label="|FC| cutoff :",
-                     value=1, 1, max=1000, 0.1),
+                     value=2, 1, max=1000, 0.1),
         actionButton(session$ns("validContrast"),"Validate"))
   })
-  
+
   # display results per contrast
   output$ContrastsResults <- renderUI({
 
     #if (rea.values[[dataset]]$diffAnal == FALSE) return()
-    if (rea.values[[dataset]]$diffAnal == FALSE || 
+    if (rea.values[[dataset]]$diffAnal == FALSE ||
         is.null(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal)) return()
-    
+
     ### adj_pvalue filtering by calling the RundDiffAnalysis method without filtering
     local.rea.values$dataset.SE <- FilterDiffAnalysis(object = local.rea.values$dataset.SE,
                                                       Adj.pvalue.cutoff = input$Adj.pvalue.cutoff,
@@ -214,7 +214,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
     list(
       lapply(1:length(rea.values$Contrasts.Sel$contrast), function(i) {
-      
+
       dataset.SE <- local.rea.values$dataset.SE
       vect     <- unlist(rea.values$Contrasts.Sel[i,])
       res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
@@ -306,10 +306,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   # merge results on upset plot
   output$ResultsMerge <- renderUI({
 
-    if (rea.values[[dataset]]$diffAnal == FALSE) return()  
-    
+    if (rea.values[[dataset]]$diffAnal == FALSE) return()
+
     # dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
-    
+
     index <- sapply(rea.values$Contrasts.Sel$tag, function(x){(input[[paste0("checkbox_",x)]])}) %>% unlist()
 
     H_selected <- rea.values$Contrasts.Sel$tag[index]
@@ -344,7 +344,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal <-
       local.rea.values$dataset.SE@metadata$DiffExpAnal
 
-    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]] <- 
+    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]] <-
       rea.values[[dataset]]$DiffValidContrast
 
     rea.values[[dataset]]$diffValid <- TRUE

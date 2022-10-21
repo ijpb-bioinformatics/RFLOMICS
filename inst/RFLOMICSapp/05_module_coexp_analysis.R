@@ -12,13 +12,13 @@ CoSeqAnalysisUI <- function(id){
             h4(tags$span("Parameters set up:", style = "color:orange")),
             p("You have first to choose between the ",tags$b("union")," or ",tags$b("intersection")," of your contrasts lists according to your biological question."),
             p("All the default parameters have been expertised according to each omic."),
-            p("It is then recommanded to do a ",tags$b("first run")," with a large number of K with few replicates.
+            p("It is then recommanded to do a ",tags$b("first run")," with a large number of K with few iterations.
             If there is a K (Kbest different from Kmin and Kmax) for which the ICL is minimum (check the first graph obtained),
             then a second run has to be done with a larger experiment: the window of K can be centered around the Kbest and the number
-            of technical replicates has to be increased to at least 20 replicates. For this larger experiment, it is recommanded to send
+            of technical replicates has to be increased to at least 20 iterations. For this larger experiment, it is recommanded to send
               analysis to remote ressources (see cluster option)"),
             h4(tags$span("Successful analysis:", style = "color:orange")),
-            p("For a given K, the result will be considered as successful when at least the half of the replicates
+            p("For a given K, the result will be considered as successful when at least the half of the iteration
               have run. Co-expression analysis will be considered as successful if there is at least a result for more than the
               half of K. In case of unsuccessful results, a detailed table of errors will appear."),
             h4(tags$span("Cluster option", style = "color:orange")),
@@ -37,9 +37,9 @@ CoSeqAnalysisUI <- function(id){
 CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
 
   local.rea.values <- reactiveValues(dataset.SE = NULL)
-    
+
   # co-expression parameters
-  output$CoExpParamUI <- renderUI({ 
+  output$CoExpParamUI <- renderUI({
 
     validate(
       need(rea.values[[dataset]]$diffValid != FALSE, "Please run diff analysis")
@@ -156,13 +156,13 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
             column(8,
                    sliderInput(session$ns("K.values"), label = "Number of clusters :", min=2, max=30, value=c(2,10), step=1)),
             column(4,
-                   numericInput(inputId = session$ns("iter"), label="Replicat :", value=2, 2, max=20, 1))),
+                   numericInput(inputId = session$ns("iter"), label="Iteration :", value=2, 2, max=20, 1))),
 
 
           fluidRow(
 
             column(8,
-                   materialSwitch(inputId = session$ns("clustermqCoseq"), label = "Cluster", value = FALSE, status = "success"),
+                   materialSwitch(inputId = session$ns("clustermqCoseq"), label = "use remote cluster", value = FALSE, status = "success"),
                    ),
                    # radioGroupButtons(inputId = session$ns("clustermqCoseq"), direction = "horizontal",
                    #                   label = " RUN :",
@@ -213,7 +213,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$coExpAnnot <- FALSE
 
     local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
-    
+
     # check if no selected DGE list
     if(length(input$select) == 0){
 
@@ -277,18 +277,18 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
       coseq.res      <- local.rea.values$dataset.SE@metadata$CoExpAnal[["coseqResults"]]
       cluster.comp   <- local.rea.values$dataset.SE@metadata$CoExpAnal[["clusters"]]
       topDEF         <- local.rea.values$dataset.SE@metadata$DiffExpAnal$mergeDEF
-  
+
       print(coseq.res)
       # For each id, get its cluster
       tab.clusters <- as.data.frame(ifelse(coseq.res@allResults[[names(nb_cluster)]] > 0.5, 1,0))
       tab.clusters <-  rownames_to_column(tab.clusters,var="DEF")
       Cluster.tab <- pivot_longer(data=tab.clusters,cols=2:(dim(tab.clusters)[2]),names_to="C",values_to="does.belong")
-  
+
       # For each id, get its FC for all Contrasts
       tmp <- lapply(1:length(local.rea.values$dataset.SE@metadata$DiffExpAnal$TopDEF),function(x){
       tmp <- local.rea.values$dataset.SE@metadata$DiffExpAnal$TopDEF[x]
       df  <- data.frame("id"=row.names(tmp[[1]]), "logFC"=tmp[[1]]$logFC)
-      names(df)=c("id",paste0("logFC.",filter(local.rea.values$dataset.SE@metadata$DiffExpAnal$Validcontrasts, 
+      names(df)=c("id",paste0("logFC.",filter(local.rea.values$dataset.SE@metadata$DiffExpAnal$Validcontrasts,
                                               contrastName== names(tmp))$tag))
       return(df)
     })

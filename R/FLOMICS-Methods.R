@@ -566,9 +566,9 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
                                                                                                        Groups = dplyr::filter(Design@Groups, samples %in% colnames(as.matrix(matrix.filt))),
                                                                                                       rowSums.zero = genes_flt0))
 
-    #### run PCA for raw count 
+    #### run PCA for raw count
     SummarizedExperimentList[[dataName]] <- RFLOMICS::RunPCA(SummarizedExperimentList[[dataName]])
-    
+
     # metadata for sampleMap for MultiAssayExperiment
     listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
                                       colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
@@ -582,7 +582,7 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
     names(omicList[[omicType]]) <- colnames
 
   }
-  
+
   prepFlomicsMultiAssay <- MultiAssayExperiment::prepMultiAssay( ExperimentList = SummarizedExperimentList,
                                                                  sampleMap      = MultiAssayExperiment::listToMap(listmap),
                                                                  colData        = Design@ExpDesign, outFile = stdout())
@@ -1300,7 +1300,7 @@ methods::setMethod(f="RunDiffAnalysis",
 #'
 methods::setMethod(f="FilterDiffAnalysis",
           signature="SummarizedExperiment",
-          definition <- function(object, Adj.pvalue.cutoff = 0.05, FC.cutoff = 1){
+          definition <- function(object, Adj.pvalue.cutoff = 0.05, FC.cutoff = 2){
 
             if(is.null(object@metadata$DiffExpAnal[["RawDEFres"]])){
               stop("can't filter the DiffExpAnal object because it doesn't exist")
@@ -1312,7 +1312,7 @@ methods::setMethod(f="FilterDiffAnalysis",
             ## TopDEF: Top differential expressed features
             DEF_filtred <- lapply(1:length(object@metadata$DiffExpAnal[["DEF"]]),function(x){
               res <- object@metadata$DiffExpAnal[["DEF"]][[x]]
-              keep <- (res$Adj.pvalue <= Adj.pvalue.cutoff) & (abs(res$logFC) >= log2(as.numeric(FC.cutoff)))
+              keep <- (res$Adj.pvalue <= Adj.pvalue.cutoff) & (abs(res$logFC) > log2(as.numeric(FC.cutoff)))
               res <- res[keep,]
               return(res)
             })
@@ -1763,14 +1763,14 @@ methods::setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
 #' @param contrasts_names contrasts names for the selection of DE entities.
 #' @param type one of union or intersection.
 #' @param group Not implemented yet in the interface. Useful for MOFA2 run.
-#' @return An untrained MOFA object or a list of dataset 
+#' @return An untrained MOFA object or a list of dataset
 #' @export
 #' @exportMethod prepareForIntegration
 #' @examples
 #'
 methods::setMethod(f="prepareForIntegration",
                    signature="MultiAssayExperiment",
-                   
+
                    definition <-  function(object,
                                            omicsToIntegrate = c("RNAseq", "proteomics", "metabolomics"),
                                            rnaSeq_transfo = "limma (voom)",
@@ -1790,7 +1790,7 @@ methods::setMethod(f="prepareForIntegration",
                      # type = "union"
                      # group = NULL
                      # method = "MixOmics"
-                     
+
                      # Checking for batch effects
                      cat("Checking for Batch effects\n")
                      correct_batch <- FALSE
@@ -1801,70 +1801,70 @@ methods::setMethod(f="prepareForIntegration",
                      }else{
                        cat("No batch effect found \n")
                      }
-                     
+
                      object@ExperimentList <- object@ExperimentList[grep("filtred", names(object@ExperimentList))]
                      object <- object[,,paste0(omicsToIntegrate, ".filtred")]
-                     
+
                      # Transformation RNASeq using limma::voom
                      if(length(grep("RNAseq", omicsToIntegrate)>0)){
                        rnaDat <- object@ExperimentList[[grep("RNAseq", names(object@ExperimentList))]]
                        assayTransform <- SummarizedExperiment::assay(rnaDat)
-                       
+
                        rnaDat@metadata[["transform_method_integration"]] <- "none"
-                       
+
                        designMat <- model.matrix(as.formula(object@metadata$design@Model.formula), data = object@metadata$design@ExpDesign)
-                       
+
                        DGEObject = DGEList(counts = assayTransform,
                                            norm.factors = rnaDat@metadata$Normalization$coefNorm$norm.factors,
                                            lib.size = rnaDat@metadata$Normalization$coefNorm$lib.size,
                                            samples = object@metadata$design@ExpDesign)
                        limmaRes <- limma::voom(DGEObject, design = designMat)
-                       
+
                        SummarizedExperiment::assay(rnaDat) <- limmaRes$E
                        rnaDat@metadata[["transform_results_all"]] <- limmaRes # changer l'appellation
                        rnaDat@metadata[["transform_method_integration"]] <- rnaSeq_transfo
-                       
+
                        rnaDat@metadata[["correction_batch_method"]] <- "none"
                        if(correct_batch) rnaDat <- rbe_function(object, rnaDat)
-                       
+
                        rnaDat@metadata[["integration_choice"]] <- choice
                        if(choice == "DE") rnaDat = filter_DE_from_SE(rnaDat, contrasts_arg = contrasts_names, type)
-                       
+
                        object@ExperimentList[[grep("RNAseq", names(object@ExperimentList))]] <- rnaDat
                      }
-                     
-                     
+
+
                      # Transformation of proteomics/metabolomics data
                      res <- lapply(omicsToIntegrate[omicsToIntegrate!="RNAseq"], FUN = function(omicName){
                        # omicName = "proteomics"
-                       
+
                        omicsDat <- object@ExperimentList[[grep(omicName, names(object@ExperimentList))]]
                        omicsDat@metadata[["transform_method_integration"]] <- omicsDat@metadata$transform_method
-                       
+
                        omicsDat@metadata[["correction_batch_method"]] <- "none"
                        if(correct_batch) omicsDat <- rbe_function(object, omicsDat)
-                       
+
                        omicsDat@metadata[["integration_choice"]] <- choice
                        if(choice == "DE")  omicsDat <- filter_DE_from_SE(omicsDat, contrasts_arg = contrasts_names, type)
-                       
+
                        object@ExperimentList[[grep(omicName, names(object@ExperimentList))]] <<- omicsDat
-                       
+
                        return(NULL)
                      })
-                     
-                     
+
+
                      if(method == "MOFA"){ MOFAObject <- MOFA2::create_mofa(object,
                                                                             group =  group,
                                                                             extract_metadata = TRUE)
-                     
+
                      return(MOFAObject)
                      }else if(method == "MixOmics"){
-                       
+
                        MixOmicsObject <- list(blocks = lapply(object@ExperimentList, FUN = function(SE)  t(assay(SE))),
-                                              metadata = object@colData) 
-                       
+                                              metadata = object@colData)
+
                        MixOmicsObject$blocks <- lapply(MixOmicsObject$blocks, FUN = function(mat) mat[order(rownames(mat)),])
-                       
+
                        return(MixOmicsObject)
                      }
                    })
@@ -1945,19 +1945,19 @@ methods::setMethod(f="run_MixOmics_analysis",
                                                             sparsity = FALSE,
                                                             cases_to_try = 5,
                                                             ...){
-                     
+
                      list_res = list()
                      dis_anal = FALSE # is this a discriminant analysis
-                     
+
                      # TODO : check this, c'est un peu etrange d'avoir eu a reordonner les lignes dans prepareForIntegration
                      # du coup ca demande de le faire aussi pour Y
                      # TODO : faudrait le faire directement dans preparedList ?
-                     Y <- data.frame(object$metadata, stringsAsFactors = TRUE) %>% 
+                     Y <- data.frame(object$metadata, stringsAsFactors = TRUE) %>%
                        rownames_to_column(var = "rowNam") %>%
-                       arrange(rowNam) %>% 
+                       arrange(rowNam) %>%
                        column_to_rownames(var = "rowNam") %>%
-                       dplyr::select(all_of(selectedResponse)) 
-                     
+                       dplyr::select(all_of(selectedResponse))
+
                      # Y <- data.frame(nutrimouse$diet, nutrimouse$genotype, nutrimouse$lipid$`C14.0`)
                      # rownames(Y) = paste("Row", 1:nrow(Y))
                      # Is this a discriminant analysis?
@@ -1965,7 +1965,7 @@ methods::setMethod(f="run_MixOmics_analysis",
                        dis_anal <- TRUE
                        Y <- Y[,1]
                      }else{
-                       rowNam <- rownames(Y) 
+                       rowNam <- rownames(Y)
                        YFactors <- do.call("cbind", lapply(1:ncol(Y), FUN = function(j){
                          if(is.factor(Y[,j])){
                            mat_return <- unmap(Y[,j])
@@ -1973,38 +1973,38 @@ methods::setMethod(f="run_MixOmics_analysis",
                            return(mat_return)
                          }
                        }))
-                       
+
                        Y <- cbind(Y %>% select_if(is.numeric), YFactors)
                        Y <- apply(Y, 2, as.numeric)
                        rownames(Y ) <- rowNam
                      }
-                     
+
                      # Design matrix
-                     Design_mat <- matrix(link_datasets, 
+                     Design_mat <- matrix(link_datasets,
                                           nrow = length(object$blocks)+1,
                                           ncol = length(object$blocks)+1)
-                     Design_mat[, ncol(Design_mat)] = 
+                     Design_mat[, ncol(Design_mat)] =
                        Design_mat[nrow(Design_mat), ] <- link_response
                      diag(Design_mat) <- 0
-                     
+
                      # What function to use for the analysis (can't be sparse if there is a continous response)
                      functionName = "pls"
                      if(dis_anal) functionName <- paste0(functionName, "da")
                      if(sparsity && !is.numeric(Y)) functionName <- paste0("s", functionName)
                      if(length(object$blocks)>1) functionName <- paste0("block.", functionName)
-                     
+
                      # Model Tuning (if required, for sparsity)
                      if(sparsity && dis_anal && functionName != "block.spls"){ # no tune.block.spls so far, there is one for spls
                        # It is a bit weird to consider tuning with folds when there is very few samples per condition
                        # Add a warning or something when it's the case?
                        # Also consider adding a warning when the number of feature is still very high even after differential analysis
-                       
+
                        tune_function <- paste0("tune.", functionName)
-                       
+
                        test_keepX <- lapply(object$blocks, FUN = function(dat){
                          ceiling(seq(from = ceiling(0.1*ncol(dat)), to = ncol(dat), length.out = cases_to_try))
                        })
-                       
+
                        list_tuning_args <- list(X = object$blocks,
                                                 Y = Y,
                                                 ncomp = ncomp,
@@ -2012,20 +2012,20 @@ methods::setMethod(f="run_MixOmics_analysis",
                                                 test.keepX = test_keepX,
                                                 folds = min(nrow(Y)-1, 10))
                        if(length(object$blocks)>1) list_tuning_args$design = Design_mat
-                       
+
                        list_res$tuning_res  <- do.call(get(tune_function), list_tuning_args)
                      }
-                     
+
                      # Model fitting
-                     
+
                      list_args <- list(X = object$blocks,
                                        Y = Y,
                                        ncomp = ncomp,
                                        scale = scale_views)
                      if(length(object$blocks)>1) list_args$design = Design_mat
                      if(sparsity && !functionName %in% c("block.spls", "block.pls")) list_args$keepX <- list_res$tuning_res$choice.keepX
-                     
+
                      list_res$analysis_res <- do.call(get(functionName), list_args)
-                     
+
                      return(list_res)
                    })

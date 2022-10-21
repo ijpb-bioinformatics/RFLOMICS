@@ -537,13 +537,14 @@ MA.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, p
 #'
 Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, pngFile=NULL){
 
+
   Abundance <- logFC <- Adj.pvalue <- NULL
   p <- EnhancedVolcano::EnhancedVolcano(toptable = data,
                   lab = rownames(data),
                   x = 'logFC',
-                  y = 'Adj.pvalue',
+                  y = 'pvalue',
                   pCutoff = Adj.pvalue.cutoff,
-                  FCcutoff = FC.cutoff,
+                  FCcutoff = log2(FC.cutoff),
                   axisLabSize=10,
                   pointSize = 1.5,
                   labSize = 2,
@@ -551,7 +552,7 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothes
                   titleLabSize=11,
                   subtitle = "",
                   subtitleLabSize = 10,
-                  caption = paste("FC cutoff=",FC.cutoff, " and " ,"FDR cutoff=",Adj.pvalue.cutoff,sep=""),
+                  caption = paste("FC cutoff=",FC.cutoff, " & " ,"FDR cutoff=",Adj.pvalue.cutoff, sep=""),
                   legendPosition = "bottom",
                   legendLabSize = 10,
                   legendIconSize=1.5,
@@ -559,7 +560,6 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothes
                   col = c('grey30', 'forestgreen', 'royalblue', 'red2'),
                   colAlpha = 0.5,
                   drawConnectors = TRUE,
-                  hline = c(10e-8),
                   widthConnectors = 0.5)
 
 
@@ -1739,31 +1739,31 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
   # type = "intersection"
   # contrasts_arg = c("(temperatureLow - temperatureElevated)", "(temperatureMedium - temperatureLow)")
   # SEobject@metadata[["integration_contrasts"]] <- contrasts
-  
+
   tabCorresp <- SEobject@metadata$DiffExpAnal$contrasts %>% dplyr::select(contrastName, tag)
   if("all" %in% contrasts_arg)   contrasts_arg <- SEobject@metadata$DiffExpAnal$contrasts$contrastName
-  
+
   tabCorresp <- tabCorresp %>% dplyr::filter(contrastName %in% contrasts_arg)
   contrasts_select <- tabCorresp$tag
-  
+
   tab1 <- SEobject@metadata$DiffExpAnal$mergeDEF %>%
     dplyr::select(all_of(c("DEF", contrasts_select)))
-  
+
   if(type == "intersection"){
-    
+
     DETab <-  tab1 %>%
       mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
       filter(SUMCOL==length(contrasts_select))
-    
+
   }else{
-    
+
     DETab <- tab1 %>%
       mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
-      filter(SUMCOL>=1) 
+      filter(SUMCOL>=1)
   }
-  
+
   SEobject <- SEobject[DETab$DEF,]
-  
+
   return(SEobject)
 }
 
