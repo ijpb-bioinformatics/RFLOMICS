@@ -306,7 +306,7 @@ methods::setMethod(f="getExpressionContrast",
 
             #BioFactors <- Design@List.Factors[FactorBioInDesign]
 
-            treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(Design@List.Factors[[x]]), sep="")})
+            treatmentFactorsList <- lapply(FactorBioInDesign, function(x){(paste(x, levels(Design@List.Factors[[x]]), sep=""))})
             names(treatmentFactorsList) <- FactorBioInDesign
 
             interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
