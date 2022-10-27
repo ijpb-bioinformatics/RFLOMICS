@@ -4,6 +4,136 @@ magrittr::`%>%`
 
 
 
+#' @title Read Experimental Design
+#'
+#' @param file experimental design file
+#' @return data.frame
+#' @export
+#'
+#' @examples 
+read_exp_design <- function(file){
+  
+  if(!file.exists(file))
+  {
+      warning(paste0("ERROR : ", file, " don't exist !"))
+      return(NULL)
+  }
+  
+  # read design and remove special characters
+  # remove "_" from modality and factor names
+  data <- vroom::vroom(file, delim = "\t", show_col_types = FALSE)  %>%
+    dplyr::mutate(dplyr::across(.cols = where(is.character), stringr::str_remove_all, pattern = "[.,;:#@!?()§$€%&<>|=+-/]")) %>%
+    dplyr::mutate(dplyr::across(.cols = where(is.character), stringr::str_remove_all, pattern = "[\\]\\[\'\"\ ]")) %>%
+    dplyr::mutate(dplyr::across(.cols = where(is.character), stringr::str_remove_all, pattern = fixed("\\"))) %>% 
+    dplyr::mutate(dplyr::across(.cols = c(-1),               stringr::str_remove_all, pattern = fixed("_"))) %>% 
+    dplyr::mutate(dplyr::across(.cols = where(is.character), as.factor)) 
+
+  names(data)  <- stringr::str_remove_all(string = names(data), pattern = "[.,;:#@!?()§$€%&<>|=+-/\\]\\[\'\"\ _]") %>%
+                  stringr::str_remove_all(., pattern = fixed("\\"))
+  
+  # check if there is duplication in sample names
+  sample.dup <- as.vector(data[which(table(data[1]) > 1),1])[[1]]
+  
+  if (length(sample.dup) !=0){
+    
+    warning(paste0("ERROR : duplicated sample names : ", paste0(sample.dup, collapse = ",")))
+    return(NULL)
+  }
+  
+  # check if there is duplication in factor names
+  factor.dup <- as.vector(data[which(table(names(data[-1])) > 1),1])[[1]]
+  
+  if (length(factor.dup) !=0){
+    
+    warning(paste0("ERROR : duplicated factor name : ", paste0(factor.dup, collapse = ",")))
+    return(NULL)
+  }
+  
+  # warning if number of factors exceed n = 10
+  n <- 10
+  if (dim(data)[2]-1 >= n){
+    
+    data <- data[, 1:n]
+    warning(paste0("WARNING : large number of columns ! only the first ", n," will be displayed"))
+    
+  }
+  
+  # check nbr of modality of the 5th fist columns
+  index <- sapply(names(data[-1]), function(x){ if(length(unique(data[-1][[x]]))>10){ FALSE }else{ TRUE } })
+  F.mod <- names(data[-1])[index]
+  
+  ratio <- length(F.mod)/length(names(data[-1]))
+  
+  if(ratio != 1)
+  {
+    message("WARNING : The select input contains a large number of options")
+  }
+  
+  # check if same name of moralities are used in diff factor
+  mod.list <- sapply(names(data[-1]), function(x){ 
+    unique(data[-1][[x]])
+    }) %>% purrr::reduce(c)
+  
+  mod.dup <- mod.list[duplicated(mod.list)]
+  if(length(mod.dup) != 0){
+    
+    message(paste0("ERROR : modality used in more than one factor : ", paste0(mod.dup, collapse = ", ")))
+    return(NULL)
+  }
+  
+  data            <- data.frame(data) 
+  row.names(data) <- data[,1]
+  data            <- data[,-1]
+  return(data)
+}
+
+
+
+#' @title Read omics data 
+#'
+#' @param file omics data matrix
+#' @return data.frame
+#' @export
+#'
+#' @examples 
+read_omics_data <- function(file){
+  
+  if(!file.exists(file))
+  {
+    warning(paste0("ERROR : ", file, " don't exist !"))
+    return(NULL)
+  }
+  
+  # read omics data and remove special characters
+  data <- vroom::vroom(file, delim = "\t", show_col_types = FALSE)
+  names(data)  <- stringr::str_remove_all(string = names(data), pattern = "[.,;:#@!?()§$€%&<>|=+-/\\]\\[\'\"\ ]") %>%
+    stringr::str_remove_all(., pattern = fixed("\\"))
+  
+  # check if there is duplication in sample names
+  sample.dup <- as.vector(data[which(table(names(data[-1])) > 1),1])[[1]]
+  
+  if (length(sample.dup) !=0){
+    
+    warning(paste0("ERROR : duplicated sample names : ", paste0(sample.dup, collapse = ",")))
+    return(NULL)
+  }
+  
+  # check if there is duplication in factor names
+  entity.dup <- as.vector(data[which(table(data[1]) > 1),1])[[1]]
+  
+  if (length(entity.dup) !=0){
+    
+    warning(paste0("ERROR : duplicated feature names : ", paste0(entity.dup, collapse = ",")))
+    return(NULL)
+  }
+  
+  data            <- data.frame(data) 
+  row.names(data) <- data[,1]
+  data            <- data[,-1]
+  return(data)
+}
+
+
 #' GetDesignFromNames
 #'
 #' @param samples_name a vector of sample names giving the designs factor, each

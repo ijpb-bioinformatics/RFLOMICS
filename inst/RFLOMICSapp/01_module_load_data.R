@@ -93,22 +93,25 @@ LoadOmicsData <- function(input, output, session, rea.values){
         session$userData$FlomicsMultiAssay      <- NULL
         #session$userData$Design <- NULL
 
+        print("# 1- Load data ...")
 
+        print("#    => Load experimental design...")
+        
         # read and check design file
-        ExpDesign.tbl <- read_ExpDesign(input.file = input$Experimental.Design.file$datapath)
+        design.tt <- tryCatch(expr = read_exp_design(file = input$Experimental.Design.file$datapath),
+                       error=function(e) e, warning=function(w) w)
+        
+        if(!is.null(design.tt$message)){
+          
+          showModal(modalDialog( title = "Error message", design.tt$message)) 
+        }
+        validate({ need(expr = is.null(design.tt$message), message=design.tt$message) })
+        
+        ExpDesign.tbl <- design.tt
+        
         local.rea.values$ExpDesign <- ExpDesign.tbl
 
-        validate({ need(!is.null(ExpDesign.tbl), message="") })
-        
-        print("# 1- Load data ...")
-        
-        print("#    => Load experimental design...")
-
         ####### Display tab of exp design  ########
-
-        # affich only the 5 firsts columns
-        if(dim(ExpDesign.tbl)[2] > 5){  ExpDesign.tbl.affich <- ExpDesign.tbl[,1:5]
-        }else{                          ExpDesign.tbl.affich <- ExpDesign.tbl }
 
         # display table
         output$ExpDesignTable <- renderUI({
@@ -118,7 +121,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
             # DT::renderDataTable( DT::datatable(data = ExpDesign.tbl.affich, filter = 'top',
             #                                    options = list( pageLength = 5, autoWidth = TRUE, dom = 'tp' )))
             #                                    #caption = 'Table 1: This is a simple caption for the table.'
-            DT::renderDataTable( DT::datatable(data = ExpDesign.tbl.affich,
+            DT::renderDataTable( DT::datatable(data = ExpDesign.tbl,
                                                options = list( pageLength = 5, autoWidth = TRUE, dom = 'tp' )))
             )
           })
@@ -130,17 +133,17 @@ LoadOmicsData <- function(input, output, session, rea.values){
           box(width = 12, background = "green", # Valid colors are: red, yellow, aqua, blue, light-blue, green, navy, teal, olive, lime, orange, fuchsia, purple, maroon, black.
             tags$b("The list and order of conditions :"),
             fluidRow(
-              lapply(names(ExpDesign.tbl.affich), function(i) {
+              lapply(names(ExpDesign.tbl), function(i) {
 
-                  column(width = round(12/length(names(ExpDesign.tbl.affich))),
+                  column(width = round(12/length(names(ExpDesign.tbl))),
                        # sample list :
                        # orderInput(inputId = session$ns(paste0("selectFactors.", i)),
                        #            label   = tags$span(style="color: black;",i) ,
-                       #            items   = levels(as.factor(ExpDesign.tbl.affich[[i]])))
+                       #            items   = levels(as.factor(ExpDesign.tbl[[i]])))
                        selectizeInput(inputId = session$ns(paste0("selectFactors.", i)),
                                       label   = tags$span(style="color: black;",i) ,
-                                      choices = levels(as.factor(ExpDesign.tbl.affich[[i]])),
-                                      selected= levels(as.factor(ExpDesign.tbl.affich[[i]])), multiple = TRUE,
+                                      choices = levels(as.factor(ExpDesign.tbl[[i]])),
+                                      selected= levels(as.factor(ExpDesign.tbl[[i]])), multiple = TRUE,
                                       options = NULL))
                 }),
                 uiOutput(session$ns("GetdFactorRef")))
@@ -153,32 +156,32 @@ LoadOmicsData <- function(input, output, session, rea.values){
           # filter samples
           #ExpDesign.tbl.flt <<- ExpDesign.tbl[input$selectSamples,]
           # filtering per conditions
-          for(i in names(ExpDesign.tbl.affich)) {
+          for(i in names(ExpDesign.tbl)) {
 
             # if select 1 modality or 0 for a Factor we exclude this factor
             if(length(input[[paste0("selectFactors.", i)]]) > 0){
-              ExpDesign.tbl.affich <- dplyr::filter(ExpDesign.tbl.affich, get(i) %in% input[[paste0("selectFactors.", i)]])
-              ExpDesign.tbl.affich[[i]] <- factor(ExpDesign.tbl.affich[[i]], levels = input[[paste0("selectFactors.", i)]])
+              ExpDesign.tbl <- dplyr::filter(ExpDesign.tbl, get(i) %in% input[[paste0("selectFactors.", i)]])
+              ExpDesign.tbl[[i]] <- factor(ExpDesign.tbl[[i]], levels = input[[paste0("selectFactors.", i)]])
             }
 
             if(length(input[[paste0("selectFactors.", i)]]) <= 1){
-              ExpDesign.tbl.affich <- dplyr::select(ExpDesign.tbl.affich, -all_of(i))
+              ExpDesign.tbl <- dplyr::select(ExpDesign.tbl, -all_of(i))
             }
           }
 
-          local.rea.values$ExpDesign <- ExpDesign.tbl.affich
+          local.rea.values$ExpDesign <- ExpDesign.tbl
 
           column(width = 12,
 
               # Construct the form to set the reference factor level
               tags$b("Set the type and the reference fo each design factor :"),
               fluidRow(
-                lapply(names(ExpDesign.tbl.affich), function(i){
+                lapply(names(ExpDesign.tbl), function(i){
 
-                    column(width= round(12/length(names(ExpDesign.tbl.affich))),
+                    column(width= round(12/length(names(ExpDesign.tbl))),
                         selectInput(inputId = session$ns(paste0("dF.RefLevel.", i)),
                                     label   = tags$span(style="color: black;",i) ,
-                                    choices = levels(ExpDesign.tbl.affich[[i]])),
+                                    choices = levels(ExpDesign.tbl[[i]])),
 
                         radioButtons(session$ns(paste0("dF.Type.", i)), label=NULL , choices = c("Bio","batch", "Meta"),
                                      selected = "Bio", inline = FALSE, width = 2, choiceNames = NULL, choiceValues = NULL))
@@ -363,9 +366,16 @@ LoadOmicsData <- function(input, output, session, rea.values){
             rea.values$validate.status <- 1
           }
           dataFile <- input[[paste0("data", k)]]
-          data.mat <- read_omicsData(dataFile$datapath)
-
-          validate({ need(!is.null(data.mat), message="") })
+          
+          data.mat.tt <- read_omics_data(dataFile$datapath)
+          
+          if(!is.null(data.mat.tt$message)){
+            
+            showModal(modalDialog( title = "Error message", data.mat.tt$message)) 
+          }
+          validate({ need(expr = is.null(data.mat.tt$message), message=data.mat.tt$message) })
+          
+          data.mat <- data.mat.tt
 
           inputs[[dataName]][["data"]]     <- data.mat
           inputs[[dataName]][["omicType"]] <- omicType
@@ -485,56 +495,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
 
 ######### FUNCTION ##########
-
-read_ExpDesign <- function(input.file){
-
-  res <- RFLOMICS::try_rflomics(read.table(input.file, header = TRUE,row.names = 1, sep = "\t")  %>%
-         dplyr::mutate(dplyr::across(where(is.character), stringr::str_remove_all, pattern = fixed(" "))) %>%
-         dplyr::mutate(dplyr::across(.cols = where(is.character), as.factor)))
-
-  # If an error occured
-  if(!is.null(res[["error"]]))
-  {
-    showModal(modalDialog( title = "Error message", as.character(res[["error"]])))
-    return(NULL)
-  }
-  else{
-
-    if(length(dim(res$value)[2]) > 5){ value <- res$value[,1:5] }else{ value <- res$value }
-
-    # check nbr of modality of the 5th fist columns
-    index <- sapply(names(value), function(x){ if(length(unique(value[[x]]))>10){ FALSE }else{ TRUE } })
-    F.mod <- names(value)[index]
-
-    ratio <- length(F.mod)/length(names(value))
-
-    if(ratio != 1)
-    {
-      showModal(modalDialog( title = "Warning message", "The select input contains a large number of options"))
-    }
-
-    mat <- res$value
-    rownames(mat) <- stringr::str_remove_all(string = rownames(mat), pattern = " ")
-    names(mat)    <- stringr::str_remove_all(string = names(mat),    pattern = " ")
-
-    return(mat)
-  }
-}
-
-
-read_omicsData <- function(input.file){
-
-  res <- RFLOMICS::try_rflomics(read.table(input.file, header = TRUE,row.names = 1, sep = "\t"))
-
-  # If an error occured
-  if(!is.null(res[["error"]]))
-  {
-    showModal(modalDialog( title = "Error message", as.character(res[["error"]])))
-    return(NULL)
-  }
-
-  return(res$value)
-}
 
 read_metaData <- function(input.file){
 
