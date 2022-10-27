@@ -348,7 +348,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
             }
     )
     
-    print(paste0("# 6  => Data processing : ", dataset))
+    print(paste0("# 3  => Data processing : ", dataset))
     processed.SE <- process_data(SE = session$userData$FlomicsMultiAssay[[dataset]], dataset = dataset, samples = input$selectSamples, param.list = param.list)
 
     local.rea.values$dataset.processed.SE <- processed.SE

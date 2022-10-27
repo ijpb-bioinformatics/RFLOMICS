@@ -53,7 +53,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     )
 
     validate(
-      need(!is.null(rea.values$Contrasts.Sel), "Please run data processing toto")
+      need(!is.null(rea.values$Contrasts.Sel), "Please run data processing ")
     )
 
     # #we must select list of contrast to test
@@ -102,6 +102,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   #   -> combine data : union or intersection
   observeEvent(input$runAnaDiff, {
 
+    toto_1 <<- session$userData$FlomicsMultiAssay
+    
     # check list of genes
     if(length(input$contrastList) == 0){
 
@@ -113,7 +115,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
     local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
 
-    print(paste("# 9- Diff Analysis...", dataset))
+    print(paste("# 4- Diff Analysis...", dataset))
 
     rea.values[[dataset]]$diffAnal   <- FALSE
     rea.values[[dataset]]$diffValid  <- FALSE
@@ -175,7 +177,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
     rea.values[[dataset]]$diffAnal <- TRUE
 
-
+    toto_2 <<- session$userData$FlomicsMultiAssay
+    
 
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))

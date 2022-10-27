@@ -186,7 +186,7 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
   else{
     print("[cmd] apply model to each contrast")
      ResGlm <-  lapply(Contrasts.Sel$contrast, function(x){
-       print(unlist(Contrasts.Coeff[x,]))
+       #print(unlist(Contrasts.Coeff[x,]))
        try_rflomics(edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,])))
 
      })
@@ -296,7 +296,7 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
   else{
     print("[cmd] fit contrasts")
     ResGlm <-  lapply(Contrasts.Sel$contrast, function(x){
-      print(paste0(x," : ",as.vector(unlist(Contrasts.Coeff[x,]))))
+      #print(paste0(x," : ",as.vector(unlist(Contrasts.Coeff[x,]))))
       try_rflomics(limma::contrasts.fit(fit, contrasts  = as.vector(unlist(Contrasts.Coeff[x,]))))
                       })
   }

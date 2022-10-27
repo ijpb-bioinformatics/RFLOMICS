@@ -99,8 +99,10 @@ LoadOmicsData <- function(input, output, session, rea.values){
         local.rea.values$ExpDesign <- ExpDesign.tbl
 
         validate({ need(!is.null(ExpDesign.tbl), message="") })
-
-        print("# 1- Load experimental design...")
+        
+        print("# 1- Load data ...")
+        
+        print("#    => Load experimental design...")
 
         ####### Display tab of exp design  ########
 
@@ -328,7 +330,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
       #### load omics data
       ####
-      print("# 2- Load omics data...")
+      print("#    => Load omics data...")
       inputs <- list()
       omicList <- list()
       #### list of omic data laoded from interface
