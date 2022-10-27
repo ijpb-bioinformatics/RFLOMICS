@@ -189,14 +189,14 @@ GetDesignFromNames <- function(samples_name){
 #' GetModelFormulae(Factors.Name=c("Genotype","Temperature","Environment","Replicat"),Factors.Type=c("Bio","Bio","Bio","batch"))
 #'
 #'
-GetModelFormulae <- function(Factors.Name,Factors.Type){
+GetModelFormulae <- function(Factors.Name, Factors.Type){
 
   # Initialize
   formulae <- list()
 
   # Verify that Type are in the list of two that are possible
 
-  if(! all(Factors.Type %in% c("Bio", "batch"))) stop("Factors.Type must be either Bio or batch !")
+  if(! all(Factors.Type %in% c("Bio", "batch", "Meta"))) stop("Factors.Type must be either Bio or batch !")
 
   #  Verify that the length of the two vectors are the same and that they are not null
 
