@@ -45,7 +45,6 @@ GLM_model <- function(input, output, session, rea.values){
           interaction terms between the biological factors will appear. Batch factor will never appear
            in interaction terms."),
 
-
           selectInput( inputId = session$ns("model.formulae"), label = "",
                        choices = rev(names(GetModelFormulae(Factors.Name=names(session$userData$FlomicsMultiAssay@metadata$design@List.Factors),
                                                             Factors.Type=session$userData$FlomicsMultiAssay@metadata$design@Factors.Type))),
@@ -66,7 +65,7 @@ GLM_model <- function(input, output, session, rea.values){
       session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(object=session$userData$FlomicsMultiAssay, 
                                                                    results = c("DiffExpAnal", "CoExpAnal", "DiffExpEnrichAnal", "CoExpEnrichAnal"))
       print("# 2- statistical setting...")
-      print("#    => Choice of model : input$model.formulae")
+      print(paste0("#    => Choice of model : ", input$model.formulae))
 
       # => Set the model formulae
       session$userData$FlomicsMultiAssay@metadata$design@Model.formula <- input$model.formulae

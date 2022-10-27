@@ -102,8 +102,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   #   -> combine data : union or intersection
   observeEvent(input$runAnaDiff, {
 
-    toto_1 <<- session$userData$FlomicsMultiAssay
-    
     # check list of genes
     if(length(input$contrastList) == 0){
 
@@ -176,9 +174,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]] <- local.rea.values$dataset.SE
 
     rea.values[[dataset]]$diffAnal <- TRUE
-
-    toto_2 <<- session$userData$FlomicsMultiAssay
-    
 
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
