@@ -35,13 +35,39 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       need(rea.values[[dataset]]$diffValid != FALSE, "Please run diff analysis and validate your choices...")
     )
     
-    #### TODO DELETE
+    # #### TODO DELETE
     # load("inst/ExamplesFiles/FlomicsMultiAssay.RData")
     # session <- list()
     # session$userData <- list()
     # session$userData$FlomicsMultiAssay <- FlomicsMultiAssay
-    # dataset <- c("proteomics.set1")
-    #### TODO DELETE
+    # dataset <- c("metabolomics.set2")
+    # local.rea.values <- list()
+    # 
+    # ListNames.diff  <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName
+    # local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
+    # 
+    # input <- list()
+    # input$db.select <- "org.At.tair.db"
+    # input$keytype <- "TAIR"
+    # input$pValue <- 0.1
+    # input$dom.select <- "GO:BP"
+    # 
+    # local.rea.values$domain <- input$dom.select
+    # 
+    # if(length(grep('GO:', input$dom.select))!=0){
+    #   local.rea.values$domain <- str_split(input$dom.select, ":")[[1]][1]
+    #   local.rea.values$list_arg$ont <- str_split(input$dom.select, ":")[[1]][2]
+    # }
+    # 
+    # local.rea.values$func_to_use <- paste0("enrich", local.rea.values$domain)
+    # 
+    # 
+    # local.rea.values$list_arg$OrgDb <- input$db.select
+    # local.rea.values$list_arg$universe <- names(local.rea.values$dataset.SE)
+    # local.rea.values$list_arg$keyType <- input$keytype
+    # local.rea.values$list_arg$pvalueCutoff <- input$pValue
+    # local.rea.values$list_arg$qvalueCutoff <- 1 # no threshold on qvalue
+    # #### TODO DELETE
     
     ## gene lists
     ListNames.diff  <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName
@@ -67,7 +93,8 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
         ),
         
         ## alpha threshold
-        numericInput(inputId = session$ns("Alpha_Enrichment"), label="P-value :", value = 0.01 , min = 0, max = 0.1, step = 0.01),
+        # numericInput(inputId = session$ns("Alpha_Enrichment"), label="P-value :", value = 0.01 , min = 0, max = 0.1, step = 0.01),
+        numericInput(inputId = session$ns("pValue"), label="p-value :", value = 0.01 , min = 0, max = 0.1, step = 0.01),
         
         actionButton(inputId = session$ns("settings_ok"), "set"),
     )
@@ -109,8 +136,8 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
           # select database
           pickerInput(
             inputId = session$ns("db.select"), label = "Select Data Base:",
-            choices = c("custom", dir(.libPaths())[grep("org.*db", dir(.libPaths()))]),
-            selected = "custom",
+            choices = c("", dir(.libPaths())[grep("org.*db", dir(.libPaths()))]),
+            selected = "",
             options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
           ),
           
@@ -127,11 +154,11 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
   })
   
   output$GeneList.coseqCPRUI <- renderUI({
-
+    
     if(rea.values[[dataset]]$coExpAnal == FALSE) return()
-
+    
     ListNames.coseq <- names(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["clusters"]])
-
+    
     pickerInput(
       inputId = session$ns("GeneList.coseq"), label = "Select Clusters :",
       choices = ListNames.coseq, multiple = TRUE, selected = ListNames.coseq,
@@ -139,7 +166,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     )
   })
   
-  
+  # ---- Annotation function ----
   observeEvent(input$runEnrich, {
     
     #---- progress bar ----#
@@ -209,9 +236,12 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       
       local.rea.values$func_to_use <- paste0("enrich", local.rea.values$domain)
       
+      # local.rea.values$list_arg$gene <- 
+      local.rea.values$list_arg$OrgDb <- input$db.select
       local.rea.values$list_arg$universe <- names(local.rea.values$dataset.SE)
       local.rea.values$list_arg$keyType <- input$keytype
-      local.rea.values$list_arg$qvalueCutoff <- input$Alpha_Enrichment
+      local.rea.values$list_arg$pvalueCutoff <- input$pValue
+      local.rea.values$list_arg$qvalueCutoff <- 1 # no threshold on qvalue
       
     }
     
@@ -223,19 +253,41 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     
     ## run annotation
     
+    # ---- Annotation on diff results: ----  
     if(length(input$GeneList.diff) != 0){
+      
+      #### TODO Extrait du code runAnnotationEnrichment
+      ## list of gene list to annotate
+      local.rea.values$gene.lists <- list()
+      if(from == "DiffExpAnal") {
+        geneLists <- lapply(ListNames, function(listname){
+          row.names(session$userData$FlomicsMultiAssay@metadata$DiffExpAnal[["TopDEF"]][[listname]])
+        })
+        names(geneLists) <- ListNames
+      }else if(from == "CoExpAnal"){
+        
+        geneLists <-  session$userData$FlomicsMultiAssay@metadata[["CoExpAnal"]][["clusters"]][ListNames]
+      }
+      ### TODO DELETE AFTER CLEANING CODE
       
       # local.rea.values$dataset.SE <- runAnnotationEnrichment(local.rea.values$dataset.SE, annotation= annotation, 
       #                                                        ListNames=input$GeneList.diff, from="DiffExpAnal", 
       #                                                        alpha = input$Alpha_Enrichment, probaMethod = input$EnrichMethod)
       
+      local.rea.values$results_enrich <- lapply(geneLists,
+                                                FUN = function(gene){
+                                                  local.rea.values$list_arg$gene <- gene
+                                                  do.call(get(local.rea.values$func_to_use), local.rea.values$list_arg)
+                                                })
+      names(local.rea.values$results_enrich) <- names(geneLists)
       
       
-      local.rea.values$resAnnot <- NULL 
+      # local.rea.values$resAnnot <- NULL 
       
       rea.values[[dataset]]$diffAnnot <- TRUE
     }
     
+    # ---- Annotation on COEXP results: ----  
     if(length(input$GeneList.coseq) != 0){
       
       local.rea.values$dataset.SE <- runAnnotationEnrichment(local.rea.values$dataset.SE, annotation= annotation, 
