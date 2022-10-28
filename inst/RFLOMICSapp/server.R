@@ -165,6 +165,13 @@ shinyServer(function(input, output, session) {
                          tags$br(),
                          tags$br(),
                          AnnotationEnrichmentUI(paste0("RNAseq",i))
+                ),
+                #### enrichment analysis  CPR ####
+                ######################################
+                tabPanel("Annotation Enrichment ClusterProf",
+                         tags$br(),
+                         tags$br(),
+                         AnnotationEnrichmentClusterProfUI(paste0("RNAseq",i))
                 )
               )
             })},
@@ -200,6 +207,13 @@ shinyServer(function(input, output, session) {
                          tags$br(),
                          tags$br(),
                          AnnotationEnrichmentUI(paste0("proteomics",i))
+                ),
+                #### enrichment analysis CPR ####
+                ######################################
+                tabPanel("Annotation Enrichment ClusterProf",
+                         tags$br(),
+                         tags$br(),
+                         AnnotationEnrichmentClusterProfUI(paste0("proteomics",i))
                 )
               )
             })},
@@ -442,7 +456,12 @@ shinyServer(function(input, output, session) {
           callModule(module  = AnnotationEnrichment, id = paste0(omics, i),
                      dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
 
-
+          ##########################################
+          # Part7 : Enrichment Analysis CPR
+          ##########################################
+          callModule(module  = AnnotationEnrichmentClusterProf, id = paste0(omics, i),
+                     dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
+          
         })
       })
 
