@@ -26,6 +26,7 @@ library(colourpicker)  ## ADDED August 2022 button to select colors
 library(RColorBrewer) 
 library(mixOmics) 
 library(clusterProfiler) ## ADDED 27/10/22
+library(enrichplot)
 library(org.At.tair.db) ## ADDED 27/10/22 # trouver un moyen de faire differemment. 
 # library(KEGGREST) ## ADDED 27/10/22 # est-ce que ca marche ? Non, il faut kegg.db, qui  n'existe plus
 source("00_module_common.R")

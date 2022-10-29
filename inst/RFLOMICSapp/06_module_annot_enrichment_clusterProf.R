@@ -17,7 +17,7 @@ AnnotationEnrichmentClusterProfUI <- function(id){
              uiOutput(ns("AnnotParamCPRUI2"))
       ),
       column(9, uiOutput(ns("AnnotDiffResultsCPR"))),
-      # column(9, uiOutput(ns("AnnotCoExpResults")))
+      column(9, uiOutput(ns("AnnotCoExpResultsCPR")))
     )
     
   )
@@ -36,11 +36,14 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     )
     
     # #### TODO DELETE
-    # load("inst/ExamplesFiles/FlomicsMultiAssay.RData")
+    # # load("inst/ExamplesFiles/FlomicsMultiAssay.RData")
+    # load("inst/ExamplesFiles/2022_10_29_tt/tt.MAE.RData")
     # session <- list()
     # session$userData <- list()
-    # session$userData$FlomicsMultiAssay <- FlomicsMultiAssay
-    # dataset <- c("metabolomics.set2")
+    # # session$userData$FlomicsMultiAssay <- FlomicsMultiAssay
+    # session$userData$FlomicsMultiAssay <- rflomics.MAE
+    # # dataset <- c("metabolomics.set2")
+    # dataset <- c("RNAseq.set1")
     # local.rea.values <- list()
     # 
     # ListNames.diff  <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName
@@ -49,8 +52,9 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     # input <- list()
     # input$db.select <- "org.At.tair.db"
     # input$keytype <- "TAIR"
-    # input$pValue <- 0.1
+    # input$pValue <- 1
     # input$dom.select <- "GO:BP"
+    # input$GeneList.diff <- ListNames.diff
     # 
     # local.rea.values$domain <- input$dom.select
     # 
@@ -64,6 +68,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     # 
     # local.rea.values$list_arg$OrgDb <- input$db.select
     # local.rea.values$list_arg$universe <- names(local.rea.values$dataset.SE)
+    # local.rea.values$list_arg$universe <- gsub("m_|p_|[.].", "", local.rea.values$list_arg$universe)
     # local.rea.values$list_arg$keyType <- input$keytype
     # local.rea.values$list_arg$pvalueCutoff <- input$pValue
     # local.rea.values$list_arg$qvalueCutoff <- 1 # no threshold on qvalue
@@ -193,7 +198,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     })
     
     # check annotation file
-    if(input$db.select == "custom"){
+    if(input$dom.select == "custom"){
       local.rea.values$func_to_use <- "enricher"
       
       if(is.null(input$annotationFile$datapath)){
@@ -225,7 +230,8 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       
       
     }else{
-      library(input$db.select)
+      print(input$db.select)
+      library(input$db.select, character.only = TRUE)
       
       local.rea.values$domain <- input$dom.select
       
@@ -242,6 +248,8 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       local.rea.values$list_arg$keyType <- input$keytype
       local.rea.values$list_arg$pvalueCutoff <- input$pValue
       local.rea.values$list_arg$qvalueCutoff <- 1 # no threshold on qvalue
+      local.rea.values$list_arg$minGSSize <- 10 # default in clusterprofiler
+      local.rea.values$list_arg$maxGSSize <- 500 # default
       
     }
     
@@ -259,15 +267,33 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       #### TODO Extrait du code runAnnotationEnrichment
       ## list of gene list to annotate
       local.rea.values$gene.lists <- list()
-      if(from == "DiffExpAnal") {
-        geneLists <- lapply(ListNames, function(listname){
-          row.names(session$userData$FlomicsMultiAssay@metadata$DiffExpAnal[["TopDEF"]][[listname]])
-        })
-        names(geneLists) <- ListNames
-      }else if(from == "CoExpAnal"){
+      # if(from == "DiffExpAnal") {
+      geneLists <- lapply(input$GeneList.diff, function(listname){
+        # listname <- input$GeneList.diff[[1]]
         
-        geneLists <-  session$userData$FlomicsMultiAssay@metadata[["CoExpAnal"]][["clusters"]][ListNames]
-      }
+        rownames(local.rea.values$dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[listname]])
+        
+        # object <- session$userData$FlomicsMultiAssay
+        # object@metadata$DiffExpAnal[["contrasts"]]$contrastName
+        # row.names(object@metadata$DiffExpAnal[["TopDEF"]][[listname]])
+        
+        # row.names(session$userData$FlomicsMultiAssay@metadata$DiffExpAnal[["TopDEF"]][[listname]])
+        # set.seed(10090)  # TODO DELETE
+        # list1 <- sample(local.rea.values$list_arg$universe, size = 450, replace = FALSE) # TODO DELETE
+        # list1 <- gsub("p_|m_|[.].", "", list1) # TODO DELETE
+        # list1 # TODO DELETE
+        # 
+        # list1 <- toupper(unlist(read.table("inst/ExamplesFiles/Example_ATList.txt")))
+        # intersect(list1, local.rea.values$list_arg$universe)
+      })
+      names(geneLists) <- input$GeneList.diff
+      
+      print(geneLists)
+      
+      # }else if(from == "CoExpAnal"){
+      
+      # geneLists <-  session$userData$FlomicsMultiAssay@metadata[["CoExpAnal"]][["clusters"]][ListNames]
+      # }
       ### TODO DELETE AFTER CLEANING CODE
       
       # local.rea.values$dataset.SE <- runAnnotationEnrichment(local.rea.values$dataset.SE, annotation= annotation, 
@@ -275,14 +301,20 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       #                                                        alpha = input$Alpha_Enrichment, probaMethod = input$EnrichMethod)
       
       local.rea.values$results_enrich <- lapply(geneLists,
-                                                FUN = function(gene){
-                                                  local.rea.values$list_arg$gene <- gene
-                                                  do.call(get(local.rea.values$func_to_use), local.rea.values$list_arg)
+                                                FUN = function(genes){
+                                                  list_args <- local.rea.values$list_arg
+                                                  list_args$gene <- genes
+                                                  do.call(get(local.rea.values$func_to_use), list_args)
                                                 })
       names(local.rea.values$results_enrich) <- names(geneLists)
       
+      local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]] <- local.rea.values$results_enrich
       
-      # local.rea.values$resAnnot <- NULL 
+      
+      # local.rea.values$results_enrich$`(temperatureLow - temperatureElevated) in mean`
+      # tab_results <- local.rea.values$results_enrich[[1]]@result
+      
+      local.rea.values$resAnnot <- NULL
       
       rea.values[[dataset]]$diffAnnot <- TRUE
     }
@@ -305,6 +337,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     #----------------------#
   })
   
+  # ---- Figures Code : ----
   ## print results
   output$AnnotDiffResultsCPR <- renderUI({
     
@@ -334,28 +367,28 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       }else{
         
         # display result for each list
-        data <- local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]][[listname]][["Over_Under_Results"]]
+        data <- local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]][[listname]]
         
         fluidRow(
           
           box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = listname, 
               
               verticalLayout(
-                renderPlot({ Enrichment.plot(object = local.rea.values$dataset.SE, listNames = listname, 
-                                             from =       "DiffExpEnrichAnal",
-                                             Over_Under = input[[paste0(listname, "-Over_Under")]],
-                                             top =        input[[paste0(listname, "-top.over")]],
-                                             domain =     input[[paste0(listname, "-domain")]]) }),
+                renderPlot({ 
+                  dotplot(data,
+                          showCategory = input[[paste0(listname, "-top.over")]]
+                  )
+                }),
                 fluidRow(
                   column(3,
-                         numericInput(inputId = session$ns(paste0(listname, "-top.over")), label="Top genes :" , value=50 , 
+                         numericInput(inputId = session$ns(paste0(listname, "-top.over")), label="Top terms:" , value=50 , 
                                       min = 20, max=length(unique(data$Term)), step = 20)),
-                  column(4,
-                         radioButtons(inputId = session$ns(paste0(listname, "-domain")), label="Domain" ,
-                                      choices = unique(data$Domain), selected = unique(data$Domain)[1], inline = FALSE, width = 1.5)),
-                  column(5,
-                         radioButtons(inputId = session$ns(paste0(listname, "-Over_Under")), label="" ,
-                                      choices = unique(data$Decision), selected = unique(data$Decision)[1], inline = FALSE, width = 1.5))
+                  # column(4,
+                  #        radioButtons(inputId = session$ns(paste0(listname, "-domain")), label="Domain" ,
+                  #                     choices = unique(data$Domain), selected = unique(data$Domain)[1], inline = FALSE, width = 1.5)),
+                  # column(5,
+                  #        radioButtons(inputId = session$ns(paste0(listname, "-Over_Under")), label="" ,
+                  #                     choices = unique(data$Decision), selected = unique(data$Decision)[1], inline = FALSE, width = 1.5))
                 )),
               hr(),
               verticalLayout(
@@ -364,8 +397,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                 ## DEG result table ###
                 DT::renderDataTable({
                   
-                  DT::datatable(dplyr::filter(data, Decision == input[[paste0(listname, "-Over_Under")]], 
-                                              Domain   == input[[paste0(listname, "-domain")]]),
+                  DT::datatable(data@result,
                                 options = list(rownames = TRUE, pageLength = 5, lengthMenu = c(5,10, 15, 20), scrollX = T))
                 })
               )
@@ -375,7 +407,9 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     })
   })
   
-  output$AnnotCoExpResults <- renderUI({
+  
+  # ---- Figure Code for Coexpr results: ----
+  output$AnnotCoExpResultsCPR <- renderUI({
     
     if(rea.values[[dataset]]$coExpAnnot == FALSE) return()
     
@@ -403,8 +437,8 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
         
       }else{
         
+        # data <- local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]][[listname]][["Over_Under_Results"]]
         data <- local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]][[listname]][["Over_Under_Results"]]
-        
         fluidRow(
           
           box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = listname, 
