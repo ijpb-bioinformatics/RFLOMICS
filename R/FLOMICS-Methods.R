@@ -558,8 +558,22 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
     # groups <- Design@Groups %>%
     #   dplyr::mutate(samples = rownames(.)) %>%
     #   tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
-
+    
     ###### create SE object
+    # check overlap between design and data
+    
+    sample.intersect <- intersect(colnames(matrix.filt), row.names(ExpDesign))
+    if(length(sample.intersect) == 0){
+      
+      stop("samples in omics data could be matched to experimental design")
+    }
+    
+    if(length(sample.intersect) < length(row.names(ExpDesign))/2){
+      
+      message("more than half of samples don't match to experimental design")
+    }
+    
+    
     SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance=as.matrix(matrix.filt)),
                                                                                        colData  = QCmat,
                                                                                        metadata = list(omicType = inputs[[dataName]][["omicType"]],
