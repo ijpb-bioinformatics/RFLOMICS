@@ -8,7 +8,8 @@ Authors@R:
     person("Audrey", "Hulot", email = "ahulot@inrae.fr", role = c("aut")),
     person("Christine", "Paysant-Leroux", email = "cpaysantleroux@inrae.fr", role = c("aut")))
 Description: What the package does (one paragraph).
-Depends: R (>= 3.5.0)
+Depends: 
+    R (>= 3.5.0)
 License: gpl-3 
 Encoding: UTF-8
 LazyData: true
@@ -19,23 +20,22 @@ Suggests:
     testthat
 VignetteBuilder: knitr
 Imports: 
-    tidyr,
+    shiny,
+    shinydashboard,
+    shinyFiles,
+    shinyWidgets,
     shinyBS,
+    tidyr,
     reactable,
-    coseq,
     magrittr,
     tibble,
     stringr,
     purrr,
     stats,
-    SummarizedExperiment,
-    MultiAssayExperiment,
     data.table,
     methods,
     FactoMineR,
     dplyr,
-    edgeR,
-    S4Vectors,
     RColorBrewer,
     gridExtra,
     DT,
@@ -43,13 +43,17 @@ Imports:
     clustermq,
     ggplot2,
     reshape2,
-    shiny,
     utils,
     kableExtra,
-    ComplexHeatmap,
-    EnhancedVolcano,
     ggpubr,
-    MOFA2,
     qgraph,
     colourpicker,
-    mixOmics
+    plotly,
+    S4Vectors,
+    MultiAssayExperiment,
+    SummarizedExperiment,
+    edgeR,
+    coseq,
+    limma,
+    EnhancedVolcano,
+    ComplexHeatmap

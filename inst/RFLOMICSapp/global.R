@@ -1,5 +1,25 @@
 # Packages
 
+# if (!require("BiocManager", quietly = TRUE))
+#   install.packages("BiocManager")
+# 
+# pkgs_to_install <- c("S4Vectors", "MultiAssayExperiment","SummarizedExperiment",
+#                      "pheatmap","BiocParallel","ComplexHeatmap",
+#                      "edgeR","limma","coseq","EnhancedVolcano")
+# 
+# for (pkgs in pkgs_to_install) {
+# 
+#   message(paste("looking for ", pkgs))
+# 
+#   if (!requireNamespace(pkgs)) {
+# 
+#     message(paste("     installing", pkgs))
+#     BiocManager::install(pkgs)
+#   }
+# }
+
+
+library(shiny)
 library(plotly)
 library(DT)
 library(magrittr)
@@ -19,12 +39,14 @@ library(ggplot2)
 library(reshape2)
 library(kableExtra)
 library(shinyBS)
-library(MOFA2) 
 library(qgraph) ## ADDED August 2022
 library(colourpicker)  ## ADDED August 2022 button to select colors
 # library(circlize) ## ADDED August 2022
 library(RColorBrewer) ## ADDED August 2022
-library(mixOmics) ## ADDED 15/09/22
+#library(mixOmics) ## ADDED 15/09/22
+#library(MOFA2) 
+
+### MODULES ###
 source("00_module_common.R")
 source("01_module_load_data.R")
 source("02_module_set_stat_model.R")
@@ -32,8 +54,8 @@ source("03_module_data_explor.R")
 source("04_module_diff_analysis.R")
 source("05_module_coexp_analysis.R")
 source("06_module_annot_enrichment.R")
-source("07_module_data_integration_MOFA.R")
-source("08_module_data_integration_mixOmics.R") ### ADDED 15/09/2022
+#source("07_module_data_integration_MOFA.R")
+#source("08_module_data_integration_mixOmics.R") ### ADDED 15/09/2022
 source("coverPage.R")
 
 #enableBookmarking(store = "server")
