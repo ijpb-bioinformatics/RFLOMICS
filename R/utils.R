@@ -15,7 +15,7 @@ read_exp_design <- function(file){
   
   if(!file.exists(file))
   {
-      warning(paste0("ERROR : ", file, " don't exist !"))
+      stop(paste0("ERROR : ", file, " don't exist !"))
       return(NULL)
   }
   
@@ -36,30 +36,37 @@ read_exp_design <- function(file){
   
   if (length(sample.dup) !=0){
     
-    warning(paste0("ERROR : duplicated sample names : ", paste0(sample.dup, collapse = ",")))
-    return(NULL)
+    stop(paste0("ERROR : duplicated sample names : ", paste0(sample.dup, collapse = ",")))
   }
   
   # check if there is duplication in factor names
   factor.dup <- as.vector(data[which(table(names(data[-1])) > 1),1])[[1]]
-  
   if (length(factor.dup) !=0){
     
-    warning(paste0("ERROR : duplicated factor name : ", paste0(factor.dup, collapse = ",")))
-    return(NULL)
+    stop(paste0("ERROR : duplicated factor name : ", paste0(factor.dup, collapse = ",")))
+  }
+  
+  # check if same name of moralities are used in diff factor
+  mod.list <- sapply(names(data[-1]), function(x){ 
+    unique(data[-1][[x]])
+  }) %>% purrr::reduce(c)
+  
+  mod.dup <- mod.list[duplicated(mod.list)]
+  if(length(mod.dup) != 0){
+    
+    stop(paste0("ERROR : modality used in more than one factor : ", paste0(mod.dup[1:10], collapse = ", ")))
   }
   
   # warning if number of factors exceed n = 10
-  n <- 10
+  n <- 5
   if (dim(data)[2]-1 >= n){
     
     data <- data[, 1:n]
-    warning(paste0("WARNING : large number of columns ! only the first ", n," will be displayed"))
-    
+    message(paste0("WARNING : large number of columns ! only the first ", n," will be displayed"))
   }
   
   # check nbr of modality of the 5th fist columns
-  index <- sapply(names(data[-1]), function(x){ if(length(unique(data[-1][[x]]))>10){ FALSE }else{ TRUE } })
+  index <- sapply(names(data[-1]), function(x){ if(length(unique(data[-1][[x]]))>n){ FALSE }else{ TRUE } })
   F.mod <- names(data[-1])[index]
   
   ratio <- length(F.mod)/length(names(data[-1]))
@@ -67,18 +74,6 @@ read_exp_design <- function(file){
   if(ratio != 1)
   {
     message("WARNING : The select input contains a large number of options")
-  }
-  
-  # check if same name of moralities are used in diff factor
-  mod.list <- sapply(names(data[-1]), function(x){ 
-    unique(data[-1][[x]])
-    }) %>% purrr::reduce(c)
-  
-  mod.dup <- mod.list[duplicated(mod.list)]
-  if(length(mod.dup) != 0){
-    
-    message(paste0("ERROR : modality used in more than one factor : ", paste0(mod.dup, collapse = ", ")))
-    return(NULL)
   }
   
   data            <- data.frame(data) 
@@ -100,8 +95,7 @@ read_omics_data <- function(file){
   
   if(!file.exists(file))
   {
-    warning(paste0("ERROR : ", file, " don't exist !"))
-    return(NULL)
+    stop(paste0("ERROR : ", file, " don't exist !"))
   }
   
   # read omics data and remove special characters
@@ -114,8 +108,7 @@ read_omics_data <- function(file){
   
   if (length(sample.dup) !=0){
     
-    warning(paste0("ERROR : duplicated sample names : ", paste0(sample.dup, collapse = ",")))
-    return(NULL)
+    stop(paste0("ERROR : duplicated sample names : ", paste0(sample.dup, collapse = ",")))
   }
   
   # check if there is duplication in factor names
@@ -123,8 +116,7 @@ read_omics_data <- function(file){
   
   if (length(entity.dup) !=0){
     
-    warning(paste0("ERROR : duplicated feature names : ", paste0(entity.dup, collapse = ",")))
-    return(NULL)
+    stop(paste0("ERROR : duplicated feature names : ", paste0(entity.dup, collapse = ",")))
   }
   
   data            <- data.frame(data) 

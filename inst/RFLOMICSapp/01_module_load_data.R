@@ -367,7 +367,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
           }
           dataFile <- input[[paste0("data", k)]]
           
-          data.mat.tt <- read_omics_data(dataFile$datapath)
+          data.mat.tt <- tryCatch(read_omics_data(file = dataFile$datapath), error=function(e) e, warning=function(w) w)
           
           if(!is.null(data.mat.tt$message)){
             
@@ -398,20 +398,30 @@ LoadOmicsData <- function(input, output, session, rea.values){
         }
       }
 
-      FlomicsMultiAssay.try <- RFLOMICS::try_rflomics(FlomicsMultiAssay.constructor(inputs = inputs,
-                                                                          ExpDesign = ExpDesign.tbl,
-                                                                          refList = dF.List.ref,
-                                                                          typeList = dF.Type.dFac,
-                                                                          projectName=input$projectName))
+      # FlomicsMultiAssay.try <- RFLOMICS::try_rflomics(FlomicsMultiAssay.constructor(inputs = inputs,
+      #                                                                     ExpDesign = ExpDesign.tbl,
+      #                                                                     refList = dF.List.ref,
+      #                                                                     typeList = dF.Type.dFac,
+      #                                                                     projectName=input$projectName))
+      # 
+      # if(!is.null(FlomicsMultiAssay.try[["error"]])) {
+      #   showModal(modalDialog( title = "Error message", as.character(FlomicsMultiAssay.try[["error"]])))
+      # }
+      # validate({ need(is.null(FlomicsMultiAssay.try[["error"]]), message="error") })
 
-      if(!is.null(FlomicsMultiAssay.try[["error"]])) {
-        showModal(modalDialog( title = "Error message", as.character(FlomicsMultiAssay.try[["error"]])))
+      FlomicsMultiAssay.try <- tryCatch(FlomicsMultiAssay.constructor(inputs = inputs,
+                                                                      ExpDesign = ExpDesign.tbl,
+                                                                      refList = dF.List.ref,
+                                                                      typeList = dF.Type.dFac,
+                                                                      projectName=input$projectName),
+                                         error=function(e) e, warning=function(w) w)
+      
+      if(!is.null(FlomicsMultiAssay.try$message)) {
+        showModal(modalDialog( title = "Error message", FlomicsMultiAssay.try$message))
       }
-      validate({ need(is.null(FlomicsMultiAssay.try[["error"]]), message="error") })
+      validate({ need(is.null(FlomicsMultiAssay.try$message), message="error") })
 
-
-
-      session$userData$FlomicsMultiAssay <- FlomicsMultiAssay.try[["value"]]
+      session$userData$FlomicsMultiAssay <- FlomicsMultiAssay.try
 
       # FlomicsMultiAssay[, complete.cases(FlomicsMultiAssay), ]
       # colData(FlomicsMultiAssay)[!complete.cases(FlomicsMultiAssay),]

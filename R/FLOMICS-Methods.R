@@ -524,7 +524,6 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
   # consctuct ExpDesign object
   Design <- ExpDesign.constructor(ExpDesign = ExpDesign, refList = refList, typeList = typeList)
 
-
   SummarizedExperimentList <- list()
   listmap  <- list()
   omicList <- list()
@@ -536,16 +535,21 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
     ## construct SummarizedExperiment for each data
     abundance <- inputs[[dataName]][["data"]]
 
-    if(!is.null(inputs[[dataName]][["meta"]])){
-      QCmat <- inputs[[dataName]][["meta"]]
+    # check overlap between design and data
+    
+    sample.intersect <- intersect(colnames(abundance), row.names(ExpDesign))
+    if(length(sample.intersect) == 0){
+      
+      stop("samples in omics data could be matched to experimental design")
     }
-    else{
-      QCmat <- data.frame(primary = colnames(abundance),
-                          colname = colnames(abundance),
-                          stringsAsFactors = FALSE)
+    
+    if(length(sample.intersect) < length(row.names(ExpDesign))/2){
+      
+      message("more than half of samples don't match to experimental design")
     }
-
-
+    
+    abundance <- dplyr::select(abundance, row.names(ExpDesign))
+    
     ###### remove row with sum == 0
     matrix <- as.matrix(abundance)
     ## nbr of genes with 0 count
@@ -558,16 +562,34 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
     # groups <- Design@Groups %>%
     #   dplyr::mutate(samples = rownames(.)) %>%
     #   tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
-
+    
     ###### create SE object
-    SummarizedExperimentList[[dataName]] <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance=as.matrix(matrix.filt)),
-                                                                                       colData  = QCmat,
-                                                                                       metadata = list(omicType = inputs[[dataName]][["omicType"]],
-                                                                                                       Groups = dplyr::filter(Design@Groups, samples %in% colnames(as.matrix(matrix.filt))),
-                                                                                                      rowSums.zero = genes_flt0))
+    
+    
+    # creat colData
+    if(!is.null(inputs[[dataName]][["meta"]])){
+      QCmat <- inputs[[dataName]][["meta"]]
+    }
+    else{
+      
+      #sample.intersect <- intersect(colnames(matrix.filt), row.names(ExpDesign))
+      
+      QCmat <- data.frame(primary = row.names(ExpDesign),
+                          colname = row.names(ExpDesign),
+                          stringsAsFactors = FALSE)
+    }
+    
+    omicType <- inputs[[dataName]][["omicType"]]
+    Groups  <- dplyr::filter(Design@Groups, samples %in% colnames(as.matrix(matrix.filt)))
 
+    SE <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance = as.matrix(matrix.filt)),
+                                                                                       colData  = QCmat,
+                                                                                       metadata = list(omicType = omicType, Groups = Groups, rowSums.zero = genes_flt0))
+
+    #SummarizedExperimentList[[dataName]] <- SE[, SE$primary %in% row.names(ExpDesign)]
+    
     #### run PCA for raw count
-    SummarizedExperimentList[[dataName]] <- RFLOMICS::RunPCA(SummarizedExperimentList[[dataName]])
+    SummarizedExperimentList[[dataName]] <- RFLOMICS::RunPCA(SE)
 
     # metadata for sampleMap for MultiAssayExperiment
     listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
