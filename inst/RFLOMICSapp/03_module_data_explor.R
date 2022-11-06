@@ -165,30 +165,30 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     tagList(
       
       box(title = length(names(session$userData$FlomicsMultiAssay[[dataset]])), 
-          width = 6, background = "maroon", "nbr of entities before filtering"
+          width = 6, background = "maroon", 
+          paste0("Initial number of ", omics.dic[[rea.values[[dataset]]$omicsType]][["variableName"]])
       ),
-      box(
-        title = length(session$userData$FlomicsMultiAssay[[dataset]]@metadata$rowSums.zero), 
-        width = 6, background = "fuchsia", "nbr of unexpressed genes"
+      box( title = length(colnames(session$userData$FlomicsMultiAssay[[dataset]])),
+           width = 6, background = "light-blue", "Initial number of samples"
       )
     )
     
   })
-  # output$filtSummary2UI <- renderUI({
-  #   
-  #   if(rea.values[[dataset]]$omicsType != "RNAseq" || rea.values[[dataset]]$process == FALSE) return()
-  # 
-  #   tagList(
-  #     
-  #     box( title = length(names(local.rea.values$dataset.processed.SE)), 
-  #          width = 6, background = "light-blue", "nbr of entities after filtering"
-  #     ),
-  #     box(title = length(local.rea.values$dataset.processed.SE@metadata$FilteredFeatures), 
-  #         width = 6, background = "purple", "nbr of low expressed genes"
-  #     )
-  #   )
-  #   
-  # })
+  output$filtSummary2UI <- renderUI({
+
+    if(rea.values[[dataset]]$process == FALSE) return()
+
+    tagList(
+      box(
+        title = length(names(local.rea.values$dataset.processed.SE)), width = 6, background = "fuchsia", 
+        paste0("Number of filtred ", omics.dic[[rea.values[[dataset]]$omicsType]][["variableName"]])
+      ),
+      box(title = length(colnames(local.rea.values$dataset.processed.SE)),
+          width = 6, background = "purple", "Number of filtred samples"
+      )
+    )
+
+  })
   
   
   #### Exploratory of Biological and Technical variability
@@ -310,7 +310,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
   })
 
-  
   #### run proprocessing : Normalisation/transformation, filtering...
   observeEvent(input$run, {
     
