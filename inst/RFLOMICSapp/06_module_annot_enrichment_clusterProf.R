@@ -14,7 +14,8 @@ AnnotationEnrichmentClusterProfUI <- function(id){
     ## parameters + input data
     fluidRow(
       column(3, uiOutput(ns("AnnotParamCPRUI")),
-             uiOutput(ns("AnnotParamCPRUI2"))
+             uiOutput(ns("AnnotParamCPRUI2")),
+             uiOutput(ns("AnnotParamCPRUI3"))
       ),
       column(9, uiOutput(ns("AnnotDiffResultsCPR"))),
       column(9, uiOutput(ns("AnnotCoExpResultsCPR")))
@@ -93,7 +94,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
         pickerInput(
           inputId = session$ns("dom.select"), label = "Select Domain:",
           choices = c("custom", "GO", "GO:BP", "GO:CC", "GO:MF", "KEGG"),
-          selected = "",
+          selected = "custom",
           options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
         ),
         
@@ -115,10 +116,14 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     if(is.null(local.rea.values$settings_ok)) return()
     
     if(input$dom.select == "custom"){
-      box(title = span(tagList(icon("sliders-h"), "  ", "Setting")), width = 14, status = "warning",
-          fileInput(inputId = session$ns("annotationFile"), label = "Annotation file :", 
+      box(title = NULL, width = 14, status = "warning",
+          
+          # Select annotation file
+          hr(),
+          fileInput(inputId = session$ns("annotationFileCPR"), label = "Annotation file:", 
                     accept  = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
-          actionButton(inputId = session$ns("runEnrich"),"Run")
+          
+          actionButton(inputId = session$ns("settings_custom_ok"), label = "OK")
       )
     }else if(input$dom.select == "KEGG"){
       box(title = span(tagList(icon("sliders-h"), "  ", "Setting")), width = 14, status = "warning",
@@ -134,7 +139,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                     label = "Organism", value = "ath", 
                     width = NULL, placeholder = NULL),
           
-          actionButton(inputId = session$ns("runEnrich"),"Run")
+          actionButton(inputId = session$ns("runEnrich"), label = "Run")
       )
     }else if(length(grep("GO", input$dom.select))!=0){
       box(title = span(tagList(icon("sliders-h"), "  ", "Setting")), width = 14, status = "warning",
@@ -153,11 +158,43 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
             selected = "ENTEZID",
             options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
           ),
-          actionButton(inputId = session$ns("runEnrich"),"Run")
+          actionButton(inputId = session$ns("runEnrich"), label = "Run")
       )
     }
   })
   
+  # ---- Third set of settings: custom only ----
+  local.rea.values$settings_custom_ok <- NULL
+  observeEvent(input$settings_custom_ok, {local.rea.values$settings_custom_ok <- TRUE})
+  
+  output$AnnotParamCPRUI3 <- renderUI({
+    if(is.null(local.rea.values$settings_custom_ok)) return()
+    
+    ### Toute la verification doit se faire ici
+    
+    annotation <- fread(file = input$annotationFileCPR$datapath, sep="\t", header = TRUE)
+    
+    box(title = span(tagList(icon("sliders-h"), "  ", "Chose columns names")), width = 14, status = "warning",
+        
+        # Select the right columns for the analysis
+        pickerInput(inputId = session$ns("col_geneName"), label = "Genes Name:",
+                    choices = c("", colnames(annotation)),
+                    selected = ""),
+        pickerInput(inputId = session$ns("col_termID"), label = "Terms IDs:",
+                    choices = c("", colnames(annotation)),
+                    selected = ""),
+        pickerInput(inputId = session$ns("col_termName"), label = "Term Names:",
+                    choices = c("", colnames(annotation)),
+                    selected = ""),
+        pickerInput(inputId = session$ns("col_domain"), label = "Domain/Ontology:",
+                    choices = c("", colnames(annotation)),
+                    selected = ""),
+        
+        actionButton(inputId = session$ns("runEnrich"), label = "Run")
+    )
+  })
+  
+  # ---- Coseq bit ----
   output$GeneList.coseqCPRUI <- renderUI({
     
     if(rea.values[[dataset]]$coExpAnal == FALSE) return()
@@ -194,31 +231,37 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       showModal(modalDialog( title = "Error message", "Please select at least 1 gene list."))
     }
     validate({ 
-      need(length(c(input$GeneList.diff, input$GeneList.coseq )) != 0, message="Please select at least 1 gene list") 
+      need(length(c(input$GeneList.diff, input$GeneList.coseq )) != 0, message = "Please select at least 1 gene list") 
     })
     
     # check annotation file
     if(input$dom.select == "custom"){
       local.rea.values$func_to_use <- "enricher"
       
-      if(is.null(input$annotationFile$datapath)){
+      message("Performing enrichment analysis with custom annotation file")
+      
+      if(is.null(input$annotationFileCPR$datapath)){
         showModal(modalDialog( title = "Error message", "need annotation file."))
       }
-      validate({
-        need(!is.null(input$annotationFile$datapath), message="need annotation file")
-      })
-      annotation <- fread(file = input$annotationFile$datapath, sep="\t", header = TRUE)
+      # validate({
+      #   need(!is.null(input$annotationFileCPR$datapath), message="need annotation file")
+      # })
+      annotation <- fread(file = input$annotationFileCPR$datapath, sep="\t", header = TRUE)
       
-      if(length(intersect(c("geneID", "Term", "Name", "Domain"), colnames(annotation))) < 4){
-        
-        showModal(modalDialog( title = "Error message", "The header of the annotation file does not match (see input vignette)..."))
+      if(input$col_geneName == "" || input$col_termID == ""){
+        showModal(modalDialog( title = "Error message", "Please chose columns names for the gene names/ID and the ontology terms ID!"))
       }
-      validate({ 
-        need(length(intersect(c("geneID", "Term", "Name", "Domain"), colnames(annotation))) == 4, message="The header of the annotation file does not match (see input vignette)...") 
-      })
+      
+      # if(length(intersect(c("geneID", "Term", "Name", "Domain"), colnames(annotation))) < 4){
+      #   
+      #   showModal(modalDialog( title = "Error message", "The header of the annotation file does not match (see input vignette)..."))
+      # }
+      # validate({ 
+      #   need(length(intersect(c("geneID", "Term", "Name", "Domain"), colnames(annotation))) == 4, message="The header of the annotation file does not match (see input vignette)...") 
+      # })
       
       # reduce ref to genes present in matrix count after filtering
-      annotation <- dplyr::filter(annotation , geneID %in% names(local.rea.values$dataset.SE))
+      # annotation <- dplyr::filter(annotation , geneID %in% names(local.rea.values$dataset.SE))
       
       #check if ref correspond to features in lists
       if(dim(annotation)[1] == 0){
@@ -229,9 +272,17 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       })
       
       
+      local.rea.values$list_arg$universe <- names(local.rea.values$dataset.SE)
+      local.rea.values$list_arg$pvalueCutoff <- input$pValue
+      local.rea.values$list_arg$qvalueCutoff <- 1 # no threshold on qvalue
+      local.rea.values$list_arg$minGSSize <- 10 # default in clusterprofiler
+      local.rea.values$list_arg$maxGSSize <- 500 # default in clusterprofiler
+      
+      local.rea.values$ont <- ifelse(input$col_domain == "", 
+                                     "", 
+                                     unique(annotation %>% dplyr::select(matches(input$col_geneName))))
+      
     }else{
-      print(input$db.select)
-      library(input$db.select, character.only = TRUE)
       
       local.rea.values$domain <- input$dom.select
       
@@ -240,16 +291,26 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
         local.rea.values$list_arg$ont <- str_split(input$dom.select, ":")[[1]][2]
       }
       
+      if(length(grep('GO', input$dom.select))!=0){
+        library(input$db.select, character.only = TRUE)
+        local.rea.values$list_arg$OrgDb <- input$db.select
+      }
+      
+      if(length(grep('KEGG', input$dom.select))!=0){
+        local.rea.values$list_arg$organism <- input$KEGG_org
+      }
+      
       local.rea.values$func_to_use <- paste0("enrich", local.rea.values$domain)
       
-      # local.rea.values$list_arg$gene <- 
-      local.rea.values$list_arg$OrgDb <- input$db.select
+      
       local.rea.values$list_arg$universe <- names(local.rea.values$dataset.SE)
       local.rea.values$list_arg$keyType <- input$keytype
       local.rea.values$list_arg$pvalueCutoff <- input$pValue
       local.rea.values$list_arg$qvalueCutoff <- 1 # no threshold on qvalue
       local.rea.values$list_arg$minGSSize <- 10 # default in clusterprofiler
-      local.rea.values$list_arg$maxGSSize <- 500 # default
+      local.rea.values$list_arg$maxGSSize <- 500 # default in clusterprofiler
+      
+      local.rea.values$domains <- NULL
       
     }
     
@@ -266,29 +327,23 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       
       #### TODO Extrait du code runAnnotationEnrichment
       ## list of gene list to annotate
+      message("Retrieving the lists of DE entities")
       local.rea.values$gene.lists <- list()
-      # if(from == "DiffExpAnal") {
       geneLists <- lapply(input$GeneList.diff, function(listname){
-        # listname <- input$GeneList.diff[[1]]
-        
         rownames(local.rea.values$dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[listname]])
-        
-        # object <- session$userData$FlomicsMultiAssay
-        # object@metadata$DiffExpAnal[["contrasts"]]$contrastName
-        # row.names(object@metadata$DiffExpAnal[["TopDEF"]][[listname]])
-        
-        # row.names(session$userData$FlomicsMultiAssay@metadata$DiffExpAnal[["TopDEF"]][[listname]])
-        # set.seed(10090)  # TODO DELETE
-        # list1 <- sample(local.rea.values$list_arg$universe, size = 450, replace = FALSE) # TODO DELETE
-        # list1 <- gsub("p_|m_|[.].", "", list1) # TODO DELETE
-        # list1 # TODO DELETE
-        # 
-        # list1 <- toupper(unlist(read.table("inst/ExamplesFiles/Example_ATList.txt")))
-        # intersect(list1, local.rea.values$list_arg$universe)
       })
       names(geneLists) <- input$GeneList.diff
       
-      print(geneLists)
+      ## log2FC of the genes (put colors on graphs) 
+      log2FC_lists <- lapply(input$GeneList.diff, function(listname){
+        data.frame("Genes" = rownames(local.rea.values$dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[listname]]),
+                   "logFC" = local.rea.values$dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[listname]][["logFC"]])
+      })
+      names(log2FC_lists) <- input$GeneList.diff
+      
+      # TODO delete
+      # local.rea.values$list_arg$universe <-  gsub("[.].", "", local.rea.values$list_arg$universe)
+      # print(lapply(geneLists, head))
       
       # }else if(from == "CoExpAnal"){
       
@@ -300,6 +355,40 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       #                                                        ListNames=input$GeneList.diff, from="DiffExpAnal", 
       #                                                        alpha = input$Alpha_Enrichment, probaMethod = input$EnrichMethod)
       
+      
+      # # Conversion KEGG id - NE fonctionne pas, a jeter !!
+      # if(local.rea.values$func_to_use == "enrichKEGG" && !input$keytype %in% c("kegg", "uniprot", "ncbi-geneid", "ncbi-proteinid")){
+      #   message("Converting to kegg ids")
+      #   
+      #   local.rea.values$list_arg$universe <- bitr_kegg(local.rea.values$list_arg$universe, 
+      #                                                   fromType = input$keytype, 
+      #                                                   toType = "kegg", 
+      #                                                   organism = input$KEGG_org, 
+      #                                                   drop = TRUE)
+      #   print("in here \n")
+      #   geneLists <- lapply(geneLists,
+      #                       bitr_kegg, 
+      #                       fromType = input$keytype, 
+      #                       toType = "kegg", 
+      #                       organism = input$KEGG_org, 
+      #                       drop = TRUE)
+      # }
+      
+      if(input$dom.select == "custom"){
+        message("Transforming the files")
+        # If custom annotation and several domains, must perform one enrichment per domain
+        
+        local.rea.values$list_arg$TERM2NAME <- NA
+        local.rea.values$list_arg$TERM2GENE <- data.frame("term" = annotation %>% dplyr::select(matches(input$col_termID)), 
+                                                          "gene" = annotation %>% dplyr::select(matches(input$col_geneName)))
+        if(input$col_termName != ""){
+          local.rea.values$list_arg$TERM2NAME <- data.frame("term" = annotation %>% dplyr::select(matches(input$col_termID)), 
+                                                            "name" = annotation %>% dplyr::select(matches(input$col_termName)))
+          local.rea.values$list_arg$TERM2NAME <- local.rea.values$list_arg$TERM2NAME[-duplicated(local.rea.values$list_arg$TERM2NAME),]
+        }
+      }
+
+      message("Finally doing the enrichment. Be patient.")
       local.rea.values$results_enrich <- lapply(geneLists,
                                                 FUN = function(genes){
                                                   list_args <- local.rea.values$list_arg
@@ -309,10 +398,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       names(local.rea.values$results_enrich) <- names(geneLists)
       
       local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]] <- local.rea.values$results_enrich
-      
-      
-      # local.rea.values$results_enrich$`(temperatureLow - temperatureElevated) in mean`
-      # tab_results <- local.rea.values$results_enrich[[1]]@result
       
       local.rea.values$resAnnot <- NULL
       
@@ -382,7 +467,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                 fluidRow(
                   column(3,
                          numericInput(inputId = session$ns(paste0(listname, "-top.over")), label="Top terms:" , value=50 , 
-                                      min = 20, max=length(unique(data$Term)), step = 20)),
+                                      min = 20, max=nrow(data@result), step = 20)),
                   # column(4,
                   #        radioButtons(inputId = session$ns(paste0(listname, "-domain")), label="Domain" ,
                   #                     choices = unique(data$Domain), selected = unique(data$Domain)[1], inline = FALSE, width = 1.5)),
