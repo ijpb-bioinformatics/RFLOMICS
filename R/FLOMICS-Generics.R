@@ -121,5 +121,10 @@ methods::setGeneric(
 methods::setGeneric(
   name="run_MixOmics_analysis",
   def = function( object, ... ){standardGeneric("run_MixOmics_analysis")}
-# >>>>>>> develop.0.1
 )
+
+methods::setGeneric(
+  name="runAnnotationEnrichment_CPR",
+  def = function( object, ... ){standardGeneric("runAnnotationEnrichment_CPR")}
+)
+
