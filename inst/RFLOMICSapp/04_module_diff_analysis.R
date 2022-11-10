@@ -189,10 +189,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     box(title = NULL,status = "warning", width = 14,
         numericInput(inputId = session$ns("Adj.pvalue.cutoff"),
                      label="Adjusted pvalue cutoff :",
-                     value=0.05, 0, max=1, 0.01),
+                     value=0.05, min=0, max=1, 0.01),
         numericInput(inputId = session$ns("abs.FC.cutoff"),
                      label="|FC| cutoff :",
-                     value=2, 1, max=1000, 0.1),
+                     value=2, min=1,max=1000, 0.1),
         actionButton(session$ns("validContrast"),"Validate"))
   })
 
@@ -235,7 +235,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                     tabPanel("MA plot", renderPlot({ suppressMessages(diff.plots$MA.plot) })),
 
                     ### MAplot
-                    tabPanel("Volcano plot", renderPlot({ suppressMessages(diff.plots$Volcano.plot) })),
+                    tabPanel("Volcano plot", renderPlot({ suppressMessages(diff.plots$Volcano.plot) },height = 600)),
 
                     ### DEF result table ###
                     tabPanel("Table",
@@ -256,7 +256,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                              renderUI({
                              renderPlot({
                              resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
-                             m.def <- assays(local.rea.values$dataset.SE)[[1]]
+                             m.def <- assays(local.rea.values$dataset.SE)[[1]][,session$userData$FlomicsMultiAssay@metadata$design@Groups$samples]
 
                              # filter by DE
                              m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
