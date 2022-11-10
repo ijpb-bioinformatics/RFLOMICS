@@ -12,7 +12,7 @@ dir.create(path=dataDir)
 dataset.raw.SE <- rflomics.MAE@ExperimentList[[data]]
 dataset.SE     <- rflomics.MAE@ExperimentList[[paste0(data,".filtred")]]
 
-Diff.eval      <- !is.null(dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]])
+Diff.eval      <- !is.null(dataset.SE@metadata[["DiffExpAnal"]][["Validcontrasts"]])
 CoEx.eval      <- !is.null(dataset.SE@metadata[["CoExpAnal"]]$results)
 Diff.ann.eval  <- !is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]]$results)
 CoEx.ann.eval  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results)
