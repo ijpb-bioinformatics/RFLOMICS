@@ -1778,22 +1778,10 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                                           col_termName = "",
                                           col_domain = "",
                                           annotationPath = NULL
-                                          ){
+                   ){
                      
                      
-                    message("Retrieving the lists of DE entities")
-
-                     # print(ListNames)
-                     # print(func_to_use)
-                     # print(lapply(list_args, head))
-                     # print(dom.select)
-                     # print(Domains)
-                     # print(annotationPath)
-                     
-                     # geneLists <- lapply(GeneList.diff, function(listname){
-                     #   rownames(object@metadata$DiffExpAnal[["TopDEF"]][[listname]])
-                     # })
-                     # names(geneLists) <- GeneList.diff
+                     message("Retrieving the lists of DE entities")
                      
                      if(from == "DiffExpAnal") {
                        geneLists <- lapply(ListNames, function(listname){
@@ -1801,43 +1789,28 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                        })
                        names(geneLists) <- ListNames
                      }else if(from == "CoExpAnal"){
-                       geneLists <-  object@metadata[["CoExpAnal"]][["clusters"]][ListNames]
+                       geneLists <- object@metadata[["CoExpAnal"]][["clusters"]][ListNames]
                      }
                      
-                     
-                     print("wait for it")
-                     
-                     # ## log2FC of the genes (put colors on graphs) 
-                     #  log2FC_lists <- lapply( GeneList.diff, function(listname){
-                     #   vect <-  dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[listname]][["logFC"]]
-                     #   names(vect) <- rownames( dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[listname]])
-                     #   return(vect)
-                     # })
-                     # names( log2FC_lists) <-  GeneList.diff
-                     
-                     # if(!is.null(annotationPath) && dom.select == "custom"){
-                     #   print("Je rentre ici alors que je devrais pas")
-                     #   annotation <- fread(file = annotationPath, sep="\t", header = TRUE)
-                     # }  
+                     if(!is.null(annotationPath) && dom.select == "custom"){
+                       message("Loading annotation file")
+                       annotation <- fread(file = annotationPath, sep="\t", header = TRUE)
+                     }
                      
                      message("Finally doing the enrichment. Be patient.")
                      
-                      results_enrich <- lapply(1:length(geneLists), FUN = function(i){
+                     results_enrich <- lapply(1:length(geneLists), FUN = function(i){
                        message(paste0("Considering contrast: ", names(geneLists)[i]))
                        
                        genes <- geneLists[[i]]
                        results_inter <- lapply(Domains, FUN = function(ont){
+                         message(paste0("Enrichment on ",dom.select , " domain: ", ont))
                          
-                         # list_args <-  list_arg
                          list_args$gene <- genes
                          if(func_to_use == "enrichGO"){
-                           message(paste0("Enrichment on GO domain: ", ont))
-                           list_args$ont <- ont
-                         }
-                         if(dom.select == "custom"){
-                           message(paste0("Annotation custom on domain: ", ont))
                            
-                           # print(annotation) # TODO delete
+                           list_args$ont <- ont
+                         }else if(dom.select == "custom"){
                            
                            annotation2 <- as.data.frame(annotation)
                            if(col_domain != "") annotation2 <-  as.data.frame(annotation) %>% dplyr::filter(.data[[col_domain]] == ont) 

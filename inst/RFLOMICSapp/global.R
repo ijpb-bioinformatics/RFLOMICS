@@ -27,8 +27,9 @@ library(RColorBrewer)
 library(mixOmics) 
 library(clusterProfiler) ## ADDED 27/10/22
 library(enrichplot)
-library(org.At.tair.db) ## ADDED 27/10/22 # trouver un moyen de faire differemment. 
+# library(org.At.tair.db) ## ADDED 27/10/22 # trouver un moyen de faire differemment. 
 # library(KEGGREST) ## ADDED 27/10/22 # est-ce que ca marche ? Non, il faut kegg.db, qui  n'existe plus
+library(AnnotationDbi)
 source("00_module_common.R")
 source("01_module_load_data.R")
 source("02_module_set_stat_model.R")
