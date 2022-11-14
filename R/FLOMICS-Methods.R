@@ -1753,12 +1753,20 @@ methods::setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
 ######################## ANNOTATION USING CLUSTERPROFILER ########################
 
 #' @title runAnnotationEnrichment_CPR
-#' @description TODO
+#' @description This function performs overrepresentation analysis (ORA) using clusterprofiler functions. It can be used with custom annotation file (via enricher), GO (enrichGO) or KEGG (enrichKEGG) annotations. 
 #' @param object An object of class \link{MultiAssayExperiment}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param func_to_use Function to use in the enrichment. Expects one of enrichGO, enrichKEGG or enricher, from clusterprofiler package. 
 #' @param ListNames names of the contrasts or clusters to consider.
-#' @param list_args list of arguments to pass to the func_to_use function.
-#' @return TODO
+#' @param list_args list of arguments to pass to the func_to_use function. These arguments must match the ones from the clusterprofiler package. E.g: universe, keytype, pvalueCutoff, qvalueCutoff, etc. 
+#' @param from indicates if ListNames are from differential analysis results (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
+#' @param Domains: names of the ontology domains. Used either for a custom files with several domains or for enrichGO (BP, CC, MF)
+#' @param dom.select: is it a custom annotation, GO or KEGG annotations
+#' @param col_termID: if custom annotation, MANDATORY, name of the column where the term identifier (eg: GO:0030198) is located.
+#' @param col_geneName: if custom annotation, MANDATORY, name of the column where the term identifier is located.
+#' @param col_termName: if custom annotation, name of the column where the term name is located. If the identifier is not very specific, indicating a name can be a good idea... (e.g: GO:0030198 corresponds to extracellular matrix organization)
+#' @param col_domain: if custom annotation, name of the column where the domain of the ontology is located. You can mix several domains or databases in your file as long as it's indicated in this column (eg: GO:BP, GO:MF, GO:CC)
+#' @param annotationPath: if custom annotation, path to the annotation file. It must contains at least two columns with the genes names and the terms identifier.
+#' @return A list of results from clusterprofiler.
 #' @export
 #' @exportMethod runAnnotationEnrichment_CPR
 #' @examples

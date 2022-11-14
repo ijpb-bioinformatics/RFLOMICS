@@ -68,7 +68,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     
   })
   
-  
   # ---- Second set of settings: ----
   local.rea.values$settings_ok <- NULL
   observeEvent(input$settings_ok, {local.rea.values$settings_ok <- NULL; local.rea.values$settings_ok <- TRUE})
@@ -127,7 +126,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
   # ---- Third set of settings: custom only ----
   local.rea.values$settings_custom_ok <- NULL
   observeEvent(input$settings_ok, {local.rea.values$settings_custom_ok <- NULL}) # erase everytime there's a change in the first panel of settings
-  # observeEvent(input$settings_custom_ok, {local.rea.values$settings_custom_ok <- NULL; local.rea.values$settings_custom_ok <- TRUE})
   
   # Check if the annotation file is ok
   observeEvent(input$settings_custom_ok, {
@@ -158,10 +156,10 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     box(title = span(tagList(icon("sliders"), "  ", "Chose columns names")), width = 14, status = "warning",
         
         # Select the right columns for the analysis
-        pickerInput(inputId = session$ns("col_geneName"), label = "Genes Name:",
+        pickerInput(inputId = session$ns("col_geneName"), label = "Genes Name: *",
                     choices = c("", colnames(annotation)),
                     selected = ""),
-        pickerInput(inputId = session$ns("col_termID"), label = "Terms IDs:",
+        pickerInput(inputId = session$ns("col_termID"), label = "Terms IDs: *",
                     choices = c("", colnames(annotation)),
                     selected = ""),
         pickerInput(inputId = session$ns("col_termName"), label = "Term Names:",
@@ -216,9 +214,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     # ---- Checks: ----
     
     isGoAnnotation <- length(grep("GO", input$dom.select))!=0
-    print(isGoAnnotation) # TODO Delete
-    
-    print(input$dom.select) # TODO Delete
     
     # load if needed
     if(isGoAnnotation) library(input$db.select, character.only = TRUE)
@@ -232,8 +227,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       need(length(c(input$GeneList.diff, input$GeneList.coseq)) != 0, message = "Please select at least 1 gene list") 
     })
     
-    print("I validated everything until now") # TODO delete
-    
     # check keytypes (GO and KEGG enrichment)
     if(input$dom.select == "KEGG"){
       if(!input$keytype %in% c("kegg", "ncbi-geneid", "ncib-proteinid", "uniprot")){
@@ -244,7 +237,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       })
     }else if(isGoAnnotation){
       accepted_keytypes <- AnnotationDbi::keytypes(get(input$db.select))
-      print(accepted_keytypes) # TODO delete
       if(!input$keytype %in% accepted_keytypes){
         showModal(modalDialog(title = paste("Keytype must be one of: ", paste(accepted_keytypes, collapse = ", "), sep = " ")))
       }
@@ -252,8 +244,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
         need(input$keytype %in% accepted_keytypes, message = paste("Keytype must be one of: ", paste(accepted_keytypes, collapse = ", "), sep = " ")) 
       })
     }
- 
-    print("I'm here, checked the keytypes!") # TODO delete
     
     # Chose function parameters for annotation enrichment (three cases)
     if(input$dom.select == "custom"){
@@ -292,7 +282,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       }
       
       if(isGoAnnotation){
-        # library(input$db.select, character.only = TRUE)
         local.rea.values$list_arg$OrgDb <- input$db.select
         if(length(grep(":", input$dom.select)) == 0){
           local.rea.values$Domains <- c("MF", "CC", "BP")
@@ -523,7 +512,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                     radioButtons(inputId = session$ns(paste0(listname, "-domain_cnet")), label="Domain",
                                                  choices = names(data), selected = names(data)[1], inline = FALSE, width = 1.5)),
                              column(1,
-                                    checkboxInput(inputId = session$ns(paste0(listname, "-genesLabels_cnet")), label = "Genes Labels", value = TRUE),
+                                    checkboxInput(inputId = session$ns(paste0(listname, "-genesLabels_cnet")), label = "Genes Labels", value = FALSE),
                                     checkboxInput(inputId = session$ns(paste0(listname, "-termsLabels_cnet")), label = "Terms Labels", value = TRUE)
                              ),
                              column(4,
@@ -545,9 +534,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
   output$AnnotCoExpResultsCPR <- renderUI({
     
     if(rea.values[[dataset]]$coExpAnnot == FALSE) return()
-    
-    #dataset.SE <- FlomicsMultiAssay@ExperimentList[[paste0(dataset,".filtred")]]
-    
     
     # check if result is empty
     if(is.null(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]])){
