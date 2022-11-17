@@ -1772,6 +1772,100 @@ methods::setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
             return(object)
           })
 
+######################## ANNOTATION USING CLUSTERPROFILER ########################
+
+#' @title runAnnotationEnrichment_CPR
+#' @description This function performs overrepresentation analysis (ORA) using clusterprofiler functions. It can be used with custom annotation file (via enricher), GO (enrichGO) or KEGG (enrichKEGG) annotations. 
+#' @param object An object of class \link{MultiAssayExperiment}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param func_to_use Function to use in the enrichment. Expects one of enrichGO, enrichKEGG or enricher, from clusterprofiler package. 
+#' @param ListNames names of the contrasts or clusters to consider.
+#' @param list_args list of arguments to pass to the func_to_use function. These arguments must match the ones from the clusterprofiler package. E.g: universe, keytype, pvalueCutoff, qvalueCutoff, etc. 
+#' @param from indicates if ListNames are from differential analysis results (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
+#' @param Domains: names of the ontology domains. Used either for a custom files with several domains or for enrichGO (BP, CC, MF)
+#' @param dom.select: is it a custom annotation, GO or KEGG annotations
+#' @param col_termID: if custom annotation, MANDATORY, name of the column where the term identifier (eg: GO:0030198) is located.
+#' @param col_geneName: if custom annotation, MANDATORY, name of the column where the term identifier is located.
+#' @param col_termName: if custom annotation, name of the column where the term name is located. If the identifier is not very specific, indicating a name can be a good idea... (e.g: GO:0030198 corresponds to extracellular matrix organization)
+#' @param col_domain: if custom annotation, name of the column where the domain of the ontology is located. You can mix several domains or databases in your file as long as it's indicated in this column (eg: GO:BP, GO:MF, GO:CC)
+#' @param annotationPath: if custom annotation, path to the annotation file. It must contains at least two columns with the genes names and the terms identifier.
+#' @return A list of results from clusterprofiler.
+#' @export
+#' @exportMethod runAnnotationEnrichment_CPR
+#' @examples
+#'
+methods::setMethod(f="runAnnotationEnrichment_CPR",
+                   signature="SummarizedExperiment",
+                   
+                   definition <- function(object, 
+                                          func_to_use, 
+                                          ListNames  = object@metadata$DiffExpAnal[["contrasts"]]$contrastName,
+                                          list_args = list(),
+                                          from = "DiffExpAnal",
+                                          Domains,
+                                          dom.select = "custom",
+                                          col_termID = "",
+                                          col_geneName = "",
+                                          col_termName = "",
+                                          col_domain = "",
+                                          annotationPath = NULL
+                   ){
+                     
+                     
+                     message("Retrieving the lists of DE entities")
+                     
+                     if(from == "DiffExpAnal") {
+                       geneLists <- lapply(ListNames, function(listname){
+                         row.names(object@metadata$DiffExpAnal[["TopDEF"]][[listname]])
+                       })
+                       names(geneLists) <- ListNames
+                     }else if(from == "CoExpAnal"){
+                       geneLists <- object@metadata[["CoExpAnal"]][["clusters"]][ListNames]
+                     }
+                     
+                     if(!is.null(annotationPath) && dom.select == "custom"){
+                       message("Loading annotation file")
+                       annotation <- fread(file = annotationPath, sep="\t", header = TRUE)
+                     }
+                     
+                     message("Finally doing the enrichment. Be patient.")
+                     
+                     results_enrich <- lapply(1:length(geneLists), FUN = function(i){
+                       message(paste0("Considering contrast: ", names(geneLists)[i]))
+                       
+                       genes <- geneLists[[i]]
+                       results_inter <- lapply(Domains, FUN = function(ont){
+                         message(paste0("Enrichment on ",dom.select , " domain: ", ont))
+                         
+                         list_args$gene <- genes
+                         if(func_to_use == "enrichGO"){
+                           
+                           list_args$ont <- ont
+                         }else if(dom.select == "custom"){
+                           
+                           annotation2 <- as.data.frame(annotation)
+                           if(col_domain != "") annotation2 <-  as.data.frame(annotation) %>% dplyr::filter(.data[[col_domain]] == ont) 
+                           
+                           list_args$TERM2NAME <- NA
+                           list_args$TERM2GENE <- data.frame("term" = annotation2 %>% dplyr::select(matches(col_termID)), 
+                                                             "gene" = annotation2 %>% dplyr::select(matches(col_geneName)))
+                           if(col_termName != ""){
+                             list_args$TERM2NAME <- data.frame("term" = annotation2 %>% dplyr::select(matches(col_termID)), 
+                                                               "name" = annotation2 %>% dplyr::select(matches(col_termName)))
+                             list_args$TERM2NAME <- list_args$TERM2NAME[-duplicated(list_args$TERM2NAME),]
+                           }
+                         }
+                         
+                         do.call(get(func_to_use), list_args)
+                       })
+                       names(results_inter) <- unlist(Domains)
+                       return(results_inter)
+                     })
+                     names(results_enrich) <- names(geneLists)
+                     
+                     return(results_enrich)
+                     
+                   })
+
 
 ######################## COMMON METHODS FOR OMICS INTEGRATION ########################
 
@@ -2051,3 +2145,6 @@ methods::setMethod(f="run_MixOmics_analysis",
 
                      return(list_res)
                    })
+
+
+
