@@ -642,8 +642,10 @@ methods::setMethod(f="RunPCA",
 
             # if the data has undergone a normalization (RNAseq data)
             if(! is.null(object@metadata[["Normalization"]]$coefNorm)){
-              pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
-                                   scale=object@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
+              pseudo <- log2(scale(SummarizedExperiment::assay(object)+1, center=FALSE,
+                                   # scale=(object@metadata[["Normalization"]]$coefNorm$norm.factors*object@metadata[["Normalization"]]$coefNorm$lib.size))+1)
+                                   scale=object@metadata[["Normalization"]]$coefNorm$norm.factors*object@metadata[["Normalization"]]$coefNorm$lib.size))
+              print(object@metadata[["Normalization"]]$coefNorm$norm.factors*(object@metadata[["Normalization"]]$coefNorm$lib.size))
               object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
 
             }
@@ -690,8 +692,8 @@ methods::setMethod(f="Library_size_barplot.plot",
             # normalized data
             if(! is.null(object@metadata$Normalization)){
               pseudo  <- scale(SummarizedExperiment::assay(object), center=FALSE,
-                               scale=object@metadata$Normalization$coefNorm$norm.factors) %>% colSums(., na.rm = TRUE)
-              title <- paste0("Filtered and normalized (",object@metadata$Normalization$methode, ") data")
+                               scale=object@metadata$Normalization$coefNorm$norm.factors*object@metadata$Normalization$coefNorm$lib.size) %>% colSums(., na.rm = TRUE)
+              title <- paste0("Filtered and normalized (", object@metadata$Normalization$methode, ") data")
             }
             # raw data
             else{
@@ -743,8 +745,8 @@ methods::setMethod(f="Data_Distribution_plot",
                       }
                       # after normalization
                       else{
-                        pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE,
-                                             scale=object@metadata[["Normalization"]]$coefNorm$norm.factors)+1)
+                        pseudo <- log2(scale(SummarizedExperiment::assay(object)+1, center=FALSE,
+                                             scale=object@metadata[["Normalization"]]$coefNorm$norm.factors*object@metadata[["Normalization"]]$coefNorm$lib.size))
                         x_lab  <- paste0("log2(",object@metadata$omicType, " data)")
                         title  <- paste0("Filtered and normalized ", object@metadata$omicType, " (",
                                          object@metadata$Normalization$methode, ") data")
@@ -823,7 +825,7 @@ methods::setMethod(f="Data_Distribution_plot",
                     },
                     "boxplot" = {
                       p <- ggplot(pseudo.gg, aes(x=samples, y=value,label = features)) +
-                        ggplot2::geom_boxplot(aes(fill=groups),outlier.colour = "red") +
+                        ggplot2::geom_boxplot(aes(fill=groups), outlier.colour = "red") +
                         theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +
                         xlab("") + ylab(x_lab) + ggtitle(title) #+
                       #geom_point(alpha = 1/100,size=0)
@@ -1194,8 +1196,6 @@ methods::setMethod(f="RunNormalization",
             object@metadata[["Normalization"]] <- list(methode = NormMethod, coefNorm = coefNorm)
             return(object)
           })
-
-
 
 ################################### DIFF-ANALYSIS #############################
 
