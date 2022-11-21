@@ -645,7 +645,6 @@ methods::setMethod(f="RunPCA",
               pseudo <- log2(scale(SummarizedExperiment::assay(object)+1, center=FALSE,
                                    # scale=(object@metadata[["Normalization"]]$coefNorm$norm.factors*object@metadata[["Normalization"]]$coefNorm$lib.size))+1)
                                    scale=object@metadata[["Normalization"]]$coefNorm$norm.factors*object@metadata[["Normalization"]]$coefNorm$lib.size))
-              print(object@metadata[["Normalization"]]$coefNorm$norm.factors*(object@metadata[["Normalization"]]$coefNorm$lib.size))
               object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo),ncp = 5,graph=F)
 
             }
