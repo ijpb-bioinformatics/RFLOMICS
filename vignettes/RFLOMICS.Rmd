@@ -247,7 +247,7 @@ Once everything is set and the analysis is conducted, several panels are display
 
 <p style='text-align: justify;'>For most of the results, you can adjust the number of terms to plot and search for an expression to retrieve specific enriched terms. 
 
-![](Images/Image_clusterprof1.png){width=80%}
+![Results of the analysis for multiple lists](Images/Image_clusterprof1.png){width=80%}
 
 ![Results displayed when using a differential analysis list](Images/Image2_clusterprof2.png){width=80%}
 
