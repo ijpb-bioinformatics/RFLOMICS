@@ -1,0 +1,56 @@
+## Annotation and Enrichment : `r annot`
+
+```{r , echo=FALSE , message=FALSE, warning=FALSE}
+annotDir <- paste0(dataDir,"/","04-Enrichment_analysis/")
+dir.create(path=annotDir)
+
+knitr::opts_chunk$set(
+  fig.path=annotDir
+)
+```
+
+Analyses in this part are conducted using the clusterprofiler R-package. 
+
+### Summary
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE}
+overview_list <- lapply(dataset.SE@metadata[[annot]][["results_CPR"]], FUN = function(contrasts_res){
+  res_inter <- lapply(contrasts_res, FUN = function(list_CPR){
+    if(!is.null(list_CPR)) return(nrow(list_CPR@result[list_CPR@result$p.adjust < list_CPR@pvalueCutoff,]))
+    else return(0)
+  })
+  names(res_inter) <- names(contrasts_res)
+  res_inter
+})
+names(overview_list) <- names(dataset.SE@metadata[[annot]][["results_CPR"]])
+
+dt_res <- as.data.frame(do.call("rbind", overview_list))
+dt_res <- dt_res %>% dplyr::mutate(Contrast = rownames(dt_res)) %>% dplyr::relocate(Contrast)
+```
+
+`r nrow(dt_res)` lists of genes have been analyzed for enrichment using `r dataset.SE@metadata[[annot]][["results_CPR_input"]]$dom.select` annotation. 
+`r if(length(grep("GO", dataset.SE@metadata[[annot]][["results_CPR_input"]]$dom.select))!=0){paste0("Using", dataset.SE@metadata[[annot]][["results_CPR_input"]]$db, " to do the analysis")}`.
+
+Adjusted pvalue was set to `r dataset.SE@metadata[[annot]][["results_CPR_input"]]$pvalueCutoff`.
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE}
+DT::datatable(dt_res, rownames = FALSE, options = list(pageLength = 10))
+```
+
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE}
+
+  out <- NULL
+
+  for (listname  in names(dataset.SE@metadata[[annot]]$results_CPR)){
+      for(domain in names(dataset.SE@metadata[[annot]]$results_CPR[[listname]])){
+      out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_per_list_per_Domain_CPR.Rmd"), quiet=TRUE))
+  }
+}
+    
+knitr::asis_output(out)
+
+```
+
+
+

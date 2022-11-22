@@ -366,7 +366,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       })
       names(local.rea.values$log2FC_lists) <- input$GeneList.diff
       
-      local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]] <- runAnnotationEnrichment_CPR(local.rea.values$dataset.SE,
+      local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results_CPR"]] <- runAnnotationEnrichment_CPR(local.rea.values$dataset.SE,
                                                                                                          func_to_use = local.rea.values$func_to_use,
                                                                                                          ListNames = input$GeneList.diff,
                                                                                                          list_args = local.rea.values$list_arg,
@@ -378,6 +378,9 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                                                                                          col_termName = ifelse(input$dom.select == "custom", input$col_termName, ""),
                                                                                                          col_domain = ifelse(input$dom.select == "custom", input$col_domain, ""),
                                                                                                          annotationPath = input$annotationFileCPR$datapath)
+      local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results_CPR_input"]]$Ont <- input$dom.select
+      local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results_CPR_input"]]$pvalueCutoff <- input$pValue
+      if(!is.null(input$db.select)) local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results_CPR_input"]]$db <- input$db.select
       
       local.rea.values$resAnnot <- NULL
       
@@ -387,7 +390,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     # ---- Annotation on COEXP results: ----  
     if(length(input$GeneList.coseq) != 0){
       
-      local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]] <- runAnnotationEnrichment_CPR(local.rea.values$dataset.SE,
+      local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results_CPR"]] <- runAnnotationEnrichment_CPR(local.rea.values$dataset.SE,
                                                                                                        func_to_use = local.rea.values$func_to_use,
                                                                                                        ListNames = input$GeneList.coseq,
                                                                                                        list_args = local.rea.values$list_arg,
@@ -400,11 +403,16 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                                                                                        col_domain = ifelse(input$dom.select == "custom", input$col_domain, ""),
                                                                                                        annotationPath = input$annotationFileCPR$datapath)
       
+      local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results_CPR_input"]]$Ont <- input$dom.select
+      local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results_CPR_input"]]$pvalueCutoff <- input$pValue
+      if(!is.null(input$db.select)) local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results_CPR_input"]]$db <- input$db.select
+      
       rea.values[[dataset]]$coExpAnnot <- TRUE
     }
     
     session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- local.rea.values$dataset.SE
     
+    Flomics.MAE <<- session$userData$FlomicsMultiAssay # TODO Delete
     
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
@@ -412,21 +420,21 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
   })
   
   # ---- Figures Code : ----
-  ## print results
+
   output$AnnotDiffResultsCPR <- renderUI({
     
     if(rea.values[[dataset]]$diffAnnot == FALSE) return()
     
     # check if result is empty
-    if(is.null(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]])){
+    if(is.null(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results_CPR"]])){
       showModal(modalDialog(title = "Error message", "There is no results for enrichment analysis"))
     }
     validate({ 
-      need(!is.null(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]]), message = "There is no results for enrichment analysis") 
+      need(!is.null(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results_CPR"]]), message = "There is no results for enrichment analysis") 
     })
     
     # Table for overview panel 
-    overview_list <- lapply(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]], FUN = function(contrasts_res){
+    overview_list <- lapply(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results_CPR"]], FUN = function(contrasts_res){
       res_inter <- lapply(contrasts_res, FUN = function(list_CPR){
         if(!is.null(list_CPR)) return(nrow(list_CPR@result[list_CPR@result$p.adjust < input$pValue,]))
         else return(0)
@@ -434,23 +442,23 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       names(res_inter) <- names(contrasts_res)
       res_inter
     })
-    names(overview_list) <- names(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]])
+    names(overview_list) <- names(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results_CPR"]])
     
     dt_res <- as.data.frame(do.call("rbind", overview_list))
     dt_res <- dt_res %>% dplyr::mutate(Contrast = rownames(dt_res)) %>% dplyr::relocate(Contrast)
     
     # foreach genes list selected (contrast)
-    lapply(names(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]]), function(listname) {
+    lapply(names(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results_CPR"]]), function(listname) {
       
       # if result is empty
-      if(is.null(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]][[listname]])){
+      if(is.null(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results_CPR"]][[listname]])){
         
         box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = listname, 
             "No results here!"
         )
         
       }else{
-        data <- local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results"]][[listname]]
+        data <- local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results_CPR"]][[listname]]
         log2FC_vect <- local.rea.values$log2FC_lists[[listname]]
         
         # display results
@@ -651,16 +659,16 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     if(rea.values[[dataset]]$coExpAnnot == FALSE) return()
     
     # check if result is empty
-    if(is.null(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]])){
+    if(is.null(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results_CPR"]])){
       
       showModal(modalDialog( title = "Error message", "No enrichment found"))
     }
     validate({ 
-      need(!is.null(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]]), message="No enrichment found") 
+      need(!is.null(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results_CPR"]]), message="No enrichment found") 
     })
     
     # Table for overview panel
-    overview_list <- lapply(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]], FUN = function(coexp_res){
+    overview_list <- lapply(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results_CPR"]], FUN = function(coexp_res){
       res_inter <- lapply(coexp_res, FUN = function(list_CPR){
         if(!is.null(list_CPR)) return(nrow(list_CPR@result[list_CPR@result$p.adjust < input$pValue,]))
         else return(0)
@@ -668,16 +676,16 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       names(res_inter) <- names(coexp_res)
       res_inter
     })
-    names(overview_list) <- names(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]])
+    names(overview_list) <- names(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results_CPR"]])
     
     dt_res <- as.data.frame(do.call("rbind", overview_list))
     dt_res <- dt_res %>% dplyr::mutate(Contrast = rownames(dt_res)) %>% dplyr::relocate(Contrast)
     
     # foreach gene list selected (contrast)
-    lapply(names(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]]), function(listname) {
+    lapply(names(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results_CPR"]]), function(listname) {
       
       # if result is empty
-      if(is.null(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]][[listname]])){
+      if(is.null(local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results_CPR"]][[listname]])){
         
         box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = listname, 
             "No enrichment found"
@@ -685,7 +693,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
         
       }else{
         # display result for each list
-        data <- local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results"]][[listname]]
+        data <- local.rea.values$dataset.SE@metadata$CoExpEnrichAnal[["results_CPR"]][[listname]]
         log2FC_vect <- local.rea.values$log2FC_lists[[listname]]
         
         fluidRow(
@@ -746,7 +754,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                              Categories <- dataPlot@result$Description[1:NbtoPlot]
                              if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
                              
-                             dotplot(dataPlot, showCategory = Categories)
+                             enrichplot::dotplot(dataPlot, showCategory = Categories)
                              
                            }),
                            fluidRow(
@@ -771,7 +779,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                              Categories <- dataPlot@result$Description[1:NbtoPlot]
                              if(input[[paste0(listname, "-grep_heat")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep_heat")]]), toupper(Categories))]
                              
-                             heatplot(dataPlot, showCategory = Categories) 
+                             enrichplot::heatplot(dataPlot, showCategory = Categories) 
                              
                            }),
                            fluidRow(
@@ -806,7 +814,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                node_label_arg <- "category"
                              }
                              
-                             cnetplot(dataPlot, showCategory = Categories, node_label = node_label_arg) 
+                             enrichplot::cnetplot(dataPlot, showCategory = Categories, node_label = node_label_arg) 
                              
                            }),
                            fluidRow(
@@ -839,6 +847,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
 
 # Code from: https://stackoverflow.com/questions/60141841/how-to-get-pathview-plot-displayed-directly-rather-than-saving-as-a-file-in-r
 
+# TODO : it still writes a file on the user's computer grrrr
 see_pathview <- function(..., save_image = FALSE)
 {
   msg <- capture.output(pathview::pathview(...), type = "message")

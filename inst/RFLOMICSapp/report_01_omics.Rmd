@@ -17,6 +17,8 @@ CoEx.eval      <- !is.null(dataset.SE@metadata[["CoExpAnal"]]$results)
 Diff.ann.eval  <- !is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]]$results)
 CoEx.ann.eval  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results)
 
+Diff.ann.eval_CPR <- !is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]]$results_CPR)
+CoEx.ann.eval_CPR  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results_CPR)
 ```
 
 
@@ -25,8 +27,8 @@ CoEx.ann.eval  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results)
 out <- NULL
 
 out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_03_data_explor.Rmd"),
-                                quiet=TRUE))  
-    
+                                quiet=TRUE))
+
 knitr::asis_output(out)
 
 ```
@@ -37,9 +39,9 @@ knitr::asis_output(out)
 
 out <- NULL
 
-out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_04_diff_analysis.Rmd"), 
-                                quiet=TRUE))  
-    
+out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_04_diff_analysis.Rmd"),
+                                quiet=TRUE))
+
 knitr::asis_output(out)
 
 ```
@@ -48,12 +50,26 @@ knitr::asis_output(out)
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.ann.eval}
 
+# out <- NULL
+# annot <- "DiffExpEnrichAnal"
+# 
+# out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich.Rmd"),
+#                                 quiet=TRUE))
+# 
+# knitr::asis_output(out)
+
+```
+
+<!-- enrichement analysis on DE G/P/M lists with clusterprofiler -->
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.ann.eval_CPR}
+
 out <- NULL
 annot <- "DiffExpEnrichAnal"
 
-out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich.Rmd"), 
-                                quiet=TRUE))  
-    
+out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_CPR.Rmd"),
+                                quiet=TRUE))
+
 knitr::asis_output(out)
 
 ```
