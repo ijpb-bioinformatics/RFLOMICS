@@ -261,19 +261,26 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                              resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
                              m.def <- assays(local.rea.values$dataset.SE)[[1]][,session$userData$FlomicsMultiAssay@metadata$design@Groups$samples]
 
+                             # Normalize counts (added 221123)
+                             if(dataset.SE@metadata$Normalization$methode == "TMM"){
+                               m.def <- log2(scale(m.def+1, center = FALSE,
+                                                        scale = dataset.SE@metadata$Normalization$coefNorm$lib.size*dataset.SE@metadata$Normalization$coefNorm$norm.factors))
+                             }
+                             
                              # filter by DE
                              m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
 
                              # normalize count
 
                              # Center
-                             m.def.filter.center <- scale(m.def.filter,center=TRUE,scale=FALSE)
+                             # m.def.filter.center <- scale(m.def.filter,center=TRUE,scale=FALSE)
+                             m.def.filter.center <- t(scale(t(m.def.filter),center = TRUE, scale = FALSE)) # Modified 221123 : centered by genes and not by samples
                              column_split.value <- if(input[[paste0(vect["contrastName"],"-","condColorSelect")]] != "none"){
                               session$userData$FlomicsMultiAssay@metadata$design@Groups[,input[[paste0(vect["contrastName"],"-","condColorSelect")]]]
                              }
                              else{NULL}
 
-                             ComplexHeatmap::Heatmap(m.def.filter.center, name = "count or XIC",
+                             ComplexHeatmap::Heatmap(m.def.filter.center, name = "normalized counts or XIC",
                                      show_row_names= ifelse( dim(m.def.filter.center)[1] > 50, FALSE, TRUE),
                                      row_names_gp = grid::gpar(fontsize = 8),
                                      column_names_gp = grid::gpar(fontsize = 12),
