@@ -444,7 +444,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     # foreach genes list selected (contrast)
     lapply(names(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results_CPR"]]$list_res), function(listname) {
       
-      # if result is empty
       if(is.null(local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal[["results_CPR"]]$list_res[[listname]])){
         
         box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = listname, 

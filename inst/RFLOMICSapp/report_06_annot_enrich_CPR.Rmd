@@ -1,7 +1,7 @@
 ## Annotation and Enrichment : `r annot`
 
 ```{r , echo=FALSE , message=FALSE, warning=FALSE}
-annotDir <- paste0(dataDir,"/","04-Enrichment_analysis/")
+annotDir <- paste0(dataDir,"/","04-Enrichment_analysis_CPR/")
 dir.create(path=annotDir)
 
 knitr::opts_chunk$set(
@@ -14,7 +14,7 @@ Analyses in this part are conducted using the clusterprofiler R-package.
 ### Summary
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE}
-overview_list <- lapply(dataset.SE@metadata[[annot]][["results_CPR"]], FUN = function(contrasts_res){
+overview_list <- lapply(dataset.SE@metadata[[annot]][["results_CPR"]]$list_res, FUN = function(contrasts_res){
   res_inter <- lapply(contrasts_res, FUN = function(list_CPR){
     if(!is.null(list_CPR)) return(nrow(list_CPR@result[list_CPR@result$p.adjust < list_CPR@pvalueCutoff,]))
     else return(0)
@@ -22,16 +22,16 @@ overview_list <- lapply(dataset.SE@metadata[[annot]][["results_CPR"]], FUN = fun
   names(res_inter) <- names(contrasts_res)
   res_inter
 })
-names(overview_list) <- names(dataset.SE@metadata[[annot]][["results_CPR"]])
+names(overview_list) <- names(dataset.SE@metadata[[annot]][["results_CPR"]]$list_res)
 
 dt_res <- as.data.frame(do.call("rbind", overview_list))
 dt_res <- dt_res %>% dplyr::mutate(Contrast = rownames(dt_res)) %>% dplyr::relocate(Contrast)
 ```
 
-`r nrow(dt_res)` lists of genes have been analyzed for enrichment using `r dataset.SE@metadata[[annot]][["results_CPR_input"]]$dom.select` annotation. 
-`r if(length(grep("GO", dataset.SE@metadata[[annot]][["results_CPR_input"]]$dom.select))!=0){paste0("Using", dataset.SE@metadata[[annot]][["results_CPR_input"]]$db, " to do the analysis")}`.
+`r nrow(dt_res)` lists of genes have been analyzed for enrichment using `r dataset.SE@metadata[[annot]]$results_CPR$dom.select` annotation. 
+`r if(length(grep("GO", dataset.SE@metadata[[annot]]$results_CPR$dom.select))!=0){paste0("Using", dataset.SE@metadata[[annot]]$results_CPR$list_args$OrgDb, " to do the analysis")}`.
 
-Adjusted pvalue was set to `r dataset.SE@metadata[[annot]][["results_CPR_input"]]$pvalueCutoff`.
+Adjusted pvalue was set to `r dataset.SE@metadata[[annot]]$results_CPR$list_args$pvalueCutoff`.
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE}
 DT::datatable(dt_res, rownames = FALSE, options = list(pageLength = 10))
@@ -39,17 +39,19 @@ DT::datatable(dt_res, rownames = FALSE, options = list(pageLength = 10))
 
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE}
+out <- NULL
 
-  out <- NULL
-
-  for (listname  in names(dataset.SE@metadata[[annot]]$results_CPR)){
-      for(domain in names(dataset.SE@metadata[[annot]]$results_CPR[[listname]])){
+for (listname  in names(dataset.SE@metadata[[annot]]$results_CPR$list_res)){
+  for(domain in names(dataset.SE@metadata[[annot]]$results_CPR$list_res[[listname]])){
+    # if(!is.null())
+    if(nrow(dataset.SE@metadata[[annot]]$results_CPR$list_res[[listname]][[domain]])>0){
       out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_per_list_per_Domain_CPR.Rmd"), quiet=TRUE))
+    }
+    else{print(paste0(listname, " - in domain: ", domain, " - There was no enriched term found in this setting."))}
   }
 }
-    
-knitr::asis_output(out)
 
+knitr::asis_output(out)
 ```
 
 
