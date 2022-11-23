@@ -1861,7 +1861,13 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                      })
                      names(results_enrich) <- names(geneLists)
                      
-                     return(results_enrich)
+                     results <- list("list_res" = results_enrich,
+                                     "list_args" = list_args[names(list_args)%in%c("universe", "keytype", "pvalueCutoff", "qvalueCutoff",
+                                                                                   "OrgDb", "domain", "func_to_use")],
+                                     "Domains" = Domains,
+                                     "dom.select" = dom.select) 
+                     
+                     return(results)
                      
                    })
 
