@@ -659,13 +659,31 @@ MA.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, p
 #'
 Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, pngFile=NULL){
 
-
+  # Modified 221123
+  # Find pvalue corresponding to the FDR cutoff for the plot (mean between the last that passes the cutoff
+  # and the first that is rejected to plot the line in the middle of the two points)
+  pval1 <- data$pvalue[data$Adj.pvalue<Adj.pvalue.cutoff] %>% dplyr::last()
+  pval2 <- data$pvalue[data$Adj.pvalue>Adj.pvalue.cutoff] %>% dplyr::first()
+  pvalCutoff <- (pval1 + pval2)/2
+  
+  # print(paste0("PvalCutoff=", pvalCutoff)) # TODO delete
+  
+  # Added 221123: if too low pvalues, unable to plot (error in if(d>0)...)
+  # If drawconnectors is FALSE, it "works", with ylim being infinity, it doesn't look like anything. 
+  # Modifiying the 0 pvalues to make sure it's working
+  nz_pval <- data$pvalue[data$pvalue != 0][1] * 10^-1 # default replacement in EnhancedVolcanoPlot
+  if(nz_pval == 0){
+    data$pvalue[data$pvalue == 0] <- data$pvalue[data$pvalue != 0][1] 
+    message("10^-1 * current lowest non-zero p-value is still 0, all 0 pvalues are set to the lowest non-zero pvalue.")
+  }
+  
   Abundance <- logFC <- Adj.pvalue <- NULL
   p <- EnhancedVolcano::EnhancedVolcano(toptable = data,
                   lab = rownames(data),
                   x = 'logFC',
                   y = 'pvalue',
-                  pCutoff = Adj.pvalue.cutoff,
+                  # pCutoff = Adj.pvalue.cutoff,
+                  pCutoff = pvalCutoff,
                   FCcutoff = log2(FC.cutoff),
                   axisLabSize=10,
                   pointSize = 1.5,
@@ -674,7 +692,7 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothes
                   titleLabSize=11,
                   subtitle = "",
                   subtitleLabSize = 10,
-                  caption = paste("FC cutoff=",FC.cutoff, " & " ,"FDR cutoff=",Adj.pvalue.cutoff, sep=""),
+                  caption = paste("FC cutoff=", FC.cutoff, " & " ,"FDR cutoff=", Adj.pvalue.cutoff, sep=""),
                   legendPosition = "bottom",
                   legendLabSize = 10,
                   legendIconSize=1.5,
@@ -683,8 +701,63 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothes
                   colAlpha = 0.5,
                   drawConnectors = TRUE,
                   widthConnectors = 0.5)
-
-
+  
+  # # TODO Test DELETE
+  # probTable <- Flomics.MAE@ExperimentList$RNAseq.set1.filtred@metadata$DiffExpAnal$TopDEF$`(GenotypeCvi0 - GenotypeCol0) in ConditionW0N1`
+  # 
+  # EnhancedVolcano::EnhancedVolcano(toptable = probTable,
+  #                                       lab = rownames(probTable),
+  #                                       x = 'logFC',
+  #                                       y = 'pvalue',
+  #                                       # pCutoff = Adj.pvalue.cutoff,
+  #                                       pCutoff = 0.05,
+  #                                       FCcutoff = log2(2),
+  #                                       axisLabSize=10,
+  #                                       pointSize = 1.5,
+  #                                       labSize = 2,
+  #                                       title = "Title",
+  #                                       titleLabSize=11,
+  #                                       subtitle = "",
+  #                                       subtitleLabSize = 10,
+  #                                       caption = paste("FC cutoff=", 2, " & " ,"FDR cutoff=", 0.05, sep=""),
+  #                                       legendPosition = "bottom",
+  #                                       legendLabSize = 10,
+  #                                       legendIconSize=1.5,
+  #                                       captionLabSize=10,
+  #                                       col = c('grey30', 'forestgreen', 'royalblue', 'red2'),
+  #                                       colAlpha = 0.5,
+  #                                       drawConnectors = FALSE,
+  #                                       widthConnectors = 0.5)
+  # 
+  # # 10^-1 * current lowest non-zero p-value... 
+  # current_nz_pval <- probTable$pvalue[probTable$pvalue != 0][1] * 10^-1
+  # probTable2 <- probTable
+  # probTable2$pvalue[probTable2$pvalue == 0] <- current_nz_pval
+  # 
+  # EnhancedVolcano::EnhancedVolcano(toptable = probTable2,
+  #                                  lab = rownames(probTable2),
+  #                                  x = 'logFC',
+  #                                  y = 'pvalue',
+  #                                  # pCutoff = Adj.pvalue.cutoff,
+  #                                  pCutoff = 0.05,
+  #                                  FCcutoff = log2(2),
+  #                                  axisLabSize=10,
+  #                                  pointSize = 1.5,
+  #                                  labSize = 2,
+  #                                  title = "Title",
+  #                                  titleLabSize=11,
+  #                                  subtitle = "",
+  #                                  subtitleLabSize = 10,
+  #                                  caption = paste("FC cutoff=", 2, " & " ,"FDR cutoff=", 0.05, sep=""),
+  #                                  legendPosition = "bottom",
+  #                                  legendLabSize = 10,
+  #                                  legendIconSize=1.5,
+  #                                  captionLabSize=10,
+  #                                  col = c('grey30', 'forestgreen', 'royalblue', 'red2'),
+  #                                  colAlpha = 0.5,
+  #                                  drawConnectors = TRUE,
+  #                                  widthConnectors = 0.5)
+  # # TODO end delete  
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
   }
