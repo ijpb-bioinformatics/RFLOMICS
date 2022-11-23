@@ -609,14 +609,16 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                          )),   
                 # ---- Tab Panel : only for KEGG, pathview : ----
                 tabPanel("Pathview results",
-                         column(2,
-                                pickerInput(
+                         fluidRow(column(2,
+                                selectInput(
                                   inputId = session$ns(paste0(listname, "-MAP.sel")), label = "Select map:", 
-                                  choices = data[[1]]@result$ID[data[[1]]@result$p.adjust<input$pValue], multiple = FALSE
+                                  choices = sort(data[[1]]@result$ID[data[[1]]@result$p.adjust<input$pValue]), multiple = FALSE, selectize = FALSE,
+                                  size = 5
                                 ),
+                         ), ),
                                 
-                         ),
-                         column(10,
+                         fluidRow(
+                         column(12,
                                 renderPlot({ 
                                   
                                   if(input$dom.select == "KEGG"){
@@ -625,18 +627,19 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                                  pathway.id = input[[paste0(listname, "-MAP.sel")]],
                                                  species = input$KEGG_org,
                                                  gene.idtype = input$keytype,
+                                                 map.symbol = FALSE,
                                                  same.layer = FALSE,
                                                  low = list(gene = "blue"),
-                                                 mid = list(gene = "white"),
+                                                 mid = list(gene = "gray"),
                                                  high = list(gene = "red"),
-                                                 na.col = "gray"
+                                                 na.col = "transparent"
                                                  # cex = 1 # too much
                                     )
                                   }
                                   
-                                }),
+                                }, res = 300, width = 1000, height = 1000),
                          )
-                ),   
+                ),),   
                 # ),  
               )# TabsetPanel
           ) # box
@@ -840,9 +843,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
 ######## ANNOTATION CLUSTERPROFILER #########
 
 # Code from: https://stackoverflow.com/questions/60141841/how-to-get-pathview-plot-displayed-directly-rather-than-saving-as-a-file-in-r
-
-# TODO : it still writes a file on the user's computer grrrr
-# TODO : remove file png and xml
+# It deletes every file created by pathview
 see_pathview <- function(...)
 {
   msg <- capture.output(pathview::pathview(...), type = "message")
@@ -853,6 +854,7 @@ see_pathview <- function(...)
   grid::grid.raster(img)
   nam <- str_split(filename, "[.]")
   invisible(file.remove(filename))
-  invisible(file.remove(paste0(nam, ".xml")))
+  invisible(file.remove(paste0(nam[[1]][1], ".xml")))
+  invisible(file.remove(paste0(nam[[1]][1], ".png")))
   return()
 }
