@@ -1906,15 +1906,15 @@ methods::setMethod(f="prepareForIntegration",
                      # method = "MixOmics"
 
                      # Checking for batch effects
-                     print("=> Checking for Batch effects")
                      correct_batch <- FALSE
                      if(any(object@metadata$design@Factors.Type=="batch")){
                        correct_batch <- TRUE
                        colBatch <- names(object@metadata$design@Factors.Type)[object@metadata$design@Factors.Type=="batch"]
-                       print(paste0("=> Correction for Batch: ", paste(colBatch, collapse = " ")))
-                     }else{
-                       print("=> No batch effect found")
+                       # print(paste0("=># \t Correction for Batch: ", paste(colBatch, collapse = " ")))
                      }
+                     # else{
+                       # print("# \t => No batch effect found")
+                     # }
 
                      object@ExperimentList <- object@ExperimentList[grep("filtred", names(object@ExperimentList))]
                      object <- object[,,paste0(omicsToIntegrate, ".filtred")]

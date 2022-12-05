@@ -1875,7 +1875,7 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
 
   if(type == "intersection"){
 
-    DETab <-  tab1 %>%
+    DETab <- tab1 %>%
       mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
       filter(SUMCOL==length(contrasts_select))
 
@@ -1914,6 +1914,8 @@ rbe_function = function(object, SEobject){
 
   colBatch <- names(object@metadata$design@Factors.Type)[object@metadata$design@Factors.Type=="batch"]
 
+  print(paste0("#     =>Correction for Batch: ", paste(colBatch, collapse = " ")))
+  
   newFormula <- gsub(pattern = paste(colBatch, collapse = "[+]|"), "", object@metadata$design@Model.formula)
   newFormula <- gsub(pattern = "~ [+] ", "~ ", newFormula)
   # designToPreserve <- model.matrix(as.formula(newFormula), data = object@metadata$design@ExpDesign)

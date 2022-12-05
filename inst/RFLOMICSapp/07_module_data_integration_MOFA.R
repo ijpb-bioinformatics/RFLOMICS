@@ -215,8 +215,8 @@ MOFA_setting <- function(input, output, session, rea.values){
     session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_warnings"]] <- local.rea.values$warnings
     session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_results"]] <- local.rea.values$resMOFA
     
-    FlomicsMultiAssay <<- session$userData$FlomicsMultiAssay
-    save(FlomicsMultiAssay, file = "/home/ahulot/Documents/INRAE/Projets/rflomics/inst/ExamplesFiles/Flomics.MAE_221130.RData") # TODO delete
+    FlomicsMultiAssay <<- session$userData$FlomicsMultiAssay # TODO delete
+    # save(FlomicsMultiAssay, file = "/home/ahulot/Documents/INRAE/Projets/rflomics/inst/ExamplesFiles/Flomics.MAE_221130.RData") # TODO delete
     
     local.rea.values$runMOFA   <- TRUE
     

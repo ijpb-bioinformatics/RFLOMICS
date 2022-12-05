@@ -2,7 +2,6 @@
 # module 08 : mixOmics
 ##########################################
 
-
 MixOmics_settingUI <- function(id){
   
   #name space for id
@@ -69,13 +68,14 @@ MixOmics_setting <- function(input, output, session, rea.values){
                  
                  # select mode of feature filtering
                  fluidRow(
-                   column(12,
-                          
+                   column(4,
                           radioButtons(inputId  = session$ns("filtMode"), 
                                        label    = "Select type of filtering:" ,
-                                       choices  = c("union","intersection"),
-                                       selected = "union", inline = FALSE))),
-                 
+                                       choices  = c("union", "intersection"),
+                                       selected = "union", inline = FALSE)),
+                   column(8,
+                          verbatimTextOutput(session$ns("mergeValue_mixOmics")))
+                 ),
                  # set parameters
                  fluidRow(
                    column(12,
@@ -118,13 +118,40 @@ MixOmics_setting <- function(input, output, session, rea.values){
                             selected = colnames(colData(session$userData$FlomicsMultiAssay))[1]))
                  ),
                  fluidRow(
-                   column(12, actionButton(session$ns("runMixOmics"),"Run Analysis"))
+                   column(12, actionButton(session$ns("runMixOmics"), "Run Analysis"))
                  )
              ),
       ) # column 3
     )# taglist
     
   })
+  
+
+  # TODO delete
+  # input <- list()
+  # input$selectedData <- c("metabolomics.set2.filtred", "proteomics.set1.filtred")
+  # input$selectedContrast <- c("(imbibitionEI - imbibitionDS) in mean",            
+  #                             "(imbibitionLI - imbibitionDS) in mean",            
+  #                             "(imbibitionLI - imbibitionEI) in mean")
+  
+  # Entities list
+  Ent_lists <- 
+    lapply(input$selectedData, FUN = function(namData){
+      lapply(session$userData$FlomicsMultiAssay@ExperimentList[[namData]]@metadata$DiffExpAnal$TopDEF[input$selectedContrast], 
+             rownames)
+    })
+  
+  # display number of selected entities
+  output$mergeValue_mixOmics <- renderText({
+    if(input$filtMode == "union"){
+      print(sum(sapply(Ent_lists, FUN = function(listDE){length(unique(unlist(listDE)))})))
+    }else if(input$filtMode == "intersection"){
+      print(sum(sapply(Ent_lists, FUN = function(listDE){
+        length(Reduce('intersect', listDE))
+      })))
+    }
+  })
+  
   
   ## observe the button run mixOmics
   observeEvent(input$runMixOmics, {
@@ -157,6 +184,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
     #----------------------#
     
     # Prepare for MixOmics run  
+    print("#     =>Preparing data list")
     local.rea.values$preparedMixOmics <- prepareForIntegration(session$userData$FlomicsMultiAssay,
                                                                omicsToIntegrate = input$selectedData,
                                                                rnaSeq_transfo = input$RNAseqTransfo,
@@ -170,6 +198,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
     #----------------------#
     
     # Run the analysis
+    print("#     =>Running MixOmics")
     local.rea.values$MixOmics_res <- run_MixOmics_analysis(local.rea.values$preparedMixOmics,
                                                            scale_views = input$scale_views,
                                                            selectedResponse = input$selectedResponse,
@@ -184,8 +213,8 @@ MixOmics_setting <- function(input, output, session, rea.values){
     session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_tuning_results"]] <- local.rea.values$MixOmics_res$tuning_res
     session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_results"]] <- local.rea.values$MixOmics_res$analysis_res
     
-    FlomicsMultiAssay <<- session$userData$FlomicsMultiAssay
-    save(FlomicsMultiAssay, file = "/home/ahulot/Documents/INRAE/Projets/rflomics/inst/ExamplesFiles/Flomics.MAE_221130.RData") # TODO delete
+    FlomicsMultiAssay <<- session$userData$FlomicsMultiAssay # TODO delete
+    # save(FlomicsMultiAssay, file = "/home/ahulot/Documents/INRAE/Projets/rflomics/inst/ExamplesFiles/Flomics.MAE_221130.RData") # TODO delete
     
     local.rea.values$runMixOmics <- TRUE
     
@@ -226,42 +255,48 @@ MixOmics_setting <- function(input, output, session, rea.values){
           tabPanel("Explained Variance",
                    column(6, renderPlot({
                      dat_explained <- reshape2::melt(do.call("rbind", local.rea.values$MixOmics_res$analysis_res$prop_expl_var))
-                     colnames(dat_explained) <- c("Dataset", "Component", "Percentage of explained variance")
-                     dat_explained$`Percentage of explained variance` <- dat_explained$`Percentage of explained variance`*100
+                     colnames(dat_explained) <- c("Dataset", "Component", "% of explained variance")
+                     dat_explained$`% of explained variance` <- dat_explained$`% of explained variance`*100
                      
                      # print(dat_explained) # TODO delete
                      
                      dat_comb <- dat_explained %>% 
                        dplyr::group_by(Dataset) %>% 
-                       dplyr::summarise("Cumulative Explained Variance" = sum(`Percentage of explained variance`))
+                       dplyr::summarise("Cumulative Explained Variance" = sum(`% of explained variance`))
                      
                      # print(dat_comb) # TODO delete
                      
-                     if(is(local.rea.values$MixOmics_res$analysis_res, "block.splsda")) dat_comb <- dat_comb %>% dplyr::filter(Dataset!="Y")
+                     if(is(local.rea.values$MixOmics_res$analysis_res, "block.splsda") || is(local.rea.values$MixOmics_res$analysis_res, "block.plsda")){
+                       dat_comb <- dat_comb %>% dplyr::filter(Dataset!="Y")
+                     }
                      
                      ggplot2::ggplot(dat_comb, aes(x = Dataset, y = `Cumulative Explained Variance`)) +
-                       geom_col() + 
+                       geom_col(fill = "darkblue") + 
                        theme_classic() +
                        theme(
                          axis.text = element_text(size = 12),
                          axis.line = element_blank(),
                          axis.ticks =  element_blank(),
                          strip.text = element_text(size = 12),
-                       ) + ylab("")   
+                       ) + ylab("") + ggtitle("Cumulative explained variance")  
                      
                      
                    })),
                    
                    column(6 , renderPlot({
                      dat_explained <- reshape2::melt(do.call("rbind", local.rea.values$MixOmics_res$analysis_res$prop_expl_var))
-                     colnames(dat_explained) <- c("Dataset", "Component", "Percentage of explained variance")
-                     dat_explained$`Percentage of explained variance` <- dat_explained$`Percentage of explained variance`*100
+                     colnames(dat_explained) <- c("Dataset", "Component", "% of explained variance")
+                     dat_explained$`% of explained variance` <- dat_explained$`% of explained variance`*100
                      
-                     if(is(local.rea.values$MixOmics_res$analysis_res, "block.splsda")) dat_explained <- dat_explained %>% dplyr::filter(Dataset!="Y")
+                     # print(dat_explained) # TODO delete
+                     
+                     if(is(local.rea.values$MixOmics_res$analysis_res, "block.splsda") || is(local.rea.values$MixOmics_res$analysis_res, "block.plsda")){
+                       dat_explained <- dat_explained %>% dplyr::filter(Dataset!="Y")
+                     }
                      
                      # Chunk of code to be cohesive with MOFA2::plot_explained_variance
                      ggplot2::ggplot(dat_explained, aes(x = Dataset, y = Component)) +
-                       geom_tile(aes(fill = `Percentage of explained variance`)) + 
+                       geom_tile(aes(fill = `% of explained variance`)) + 
                        theme_classic() +
                        theme(
                          axis.text = element_text(size = 12),
@@ -269,8 +304,9 @@ MixOmics_setting <- function(input, output, session, rea.values){
                          axis.ticks =  element_blank(),
                          strip.text = element_text(size = 12),
                        ) + ylab("") +  
-                       scale_fill_gradientn(colors=c("gray97","darkblue"), guide="colorbar", limits=c(min(dat_explained$`Percentage of explained variance`),
-                                                                                                      max(dat_explained$`Percentage of explained variance`)))
+                       scale_fill_gradientn(colors=c("gray97","darkblue"), guide="colorbar", limits=c(min(dat_explained$`% of explained variance`),
+                                                                                                      max(dat_explained$`% of explained variance`))) + 
+                       ggtitle("Percentage of explained variance \n per component per block")
                      
                    })),
                    
@@ -291,9 +327,9 @@ MixOmics_setting <- function(input, output, session, rea.values){
                                        value = 2, step = 1)
                    ),
                    column(11 , renderPlot(mixOmics::plotIndiv(local.rea.values$MixOmics_res$analysis_res, 
-                                                             comp = c(input$ind_comp_choice_1, input$ind_comp_choice_2),
-                                                             ellipse = input$ellipse_choice,
-                                                             legend = TRUE)))
+                                                              comp = c(input$ind_comp_choice_1, input$ind_comp_choice_2),
+                                                              ellipse = input$ellipse_choice,
+                                                              legend = TRUE)))
           ),
           # ---- Tab panel Features ----
           tabPanel("Features",
@@ -354,13 +390,19 @@ MixOmics_setting <- function(input, output, session, rea.values){
           ), 
           # ---- Tab  Panel CircosPlot & cimPlot ----
           tabPanel("CircosPlot",
-                   column(1, numericInput(inputId = session$ns("Circos_cutoff"),
-                                          label = "Cutoff:",
-                                          min = 0,
-                                          max =  1,
-                                          value = 0.9, step = 0.05)),
-                   column(11, renderPlot(mixOmics::circosPlot(local.rea.values$MixOmics_res$analysis_res,
-                                                              cutoff = input$Circos_cutoff))),
+                   if(is(local.rea.values$MixOmics_res$analysis_res, "block.splsda")){
+                     fluidRow(
+                       column(1, numericInput(inputId = session$ns("Circos_cutoff"),
+                                              label = "Cutoff:",
+                                              min = 0,
+                                              max =  1,
+                                              value = 0.9, step = 0.05)),
+                       column(11, renderPlot(mixOmics::circosPlot(local.rea.values$MixOmics_res$analysis_res,
+                                                                  cutoff = input$Circos_cutoff)))
+                     )
+                   }else{
+                     renderText({print("This plot is only available for sparse multi-block discriminant analysis results.")})
+                   }
           ),
           tabPanel("CimPlot",
                    column(1,),
@@ -369,7 +411,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
                             print("=> Rendering cimPlot, be patient!")
                             renderPlot(mixOmics::cimDiablo(local.rea.values$MixOmics_res$analysis_res))
                           }else{
-                            renderText({print("This plot is only available for splarse multi-block discriminant analysis results.")})
+                            renderText({print("This plot is only available for sparse multi-block discriminant analysis results.")})
                           }
                    ),
           ),
