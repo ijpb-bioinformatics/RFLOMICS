@@ -240,7 +240,7 @@ methods::setMethod(f="Datasets_overview_plot",
     geom_tile(aes(fill = y.axis), colour = "grey50") +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank(), axis.ticks = element_blank(), legend.position="none",
-          axis.text.x = element_text(angle = -90, hjust = -0.5, vjust = 0.5)) +
+          axis.text.x = element_text(angle = 90, hjust = 1)) +
     xlab(paste0("Samples (k=", length(unique(sampleMap(object)$primary)), ")")) +
     ylab("")
 
