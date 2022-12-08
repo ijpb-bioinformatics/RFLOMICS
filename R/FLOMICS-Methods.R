@@ -202,7 +202,8 @@ methods::setMethod(f="CheckExpDesignCompleteness",
 
 
 #' @title Datasets overview plot
-#' @description This function plot overview of loaded datasets aligned per sample (n=number of entities (genes/metabolites/proteins); k=number of samples)
+#' @description This function plot overview of loaded datasets aligned per sample 
+#' (n=number of entities (genes/metabolites/proteins); k=number of samples)
 #' @param An object of class \link{MultiAssayExperiment-class}
 #' @exportMethod Datasets_overview_plot
 #' @return plot
@@ -218,7 +219,7 @@ methods::setMethod(f="Datasets_overview_plot",
 
   data <- data.frame(nb_entities = nb_entities, assay = names(nb_entities)) %>%
     dplyr::full_join(data.frame(sampleMap(object)), by="assay") %>%
-    dplyr::mutate(y.axis = paste0(assay, "\n", "n=", nb_entities))
+    dplyr::mutate(y.axis = paste0(assay, "\n", "n=", nb_entities)) %>% dplyr::arrange(primary)
 
   p <- ggplot(data, aes(x=primary, y=y.axis)) +
     geom_tile(aes(fill = y.axis), colour = "grey50") +
