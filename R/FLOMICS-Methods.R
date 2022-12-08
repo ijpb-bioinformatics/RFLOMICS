@@ -101,43 +101,24 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 
 #' @title CheckExpDesignCompleteness
 #' @description This method check some experimental design characteristics.
-#' \itemize{
-#'  \item{does it have biological factor ?}
-#'  \item{does it have replicat/batch factor ?}
-#'  \item{does it have enough replicat/batch ? at least 3 are advised}
-#'  \item{is the design completed ? presence of all possible combinations of levels for all factors}
-#'  \item{is the design balanced ? presence of the same number of replicat for all possible combinations}
-#'  }
 #'  Completed design and at least on biological and one batch factors are required for using RFLOMICS workflow.
 #' @param An object of class \link{MultiAssayExperiment-class}
 #' @param sampleList list of samples to check.
 #' @return a named list of two objects
 #' \itemize{
-#' \item{"count:"}{ a data.frame with the number of each possible combinations of levels for all factors.}
-#' \item{"message:"}{ results of the check}
-#' \itemize{
-#'  \item{"true" :"}{  false or "The experimental design is complete and balanced}
-#'  \item{"lowRep" :"}{  false or "WARNING : 3 biological replicates are needed.}
-#'  \item{"noCompl" :"}{ false or "ERROR : The experimental design is not complete.}
-#'  \item{"noBalan" :"}{ warning or "WARNING : The experimental design is complete but not balanced.}
-#'  \item{"noBio" :"}{ false or "ERROR : no bio factor !}
-#'  \item{"noBatch :"}{ false or "ERROR : no replicat}
+#'  \item{"count:"}{ a data.frame with the number of each possible combinations of levels for all factors.}
+#'  \item{"plot:"}{ plot of count data.frame.}
+#'  \item{"warning:"}{ warning message if design is not balanced}
+#'  \item{"error:"}{error message if:}
+#'  \itemize{
+#'   \item{number of biological factor is not between 1 and 3}
+#'   \item{number of batch factor is not between 1 and 2}
+#'   \item{design is uncomplete}
+#'   }
 #'  }
-#'  }
+#'  
 #' @exportMethod CheckExpDesignCompleteness
 #' @examples
-#' Design.File <- read.table(file= paste(path.package("RFLOMICS"), "/ExamplesFiles/TP/experimental_design.txt",sep=""),header = TRUE,row.names = 1, sep = "\t")
-#'
-#' # Define the type of each factor
-#' Design.typeList <- c("Bio","Bio","batch")
-#'
-#' # Define the reference modality for each factor
-#' Design.refList <- c("WT","control","rep1")
-#'
-#' # Initialize an object of class ExpDesign
-#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File,
-#' refList = Design.refList, typeList = Design.typeList)
-#' CheckExpDesignCompleteness(Design.obj)
 #' @noRd
 
 methods::setMethod(f="CheckExpDesignCompleteness",
@@ -169,26 +150,29 @@ methods::setMethod(f="CheckExpDesignCompleteness",
               # sampleList <- lapply(unique(tmp$assay), function(dataset){filter(tmp, assay == dataset)$primary }) %>%
               #   purrr::reduce(dplyr::union)
 
-              sampleList <- sampleMap(object)$primary
+              #sampleList <- sampleMap(object)$primary
+              sampleList.tmp <- dplyr::group_by(data.frame(sampleMap(object)), primary) %>% dplyr::count() %>% 
+                     dplyr::ungroup() %>% mutate(max=max(n)) %>% filter(n==max)
+              sampleList <- sampleList.tmp$primary
             }
-            ExpDesign <- dplyr::filter(Design@ExpDesign, rownames(Design@ExpDesign) %in% sampleList)
-
-            dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
-              factor(ExpDesign[[i]], levels=unique(ExpDesign[[i]]))
-              #relevel(ExpDesign[[i]], ref=levels(Design@List.Factors[[i]])[1])
+            
+            dF.List <- lapply(1:dim(Design@ExpDesign)[2], function(i){
+              factor(Design@ExpDesign[[i]], levels=unique(Design@ExpDesign[[i]]))
             })
-            names(dF.List) <- names(ExpDesign)
-
-            group_count  <- dF.List[Design@Factors.Type == "Bio"] %>% as.data.frame() %>% table() %>% as.data.frame()
-            names(group_count) <- c(names(dF.List[Design@Factors.Type == "Bio"]), "Count")
-
+            names(dF.List) <- names(Design@ExpDesign)
+            
+            ExpDesign <- dplyr::filter(Design@ExpDesign, rownames(Design@ExpDesign) %in% sampleList)
+            
+            bio.fact <- names(dF.List[Design@Factors.Type == "Bio"])
+            tmp <- ExpDesign %>% dplyr::mutate(samples=row.names(.))
+            group_count <- as.data.frame(dF.List) %>% table() %>% as.data.frame() %>% full_join(tmp, by=names(dF.List)) %>% 
+              mutate_at(.vars = "samples", .funs = function(x) dplyr::if_else(is.na(x), 0, 1)) %>%
+              dplyr::group_by_at((bio.fact)) %>% dplyr::summarise(Count=sum(samples), .groups = "keep")
 
             # check presence of relicat / batch
             # check if design is complete
             # check if design is balanced
             # check nbr of replicats
-
-
             if(min(group_count$Count) == 0){
               message <- "ERROR : The experimental design is not complete."
               output[["error"]] <- message
@@ -522,8 +506,15 @@ methods::setMethod(f="getContrastMatrix",
 FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refList , typeList){
 
   # consctuct ExpDesign object
+  for (i in names(ExpDesign)){
+    
+    ExpDesign[[i]] <- factor(ExpDesign[[i]], levels = unique(ExpDesign[[i]]))
+  }
+  
   Design <- ExpDesign.constructor(ExpDesign = ExpDesign, refList = refList, typeList = typeList)
 
+  
+  ## creat SE object of each dataset
   SummarizedExperimentList <- list()
   listmap  <- list()
   omicList <- list()
@@ -536,19 +527,19 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
     abundance <- inputs[[dataName]][["data"]]
 
     # check overlap between design and data
-
     sample.intersect <- intersect(colnames(abundance), row.names(ExpDesign))
     if(length(sample.intersect) == 0){
 
       stop("samples in omics data could be matched to experimental design")
     }
 
-    if(length(sample.intersect) < length(row.names(ExpDesign))/2){
+    if(length(sample.intersect) < length(row.names(ExpDesign))){
 
       message("more than half of samples don't match to experimental design")
     }
 
-    abundance <- dplyr::select(abundance, row.names(ExpDesign))
+    # select abundance from design table
+    abundance <- dplyr::select(abundance, all_of(sample.intersect))
 
     ###### remove row with sum == 0
     matrix <- as.matrix(abundance)
@@ -564,9 +555,8 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
     #   tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
 
     ###### create SE object
-
-
-    # creat colData
+    
+    # => creat colData
     if(!is.null(inputs[[dataName]][["meta"]])){
       QCmat <- inputs[[dataName]][["meta"]]
     }
@@ -574,8 +564,8 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 
       #sample.intersect <- intersect(colnames(matrix.filt), row.names(ExpDesign))
 
-      QCmat <- data.frame(primary = row.names(ExpDesign),
-                          colname = row.names(ExpDesign),
+      QCmat <- data.frame(primary = sample.intersect,
+                          colname = sample.intersect,
                           stringsAsFactors = FALSE)
     }
 
@@ -584,7 +574,9 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 
     SE <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance = as.matrix(matrix.filt)),
                                                                                        colData  = QCmat,
-                                                                                       metadata = list(omicType = omicType, Groups = Groups, rowSums.zero = genes_flt0))
+                                                                                       metadata = list(omicType     = omicType, 
+                                                                                                       Groups       = Groups, 
+                                                                                                       rowSums.zero = genes_flt0))
 
     #SummarizedExperimentList[[dataName]] <- SE[, SE$primary %in% row.names(ExpDesign)]
 
@@ -596,7 +588,7 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
                                       colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
                                       stringsAsFactors = FALSE)
 
-    #
+    # 
     omicType <- inputs[[dataName]][["omicType"]]
 
     colnames <- c(names(omicList[[omicType]]), k)
