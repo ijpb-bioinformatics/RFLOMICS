@@ -168,9 +168,9 @@ LoadOmicsData <- function(input, output, session, rea.values){
               ExpDesign.tbl <- dplyr::select(ExpDesign.tbl, -all_of(i))
             }
           }
-
+          
           local.rea.values$ExpDesign <- ExpDesign.tbl
-
+          
           column(width = 12,
 
               # Construct the form to set the reference factor level
@@ -181,7 +181,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
                     column(width= round(12/length(names(ExpDesign.tbl))),
                         selectInput(inputId = session$ns(paste0("dF.RefLevel.", i)),
                                     label   = tags$span(style="color: black;",i) ,
-                                    choices = levels(ExpDesign.tbl[[i]])),
+                                    choices = unique(ExpDesign.tbl[[i]])),
 
                         radioButtons(session$ns(paste0("dF.Type.", i)), label=NULL , choices = c("Bio","batch", "Meta"),
                                      selected = "Bio", inline = FALSE, width = 2, choiceNames = NULL, choiceValues = NULL))
@@ -313,87 +313,84 @@ LoadOmicsData <- function(input, output, session, rea.values){
         dF.List.ref[dFac]  <- input[[paste0("dF.RefLevel.",dFac)]]
       }
 
+      # check number of factor bio
       if(! length(stringr::str_subset(dF.Type.dFac, "Bio")) %in% 1:3){
         showModal(modalDialog(title = "Error message", "1 to 3 bio factor(s)")) }
 
+      # check number of factor batch
       if(! length(stringr::str_subset(dF.Type.dFac, "batch")) %in% 1:2){
         showModal(modalDialog(title = "Error message", "at least 1 batch factor (max = 2)"))}
 
       validate({ need((length(stringr::str_subset(dF.Type.dFac, "Bio"  )) %in% 1:3) &
                       (length(stringr::str_subset(dF.Type.dFac, "batch")) %in% 1:2), message="") })
 
-
-      ## create Design object
-      # session$userData$Design <- ExpDesign.constructor(ExpDesign = ExpDesign.tbl, refList = dF.List.ref, typeList = dF.Type.dFac)
-      # Design <<- session$userData$Design
-
-      #Design <- ExpDesign.constructor(ExpDesign = ExpDesign.tbl, refList = dF.List.ref, typeList = dF.Type.dFac)
-
-
-
       #### load omics data
       ####
       print("#    => Load omics data...")
       inputs <- list()
-      omicList <- list()
       #### list of omic data laoded from interface
       rea.values$validate.status <- 0
       dataName.vec <- c()
       for (k in 1:addDataNum){
-
+        
         if(input[[paste0("omicType", k)]] != "none"){
 
+          ### omics type ###
           omicType <- input[[paste0("omicType", k)]]
-
-          dataName <- paste0(omicType, ".", gsub("[[:space:]]", "", input[[paste0("DataName", k)]]))
-
-          # check presence of dataname
-          if(dataName == ""){
+          
+          ### dataset name ### 
+          # => check presence of dataname
+          dataName.tmp <- gsub("[[:space:]]", "", input[[paste0("DataName", k)]])
+          
+          if(dataName.tmp == ""){
             showModal(modalDialog( title = "Error message", "Dataset names is required : dataset ", k ))
             rea.values$validate.status <- 1
           }
+          dataName <- paste0(omicType, ".", dataName.tmp)
+          dataName.vec <- c(dataName.vec, dataName)
 
-          # check duplicat dataset name
-          if(any(duplicated(omicList[[omicType]])) == TRUE){
+          # => check duplicat dataset name
+          if(any(duplicated(dataName.vec)) == TRUE){
             showModal(modalDialog( title = "Error message", "Dataset names must be unique : dataset ", (1:addDataNum)[duplicated(dataName.vec)] ))
             rea.values$validate.status <- 1
           }
 
-          #### read omic data file
+          #### omics dataset
           # => check omics data
           if(is.null(input[[paste0("data", k)]])){
-            showModal(modalDialog( title = "Error message", "omics counts/abundances matrix is required : dataset ", k ))
+            showModal(modalDialog( title = "Error message", "omics dataset is required : dataset ", k ))
             rea.values$validate.status <- 1
           }
-          dataFile <- input[[paste0("data", k)]]
+          validate({ need(expr = !is.null(input[[paste0("data", k)]]), message="error") })
           
+          # => read data matrix
+          dataFile <- input[[paste0("data", k)]]
           data.mat.tt <- tryCatch(read_omics_data(file = dataFile$datapath), error=function(e) e, warning=function(w) w)
           
           if(!is.null(data.mat.tt$message)){
             
             showModal(modalDialog( title = "Error message", data.mat.tt$message)) 
+            rea.values$validate.status <- 1
           }
           validate({ need(expr = is.null(data.mat.tt$message), message=data.mat.tt$message) })
           
           data.mat <- data.mat.tt
-
-          inputs[[dataName]][["data"]]     <- data.mat
           inputs[[dataName]][["omicType"]] <- omicType
-          inputs[[dataName]][["meta"]]     <- NULL
-          #inputs[[dataName]][["dataFile"]] <- input[[paste0("data", k)]]$datapath
-
+          inputs[[dataName]][["data"]] <- data.mat
+          
           #### read meta data file
-          if(!is.null(input[[paste0("metadataQC", k)]])){
-            print("# ... metadata QC...")
-            qcFile <- input[[paste0("metadataQC", k)]]
-            QCmat  <- read_metaData(qcFile$datapath)
-
-            validate({ need(!is.null(QCmat), message="") })
-
-            inputs[[dataName]][["meta"]] <- QCmat
-            #inputs[[dataName]][["qcFile"]] <- input[[paste0("metadataQC", k)]]$datapath ####
-          }
-
+          # if(!is.null(input[[paste0("metadataQC", k)]])){
+          #   print("# ... metadata QC...")
+          #   qcFile <- input[[paste0("metadataQC", k)]]
+          #   QCmat  <- read_metaData(qcFile$datapath)
+          #   
+          #   validate({ need(!is.null(QCmat), message="") })
+          #   
+          #   inputs[[dataName]][["meta"]] <- QCmat
+          #   #inputs[[dataName]][["qcFile"]] <- input[[paste0("metadataQC", k)]]$datapath ####
+          # }
+          inputs[[dataName]][["meta"]]     <- NULL
+          
           validate({ need(rea.values$validate.status == 0, message="error") })
         }
       }
@@ -408,7 +405,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
       #   showModal(modalDialog( title = "Error message", as.character(FlomicsMultiAssay.try[["error"]])))
       # }
       # validate({ need(is.null(FlomicsMultiAssay.try[["error"]]), message="error") })
-
+      
+      
       FlomicsMultiAssay.try <- tryCatch(FlomicsMultiAssay.constructor(inputs = inputs,
                                                                       ExpDesign = ExpDesign.tbl,
                                                                       refList = dF.List.ref,
@@ -418,6 +416,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
       
       if(!is.null(FlomicsMultiAssay.try$message)) {
         showModal(modalDialog( title = "Error message", FlomicsMultiAssay.try$message))
+        rea.values$validate.status <- 1
       }
       validate({ need(is.null(FlomicsMultiAssay.try$message), message="error") })
 
@@ -432,31 +431,28 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
       print(paste0("#    => Design Completeness Check..."))
 
-#<<<<<<< HEAD
       local.rea.values$completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
-      # #session$userData$FlomicsMultiAssay@metadata[["completeCheck"]] <- completeCheckRes
-#=======
-      # print(session$userData$FlomicsMultiAssay) ## DEBUG 05/08/22 TO DELETE 
-      
-      # completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
-      # session$userData$FlomicsMultiAssay@metadata[["completeCheck"]] <- completeCheckRes
-#>>>>>>> 1e88d12a8df39c83311271174d5f1b11d8885cd4
-      local.rea.values$plots <- TRUE
-      rea.values$loadData <- TRUE
-      #rea.values$model    <- TRUE
 
+      # plot : ok
+      local.rea.values$plots <- TRUE
+      
       if(!is.null(local.rea.values$completeCheckRes[["error"]])){
         #rea.values$loadData <- FALSE
         #rea.values$model    <- FALSE
         showModal(modalDialog(title = "Error message", local.rea.values$completeCheckRes[["error"]]))
+        rea.values$validate.status <- 1
       }
 
       # continue only if message is true or warning
-      #validate({ need(is.null(local.rea.values$completeCheckRes[["error"]]) ,message="") })
+      validate({ need(is.null(local.rea.values$completeCheckRes[["error"]]) ,message="") })
 
       # 
-      rea.values$datasetList   <- session$userData$FlomicsMultiAssay@metadata$omicList
+      rea.values$datasetList <- session$userData$FlomicsMultiAssay@metadata$omicList
 
+
+      rea.values$loadData <- TRUE
+      #rea.values$model    <- TRUE
+      
     }, ignoreInit = TRUE)
 
     ##########################################
@@ -500,7 +496,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     })
 
     return(input)
-
 }
 
 
