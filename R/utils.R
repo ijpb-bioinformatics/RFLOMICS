@@ -649,10 +649,16 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothes
   # Modified 221123
   # Find pvalue corresponding to the FDR cutoff for the plot (mean between the last that passes the cutoff
   # and the first that is rejected to plot the line in the middle of the two points)
-  pval1 <- data$pvalue[data$Adj.pvalue<Adj.pvalue.cutoff] %>% dplyr::last()
-  pval2 <- data$pvalue[data$Adj.pvalue>Adj.pvalue.cutoff] %>% dplyr::first()
-  pvalCutoff <- (pval1 + pval2)/2
+  # if pvalcutoff is 1 (no cutoff) no need to adjust
   
+  if(Adj.pvalue.cutoff < 1){
+    pval1 <- data$pvalue[data$Adj.pvalue<Adj.pvalue.cutoff] %>% dplyr::last()
+    pval2 <- data$pvalue[data$Adj.pvalue>Adj.pvalue.cutoff] %>% dplyr::first()
+    pvalCutoff <- (pval1 + pval2)/2
+  }else if(Adj.pvalue.cutoff >= 1){
+    pvalCutoff <- 1
+  }
+
   # Added 221123: if too low pvalues, unable to plot (error in if(d>0)...)
   # If drawconnectors is FALSE, it "works", with ylim being infinity, it doesn't look like anything. 
   # Modifiying the 0 pvalues to make sure it's working
@@ -661,7 +667,7 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothes
     data$pvalue[data$pvalue == 0] <- data$pvalue[data$pvalue != 0][1] 
     message("10^-1 * current lowest non-zero p-value is still 0, all 0 pvalues are set to the lowest non-zero pvalue.")
   }
-  
+
   Abundance <- logFC <- Adj.pvalue <- NULL
   p <- EnhancedVolcano::EnhancedVolcano(toptable = data,
                   lab = rownames(data),
@@ -693,8 +699,6 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothes
 
   return(p)
 }
-
-
 
 #' Plot the balance of data in an experimental design
 #'

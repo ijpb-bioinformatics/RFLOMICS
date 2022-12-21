@@ -191,11 +191,11 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 
     box(title = NULL,status = "warning", width = 14,
         numericInput(inputId = session$ns("Adj.pvalue.cutoff"),
-                     label="Adjusted pvalue cutoff :",
+                     label="Adjusted pvalue cutoff:",
                      value=0.05, min=0, max=1, 0.01),
         numericInput(inputId = session$ns("abs.FC.cutoff"),
-                     label="|FC| cutoff :",
-                     value=2, min=1,max=1000, 0.1),
+                     label="|FC| cutoff:",
+                     value=2, min=1, max=1000, 0.1),
         actionButton(session$ns("validContrast"),"Validate"))
   })
 
@@ -210,7 +210,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     local.rea.values$dataset.SE <- FilterDiffAnalysis(object = local.rea.values$dataset.SE,
                                                       Adj.pvalue.cutoff = input$Adj.pvalue.cutoff,
                                                       FC.cutoff = input$abs.FC.cutoff)
-
     #Contrasts.Sel <- local.rea.values$dataset.SE@metadata$DiffExpAnal$contrasts
 
     list(
@@ -228,79 +227,135 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         column(10,
                box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning",
                    title = tags$h5(paste0(vect["tag"], " : ", vect["contrastName"],"  [#DE: ", stats$gDE," (up: ", stats$pgDEup,"%, ", "down: ", stats$pgDEdown,"%)]")),
-
+                   
                    tabsetPanel(
-
-                    ### pvalue plot ###
-                    tabPanel("Pvalue's distribution", renderPlot({ diff.plots$Pvalue.hist })),
-
-                    ### MAplot
-                    tabPanel("MA plot", renderPlot({ suppressMessages(diff.plots$MA.plot) })),
-
-                    ### MAplot
-                    tabPanel("Volcano plot", renderPlot({ suppressMessages(diff.plots$Volcano.plot) },height = 600)),
-
-                    ### DEF result table ###
-                    tabPanel("Table",
-                       ### DEF result table ###
-                       DT::renderDataTable({
-                         resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
-                         resTable %>% DT::datatable(extensions = 'Buttons',
-                                        options = list(dom = 'lfrtipB',
-                                                      rownames = FALSE,
-                                                      pageLength = 10,
-                                                      buttons = c('csv', 'excel'),
-                                                      lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All")))) %>%
-                           formatStyle('logFC',
-                                 backgroundColor = styleInterval(c(0, 0.01), c('royalblue', 'white', 'red2')),
-                                 fontWeight = 'bold') %>% formatSignif(columns = 1:dim(resTable)[2], digits = 3)
-                       }, server = FALSE)),
-                      tabPanel("Heatmap",
-                             renderUI({
-                             renderPlot({
-                             resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
-                             m.def <- assays(local.rea.values$dataset.SE)[[1]][,session$userData$FlomicsMultiAssay@metadata$design@Groups$samples]
-
-                             # Normalize counts (added 221123)
-                             if(dataset.SE@metadata$Normalization$methode == "TMM"){
-                               m.def <- log2(scale(m.def+1, center = FALSE,
+                     
+                     ### pvalue plot ###
+                     tabPanel("Pvalue's distribution", renderPlot({ diff.plots$Pvalue.hist })),
+                     
+                     ### MAplot
+                     tabPanel("MA plot", renderPlot({ suppressMessages(diff.plots$MA.plot) })),
+                     
+                     ### MAplot
+                     tabPanel("Volcano plot", renderPlot({ suppressMessages(diff.plots$Volcano.plot) }, height = 600)),
+                     
+                     ### DEF result table ###
+                     tabPanel("Table",
+                              ### DEF result table ###
+                              DT::renderDataTable({
+                                resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
+                                resTable %>% DT::datatable(extensions = 'Buttons',
+                                                           options = list(dom = 'lfrtipB',
+                                                                          rownames = FALSE,
+                                                                          pageLength = 10,
+                                                                          buttons = c('csv', 'excel'),
+                                                                          lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All")))) %>%
+                                  formatStyle('logFC',
+                                              backgroundColor = styleInterval(c(0, 0.01), c('royalblue', 'white', 'red2')),
+                                              fontWeight = 'bold') %>% formatSignif(columns = 1:dim(resTable)[2], digits = 3)
+                              }, server = FALSE)),
+                     ### Heatmap ###
+                     tabPanel("Heatmap",
+                              renderUI({
+                                renderPlot({
+                                  resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
+                                  m.def <- assays(local.rea.values$dataset.SE)[[1]][,session$userData$FlomicsMultiAssay@metadata$design@Groups$samples]
+                                  
+                                  # Normalize counts (added 221123)
+                                  if(dataset.SE@metadata$Normalization$methode == "TMM"){
+                                    m.def <- log2(scale(m.def+1, center = FALSE,
                                                         scale = dataset.SE@metadata$Normalization$coefNorm$lib.size*dataset.SE@metadata$Normalization$coefNorm$norm.factors))
-                             }
+                                  }
+                                  
+                                  # filter by DE
+                                  m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
+                       
+                                  # normalize count
+                                  
+                                  # Center
+                                  # m.def.filter.center <- scale(m.def.filter,center=TRUE,scale=FALSE)
+                                  m.def.filter.center <- t(scale(t(m.def.filter),center = TRUE, scale = FALSE)) # Modified 221123 : centered by genes and not by samples
+                                  column_split.value <- if(input[[paste0(vect["contrastName"],"-","condColorSelect")]] != "none"){
+                                    session$userData$FlomicsMultiAssay@metadata$design@Groups[,input[[paste0(vect["contrastName"],"-","condColorSelect")]]]
+                                  }
+                                  else{NULL}
                              
-                             # filter by DE
-                             m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
-
-                             # normalize count
-
-                             # Center
-                             # m.def.filter.center <- scale(m.def.filter,center=TRUE,scale=FALSE)
-                             m.def.filter.center <- t(scale(t(m.def.filter),center = TRUE, scale = FALSE)) # Modified 221123 : centered by genes and not by samples
-                             column_split.value <- if(input[[paste0(vect["contrastName"],"-","condColorSelect")]] != "none"){
-                              session$userData$FlomicsMultiAssay@metadata$design@Groups[,input[[paste0(vect["contrastName"],"-","condColorSelect")]]]
-                             }
-                             else{NULL}
-
-                             ComplexHeatmap::Heatmap(m.def.filter.center, name = "normalized counts\nor XIC",
-                                     show_row_names= ifelse( dim(m.def.filter.center)[1] > 50, FALSE, TRUE),
-                                     row_names_gp = grid::gpar(fontsize = 8),
-                                     column_names_gp = grid::gpar(fontsize = 12),
-                                     row_title_rot = 0 ,
-                                     clustering_method_columns = "ward.D2",
-                                     cluster_column_slice=FALSE,
-                                     column_split = column_split.value)
-                             })
-                             })
-                             ,
-                             renderText("Clustering method=ward.D2, center=TRUE, scale=FALSE")
-                             ,
-                             ## select cluster to plot
-                             radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-","condColorSelect")),
-                                          label = 'Levels :',
-                                          choices = c("none",names(session$userData$FlomicsMultiAssay@colData)),
-                                          selected = "none")
-                    )
-
+                                  # Color annotations
+                                  df_annotation <- session$userData$FlomicsMultiAssay@metadata$design@Groups %>% dplyr::select(!samples & !groups)
+                                  
+                                  set.seed(10000) ; selectPal <- sample(rownames(RColorBrewer::brewer.pal.info),  size = ncol(df_annotation), replace = FALSE)
+                                  
+                                  color_list <- lapply(1:ncol(df_annotation), FUN = function(i){
+                                    col_vect <- RColorBrewer::brewer.pal(n = length(unique(df_annotation[,i])), name = selectPal[i]) 
+                                    names(col_vect) <- unique(df_annotation[,i])
+                                    col_vect
+                                  })
+                                  names(color_list) <- colnames(df_annotation)
+                                  
+                                  column_ha <- ComplexHeatmap::HeatmapAnnotation(df = df_annotation, col = color_list)
+                                  
+                                  # Drawing heatmap
+                                  ha <- ComplexHeatmap::Heatmap(m.def.filter.center, name = "normalized counts\nor XIC",
+                                                                show_row_names= ifelse( dim(m.def.filter.center)[1] > 50, FALSE, TRUE),
+                                                                row_names_gp = grid::gpar(fontsize = 8),
+                                                                column_names_gp = grid::gpar(fontsize = 12),
+                                                                row_title_rot = 0 ,
+                                                                clustering_method_columns = "ward.D2",
+                                                                cluster_column_slice=FALSE,
+                                                                column_split = column_split.value,
+                                                                top_annotation = column_ha)
+                                  
+                                  ComplexHeatmap::draw(ha, merge_legend = TRUE)
+                                })
+                              })
+                              ,
+                              renderText("Clustering method=ward.D2, center=TRUE, scale=FALSE")
+                              ,
+                              ## select cluster to plot
+                              radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-","condColorSelect")),
+                                           label = 'Levels :',
+                                           choices = c("none", names(session$userData$FlomicsMultiAssay@colData)),
+                                           selected = "none", inline = TRUE)
                      ),
+                     ### PCA ###
+                     tabPanel("PCA on DE",
+                              
+                              fluidRow(
+                                renderPlot({
+                                  
+                                  resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
+                                  newDataset.SE <- dataset.SE[rownames(dataset.SE) %in% row.names(resTable)]
+                                  newDataset.SE <- RFLOMICS::RunPCA(newDataset.SE)  
+
+                                  RFLOMICS::plotPCA(newDataset.SE, 
+                                                    PCA = "norm", 
+                                                    PCs = c(as.numeric(input[["DEG_PCA_Firstaxis"]]), as.numeric(input[["DEG_PCA_Secondaxis"]])), 
+                                                    condition = input$DEG_PCA_condColorSelect)
+                                  
+                                })
+                              ),
+                              fluidRow(
+                                # 12/2022 : don't know how to make module common work...
+                                column(width = 3, radioButtons(inputId = session$ns("DEG_PCA_condColorSelect"),
+                                             label = 'Levels:',
+                                             choices = c("groups", names(session$userData$FlomicsMultiAssay@colData)),
+                                             selected = "groups")),
+                                column(width = 3,   radioButtons(inputId  = session$ns("DEG_PCA_Firstaxis"),
+                                                                 label    = "Choice of PCs:",
+                                                                 choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
+                                                                 selected = 1,
+                                                                 inline = TRUE)),
+                                column(width = 3, 
+                                       
+                                       radioButtons(inputId  = session$ns("DEG_PCA_Secondaxis"),
+                                                                 label    = "Choice of PCs:",
+                                                                 choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
+                                                                 selected = 2,
+                                                                 inline = TRUE))
+                              ),
+                              
+                     )
+                   ),
                )
         ),
         column(2,
