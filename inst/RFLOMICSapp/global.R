@@ -5,7 +5,7 @@
 # 
 # pkgs_to_install <- c("S4Vectors", "MultiAssayExperiment","SummarizedExperiment",
 #                      "pheatmap","BiocParallel","ComplexHeatmap",
-#                      "edgeR","limma","coseq","EnhancedVolcano")
+#                      "edgeR","limma","coseq","EnhancedVolcano", "clusterProfiler", "pathview")
 # 
 # for (pkgs in pkgs_to_install) {
 # 
@@ -42,16 +42,16 @@ library(shinyBS)
 
 ### MODULES ###
 
-library(MOFA2) 
+#library(MOFA2) 
 library(qgraph)
 library(colourpicker)  ## ADDED August 2022 button to select colors
 # library(circlize)
 library(RColorBrewer) 
-library(mixOmics) 
+#library(mixOmics) 
 library(clusterProfiler) ## ADDED 27/10/22
 library(enrichplot)
 # library(org.At.tair.db) ## ADDED 27/10/22 # trouver un moyen de faire differemment. 
-library(AnnotationDbi)
+#library(AnnotationDbi)
 library(pathview)
 library(grid)
 library(png)

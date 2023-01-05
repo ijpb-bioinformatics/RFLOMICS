@@ -2,7 +2,7 @@
 # module 08 : mixOmics
 ##########################################
 
-
+library(mixOmics)
 MixOmics_settingUI <- function(id){
   
   #name space for id

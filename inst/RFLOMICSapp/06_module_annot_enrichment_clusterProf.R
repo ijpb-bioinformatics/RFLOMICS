@@ -1,3 +1,7 @@
+
+library(AnnotationDbi)
+library(pathview)
+
 AnnotationEnrichmentClusterProfUI <- function(id){
   
   options(shiny.maxRequestSize = 3000*1024^2)
