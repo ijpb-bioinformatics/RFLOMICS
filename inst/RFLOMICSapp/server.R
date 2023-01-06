@@ -250,13 +250,13 @@ shinyServer(function(input, output, session) {
       })
     })
 
-    #### analysis Summary ####
-    ###############################
-    output$omicsSum_UI <- renderUI({
-
-      omics_data_analysis_summaryUI("omics")
-
-    })
+    # #### analysis Summary ####
+    # ###############################
+    # output$omicsSum_UI <- renderUI({
+    # 
+    #   omics_data_analysis_summaryUI("omics")
+    # 
+    # })
 
 
     # #### MOFA data integration ####

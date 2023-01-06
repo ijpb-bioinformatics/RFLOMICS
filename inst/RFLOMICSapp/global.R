@@ -69,8 +69,8 @@ source("06_module_annot_enrichment.R")
 #source("08_module_data_integration_mixOmics.R") ### ADDED 15/09/2022
 
 source("06_module_annot_enrichment_clusterProf.R")
-source("07_module_data_integration_MOFA.R")
-source("08_module_data_integration_mixOmics.R")
+#source("07_module_data_integration_MOFA.R")
+#source("08_module_data_integration_mixOmics.R")
 
 source("coverPage.R")
 
