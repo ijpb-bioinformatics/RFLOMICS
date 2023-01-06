@@ -9,20 +9,33 @@ dir.create(path=dataDir)
 
 ```{r , echo=FALSE, message=FALSE, warning=FALSE}
 
+dataset.raw.SE <- NULL
+dataset.SE     <- NULL
+Diff.eval      <- FALSE
+CoEx.eval      <- FALSE
+Diff.ann.eval  <- FALSE
+CoEx.ann.eval  <- FALSE
+Diff.ann.eval_CPR <- FALSE
+CoEx.ann.eval_CPR <- FALSE
+
 dataset.raw.SE <- rflomics.MAE@ExperimentList[[data]]
 dataset.SE     <- rflomics.MAE@ExperimentList[[paste0(data,".filtred")]]
 
-Diff.eval      <- !is.null(dataset.SE@metadata[["DiffExpAnal"]][["Validcontrasts"]])
-CoEx.eval      <- !is.null(dataset.SE@metadata[["CoExpAnal"]]$results)
-Diff.ann.eval  <- !is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]]$results)
-CoEx.ann.eval  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results)
+if(!is.null(dataset.SE)){
+  
+  Diff.eval      <- !is.null(dataset.SE@metadata[["DiffExpAnal"]][["Validcontrasts"]])
+  CoEx.eval      <- !is.null(dataset.SE@metadata[["CoExpAnal"]]$results)
+  Diff.ann.eval  <- !is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]]$results)
+  CoEx.ann.eval  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results)
+  
+  Diff.ann.eval_CPR <- !is.null(dataset.SE@metadata[["DiffExpAnal"]]$results_CPR)
+  CoEx.ann.eval_CPR  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results_CPR)
+}
 
-Diff.ann.eval_CPR <- !is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]]$results_CPR)
-CoEx.ann.eval_CPR  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results_CPR)
 ```
 
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, eval=!is.null(dataset.SE)}
 
 out <- NULL
 
@@ -50,19 +63,19 @@ knitr::asis_output(out)
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.ann.eval}
 
-# out <- NULL
-# annot <- "DiffExpEnrichAnal"
-# 
-# out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich.Rmd"),
-#                                 quiet=TRUE))
-# 
-# knitr::asis_output(out)
+out <- NULL
+annot <- "DiffExpEnrichAnal"
+
+out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich.Rmd"),
+                                quiet=TRUE))
+
+knitr::asis_output(out)
 
 ```
 
 <!-- enrichement analysis on DE G/P/M lists with clusterprofiler -->
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.ann.eval_CPR}
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=FALSE}
 
 out <- NULL
 annot <- "DiffExpEnrichAnal"
@@ -80,9 +93,9 @@ knitr::asis_output(out)
 
 out <- NULL
 
-out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_05_coexp_analysis.Rmd"), 
-                                quiet=TRUE))  
-    
+out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_05_coexp_analysis.Rmd"),
+                                quiet=TRUE))
+
 knitr::asis_output(out)
 
 ```
@@ -95,8 +108,8 @@ knitr::asis_output(out)
 annot <- "CoExpEnrichAnal"
 out <- NULL
 
-out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich.Rmd"), quiet=TRUE))  
-    
+out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich.Rmd"), quiet=TRUE))
+
 knitr::asis_output(out)
 
 ```
