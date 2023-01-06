@@ -1,6 +1,8 @@
 
 library(AnnotationDbi)
 library(pathview)
+library(clusterProfiler)
+library(enrichplot)
 
 AnnotationEnrichmentClusterProfUI <- function(id){
   

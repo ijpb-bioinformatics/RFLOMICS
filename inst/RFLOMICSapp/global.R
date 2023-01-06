@@ -48,11 +48,11 @@ library(colourpicker)  ## ADDED August 2022 button to select colors
 # library(circlize)
 library(RColorBrewer) 
 #library(mixOmics) 
-library(clusterProfiler) ## ADDED 27/10/22
-library(enrichplot)
+#library(clusterProfiler) ## ADDED 27/10/22
+#library(enrichplot)
 # library(org.At.tair.db) ## ADDED 27/10/22 # trouver un moyen de faire differemment. 
 #library(AnnotationDbi)
-library(pathview)
+#library(pathview)
 library(grid)
 library(png)
 
