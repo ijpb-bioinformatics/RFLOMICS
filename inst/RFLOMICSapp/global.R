@@ -5,7 +5,7 @@
 # 
 # pkgs_to_install <- c("S4Vectors", "MultiAssayExperiment","SummarizedExperiment",
 #                      "pheatmap","BiocParallel","ComplexHeatmap",
-#                      "edgeR","limma","coseq","EnhancedVolcano", "clusterProfiler", "pathview")
+#                      "edgeR","limma","coseq","EnhancedVolcano", "clusterProfiler", "pathview", "enrichplot", "AnnotationDbi")
 # 
 # for (pkgs in pkgs_to_install) {
 # 
@@ -52,7 +52,7 @@ library(RColorBrewer)
 #library(enrichplot)
 # library(org.At.tair.db) ## ADDED 27/10/22 # trouver un moyen de faire differemment. 
 #library(AnnotationDbi)
-#library(pathview)
+library(pathview)
 library(grid)
 library(png)
 
