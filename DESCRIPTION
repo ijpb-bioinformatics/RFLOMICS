@@ -20,6 +20,7 @@ Suggests:
     testthat
 VignetteBuilder: knitr
 Imports: 
+    devtools,
     shiny,
     shinydashboard,
     shinyFiles,
