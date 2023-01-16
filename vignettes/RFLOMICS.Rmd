@@ -23,48 +23,17 @@ knitr::opts_chunk$set(
 )
 ```
 
-
-
-
-<br>
 <br>
 <br>
 
-# 1. Install RFLOMICS via Docker:
-
-* install Docker
-
-https://docs.docker.com/engine/install/
-
-* Get the Dockerfile
+# 1. Run RFLOMICS
 
 ```{bash, eval=FALSE}
-https://forgemia.inra.fr/flomics/rflomics/-/blob/develop.0.1/Dockerfile
+library(RFLOMICS)
+RFLOMICS::runExample()
 ```
-
-* Build the Docker Image
-
-```{bash, eval=FALSE}
-docker build --file=Dockerfile --tag=rflomics .
-```
-
-* Run Docker
-
-```{bash, eval=FALSE}
-docker run -it -p 3838:3838 -v ${HOME}:/root --name='rflomics' --cpus 4 rflomics
-```
-
-* Open a web navigator and paste this url: 
-
-```{bash, eval=FALSE}
-http://0.0.0.0:3838
-```
-
-
 
 On the left side of interface, the different tab menu will appear as the analysis progresses to guide the user.
-
-
 
 # 2. Load Data
 

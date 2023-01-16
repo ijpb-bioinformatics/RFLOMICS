@@ -5,7 +5,7 @@
 #'
 #' @examples
 #'
-runExample <- function() {
+runRFLOMICS <- function() {
   appDir <- system.file("RFLOMICSapp", package = "RFLOMICS")
 
   if (appDir == "") {

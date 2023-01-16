@@ -105,30 +105,12 @@
       </p>
     </div>
     
-<p><br><br><br></p>
+<p><br><br></p>
 <div class="section level2">
-<h2 id="install-rflomics-via-docker">1. Install RFLOMICS via Docker:<a class="anchor" aria-label="anchor" href="#install-rflomics-via-docker"></a>
+<h2 id="run-rflomics">1. Run RFLOMICS<a class="anchor" aria-label="anchor" href="#run-rflomics"></a>
 </h2>
-<ul>
-<li>install Docker</li>
-</ul>
-<p><a href="https://docs.docker.com/engine/install/" class="external-link uri">https://docs.docker.com/engine/install/</a></p>
-<ul>
-<li>Get the Dockerfile</li>
-</ul>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">https://forgemia.inra.fr/flomics/rflomics/-/blob/develop.0.1/Dockerfile</span></span></code></pre></div>
-<ul>
-<li>Build the Docker Image</li>
-</ul>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">--file</span><span class="op">=</span>Dockerfile <span class="at">--tag</span><span class="op">=</span>rflomics .</span></code></pre></div>
-<ul>
-<li>Run Docker</li>
-</ul>
-<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-it</span> <span class="at">-p</span> 3838:3838 <span class="at">-v</span> <span class="va">${HOME}</span>:/root <span class="at">--name</span><span class="op">=</span><span class="st">'rflomics'</span> <span class="at">--cpus</span> 4 rflomics</span></code></pre></div>
-<ul>
-<li>Open a web navigator and paste this url:</li>
-</ul>
-<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">http://0.0.0.0:3838</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">library</span><span class="er">(</span><span class="ex">RFLOMICS</span><span class="kw">)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">RFLOMICS::runExample()</span></span></code></pre></div>
 <p>On the left side of interface, the different tab menu will appear as
 the analysis progresses to guide the user.</p>
 </div>
@@ -258,12 +240,12 @@ strategy”</strong> (NbOfsample_over_cpm &lt;= NbConditions). By default
 the data are filtered based on NbCondition strategy with CPM cutoff
 equal to 5. In this example, there are 9 conditions. So, the number of
 genes with a CPM less than 5 in at least 9 samples are removed.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># geneToKeep &lt;- counts[rowSums(edgeR::cpm(counts) &gt;= CPM_Cutoff) &gt;= x, ]</span></span></code></pre></div>
 <p>To correct for differences in sequencing depths (library size),
 RFlomics proposes one method for normalization, <strong>“TMM
 method”</strong> from edgeR package.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># dge &lt;- edgeR::DGEList(counts=counts, group=groups)</span></span>
 <span><span class="co"># dge &lt;- edgeR::calcNormFactors(dge, method="TMM")</span></span></code></pre></div>
 <p>For RNAses data the QC graphs are:</p>
