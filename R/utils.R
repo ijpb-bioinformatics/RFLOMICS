@@ -167,53 +167,40 @@ GetDesignFromNames <- function(samples_name){
 #' not appear in interaction terms with biological factor. Model formulae stop in
 #' second order interaction.
 #'
-#' @param Factors.Name a vector of character giving the name of the factors
-#' @param Factors.Type a vector of character giving the type of effect for the factor ("Bio" or "batch")
+#' @param FacBio a vector of character giving the name of the bio factors.
+#' @param FacBatch a vector of character giving the name of the batch factors.
 #'
 #' @return a named list of object of class formula
 #' @export
 #' @noRd
 #' @examples
 #'
-#' GetModelFormulae(Factors.Name=c("Genotype","Temperature"),Factors.Type=c("Bio","Bio"))
-#' GetModelFormulae(Factors.Name=c("Genotype","Temperature","Replicat"),Factors.Type=c("Bio","Bio","batch"))
-#' GetModelFormulae(Factors.Name=c("Genotype","Temperature","Environment"),Factors.Type=c("Bio","Bio","Bio"))
-#' GetModelFormulae(Factors.Name=c("Genotype","Temperature","Environment","Replicat"),Factors.Type=c("Bio","Bio","Bio","batch"))
+#' GetModelFormulae(FacBio=c("Genotype","Temperature","Environment"), FacBatch=c("Replicat"))
+#' GetModelFormulae(FacBio=c("Genotype","Temperature"), FacBatch=c("Replicat"))
+#' GetModelFormulae(FacBio=c("Genotype"), FacBatch=c("Replicat"))
 #'
-#'
-GetModelFormulae <- function(Factors.Name, Factors.Type){
+#' GetModelFormulae(FacBio=c("Genotype","Temperature"), FacBatch=c("Replicat", "laboratory"))
+#' 
+GetModelFormulae <- function(FacBio=NULL, FacBatch=NULL){
 
   # Initialize
   formulae <- list()
 
-  # Verify that Type are in the list of two that are possible
-
-  if(! all(Factors.Type %in% c("Bio", "batch", "Meta"))) stop("Factors.Type must be either Bio or batch !")
-
-  #  Verify that the length of the two vectors are the same and that they are not null
-
-  if(! (length(Factors.Name) == length(Factors.Type) && ! is.null(Factors.Name))) stop("Factors.Type and Factors.Name do not have the same length or one of them is null")
-
-  FacBio <- Factors.Name[which(Factors.Type == "Bio")]
-  FacBatch <- Factors.Name[which(Factors.Type == "batch")]
+  # Verify that nbr of bio factors are between 1 and 3.
+  if(!length(FacBio) %in% 1:3) stop(".... !")
+  
+  # Verify that nbr of batch factors are between 1 and 2.
+  if(!length(FacBatch) %in% 1:2) stop(".... !")
 
   nFac <- length(FacBio)
 
-  getF <- function(x,FacBatch){
-    update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+","(",paste(x,collapse="+"),")^2")),new=~.)
-  }
-  getF2 <- function(x,FacBatch){
-    update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+",paste(x,collapse="+"))),new=~.)
-  }
-
-  for(i in 1:nFac){
-
-    formulae <- c(formulae, apply(combn(FacBio,i),2,getF, FacBatch=FacBatch))
-    if(i !=1){
-      formulae <- c(formulae, apply(combn(FacBio,i),2,getF2, FacBatch=FacBatch))
-    }
-  }
-
+  # get formulae without interation
+  formulae[[1]] <- update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+",paste(FacBio,collapse="+"))),new=~.)
+  
+  # get formulae with interation if nbr of FacBio > 1
+  if(nFac !=1)
+    formulae[[2]] <- update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+","(",paste(FacBio,collapse="+"),")^2")),new=~.)
+  
   formulae <- unlist(formulae)
   names(formulae) <- unlist(as.character(formulae))
 

@@ -32,12 +32,16 @@ GLM_model <- function(input, output, session, rea.values){
 
     # Construct the form to select the model
     output$SetModelFormula <- renderUI({
-
+      
       #if (rea.values$model == FALSE) return()
 
       validate(
         need(rea.values$loadData != FALSE, "Please load data")
       )
+      
+      FacBio <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type == "Bio"])
+      FacBatch <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type == "batch"])
+      
 
       box(status = "warning", width = 12, solidHeader = TRUE, title = "Select a model formulae",
 
@@ -46,8 +50,7 @@ GLM_model <- function(input, output, session, rea.values){
            in interaction terms."),
 
           selectInput( inputId = session$ns("model.formulae"), label = "",
-                       choices = rev(names(GetModelFormulae(Factors.Name=names(session$userData$FlomicsMultiAssay@metadata$design@List.Factors),
-                                                            Factors.Type=session$userData$FlomicsMultiAssay@metadata$design@Factors.Type))),
+                       choices = rev(names(GetModelFormulae(FacBio=FacBio, FacBatch=FacBatch))),
                        selectize=FALSE,size=5),
           actionButton(session$ns("validModelFormula"),"Valid model choice")
       )
