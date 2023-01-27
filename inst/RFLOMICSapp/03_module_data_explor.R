@@ -54,6 +54,8 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
                                      message = "")
   
   
+  toto <<- session$userData$FlomicsMultiAssay
+  
   ### sample list  ###
   output$selectSamplesUI <- renderUI({
 
@@ -155,9 +157,15 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   
   #### PCA axis for plot
   # update/adapt PCA axis
-  callModule(UpdateRadioButtons, "rawData")
+  callModule(UpdateRadioButtons, "factors")
   # select factors for color PCA plot
-  callModule(RadioButtonsCondition, "rawData")
+  callModule(RadioButtonsCondition, "factors", typeFact = c("Bio", "batch"))
+  
+  #### PCA for metadata axis for plot
+  # update/adapt PCA axis
+  callModule(UpdateRadioButtons, "meta")
+  # select factors for color PCA plot
+  callModule(RadioButtonsCondition, "meta", typeFact = c("Meta"))
 
   #### dataset filterin summary
   output$filtSummary1UI <- renderUI({
@@ -196,7 +204,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
     if(rea.values$model == FALSE) return()
 
-
     #if(is.null(FlomicsMultiAssay)) return()
 
     tabPanel.default.list <- list(
@@ -218,13 +225,24 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
                  column(width = 12,  plotOutput(session$ns("raw.PCAcoord"))),
                  hr(),
                  fluidRow(
-                   column(width = 6, RadioButtonsConditionUI(session$ns("rawData"))),
-                   column(width = 6, UpdateRadioButtonsUI(session$ns("rawData")))
+                   column(width = 6, RadioButtonsConditionUI(session$ns("factors"))),
+                   column(width = 6, UpdateRadioButtonsUI(session$ns("factors")))
                  ),
                  hr(),
                  column(width = 12, plotOutput(session$ns("norm.PCAcoord")))#,
                  # tags$br(),
                  # column(width = 12, actionButton(session$ns("screenshotPCA_QC"),"Screenshot"))
+        ),
+        tabPanel("PCA for metadata",
+                 tags$br(),
+                 column(width = 12,  plotOutput(session$ns("raw.PCA.meta"))),
+                 hr(),
+                 fluidRow(
+                   column(width = 6, RadioButtonsConditionUI(session$ns("meta"))),
+                   column(width = 6, UpdateRadioButtonsUI(session$ns("meta")))
+                 ),
+                 hr(),
+                 column(width = 12, plotOutput(session$ns("norm.PCA.meta")))
         )
         # ,
         # tabPanel("Principal component analysis (2/2)",
@@ -292,9 +310,9 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   # PCA plot
   output$raw.PCAcoord <- renderPlot({
     
-    PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
-    PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])
-    condGroup <- input$`rawData-condColorSelect`[1]
+    PC1.value <- as.numeric(input$`factors-Firstaxis`[1])
+    PC2.value <- as.numeric(input$`factors-Secondaxis`[1])
+    condGroup <- input$`factors-condColorSelect`[1]
     
     RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[dataset]], PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup)
     
@@ -302,13 +320,35 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   output$norm.PCAcoord <- renderPlot({
     if(rea.values[[dataset]]$process == FALSE) return()
 
-    PC1.value <- as.numeric(input$`rawData-Firstaxis`[1])
-    PC2.value <- as.numeric(input$`rawData-Secondaxis`[1])
-    condGroup <- input$`rawData-condColorSelect`[1]
+    PC1.value <- as.numeric(input$`factors-Firstaxis`[1])
+    PC2.value <- as.numeric(input$`factors-Secondaxis`[1])
+    condGroup <- input$`factors-condColorSelect`[1]
 
     RFLOMICS::plotPCA(local.rea.values$dataset.processed.SE, PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
 
   })
+  
+  # PCA meta plot
+  output$raw.PCA.meta <- renderPlot({
+    
+    PC1.value <- as.numeric(input$`meta-Firstaxis`[1])
+    PC2.value <- as.numeric(input$`meta-Secondaxis`[1])
+    condGroup <- input$`meta-condColorSelect`[1]
+    
+    RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[dataset]], PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup)
+    
+  })
+  output$norm.PCA.meta <- renderPlot({
+    if(rea.values[[dataset]]$process == FALSE) return()
+    
+    PC1.value <- as.numeric(input$`meta-Firstaxis`[1])
+    PC2.value <- as.numeric(input$`meta-Secondaxis`[1])
+    condGroup <- input$`meta-condColorSelect`[1]
+    
+    RFLOMICS::plotPCA(local.rea.values$dataset.processed.SE, PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
+    
+  })
+  
 
   #### run proprocessing : Normalisation/transformation, filtering...
   observeEvent(input$run, {
