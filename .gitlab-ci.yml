@@ -7,4 +7,4 @@ pages:
     paths:
     - public
  only:
-    - signle_omics_dev
+    - develop
