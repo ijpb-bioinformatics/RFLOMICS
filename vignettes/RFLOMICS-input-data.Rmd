@@ -48,7 +48,7 @@ The first file **(mandatory)** provide matrix-likes of abundance of omics data :
 ```{r RNAseq, output="asis"}
 
 geneCount.file <- file.path(path = path.package("RFLOMICS"), 
-                            file ="/ExamplesFiles/ecoseed/transcriptome2_ecoseed.txt")
+                            file ="/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")
 geneCount      <- read.table(file = geneCount.file, header = TRUE, row.names = 1, sep = "\t")
 
 DT::datatable(geneCount[1:10, 1:5])
