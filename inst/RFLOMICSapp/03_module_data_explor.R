@@ -232,17 +232,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
                  column(width = 12, plotOutput(session$ns("norm.PCAcoord")))#,
                  # tags$br(),
                  # column(width = 12, actionButton(session$ns("screenshotPCA_QC"),"Screenshot"))
-        ),
-        tabPanel("PCA for metadata",
-                 tags$br(),
-                 column(width = 12,  plotOutput(session$ns("raw.PCA.meta"))),
-                 hr(),
-                 fluidRow(
-                   column(width = 6, RadioButtonsConditionUI(session$ns("meta"))),
-                   column(width = 6, UpdateRadioButtonsUI(session$ns("meta")))
-                 ),
-                 hr(),
-                 column(width = 12, plotOutput(session$ns("norm.PCA.meta")))
         )
         # ,
         # tabPanel("Principal component analysis (2/2)",
@@ -270,6 +259,20 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
               tabPanel.list <- tabPanel.default.list
             }
     )
+    
+    if(any(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("Meta")))
+      tabPanel.list <- c(tabPanel.list,
+        list(tabPanel("PCA for metadata",
+               tags$br(),
+               column(width = 12,  plotOutput(session$ns("raw.PCA.meta"))),
+               hr(),
+               fluidRow(
+                 column(width = 6, RadioButtonsConditionUI(session$ns("meta"))),
+                 column(width = 6, UpdateRadioButtonsUI(session$ns("meta")))
+               ),
+               hr(),
+               column(width = 12, plotOutput(session$ns("norm.PCA.meta")))
+      )))
 
     # Exploratory of Biological and Technical variability
     box(width = 14, title = "Exploratory of Biological and Technical variability", 
