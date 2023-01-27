@@ -100,7 +100,7 @@ docker run -it -p 3838:3838 -v ${HOME}:/root --name='rflomics' --cpus 4 rflomics
 http://0.0.0.0:3838
 ```
 
-## [Vignettes](articles/RFLOMICS.html)
+### [Vignettes](https://flomics.pages.mia.inra.fr/rflomics/index.html)
 
 ## Contact and support
 [ijpb-bioinfo-team](mailto:ijpb-bioinfo-team@inrae.fr)
