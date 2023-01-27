@@ -1,7 +1,7 @@
 ##########################################
 # module 07 : MOFA
 ##########################################
-library(MOFA2) 
+
 
 MOFA_settingUI <- function(id){
   
@@ -118,9 +118,9 @@ MOFA_setting <- function(input, output, session, rea.values){
       ))
   })
   
-  
-  
   observeEvent(input$runMOFA, {
+    
+    library(MOFA2) 
     
     # TODO put everything into one metadata list slot
     # TODO reinitialize everything when the person runs mofa.

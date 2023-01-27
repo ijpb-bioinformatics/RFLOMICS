@@ -2,7 +2,7 @@
 # module 08 : mixOmics
 ##########################################
 
-library(mixOmics)
+
 MixOmics_settingUI <- function(id){
   
   #name space for id
@@ -129,6 +129,8 @@ MixOmics_setting <- function(input, output, session, rea.values){
   
   ## observe the button run mixOmics
   observeEvent(input$runMixOmics, {
+    
+    library(mixOmics)
     
     local.rea.values$runMixOmics   <- FALSE
     local.rea.values$preparedMixOmics  <- NULL

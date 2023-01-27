@@ -1,61 +1,69 @@
-# Packages
+# Bioconductor packages
 
 # if (!require("BiocManager", quietly = TRUE))
 #   install.packages("BiocManager")
 # 
-# pkgs_to_install <- c("S4Vectors", "MultiAssayExperiment","SummarizedExperiment",
-#                      "pheatmap","BiocParallel","ComplexHeatmap",
-#                      "edgeR","limma","coseq","EnhancedVolcano", "clusterProfiler", "pathview", "enrichplot", "AnnotationDbi")
+# pkgs <- c("S4Vectors", "MultiAssayExperiment","SummarizedExperiment", "pheatmap","BiocParallel","ComplexHeatmap", "edgeR","limma","coseq","EnhancedVolcano", "clusterProfiler", "pathview", "enrichplot", "AnnotationDbi")
+# pkgs.dataIntegration <- c("mixOmics", "MOFA2") 
+#
+# for (pkg in pkgs) {
 # 
-# for (pkgs in pkgs_to_install) {
+#   message(paste("looking for ", pkg))
 # 
-#   message(paste("looking for ", pkgs))
+#   if (!requireNamespace(pkg)) {
 # 
-#   if (!requireNamespace(pkgs)) {
-# 
-#     message(paste("     installing", pkgs))
-#     BiocManager::install(pkgs)
+#     message(paste("     installing", pkg))
+#     BiocManager::install(pkg)
 #   }
 # }
 
-
+# shiny
 library(shiny)
-library(plotly)
-library(DT)
+library(shinyWidgets)
+library(shinyBS)
+
+# data management
 library(magrittr)
-library(coseq)
-library(edgeR)
+library(SummarizedExperiment)
+library(MultiAssayExperiment)
 library(tibble)
 library(dplyr)
 library(tidyr)
 library(stringr)
 library(data.table)
-library(shinyWidgets)
-library(SummarizedExperiment)
-library(gridExtra)
-library(MultiAssayExperiment)
-library(FactoMineR)
-library(ggplot2)
 library(reshape2)
 library(kableExtra)
-library(shinyBS)
+library(DT)
 
-### MODULES ###
-
-#library(MOFA2) 
+# graph / table
+library(plotly)
+library(gridExtra)
+library(ggplot2)
 library(qgraph)
 library(colourpicker)  ## ADDED August 2022 button to select colors
-# library(circlize)
-library(RColorBrewer) 
-#library(mixOmics) 
-#library(clusterProfiler) ## ADDED 27/10/22
-#library(enrichplot)
-# library(org.At.tair.db) ## ADDED 27/10/22 # trouver un moyen de faire differemment. 
-#library(AnnotationDbi)
-library(pathview)
+library(circlize)
+library(RColorBrewer)
 library(grid)
 library(png)
 
+# stat
+library(edgeR)
+library(FactoMineR)
+library(coseq)
+
+# enrichment
+# library(clusterProfiler)
+# library(enrichplot)
+# library(org.At.tair.db)
+# library(AnnotationDbi)
+# library(pathview)
+
+# data integration
+# library(MOFA2) 
+# library(mixOmics)
+
+# #############
+# MODULES
 
 source("00_module_common.R")
 source("01_module_load_data.R")
@@ -64,14 +72,9 @@ source("03_module_data_explor.R")
 source("04_module_diff_analysis.R")
 source("05_module_coexp_analysis.R")
 source("06_module_annot_enrichment.R")
-
-#source("07_module_data_integration_MOFA.R")
-#source("08_module_data_integration_mixOmics.R") ### ADDED 15/09/2022
-
 source("06_module_annot_enrichment_clusterProf.R")
-#source("07_module_data_integration_MOFA.R")
-#source("08_module_data_integration_mixOmics.R")
-
+source("07_module_data_integration_MOFA.R")
+source("08_module_data_integration_mixOmics.R") ### ADDED 15/09/2022
 source("coverPage.R")
 
 #enableBookmarking(store = "server")

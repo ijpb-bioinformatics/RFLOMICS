@@ -1,8 +1,4 @@
 
-library(AnnotationDbi)
-library(pathview)
-library(clusterProfiler)
-library(enrichplot)
 
 AnnotationEnrichmentClusterProfUI <- function(id){
   
@@ -65,6 +61,14 @@ AnnotationEnrichmentClusterProfUI <- function(id){
 }
 
 AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea.values){
+  
+  
+  library(clusterProfiler)
+  library(pathview)
+  library(enrichplot)
+  
+  library(org.At.tair.db)
+  library(AnnotationDbi)
   
   local.rea.values <- reactiveValues(dataset.SE = NULL)
   local.rea.values$settings_ok <- NULL
