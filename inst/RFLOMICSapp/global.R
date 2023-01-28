@@ -1,21 +1,3 @@
-# Bioconductor packages
-
-# if (!require("BiocManager", quietly = TRUE))
-#   install.packages("BiocManager")
-# 
-# pkgs <- c("S4Vectors", "MultiAssayExperiment","SummarizedExperiment", "pheatmap","BiocParallel","ComplexHeatmap", "edgeR","limma","coseq","EnhancedVolcano", "clusterProfiler", "pathview", "enrichplot", "AnnotationDbi")
-# pkgs.dataIntegration <- c("mixOmics", "MOFA2") 
-#
-# for (pkg in pkgs) {
-# 
-#   message(paste("looking for ", pkg))
-# 
-#   if (!requireNamespace(pkg)) {
-# 
-#     message(paste("     installing", pkg))
-#     BiocManager::install(pkg)
-#   }
-# }
 
 # shiny
 library(shiny)

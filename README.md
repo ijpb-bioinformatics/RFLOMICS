@@ -41,20 +41,6 @@ git clone -branch  single_omics_dev  https://forgemia.inra.fr/flomics/rflomics.g
 cd rflomics
 ```
 
-#### Install required R bioconductor packages
-
-``` {.r}
-if (!require("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-
-pkgs_to_install <- c("S4Vectors","MultiAssayExperiment","SummarizedExperiment","edgeR","limma","coseq","EnhancedVolcano","pheatmap","BiocParallel","ComplexHeatmap","clusterProfiler","pathview","enrichplot","AnnotationDbi")
-
-for (pkgs in pkgs_to_install) {
-  if (!requireNamespace(pkgs)) {
-    BiocManager::install(pkgs)
-  }
-}
-```
 #### Install rflomics package
 
 ``` {.r}
