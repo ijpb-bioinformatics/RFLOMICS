@@ -316,6 +316,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                            label = 'Levels :',
                                            choices = c("none", names(session$userData$FlomicsMultiAssay@colData)),
                                            selected = "none", inline = TRUE)
+
+                    )
+
                      ),
                      ### PCA ###
                      tabPanel("PCA on DE",
@@ -352,9 +355,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                                                  choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
                                                                  selected = 2,
                                                                  inline = TRUE))
-                              ),
+                              )
                               
-                     )
+                    
                    ),
                )
         ),
