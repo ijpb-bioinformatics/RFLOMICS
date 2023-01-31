@@ -377,11 +377,7 @@ shinyServer(function(input, output, session) {
       validate({
         need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >= 2, message = "")
       })
-<<<<<<< HEAD
-      
-=======
 
->>>>>>> 28fdaa0 (Just some changes. Reactivated mixOmics and MOFA modules.)
       menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'), startExpanded = FALSE,selected = FALSE,
            menuSubItem(text = "Dataset analysis summary", tabName = "omicsSum" ),
            menuSubItem(text = "with MOFA", tabName = "withMOFA" ),
