@@ -280,7 +280,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                              }
                              else{NULL}
 
-                             ComplexHeatmap::Heatmap(m.def.filter.center, name = "normalized counts or XIC",
+                             ComplexHeatmap::Heatmap(m.def.filter.center, name = "normalized counts\nor XIC",
                                      show_row_names= ifelse( dim(m.def.filter.center)[1] > 50, FALSE, TRUE),
                                      row_names_gp = grid::gpar(fontsize = 8),
                                      column_names_gp = grid::gpar(fontsize = 12),
