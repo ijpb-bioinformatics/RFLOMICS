@@ -1906,14 +1906,14 @@ methods::setMethod(f="prepareForIntegration",
                      # method = "MixOmics"
 
                      # Checking for batch effects
-                     cat("Checking for Batch effects\n")
+                     print("=> Checking for Batch effects")
                      correct_batch <- FALSE
                      if(any(object@metadata$design@Factors.Type=="batch")){
                        correct_batch <- TRUE
                        colBatch <- names(object@metadata$design@Factors.Type)[object@metadata$design@Factors.Type=="batch"]
-                       cat(paste0("Correct for Batch: ", paste(colBatch, collapse = " "), "\n"))
+                       print(paste0("=> Correction for Batch: ", paste(colBatch, collapse = " ")))
                      }else{
-                       cat("No batch effect found \n")
+                       print("=> No batch effect found")
                      }
 
                      object@ExperimentList <- object@ExperimentList[grep("filtred", names(object@ExperimentList))]
@@ -2034,16 +2034,19 @@ methods::setMethod(f="run_MOFA_analysis",
 ######################## INTEGRATION USING MixOMICS ########################
 
 #' @title run_MixOmics_analysis
-#' @description TODO
-#' @param object TODO
-#' @param scale_views TODO
-#' @param selectedResponse TODO
-#' @param ncomp TODO
-#' @param link_dataset TODO
-#' @param link_response TODO
-#' @param sparsity TODO
-#' @param cases_to_try TODO
-#' @return TODO
+#' @description Run a mixOmics analysis. Given the specification of the user (type of response, if response there is, multi block or not) 
+#'  the function will determine which mixOmics function to use. Please see mixOmics manual or website for more information.
+#' @param object list of blocks (matrices) with the same samples (rows)
+#' @param scale_views Boolean. Do the matrices have to be scaled? Is used inside the mixOmics function.
+#' @param selectedResponse Default is NULL (pls functions). The response, can be a matrix or a single factor (discriminant analysis is set in this case).
+#' @param ncomp Number of component to be computed.  
+#' @param link_dataset Numeric between 0 and 1. Only used for multi block analysis. Indicates the correlation to be considered between the matrices. 
+#'        It impacts the weights of the features, hence the feature selection. Please see mixOmics user's guide for better explaination.
+#' @param link_response Numeric between 0 and 1. Indicates the correlation to be considered between the matrices and the response matrix. 
+#'        It impacts the weights of the features, hence the feature selection. Please see mixOmics user's guide for better explaination.
+#' @param sparsity Boolean. Indicates if there is a feature selection purpose. If TRUE, functions like spls(da), block.spls(da) will be used.
+#' @param cases_to_try If sparsity is TRUE, indicates the number of cases to try for the feature selection. The best outcome, as computed by tuning function, will be displayed.
+#' @return A mixOmics result.
 #' @export
 #' @exportMethod run_MixOmics_analysis
 #' @examples
@@ -2072,8 +2075,6 @@ methods::setMethod(f="run_MixOmics_analysis",
                        column_to_rownames(var = "rowNam") %>%
                        dplyr::select(all_of(selectedResponse))
 
-                     # Y <- data.frame(nutrimouse$diet, nutrimouse$genotype, nutrimouse$lipid$`C14.0`)
-                     # rownames(Y) = paste("Row", 1:nrow(Y))
                      # Is this a discriminant analysis?
                      if(ncol(Y) == 1 && is.factor(Y[,1])){
                        dis_anal <- TRUE

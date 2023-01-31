@@ -58,7 +58,7 @@ MOFA_setting <- function(input, output, session, rea.values){
     tagList(
       
       ## Input parameters
-      box(title = span(tagList(icon("sliders-h"), "  ", "Setting")), width = 14, status = "warning",
+      box(title = span(tagList(icon("sliders"), "  ", "Setting")), width = 14, status = "warning",
           
           # Select lists of dataset to integrat
           fluidRow(
@@ -119,11 +119,20 @@ MOFA_setting <- function(input, output, session, rea.values){
   })
   
   observeEvent(input$runMOFA, {
-    
+
     library(MOFA2) 
     
     # TODO put everything into one metadata list slot
     # TODO reinitialize everything when the person runs mofa.
+
+    #---- progress bar ----#
+    progress <- shiny::Progress$new()
+    progress$set(message = "Run MOFA2", value = 0)
+    on.exit(progress$close())
+    progress$inc(1/10, detail = "in progress...")
+    #----------------------#
+    
+    print("# 7- MOFA Analysis")
     
     local.rea.values$untrainedMOFA <- NULL # reactive ? # ADD 23/06
     local.rea.values$runMOFA   <- FALSE
@@ -132,11 +141,15 @@ MOFA_setting <- function(input, output, session, rea.values){
     local.rea.values$preparedMOFA <- NULL
     local.rea.values$listResMOFA <- NULL
     
-    session$userData$FlomicsMultiAssay@metadata[["MOFA_selected_contrasts"]] <<- NULL
-    session$userData$FlomicsMultiAssay@metadata[["MOFA_selected_filter"]] <<- NULL
-    session$userData$FlomicsMultiAssay@metadata[["MOFA_untrained"]] <<- NULL
-    session$userData$FlomicsMultiAssay@metadata[["MOFA_warnings"]] <<- NULL
-    session$userData$FlomicsMultiAssay@metadata[["MOFA_results"]] <<- NULL
+    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_selected_contrasts"]] <- NULL
+    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_selected_filter"]] <- NULL
+    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_untrained"]] <- NULL
+    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_warnings"]] <- NULL
+    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_results"]] <- NULL
+    
+    #---- progress bar ----#
+    progress$inc(1/10, detail = paste("Checks ", 10, "%", sep=""))
+    #----------------------#
     
     # check nbr dataset to integrate
     # if less then 2 -> error message
@@ -157,16 +170,21 @@ MOFA_setting <- function(input, output, session, rea.values){
       need(length(input$selectedContrast) != 0, message="Select at least one contast!")
     })
     
-    # run MOFA
-    # print(input$selectedData)
+    #---- progress bar ----#
+    progress$inc(1/10, detail = paste("Preparing object ", 20, "%", sep = ""))
+    #----------------------#
     
     local.rea.values$preparedMOFA <- prepareForIntegration(session$userData$FlomicsMultiAssay,
-                                                 omicsToIntegrate = input$selectedData,
-                                                 rnaSeq_transfo = input$RNAseqTransfo,
-                                                 choice = "DE", 
-                                                 contrasts_names = input$selectedContrast,
-                                                 type = input$filtMode,
-                                                 group = NULL, method = "MOFA")
+                                                           omicsToIntegrate = input$selectedData,
+                                                           rnaSeq_transfo = input$RNAseqTransfo,
+                                                           choice = "DE", 
+                                                           contrasts_names = input$selectedContrast,
+                                                           type = input$filtMode,
+                                                           group = NULL, method = "MOFA")
+    
+    #---- progress bar ----#
+    progress$inc(1/10, detail = paste("Running MOFA ", 30, "%", sep = ""))
+    #----------------------#
     
     local.rea.values$listResMOFA <- run_MOFA_analysis(local.rea.values$preparedMOFA, 
                                                       scale_views = as.logical(input$scaleViews),
@@ -191,13 +209,20 @@ MOFA_setting <- function(input, output, session, rea.values){
     # output$warnings <- renderText({local.rea.values$warnings})
     #### End of catchning warnings.
     
-    session$userData$FlomicsMultiAssay@metadata[["MOFA_selected_contrasts"]] <- input$selectedContrast
-    session$userData$FlomicsMultiAssay@metadata[["MOFA_selected_filter"]] <- input$filtMode
-    session$userData$FlomicsMultiAssay@metadata[["MOFA_untrained"]] <- local.rea.values$untrainedMOFA
-    session$userData$FlomicsMultiAssay@metadata[["MOFA_warnings"]] <- local.rea.values$warnings
-    session$userData$FlomicsMultiAssay@metadata[["MOFA_results"]] <- local.rea.values$resMOFA
+    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_selected_contrasts"]] <- input$selectedContrast
+    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_selected_filter"]] <- input$filtMode
+    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_untrained"]] <- local.rea.values$untrainedMOFA
+    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_warnings"]] <- local.rea.values$warnings
+    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_results"]] <- local.rea.values$resMOFA
+    
+    FlomicsMultiAssay <<- session$userData$FlomicsMultiAssay
+    save(FlomicsMultiAssay, file = "/home/ahulot/Documents/INRAE/Projets/rflomics/inst/ExamplesFiles/Flomics.MAE_221130.RData") # TODO delete
     
     local.rea.values$runMOFA   <- TRUE
+    
+    #---- progress bar ----#
+    progress$inc(1, detail = paste("Finished ", 100,"%", sep = ""))
+    #----------------------#
     
   }, ignoreInit = TRUE)
   
@@ -449,7 +474,6 @@ MOFA_setting <- function(input, output, session, rea.values){
           tabPanel("Network",
                    
                    fluidRow(# buttons - choices for network
-                     # p("Work in progress :)"), 
                      
                      column(1, numericInput(inputId = session$ns("factor_choice_network"),
                                             label = "Factor:",
@@ -467,7 +491,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                                             label = "Minimum absolute \n correlation to display:",
                                             min = 0.05,
                                             max = 1,
-                                            value = 0.5, 
+                                            value = 0.75, 
                                             step = 0.05
                      )),
                      column(2, radioButtons(inputId = session$ns("network_layout"),
@@ -506,88 +530,90 @@ MOFA_setting <- function(input, output, session, rea.values){
                    fluidRow(
                      column(12,
                             renderPlot({
-                              # load("inst/ExamplesFiles/FlomicsMultiAssay.RData")
+                              # TODO delete
+                              # # load("inst/ExamplesFiles/FlomicsMultiAssay.RData")
+                              # load("inst/ExamplesFiles/Flomics.MAE_221130.RData")
                               # local.rea.values <- list() ; input <- list()
-                              # local.rea.values$resMOFA <- FlomicsMultiAssay@metadata$MOFA_results
-                              # input$factor_choice_network <- 1
+                              # local.rea.values$resMOFA <- FlomicsMultiAssay@metadata$MOFA$MOFA_results
+                              # input$factor_choice_network <- 2
                               # input$abs_weight_network <- 0.5
                               # input$network_layout <- "Circle"
                               # input$abs_min_cor_network <- 0.5
                               # input$posCol <- "red"
                               # input$negCol <- "green"
-                              # input$colors_proteomics.set1.filtred <- brewer.pal(5, "Blues")
-                              # input$colors_metabolomics.set2.filtred <- brewer.pal(5, "Oranges")
-                              
+                              # # input$colors_proteomics.set1.filtred <- RColorBrewer::brewer.pal(5, "Blues")
+                              # # input$colors_metabolomics.set2.filtred <- RColorBrewer::brewer.pal(5, "Oranges")
+                              # input$colors_RNAseq.set1.filtred <- RColorBrewer::brewer.pal(5, "Blues")
+                              # input$colors_proteomics.set2.filtred <- RColorBrewer::brewer.pal(5, "Oranges")
+                              # input$colors_metabolomics.set3.filtred <- RColorBrewer::brewer.pal(5, "Purples")
+                              # TODO end delete
                               
                               # Correlation matrix is done on all ZW, not on the selected factor. 
-                              data_reconst_list <- lapply(get_weights(local.rea.values$resMOFA), FUN = function(mat){
-                                get_factors(local.rea.values$resMOFA)$group1 %*% t(mat)})
+                              data_reconst_list <- lapply(MOFA2::get_weights(local.rea.values$resMOFA), FUN = function(mat){
+                                MOFA2::get_factors(local.rea.values$resMOFA)$group1 %*% t(mat)})
                               data_reconst <- do.call(cbind, data_reconst_list)
                               cor_mat <- stats::cor(data_reconst)
                               
-                              features_metadata <- do.call(rbind, lapply(1:length(get_weights(local.rea.values$resMOFA)), FUN = function(i){
-                                # mat_weights <- data.frame(apply(get_weights(local.rea.values$resMOFA)[[i]], 2, FUN = function(vect) vect/max(vect)))
-                                mat_weights <- data.frame(get_weights(local.rea.values$resMOFA, scale = TRUE)[[i]])
-                                mat_weights$Table <- names(get_weights(local.rea.values$resMOFA))[i]
+                              features_metadata <- do.call(rbind, lapply(1:length(MOFA2::get_weights(local.rea.values$resMOFA)), FUN = function(i){
+                                mat_weights <- data.frame(MOFA2::get_weights(local.rea.values$resMOFA, scale = TRUE)[[i]])
+                                mat_weights$Table <- names(MOFA2::get_weights(local.rea.values$resMOFA))[i]
                                 return(mat_weights)
                               }))
                               
                               factor_selected <- paste0("Factor", input$factor_choice_network)
                               
                               feature_filtered <- features_metadata %>% 
-                                rownames_to_column("EntityName") %>%
-                                mutate(F_selected = abs(get(factor_selected))) %>% 
-                                arrange(desc(abs(F_selected))) %>% 
-                                group_by(Table) %>% 
-                                filter(abs(F_selected)>input$abs_weight_network)
+                                tibble::rownames_to_column("EntityName") %>%
+                                dplyr::mutate(F_selected = abs(get(factor_selected))) %>% 
+                                dplyr::arrange(desc(abs(F_selected))) %>% 
+                                dplyr::group_by(Table) %>% 
+                                dplyr::filter(abs(F_selected)>input$abs_weight_network)
                               
-                              # feature_filtered$Color <- cut(feature_filtered$F_selected, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1))
-                              # feature_filtered$Color2 <- apply(feature_filtered, 1, FUN = function())
-                              
-                              feature_filtered <- feature_filtered %>% group_by(Table) %>% 
-                                mutate(Color = cut(F_selected, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1))) %>%
-                                mutate(Color2 = input[[paste0("colors_", unique(Table))]]) %>%
-                                mutate(Color3 = unlist(input[[paste0("colors_", unique(Table))]])[as.numeric(Color)])
-                              
-                              feature_filtered <<- feature_filtered
-                              save(feature_filtered, file = "feature_filtered.RData")
-                              
-                              layout_arg <- tolower(input$network_layout)
-                              if(tolower(layout_arg) == tolower("Circle + omics")){
-                                layout_arg <- "groups"
+                              if(nrow(feature_filtered)>0){
+                                feature_filtered <- feature_filtered %>% dplyr::group_by(Table) %>%
+                                  dplyr::mutate(Color = cut(F_selected, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)))
+                                feature_filtered$Color2 <- sapply(1:nrow(feature_filtered), FUN = function(i)  input[[paste0("colors_", feature_filtered$Table[i])]][as.numeric(feature_filtered$Color[i])])
+                                
+                                # Layout
+                                layout_arg <- tolower(input$network_layout)
+                                if(tolower(layout_arg) == tolower("Circle + omics")){
+                                  layout_arg <- "groups"
+                                }
+                                
+                                # Network main graph
+                                cor_display <- cor_mat[rownames(cor_mat) %in% feature_filtered$EntityName, colnames(cor_mat)%in% feature_filtered$EntityName]
+                                qgraph_plot <- qgraph::qgraph(cor_display, minimum = input$abs_min_cor_network, 
+                                                      cut = 0,
+                                                      shape = "rectangle", labels = rownames(cor_display), vsize2 = 2, 
+                                                      vsize = sapply(rownames(cor_display), nchar)*1.1,  layout = layout_arg,
+                                                      esize = 2,
+                                                      groups = gsub("[.]filtred", "", features_metadata$Table[match(rownames(cor_display), rownames(features_metadata))]),
+                                                      posCol = input$posCol, negCol = input$negCol, 
+                                                      details = FALSE,  legend = FALSE,
+                                                      color = feature_filtered$Color2)
+                                qgraph_plot <- recordPlot()
+                                
+                                # Legend
+                                legend_matrix <- do.call("rbind", lapply(MOFA2::views_names(local.rea.values$resMOFA), FUN = function(nam) input[[paste0("colors_", nam)]]))
+                                colnames(legend_matrix) <- c("(0,0.2]", "(0.2,0.4]", "(0.4,0.6]", "(0.6,0.8]", "(0.8, 1]")
+                                rownames(legend_matrix) <- gsub("[.]filtred|colors_", "", MOFA2::views_names(local.rea.values$resMOFA))
+                                legend.reshape <- reshape2::melt(legend_matrix)
+                                
+                                gg.legend <-  ggplot2::ggplot(legend.reshape, ggplot2::aes(x = Var2, y = Var1)) + 
+                                  ggplot2::geom_tile(fill = legend.reshape$value) + xlab("") + ylab("") + 
+                                  theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(), 
+                                                     axis.ticks.y = element_blank(),
+                                                     # axis.text.y = element_blank(),
+                                                     axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+                                
+                                gg.legend <- ggpubr::ggarrange(gg.legend, nrow = 3, ncol = 1) 
+                                
+                                # Actual plotting
+                                ggpubr::ggarrange(plotlist = list(qgraph_plot, gg.legend), nrow = 1, ncol = 2, widths = c(3, 1))
+                              }else{
+                                renderText({print("There is nothing to plot. Please try to lower the absolute weight, the correlation threshold or change the factor.")})
                               }
-                              
-                              # transparency_vect <- 155+100*abs(feature_filtered[,colnames(feature_filtered) == factor_selected]) # doesn't work
-                              # scores_vect <- cut(abs(unlist(feature_filtered[,colnames(feature_filtered) == factor_selected])), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c(1, 2, 3, 4))
-                              
-                              
-                              cor_display <- cor_mat[rownames(cor_mat) %in% feature_filtered$EntityName, colnames(cor_mat)%in% feature_filtered$EntityName]
-                              qgraph_plot <- qgraph(cor_display, minimum = input$abs_min_cor_network, 
-                                                    shape = "rectangle", labels = rownames(cor_display), vsize2 = 2, 
-                                                    vsize = sapply(rownames(cor_display), nchar)*1.1, esize = 2, layout = layout_arg,
-                                                    groups = gsub("[.]filtred", "", features_metadata$Table[match(rownames(cor_display), rownames(features_metadata))]),
-                                                    posCol = input$posCol, negCol = input$negCol, details = FALSE,  legend = FALSE,
-                                                    color = feature_filtered$Color3)
-                              qgraph_plot <- recordPlot()
-                              
-                              # legend_matrix = do.call("rbind", input[grep("colors", names(input))])
-                              
-                              
-                              
-                              legend_matrix <- do.call("rbind", lapply(views_names(local.rea.values$resMOFA), FUN = function(nam) input[[paste0("colors_", nam)]]))
-                              colnames(legend_matrix) <- c("(0,0.2]", "(0.2,0.4]", "(0.4,0.6]", "(0.6,0.8]", "(0.8, 1]")
-                              rownames(legend_matrix) <- gsub("[.]filtred|colors_", "", rownames(legend_matrix))
-                              legend.reshape <- reshape2::melt(legend_matrix)
-                              
-                              gg.legend <-  ggplot(legend.reshape, aes(x = Var2, y = Var1)) + 
-                                geom_tile(fill = legend.reshape$value) + xlab("") + ylab("") + 
-                                theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(), axis.ticks=element_blank())
-                              
-                              # Heatmap(legend_matrix, col = legend_matrix, cluster_columns = FALSE, cluster_rows = FALSE, column_names_rot = 0, column_order = 1:5,
-                              #         column_names_centered = TRUE, column_names_side = "top", show_heatmap_legend = FALSE)
-                              
-                              gg.legend <- ggpubr::ggarrange(gg.legend, nrow = 3, ncol = 1) 
-                              ggpubr::ggarrange(plotlist = list(qgraph_plot, gg.legend), nrow = 1, ncol = 2, widths = c(3, 1))
+                            
                               
                             }) # renderplot
                      )# column

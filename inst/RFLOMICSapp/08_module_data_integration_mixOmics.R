@@ -42,7 +42,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
       
       column(width = 12,
              ## Input parameters (For blocks/X)
-             box(title = span(tagList(icon("sliders-h"), "  ", "Setting Blocks")), width = 12, status = "warning",
+             box(title = span(tagList(icon("sliders"), "  ", "Setting Blocks")), width = 12, status = "warning",
                  
                  # Select lists of dataset to integrate
                  fluidRow(
@@ -85,19 +85,19 @@ MixOmics_setting <- function(input, output, session, rea.values){
                                       selected = "limma (voom)")))
                  
              ),
-             box(title = span(tagList(icon("sliders-h"), "  ", "Settings for analysis")), width = 12, status = "warning",
+             box(title = span(tagList(icon("sliders"), "  ", "Settings for analysis")), width = 12, status = "warning",
                  
                  fluidRow(
                    column(12,
-                          column(5, checkboxInput(inputId = session$ns("scale_views"), label = "Scale Datasets", value = FALSE, width = NULL)),
-                          column(5, checkboxInput(inputId = session$ns("sparsity"), label = "Sparse analysis", value = FALSE, width = NULL)),
-                          numericInput(inputId = session$ns("ncomp"), label = "Number of component", value = 2, min = 1, max= 5),
-                          numericInput(inputId = session$ns("cases_to_try"), label = "Tuning cases", value = 2, min = 1, max= 5),
-                          numericInput(inputId = session$ns("link_datasets"), label = "Link between datasets", value = 1, min = 0, max= 1),
-                          numericInput(inputId = session$ns("link_response"), label = "Link to response", value = 1, min = 0, max= 1)
+                          column(6, checkboxInput(inputId = session$ns("scale_views"), label = "Scale Datasets", value = FALSE, width = NULL)),
+                          column(6, checkboxInput(inputId = session$ns("sparsity"), label = "Sparse analysis", value = FALSE, width = NULL)),
+                          column(6, numericInput(inputId = session$ns("ncomp"), label = "Components", value = 2, min = 1, max= 5)),
+                          column(6, numericInput(inputId = session$ns("cases_to_try"), label = "Tuning cases", value = 2, min = 1, max= 5)),
+                          column(6, numericInput(inputId = session$ns("link_datasets"), label = "Link between datasets", value = 1, min = 0, max= 1)),
+                          column(6, numericInput(inputId = session$ns("link_response"), label = "Link to response", value = 1, min = 0, max= 1))
                    ))
              ),
-             box(title = span(tagList(icon("sliders-h"), "  ", "Response Variables")), width = 12, status = "warning",
+             box(title = span(tagList(icon("sliders"), "  ", "Response Variables")), width = 12, status = "warning",
                  
                  # Select lists of dataset to integrate
                  fluidRow(
@@ -117,9 +117,8 @@ MixOmics_setting <- function(input, output, session, rea.values){
                             # options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                             selected = colnames(colData(session$userData$FlomicsMultiAssay))[1]))
                  ),
-                 box(title = span(tagList(icon("sliders-h"), "  ", "Run Analysis")), width = 12, status = "warning",
-                     fluidRow(
-                       column(12, actionButton(session$ns("runMixOmics"),"Run Analysis")))
+                 fluidRow(
+                   column(12, actionButton(session$ns("runMixOmics"),"Run Analysis"))
                  )
              ),
       ) # column 3
@@ -129,54 +128,33 @@ MixOmics_setting <- function(input, output, session, rea.values){
   
   ## observe the button run mixOmics
   observeEvent(input$runMixOmics, {
-    
+
     library(mixOmics)
+
+    #---- progress bar ----#
+    progress <- shiny::Progress$new()
+    progress$set(message = "Run MixOmics", value = 0)
+    on.exit(progress$close())
+    progress$inc(1/10, detail = "in progress...")
+    #----------------------#
+    
+    print("# 8- MixOmics Analysis")
     
     local.rea.values$runMixOmics   <- FALSE
     local.rea.values$preparedMixOmics  <- NULL
     local.rea.values$resMixOmics <- NULL
-    local.rea.values$dis_anal <- FALSE
-    local.rea.values$Y <- NULL
-    local.rea.values$Design_mat <- NULL
-    local.rea.values$keepX <- NULL
-    local.rea.values$tuning_res <- NULL
-    # local.rea.values$multipleBlocks <- FALSE # TODO use ?
-    # local.rea.values$tuning <- FALSE # TODO use ?
+    session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_tuning_results"]] <- NULL
+    session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_results"]] <- NULL
     
+    #---- progress bar ----#
+    progress$inc(1/10, detail = paste("Checks ", 10, "%", sep=""))
+    #----------------------#
     
-    ### TESTS TO DELETE
-    # load("inst/ExamplesFiles/FlomicsMultiAssay.RData")
-    # preparedMixOmics <- prepareForIntegration(FlomicsMultiAssay,
-    #                                           omicsToIntegrate = c("proteomics.set1", "metabolomics.set2"),
-    #                                           rnaSeq_transfo = "",
-    #                                           choice = "DE",
-    #                                           contrasts_names = c("(temperatureLow - temperatureElevated) in mean",
-    #                                                               "(temperatureMedium - temperatureElevated) in mean"),
-    #                                           type = "union",
-    #                                           group = NULL,
-    #                                           method = "MixOmics")
+    # TODO missing checks in here !!
     
-    ## choice of function according to user selection
-    
-    # selectedResponse = c("temperature", "imbibition") # TODO DELETE
-    # Y = as.data.frame(preparedMixOmics$metadata) %>% dplyr::select(all_of(selectedResponse))  # TODO DELETE
-    
-    # local.rea.values <- list()
-    # input <- list()
-    # input$sparsity = TRUE
-    # input$Tuning = TRUE
-    # input$cases_to_try = 3
-    # input$ncomp = 2
-    # input$scale_views = TRUE
-    # input$link_datasets=1
-    # input$link_response = 1
-    # input$selectedResponse = c("temperature", "imbibition")
-    # # input$selectedResponse = c("temperature")
-    # local.rea.values$preparedMixOmics <- preparedMixOmics
-    # local.rea.values$Y = Y
-    
-    session$userData$FlomicsMultiAssay@metadata[["MixOmics_results"]] <<- NULL
-    session$userData$FlomicsMultiAssay@metadata[["MixOmics_tuning_results"]] <<- NULL
+    #---- progress bar ----#
+    progress$inc(1/10, detail = paste("Preparing object ", 20, "%", sep = ""))
+    #----------------------#
     
     # Prepare for MixOmics run  
     local.rea.values$preparedMixOmics <- prepareForIntegration(session$userData$FlomicsMultiAssay,
@@ -187,7 +165,9 @@ MixOmics_setting <- function(input, output, session, rea.values){
                                                                type = input$filtMode,
                                                                group = NULL,
                                                                method = "MixOmics")
-    
+    #---- progress bar ----#
+    progress$inc(1/10, detail = paste("Running MixOmics ", 30, "%", sep = ""))
+    #----------------------#
     
     # Run the analysis
     local.rea.values$MixOmics_res <- run_MixOmics_analysis(local.rea.values$preparedMixOmics,
@@ -201,17 +181,23 @@ MixOmics_setting <- function(input, output, session, rea.values){
     )
     
     # Store results
-    session$userData$FlomicsMultiAssay@metadata[["MixOmics_tuning_results"]] <<- local.rea.values$MixOmics_res$tuning_res
-    session$userData$FlomicsMultiAssay@metadata[["MixOmics_results"]] <<- local.rea.values$MixOmics_res$analysis_res
+    session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_tuning_results"]] <- local.rea.values$MixOmics_res$tuning_res
+    session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_results"]] <- local.rea.values$MixOmics_res$analysis_res
+    
+    FlomicsMultiAssay <<- session$userData$FlomicsMultiAssay
+    save(FlomicsMultiAssay, file = "/home/ahulot/Documents/INRAE/Projets/rflomics/inst/ExamplesFiles/Flomics.MAE_221130.RData") # TODO delete
     
     local.rea.values$runMixOmics <- TRUE
     
+    #---- progress bar ----#
+    progress$inc(1, detail = paste("Finished ", 100,"%", sep = ""))
+    #----------------------#
   })
   
   ## Output results
   output$MOResultViewUI <- renderUI({
     
-    if(local.rea.values$runMixOmics == FALSE) return()
+    if(!local.rea.values$runMixOmics) return()
     
     box(width=14, solidHeader = TRUE, status = "warning",
         title = "MixOmics results",
@@ -243,13 +229,15 @@ MixOmics_setting <- function(input, output, session, rea.values){
                      colnames(dat_explained) <- c("Dataset", "Component", "Percentage of explained variance")
                      dat_explained$`Percentage of explained variance` <- dat_explained$`Percentage of explained variance`*100
                      
-                     print(dat_explained)
+                     # print(dat_explained) # TODO delete
                      
                      dat_comb <- dat_explained %>% 
                        dplyr::group_by(Dataset) %>% 
                        dplyr::summarise("Cumulative Explained Variance" = sum(`Percentage of explained variance`))
                      
-                     print(dat_comb)
+                     # print(dat_comb) # TODO delete
+                     
+                     if(is(local.rea.values$MixOmics_res$analysis_res, "block.splsda")) dat_comb <- dat_comb %>% dplyr::filter(Dataset!="Y")
                      
                      ggplot2::ggplot(dat_comb, aes(x = Dataset, y = `Cumulative Explained Variance`)) +
                        geom_col() + 
@@ -265,10 +253,11 @@ MixOmics_setting <- function(input, output, session, rea.values){
                    })),
                    
                    column(6 , renderPlot({
-                     # local.rea.values$MixOmics_res$analysis_res = TCGA.block.splsda
                      dat_explained <- reshape2::melt(do.call("rbind", local.rea.values$MixOmics_res$analysis_res$prop_expl_var))
                      colnames(dat_explained) <- c("Dataset", "Component", "Percentage of explained variance")
                      dat_explained$`Percentage of explained variance` <- dat_explained$`Percentage of explained variance`*100
+                     
+                     if(is(local.rea.values$MixOmics_res$analysis_res, "block.splsda")) dat_explained <- dat_explained %>% dplyr::filter(Dataset!="Y")
                      
                      # Chunk of code to be cohesive with MOFA2::plot_explained_variance
                      ggplot2::ggplot(dat_explained, aes(x = Dataset, y = Component)) +
@@ -288,9 +277,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
           ),
           # ---- Tab panel Individuals ----
           tabPanel("Individuals",
-                   # TODO Rep.space ? Ne pas laisser le choix, je pense ....
-                   # TODO Le titre ?
-                   column(3,
+                   column(1,
                           checkboxInput(inputId = session$ns("ellipse_choice"), label = "Ellipses", value = FALSE, width = NULL),
                           numericInput(inputId = session$ns("ind_comp_choice_1"),
                                        label = "Comp x:",
@@ -303,15 +290,14 @@ MixOmics_setting <- function(input, output, session, rea.values){
                                        max =  input$ncomp,
                                        value = 2, step = 1)
                    ),
-                   column(9 , renderPlot(mixOmics::plotIndiv(local.rea.values$MixOmics_res$analysis_res, 
+                   column(11 , renderPlot(mixOmics::plotIndiv(local.rea.values$MixOmics_res$analysis_res, 
                                                              comp = c(input$ind_comp_choice_1, input$ind_comp_choice_2),
                                                              ellipse = input$ellipse_choice,
                                                              legend = TRUE)))
           ),
           # ---- Tab panel Features ----
           tabPanel("Features",
-                   # TODO Permettre la selection du block affiche ? Bof ?   
-                   column(3,
+                   column(1,
                           checkboxInput(inputId = session$ns("overlap"), label = "Overlap", value = FALSE, width = NULL),
                           numericInput(inputId = session$ns("var_comp_choice_1"),
                                        label = "Comp x:",
@@ -324,15 +310,14 @@ MixOmics_setting <- function(input, output, session, rea.values){
                                        max =  input$ncomp,
                                        value = 2, step = 1)
                    ),
-                   column(9 , renderPlot(mixOmics::plotVar(local.rea.values$MixOmics_res$analysis_res, 
-                                                           comp = c(input$var_comp_choice_1, input$var_comp_choice_2),
-                                                           overlap = input$overlap,
-                                                           legend = TRUE)))
+                   column(11 , renderPlot(mixOmics::plotVar(local.rea.values$MixOmics_res$analysis_res, 
+                                                            comp = c(input$var_comp_choice_1, input$var_comp_choice_2),
+                                                            overlap = input$overlap,
+                                                            legend = TRUE)))
           ),     
           # ---- Tab panel Loadings ----
           tabPanel("Loadings",
-                   # TODO Permettre la selection du block affiche ?
-                   column(3,
+                   column(1,
                           numericInput(inputId = session$ns("Load_comp_choice"),
                                        label = "Component:",
                                        min = 1,
@@ -344,9 +329,9 @@ MixOmics_setting <- function(input, output, session, rea.values){
                                        max =  max(sapply(local.rea.values$MixOmics_res$analysis_res$X, ncol)),
                                        value = 25, step = 1),
                    ),
-                   column(9 , renderPlot(mixOmics::plotLoadings(local.rea.values$MixOmics_res$analysis_res, 
-                                                                comp = input$Load_comp_choice,
-                                                                ndisplay = input$Load_ndisplay)))
+                   column(11 , renderPlot(mixOmics::plotLoadings(local.rea.values$MixOmics_res$analysis_res, 
+                                                                 comp = input$Load_comp_choice,
+                                                                 ndisplay = input$Load_ndisplay)))
           ),   
           # ---- Tab panel Tuning ----
           #   tabPanel("Tuning",
@@ -356,33 +341,38 @@ MixOmics_setting <- function(input, output, session, rea.values){
           tabPanel("Networks",
                    # TODO Prevoir bouton pour comp selectionnee
                    # Comp fonctionne plus ?!
-                   column(3, numericInput(inputId = session$ns("Network_cutoff"),
+                   column(1, numericInput(inputId = session$ns("Network_cutoff"),
                                           label = "Cutoff:",
                                           min = 0,
                                           max =  1,
-                                          value = 0.75, step = 0.05)),
-                   column(9 , renderPlot(mixOmics::network(mat = local.rea.values$MixOmics_res$analysis_res, 
-                                                           # comp = 1:2, 
-                                                           blocks = 1:length(input$selectedData),
-                                                           cutoff = input$Network_cutoff, 
-                                                           shape.node = c("rectangle", "rectangle"))))
+                                          value = 0.9, step = 0.05)),
+                   column(11 , renderPlot(mixOmics::network(mat = local.rea.values$MixOmics_res$analysis_res, 
+                                                            # comp = 1:2, 
+                                                            blocks = 1:length(input$selectedData),
+                                                            cutoff = input$Network_cutoff, 
+                                                            shape.node = rep("rectangle", length(input$selectedData)))))
           ), 
           # ---- Tab  Panel CircosPlot & cimPlot ----
-          # conditionalPanel(condition = "is(local.real.values$MixOmics_res, 'block.splsda')",
           tabPanel("CircosPlot",
-                   column(3, numericInput(inputId = session$ns("Circos_cutoff"),
+                   column(1, numericInput(inputId = session$ns("Circos_cutoff"),
                                           label = "Cutoff:",
                                           min = 0,
                                           max =  1,
-                                          value = 0.75, step = 0.05)),
-                   column(9, renderPlot(mixOmics::circosPlot(local.rea.values$MixOmics_res$analysis_res,
-                                                             cutoff = input$Circos_cutoff))),
+                                          value = 0.9, step = 0.05)),
+                   column(11, renderPlot(mixOmics::circosPlot(local.rea.values$MixOmics_res$analysis_res,
+                                                              cutoff = input$Circos_cutoff))),
           ),
           tabPanel("CimPlot",
-                   column(3,),
-                   column(9, renderPlot(mixOmics::cimDiablo(local.rea.values$MixOmics_res$analysis_res))),
+                   column(1,),
+                   column(11, 
+                          if(is(local.rea.values$MixOmics_res$analysis_res, "block.splsda")){
+                            print("=> Rendering cimPlot, be patient!")
+                            renderPlot(mixOmics::cimDiablo(local.rea.values$MixOmics_res$analysis_res))
+                          }else{
+                            renderText({print("This plot is only available for splarse multi-block discriminant analysis results.")})
+                          }
+                   ),
           ),
-          # )
         ))
     
   })
