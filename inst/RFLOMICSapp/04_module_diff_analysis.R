@@ -286,9 +286,11 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                   set.seed(10000) ; selectPal <- sample(rownames(RColorBrewer::brewer.pal.info),  size = ncol(df_annotation), replace = FALSE)
                                   
                                   color_list <- lapply(1:ncol(df_annotation), FUN = function(i){
-                                    col_vect <- RColorBrewer::brewer.pal(n = length(unique(df_annotation[,i])), name = selectPal[i]) 
-                                    names(col_vect) <- unique(df_annotation[,i])
-                                    col_vect
+                                    annot_vect <- unique(df_annotation[,i])
+                                    
+                                    col_vect <- RColorBrewer::brewer.pal(n = length(annot_vect), name = selectPal[i]) 
+                                    names(col_vect) <- annot_vect 
+                                    col_vect[!is.na(names(col_vect))] # RcolorBrewer::brewer.pal n is minimum 3, remove NA names if only 2 levels
                                   })
                                   names(color_list) <- colnames(df_annotation)
                                   
