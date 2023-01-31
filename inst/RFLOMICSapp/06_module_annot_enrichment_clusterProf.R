@@ -620,36 +620,48 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                 # ---- Tab Panel : only for KEGG, pathview : ----
                 tabPanel("Pathview results",
                          fluidRow(column(2,
-                                selectInput(
-                                  inputId = session$ns(paste0(listname, "-MAP.sel")), label = "Select map:", 
-                                  choices = sort(data[[1]]@result$ID[data[[1]]@result$p.adjust<input$pValue]), multiple = FALSE, selectize = FALSE,
-                                  size = 5
-                                ),
+                                         selectInput(
+                                           inputId = session$ns(paste0(listname, "-MAP.sel")), label = "Select map:", 
+                                           choices = sort(data[[1]]@result$ID[data[[1]]@result$p.adjust<input$pValue]), multiple = FALSE, selectize = FALSE,
+                                           size = 5
+                                         ),
                          ), ),
-                                
                          fluidRow(
-                         column(12,
-                                renderPlot({ 
+                           column(12,
+                                  renderUI({
+                                      if(input$dom.select == "KEGG"){
+                                        
+                                        # From the browseKEGG function: 
+                                        link_to_map <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?", 
+                                                              input[[paste0(listname, "-MAP.sel")]], 
+                                                              "/", 
+                                                              data[[1]][input[[paste0(listname, "-MAP.sel")]], "geneID"])
+                                      
+                                      a(href=link_to_map, "Link to interactive map online")
+                                    }
+                                  })),
+                           column(12,
                                   
-                                  if(input$dom.select == "KEGG"){
+                                  renderPlot({ 
                                     
-                                    see_pathview(gene.data = log2FC_vect, 
-                                                 pathway.id = input[[paste0(listname, "-MAP.sel")]],
-                                                 species = input$KEGG_org,
-                                                 gene.idtype = input$keytype,
-                                                 map.symbol = FALSE,
-                                                 same.layer = FALSE,
-                                                 low = list(gene = "blue"),
-                                                 mid = list(gene = "gray"),
-                                                 high = list(gene = "red"),
-                                                 na.col = "transparent"
-                                                 # cex = 1 # too much
-                                    )
-                                  }
-                                  
-                                }, res = 300, width = 1000, height = 1000),
-                         )
-                ),),   
+                                    if(input$dom.select == "KEGG"){
+                                      see_pathview(gene.data = log2FC_vect, 
+                                                   pathway.id = input[[paste0(listname, "-MAP.sel")]],
+                                                   species = input$KEGG_org,
+                                                   gene.idtype = input$keytype,
+                                                   map.symbol = FALSE,
+                                                   same.layer = FALSE,
+                                                   low = list(gene = "blue"),
+                                                   mid = list(gene = "gray"),
+                                                   high = list(gene = "red"),
+                                                   na.col = "transparent"
+                                                   # cex = 1 # too much
+                                      )
+                                    }
+                                    
+                                  }, res = 300, width = 1000, height = 1000),
+                           )
+                         ),),   
                 # ),  
               )# TabsetPanel
           ) # box
