@@ -28,7 +28,7 @@ if(!is.null(dataset.SE)){
   Diff.ann.eval  <- !is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]]$results)
   CoEx.ann.eval  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results)
   
-  Diff.ann.eval_CPR <- !is.null(dataset.SE@metadata[["DiffExpAnal"]]$results_CPR)
+  Diff.ann.eval_CPR <- !is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]]$results_CPR)
   CoEx.ann.eval_CPR  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results_CPR)
 }
 
@@ -61,7 +61,7 @@ knitr::asis_output(out)
 
 <!-- enrichement analysis on DE G/P/M lists -->
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.ann.eval}
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=FALSE}
 
 out <- NULL
 annot <- "DiffExpEnrichAnal"
@@ -75,7 +75,7 @@ knitr::asis_output(out)
 
 <!-- enrichement analysis on DE G/P/M lists with clusterprofiler -->
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=FALSE}
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.ann.eval_CPR}
 
 out <- NULL
 annot <- "DiffExpEnrichAnal"
@@ -102,13 +102,25 @@ knitr::asis_output(out)
 
 <!-- enrichement analysis on cluster -->
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=CoEx.ann.eval}
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=FALSE}
 
 
 annot <- "CoExpEnrichAnal"
 out <- NULL
 
 out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich.Rmd"), quiet=TRUE))
+
+knitr::asis_output(out)
+
+```
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=CoEx.ann.eval_CPR}
+
+out <- NULL
+annot <- "CoExpEnrichAnal"
+
+out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_CPR.Rmd"),
+                                quiet=TRUE))
 
 knitr::asis_output(out)
 
