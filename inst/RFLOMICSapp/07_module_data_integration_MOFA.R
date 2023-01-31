@@ -518,9 +518,9 @@ MOFA_setting <- function(input, output, session, rea.values){
                                                  returnName = FALSE,
                                                  closeOnClick = FALSE)),
                      ),
-                     column(2,  lapply(1:length(views_names(local.rea.values$resMOFA)), function(i) {
-                       selectInput(paste0("colors_", views_names(local.rea.values$resMOFA)[i]),
-                                   label = views_names(local.rea.values$resMOFA)[i],
+                     column(2,  lapply(1:length(MOFA2::views_names(local.rea.values$resMOFA)), function(i) {
+                       selectInput(paste0("colors_", MOFA2::views_names(local.rea.values$resMOFA)[i]),
+                                   label = MOFA2::views_names(local.rea.values$resMOFA)[i],
                                    choices = colorPal_choices,
                                    multiple = FALSE, 
                                    selected = colorPal_choices[i]
