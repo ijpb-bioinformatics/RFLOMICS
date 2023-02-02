@@ -195,7 +195,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                      value=0.05, min=0, max=1, 0.01),
         numericInput(inputId = session$ns("abs.FC.cutoff"),
                      label="|FC| cutoff:",
-                     value=2, min=1, max=1000, 0.1),
+                     value=0, min=0, max=100, 0.1),
         actionButton(session$ns("validContrast"),"Validate"))
   })
 
