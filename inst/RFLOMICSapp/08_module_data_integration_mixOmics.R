@@ -213,7 +213,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
     session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_tuning_results"]] <- local.rea.values$MixOmics_res$tuning_res
     session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_results"]] <- local.rea.values$MixOmics_res$analysis_res
     
-    FlomicsMultiAssay <<- session$userData$FlomicsMultiAssay # TODO delete
+    # FlomicsMultiAssay <<- session$userData$FlomicsMultiAssay # TODO delete
     # save(FlomicsMultiAssay, file = "/home/ahulot/Documents/INRAE/Projets/rflomics/inst/ExamplesFiles/Flomics.MAE_221130.RData") # TODO delete
     
     local.rea.values$runMixOmics <- TRUE
