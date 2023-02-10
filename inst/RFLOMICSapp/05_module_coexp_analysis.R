@@ -335,14 +335,15 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                            ),
                 # tabPanel("probapost_histogram", renderPlot({ plot.coseq.res$probapost_histogram })),
                 tabPanel("clusters_composition",
-                         DT::renderDataTable(DT::datatable(tab.clusters),
+                         DT::renderDataTable({
+                           DT::datatable(tab.clusters,
                                              extensions = 'Buttons',
                                              options = list(dom = 'lfrtipB',
                                                             rownames = FALSE,
                                                             pageLength = 10,
-                                                            buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
-                                                            lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All"))
-                                                                              ))),
+                                                            buttons = c('csv', 'excel'),
+                                                            lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All"))))
+                                             })),
                 tabPanel("summary",
                          DT::renderDataTable(DT::datatable(as.data.frame(local.rea.values$dataset.SE@metadata$CoExpAnal[["stats"]])),
                                              options = list(rownames = FALSE, pageLength = 10))
