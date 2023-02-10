@@ -75,7 +75,9 @@ knitr::asis_output(out)
 
 <!-- enrichement analysis on DE G/P/M lists with clusterprofiler -->
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.ann.eval_CPR}
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=FALSE}
+
+# eval=Diff.ann.eval_CPR
 
 out <- NULL
 annot <- "DiffExpEnrichAnal"
@@ -114,7 +116,9 @@ knitr::asis_output(out)
 
 ```
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=CoEx.ann.eval_CPR}
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=FALSE}
+
+# eval=CoEx.ann.eval_CPR
 
 out <- NULL
 annot <- "CoExpEnrichAnal"
