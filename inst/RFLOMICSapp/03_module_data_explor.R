@@ -54,8 +54,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
                                      message = "")
   
   
-  toto <<- session$userData$FlomicsMultiAssay
-  
   ### sample list  ###
   output$selectSamplesUI <- renderUI({
 

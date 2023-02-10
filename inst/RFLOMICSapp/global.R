@@ -53,7 +53,7 @@ source("02_module_set_stat_model.R")
 source("03_module_data_explor.R")
 source("04_module_diff_analysis.R")
 source("05_module_coexp_analysis.R")
-source("06_module_annot_enrichment.R")
+#source("06_module_annot_enrichment.R")
 
 source("06_module_annot_enrichment_clusterProf.R")
 source("07_module_data_integration_MOFA.R")
