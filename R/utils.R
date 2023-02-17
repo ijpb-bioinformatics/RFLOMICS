@@ -1554,7 +1554,7 @@ coseq.results.process <- function(coseqObjectList, K, conds){
 #' @export
 #' @noRd
 #'
-runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list){
+runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list, remote=FALSE){
 
     iter <-  rep(K, each=replicates)
     nbr_iter <- length(iter)
@@ -1587,7 +1587,26 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
                                 normFactors=normFactors,
                                 meanFilterCutoff=meanFilterCutoff))
     }
-    coseq.res.list <- clustermq::Q(fx, x=iter, export=param.list, n_jobs=nbr_iter, pkgs="coseq")
+    if(remote == FALSE){
+      options(clustermq.scheduler="multiprocess")
+      # Use local resources in parallel. Send (NbCores-2) process. Each process will run  nbr_iter/(NbCores-2) jobs.  
+      nbCore <- BiocParallel::multicoreWorkers()
+      print(paste0("Number of detected core(s)=",nbCore))
+      if(nbCore <= 2){ 
+        nbCoreUsed <- nbCore
+      }else{
+        nbCoreUsed <- nbCore-2 
+      }
+      print(paste0("Number of used core(s)=",nbCoreUsed))
+      # coseq.res.list <- clustermq::Q(fx, x=iter, export=param.list, n_jobs=nbCore-2, job_size = nbr_iter/nbCore, pkgs="coseq")
+      coseq.res.list <- clustermq::Q(fx, x=iter, export=param.list, n_jobs=nbCoreUsed, pkgs="coseq")
+    }
+    else{
+      options(clustermq.scheduler="ssh")
+      # Use remote resources.  Send nbr_iter jobs to the cluster. slurm will manage the resources.  
+      coseq.res.list <- clustermq::Q(fx, x=iter, export=param.list, n_jobs=nbr_iter, pkgs="coseq")
+    }
+    
     names(coseq.res.list) <- c(1:nbr_iter)
 
     CoExpAnal <- list()
