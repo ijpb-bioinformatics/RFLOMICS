@@ -69,17 +69,11 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S4 method for SummarizedExperiment</span></span>
 <span><span class="fu">runAnnotationEnrichment_CPR</span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
-<span>  <span class="va">func_to_use</span>,</span>
-<span>  ListNames <span class="op">=</span> <span class="va">object</span><span class="op">@</span><span class="va">metadata</span><span class="op">$</span><span class="va">DiffExpAnal</span><span class="op">[[</span><span class="st">"contrasts"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">contrastName</span>,</span>
 <span>  list_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  from <span class="op">=</span> <span class="st">"DiffExpAnal"</span>,</span>
-<span>  <span class="va">Domains</span>,</span>
 <span>  dom.select <span class="op">=</span> <span class="st">"custom"</span>,</span>
-<span>  col_termID <span class="op">=</span> <span class="st">""</span>,</span>
-<span>  col_geneName <span class="op">=</span> <span class="st">""</span>,</span>
-<span>  col_termName <span class="op">=</span> <span class="st">""</span>,</span>
-<span>  col_domain <span class="op">=</span> <span class="st">""</span>,</span>
-<span>  annotationPath <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  Domain <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotation <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -87,14 +81,6 @@
     <h2>Arguments</h2>
     <dl><dt>object</dt>
 <dd><p>An object of class MultiAssayExperiment. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.</p></dd>
-
-
-<dt>func_to_use</dt>
-<dd><p>Function to use in the enrichment. Expects one of enrichGO, enrichKEGG or enricher, from clusterprofiler package.</p></dd>
-
-
-<dt>ListNames</dt>
-<dd><p>names of the contrasts or clusters to consider.</p></dd>
 
 
 <dt>list_args</dt>
@@ -105,32 +91,8 @@
 <dd><p>indicates if ListNames are from differential analysis results (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)</p></dd>
 
 
-<dt>Domains:</dt>
-<dd><p>names of the ontology domains. Used either for a custom files with several domains or for enrichGO (BP, CC, MF)</p></dd>
-
-
 <dt>dom.select:</dt>
 <dd><p>is it a custom annotation, GO or KEGG annotations</p></dd>
-
-
-<dt>col_termID:</dt>
-<dd><p>if custom annotation, MANDATORY, name of the column where the term identifier (eg: GO:0030198) is located.</p></dd>
-
-
-<dt>col_geneName:</dt>
-<dd><p>if custom annotation, MANDATORY, name of the column where the term identifier is located.</p></dd>
-
-
-<dt>col_termName:</dt>
-<dd><p>if custom annotation, name of the column where the term name is located. If the identifier is not very specific, indicating a name can be a good idea... (e.g: GO:0030198 corresponds to extracellular matrix organization)</p></dd>
-
-
-<dt>col_domain:</dt>
-<dd><p>if custom annotation, name of the column where the domain of the ontology is located. You can mix several domains or databases in your file as long as it's indicated in this column (eg: GO:BP, GO:MF, GO:CC)</p></dd>
-
-
-<dt>annotationPath:</dt>
-<dd><p>if custom annotation, path to the annotation file. It must contains at least two columns with the genes names and the terms identifier.</p></dd>
 
 </dl></div>
     <div id="value">

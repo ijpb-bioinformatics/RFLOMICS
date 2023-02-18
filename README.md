@@ -23,32 +23,28 @@ RFLOMICS currently supports up to three types of omics: RNAseq, proteomics, and 
 
 ## Locally installation
 
-#### Get rflomics code source
+Download from https://forgemia.inra.fr/flomics/rflomics/-/tree/develop
 
-Download from https://forgemia.inra.fr/flomics/rflomics/-/tree/single_omics_dev
-
-```
-tar -xzvf rflomics-signle_omics_dev.tar.gz
-mv rflomics-signle_omics_dev  rflomics
-cd rflomics
+``` {.r}
+install.packages("rflomics.tar.gz", repos = NULL, type = "source")
 ```
 
 Or
 
 Clone from forgemia repository
 ```
-git clone -branch  single_omics_dev  https://forgemia.inra.fr/flomics/rflomics.git
-cd rflomics
+git clone -branch  develop  https://forgemia.inra.fr/flomics/rflomics.git
 ```
 
-#### Install rflomics package
-
 ``` {.r}
-# setwd("rflomics/")
+library(remotes)
+
+setwd("rflomics/")
+
 remotes::install_local(upgrade="never")
 ```
 
-#### Run rflomics
+## Run rflomics
 
 ``` {.r}
 library(RFLOMICS)
@@ -56,7 +52,7 @@ library(RFLOMICS)
 RFLOMICS::runRFLOMICS()
 ```
 
-## Install RFLOMICS via Docker
+<!--## Install RFLOMICS via Docker
 
 * install Docker
 
@@ -80,11 +76,12 @@ docker build --file=Dockerfile --tag=rflomics .
 docker run -it -p 3838:3838 -v ${HOME}:/root --name='rflomics' --cpus 4 rflomics
 ```
 
-* Open a web navigator and paste this url: 
+* Open a web navigator and paste this url:
 
 ```
 http://0.0.0.0:3838
 ```
+-->
 
 ### [Vignettes](https://flomics.pages.mia.inra.fr/rflomics/index.html)
 
