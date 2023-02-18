@@ -1544,7 +1544,6 @@ coseq.results.process <- function(coseqObjectList, K, conds){
   return(CoExpAnal)
 }
 
-
 #' @title run Coseq for co-expression analysis on cluster
 #' @param counts matrix
 #' @param K
@@ -1554,118 +1553,97 @@ coseq.results.process <- function(coseqObjectList, K, conds){
 #' @export
 #' @noRd
 #'
-runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list, remote=FALSE){
-
-    iter <-  rep(K, each=replicates)
-    nbr_iter <- length(iter)
-    coseq.res.list <- list()
-    #set.seed(12345)
-
-    # setting to run coseq on clustermq
-    param.list[["object"]] <- counts
-    param.list[["K"]] <- K
-
-    fx <- function(x){
-
-      try_rflomics <- function(expr) {
-        warn <- err <- NULL
-        value <- withCallingHandlers(
-          tryCatch(expr,
-                   error    =function(e){ err <- e
-                   NULL
-                   }),
-          warning =function(w){ warn <- w
-          invokeRestart("muffleWarning")}
-        )
-        list(value=value, warning=warn, error=err)
-      }
-
-      try_rflomics(coseq::coseq(object=object, K=x,
-                                model=model,
-                                transformation=transformation,
-                                GaussianModel = GaussianModel,
-                                normFactors=normFactors,
-                                meanFilterCutoff=meanFilterCutoff))
-    }
-    if(remote == FALSE){
-      options(clustermq.scheduler="multiprocess")
-      # Use local resources in parallel. Send (NbCores-2) process. Each process will run  nbr_iter/(NbCores-2) jobs.  
-      nbCore <- BiocParallel::multicoreWorkers()
-      print(paste0("Number of detected core(s)=",nbCore))
-      if(nbCore <= 2){ 
-        nbCoreUsed <- nbCore
-      }else{
-        nbCoreUsed <- nbCore-2 
-      }
-      print(paste0("Number of used core(s)=",nbCoreUsed))
-      # coseq.res.list <- clustermq::Q(fx, x=iter, export=param.list, n_jobs=nbCore-2, job_size = nbr_iter/nbCore, pkgs="coseq")
-      coseq.res.list <- clustermq::Q(fx, x=iter, export=param.list, n_jobs=nbCoreUsed, pkgs="coseq")
-    }
-    else{
-      options(clustermq.scheduler="ssh")
-      # Use remote resources.  Send nbr_iter jobs to the cluster. slurm will manage the resources.  
-      coseq.res.list <- clustermq::Q(fx, x=iter, export=param.list, n_jobs=nbr_iter, pkgs="coseq")
+runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list){
+  
+  iter <-  rep(K, each=replicates)
+  nbr_iter <- length(iter)
+  coseq.res.list <- list()
+  #set.seed(12345)
+  
+  # setting to run coseq on clustermq
+  param.list[["object"]] <- counts
+  param.list[["K"]] <- K
+  
+  fx <- function(x){
+    
+    try_rflomics <- function(expr) {
+      warn <- err <- NULL
+      value <- withCallingHandlers(
+        tryCatch(expr,
+                 error    =function(e){ err <- e
+                 NULL
+                 }),
+        warning =function(w){ warn <- w
+        invokeRestart("muffleWarning")}
+      )
+      list(value=value, warning=warn, error=err)
     }
     
-    names(coseq.res.list) <- c(1:nbr_iter)
-
-    CoExpAnal <- list()
-
-    print("#     => error management ")
-
-    # Create a table of jobs summary
-    error.list <- unlist(lapply(coseq.res.list, function(x){
-      ifelse(is.null(x$error),"success",as.character(x$error))
-    }))
-
-    nK_success <- table(error.list)["success"]
-    print(paste0("#     => nbr of success jobs : ", nK_success))
-
-    K.list <- rep(paste0("K=", K), each=replicates)
-
-    jobs.tab <- data.frame(K= K.list, error.message=as.factor(error.list))
-
-    jobs.tab.sum <- jobs.tab %>% dplyr::group_by(K,error.message) %>%
-      dplyr::summarise(n=dplyr::n()) %>%  dplyr::mutate(prop.failed=round((n/replicates)*100)) %>%
-      dplyr::filter(error.message != "success")
-
-
-    # If they are at least the half of K which succeed, valid results
-    if(nK_success !=0 ){
-
-      print("#     => process results ")
-      # Generate the list of results
-      #coseq.res.list[["value"]] <- lapply(coseq.res.list,function(x){x$value})
-      coseq.res.list[["value"]] <- list()
-      for(x in names(coseq.res.list)){
-
-        if(!is.null(coseq.res.list[[x]]$value)){
-          coseq.res.list[["value"]][[x]] <- coseq.res.list[[x]]$value
-        }
-      }
-
-      CoExpAnal <- coseq.results.process(coseq.res.list[["value"]], conds = conds)
-      CoExpAnal[["warning"]] <- coseq.res.list$warning
-
-      if(nK_success/length(iter) < 0.8){
-
-        CoExpAnal[["error"]] <- TRUE
-      }
-
-    }
-    # Réinitialisation de l'objet CoExpAnal
-    else{
-      CoExpAnal[["results"]] <- FALSE
-      CoExpAnal[["error"]] <- TRUE
-
-    }
-
-    CoExpAnal[["stats"]] <- jobs.tab.sum
-
-    return(CoExpAnal)
+    try_rflomics(coseq::coseq(object=object, K=x,
+                              model=model,
+                              transformation=transformation,
+                              GaussianModel = GaussianModel,
+                              normFactors=normFactors,
+                              meanFilterCutoff=meanFilterCutoff))
   }
-
-
+  coseq.res.list <- clustermq::Q(fx, x=iter, export=param.list, n_jobs=nbr_iter, pkgs="coseq")
+  names(coseq.res.list) <- c(1:nbr_iter)
+  
+  CoExpAnal <- list()
+  
+  print("#     => error management ")
+  
+  # Create a table of jobs summary
+  error.list <- unlist(lapply(coseq.res.list, function(x){
+    ifelse(is.null(x$error),"success",as.character(x$error))
+  }))
+  
+  nK_success <- table(error.list)["success"]
+  print(paste0("#     => nbr of success jobs : ", nK_success))
+  
+  K.list <- rep(paste0("K=", K), each=replicates)
+  
+  jobs.tab <- data.frame(K= K.list, error.message=as.factor(error.list))
+  
+  jobs.tab.sum <- jobs.tab %>% dplyr::group_by(K,error.message) %>%
+    dplyr::summarise(n=dplyr::n()) %>%  dplyr::mutate(prop.failed=round((n/replicates)*100)) %>%
+    dplyr::filter(error.message != "success")
+  
+  
+  # If they are at least the half of K which succeed, valid results
+  if(nK_success !=0 ){
+    
+    print("#     => process results ")
+    # Generate the list of results
+    #coseq.res.list[["value"]] <- lapply(coseq.res.list,function(x){x$value})
+    coseq.res.list[["value"]] <- list()
+    for(x in names(coseq.res.list)){
+      
+      if(!is.null(coseq.res.list[[x]]$value)){
+        coseq.res.list[["value"]][[x]] <- coseq.res.list[[x]]$value
+      }
+    }
+    
+    CoExpAnal <- coseq.results.process(coseq.res.list[["value"]], conds = conds)
+    CoExpAnal[["warning"]] <- coseq.res.list$warning
+    
+    if(nK_success/length(iter) < 0.8){
+      
+      CoExpAnal[["error"]] <- TRUE
+    }
+    
+  }
+  # Réinitialisation de l'objet CoExpAnal
+  else{
+    CoExpAnal[["results"]] <- FALSE
+    CoExpAnal[["error"]] <- TRUE
+    
+  }
+  
+  CoExpAnal[["stats"]] <- jobs.tab.sum
+  
+  return(CoExpAnal)
+}
 
 
 

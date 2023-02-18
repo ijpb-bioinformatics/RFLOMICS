@@ -163,7 +163,6 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
 
             column(8,
                    materialSwitch(inputId = session$ns("clustermqCoseq"), label = "use remote cluster", value = FALSE, status = "success"),
-                   radioButtons(inputId = session$ns("localParallel"),label="Advanced parameters:",c("clustermq"="clustermq","BiocParallel"="BiocParallel"))
                    ),
                    # radioGroupButtons(inputId = session$ns("clustermqCoseq"), direction = "horizontal",
                    #                   label = " RUN :",
@@ -242,7 +241,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     local.rea.values$dataset.SE <- runCoExpression(object=local.rea.values$dataset.SE, geneList=DEG_list(), merge=input$unionInter, nameList=input$select,
                                   K=input$K.values[1]:input$K.values[2], replicates = input$iter,
                                   model  = input$model, transformation=input$transfo, normFactors=input$norm,
-                                  GaussianModel =input$GaussianModel, clustermq = input$clustermqCoseq, localParallel=input$localParallel)
+                                  GaussianModel =input$GaussianModel, clustermq = input$clustermqCoseq)
 
     session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- local.rea.values$dataset.SE
 

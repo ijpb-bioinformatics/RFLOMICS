@@ -1416,6 +1416,7 @@ methods::setMethod(f="DiffAnal.plot",
 ################################### CO-EXPRESSION #############################
 
 
+
 #' @title runCoExpression
 #' @description This is an interface method which performed co-expression/co-abundance analysis
 #' of omic-data.
@@ -1465,8 +1466,7 @@ methods::setMethod(f="DiffAnal.plot",
 methods::setMethod(f="runCoExpression",
                    signature="SummarizedExperiment",
                    definition <- function(object, geneList, K=2:20, replicates=5, nameList, merge="union",
-                                          model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation, 
-                                          normFactors, clustermq=FALSE, localParallel="BiocParallel"){
+                                          model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation, normFactors, clustermq=FALSE){
                      
                      
                      CoExpAnal <- list()
@@ -1532,25 +1532,15 @@ methods::setMethod(f="runCoExpression",
                      
                      coseq.res.list <- switch (as.character(clustermq),
                                                `FALSE` = {
-                                                 if(localParallel == "BiocParallel"){
-                                                   print("#     => launch coseq in local with BiocParallel")
+                                                 
                                                  try_rflomics(
-                                                   runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, 
-                                                                  param.list=param.list))
-                                                 }
-                                                 else if(localParallel == "clustermq"){
-                                                   print("#     => launch coseq in local with clustermq")
-                                                   try_rflomics(
-                                                   runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, 
-                                                                  param.list=param.list, remote=FALSE))
-                                                 }
+                                                   runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
                                                  
                                                },
                                                `TRUE` = {
-                                                 print("#     => launch coseq in remote with clustermq")
+                                                 
                                                  try_rflomics(
-                                                   runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates,
-                                                                      param.list=param.list,remote=TRUE))
+                                                   runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
                                                  
                                                })
                      
