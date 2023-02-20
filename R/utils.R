@@ -58,7 +58,7 @@ read_exp_design <- function(file){
   }
   
   # warning if number of factors exceed n = 10
-  n <- 5
+  n <- 10
   if (dim(data)[2]-1 >= n){
     
     data <- data[, 1:n]
