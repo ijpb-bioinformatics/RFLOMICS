@@ -15,8 +15,8 @@ read_exp_design <- function(file){
   
   if(!file.exists(file))
   {
-      stop(paste0("ERROR : ", file, " don't exist !"))
-      return(NULL)
+    stop(paste0("ERROR : ", file, " don't exist !"))
+    return(NULL)
   }
   
   # read design and remove special characters
@@ -27,9 +27,9 @@ read_exp_design <- function(file){
     dplyr::mutate(dplyr::across(.cols = where(is.character), stringr::str_remove_all, pattern = fixed("\\"))) %>% 
     dplyr::mutate(dplyr::across(.cols = c(-1),               stringr::str_remove_all, pattern = fixed("_"))) %>% 
     dplyr::mutate(dplyr::across(.cols = where(is.character), as.factor)) 
-
+  
   names(data)  <- stringr::str_remove_all(string = names(data), pattern = "[.,;:#@!?()§$€%&<>|=+-/\\]\\[\'\"\ _]") %>%
-                  stringr::str_remove_all(., pattern = fixed("\\"))
+    stringr::str_remove_all(., pattern = fixed("\\"))
   
   # check if there is duplication in sample names
   sample.dup <- as.vector(data[which(table(data[1]) > 1),1])[[1]]
@@ -143,19 +143,19 @@ read_omics_data <- function(file){
 #'
 #'
 GetDesignFromNames <- function(samples_name){
-
+  
   # Get the number of design factor and the factors from the names of the count matrix
   nb_dFac <- stringr::str_count(samples_name,pattern="_")+1
   # Test if the number of factor are the same for all sample names
   try(if(var(nb_dFac) != 0 ) stop("Column names do not have the same level of factor"))
   nb_dFac <- nb_dFac[1]
   names(nb_dFac) <- "n_dFac"
-
+  
   #  Get all the factors from the names of the count matrix
   tmpDesign <- tibble::tibble(design=samples_name) %>%
     tidyr::separate(.,design,into=paste("dFac",1:nb_dFac["n_dFac"],sep="")) %>%
     dplyr::mutate_all(.,as.factor)
-
+  
   return(list("nb_dFac"=nb_dFac,"tmpDesign"=tmpDesign))
 }
 
@@ -182,18 +182,18 @@ GetDesignFromNames <- function(samples_name){
 #' GetModelFormulae(FacBio=c("Genotype","Temperature"), FacBatch=c("Replicat", "laboratory"))
 #' 
 GetModelFormulae <- function(FacBio=NULL, FacBatch=NULL){
-
+  
   # Initialize
   formulae <- list()
-
+  
   # Verify that nbr of bio factors are between 1 and 3.
   if(!length(FacBio) %in% 1:3) stop(".... !")
   
   # Verify that nbr of batch factors are between 1 and 2.
   if(!length(FacBatch) %in% 1:2) stop(".... !")
-
+  
   nFac <- length(FacBio)
-
+  
   # get formulae without interation
   formulae[[1]] <- update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+",paste(FacBio,collapse="+"))),new=~.)
   
@@ -203,11 +203,11 @@ GetModelFormulae <- function(FacBio=NULL, FacBatch=NULL){
   
   formulae <- unlist(formulae)
   names(formulae) <- unlist(as.character(formulae))
-
+  
   # Sort formulae
-
+  
   formulae <- formulae[order(unlist(lapply(names(formulae),nchar)),decreasing=TRUE)]
-
+  
   return(formulae)
 }
 
@@ -241,17 +241,17 @@ TMM.Normalization <- function(counts, groups){
 #'
 #' @examples
 edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.factors, Contrasts.Sel, Contrasts.Coeff, FDR, clustermq = FALSE){
-
+  
   z <- y <- NULL
-
+  
   ListRes <- list()
-
+  
   # Construct the DGE obect
   dge <- edgeR::DGEList(counts       = count_matrix,
                         group        = group,
                         lib.size     = lib.size,
                         norm.factors = norm.factors)
-
+  
   # Run the model
   print("[cmd] dge <- edgeR::estimateGLMCommonDisp(dge, design=model_matrix)")
   dge <- edgeR::estimateGLMCommonDisp(dge, design=model_matrix)
@@ -261,95 +261,95 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
   dge <- edgeR::estimateGLMTagwiseDisp(dge, design=model_matrix)
   print("[cmd] fit.f <- edgeR::glmFit(dge,design=model_matrix)")
   fit.f <- edgeR::glmFit(dge,design=model_matrix)
-
-
+  
+  
   # test clustermq
   if(clustermq == TRUE){
-
-     # Fonction to run on contrast per job
-     # y is the model, Contrasts are stored in a matrix, by columns
-
-      fx <- function(x){
-
-        try_rflomics <- function(expr) {
-          warn <- err <- NULL
-          value <- withCallingHandlers(
-            tryCatch(expr,
-                     error    =function(e){ err <- e
-                     NULL
-                     }),
-            warning =function(w){ warn <- w
-            invokeRestart("muffleWarning")}
-          )
-          list(value=value, warning=warn, error=err)
-        }
-
-        try_rflomics(edgeR::glmLRT(y, contrast = unlist(z[x,])))
+    
+    # Fonction to run on contrast per job
+    # y is the model, Contrasts are stored in a matrix, by columns
+    
+    fx <- function(x){
+      
+      try_rflomics <- function(expr) {
+        warn <- err <- NULL
+        value <- withCallingHandlers(
+          tryCatch(expr,
+                   error    =function(e){ err <- e
+                   NULL
+                   }),
+          warning =function(w){ warn <- w
+          invokeRestart("muffleWarning")}
+        )
+        list(value=value, warning=warn, error=err)
       }
-
-      ResGlm <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
-                              export=list(y=fit.f,z=Contrasts.Coeff),
-                              n_jobs=length(Contrasts.Sel$contrast),pkgs="edgeR")
-
+      
+      try_rflomics(edgeR::glmLRT(y, contrast = unlist(z[x,])))
+    }
+    
+    ResGlm <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
+                           export=list(y=fit.f,z=Contrasts.Coeff),
+                           n_jobs=length(Contrasts.Sel$contrast),pkgs="edgeR")
+    
   }
   else{
     print("[cmd] apply model to each contrast")
-     ResGlm <-  lapply(Contrasts.Sel$contrast, function(x){
-       #print(unlist(Contrasts.Coeff[x,]))
-       try_rflomics(edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,])))
-
-     })
+    ResGlm <-  lapply(Contrasts.Sel$contrast, function(x){
+      #print(unlist(Contrasts.Coeff[x,]))
+      try_rflomics(edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,])))
+      
+    })
   }
-
-    # Create a table of jobs summary
-    error.list <- unlist(lapply(ResGlm, function(x){
-      ifelse(is.null(x$error),"success",as.character(x$error))
-    }))
-
-    jobs.tab <- data.frame(H=Contrasts.Sel$contrast , error.message=as.factor(error.list))
-
-    jobs.tab.error <- jobs.tab %>% dplyr::filter(., error.message != "success")
-
-    # If no error
-    if(dim(jobs.tab.error)[1]==0){
-
+  
+  # Create a table of jobs summary
+  error.list <- unlist(lapply(ResGlm, function(x){
+    ifelse(is.null(x$error),"success",as.character(x$error))
+  }))
+  
+  jobs.tab <- data.frame(H=Contrasts.Sel$contrast , error.message=as.factor(error.list))
+  
+  jobs.tab.error <- jobs.tab %>% dplyr::filter(., error.message != "success")
+  
+  # If no error
+  if(dim(jobs.tab.error)[1]==0){
+    
     ListRes[[1]] <- lapply(ResGlm,function(x){
       x$value
     })
-
+    
     # Name the table of raw results
-     names(ListRes[[1]]) <- Contrasts.Sel$contrastName
-
+    names(ListRes[[1]]) <- Contrasts.Sel$contrastName
+    
     # ListRes[[2]] => TOPDGE => TopDFE
-
+    
     TopDGE <- lapply(ListRes[[1]], function(x){
-
-    res <- edgeR::topTags(x, n = dim(x)[1])
-
-    DEGs<- res$table[res$table$FDR <= FDR,]
-    #DEGs<-res$table
-    return(DEGs)
-  })
-
-  ListRes[[2]] <- TopDGE
-
-  names(ListRes[[2]]) <- names(ListRes[[1]])
-
-  # Mutate column name to render the anadiff results generic
-  # Initial column Name:  gene_name  logFC      logCPM        LR        PValue           FDR
-  ListRes[[2]] <- lapply(ListRes[[2]], function(x){
+      
+      res <- edgeR::topTags(x, n = dim(x)[1])
+      
+      DEGs<- res$table[res$table$FDR <= FDR,]
+      #DEGs<-res$table
+      return(DEGs)
+    })
+    
+    ListRes[[2]] <- TopDGE
+    
+    names(ListRes[[2]]) <- names(ListRes[[1]])
+    
+    # Mutate column name to render the anadiff results generic
+    # Initial column Name:  gene_name  logFC      logCPM        LR        PValue           FDR
+    ListRes[[2]] <- lapply(ListRes[[2]], function(x){
       #dplyr::rename(x,"Abundance"="logCPM","StatTest"="LR","pvalue"="PValue","Adj.pvalue"="FDR")
       dplyr::rename(x,"Abundance"="logCPM","pvalue"="PValue","Adj.pvalue"="FDR")
-  })
-
-  names(ListRes) <- c("RawDEFres","TopDEF")
+    })
+    
+    names(ListRes) <- c("RawDEFres","TopDEF")
   }
   else{
     ListRes[[1]] <- NULL
     ListRes[[2]] <- jobs.tab.error
     names(ListRes) <- c("RawDEFres","ErrorTab")
-    }
-
+  }
+  
   return(ListRes)
 }
 
@@ -367,17 +367,17 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
 #' @examples
 
 limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.Coeff, Adj.pvalue.cutoff, Adj.pvalue.method,clustermq){
-
+  
   ListRes <- list()
-
+  
   # Run the model
   fit <- limma::lmFit(count_matrix, model_matrix)
-
+  
   # test clustermq
   if(clustermq == TRUE){
-
+    
     fx <- function(x){
-
+      
       try_rflomics <- function(expr) {
         warn <- err <- NULL
         value <- withCallingHandlers(
@@ -390,76 +390,76 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
         )
         list(value=value, warning=warn, error=err)
       }
-
-    # Fonction to run on contrast per job
-    # y is the model, Contrasts are stored in a matrix, by columns
-
+      
+      # Fonction to run on contrast per job
+      # y is the model, Contrasts are stored in a matrix, by columns
+      
       try_rflomics(limma::contrasts.fit(y, contrasts  = unlist(z[x,])))
     }
-
+    
     ResGlm  <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
-                                 export=list(y=fit,z=Contrasts.Coeff),
-                                 n_jobs=length(Contrasts.Sel$contrast),pkgs="edgeR")
-
+                            export=list(y=fit,z=Contrasts.Coeff),
+                            n_jobs=length(Contrasts.Sel$contrast),pkgs="edgeR")
+    
   }
   else{
     print("[cmd] fit contrasts")
     ResGlm <-  lapply(Contrasts.Sel$contrast, function(x){
       #print(paste0(x," : ",as.vector(unlist(Contrasts.Coeff[x,]))))
       try_rflomics(limma::contrasts.fit(fit, contrasts  = as.vector(unlist(Contrasts.Coeff[x,]))))
-                      })
+    })
   }
-
+  
   # Construct a table of jobs summary
   error.list <- unlist(lapply(ResGlm, function(x){
     ifelse(is.null(x$error),"success",as.character(x$error))
   }))
-
+  
   jobs.tab <- data.frame(H=Contrasts.Sel$contrast , error.message=as.factor(error.list))
-
+  
   jobs.tab.error <- jobs.tab %>% dplyr::filter(., error.message != "success")
-
+  
   # If no error
   if(dim(jobs.tab.error)[1]==0){
-
+    
     ListRes[[1]] <- lapply(ResGlm,function(x){
       x$value
     })
-
-  # Name the table of raw results
-
-  names(ListRes[[1]]) <- Contrasts.Sel$contrastName
-
-  # ListRes[[2]] TopDPE with column names common to all AnaDiff function
-
-  ListRes[[2]] <- lapply(ListRes[[1]], function(x){
-
-    fit2 <- limma::eBayes(x, robust=TRUE)
-    res <- limma::topTable(fit2, adjust=Adj.pvalue.method, number=Inf, sort.by="AveExpr")
-    DEPs <- res[res$adj.P.Val <= Adj.pvalue.cutoff,]
-    return(DEPs)
-  })
-
-
-  # Mutate column name to render the anadiff results generic
-  # Initial column Name:  logFC  AveExpr         t      P.Value    adj.P.Val            B
-  ListRes[[2]] <- lapply(ListRes[[2]], function(x){
-    #dplyr::rename(x,"Abundance"="AveExpr","StatTest"="t","pvalue"="P.Value","Adj.pvalue"="adj.P.Val")
-    dplyr::rename(x,"Abundance"="AveExpr","pvalue"="P.Value","Adj.pvalue"="adj.P.Val")
-  })
-
-  names(ListRes[[2]]) <- names(ListRes[[1]])
-
-  names(ListRes) <- c("RawDEFres","TopDEF")
-
+    
+    # Name the table of raw results
+    
+    names(ListRes[[1]]) <- Contrasts.Sel$contrastName
+    
+    # ListRes[[2]] TopDPE with column names common to all AnaDiff function
+    
+    ListRes[[2]] <- lapply(ListRes[[1]], function(x){
+      
+      fit2 <- limma::eBayes(x, robust=TRUE)
+      res <- limma::topTable(fit2, adjust=Adj.pvalue.method, number=Inf, sort.by="AveExpr")
+      DEPs <- res[res$adj.P.Val <= Adj.pvalue.cutoff,]
+      return(DEPs)
+    })
+    
+    
+    # Mutate column name to render the anadiff results generic
+    # Initial column Name:  logFC  AveExpr         t      P.Value    adj.P.Val            B
+    ListRes[[2]] <- lapply(ListRes[[2]], function(x){
+      #dplyr::rename(x,"Abundance"="AveExpr","StatTest"="t","pvalue"="P.Value","Adj.pvalue"="adj.P.Val")
+      dplyr::rename(x,"Abundance"="AveExpr","pvalue"="P.Value","Adj.pvalue"="adj.P.Val")
+    })
+    
+    names(ListRes[[2]]) <- names(ListRes[[1]])
+    
+    names(ListRes) <- c("RawDEFres","TopDEF")
+    
   }
   else{
     ListRes[[1]] <- NULL
     ListRes[[2]] <- jobs.tab.error
     names(ListRes) <- c("RawDEFres","ErrorTab")
   }
-
-
+  
+  
   return(ListRes)
 }
 
@@ -478,31 +478,31 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
 #' @noRd
 #' @examples
 colorPlot <- function(design, ColData, condition="samples"){
-
+  
   getPalette <- colorRampPalette(brewer.pal(9, "Set1"))
-
-    if(condition == "samples"){
-
-      # combine only bio fact
-      groups <- design@List.Factors[design@Factors.Type == "Bio"] %>%
-        as.data.frame() %>% tidyr::unite(col="groups", sep="_")
-      list.cond <- factor(groups$groups)
-    }
-    else{
-
-      list.cond <- design@List.Factors[[condition]]
-    }
-
-    len.cond  <- length(levels(list.cond))
-
-    colors    <- getPalette(len.cond)
-
-    #col <- colors[list.cond]
-    col <- colors[levels(list.cond)]
-    #names(col) <- row.names(ColData)
-    names(col) <- row.names(levels(list.cond))
-
-    return(col)
+  
+  if(condition == "samples"){
+    
+    # combine only bio fact
+    groups <- design@List.Factors[design@Factors.Type == "Bio"] %>%
+      as.data.frame() %>% tidyr::unite(col="groups", sep="_")
+    list.cond <- factor(groups$groups)
+  }
+  else{
+    
+    list.cond <- design@List.Factors[[condition]]
+  }
+  
+  len.cond  <- length(levels(list.cond))
+  
+  colors    <- getPalette(len.cond)
+  
+  #col <- colors[list.cond]
+  col <- colors[levels(list.cond)]
+  #names(col) <- row.names(ColData)
+  names(col) <- row.names(levels(list.cond))
+  
+  return(col)
 }
 
 
@@ -513,36 +513,36 @@ colorPlot <- function(design, ColData, condition="samples"){
 #' @importFrom ggplot2 geom_density xlab
 #' @noRd
 plotDistr <- function(abundances, dataType, transform_method){
-
-
+  
+  
   value <- samples <- NULL
-
+  
   switch(dataType,
-        "RNAseq" = {
-          pseudo_counts <- log2(abundances+1) %>% reshape2::melt()
-          colnames(pseudo_counts) <- c("features", "samples", "value")
-          x_lab <-"log2(feature abundances)"
+         "RNAseq" = {
+           pseudo_counts <- log2(abundances+1) %>% reshape2::melt()
+           colnames(pseudo_counts) <- c("features", "samples", "value")
+           x_lab <-"log2(feature abundances)"
          },
-        "proteomics"={
-        pseudo_counts <- abundances %>% reshape2::melt()
-        colnames(pseudo_counts) <- c("features", "samples", "value")
-        x_lab <- switch (transform_method,
-                         "log2"= "log2(feature abundances)",
-                          "none"="feature abundances")
-        },
-        "metabolomics"={
-        pseudo_counts <- abundances %>% reshape2::melt()
-        colnames(pseudo_counts) <- c("features", "samples", "value")
-        x_lab <- switch (transform_method,
-                         "log2"= "log2(feature abundances)",
-                         "none"="feature abundances")
-        }
-        )
-
+         "proteomics"={
+           pseudo_counts <- abundances %>% reshape2::melt()
+           colnames(pseudo_counts) <- c("features", "samples", "value")
+           x_lab <- switch (transform_method,
+                            "log2"= "log2(feature abundances)",
+                            "none"="feature abundances")
+         },
+         "metabolomics"={
+           pseudo_counts <- abundances %>% reshape2::melt()
+           colnames(pseudo_counts) <- c("features", "samples", "value")
+           x_lab <- switch (transform_method,
+                            "log2"= "log2(feature abundances)",
+                            "none"="feature abundances")
+         }
+  )
+  
   p <- ggplot2::ggplot(pseudo_counts) + geom_density(aes(value, color=samples) ) + xlab(x_lab) +
-                                        theme(legend.position='none')
+    theme(legend.position='none')
   print(p)
-
+  
 }
 
 
@@ -561,18 +561,18 @@ plotDistr <- function(abundances, dataType, transform_method){
 #' @examples
 #' @noRd
 pvalue.plot <- function(data, hypothesis=hypothesis, pngFile=NULL){
-
+  
   PValue <- NULL
-
+  
   p <- ggplot2::ggplot(data=data) +
     ggplot2::geom_histogram(aes(x=pvalue), bins = 200) +
     ggplot2::labs(x = expression(p - value), y = "count", title = hypothesis )+
     ggplot2::theme_bw(base_size = 10)
-
+  
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
   }
-
+  
   return(p)
 }
 
@@ -590,7 +590,7 @@ utils::globalVariables(names(data))
 #' @examples
 #' @noRd
 MA.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, pngFile=NULL){
-
+  
   # Abundance <- logFC <- Adj.pvalue <- NULL
   # p <- ggplot2::ggplot(data=data, aes(x = Abundance, y=logFC, col= (Adj.pvalue < Adj.pvalue.cutoff & abs(logFC) > log2(FC.cutoff) ))) +
   #   geom_point(alpha=0.4, size = 0.8) +
@@ -607,25 +607,25 @@ MA.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, p
   Abundance <- logFC <- Adj.pvalue <- NULL
   tmp <-dplyr::select(data,"Abundance","logFC","Adj.pvalue") %>% rename(., baseMeanLog2=Abundance, log2FoldChange=logFC, padj=Adj.pvalue)
   p <- ggpubr::ggmaplot(tmp, main = hypothesis,
-                fdr = Adj.pvalue.cutoff, fc = FC.cutoff, size = 0.4,
-                ylab = bquote(~Log[2] ~ "fold change"),
-                xlab = bquote(~Log[2] ~ "mean expression"),
-                palette = c("#B31B21", "#1465AC", "grey30"),
-                select.top.method=c("padj","fc"),
-                legend = "bottom", top = 20,
-                font.label = c("plain", 7),
-                font.legend = c(11, "plain", "black"),
-                font.main = c(11, "bold", "black"),
-                caption = paste("FC cutoff=",FC.cutoff, " and " ,"FDR cutoff=",Adj.pvalue.cutoff,sep=""),
-                ggtheme = ggplot2::theme_linedraw())
-
-
+                        fdr = Adj.pvalue.cutoff, fc = FC.cutoff, size = 0.4,
+                        ylab = bquote(~Log[2] ~ "fold change"),
+                        xlab = bquote(~Log[2] ~ "mean expression"),
+                        palette = c("#B31B21", "#1465AC", "grey30"),
+                        select.top.method=c("padj","fc"),
+                        legend = "bottom", top = 20,
+                        font.label = c("plain", 7),
+                        font.legend = c(11, "plain", "black"),
+                        font.main = c(11, "bold", "black"),
+                        caption = paste("FC cutoff=",FC.cutoff, " and " ,"FDR cutoff=",Adj.pvalue.cutoff,sep=""),
+                        ggtheme = ggplot2::theme_linedraw())
+  
+  
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
   }
-
+  
   return(p)
-
+  
 }
 
 
@@ -645,7 +645,7 @@ MA.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, p
 #' @examples
 #'
 Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, pngFile=NULL){
-
+  
   # Modified 221123
   # Find pvalue corresponding to the FDR cutoff for the plot (mean between the last that passes the cutoff
   # and the first that is rejected to plot the line in the middle of the two points)
@@ -658,7 +658,7 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothes
   }else if(Adj.pvalue.cutoff >= 1){
     pvalCutoff <- 1
   }
-
+  
   # Added 221123: if too low pvalues, unable to plot (error in if(d>0)...)
   # If drawconnectors is FALSE, it "works", with ylim being infinity, it doesn't look like anything. 
   # Modifiying the 0 pvalues to make sure it's working
@@ -667,36 +667,36 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothes
     data$pvalue[data$pvalue == 0] <- data$pvalue[data$pvalue != 0][1] 
     message("10^-1 * current lowest non-zero p-value is still 0, all 0 pvalues are set to the lowest non-zero pvalue.")
   }
-
+  
   Abundance <- logFC <- Adj.pvalue <- NULL
   p <- EnhancedVolcano::EnhancedVolcano(toptable = data,
-                  lab = rownames(data),
-                  x = 'logFC',
-                  y = 'pvalue',
-                  # pCutoff = Adj.pvalue.cutoff,
-                  pCutoff = pvalCutoff,
-                  FCcutoff = log2(FC.cutoff),
-                  axisLabSize=10,
-                  pointSize = 1.5,
-                  labSize = 2,
-                  title = hypothesis,
-                  titleLabSize=11,
-                  subtitle = "",
-                  subtitleLabSize = 10,
-                  caption = paste("FC cutoff=", FC.cutoff, " & " ,"FDR cutoff=", Adj.pvalue.cutoff, sep=""),
-                  legendPosition = "bottom",
-                  legendLabSize = 10,
-                  legendIconSize=1.5,
-                  captionLabSize=10,
-                  col = c('grey30', 'forestgreen', 'royalblue', 'red2'),
-                  colAlpha = 0.5,
-                  drawConnectors = TRUE,
-                  widthConnectors = 0.5)
+                                        lab = rownames(data),
+                                        x = 'logFC',
+                                        y = 'pvalue',
+                                        # pCutoff = Adj.pvalue.cutoff,
+                                        pCutoff = pvalCutoff,
+                                        FCcutoff = log2(FC.cutoff),
+                                        axisLabSize=10,
+                                        pointSize = 1.5,
+                                        labSize = 2,
+                                        title = hypothesis,
+                                        titleLabSize=11,
+                                        subtitle = "",
+                                        subtitleLabSize = 10,
+                                        caption = paste("FC cutoff=", FC.cutoff, " & " ,"FDR cutoff=", Adj.pvalue.cutoff, sep=""),
+                                        legendPosition = "bottom",
+                                        legendLabSize = 10,
+                                        legendIconSize=1.5,
+                                        captionLabSize=10,
+                                        col = c('grey30', 'forestgreen', 'royalblue', 'red2'),
+                                        colAlpha = 0.5,
+                                        drawConnectors = TRUE,
+                                        widthConnectors = 0.5)
   
   if (! is.null(pngFile)){
     ggsave(filename = pngFile, plot = p)
   }
-
+  
   return(p)
 }
 
@@ -840,19 +840,19 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
   #     p = p + facet_grid(.~col)
   #   }
   # }
-
+  
   #add color column
   # #00BA38
   counts <- counts %>% dplyr::mutate(status = dplyr::if_else(Count > 2 , "pass", dplyr::if_else(Count == 2 , "warning", "error")))
-
+  
   #list of factor names
   factors <- names(counts)[1:(dim(counts)[2]-2)]
-
+  
   col.panel <- c("pass", "warning", "error")
   names(col.panel) <- c("#00BA38", "orange", "red")
-
+  
   col.panel.u <- col.panel[col.panel %in% unique(counts$status)]
-
+  
   switch (length(factors),
           "1" = { p <- ggplot(counts ,aes_string(x = factors[1], y = 1)) + theme(axis.text.y = element_blank()) + ylab("") },
           "2" = { p <- ggplot(counts ,aes_string(x = factors[1], y = factors[2])) },
@@ -861,21 +861,21 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
             factors.l <- lapply(factors, function(x){ length(unique(counts[[x]])) }) %>% unlist()
             names(factors.l) <- factors
             factor.min <- names(factors.l[factors.l == min(factors.l)][1])
-
+            
             factors <- factors[factors != factor.min]
-
+            
             #add column to rename facet_grid
             counts <- counts %>% dplyr::mutate(grid = paste0(factor.min, "=",get(factor.min)))
-
+            
             p <- ggplot(counts ,aes_string(x = factors[1], y = factors[2])) +
               facet_grid(grid~.) })
-
+  
   p <- p + geom_tile(aes(fill = status), color = "white", size = 1, width = 1, height = 1)  + geom_text(aes(label = Count)) +
     scale_fill_manual(values = names(col.panel.u), breaks = col.panel.u) +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           axis.ticks = element_blank(), axis.text.x=element_text(angle=90, hjust=1)) +
     ggtitle(message)
-
+  
   return(p)
 }
 
@@ -913,26 +913,26 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
 #' @examples
 #' @author Christine Paysant-Le Roux
 define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
-
+  
   contrastPart <- fixFactor <- NULL
-
+  
   comparisonPart <- treatmentFactorsList
   # combn(x,2) generate all combinations of the elements of x taken 2 at a time
   vectorFromCombn <- combn(treatmentFactorsList[[i]],2)[j,]
   comparisonPart[[i]] <- vectorFromCombn
   df_comparisonPart <- expand.grid(comparisonPart)
   data.table::setDT(df_comparisonPart)
-
+  
   # paste all the column of the data table
   #df_comparisonPart[, contrastPart := do.call(paste, c(.SD, sep = "_")), .SDcols = names(df_comparisonPart)]
   df_comparisonPart <- df_comparisonPart %>% tidyr::unite(contrastPart, sep="_", remove=F)
-
+  
   #colnameFactor_i <- names(df_comparisonPart)[i]
   colnameFactor_i <- names(treatmentFactorsList)[i]
-
+  
   #df_comparisonPart[, comparisonPart := df_comparisonPart[[colnameFactor_i]]]
   df_comparisonPart <- df_comparisonPart %>% dplyr::mutate(comparisonPart = df_comparisonPart[[colnameFactor_i]])
-
+  
   if(length(names(treatmentFactorsList)) != 1){
     colnamesToKeep <- setdiff(names(df_comparisonPart),c("contrastPart", "comparisonPart", colnameFactor_i))
     #df_comparisonPart[, fixFactor := do.call(paste, c(.SD, sep = "_")), .SDcols = colnamesToKeep]
@@ -940,12 +940,12 @@ define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
   }else{
     df_comparisonPart <- df_comparisonPart %>% dplyr::mutate(fixFactor= NA)
   }
-
-
+  
+  
   colnamesToDelete <- names(treatmentFactorsList)
   #df_comparisonPart[, (colnamesToDelete) := NULL]
   df_comparisonPart <- df_comparisonPart %>% dplyr::select(-all_of(colnamesToDelete))
-
+  
   nameColumnContrast <- paste0("contrastPart", j)
   nameColumnComparison <- paste0("comparisonPart", j)
   data.table::setnames(df_comparisonPart, c("contrastPart", "comparisonPart"), c(nameColumnContrast, nameColumnComparison))
@@ -962,51 +962,51 @@ define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
 #' @examples
 #' @author Christine Paysant-Le Roux
 simpleContrastForOneFactor <- function (treatmentFactorsList, i){
-
+  
   fixFactor <- groupComparison <- NULL
-
+  
   contrastPart1 <- contrastPart2 <- contrastPart3 <- contrastPart4 <-  NULL
   comparisonPart1 <- comparisonPart2 <- NULL
   fixPart1 <- fixPart3 <- fixFactor1 <- fixFactor3 <- NULL
   comparisonPart3 <- comparisonPart4 <- NULL
-
+  
   df_FirstComparisonPart <- define_partOfSimpleContrast_df(treatmentFactorsList,i,2)
   #df_FirstComparisonPart[,fixFactor := NULL]
   df_FirstComparisonPart <- df_FirstComparisonPart %>% dplyr::select(-fixFactor)
-
+  
   df_SecondComparisonPart <- define_partOfSimpleContrast_df(treatmentFactorsList,i,1)
   df_simpleContrasts_factor <- cbind(df_FirstComparisonPart, df_SecondComparisonPart)
-
+  
   #df_simpleContrasts_factor[, contrast := paste0("(", contrastPart2, " - ", contrastPart1, ")")]
   #df_simpleContrasts_factor[, groupComparison := paste0("(", comparisonPart2, " - ", comparisonPart1, ")")]
-
+  
   df_simpleContrasts_factor <- df_simpleContrasts_factor %>%
     dplyr::mutate(contrast        = paste0("(", contrastPart2,   " - ", contrastPart1, ")"),
                   groupComparison = paste0("(", comparisonPart2, " - ", comparisonPart1, ")"))
-
-
+  
+  
   # case where fixFactor column is empty (NA inside)
   emptycolFixFactor <- unique(is.na(df_simpleContrasts_factor$fixFactor))
   if(emptycolFixFactor){
     #df_simpleContrasts_factor[, contrastName := groupComparison]
     df_simpleContrasts_factor <- df_simpleContrasts_factor %>% dplyr::mutate(contrastName = groupComparison)
-
+    
   } else {
     #df_simpleContrasts_factor[, contrastName := paste0(groupComparison, " in ", fixFactor )]
     df_simpleContrasts_factor <- df_simpleContrasts_factor %>% dplyr::mutate(contrastName = paste0(groupComparison, " in ", fixFactor ))
   }
   #df_simpleContrasts_factor[, type := "simple"]
   df_simpleContrasts_factor <- df_simpleContrasts_factor %>% dplyr::mutate(type = "simple")
-
+  
   colnamesToDelete <- c("contrastPart2", "comparisonPart2", "contrastPart1", "comparisonPart1")
-
+  
   #df_simpleContrasts_factor[, (colnamesToDelete) := NULL]
   #data.table::setcolorder(df_simpleContrasts_factor, c(names(df_simpleContrasts_factor)[2:length(names(df_simpleContrasts_factor))], names(df_simpleContrasts_factor)[1]))
   df_simpleContrasts_factor <- df_simpleContrasts_factor %>% dplyr::select(-all_of(colnamesToDelete)) %>%
     dplyr::select("contrast", "groupComparison", "contrastName", "type", "fixFactor")
-
-
-
+  
+  
+  
   return(df_simpleContrasts_factor)
 }
 
@@ -1042,22 +1042,22 @@ defineAllSimpleContrasts <- function(treatmentFactorsList){
 #' @examples
 #' @author Christine Paysant-Le Roux
 define_averaged_contrasts <- function(allSimpleContrast_df){
-
+  
   groupComparison <- contrast <- n <- fixFactor <- contrastName <- NULL
-
+  
   #allAveragedContrasts_df <- allSimpleContrast_df[, list(contrast = paste0(paste0(paste0("(", paste(contrast, collapse=" + ")),")/"),.N), meanIn = paste(fixFactor, collapse=" + ")), by = groupComparison]
   #allAveragedContrasts_df[, type :="mean"]
   allAveragedContrasts_df <- allSimpleContrast_df %>% dplyr::group_by(groupComparison) %>% dplyr::add_tally() %>%
     dplyr::mutate(contrast= paste0(paste0("(", paste(contrast, collapse=" + ")),")/", n),
-           meanIn  = paste(fixFactor, collapse=" + "),
-           type    = "mean") %>%
+                  meanIn  = paste(fixFactor, collapse=" + "),
+                  type    = "mean") %>%
     dplyr::select(-contrastName, -fixFactor, -n) %>% unique() %>% data.table::data.table()
-
+  
   #allAveragedContrasts_df[, contrastName := paste(groupComparison, "mean", sep = " in ")]
   allAveragedContrasts_df <- allAveragedContrasts_df %>% dplyr::mutate(contrastName = paste(groupComparison, "mean", sep = " in "))
-
+  
   data.table::setcolorder(allAveragedContrasts_df, c("contrast", "groupComparison", "contrastName", "type", "meanIn"))
-
+  
   #  allAveragedContrasts_df <- allSimpleContrast_df[, list(meanIn = paste(fixFactor, collapse=" + ")), by = groupComparison]
   return(allAveragedContrasts_df[])
 }
@@ -1078,10 +1078,10 @@ define_averaged_contrasts <- function(allSimpleContrast_df){
 #' @examples
 #' @author Christine Paysant-Le Roux
 define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, row_i, row_j) {
-
+  
   contrastPart_bis <- outsideGroup_bis <- fixFactor_bis <- NULL
-
-
+  
+  
   comparisonPart <- treatmentFactorsList
   # combn(x,2) generate all combinations of the elements of x taken 2 at a time
   comparisonPart [[i]] <- combn(treatmentFactorsList[[i]],2)[row_i,]
@@ -1092,46 +1092,46 @@ define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, 
   #df_comparisonPart[, contrastPart := do.call(paste, c(.SD, sep = "_")), .SDcols = names(df_comparisonPart)]
   df_comparisonPart <- df_comparisonPart %>% tidyr::unite(contrastPart_bis, names(df_comparisonPart), sep="_", remove=F) %>%
     dplyr::mutate(contrastPart = contrastPart_bis) %>% dplyr::select(-contrastPart_bis)
-
+  
   colnameFactor_i <- names(df_comparisonPart)[i]
   colnameFactor_j <- names(df_comparisonPart)[j]
-
+  
   #data.table::setDT(df_comparisonPart)
   #df_comparisonPart[, comparisonPart := df_comparisonPart[[colnameFactor_i]]]
   #df_comparisonPart[, fixPart := df_comparisonPart[[colnameFactor_j]]]
   df_comparisonPart <- df_comparisonPart %>%
     dplyr::mutate(comparisonPart = df_comparisonPart[[colnameFactor_i]]) %>%
     dplyr::mutate(fixPart        = df_comparisonPart[[colnameFactor_j]])
-
-
+  
+  
   colnamesToKeep <- setdiff(names(treatmentFactorsList),c(colnameFactor_i, colnameFactor_j))
   #df_comparisonPart[, outsideGroup := do.call(paste, c(.SD, sep = "_")), .SDcols = colnamesToKeep]
   if(length(colnamesToKeep)){
-
+    
     df_comparisonPart <- df_comparisonPart %>% tidyr::unite(outsideGroup_bis, all_of(colnamesToKeep), sep="_", remove=F) %>%
       dplyr::mutate(outsideGroup = outsideGroup_bis) %>% dplyr::select(-outsideGroup_bis)
   }else{
-
+    
     df_comparisonPart <- df_comparisonPart %>% dplyr::mutate(outsideGroup = NA)
   }
-
+  
   colnamesToKeep <- setdiff(names(df_comparisonPart),c("contrastPart", "comparisonPart", "fixPart", "outsideGroup", colnameFactor_i))
   #df_comparisonPart[, fixFactor := do.call(paste, c(.SD, sep = "_")), .SDcols = colnamesToKeep]
   df_comparisonPart <- df_comparisonPart %>% tidyr::unite(fixFactor_bis, all_of(colnamesToKeep), sep="_", remove=F) %>%
     dplyr::mutate(fixFactor = fixFactor_bis) %>% dplyr::select(-fixFactor_bis)
-
+  
   colnamesToDelete <- names(treatmentFactorsList)
   #df_comparisonPart[, (colnamesToDelete) := NULL]
   df_comparisonPart <- df_comparisonPart %>% dplyr::select(-all_of(colnamesToDelete))
-
-
+  
+  
   nameColumnContrast <- paste0("contrastPart", k)
   nameColumnComparison <- paste0("comparisonPart", k)
   nameFixFactor <- paste0("fixFactor", k)
   namePartFixFactor <- paste0("fixPart", k)
   nameOutsideGroup <- paste0("outsideGroup", k)
   data.table::setnames(df_comparisonPart, c("contrastPart", "comparisonPart", "fixFactor", "fixPart", "outsideGroup"),
-           c(nameColumnContrast, nameColumnComparison, nameFixFactor, namePartFixFactor, nameOutsideGroup))
+                       c(nameColumnContrast, nameColumnComparison, nameFixFactor, namePartFixFactor, nameOutsideGroup))
   return(df_comparisonPart)
 }
 #' define interaction constrast for pairs of biological factors
@@ -1146,12 +1146,11 @@ define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, 
 #' @examples
 #' @author Christine Paysant-Le Roux
 defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i, j){
-
+  
   contrastPart1 <- contrastPart2 <- contrastPart3 <- contrastPart4 <- NULL
   comparisonPart1 <- comparisonPart2 <- comparisonPart3 <- comparisonPart4 <- NULL
   fixPart1 <- fixPart3 <- fixFactor1 <- fixFactor3 <- NULL
-
-
+  
   df_part1<- define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 1, 2, 2)
   df_part2<- define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 2, 1, 2)
   df_part3<- define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 3, 2, 1)
@@ -1162,25 +1161,41 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
   #df_interactionContrasts[, contrastName := paste0("(", comparisonPart1, " - ", comparisonPart2, ")", " in ", fixFactor1, " - ", "(", comparisonPart3, " - ", comparisonPart4, ")", " in ", fixFactor3 )]
   #df_interactionContrasts[, type := "interaction"]
   df_interactionContrasts <- df_interactionContrasts %>% dplyr::mutate(contrast = paste0("(", "(", contrastPart1, " - ", contrastPart2, ")"," - ",
-                                                                                              "(", contrastPart3, " - ", contrastPart4, ")", ")"),
+                                                                                         "(", contrastPart3, " - ", contrastPart4, ")", ")"),
                                                                        groupComparison = paste0("(", comparisonPart1, " - ", comparisonPart2, ")", " vs ",
                                                                                                 "(", fixPart1, " - ", fixPart3, ")"),
                                                                        contrastName  = paste0("(", comparisonPart1, " - ", comparisonPart2, ")", " in ", fixFactor1, " - ",
                                                                                               "(", comparisonPart3, " - ", comparisonPart4, ")", " in ", fixFactor3 ),
                                                                        type = "interaction")
-
+  
   colnamesToDelete <- c("contrastPart1",  "comparisonPart1", "fixFactor1", "fixPart1", "outsideGroup1",
                         "contrastPart2", "comparisonPart2", "fixFactor2", "fixPart2", "outsideGroup2",
                         "contrastPart3", "comparisonPart3", "fixFactor3", "fixPart3", "outsideGroup3",
                         "contrastPart4", "comparisonPart4", "fixFactor4", "fixPart4")
   #df_interactionContrasts[, (colnamesToDelete) := NULL]
   df_interactionContrasts <- df_interactionContrasts %>% dplyr::select(-all_of(colnamesToDelete))
-
-
+  
+  
   data.table::setnames(df_interactionContrasts, "outsideGroup4", "outsideGroup")
-
+  
   #df_interactionContrasts[,groupInteraction := paste0(names(treatmentFactorsList)[i], " vs ", names(treatmentFactorsList)[j])]
   df_interactionContrasts <- df_interactionContrasts %>% dplyr::mutate(groupInteraction = paste0(names(treatmentFactorsList)[i], " vs ", names(treatmentFactorsList)[j]))
+ 
+  # if 3 factors bio / outsideGroup exist
+  if(!is.null(df_interactionContrasts$outsideGroup)){
+    
+    ## add factor name of outsideGroup modality
+    if(length(names(treatmentFactorsList)[-c(i,j)]) != 0){
+      
+      df_interactionContrasts <- df_interactionContrasts %>% dplyr::mutate(outsideGroup = names(treatmentFactorsList)[-c(i,j)]) %>% 
+        dplyr::group_by(outsideGroup, groupComparison) %>% dplyr::add_tally() %>% 
+        dplyr::mutate(contrast= paste0(paste0("(", paste(contrast, collapse=" + ")),")/", n), 
+                      contrastName=paste0(groupComparison, " in ", outsideGroup)) %>% 
+        dplyr::select(-n) %>% unique()
+    }
+  }
+ 
+  return(df_interactionContrasts)
 }
 
 #' define all interaction contrasts
@@ -1194,11 +1209,11 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
 #' @examples
 #' @author Christine Paysant-Le Roux
 defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteractionToKeep = NULL){
-
+  
   groupInteraction <- NULL
-
+  
   allInteractionsContrasts_df <- data.table::data.table(contrast = character(), groupComparison = factor(), groupInteraction = character(),
-                                            outsideGroup = character(),contrastName = character(), type = character())
+                                                        outsideGroup = character(),contrastName = character(), type = character())
   # combn(names(treatmentFactorsList),2)
   # cat(paste("\ntreatment factors names:\n"))
   # print(as.character(names(treatmentFactorsList)))
@@ -1325,19 +1340,19 @@ returnContrastCoefficients <- function(contrast, colnamesGLMdesign, treatmentCon
 #' @noRd
 #'
 getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1], mergeType="union"){
-
+  
   if (length(colnames) == 0 ){ return(NULL) }
-
+  
   matrix_sum <- matrix %>% dplyr::mutate(sum = dplyr::select(., all_of(colnames)) %>% rowSums(.))
-
+  
   DEG_list <- switch(mergeType,
-
-         "union"={        dplyr::filter(matrix_sum, sum != 0) },
-         "intersection"={ dplyr::filter(matrix_sum, sum == length(colnames)) }
+                     
+                     "union"={        dplyr::filter(matrix_sum, sum != 0) },
+                     "intersection"={ dplyr::filter(matrix_sum, sum == length(colnames)) }
   )
-
+  
   if (length(DEG_list$DEF) == 0 ){ return(NULL) }
-
+  
   return(DEG_list$DEF)
 }
 
@@ -1362,14 +1377,14 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
 try_rflomics <- function(expr) {
   warn <- err <- NULL
   value <- withCallingHandlers(
-        tryCatch(expr,
-                 error    =function(e){ err <- e
-                                        NULL
-                                        }),
-                  warning =function(w){ warn <- w
-                                        invokeRestart("muffleWarning")}
-        )
-        list(value=value, warning=warn, error=err)
+    tryCatch(expr,
+             error    =function(e){ err <- e
+             NULL
+             }),
+    warning =function(w){ warn <- w
+    invokeRestart("muffleWarning")}
+  )
+  list(value=value, warning=warn, error=err)
 }
 
 
@@ -1382,84 +1397,84 @@ try_rflomics <- function(expr) {
 #' @noRd
 #'
 coseq.error.manage <- function(coseq.res.list, K, replicates){
-
+  
   # Create a table of jobs summary
   error.list <- unlist(lapply(coseq.res.list, function(x){
     ifelse(is.null(x$error),"success",as.character(x$error))
   }))
-
+  
   # status of jobs
   nK_success.job <- table(error.list)["success"]
-
+  
   if(is.na(nK_success.job)){ nK_success.job <- 0 }
-
+  
   # if at least one failed job
   # => generate table with error summary
   K.list <- rep(paste0("K",min(K), "-", max(K)), each=replicates)
-
+  
   jobs.tab <- data.frame(K= K.list, error.message=as.factor(error.list))
-
+  
   jobs.tab.sum1 <- jobs.tab %>% dplyr::group_by(K,error.message) %>%
     dplyr::summarise(n=dplyr::n()) %>%  dplyr::mutate(prop.failed=round((n/replicates)*100)) %>%
     dplyr::filter(error.message != "success")
-
+  
   jobs.tab.sum <- jobs.tab.sum1
-
+  
   if(nK_success.job != 0){
-
+    
     # Generate the list of results
     #coseq.res.list[["value"]] <- lapply(coseq.res.list,function(x){x$value})
     coseq.res.list[["value"]] <- list()
-
+    
     for(x in names(coseq.res.list)){
-
+      
       if(!is.null(coseq.res.list[[x]]$value)){
         coseq.res.list[["value"]][[x]] <- coseq.res.list[[x]]$value
       }
     }
-
+    
     print("#     => error management : level 2 ")
     ICL.vec <- unlist(lapply(1:nK_success.job, function(x){ (ICL(coseq.res.list[["value"]][[x]])) })) %>%
       lapply(., function(x){ if_else(is.na(x), "failed", "success") }) %>% unlist()
-
+    
     nK_success <- table(ICL.vec)["success"]
-
+    
     replicates <- nK_success.job
-
+    
     # expected list of cases
     K.list.ex <- rep(K, each=replicates)
-
+    
     # observed list of cases
     K.list.ob <- stringr::str_replace(string = names(ICL.vec), pattern = "K=", replacement = "") %>% as.numeric() %>% sort()
-
+    
     # missed cases
     if(length(K.list.ob) != length(K.list.ex)){
-
+      
       missed.K.vec <- names(table(K.list.ob)[table(K.list.ob) < nK_success.job])
-
+      
       ICL.vec.bis <- rep("failed", length(missed.K.vec))
       names(ICL.vec.bis) <- paste0("K=", missed.K.vec)
-
+      
       ICL.vec <- c(ICL.vec, ICL.vec.bis)
     }
-
+    
     jobs.tab <- data.frame(K = names(ICL.vec), error.message = as.factor(ICL.vec))
-
+    
     jobs.tab.sum2 <- jobs.tab %>% dplyr::group_by(K,error.message) %>%
       dplyr::summarise(n=dplyr::n()) %>%  dplyr::mutate(prop.failed=round((n/replicates)*100)) %>%
       dplyr::filter(error.message != "success")
-
+    
     # if (dim(jobs.tab.sum1)[1] == 0){ jobs.tab.sum <- jobs.tab.sum2 }
     # else if(dim(jobs.tab.sum2)[1] == 0){ jobs.tab.sum <- jobs.tab.sum1 }
     # else{ jobs.tab.sum <- rbind(jobs.tab.sum1, jobs.tab.sum2) }
-
+    
     jobs.tab.sum <- data.table::rbindlist(list(jobs.tab.sum1, jobs.tab.sum2), use.names = TRUE) %>% tibble()
-
+    
   }
   else{
     nK_success <- 0
   }
-
+  
   return(list(jobs.tab.sum=jobs.tab.sum, nK_success=nK_success, coseq.res.list.values=coseq.res.list[["value"]]))
 }
 
@@ -1472,45 +1487,45 @@ coseq.error.manage <- function(coseq.res.list, K, replicates){
 #' @noRd
 #'
 coseq.results.process <- function(coseqObjectList, K, conds){
-
+  
   # ICL plot
   #ICL.vec <- sapply(1:length(coseqObjectList), function(x){ coseq::ICL(coseqObjectList[[x]]) })
   ICL.vec <- lapply(1:length(coseqObjectList), function(x){ coseq::ICL(coseqObjectList[[x]]) }) %>% unlist()
-
+  
   ICL.tab <- data.frame(K=stringr::str_replace(names(ICL.vec), "K=", ""), ICL=ICL.vec) %>% dplyr::mutate(K=as.numeric(K))
-
+  
   ICL.n <- ICL.tab  %>% dplyr::group_by(.,K) %>% dplyr::filter(!is.na(ICL)) %>%
-                        dplyr::summarise(median = median(ICL, na.rm = TRUE), n = dplyr::n()) %>%
-                        dplyr::mutate(K=as.numeric(K))
-
+    dplyr::summarise(median = median(ICL, na.rm = TRUE), n = dplyr::n()) %>%
+    dplyr::mutate(K=as.numeric(K))
+  
   ICL.p   <- ggplot(data = ICL.tab) + geom_boxplot(aes(x=as.factor(K), y=ICL, group=K)) +
     geom_text(data=ICL.n, aes(x=1:length(K), y=max(ICL.vec, na.rm = TRUE), label=paste0("n=",n)), col='red', size=4) +
     ylim(min(ICL.vec, na.rm = TRUE), max(ICL.vec, na.rm = TRUE)) + xlab("K")
-
+  
   # min ICL
   K.ICL.median.min <- ICL.n[which.min(ICL.n$median),]$K
   K.ICL.min <- min(ICL.vec[names(ICL.vec) == paste0("K=", K.ICL.median.min)], na.rm = TRUE)
-
+  
   # coseq object with the min ICL
   index <- sapply(names(coseqObjectList), function(x){(TRUE %in% (ICL(coseqObjectList[[x]]) == K.ICL.min))})
   coseq.res <- coseqObjectList[index][[1]]
   # coseq.res <- coseqObjectList[[which.min(ICL.vec)]]
-
+  
   # logLike plot
   logLike.vec <- lapply(1:length(coseqObjectList), function(x){ coseq::likelihood(coseqObjectList[[x]]) }) %>% unlist()
-
+  
   logLike.tab <- data.frame(K=stringr::str_replace(names(logLike.vec), "K=", ""), logLike=logLike.vec) %>% dplyr::mutate(K=as.numeric(K))
-
+  
   logLike.n <- logLike.tab  %>% dplyr::group_by(.,K) %>% dplyr::filter(!is.na(logLike)) %>%
-                                dplyr::summarise(median = median(logLike), n = dplyr::n()) %>%
-                                dplyr::mutate(K=as.numeric(K))
-
+    dplyr::summarise(median = median(logLike), n = dplyr::n()) %>%
+    dplyr::mutate(K=as.numeric(K))
+  
   logLike.p   <- ggplot(data = logLike.tab) + geom_boxplot(aes(x=as.factor(K), y=logLike, group=K)) + xlab("K") +
     geom_text(data=logLike.n, aes(x=1:length(K), y=max(logLike.vec, na.rm = TRUE), label=paste0("n=",n)), col='red', size=4)
-
-
+  
+  
   # process results
-
+  
   # plot
   plot.coseq.res <- coseq::plot(coseq.res, conds = conds, collapse_reps="average",
                                 graphs = c("profiles", "boxplots", "probapost_boxplots",
@@ -1519,27 +1534,27 @@ coseq.results.process <- function(coseqObjectList, K, conds){
   CoExpAnal[["plots"]] <- plot.coseq.res
   CoExpAnal[["plots"]][["ICL"]]     <- ICL.p
   CoExpAnal[["plots"]][["logLike"]] <- logLike.p
-
+  
   CoExpAnal[["results"]]      <- TRUE
   CoExpAnal[["coseqResults"]] <- coseq.res
   #CoExpAnal[["coseqResults"]] <- coseq.res.list
   #coseq.res <- coseq.res.list
-
+  
   # list of genes per cluster
   clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
     names(coseq::clusters(coseq.res)[coseq::clusters(coseq.res) == i])
   })
   CoExpAnal[["clusters"]] <- clusters
   names(CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
-
+  
   # nbr of cluster
   # Gestion des NA dans les ICLs
   ICLv <- na.omit(coseq.res@metadata$ICL)
   nb_cluster <- na.omit(coseq.res@metadata$nbCluster)[min(ICLv) == ICLv]
-
+  
   CoExpAnal[["cluster.nb"]] <- nb_cluster
-
-
+  
+  
   #return(list("ICL.p"=ICL.p, "logLike.p"=logLike.p, "coseqObjectMinICL"=coseq.res))
   return(CoExpAnal)
 }
@@ -1658,54 +1673,54 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
 #' @noRd
 #'
 runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list){
-
+  
   iter <- rep(K, replicates)
   nbr_iter <- length(iter)
   coseq.res.list <- list()
   #set.seed(12345)
-
+  
   coseq.res.list <- lapply(1:replicates, function(x){
-
+    
     try_rflomics(coseq::coseq(counts, K=K, parallel= TRUE,
                               model           =param.list[["model"]],
                               transformation  =param.list[["transformation"]],
                               meanFilterCutoff=param.list[["meanFilterCutoff"]],
                               normFactors     =param.list[["normFactors"]],
                               GaussianModel   =param.list[["GaussianModel"]]))})
-
+  
   # coseq.res.list$value[[3]]@metadata$nbClusterError
-
-
+  
+  
   names(coseq.res.list) <- c(1:replicates)
-
+  
   CoExpAnal <- list()
-
+  
   # error managment
   print("#     => error management : level 1 ")
   coseq.error.management <- coseq.error.manage(coseq.res.list=coseq.res.list, K=K, replicates=replicates)
-
+  
   nK_success   <- coseq.error.management$nK_success
-
+  
   # If they are at least the half of jobs succeed, valid results
   if(nK_success != 0){
-
+    
     CoExpAnal <- coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, conds = conds)
     CoExpAnal[["warning"]] <- coseq.res.list$warning
-
+    
     if(nK_success/length(iter) < 0.8){
       CoExpAnal[["error"]] <- TRUE
     }
-
+    
   }
   else{
-
+    
     CoExpAnal[["results"]] <- FALSE
     CoExpAnal[["error"]] <- TRUE
   }
-
-
+  
+  
   CoExpAnal[["stats"]] <- coseq.error.management$jobs.tab.sum
-
+  
   return(CoExpAnal)
 }
 
@@ -1721,14 +1736,14 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list){
 #' @noRd
 #'
 coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
-
+  
   samples <- variable <- value <- cluster <- NULL
-
+  
   nb_cluster <- coseq.res@metadata$nbCluster[min(coseq.res@metadata$ICL) == coseq.res@metadata$ICL]
   groups <- conds %>% dplyr::arrange(factor(samples, levels = names(coseq.res@y_profiles)))
   y_profiles <- list()
   for (i in 1:nb_cluster){
-   #print(i)
+    #print(i)
     #y_profiles[[i]] <- coseq.res@y_profiles[coseq.res@allResults[[nb_cluster-1]][,i] != 0,] %>%
     y_profiles[[i]] <- coseq.res@y_profiles[coseq.res@allResults[[paste0("K=",nb_cluster)]][,i] != 0,] %>%
       data.frame() %>% reshape2::melt() %>%  dplyr::rename(samples = variable) %>%
@@ -1737,14 +1752,14 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
   y_profiles.gg <-  y_profiles %>% purrr::reduce(rbind)
   y_profiles.gg$groups <- factor(y_profiles.gg$groups, levels = unique(conds$groups))
   y_profiles.gg$samples <- factor(y_profiles.gg$samples, levels = unique(conds$samples))
-
-
+  
+  
   p <- ggplot2::ggplot(data = dplyr::filter(y_profiles.gg, cluster == selectedCluster)) +
-
+    
     geom_boxplot(aes(x=samples, y=value, fill = groups), outlier.size = 0.3) + facet_wrap(~cluster) +
     theme(axis.text.x=element_blank())
-    #theme(axis.text.x=element_text(angle=90, hjust=1))
-
+  #theme(axis.text.x=element_text(angle=90, hjust=1))
+  
   print(p)
 }
 
@@ -1761,11 +1776,11 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
 #' @noRd
 #'
 EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
-#enrichment_analysis <- function(Reference,Gene_List,Alpha){
-
+  #enrichment_analysis <- function(Reference,Gene_List,Alpha){
+  
   Term <- Name <- Domain <- geneID <- NULL
   Pvalue_over <- Pvalue_under <- Decision <- NULL
-
+  
   # ## success in the urn /  For each annotation term, number of annotated genes in the Reference file
   # m=table(Reference[,2])
   # ## failures in the urn / For each annotation term, number of not annotated genes in the Reference file
@@ -1776,24 +1791,24 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
   # k=length(unique(trial[,1]))
   # ## trial success /  For each annotation term, number of annotated genes in the gene list file
   # x=table(factor(trial[,2],levels=rownames(m)))
-
+  
   ## success in the urn /  For each annotation term, number of annotated genes in the Reference file
-
+  
   Urn_Success <- annotation %>% dplyr::group_by(Term, Name, Domain) %>% dplyr::count(name = "Urn_Success")
-
+  
   ## size of reference / nbr of genes in Ref file
   Urn_effective <- length(unique(annotation$geneID))
-
+  
   ##
   #trial<-merge(geneList,annotation)
   trial <- dplyr::filter(annotation , geneID %in% geneList)
-
+  
   ## trial effective / number of genes in the gene list
   Trial_effective <- length(unique(trial$geneID))
-
+  
   ## trial success /  For each annotation term, number of annotated genes in the gene list file
   Trial_Success <- trial %>% dplyr::group_by(Term, Name, Domain) %>% dplyr::count(name = "Trial_Success")
-
+  
   ## Result files
   res=NaN
   # Term=rownames(m)
@@ -1805,14 +1820,14 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
   #                Trial_percentage_Success=signif(100*x/k,3),
   #                Pvalue_over=phyper(x-1,m,n,k,lower.tail=FALSE),
   #                Pvalue_under=phyper(x,m,n,k,lower.tail=TRUE))
-
+  
   res= dplyr::full_join(Urn_Success, Trial_Success, by = c("Term", "Name", "Domain")) %>%
-       dplyr::mutate(Urn_percentage_Success   = signif(100*Urn_Success/Urn_effective, 3), Urn_effective = Urn_effective,
-
-                     Trial_percentage_Success = signif(100*Trial_Success/Trial_effective, 3), Trial_effective = Trial_effective,
-                     Pvalue_over  = stats::phyper(Trial_Success-1,Urn_Success, (Urn_effective-Urn_Success),Trial_effective,lower.tail=FALSE),
-                     Pvalue_under = stats::phyper(Trial_Success,  Urn_Success, (Urn_effective-Urn_Success),Trial_effective,lower.tail=TRUE))
-
+    dplyr::mutate(Urn_percentage_Success   = signif(100*Urn_Success/Urn_effective, 3), Urn_effective = Urn_effective,
+                  
+                  Trial_percentage_Success = signif(100*Trial_Success/Trial_effective, 3), Trial_effective = Trial_effective,
+                  Pvalue_over  = stats::phyper(Trial_Success-1,Urn_Success, (Urn_effective-Urn_Success),Trial_effective,lower.tail=FALSE),
+                  Pvalue_under = stats::phyper(Trial_Success,  Urn_Success, (Urn_effective-Urn_Success),Trial_effective,lower.tail=TRUE))
+  
   # res_over_under <-NULL
   # index=which(res$Pvalue_over<Alpha)
   # if(length(index)!=0)
@@ -1831,17 +1846,17 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
   #   colnames(res_under)[10] <- c("Decision")
   #   res_over_under <- rbind(res_over_under,res_under)
   # }
-
+  
   res_over_under <- NULL
   res_over_under <- res %>% dplyr::mutate(Decision = dplyr::if_else(Pvalue_over <alpha, "overrepresented",
-                                                     dplyr::if_else(Pvalue_under<alpha, "underrepresented", NULL))) %>%
-                            dplyr::filter(!is.na(Decision))
-
+                                                                    dplyr::if_else(Pvalue_under<alpha, "underrepresented", NULL))) %>%
+    dplyr::filter(!is.na(Decision))
+  
   Results <- list("All_results"   = res, "Over_Under_Results" = res_over_under,
                   "Urn_effective" = Urn_effective, "Trial_effective" = Trial_effective)
-
+  
   return(Results)
-
+  
 }
 
 ######## INTEGRATION WITH MOFA #############
@@ -1864,31 +1879,31 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
   # type = "intersection"
   # contrasts_arg = c("(temperatureLow - temperatureElevated)", "(temperatureMedium - temperatureLow)")
   # SEobject@metadata[["integration_contrasts"]] <- contrasts
-
+  
   tabCorresp <- SEobject@metadata$DiffExpAnal$contrasts %>% dplyr::select(contrastName, tag)
   if("all" %in% contrasts_arg)   contrasts_arg <- SEobject@metadata$DiffExpAnal$contrasts$contrastName
-
+  
   tabCorresp <- tabCorresp %>% dplyr::filter(contrastName %in% contrasts_arg)
   contrasts_select <- tabCorresp$tag
-
+  
   tab1 <- SEobject@metadata$DiffExpAnal$mergeDEF %>%
     dplyr::select(all_of(c("DEF", contrasts_select)))
-
+  
   if(type == "intersection"){
-
+    
     DETab <- tab1 %>%
       mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
       filter(SUMCOL==length(contrasts_select))
-
+    
   }else{
-
+    
     DETab <- tab1 %>%
       mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
       filter(SUMCOL>=1)
   }
-
+  
   SEobject <- SEobject[DETab$DEF,]
-
+  
   return(SEobject)
 }
 
@@ -1907,25 +1922,25 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
 #' @noRd
 #'
 rbe_function = function(object, SEobject){
-
+  
   # object = object
   # SEobject = omicsDat
-
+  
   assayTransform <- SummarizedExperiment::assay(SEobject)
-
+  
   colBatch <- names(object@metadata$design@Factors.Type)[object@metadata$design@Factors.Type=="batch"]
-
+  
   print(paste0("#     =>Correction for Batch: ", paste(colBatch, collapse = " ")))
   
   newFormula <- gsub(pattern = paste(colBatch, collapse = "[+]|"), "", object@metadata$design@Model.formula)
   newFormula <- gsub(pattern = "~ [+] ", "~ ", newFormula)
   # designToPreserve <- model.matrix(as.formula(newFormula), data = object@metadata$design@ExpDesign)
   designToPreserve <- model.matrix(as.formula(newFormula), data = SEobject@metadata$Groups)
-
+  
   if(length(colBatch)==1){
     rbeRes <- limma::removeBatchEffect(assayTransform, batch = SEobject@metadata$Groups[,colBatch], design = designToPreserve)
   }else if(length(colBatch) >= 2){
-
+    
     rbeRes <- limma::removeBatchEffect(assayTransform,
                                        batch = SEobject@metadata$Groups[,colBatch[1]],
                                        batch2 = SEobject@metadata$Groups[,colBatch[2]],
@@ -1934,13 +1949,13 @@ rbe_function = function(object, SEobject){
   # else{
   if(length(colBatch) > 2) print("sorry, only 2 batches effect for now!!!") # trouver un moyen de prendre en compte automatiquement plusieurs batch factors. C'est moche.
   # }
-
+  
   SEobject@metadata[["correction_batch_method"]] <- "limma (removeBatchEffect)"
-
+  
   # SEobject@metadata[["integration_table"]] <- rbeRes # on ecrase le tableau de resultats
   SummarizedExperiment::assay(SEobject) <- rbeRes
-
-
+  
+  
   return(SEobject)
 }
 
