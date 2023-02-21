@@ -817,7 +817,7 @@ methods::setMethod(f="Data_Distribution_plot",
                              },
                              "boxplot" = {
                                p <- ggplot(pseudo.gg, aes(x=samples, y=value,label = features)) +
-                                 ggplot2::geom_boxplot(aes(fill=groups), outlier.colour = "red") +
+                                 ggplot2::geom_boxplot(aes(fill=groups)) +
                                  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +
                                  xlab("") + ylab(x_lab) + ggtitle(title) #+
                                #geom_point(alpha = 1/100,size=0)
