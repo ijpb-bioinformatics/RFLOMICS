@@ -510,7 +510,7 @@ shinyServer(function(input, output, session) {
         # Set up parameters to pass to Rmd document
         print(file.path(outDir, RData.name))
         params <- list( FEdata = file.path(outDir, RData.name),
-                        title  = paste0(projectName, "project"),
+                        title  = paste0(projectName, " project"),
                         outDir = outDir)
 
         print(tempdir())

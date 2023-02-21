@@ -13,8 +13,7 @@ knitr::opts_chunk$set(
 
 Differential expression analysis was carried out for each selected contrast thanks to the `r dataset.SE@metadata[["DiffExpAnal"]]$method` model. 
 
-P-value of differential expressed `r omics.dic[[omictype]][["variableName"]]` were adjusted according to the `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.method` method
-with a cutoff set to `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff`.
+P-value of differential expressed `r omics.dic[[omictype]][["variableName"]]` were adjusted according to the `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.method` method with a cutoff set to `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff`.
 
 ### Summary
 

@@ -35,7 +35,7 @@ check$plot
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
 
 * The *unexpressed genes* are filtered-out by default: `r length(dataset.raw.SE@metadata$rowSums.zero)` filtred-out genes.
-* The *low expressed genes* (those with low counts) are filtred-out using the Counts Per Million (CPM) method with "`r dataset.SE@metadata$FilteringOptions$Filter_Strategy`" strategy and cut-off equal to `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff`: `r length(dataset.raw.SE@metadata$FilteredFeatures)` filtred-out genes.
+* The *low expressed genes* (those with low counts) are filtred-out using the Counts Per Million (CPM) method with "`r dataset.SE@metadata$FilteringOptions$Filter_Strategy`" strategy and cut-off equal to `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff`: `r length(dataset.raw.SE@metadata$FilteredFeatures)` filtered-out genes.
 
 * The `r dataset.SE@metadata$Normalization$methode` normalization method 
 was applied and the scaling factors are stored in the table below:

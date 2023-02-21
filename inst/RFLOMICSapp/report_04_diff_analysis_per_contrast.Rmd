@@ -1,7 +1,6 @@
 
-
-<!-- <details> -->
-<!--   <summary>`r contrast`</summary> -->
+<details>
+<summary>`r contrast`</summary>
 
 
 ```{r , echo=FALSE , message=FALSE, warning=FALSE}
@@ -19,32 +18,37 @@ knitr::opts_chunk$set(
 ```
 
 ```{r , echo=FALSE,out.width = "50%"}
-
 diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=contrast, Adj.pvalue.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["Adj.pvalue.cutoff"]], FC.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["abs.FC.cutoff"]])
 ```
-### `r contrast` {.tabset}
 
-#### Pvalue
+<!-- ### `r contrast` {.tabset} -->
+
+<!-- #### Pvalue -->
 
 ```{r pvalues_distrib, echo=FALSE,out.width = "50%"}
 diff.plots$Pvalue.hist
 ```
 
-#### MAplot
+<!-- #### MAplot & Volcano plot -->
 
 
-```{r MA_plot, echo=FALSE,out.width = "50%"}
+```{r MA_plot, echo=FALSE,out.width = "50%",fig.show = "hold", warning=FALSE}
 diff.plots$MA.plot
-```
-
-#### Volcano plot
-
-
-```{r volcano_plot, echo=FALSE,out.width = "50%"}
 diff.plots$Volcano.plot
 ```
 
-#### Table
+<!-- #### ComplexHeatmap -->
+
+
+
+<!-- #### Volcano plot -->
+
+
+<!-- ```{r volcano_plot, echo=FALSE,out.width = "50%"} -->
+<!-- diff.plots$Volcano.plot -->
+<!-- ``` -->
+
+<!-- #### Table -->
 
 ```{r , results='asis', echo = FALSE, out.width = "70%"}
 
@@ -59,8 +63,10 @@ diff.plots$Volcano.plot
                         "#e00000"
                       }
                       list(fontWeight = 600, color = color)
-                  }
-                )
+                  }, format=colFormat(digits = 2)
+                ),
+              Abundance = colDef(format = colFormat(digits = 2)),
+              LR= colDef(format = colFormat(digits = 2))
               )
             )
 
@@ -78,7 +84,6 @@ write.table(dataset.SE@metadata[["DiffExpAnal"]][["DEF"]][[contrast]],
 ```
 
 
-
-<!-- </details> -->
+</details>
 
 
