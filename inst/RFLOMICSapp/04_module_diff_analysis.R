@@ -35,9 +35,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                     "metabolomics" = MethodList[2])
 
   output$instruction <- renderUI({
-    box(title = span(tagList(icon("cogs"), "  ",  a(names(method), href="https://bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf"), "    (Scroll down for instructions)"  )),
+    box(title = span(tagList(icon("cogs"), "  ",  a(names(method), href="https://bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf"), tags$small("(Scroll down for instructions)")  )),
         solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
-        p("Differential expression analysis is conducted for each hypothesis. There is just two options to set (the ajusted-pvalue cut-off and the |FC| cut-off).
+        p("Differential expression analysis is conducted for each hypothesis. There is just two options to set (the ajusted-pvalue cut-off and the |logFC| cut-off).
           The results will appear in blocks (one per hypothesis) with 3 outputs:"),
         p("- the distribution of pvalue's : which has to be validated", a("(some help to identify the good shapes)", href="Pvalue_distrib.pdf"),""),
         p("- the MA plot (DE genes in red will varie with the p-value cutoff)"),
@@ -193,9 +193,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         numericInput(inputId = session$ns("Adj.pvalue.cutoff"),
                      label="Adjusted pvalue cutoff:",
                      value=0.05, min=0, max=1, 0.01),
-        numericInput(inputId = session$ns("abs.FC.cutoff"),
-                     label="|FC| cutoff:",
-                     value=0, min=0, max=100, 0.1),
+        numericInput(inputId = session$ns("abs.logFC.cutoff"),
+                     label="|logFC| cutoff:",
+                     value=0, min=0, max=100, 0.01),
         actionButton(session$ns("validContrast"),"Validate"))
   })
 
@@ -209,7 +209,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     ### adj_pvalue filtering by calling the RundDiffAnalysis method without filtering
     local.rea.values$dataset.SE <- FilterDiffAnalysis(object = local.rea.values$dataset.SE,
                                                       Adj.pvalue.cutoff = input$Adj.pvalue.cutoff,
-                                                      FC.cutoff = input$abs.FC.cutoff)
+                                                      logFC.cutoff = input$abs.logFC.cutoff)
     #Contrasts.Sel <- local.rea.values$dataset.SE@metadata$DiffExpAnal$contrasts
 
     list(
@@ -221,7 +221,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       stats    <- dataset.SE@metadata$DiffExpAnal[["stats"]][[vect["contrastName"]]]
 
       diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=vect["contrastName"],
-                                  Adj.pvalue.cutoff = input$Adj.pvalue.cutoff, FC.cutoff = input$abs.FC.cutoff)
+                                  Adj.pvalue.cutoff = input$Adj.pvalue.cutoff, logFC.cutoff = input$abs.logFC.cutoff)
 
       fluidRow(
         column(10,

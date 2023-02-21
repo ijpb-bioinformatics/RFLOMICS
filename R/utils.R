@@ -589,7 +589,7 @@ utils::globalVariables(names(data))
 #' @importFrom ggplot2 aes geom_point scale_colour_manual ggsave
 #' @examples
 #' @noRd
-MA.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, pngFile=NULL){
+MA.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypothesis){
   
   # Abundance <- logFC <- Adj.pvalue <- NULL
   # p <- ggplot2::ggplot(data=data, aes(x = Abundance, y=logFC, col= (Adj.pvalue < Adj.pvalue.cutoff & abs(logFC) > log2(FC.cutoff) ))) +
@@ -607,7 +607,7 @@ MA.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, p
   Abundance <- logFC <- Adj.pvalue <- NULL
   tmp <-dplyr::select(data,"Abundance","logFC","Adj.pvalue") %>% rename(., baseMeanLog2=Abundance, log2FoldChange=logFC, padj=Adj.pvalue)
   p <- ggpubr::ggmaplot(tmp, main = hypothesis,
-                        fdr = Adj.pvalue.cutoff, fc = FC.cutoff, size = 0.4,
+                        fdr = Adj.pvalue.cutoff, fc = 2^logFC.cutoff, size = 0.4,
                         ylab = bquote(~Log[2] ~ "fold change"),
                         xlab = bquote(~Log[2] ~ "mean expression"),
                         palette = c("#B31B21", "#1465AC", "grey30"),
@@ -616,13 +616,9 @@ MA.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, p
                         font.label = c("plain", 7),
                         font.legend = c(11, "plain", "black"),
                         font.main = c(11, "bold", "black"),
-                        caption = paste("FC cutoff=",FC.cutoff, " and " ,"FDR cutoff=",Adj.pvalue.cutoff,sep=""),
+                        caption = paste("logFC cutoff=",logFC.cutoff, " and " ,"FDR cutoff=",Adj.pvalue.cutoff,sep=""),
                         ggtheme = ggplot2::theme_linedraw())
   
-  
-  if (! is.null(pngFile)){
-    ggsave(filename = pngFile, plot = p)
-  }
   
   return(p)
   
@@ -644,7 +640,7 @@ MA.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, p
 #' @noRd
 #' @examples
 #'
-Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothesis, pngFile=NULL){
+Volcano.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypothesis, pngFile=NULL){
   
   # Modified 221123
   # Find pvalue corresponding to the FDR cutoff for the plot (mean between the last that passes the cutoff
@@ -675,7 +671,7 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothes
                                         y = 'pvalue',
                                         # pCutoff = Adj.pvalue.cutoff,
                                         pCutoff = pvalCutoff,
-                                        FCcutoff = log2(FC.cutoff),
+                                        FCcutoff = logFC.cutoff,
                                         axisLabSize=10,
                                         pointSize = 1.5,
                                         labSize = 2,
@@ -683,7 +679,7 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, FC.cutoff, hypothesis=hypothes
                                         titleLabSize=11,
                                         subtitle = "",
                                         subtitleLabSize = 10,
-                                        caption = paste("FC cutoff=", FC.cutoff, " & " ,"FDR cutoff=", Adj.pvalue.cutoff, sep=""),
+                                        caption = paste("logFC cutoff=", logFC.cutoff, " & " ,"FDR cutoff=", Adj.pvalue.cutoff, sep=""),
                                         legendPosition = "bottom",
                                         legendLabSize = 10,
                                         legendIconSize=1.5,
