@@ -132,3 +132,9 @@ methods::setGeneric(
   name="heatmap.plot",
   def = function( object, ... ){standardGeneric("heatmap.plot")}
 )
+
+methods::setGeneric(
+  name="boxplot.DE.plot",
+  def = function( object, ... ){standardGeneric("boxplot.DE.plot")}
+)
+

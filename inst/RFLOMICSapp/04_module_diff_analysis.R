@@ -107,7 +107,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   output$validateUI <- renderUI({
     
     if (rea.values[[dataset]]$diffAnal == FALSE) return()
-    if (dim(rea.values[[dataset]]$DiffValidContrast)[1] == 0) return()
+    if (is.null(rea.values[[dataset]]$DiffValidContrast) || dim(rea.values[[dataset]]$DiffValidContrast)[1] == 0) return()
     
     fluidRow(
       column(width = 9),
@@ -322,18 +322,17 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                       newDataset.SE <- dataset.SE[rownames(dataset.SE) %in% row.names(resTable)]
                                       newDataset.SE <- RFLOMICS::RunPCA(newDataset.SE)  
                                       
-                                      PC1.value <- as.numeric(input[[paste0(vect["contrastName"],"-","diff-Firstaxis")]][1])
-                                      PC2.value <- as.numeric(input[[paste0(vect["contrastName"],"-","diff-Secondaxis")]][1])
-                                      condGroup <- input[[paste0(vect["contrastName"],"-","diff-condColorSelect")]][1]
+                                      PC1.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Firstaxis")]][1])
+                                      PC2.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Secondaxis")]][1])
+                                      condGroup <- input[[paste0(vect["contrastName"],"-diff-condColorSelect")]][1]
                                       
                                       RFLOMICS::plotPCA(newDataset.SE,  PCA = "norm", PCs = c(PC1.value, PC2.value), condition = condGroup)
                                     })
                                   ),
                                   fluidRow(
-                                    column(width = 6, RadioButtonsConditionUI(session$ns(paste0(vect["contrastName"],"-","diff")))),
-                                    column(width = 6, UpdateRadioButtonsUI(session$ns(paste0(vect["contrastName"],"-","diff"))))
+                                    column(width = 6, RadioButtonsConditionUI(session$ns(paste0(vect["contrastName"],"-diff")))),
+                                    column(width = 6, UpdateRadioButtonsUI(session$ns(paste0(vect["contrastName"],"-diff"))))
                                     
-                                    # paste0(vect["contrastName"],"-","diff")
                                   )
                          ),
                          ### boxplot DE ###
@@ -348,9 +347,11 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                     column(9,
                                            renderUI({
                                              renderPlot({
-                                               boxplot.DE.plot(object=dataset.SE, DE=input[[paste0(vect["contrastName"], "-DE")]])
+                                               boxplot.DE.plot(object=dataset.SE, DE=input[[paste0(vect["contrastName"], "-DE")]], 
+                                                               condition=input[[paste0(vect["contrastName"], "-DEcondition-condColorSelect")]])
                                              })
-                                           })
+                                           }),
+                                           RadioButtonsConditionUI(session$ns(paste0(vect["contrastName"],"-DEcondition")))
                                     )
                                   )
                          )
@@ -374,9 +375,12 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       vect     <- unlist(rea.values$Contrasts.Sel[i,])
       
       # update/adapt PCA axis
-      callModule(UpdateRadioButtons, paste0(vect["contrastName"],"-","diff"))
+      callModule(UpdateRadioButtons, paste0(vect["contrastName"],"-diff"))
       # select factors for color PCA plot
-      callModule(RadioButtonsCondition, paste0(vect["contrastName"],"-","diff"), typeFact = c("Bio", "batch"))
+      callModule(RadioButtonsCondition, paste0(vect["contrastName"],"-diff"), typeFact = c("Bio", "batch"))
+      
+      # select factors for color PCA plot
+      callModule(module = RadioButtonsCondition, id = paste0(vect["contrastName"],"-DEcondition"), typeFact = c("Bio"))
       
     })
   })
