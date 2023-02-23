@@ -560,7 +560,7 @@ plotDistr <- function(abundances, dataType, transform_method){
 #' @importFrom ggplot2 geom_histogram
 #' @examples
 #' @noRd
-pvalue.plot <- function(data, hypothesis=hypothesis, pngFile=NULL){
+pvalue.plot <- function(data, hypothesis=hypothesis){
   
   PValue <- NULL
   
@@ -568,10 +568,6 @@ pvalue.plot <- function(data, hypothesis=hypothesis, pngFile=NULL){
     ggplot2::geom_histogram(aes(x=pvalue), bins = 200) +
     ggplot2::labs(x = expression(p - value), y = "count", title = hypothesis )+
     ggplot2::theme_bw(base_size = 10)
-  
-  if (! is.null(pngFile)){
-    ggsave(filename = pngFile, plot = p)
-  }
   
   return(p)
 }
@@ -640,20 +636,20 @@ MA.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypothesis
 #' @noRd
 #' @examples
 #'
-Volcano.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypothesis, pngFile=NULL){
+Volcano.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis){
   
   # Modified 221123
   # Find pvalue corresponding to the FDR cutoff for the plot (mean between the last that passes the cutoff
   # and the first that is rejected to plot the line in the middle of the two points)
   # if pvalcutoff is 1 (no cutoff) no need to adjust
   
-  if(Adj.pvalue.cutoff < 1){
-    pval1 <- data$pvalue[data$Adj.pvalue<Adj.pvalue.cutoff] %>% dplyr::last()
-    pval2 <- data$pvalue[data$Adj.pvalue>Adj.pvalue.cutoff] %>% dplyr::first()
-    pvalCutoff <- (pval1 + pval2)/2
-  }else if(Adj.pvalue.cutoff >= 1){
-    pvalCutoff <- 1
-  }
+  
+  if(Adj.pvalue.cutoff > 1){stop("Adj.pvalue.cutoff must be between 0 and 1")}
+  
+  pval1 <- data$pvalue[data$Adj.pvalue<Adj.pvalue.cutoff] %>% dplyr::last()
+  pval2 <- data$pvalue[data$Adj.pvalue>Adj.pvalue.cutoff] %>% dplyr::first()
+  pvalCutoff <- (pval1 + pval2)/2
+  
   
   # Added 221123: if too low pvalues, unable to plot (error in if(d>0)...)
   # If drawconnectors is FALSE, it "works", with ylim being infinity, it doesn't look like anything. 
@@ -689,12 +685,10 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypot
                                         drawConnectors = TRUE,
                                         widthConnectors = 0.5)
   
-  if (! is.null(pngFile)){
-    ggsave(filename = pngFile, plot = p)
-  }
-  
   return(p)
 }
+
+
 
 #' Plot the balance of data in an experimental design
 #'
@@ -1176,7 +1170,7 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
   
   #df_interactionContrasts[,groupInteraction := paste0(names(treatmentFactorsList)[i], " vs ", names(treatmentFactorsList)[j])]
   df_interactionContrasts <- df_interactionContrasts %>% dplyr::mutate(groupInteraction = paste0(names(treatmentFactorsList)[i], " vs ", names(treatmentFactorsList)[j]))
- 
+  
   # if 3 factors bio / outsideGroup exist
   if(!is.null(df_interactionContrasts$outsideGroup)){
     
@@ -1190,7 +1184,7 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
         dplyr::select(-n) %>% unique()
     }
   }
- 
+  
   return(df_interactionContrasts)
 }
 

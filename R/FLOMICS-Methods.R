@@ -1241,9 +1241,7 @@ methods::setMethod(f="RunNormalization",
 methods::setMethod(f="RunDiffAnalysis",
                    signature="SummarizedExperiment",
                    definition <- function(object, design, Adj.pvalue.method="BH",
-                                          contrastList, DiffAnalysisMethod, clustermq=FALSE){
-                     
-                     
+                                          contrastList, DiffAnalysisMethod, Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE){
                      
                      contrastName <- NULL
                      Contrasts.Sel <- dplyr::filter(design@Contrasts.Sel, contrastName %in% contrastList)
@@ -1276,23 +1274,23 @@ methods::setMethod(f="RunDiffAnalysis",
                                                                                Adj.pvalue.method = Adj.pvalue.method,
                                                                                clustermq=clustermq)))
                      
-                     
-                     
                      if(! is.null(ListRes$value)){
                        if(! is.null(ListRes$value[["RawDEFres"]])){
                          object@metadata$DiffExpAnal[["results"]] <- TRUE
                          object@metadata$DiffExpAnal[["RawDEFres"]] <- ListRes$value[["RawDEFres"]]
                          object@metadata$DiffExpAnal[["DEF"]] <- ListRes$value[["TopDEF"]]
                        }else{
-                         object@metadata$DiffExpAnal[["results"]] <- FALSE
+                         object@metadata$DiffExpAnal[["results"]]    <- FALSE
                          object@metadata$DiffExpAnal[["ErrorStats"]] <- ListRes$value[["ErrorTab"]]
                        }
                      }else{
-                       object@metadata$DiffExpAnal[["results"]] <- FALSE
-                       object@metadata$DiffExpAnal[["Error"]] <- ListRes$error
+                       object@metadata$DiffExpAnal[["results"]]    <- FALSE
+                       object@metadata$DiffExpAnal[["Error"]]      <- ListRes$error
                        object@metadata$DiffExpAnal[["ErrorStats"]] <- NULL
                      }
                      
+                     ## filtering
+                     object <- FilterDiffAnalysis(object = object, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff)
                      
                      return(object)
                    })
@@ -1356,15 +1354,14 @@ methods::setMethod(f="FilterDiffAnalysis",
                      
                      
                      ## merge results in bin matrix
-                     DEF_list <- lapply(names(object@metadata$DiffExpAnal[["TopDEF"]]), function(x){
-                       #print(x)
+                     DEF_list <- list()
+                     for(x in names(object@metadata$DiffExpAnal[["TopDEF"]])){
                        res <- object@metadata$DiffExpAnal[["TopDEF"]][[x]]
                        tmp <- data.frame(DEF = rownames(res), bin = rep(1,length(rownames(res))))
                        colnames(tmp) <- c("DEF", dplyr::filter(object@metadata$DiffExpAnal$contrasts, contrastName == x)$tag)
-                       #print(dplyr::filter(object@metadata$DiffExpAnal$contrasts, contrastName == x)$tag)
-                       return(tmp)
-                     })
-                     names(DEF_list) <- names(object@metadata$DiffExpAnal[["TopDEF"]])
+                       
+                       if(dim(tmp)[1] != 0){ DEF_list[[x]] <- tmp }
+                     }
                      
                      object@metadata$DiffExpAnal[["mergeDEF"]] <- DEF_list %>% purrr::reduce(dplyr::full_join, by="DEF") %>%
                        dplyr::mutate_at(.vars = 2:(length(DEF_list)+1),
@@ -1395,22 +1392,226 @@ methods::setMethod(f="FilterDiffAnalysis",
 methods::setMethod(f="DiffAnal.plot",
                    signature="SummarizedExperiment",
                    
-                   definition <- function(object, hypothesis,Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0){
+                   definition <- function(object, hypothesis){
                      
                      plots <- list()
                      
                      res      <- object@metadata$DiffExpAnal[["RawDEFres"]][[hypothesis]]
                      resTable <- object@metadata$DiffExpAnal[["DEF"]][[hypothesis]]
                      
+                     logFC.cutoff      <- object@metadata$DiffExpAnal[["abs.logFC.cutoff"]]
+                     Adj.pvalue.cutoff <- object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]
                      
-                     plots[["MA.plot"]]     <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
-                     plots[["Volcano.plot"]]   <- Volcano.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
-                     plots[["Pvalue.hist"]] <- pvalue.plot(data =resTable,hypothesis=hypothesis)
-                     
+                     plots[["MA.plot"]]      <- MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
+                     plots[["Volcano.plot"]] <- Volcano.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
+                     plots[["Pvalue.hist"]]  <- pvalue.plot(data =resTable, hypothesis=hypothesis)
                      return(plots)
                    })
 
 
+
+
+#' @title heatmap.plot
+#' @description
+#' This is an interface method which draw a meatmap from the results of a differential analysis
+#' performed on omic datasets stored in an object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{SummarizedExperiment}
+#' @param hypothesis The hypothesis for which the MAplot has to be drawn
+#' @return plot
+#' @exportMethod heatmap.plot
+#' @export
+#'
+#' @examples
+methods::setMethod(f="heatmap.plot",
+                   signature="SummarizedExperiment",
+                   definition <- function(object, hypothesis, condition="none"){
+                   
+  resTable <- object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]]
+  
+  if(dim(resTable)[1] == 0){
+    stop("no differentially expressed variables...")
+  }
+  
+  if(dim(resTable)[1] > 2000){
+    message("differentially expressed variables exceeding 2000 variables")
+  }
+  
+  m.def <- assays(object)[[1]][,object@metadata$Groups$samples]
+  
+  # Normalize counts (added 221123)
+  if(object@metadata$Normalization$methode == "TMM"){
+    m.def <- log2(scale(m.def+1, center = FALSE,
+                        scale = object@metadata$Normalization$coefNorm$lib.size*object@metadata$Normalization$coefNorm$norm.factors))
+  }
+  
+  # filter by DE
+  m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
+  
+  # normalize count
+  
+  # Center
+  # m.def.filter.center <- scale(m.def.filter,center=TRUE,scale=FALSE)
+  m.def.filter.center <- t(scale(t(m.def.filter),center = TRUE, scale = FALSE)) # Modified 221123 : centered by genes and not by samples
+  column_split.value <- if(condition != "none"){
+    object@metadata$Groups[,condition] }else{NULL}
+  
+  # Color annotations
+  df_annotation <- object@metadata$Groups %>% dplyr::select(!samples & !groups)
+  
+  set.seed(10000) ; selectPal <- sample(rownames(RColorBrewer::brewer.pal.info),  size = ncol(df_annotation), replace = FALSE)
+  
+  color_list <- lapply(1:ncol(df_annotation), FUN = function(i){
+    annot_vect <- unique(df_annotation[,i])
+    
+    col_vect <- RColorBrewer::brewer.pal(n = length(annot_vect), name = selectPal[i]) 
+    names(col_vect) <- annot_vect 
+    col_vect[!is.na(names(col_vect))] # RcolorBrewer::brewer.pal n is minimum 3, remove NA names if only 2 levels
+  })
+  names(color_list) <- colnames(df_annotation)
+  
+  column_ha <- ComplexHeatmap::HeatmapAnnotation(df = df_annotation, col = color_list)
+  
+  # Drawing heatmap
+  ha <- ComplexHeatmap::Heatmap(m.def.filter.center, name = "normalized counts\nor XIC",
+                                show_row_names= ifelse( dim(m.def.filter.center)[1] > 50, FALSE, TRUE),
+                                row_names_gp = grid::gpar(fontsize = 8),
+                                column_names_gp = grid::gpar(fontsize = 12),
+                                row_title_rot = 0 ,
+                                clustering_method_columns = "ward.D2",
+                                cluster_column_slice=FALSE,
+                                column_split = column_split.value,
+                                top_annotation = column_ha)
+  
+  ComplexHeatmap::draw(ha, merge_legend = TRUE)
+  return(p)
+})
+
+
+#' @title boxplot.DE.plot
+#'
+#' @param object An object of class \link{SummarizedExperiment}
+#' @param DE variable name
+#' @export
+#' @exportMethod boxplot.DE.plot
+#' @importFrom ggplot2 geom_density xlab
+#' @noRd
+
+methods::setMethod(f="boxplot.DE.plot",
+                   signature="SummarizedExperiment",
+                   definition <- function(object, DE = NULL){
+                     
+                     # check variable name
+                     if(is.null(DE) | DE == "" | length(DE) !=1){
+                       stop("set variable name")
+                     }
+                     
+                     # check presence of variable in SE
+                     
+                     
+                     
+                     
+                     switch (object@metadata$omicType,
+                             "RNAseq" = {
+                               
+                               # before normalization
+                               if(is.null(object@metadata[["Normalization"]]$coefNorm)){
+                                 pseudo <- log2(SummarizedExperiment::assay(object) + 1)
+                                 x_lab  <- paste0("log2(",object@metadata$omicType, " data)")
+                                 title  <- paste0(object@metadata$omicType, " raw data")
+                                 
+                               }
+                               # after normalization
+                               else{
+                                 pseudo <- log2(scale(SummarizedExperiment::assay(object)+1, center=FALSE,
+                                                      scale=object@metadata[["Normalization"]]$coefNorm$norm.factors*object@metadata[["Normalization"]]$coefNorm$lib.size))
+                                 x_lab  <- paste0("log2(",object@metadata$omicType, " data)")
+                                 title  <- paste0("Filtered and normalized ", object@metadata$omicType, " (",
+                                                  object@metadata$Normalization$methode, ") data")
+                               }
+                             },
+                             "proteomics" = {
+                               # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
+                               if(object@metadata$transform_method == "none" || is.null(object@metadata$transform_method)){
+                                 pseudo <- SummarizedExperiment::assay(object)
+                                 x_lab  <- paste0(object@metadata$omicType, " data")
+                                 title  <- paste0(object@metadata$omicType, " raw data")
+                                 
+                               }
+                               # after transformation
+                               else{
+                                 
+                                 x_lab  <- paste0(object@metadata$omicType, " data")
+                                 title  <- paste0("Transformed ", object@metadata$omicType, " (" , object@metadata$transform_method, ") data")
+                                 
+                                 switch (object@metadata$transform_method,
+                                         
+                                         "log1p" = {
+                                           pseudo <- log1p(SummarizedExperiment::assay(object)) },
+                                         
+                                         "squareroot" = {
+                                           pseudo <- sqrt(SummarizedExperiment::assay(object)) }
+                                         # "log2" = {
+                                         #   pseudo <- log2(SummarizedExperiment::assay(object) +1 )},
+                                         # "log10" = {
+                                         #   pseudo <- log10(SummarizedExperiment::assay(object)+1)}
+                                 )
+                               }
+                             },
+                             "metabolomics" = {
+                               # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
+                               if(object@metadata$transform_method == "none" || is.null(object@metadata$transform_method)){
+                                 pseudo <- SummarizedExperiment::assay(object)
+                                 x_lab  <- paste0(object@metadata$omicType, " data")
+                                 title  <- paste0(object@metadata$omicType, " raw data")
+                                 
+                               }
+                               # after transformation
+                               else{
+                                 
+                                 x_lab  <- paste0(object@metadata$omicType, " data")
+                                 title  <- paste0("Transformed ", object@metadata$omicType, " (" , object@metadata$transform_method, ") data")
+                                 
+                                 switch (object@metadata$transform_method,
+                                         
+                                         "log1p" = {
+                                           pseudo <- log1p(SummarizedExperiment::assay(object)) },
+                                         
+                                         "squareroot" = {
+                                           pseudo <- sqrt(SummarizedExperiment::assay(object)) }
+                                         # "log2" = {
+                                         #   pseudo <- log2(SummarizedExperiment::assay(object) +1 )},
+                                         # "log10" = {
+                                         #   pseudo <- log10(SummarizedExperiment::assay(object)+1)}
+                                 )
+                               }
+                             }
+                     )
+                     
+                     pseudo.gg <- pseudo %>% reshape2::melt()
+                     colnames(pseudo.gg) <- c("features", "samples", "value")
+                     
+                     pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples") %>%
+                       dplyr::arrange(groups)
+                     
+                     pseudo.gg$samples <- factor(pseudo.gg$samples, levels = unique(pseudo.gg$samples))
+                     
+                     switch (plot,
+                             "density" = {
+                               p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) +
+                                 xlab(x_lab) + theme(legend.position='none') + ggtitle(title)
+                             },
+                             "boxplot" = {
+                               p <- ggplot(pseudo.gg, aes(x=samples, y=value,label = features)) +
+                                 ggplot2::geom_boxplot(aes(fill=groups)) +
+                                 theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +
+                                 xlab("") + ylab(x_lab) + ggtitle(title) #+
+                               #geom_point(alpha = 1/100,size=0)
+                             })
+                     
+                     print(p)
+                     
+                   }
+)
 
 
 ################################### CO-EXPRESSION #############################

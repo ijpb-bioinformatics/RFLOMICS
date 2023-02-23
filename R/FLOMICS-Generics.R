@@ -128,3 +128,7 @@ methods::setGeneric(
   def = function( object, ... ){standardGeneric("runAnnotationEnrichment_CPR")}
 )
 
+methods::setGeneric(
+  name="heatmap.plot",
+  def = function( object, ... ){standardGeneric("heatmap.plot")}
+)

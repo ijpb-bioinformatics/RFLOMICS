@@ -1,39 +1,41 @@
 
 
 DiffExpAnalysisUI <- function(id){
-
+  
   #name space for id
   ns <- NS(id)
-
+  
   tagList(
     fluidRow(
       uiOutput(ns("instruction"))),
-
+    
     ### parametres for Diff Analysis
     fluidRow(
-      column(3,uiOutput(ns("DiffParamUI")),
-               uiOutput(ns("FilterPvalueUI"))),
-      column(9,uiOutput(ns("ContrastsResults")),
-               tags$br(),
-               uiOutput(ns("ResultsMerge"))))
-
+      column(3,
+             uiOutput(ns("DiffParamUI"))),
+      column(9,
+             uiOutput(ns("ContrastsResults")),
+             uiOutput(ns("validateUI")))),
+    
+    fluidRow(
+      uiOutput(ns("ResultsMerge")))
   )
 }
 
 
 
 DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
-
-  local.rea.values <- reactiveValues(dataset.SE = NULL)
-
+  
+  local.rea.values <- reactiveValues(dataset.SE = NULL, Adj.pvalue.cutoff = 0.05, abs.logFC.cutoff = 0, update = FALSE)
+  
   # list of tools for diff analysis
   MethodList <- c("glmfit (edgeR)"="edgeRglmfit", "lmFit (limma)"="limmalmFit")
-
+  
   method <- switch (rea.values[[dataset]]$omicsType,
                     "RNAseq"       = MethodList[1],
                     "proteomics"   = MethodList[2],
                     "metabolomics" = MethodList[2])
-
+  
   output$instruction <- renderUI({
     box(title = span(tagList(icon("cogs"), "  ",  a(names(method), href="https://bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf"), tags$small("(Scroll down for instructions)")  )),
         solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
@@ -44,55 +46,74 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         p("- the table of statistics per gene/protein/metabolite (Number of stats displayed will varie with the p-value cutoff)")
     )
   })
-
+  
+  # diff param
   output$DiffParamUI <- renderUI({
-
+    
     #we must run process before
     validate(
       need(rea.values[[dataset]]$process != FALSE, "Please run data processing")
     )
-
+    
     validate(
       need(!is.null(rea.values$Contrasts.Sel), "Please run data processing ")
     )
-
+    
     # #we must select list of contrast to test
     # validate(
     #   need(rea.values$analysis != FALSE, "Please select contrast")
     # )
-
+    
     #design must be complete
     validate(
       need(rea.values[[dataset]]$compCheck != FALSE, session$userData$FlomicsMultiAssay@metadata$completeCheck[["error"]])
     )
-
+    
     box(title = span(tagList(icon("sliders-h"), "  ", "Setting")), width = 14, status = "warning",
-
+        
         fluidRow(column(12,
-               ## list of contrasts to test
-               pickerInput(
-                   inputId  = session$ns("contrastList"),
-                   label    = "Selected contrast :",
-                   choices  = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
-                   multiple = TRUE, selected = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName),
-
-               # method for Diff analysis
-               selectInput(inputId  = session$ns("AnaDiffMethod"), label = "Method :",
-                           choices  = method,
-                           selected = method),
-
-               # use of cluster. need setting step
-               materialSwitch(inputId = session$ns("clustermq"),
-                              label   =  popify(actionLink("infoCluster",paste0("Cluster: (?)")),"",
-                                                "If there is a huge number of contrasts, the calculation can be send to the cluster to be run in parrallel",
-                                                options=list(container="body"))
-                              , value = FALSE, status = "success"),
-
-               actionButton(session$ns("runAnaDiff"),"Run"))
-    ))
-
+                        ## list of contrasts to test
+                        pickerInput(
+                          inputId  = session$ns("contrastList"),
+                          label    = "Selected contrast :",
+                          choices  = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
+                          multiple = TRUE, selected = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName),
+                        
+                        # method for Diff analysis
+                        selectInput(inputId  = session$ns("AnaDiffMethod"), label = "Method :",
+                                    choices  = method,
+                                    selected = method),
+                        
+                        numericInput(inputId = session$ns("Adj.pvalue.cutoff"), 
+                                     label="Adjusted pvalue cutoff:",
+                                     value=local.rea.values$Adj.pvalue.cutoff, min=0, max=1, 0.01),
+                        numericInput(inputId = session$ns("abs.logFC.cutoff"),
+                                     label="|logFC| cutoff:",
+                                     value=local.rea.values$abs.logFC.cutoff, min=0, max=100, 0.01),
+                        
+                        # use of cluster. need setting step
+                        materialSwitch(inputId = session$ns("clustermq"),
+                                       label   =  popify(actionLink("infoCluster",paste0("Cluster: (?)")),"",
+                                                         "If there is a huge number of contrasts, the calculation can be send to the cluster to be run in parrallel",
+                                                         options=list(container="body"))
+                                       , value = FALSE, status = "success"),
+                        
+                        actionButton(session$ns("runAnaDiff"),"Run"))
+        ))
+    
   })
-
+  
+  # # filter param
+  output$validateUI <- renderUI({
+    
+    if (rea.values[[dataset]]$diffAnal == FALSE) return()
+    if (dim(rea.values[[dataset]]$DiffValidContrast)[1] == 0) return()
+    
+    fluidRow(
+      column(width = 9),
+      column(width = 3, actionButton(session$ns("validContrast"),"Validate")))
+  })
+  
   # Run the differential analysis for each contrast set
   # Filter
   #   -> return a dynamic user interface with a collapsible box for each contrast
@@ -101,326 +122,315 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   #         - Table of the DE genes
   #   -> combine data : union or intersection
   observeEvent(input$runAnaDiff, {
-
+    
     # check list of genes
     if(length(input$contrastList) == 0){
-
+      
       showModal(modalDialog( title = "Error message", "Please select at least 1 hypothesis"))
     }
     validate({
       need(length(input$contrastList) != 0, message="Please select at least 1 hypothesis")
     })
-
-    local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
-
-    print(paste("# 4- Diff Analysis...", dataset))
-
+    
     rea.values[[dataset]]$diffAnal   <- FALSE
     rea.values[[dataset]]$diffValid  <- FALSE
     rea.values[[dataset]]$coExpAnal  <- FALSE
     rea.values[[dataset]]$diffAnnot  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
-
+    rea.values[[dataset]]$DiffValidContrast <- NULL
+    
     session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]] <- NULL
-
-
+    
+    dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
+    
     if (dataset %in% rea.values$datasetDiff){
       rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
-      }
-
-    local.rea.values$dataset.SE@metadata$DiffExpAnal <- list()
-    local.rea.values$dataset.SE@metadata$CoExpAnal   <- list()
-    local.rea.values$dataset.SE@metadata$DiffExpEnrichAnal  <- list()
-    local.rea.values$dataset.SE@metadata$CoExpEnrichAnal  <- list()
-
+    }
+    
+    
+    dataset.SE@metadata$CoExpAnal   <- list()
+    dataset.SE@metadata$DiffExpEnrichAnal  <- list()
+    dataset.SE@metadata$CoExpEnrichAnal  <- list()
+    
     #---- progress bar ----#
     progress <- shiny::Progress$new()
     progress$set(message = "Run Diff", value = 0)
     on.exit(progress$close())
     progress$inc(1/10, detail = "in progress...")
     #----------------------#
-
-
-
-    # run diff analysis with selected method
-    local.rea.values$dataset.SE <- RunDiffAnalysis(object =             local.rea.values$dataset.SE,
-                                                   design =             session$userData$FlomicsMultiAssay@metadata$design,
-                                                   contrastList =       session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
-                                                   Adj.pvalue.method =  "BH",
-                                                   DiffAnalysisMethod = input$AnaDiffMethod,
-                                                   clustermq =          input$clustermq)
-
+    
+    if(is.null(dataset.SE@metadata$DiffExpAnal)){
+      
+      dataset.SE@metadata$DiffExpAnal <- list()
+      
+      print(paste("# 4- Diff Analysis...", dataset))
+      print(paste("#    => Filter Diff Analysis..."))
+      
+      # run diff analysis with selected method
+      dataset.SE <- RunDiffAnalysis(object             = dataset.SE,
+                                    design             = session$userData$FlomicsMultiAssay@metadata$design,
+                                    contrastList       = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
+                                    Adj.pvalue.method  = "BH",
+                                    DiffAnalysisMethod = input$AnaDiffMethod,
+                                    clustermq          = input$clustermq,
+                                    Adj.pvalue.cutoff  = input$Adj.pvalue.cutoff, 
+                                    logFC.cutoff       = input$abs.logFC.cutoff)
+    }
+    else{
+      
+      print(paste("#    => Filter Diff Analysis..."))
+      ### adj_pvalue filtering by calling the RundDiffAnalysis method without filtering
+      dataset.SE <- FilterDiffAnalysis(object            = dataset.SE,
+                                       Adj.pvalue.cutoff = input$Adj.pvalue.cutoff,
+                                       logFC.cutoff      = input$abs.logFC.cutoff)
+    }
+    
+    toto <<- dataset.SE
+    
     # error management
-    if(isFALSE(local.rea.values$dataset.SE@metadata$DiffExpAnal[["results"]])){
+    if(isFALSE(dataset.SE@metadata$DiffExpAnal[["results"]])){
       showModal(modalDialog( title = "Error message",
-                             if(! is.null(local.rea.values$dataset.SE@metadata$DiffExpAnal[["ErrorStats"]])){
-                               renderDataTable(local.rea.values$dataset.SE@metadata$DiffExpAnal[["ErrorStats"]],rownames = FALSE)
+                             if(! is.null(dataset.SE@metadata$DiffExpAnal[["ErrorStats"]])){
+                               renderDataTable(dataset.SE@metadata$DiffExpAnal[["ErrorStats"]],rownames = FALSE)
                              }
                              else{
-                               as.character(local.rea.values$dataset.SE@metadata$DiffExpAnal[["Error"]])
+                               as.character(dataset.SE@metadata$DiffExpAnal[["Error"]])
                              }
       ))
     }
-
-    if(is.null(local.rea.values$dataset.SE@metadata$DiffExpAnal[["RawDEFres"]])){
-
+    
+    if(is.null(dataset.SE@metadata$DiffExpAnal[["RawDEFres"]])){
+      
       showModal(modalDialog( title = "Error message",
-                             if(! is.null(local.rea.values$dataset.SE@metadata$DiffExpAnal[["ErrorTab"]])){
-                               renderDataTable(local.rea.values$dataset.SE@metadata$DiffExpAnal[["ErrorTab"]],rownames = FALSE)
+                             if(! is.null(dataset.SE@metadata$DiffExpAnal[["ErrorTab"]])){
+                               renderDataTable(dataset.SE@metadata$DiffExpAnal[["ErrorTab"]],rownames = FALSE)
                              }
                              else{
-                               as.character(local.rea.values$dataset.SE@metadata$DiffExpAnal[["error"]])
+                               as.character(dataset.SE@metadata$DiffExpAnal[["error"]])
                              }
       ))
     }
-
-    session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]] <- local.rea.values$dataset.SE
-
+    
+    session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]] <- dataset.SE
+    local.rea.values$dataset.SE <- dataset.SE
+    
     rea.values[[dataset]]$diffAnal <- TRUE
-
+    
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
     #----------------------#
-
+    
   }, ignoreInit = TRUE)
-
-  # filterin param
-  output$FilterPvalueUI <- renderUI({
-
-    if (rea.values[[dataset]]$diffAnal == FALSE) return()
-
-    box(title = NULL,status = "warning", width = 14,
-        numericInput(inputId = session$ns("Adj.pvalue.cutoff"),
-                     label="Adjusted pvalue cutoff:",
-                     value=0.05, min=0, max=1, 0.01),
-        numericInput(inputId = session$ns("abs.logFC.cutoff"),
-                     label="|logFC| cutoff:",
-                     value=0, min=0, max=100, 0.01),
-        actionButton(session$ns("validContrast"),"Validate"))
-  })
-
+  
   # display results per contrast
   output$ContrastsResults <- renderUI({
-
-    #if (rea.values[[dataset]]$diffAnal == FALSE) return()
+    
     if (rea.values[[dataset]]$diffAnal == FALSE ||
-        is.null(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal)) return()
-
-    ### adj_pvalue filtering by calling the RundDiffAnalysis method without filtering
-    local.rea.values$dataset.SE <- FilterDiffAnalysis(object = local.rea.values$dataset.SE,
-                                                      Adj.pvalue.cutoff = input$Adj.pvalue.cutoff,
-                                                      logFC.cutoff = input$abs.logFC.cutoff)
-    #Contrasts.Sel <- local.rea.values$dataset.SE@metadata$DiffExpAnal$contrasts
-
+        is.null(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["TopDEF"]])) return()
+    
+    # ### adj_pvalue filtering by calling the RundDiffAnalysis method without filtering
+    # local.rea.values$dataset.SE <- FilterDiffAnalysis(object = local.rea.values$dataset.SE,
+    #                                                   Adj.pvalue.cutoff = input$Adj.pvalue.cutoff,
+    #                                                   logFC.cutoff = input$abs.logFC.cutoff)
+    # #Contrasts.Sel <- local.rea.values$dataset.SE@metadata$DiffExpAnal$contrasts
+    
     list(
       lapply(1:length(rea.values$Contrasts.Sel$contrast), function(i) {
-
-      dataset.SE <- local.rea.values$dataset.SE
-      vect     <- unlist(rea.values$Contrasts.Sel[i,])
-      res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
-      stats    <- dataset.SE@metadata$DiffExpAnal[["stats"]][[vect["contrastName"]]]
-
-      diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=vect["contrastName"],
-                                  Adj.pvalue.cutoff = input$Adj.pvalue.cutoff, logFC.cutoff = input$abs.logFC.cutoff)
-
-      fluidRow(
-        column(10,
-               box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning",
-                   title = tags$h5(paste0(vect["tag"], " : ", vect["contrastName"],"  [#DE: ", stats$gDE," (up: ", stats$pgDEup,"%, ", "down: ", stats$pgDEdown,"%)]")),
-                   
-                   tabsetPanel(
-                     
-                     ### pvalue plot ###
-                     tabPanel("Pvalue's distribution", renderPlot({ diff.plots$Pvalue.hist })),
-                     
-                     ### MAplot
-                     tabPanel("MA plot", renderPlot({ suppressMessages(diff.plots$MA.plot) })),
-                     
-                     ### MAplot
-                     tabPanel("Volcano plot", renderPlot({ suppressMessages(diff.plots$Volcano.plot) }, height = 600)),
-                     
-                     ### DEF result table ###
-                     tabPanel("Table",
-                              ### DEF result table ###
-                              DT::renderDataTable({
-                                resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
-                                resTable %>% DT::datatable(extensions = 'Buttons',
-                                                           options = list(dom = 'lfrtipB',
-                                                                          rownames = FALSE,
-                                                                          pageLength = 10,
-                                                                          buttons = c('csv', 'excel'),
-                                                                          lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All")))) %>%
-                                  formatStyle('logFC',
-                                              backgroundColor = styleInterval(c(0, 0.01), c('royalblue', 'white', 'red2')),
-                                              fontWeight = 'bold') %>% formatSignif(columns = 1:dim(resTable)[2], digits = 3)
-                              }, server = FALSE)),
-                     ### Heatmap ###
-                     tabPanel("Heatmap",
-                              renderUI({
-                                renderPlot({
-                                  resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
-                                  m.def <- assays(local.rea.values$dataset.SE)[[1]][,session$userData$FlomicsMultiAssay@metadata$design@Groups$samples]
-                                  
-                                  # Normalize counts (added 221123)
-                                  if(dataset.SE@metadata$Normalization$methode == "TMM"){
-                                    m.def <- log2(scale(m.def+1, center = FALSE,
-                                                        scale = dataset.SE@metadata$Normalization$coefNorm$lib.size*dataset.SE@metadata$Normalization$coefNorm$norm.factors))
-                                  }
-                                  
-                                  # filter by DE
-                                  m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
+        
+        dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]]
+        vect     <- unlist(rea.values$Contrasts.Sel[i,])
+        res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
+        stats    <- dataset.SE@metadata$DiffExpAnal[["stats"]][[vect["contrastName"]]]
+        
+        diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=vect["contrastName"])
+        
+        if(dim(dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]])[1] == 0){
+          
+          fluidRow(
+            column(10,
+                   box(width=14, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "danger",
+                       title = tags$h5(paste0(vect["tag"], " : ", vect["contrastName"],"  [#DE: ", stats$gDE," ]")),
                        
-                                  # normalize count
+                       tabsetPanel(
+                         
+                         ### pvalue plot ###
+                         tabPanel("Pvalue's distribution", renderPlot({ diff.plots$Pvalue.hist })),
+                         
+                         ### MAplot
+                         tabPanel("MA plot", renderPlot({ suppressMessages(diff.plots$MA.plot) })),
+                         
+                         ### MAplot
+                         tabPanel("Volcano plot", renderPlot({ suppressMessages(diff.plots$Volcano.plot) }, height = 600))
+                       )
+                   )))
+        }
+        else{
+          
+          fluidRow(
+            column(10,
+                   box(width=14, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success",
+                       title = tags$h5(paste0(vect["tag"], " : ", vect["contrastName"],"  [#DE: ", stats$gDE," (up: ", stats$pgDEup,"%, ", "down: ", stats$pgDEdown,"%)]")),
+                       
+                       tabsetPanel(
+                         
+                         ### pvalue plot ###
+                         tabPanel("Pvalue's distribution", renderPlot({ diff.plots$Pvalue.hist })),
+                         
+                         ### MAplot
+                         tabPanel("MA plot", renderPlot({ suppressMessages(diff.plots$MA.plot) })),
+                         
+                         ### MAplot
+                         tabPanel("Volcano plot", renderPlot({ suppressMessages(diff.plots$Volcano.plot) }, height = 600)),
+                         
+                         ### DEF result table ###
+                         tabPanel("Table",
+                                  ### DEF result table ###
+                                  DT::renderDataTable({
+                                    resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
+                                    resTable %>% DT::datatable(extensions = 'Buttons',
+                                                               options = list(dom = 'lfrtipB',
+                                                                              rownames = FALSE,
+                                                                              pageLength = 10,
+                                                                              buttons = c('csv', 'excel'),
+                                                                              lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All")))) %>%
+                                      formatStyle('logFC',
+                                                  backgroundColor = styleInterval(c(0, 0.01), c('royalblue', 'white', 'red2')),
+                                                  fontWeight = 'bold') %>% formatSignif(columns = 1:dim(resTable)[2], digits = 3)
+                                  }, server = FALSE)),
+                         ### Heatmap ###
+                         tabPanel("Heatmap",
+                                  renderUI({
+                                    renderPlot({
+                                      heatmap.plot(object=dataset.SE, hypothesis=vect["contrastName"], condition=input[[paste0(vect["contrastName"],"-","condColorSelect")]])
+                                    })
+                                  }),
+                                  renderText("Clustering method=ward.D2, center=TRUE, scale=FALSE"),
+                                  ## select cluster to plot
+                                  radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-","condColorSelect")),
+                                               label = 'Levels :',
+                                               choices = c("none", names(session$userData$FlomicsMultiAssay@colData)),
+                                               selected = "none", inline = TRUE)
+                         ),
+
+                         ### PCA ###
+                         tabPanel("PCA on DE",
                                   
-                                  # Center
-                                  # m.def.filter.center <- scale(m.def.filter,center=TRUE,scale=FALSE)
-                                  m.def.filter.center <- t(scale(t(m.def.filter),center = TRUE, scale = FALSE)) # Modified 221123 : centered by genes and not by samples
-                                  column_split.value <- if(input[[paste0(vect["contrastName"],"-","condColorSelect")]] != "none"){
-                                    session$userData$FlomicsMultiAssay@metadata$design@Groups[,input[[paste0(vect["contrastName"],"-","condColorSelect")]]]
-                                  }
-                                  else{NULL}
-                             
-                                  # Color annotations
-                                  df_annotation <- session$userData$FlomicsMultiAssay@metadata$design@Groups %>% dplyr::select(!samples & !groups)
-                                  
-                                  set.seed(10000) ; selectPal <- sample(rownames(RColorBrewer::brewer.pal.info),  size = ncol(df_annotation), replace = FALSE)
-                                  
-                                  color_list <- lapply(1:ncol(df_annotation), FUN = function(i){
-                                    annot_vect <- unique(df_annotation[,i])
+                                  fluidRow(
+                                    renderPlot({
+                                      
+                                      resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
+                                      newDataset.SE <- dataset.SE[rownames(dataset.SE) %in% row.names(resTable)]
+                                      newDataset.SE <- RFLOMICS::RunPCA(newDataset.SE)  
+                                      
+                                      PC1.value <- as.numeric(input[[paste0(vect["contrastName"],"-","diff-Firstaxis")]][1])
+                                      PC2.value <- as.numeric(input[[paste0(vect["contrastName"],"-","diff-Secondaxis")]][1])
+                                      condGroup <- input[[paste0(vect["contrastName"],"-","diff-condColorSelect")]][1]
+                                      
+                                      RFLOMICS::plotPCA(newDataset.SE,  PCA = "norm", PCs = c(PC1.value, PC2.value), condition = condGroup)
+                                    })
+                                  ),
+                                  fluidRow(
+                                    column(width = 6, RadioButtonsConditionUI(session$ns(paste0(vect["contrastName"],"-","diff")))),
+                                    column(width = 6, UpdateRadioButtonsUI(session$ns(paste0(vect["contrastName"],"-","diff"))))
                                     
-                                    col_vect <- RColorBrewer::brewer.pal(n = length(annot_vect), name = selectPal[i]) 
-                                    names(col_vect) <- annot_vect 
-                                    col_vect[!is.na(names(col_vect))] # RcolorBrewer::brewer.pal n is minimum 3, remove NA names if only 2 levels
-                                  })
-                                  names(color_list) <- colnames(df_annotation)
-                                  
-                                  column_ha <- ComplexHeatmap::HeatmapAnnotation(df = df_annotation, col = color_list)
-                                  
-                                  # Drawing heatmap
-                                  ha <- ComplexHeatmap::Heatmap(m.def.filter.center, name = "normalized counts\nor XIC",
-                                                                show_row_names= ifelse( dim(m.def.filter.center)[1] > 50, FALSE, TRUE),
-                                                                row_names_gp = grid::gpar(fontsize = 8),
-                                                                column_names_gp = grid::gpar(fontsize = 12),
-                                                                row_title_rot = 0 ,
-                                                                clustering_method_columns = "ward.D2",
-                                                                cluster_column_slice=FALSE,
-                                                                column_split = column_split.value,
-                                                                top_annotation = column_ha)
-                                  
-                                  ComplexHeatmap::draw(ha, merge_legend = TRUE)
-                                })
-                              })
-                              ,
-                              renderText("Clustering method=ward.D2, center=TRUE, scale=FALSE")
-                              ,
-                              ## select cluster to plot
-                              radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-","condColorSelect")),
-                                           label = 'Levels :',
-                                           choices = c("none", names(session$userData$FlomicsMultiAssay@colData)),
-                                           selected = "none", inline = TRUE)
-
-                     ),
-                     ### PCA ###
-                     tabPanel("PCA on DE",
-                              
-                              fluidRow(
-                                renderPlot({
-                                  
-                                  resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
-                                  newDataset.SE <- dataset.SE[rownames(dataset.SE) %in% row.names(resTable)]
-                                  newDataset.SE <- RFLOMICS::RunPCA(newDataset.SE)  
-
-                                  RFLOMICS::plotPCA(newDataset.SE, 
-                                                    PCA = "norm", 
-                                                    PCs = c(as.numeric(input[["DEG_PCA_Firstaxis"]]), as.numeric(input[["DEG_PCA_Secondaxis"]])), 
-                                                    condition = input$DEG_PCA_condColorSelect)
-                                  
-                                })
-                              ),
-                              fluidRow(
-                                # 12/2022 : don't know how to make module common work...
-                                column(width = 3, radioButtons(inputId = session$ns("DEG_PCA_condColorSelect"),
-                                             label = 'Levels:',
-                                             choices = c("groups", names(session$userData$FlomicsMultiAssay@colData)),
-                                             selected = "groups")),
-                                column(width = 3,   radioButtons(inputId  = session$ns("DEG_PCA_Firstaxis"),
-                                                                 label    = "Choice of PCs:",
-                                                                 choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
-                                                                 selected = 1,
-                                                                 inline = TRUE)),
-                                column(width = 3, 
-                                       
-                                       radioButtons(inputId  = session$ns("DEG_PCA_Secondaxis"),
-                                                                 label    = "Choice of PCs:",
-                                                                 choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
-                                                                 selected = 2,
-                                                                 inline = TRUE))
-
-                              ),
-                              
-                     )
-                   ),
-               )
-        ),
-        column(2,
-               checkboxInput(session$ns(paste0("checkbox_", vect[["tag"]])), "OK", value = TRUE))
-      )
-    })
+                                    # paste0(vect["contrastName"],"-","diff")
+                                  )
+                         ),
+                         ### boxplot DE ###
+                         tabPanel("boxplot DE",
+                                  fluidRow(
+                                    column(3,
+                                           selectInput(
+                                             inputId = session$ns(paste0(vect["contrastName"], "-DE")), label = "Select DE:",
+                                             choices = rownames(dataset.SE@metadata$DiffExpAnal$TopDEF[[vect["contrastName"]]]),
+                                             multiple = FALSE, selectize = FALSE,
+                                             size = 5 )),
+                                    column(9,
+                                           renderUI({
+                                             renderPlot({
+                                               boxplot.DE.plot(object=dataset.SE, DE=input[[paste0(vect["contrastName"], "-DE")]])
+                                             })
+                                           })
+                                    )
+                                  )
+                         )
+                       )
+                   )
+            ),
+            column(2,
+                   checkboxInput(session$ns(paste0("checkbox_", vect[["tag"]])), "OK", value = FALSE)) 
+          )
+        }
+      })
     )
-
+    
   })
-
+  
+  #### PCA axis for plot
+  
+  observe({
+    lapply(1:length(rea.values$Contrasts.Sel$contrast), function(i) {
+      
+      vect     <- unlist(rea.values$Contrasts.Sel[i,])
+      
+      # update/adapt PCA axis
+      callModule(UpdateRadioButtons, paste0(vect["contrastName"],"-","diff"))
+      # select factors for color PCA plot
+      callModule(RadioButtonsCondition, paste0(vect["contrastName"],"-","diff"), typeFact = c("Bio", "batch"))
+      
+    })
+  })
+  
   # merge results on upset plot
   output$ResultsMerge <- renderUI({
-
+    
     if (rea.values[[dataset]]$diffAnal == FALSE) return()
-
-    # dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
-
-    index <- sapply(rea.values$Contrasts.Sel$tag, function(x){(input[[paste0("checkbox_",x)]])}) %>% unlist()
-
-    H_selected <- rea.values$Contrasts.Sel$tag[index]
-
+    
+    #local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
     DEF_mat <- as.data.frame(local.rea.values$dataset.SE@metadata$DiffExpAnal[["mergeDEF"]])
-
+    
+    index <- sapply(names(DEF_mat)[-1], function(x){(input[[paste0("checkbox_",x)]])}) %>% unlist()
+    #index <- index[!sapply(index,is.null)]
+    
+    H_selected <- names(DEF_mat)[-1][index]
+    
     rea.values[[dataset]]$DiffValidContrast <- dplyr::filter(rea.values$Contrasts.Sel, tag %in% H_selected)
-
-    if (length(H_selected) > 1){
-
-       box(width=12,  status = "warning",
-
-           renderPlot({ UpSetR::upset(DEF_mat, sets = H_selected) })
-       )
+    
+    if (length(H_selected) > 1 && dim(DEF_mat)[1] != 0){
+      
+      box(width=12,  status = "warning",
+          
+          renderPlot({ UpSetR::upset(DEF_mat, sets = H_selected) })
+      )
     }
-
-
+    
+    
   })
-
+  
   # validate contrasts
   observeEvent(input$validContrast, {
-
-    print(paste("# 9bis- Filter Diff Analysis...", dataset))
-
+    
     rea.values[[dataset]]$diffValid  <- FALSE
     rea.values[[dataset]]$coExpAnal  <- FALSE
     rea.values[[dataset]]$diffAnnot  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
-
+    
+    dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]] 
+    
     # filter DEG according pvalue adj cut-off
-
+    
     session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal <-
-      local.rea.values$dataset.SE@metadata$DiffExpAnal
-
+      dataset.SE@metadata$DiffExpAnal
+    
     session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]] <-
       rea.values[[dataset]]$DiffValidContrast
-
+    
     rea.values[[dataset]]$diffValid <- TRUE
     rea.values$datasetDiff <- unique(c(rea.values$datasetDiff , dataset))
-
-
+    
   }, ignoreInit = TRUE)
-
-
+  
+  
   return(input)
 }
 
