@@ -48,7 +48,7 @@ diff.plots$Volcano.plot
 
 <!-- #### ComplexHeatmap -->
 
-3- Heatmap of DE 
+3- Heatmap Heatmap of the euclidean distances with a link of Ward 
 
 <!-- #### PCA on DE features -->
 4- PCA on DE 

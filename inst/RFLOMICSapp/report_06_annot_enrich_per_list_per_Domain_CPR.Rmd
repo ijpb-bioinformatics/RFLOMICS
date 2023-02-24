@@ -76,28 +76,33 @@ else{print(paste0(listname, " - in domain: ", domain, " - There was no enriched 
 
 4- Table
 
-```{r , echo=FALSE, out.width = "75%", message=FALSE, warning=FALSE}
+```{r , echo=FALSE, out.width = "100%", message=FALSE, warning=FALSE}
+
+dataPlot <- list()
+
 for(domain in names(dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]])){
-dataPlot <- dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]][[domain]]
+tmp <- dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]][[domain]]
+tmp@result$domain <- rep(domain,dim(tmp@result)[1])
+dataPlot[[domain]] <- tmp@result[tmp@result$p.adjust < tmp@pvalueCutoff, ] %>% dplyr::select(!c("geneID", "qvalue"))
+}
 
 #DT::datatable(dataPlot, # sometimes it prints non significant results...
 #                    rownames = FALSE,
 #                    options = list(rownames = FALSE, pageLength = 5, lengthMenu = c(5, 10, 15, 20), scrollX = T))
 #
 
-df <- reactable(dataPlot@result[dataPlot@result$p.adjust < dataPlot@pvalueCutoff, ] %>% dplyr::select(!c("geneID", "qvalue")),
+reactable(dataPlot %>% purrr::reduce(rbind),rownames = FALSE,
           showSortable = TRUE,
           bordered = TRUE,
           defaultPageSize = 5, searchable = TRUE, paginationType = "simple")
-print(df)
-}
+
 ```
 
 ```{r, , echo=FALSE, message=FALSE, warning=FALSE}
 for(domain in names(dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]])){
 dataPlot <- dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]][[domain]]
 write.table(dataPlot@result[dataPlot@result$p.adjust < dataPlot@pvalueCutoff, ],
-            file=paste0(listnameDir,"Table_of_Enriched_terms_for_",domain,"_","pval<",dataPlot@pvalueCutoff,".txt"),
+            file=paste0(listnameDir,"Table_of_Enriched_terms_for_",domain,"_","pval_",dataPlot@pvalueCutoff,".txt"),
             sep="\t",quote=FALSE,col.names=TRUE,row.names=FALSE)
 }
 ```

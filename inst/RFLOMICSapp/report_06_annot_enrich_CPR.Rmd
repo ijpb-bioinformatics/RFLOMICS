@@ -10,12 +10,13 @@ knitr::opts_chunk$set(
 
 <br>
 
-* Enrichment analysis for `r ontology` ontology:
+* **Contrast(s) annotation by `r ontology` ontology:**
 
-Enrichment analysis was carried out for each selected contrast thanks to  the clusterprofiler R-package. 
-Lists of DE features have been analyzed for enrichment using `r ontology` ontology.
+Enrichment of type **Overrepresentation analysis (ORA)** was carried out for each list of `r omics.dic[[omictype]][["variableName"]]` 
+thanks to the **clusterProfiler** R-package and its **enrich...** functions.
+This function determines the overrepresented `r ontology` terms in the gene list when compared to a reference list. 
 
-Summary:
+**Summary:**
 
 <!-- ### summary per ontology and per contrast -->
 
@@ -23,9 +24,9 @@ Summary:
 kable_styling(kable(dataset.SE@metadata[[annot]][[ontology]]$summary, row.names=FALSE, caption=NULL, format="html"), font_size=12)
 ```
 
-Results by contrasts:
+**Results by contrasts:**
 
-*Please click on the arrows to scroll down the results and click on the figure for zooming*
+*Please click on the arrows to scroll down the results and click on the figure to zoom*
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE}
 out <- NULL

@@ -1,6 +1,8 @@
+<br>
 
-# Design
-## Experimental plan
+# Statistical design:
+
+* Experimental design:
 
 <!-- ## Sample sheet overview -->
 
@@ -12,18 +14,32 @@ DT::datatable(as.data.frame(rflomics.MAE@colData),
 
 ```
 
+* Factor settings:
 
 ```{r factors, echo=FALSE, message=TRUE, warning=TRUE}
 
-Bio.fact   <- rflomics.MAE@metadata$design@Factors.Type[rflomics.MAE@metadata$design@Factors.Type == "Bio"]
-Batch.fact <- rflomics.MAE@metadata$design@Factors.Type[rflomics.MAE@metadata$design@Factors.Type == "batch"]
+# Bio.fact   <- rflomics.MAE@metadata$design@Factors.Type[rflomics.MAE@metadata$design@Factors.Type == "Bio"]
+# Batch.fact <- rflomics.MAE@metadata$design@Factors.Type[rflomics.MAE@metadata$design@Factors.Type == "batch"]
+fact.names <- names(rflomics.MAE@metadata$design@Factors.Type)
+fact.types <- rflomics.MAE@metadata$design@Factors.Type
+fact.ref <- vector()
+for(i in 1:length(fact.names)){
+  fact.ref[i] <- levels(rflomics.MAE@metadata$design@ExpDesign[,fact.names[i]])[1]
+}
 
+df <- data.frame("Names" = fact.names ,
+           "Type" = fact.types,
+           "Ref mod" = fact.ref)
+
+DT::datatable(df , rownames = FALSE ,options = list( pageLength = 6, scrollX = F, dom = 'tip'),
+              class = 'cell-border stripe')
 ```
 
-* `r paste0("Biological factor : ",  paste0(names(Bio.fact), collapse = ", "))`
-* `r paste0("Batch factor : ",  paste0(names(Batch.fact), collapse = ", "))`
+<!-- * `r paste0("Biological factor : ",  paste0(names(Bio.fact), collapse = ", "))` -->
+<!-- * `r paste0("Batch factor : ",  paste0(names(Batch.fact), collapse = ", "))` -->
 
-## Omics data
+
+* Analyzed dataset(s):
 
 ```{r Sample table, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}
 
@@ -31,8 +47,8 @@ loaded.data <- data.frame(datasets = sapply(names(rflomics.MAE@metadata$omicList
                               function(x){ paste0(rflomics.MAE@metadata$omicList[[x]], collapse = ", ") }), 
                           omics = names(rflomics.MAE@metadata$omicList)) %>% data.table::as.data.table()
 
-DT::datatable(loaded.data, 
-              options = list(rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),
+DT::datatable(loaded.data, rownames = FALSE,
+              options = list( pageLength = 6, scrollX = T, dom = 'tip'),
               class = 'cell-border stripe')
 
 # kable_styling(kable(loaded.data, row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
@@ -54,9 +70,7 @@ if(length(unlist(rflomics.MAE@metadata$omicList)) > 2){
 #check$plot
 ```
 
-## Statistical model
-
-* The statistical model written for the experiment is:  
+* Statistical model
 
 ```
 `r rflomics.MAE@metadata$design@Model.formula`
@@ -66,8 +80,8 @@ if(length(unlist(rflomics.MAE@metadata$omicList)) > 2){
 
 ```{r contrastSel, echo=FALSE, results="asis", warning=FALSE, message=FALSE}
 
-DT::datatable(rflomics.MAE@metadata$design@Contrasts.Sel[,c(5,2:3)], 
-              options = list(rownames = FALSE, pageLength = 6, scrollX = T, dom = 'tip'),
+DT::datatable(rflomics.MAE@metadata$design@Contrasts.Sel[,c(5,2:3)], rownames = FALSE,
+              options = list( pageLength = 6, scrollX = F, dom = 'tip'),
               class = 'cell-border stripe')
 
 # kable_styling(kable(rflomics.MAE@metadata$design@Contrasts.Sel[,c(5,2:3)], 

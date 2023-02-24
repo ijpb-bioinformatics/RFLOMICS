@@ -30,14 +30,6 @@ par(mar = c(4, 4, .5, .1))
 plot.coseq.res$ICL 
 ```
 
-
-### profiles  
-
-```{r profiles, echo=FALSE}
-par(mar = c(4, 4, .5, .1))
-plot.coseq.res$profiles 
-```
-
 ### boxplots
 
 ```{r boxplots_profile, echo=FALSE}
@@ -59,12 +51,6 @@ par(mar = c(4, 4, .5, .1))
 plot.coseq.res$probapost_barplots
 ```
 
-### probapost_barplots
-
-```{r histogram_probapost, echo=FALSE}
-par(mar = c(4, 4, .5, .1))
-plot.coseq.res$probapost_histogram
-```   
 
 
 

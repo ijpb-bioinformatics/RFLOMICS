@@ -1,7 +1,7 @@
 ---
 title: "`r params$title`"
-author: "Analyzes performed by RFLOMICS package"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+author: "Analyzis were performed by the RFLOMICS package (cite)"
+date: "The `r format(Sys.time(), '%d %B, %Y')`"
 bibliography: bibliography.bib
 output: 
   html_document:
@@ -73,7 +73,6 @@ script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
 
 
 
-
 <!-- Experimental design -->
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE}
@@ -126,8 +125,10 @@ knitr::asis_output(out)
 
 # R Session
 
-```{r session, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
-devtools::session_info()
+See **session_info.txt** files in the results directory.
+
+```{r session, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE}
+writeLines(capture.output(devtools::session_info()),  paste0(outDir,"/","session_info.txt"))
 ```
 
 

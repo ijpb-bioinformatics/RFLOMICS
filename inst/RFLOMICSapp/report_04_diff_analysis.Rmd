@@ -15,10 +15,10 @@ knitr::opts_chunk$set(
 
 Differential expression analysis was carried out for each selected contrast thanks to the `r dataset.SE@metadata[["DiffExpAnal"]]$method` model. 
 
-P-value of differential expressed `r omics.dic[[omictype]][["variableName"]]` were adjusted according to the `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.method` method with a cutoff set to `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff`.
+P-values of differential expressed `r omics.dic[[omictype]][["variableName"]]` were adjusted according to the `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.method` procedure with a cutoff set to `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff`.
 
 
-* Summary of differential expression analysis
+* **Summary of differential expression analysis**
 
 ```{r ,echo=FALSE,message=FALSE, out.width = "100%",warning=FALSE,  fig.show = "hold", eval=Diff.eval}
 
@@ -40,7 +40,7 @@ for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
 
 
 ```{r , echo=FALSE, results="asis", eval=Diff.eval}
-kable_styling(kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("Nb DE"=DE,"Nb DEup"=DEup,"Nb DEdown"=DEdown)), row.names=FALSE, caption=NULL, format="html"), font_size=12)
+kable_styling(kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("#DE"=DE,"#DEup"=DEup,"# DEdown"=DEdown)), row.names=FALSE, caption=NULL, format="html"), font_size=12)
 ```
 
 
@@ -59,9 +59,9 @@ write.table(DEF_mat, file=paste0(anaDiffDir,"/","Matrice_of_DE_",omics.dic[[omic
 
 ```
 
-* Results by contrast(s): 
+* **Results by contrast(s):** 
 
-*Please click on the arrows to scroll down the results and click on the figure for zooming*
+*Please click on the arrows to scroll down the results and click on the figure to zoom*
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.eval}
 
