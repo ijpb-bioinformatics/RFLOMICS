@@ -449,8 +449,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     # 
     rea.values$datasetList <- session$userData$FlomicsMultiAssay@metadata$omicList
     
-    toto <<- session$userData$FlomicsMultiAssay
-    
     rea.values$loadData <- TRUE
     #rea.values$model    <- TRUE
     

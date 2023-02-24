@@ -870,9 +870,10 @@ methods::setMethod(f= "plotPCA",
                      )
                      
                      
+                     
                      p <- ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
-                       ggplot2::geom_point(size=3) +
-                       ggplot2::geom_text(aes(label=samples), size=3, vjust = 0) +
+                       ggplot2::geom_point(size=2) +
+                       ggplot2::geom_text(aes(label=samples), size=2, vjust = 0) +
                        xlab(paste(PC1, " (",var1,"%)", sep="")) +
                        ylab(paste(PC2, " (",var2,"%)", sep="")) +
                        ggplot2::geom_hline(yintercept=0, linetype="dashed", color = "red") +
@@ -880,6 +881,21 @@ methods::setMethod(f= "plotPCA",
                        theme(strip.text.x = element_text(size=8, face="bold.italic"),
                              strip.text.y = element_text(size=8, face="bold.italic")) +
                        ggtitle(title)
+                     
+                     # ellipse corr
+                     aa <- dplyr::select(score, all_of(condition), PC1, PC2)
+                     bb <- coord.ellipse(aa, bary = TRUE)
+                     p <- p + geom_polygon(data = bb$res, aes_string(x=PC1, y=PC2, fill = condition),
+                                           show.legend = FALSE,
+                                           alpha = 0.1)
+                     
+                     
+                     # if(condition != "groups"){
+                     #   p <- p + stat_ellipse(geom="polygon", aes_string(fill = condition),
+                     #                         alpha = 0.01,
+                     #                         show.legend = FALSE,
+                     #                         level = 0.95)
+                     # }
                      
                      print(p)
                      
@@ -1371,7 +1387,7 @@ methods::setMethod(f="FilterDiffAnalysis",
                      object@metadata$DiffExpAnal[["mergeDEF"]] <- NULL
                      
                      if(length(DEF_list) != 0){
-
+                       
                        object@metadata$DiffExpAnal[["mergeDEF"]] <- DEF_list %>% purrr::reduce(dplyr::full_join, by="DEF") %>%
                          dplyr::mutate_at(.vars = 2:(length(DEF_list)+1),
                                           .funs = function(x){
