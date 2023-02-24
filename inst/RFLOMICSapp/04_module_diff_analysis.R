@@ -132,7 +132,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       # update/adapt PCA axis
       callModule(UpdateRadioButtons, paste0(vect["contrastName"],"-diff"))
       # select factors for color PCA plot
-      callModule(RadioButtonsCondition, paste0(vect["contrastName"],"-diff"), typeFact = c("Bio"))
+      #callModule(RadioButtonsCondition, paste0(vect["contrastName"],"-diff"), typeFact = c("Bio"))
     })
   })
   
@@ -319,11 +319,11 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                          ### Heatmap ###
                          tabPanel("Heatmap",
                                   renderPlot({
-                                    heatmap.plot(object=dataset.SE, hypothesis=vect["contrastName"], condition=input[[paste0(vect["contrastName"],"-","condColorSelect")]])
+                                    heatmap.plot(object=dataset.SE, hypothesis=vect["contrastName"], condition=input[[paste0(vect["contrastName"],"-heat.condColorSelect")]])
                                   }),
                                   renderText("Clustering method=ward.D2, center=TRUE, scale=FALSE"),
                                   ## select cluster to plot
-                                  radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-","condColorSelect")),
+                                  radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-heat.condColorSelect")),
                                                label = 'Levels :',
                                                choices = c("none", names(session$userData$FlomicsMultiAssay@colData)),
                                                selected = "none", inline = TRUE)
@@ -340,14 +340,19 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                              
                                              PC1.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Firstaxis")]][1])
                                              PC2.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Secondaxis")]][1])
-                                             condGroup <- input[[paste0(vect["contrastName"],"-diff-condColorSelect")]][1]
+                                             condGroup <- input[[paste0(vect["contrastName"],"-pca.DE.condColorSelect")]][1]
                                              
                                              RFLOMICS::plotPCA(newDataset.SE,  PCA = "norm", PCs = c(PC1.value, PC2.value), condition = condGroup)
                                            })
                                     )
                                   ),
                                   fluidRow(
-                                    column(width = 6, RadioButtonsConditionUI(session$ns(paste0(vect["contrastName"],"-diff")))),
+                                    column(width = 6, 
+                                           #RadioButtonsConditionUI(session$ns(paste0(vect["contrastName"],"-diff")))
+                                           radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-pca.DE.condColorSelect")),
+                                                        label = 'Levels :',
+                                                        choices = c("groups",factors.bio),
+                                                        selected = "groups")),
                                     column(width = 6, UpdateRadioButtonsUI(session$ns(paste0(vect["contrastName"],"-diff"))))
                                     
                                   )

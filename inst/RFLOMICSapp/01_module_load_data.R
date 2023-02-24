@@ -433,6 +433,9 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     local.rea.values$completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
     
+    # session$userData$FlomicsMultiAssay@metadata$completeCheck[["error"]]   <- local.rea.values$completeCheckRes[["error"]]
+    # session$userData$FlomicsMultiAssay@metadata$completeCheck[["warning"]] <- local.rea.values$completeCheckRes[["warning"]]
+    
     # plot : ok
     local.rea.values$plots <- TRUE
     
@@ -444,7 +447,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     }
     
     # continue only if message is true or warning
-    validate({ need(is.null(local.rea.values$completeCheckRes[["error"]]) ,message="") })
+    validate({ need(is.null(local.rea.values$completeCheckRes[["error"]]) ,message=local.rea.values$completeCheckRes[["error"]]) })
     
     # 
     rea.values$datasetList <- session$userData$FlomicsMultiAssay@metadata$omicList

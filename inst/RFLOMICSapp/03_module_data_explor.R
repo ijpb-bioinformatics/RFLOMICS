@@ -51,7 +51,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   local.rea.values <- reactiveValues(dataset.processed.SE = NULL, 
                                      dataset.raw.SE = NULL,
                                      compCheck = TRUE,
-                                     message = "")
+                                     message = NULL)
   
   
   ### sample list  ###
@@ -68,26 +68,26 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       selected = sampleList)
   })
   
-  ### check completeness ###
-  completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay,
-                                                 sampleList = colnames(session$userData$FlomicsMultiAssay[[dataset]]))
-  # stock message in MAE
-  session$userData$FlomicsMultiAssay@metadata$completeCheck[["error"]]   <- completeCheckRes[["error"]]
-  session$userData$FlomicsMultiAssay@metadata$completeCheck[["warning"]] <- completeCheckRes[["warning"]]
-  # reactive values
-  rea.values[[dataset]]$compCheck <- TRUE
-  if(!is.null(completeCheckRes[["error"]])){ rea.values[[dataset]]$compCheck <- FALSE }
+  # ### check completeness ###
+  # completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay,
+  #                                                sampleList = colnames(session$userData$FlomicsMultiAssay[[dataset]]))
+  # # stock message in MAE
+  # session$userData$FlomicsMultiAssay@metadata$completeCheck[["error"]]   <- completeCheckRes[["error"]]
+  # session$userData$FlomicsMultiAssay@metadata$completeCheck[["warning"]] <- completeCheckRes[["warning"]]
+  # # reactive values
+  # rea.values[[dataset]]$compCheck <- TRUE
+  # if(!is.null(completeCheckRes[["error"]])){ rea.values[[dataset]]$compCheck <- FALSE }
   
   
   output$completenessUI <- renderUI({
     
     completeCheckRes <- CheckExpDesignCompleteness(session$userData$FlomicsMultiAssay, input$selectSamples)
+    local.rea.values$message   <- completeCheckRes[["error"]]
     
-    local.rea.values$compCheck <- TRUE
+    #local.rea.values$compCheck <- TRUE
     
     if(!is.null(completeCheckRes[["error"]])){
-      local.rea.values$compCheck <- FALSE
-      local.rea.values$message   <- completeCheckRes[["error"]]
+      #local.rea.values$compCheck <- FALSE
       
       showModal(modalDialog(title = "Error message", completeCheckRes[["error"]]))
     }
@@ -371,10 +371,10 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   #### run proprocessing : Normalisation/transformation, filtering...
   observeEvent(input$run, {
     
-    if(isFALSE(local.rea.values$compCheck)){
+    if(!is.null(local.rea.values$message)){
       showModal(modalDialog(title = "Error message", local.rea.values$message))
     }
-    validate({ need(!isFALSE(local.rea.values$compCheck), message=local.rea.values$message) })
+    validate({ need(is.null(local.rea.values$message), message=local.rea.values$message) })
     
     rea.values[[dataset]]$compCheck <- TRUE
     
