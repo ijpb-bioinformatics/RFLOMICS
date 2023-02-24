@@ -34,7 +34,7 @@
 ExpDesign.constructor <- function(ExpDesign, refList, typeList){
   
   # check ExpDesign dimension
-  if(dim(ExpDesign)[1] == 0 | dim(ExpDesign)[2] == 0){
+  if(dim(ExpDesign)[1] == 0 || dim(ExpDesign)[2] == 0){
     stop("Error : ExpDesign matrix is impty!")
   }
   
@@ -52,10 +52,10 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
   names(refList)  <- names(ExpDesign)
   names(typeList) <- names(ExpDesign)
   
-  for(i in c(names(typeList[typeList == "batch"]), names(typeList[typeList == "Bio"]))){
-    ExpDesign      <- dplyr::arrange(ExpDesign, get(i))
-    
-  }
+  # for(i in c(names(typeList[typeList == "batch"]), names(typeList[typeList == "Bio"]))){
+  #   ExpDesign      <- dplyr::arrange(ExpDesign, get(i))
+  # }
+  
   
   dF.List <- list()
   for(i in names(ExpDesign)){
@@ -73,9 +73,11 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
   # groups <- tidyr::unite(as.data.frame(ExpDesign[typeList == "Bio"]), col="groups", sep="_", remove = TRUE) %>%
   #           dplyr::mutate(samples = rownames(.))
   
-  groups <- ExpDesign %>% as.data.frame() %>%
-    dplyr::mutate(samples = rownames(.)) %>%
+  groups <- ExpDesign %>% dplyr::mutate(samples = rownames(.)) %>%
     tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
+  
+  groups$samples <- factor(groups$samples, levels = unique(groups$samples))
+  groups$groups  <- factor(groups$groups,  levels = unique(groups$groups))
   
   Design = new(Class = "ExpDesign",
                ExpDesign=as.data.frame(ExpDesign),
@@ -508,8 +510,7 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
   
   # consctuct ExpDesign object
   for (i in names(ExpDesign)){
-    
-    ExpDesign[[i]] <- factor(ExpDesign[[i]], levels = unique(ExpDesign[[i]]))
+    ExpDesign      <- dplyr::arrange(ExpDesign, get(i))
   }
   
   Design <- ExpDesign.constructor(ExpDesign = ExpDesign, refList = refList, typeList = typeList)
@@ -817,7 +818,7 @@ methods::setMethod(f="Data_Distribution_plot",
                              },
                              "boxplot" = {
                                p <- ggplot(pseudo.gg, aes(x=samples, y=value,label = features)) +
-                                 ggplot2::geom_boxplot(aes(fill=groups)) +
+                                 ggplot2::geom_boxplot(aes(fill=groups), outlier.size = 0.3) +
                                  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +
                                  xlab("") + ylab(x_lab) + ggtitle(title) #+
                                #geom_point(alpha = 1/100,size=0)
@@ -848,6 +849,10 @@ methods::setMethod(f= "plotPCA",
                      #
                      PC1 <- paste("Dim.",PCs[1], sep="")
                      PC2 <- paste("Dim.",PCs[2], sep="")
+                     
+                     if(PC1 == PC2){
+                       stop("PC1 and PC2 must be different")
+                     }
                      
                      score     <- object@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
                        dplyr::mutate(samples=row.names(.)) %>% dplyr::full_join(., object@metadata$Groups, by="samples")
@@ -1363,11 +1368,16 @@ methods::setMethod(f="FilterDiffAnalysis",
                        if(dim(tmp)[1] != 0){ DEF_list[[x]] <- tmp }
                      }
                      
-                     object@metadata$DiffExpAnal[["mergeDEF"]] <- DEF_list %>% purrr::reduce(dplyr::full_join, by="DEF") %>%
-                       dplyr::mutate_at(.vars = 2:(length(DEF_list)+1),
-                                        .funs = function(x){
-                                          dplyr::if_else(is.na(x), 0, 1)}) %>%
-                       data.table::data.table()
+                     object@metadata$DiffExpAnal[["mergeDEF"]] <- NULL
+                     
+                     if(length(DEF_list) != 0){
+
+                       object@metadata$DiffExpAnal[["mergeDEF"]] <- DEF_list %>% purrr::reduce(dplyr::full_join, by="DEF") %>%
+                         dplyr::mutate_at(.vars = 2:(length(DEF_list)+1),
+                                          .funs = function(x){
+                                            dplyr::if_else(is.na(x), 0, 1)}) %>%
+                         data.table::data.table()
+                     }
                      
                      return(object)
                    })
@@ -1426,23 +1436,49 @@ methods::setMethod(f="heatmap.plot",
                    signature="SummarizedExperiment",
                    definition <- function(object, hypothesis, condition="none"){
                      
-                     resTable <- object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]]
+                     if(is.null(object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]])){
+                       stop("no DE variables")
+                     }
+                     
+                     resTable <- dplyr::arrange(object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]], Adj.pvalue)
                      
                      if(dim(resTable)[1] == 0){
                        stop("no differentially expressed variables...")
                      }
                      
+                     title = ""
                      if(dim(resTable)[1] > 2000){
                        message("differentially expressed variables exceeding 2000 variables")
+                       resTable <- resTable[1:2000,]
+                       title = "plot only 2000 TOP DE variables"
                      }
                      
                      m.def <- assays(object)[[1]][,object@metadata$Groups$samples]
                      
-                     # Normalize counts (added 221123)
-                     if(object@metadata$Normalization$methode == "TMM"){
-                       m.def <- log2(scale(m.def+1, center = FALSE,
-                                           scale = object@metadata$Normalization$coefNorm$lib.size*object@metadata$Normalization$coefNorm$norm.factors))
-                     }
+                     
+                     switch (object@metadata$omicType,
+                             "RNAseq" = {
+                               
+                               m.def <- log2(scale(m.def+1, center = FALSE,
+                                                   scale = object@metadata$Normalization$coefNorm$lib.size*object@metadata$Normalization$coefNorm$lib.size))
+                             },
+                             "proteomics" = {
+                               
+                               switch (object@metadata$transform_method,
+                                       "log1p"      = { m.def <- log1p(m.def) },
+                                       "squareroot" = { m.def <- sqrt(m.def) }
+                               )
+                             },
+                             "metabolomics" = {
+                               # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
+                               
+                               switch (object@metadata$transform_method,
+                                       "log1p"      = { m.def <- log1p(m.def) },
+                                       "squareroot" = { m.def <- sqrt(m.def) }
+                               )
+                             }
+                     )
+                     
                      
                      # filter by DE
                      m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
@@ -1480,7 +1516,8 @@ methods::setMethod(f="heatmap.plot",
                                                    clustering_method_columns = "ward.D2",
                                                    cluster_column_slice=FALSE,
                                                    column_split = column_split.value,
-                                                   top_annotation = column_ha)
+                                                   top_annotation = column_ha,
+                                                   column_title = title)
                      
                      ComplexHeatmap::draw(ha, merge_legend = TRUE)
                      return(p)
@@ -1593,7 +1630,7 @@ methods::setMethod(f="boxplot.DE.plot",
                      pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples") %>%
                        dplyr::arrange(groups)
                      
-                     pseudo.gg <- arrange(pseudo.gg, get(condition))
+                     pseudo.gg <- dplyr::arrange(pseudo.gg, get(condition))
                      
                      pseudo.gg$groups <- factor(pseudo.gg$groups, levels = unique(pseudo.gg$groups))
                      

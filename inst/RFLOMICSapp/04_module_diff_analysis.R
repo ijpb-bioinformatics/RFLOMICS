@@ -121,6 +121,21 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   #         - MAplot
   #         - Table of the DE genes
   #   -> combine data : union or intersection
+  
+  #### PCA axis for plot
+  
+  observe({
+    lapply(1:length(rea.values$Contrasts.Sel$contrast), function(i) {
+      
+      vect     <- unlist(rea.values$Contrasts.Sel[i,])
+      
+      # update/adapt PCA axis
+      callModule(UpdateRadioButtons, paste0(vect["contrastName"],"-diff"))
+      # select factors for color PCA plot
+      callModule(RadioButtonsCondition, paste0(vect["contrastName"],"-diff"), typeFact = c("Bio"))
+    })
+  })
+  
   observeEvent(input$runAnaDiff, {
     
     # check list of genes
@@ -185,8 +200,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                        logFC.cutoff      = input$abs.logFC.cutoff)
     }
     
-    toto <<- dataset.SE
-    
     # error management
     if(isFALSE(dataset.SE@metadata$DiffExpAnal[["results"]])){
       showModal(modalDialog( title = "Error message",
@@ -233,6 +246,11 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     #                                                   Adj.pvalue.cutoff = input$Adj.pvalue.cutoff,
     #                                                   logFC.cutoff = input$abs.logFC.cutoff)
     # #Contrasts.Sel <- local.rea.values$dataset.SE@metadata$DiffExpAnal$contrasts
+    
+    # list of bio factors
+    factors.bio   <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("Bio")])
+    factors.batch <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("batch")])
+    
     
     list(
       lapply(1:length(rea.values$Contrasts.Sel$contrast), function(i) {
@@ -297,12 +315,11 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                                   backgroundColor = styleInterval(c(0, 0.01), c('royalblue', 'white', 'red2')),
                                                   fontWeight = 'bold') %>% formatSignif(columns = 1:dim(resTable)[2], digits = 3)
                                   }, server = FALSE)),
+                         
                          ### Heatmap ###
                          tabPanel("Heatmap",
-                                  renderUI({
-                                    renderPlot({
-                                      heatmap.plot(object=dataset.SE, hypothesis=vect["contrastName"], condition=input[[paste0(vect["contrastName"],"-","condColorSelect")]])
-                                    })
+                                  renderPlot({
+                                    heatmap.plot(object=dataset.SE, hypothesis=vect["contrastName"], condition=input[[paste0(vect["contrastName"],"-","condColorSelect")]])
                                   }),
                                   renderText("Clustering method=ward.D2, center=TRUE, scale=FALSE"),
                                   ## select cluster to plot
@@ -311,23 +328,23 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                                choices = c("none", names(session$userData$FlomicsMultiAssay@colData)),
                                                selected = "none", inline = TRUE)
                          ),
-
+                         
                          ### PCA ###
                          tabPanel("PCA on DE",
                                   
                                   fluidRow(
-                                    renderPlot({
-                                      
-                                      resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
-                                      newDataset.SE <- dataset.SE[rownames(dataset.SE) %in% row.names(resTable)]
-                                      newDataset.SE <- RFLOMICS::RunPCA(newDataset.SE)  
-                                      
-                                      PC1.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Firstaxis")]][1])
-                                      PC2.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Secondaxis")]][1])
-                                      condGroup <- input[[paste0(vect["contrastName"],"-diff-condColorSelect")]][1]
-                                      
-                                      RFLOMICS::plotPCA(newDataset.SE,  PCA = "norm", PCs = c(PC1.value, PC2.value), condition = condGroup)
-                                    })
+                                    column(width = 12,
+                                           renderPlot({
+                                             
+                                             newDataset.SE <- RFLOMICS::RunPCA(dataset.SE[row.names(dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]])])  
+                                             
+                                             PC1.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Firstaxis")]][1])
+                                             PC2.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Secondaxis")]][1])
+                                             condGroup <- input[[paste0(vect["contrastName"],"-diff-condColorSelect")]][1]
+                                             
+                                             RFLOMICS::plotPCA(newDataset.SE,  PCA = "norm", PCs = c(PC1.value, PC2.value), condition = condGroup)
+                                           })
+                                    )
                                   ),
                                   fluidRow(
                                     column(width = 6, RadioButtonsConditionUI(session$ns(paste0(vect["contrastName"],"-diff")))),
@@ -335,23 +352,26 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                     
                                   )
                          ),
+                         
                          ### boxplot DE ###
                          tabPanel("boxplot DE",
                                   fluidRow(
                                     column(3,
                                            selectInput(
                                              inputId = session$ns(paste0(vect["contrastName"], "-DE")), label = "Select DE:",
-                                             choices = rownames(dataset.SE@metadata$DiffExpAnal$TopDEF[[vect["contrastName"]]]),
-                                             multiple = FALSE, selectize = FALSE,
-                                             size = 5 )),
+                                             choices = rownames(dplyr::arrange(dataset.SE@metadata$DiffExpAnal$TopDEF[[vect["contrastName"]]], Adj.pvalue)),
+                                             multiple = FALSE, selectize = FALSE, 
+                                             size = 5 ),
+                                           #RadioButtonsConditionUI(session$ns(paste0(vect["contrastName"],"-DEcondition")))
+                                           radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-DEcondition")),
+                                                        label = 'Levels :',
+                                                        choices = c("groups",factors.bio),
+                                                        selected = factors.bio[1])
+                                           ),
                                     column(9,
-                                           renderUI({
-                                             renderPlot({
-                                               boxplot.DE.plot(object=dataset.SE, DE=input[[paste0(vect["contrastName"], "-DE")]], 
-                                                               condition=input[[paste0(vect["contrastName"], "-DEcondition-condColorSelect")]])
-                                             })
-                                           }),
-                                           RadioButtonsConditionUI(session$ns(paste0(vect["contrastName"],"-DEcondition")))
+                                           renderPlot({
+                                             boxplot.DE.plot(object=dataset.SE, DE=input[[paste0(vect["contrastName"], "-DE")]], 
+                                                             condition=input[[paste0(vect["contrastName"], "-DEcondition")]]) })
                                     )
                                   )
                          )
@@ -367,28 +387,12 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     
   })
   
-  #### PCA axis for plot
   
-  observe({
-    lapply(1:length(rea.values$Contrasts.Sel$contrast), function(i) {
-      
-      vect     <- unlist(rea.values$Contrasts.Sel[i,])
-      
-      # update/adapt PCA axis
-      callModule(UpdateRadioButtons, paste0(vect["contrastName"],"-diff"))
-      # select factors for color PCA plot
-      callModule(RadioButtonsCondition, paste0(vect["contrastName"],"-diff"), typeFact = c("Bio", "batch"))
-      
-      # select factors for color PCA plot
-      callModule(module = RadioButtonsCondition, id = paste0(vect["contrastName"],"-DEcondition"), typeFact = c("Bio"))
-      
-    })
-  })
   
   # merge results on upset plot
   output$ResultsMerge <- renderUI({
     
-    if (rea.values[[dataset]]$diffAnal == FALSE) return()
+    if (rea.values[[dataset]]$diffAnal == FALSE || is.null(local.rea.values$dataset.SE@metadata$DiffExpAnal[["mergeDEF"]])) return()
     
     #local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
     DEF_mat <- as.data.frame(local.rea.values$dataset.SE@metadata$DiffExpAnal[["mergeDEF"]])
@@ -404,11 +408,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       
       box(width=12,  status = "warning",
           
-          renderPlot({ UpSetR::upset(DEF_mat, sets = H_selected) })
+          renderPlot({ UpSetR::upset(DEF_mat, sets = H_selected, order.by = "freq") })
       )
     }
-    
-    
   })
   
   # validate contrasts
