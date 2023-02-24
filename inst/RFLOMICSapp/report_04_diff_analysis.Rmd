@@ -11,11 +11,14 @@ knitr::opts_chunk$set(
 
 ```
 
+<!-- ## Summary table of differential expression analysis -->
+
 Differential expression analysis was carried out for each selected contrast thanks to the `r dataset.SE@metadata[["DiffExpAnal"]]$method` model. 
 
 P-value of differential expressed `r omics.dic[[omictype]][["variableName"]]` were adjusted according to the `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.method` method with a cutoff set to `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff`.
 
-### Summary
+
+* Summary of differential expression analysis
 
 ```{r ,echo=FALSE,message=FALSE, out.width = "100%",warning=FALSE,  fig.show = "hold", eval=Diff.eval}
 
@@ -38,7 +41,6 @@ for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
 
 ```{r , echo=FALSE, results="asis", eval=Diff.eval}
 kable_styling(kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("Nb DE"=DE,"Nb DEup"=DEup,"Nb DEdown"=DEdown)), row.names=FALSE, caption=NULL, format="html"), font_size=12)
-
 ```
 
 
@@ -46,6 +48,7 @@ The following graph gives the number of common and specific differential express
 
 
 ```{r Upset_plot,echo=FALSE, message=FALSE, warning=FALSE, fig.show = "hold", out.width = "80%", echo=FALSE, eval=Diff.eval}
+
 DEF_mat <- dataset.SE@metadata$DiffExpAnal[["mergeDEF"]]
 
 if(dim(DEF_mat)[2] > 2){
@@ -56,11 +59,13 @@ write.table(DEF_mat, file=paste0(anaDiffDir,"/","Matrice_of_DE_",omics.dic[[omic
 
 ```
 
-<!-- ### Results per contrast -->
+* Results by contrast(s): 
+
+*Please click on the arrows to scroll down the results and click on the figure for zooming*
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.eval}
 
-  out <- NULL
+out <- NULL
   
   for (contrast  in  dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]]$contrastName) {
       out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"),"/RFLOMICSapp/","report_04_diff_analysis_per_contrast.Rmd"), quiet=TRUE))  

@@ -28,8 +28,8 @@ if(!is.null(dataset.SE)){
   Diff.ann.eval  <- !is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]]$results)
   CoEx.ann.eval  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results)
   
-  Diff.ann.eval_CPR <- !is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]]$results_CPR)
-  CoEx.ann.eval_CPR  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results_CPR)
+  Diff.ann.eval_CPR <- !is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]])
+  CoEx.ann.eval_CPR  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]])
 }
 
 ```
@@ -66,8 +66,10 @@ knitr::asis_output(out)
 out <- NULL
 annot <- "DiffExpEnrichAnal"
 
+
 out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich.Rmd"),
                                 quiet=TRUE))
+
 
 knitr::asis_output(out)
 
@@ -75,15 +77,16 @@ knitr::asis_output(out)
 
 <!-- enrichement analysis on DE G/P/M lists with clusterprofiler -->
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=FALSE}
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.ann.eval_CPR}
 
-# eval=Diff.ann.eval_CPR
 
 out <- NULL
 annot <- "DiffExpEnrichAnal"
 
+for(ontology  in names(dataset.SE@metadata[[annot]])){
 out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_CPR.Rmd"),
                                 quiet=TRUE))
+}
 
 knitr::asis_output(out)
 
@@ -95,8 +98,10 @@ knitr::asis_output(out)
 
 out <- NULL
 
+
 out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_05_coexp_analysis.Rmd"),
                                 quiet=TRUE))
+
 
 knitr::asis_output(out)
 
@@ -116,15 +121,16 @@ knitr::asis_output(out)
 
 ```
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=FALSE}
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=CoEx.ann.eval_CPR}
 
-# eval=CoEx.ann.eval_CPR
 
 out <- NULL
 annot <- "CoExpEnrichAnal"
 
+for(ontology  in names(dataset.SE@metadata[[annot]])){
 out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_CPR.Rmd"),
                                 quiet=TRUE))
+}
 
 knitr::asis_output(out)
 

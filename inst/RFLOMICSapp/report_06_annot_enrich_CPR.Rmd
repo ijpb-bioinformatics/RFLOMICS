@@ -1,4 +1,3 @@
-## Annotation and Enrichment : `r annot`
 
 ```{r , echo=FALSE , message=FALSE, warning=FALSE}
 annotDir <- paste0(dataDir,"/","04-Enrichment_analysis_CPR/")
@@ -9,50 +8,34 @@ knitr::opts_chunk$set(
 )
 ```
 
-Analyses in this part are conducted using the clusterprofiler R-package. 
+<br>
 
-### Summary
+* Enrichment analysis for `r ontology` ontology:
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE}
-overview_list <- lapply(dataset.SE@metadata[[annot]][["results_CPR"]]$list_res, FUN = function(contrasts_res){
-  res_inter <- lapply(contrasts_res, FUN = function(list_CPR){
-    if(!is.null(list_CPR)) return(nrow(list_CPR@result[list_CPR@result$p.adjust < list_CPR@pvalueCutoff,]))
-    else return(0)
-  })
-  names(res_inter) <- names(contrasts_res)
-  res_inter
-})
-names(overview_list) <- names(dataset.SE@metadata[[annot]][["results_CPR"]]$list_res)
+Enrichment analysis was carried out for each selected contrast thanks to  the clusterprofiler R-package. 
+Lists of DE features have been analyzed for enrichment using `r ontology` ontology.
 
-dt_res <- as.data.frame(do.call("rbind", overview_list))
-dt_res <- dt_res %>% dplyr::mutate(Contrast = rownames(dt_res)) %>% dplyr::relocate(Contrast)
+Summary:
+
+<!-- ### summary per ontology and per contrast -->
+
+```{r ,  message=FALSE, warning=FALSE, echo=FALSE, results="asis", out.width = "50%"}
+kable_styling(kable(dataset.SE@metadata[[annot]][[ontology]]$summary, row.names=FALSE, caption=NULL, format="html"), font_size=12)
 ```
 
-`r nrow(dt_res)` lists of genes have been analyzed for enrichment using `r dataset.SE@metadata[[annot]]$results_CPR$dom.select` annotation. 
-`r if(length(grep("GO", dataset.SE@metadata[[annot]]$results_CPR$dom.select))!=0){paste0("Using", dataset.SE@metadata[[annot]]$results_CPR$list_args$OrgDb, " to do the analysis")}`.
+Results by contrasts:
 
-Adjusted pvalue was set to `r dataset.SE@metadata[[annot]]$results_CPR$list_args$pvalueCutoff`.
-
-```{r , message=FALSE, warning=FALSE, echo=FALSE}
-DT::datatable(dt_res, rownames = FALSE, options = list(pageLength = 10))
-```
-
+*Please click on the arrows to scroll down the results and click on the figure for zooming*
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE}
 out <- NULL
-
-for (listname  in names(dataset.SE@metadata[[annot]]$results_CPR$list_res)){
-  for(domain in names(dataset.SE@metadata[[annot]]$results_CPR$list_res[[listname]])){
-    # if(!is.null())
-    if(nrow(dataset.SE@metadata[[annot]]$results_CPR$list_res[[listname]][[domain]])>0){
+for (listname  in names(dataset.SE@metadata[[annot]][[ontology]]$enrichResult)){
       out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_per_list_per_Domain_CPR.Rmd"), quiet=TRUE))
-    }
-    else{print(paste0(listname, " - in domain: ", domain, " - There was no enriched term found in this setting."))}
-  }
 }
 
 knitr::asis_output(out)
 ```
+
 
 
 

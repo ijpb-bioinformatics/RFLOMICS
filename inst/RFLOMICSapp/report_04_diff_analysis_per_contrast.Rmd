@@ -17,27 +17,55 @@ knitr::opts_chunk$set(
 )
 ```
 
+
 ```{r , echo=FALSE,out.width = "50%"}
-diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=contrast, Adj.pvalue.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["Adj.pvalue.cutoff"]], FC.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["abs.FC.cutoff"]])
+diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=contrast, 
+                            Adj.pvalue.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["Adj.pvalue.cutoff"]], 
+                            FC.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["abs.FC.cutoff"]])
 ```
 
 <!-- ### `r contrast` {.tabset} -->
 
 <!-- #### Pvalue -->
 
-```{r pvalues_distrib, echo=FALSE,out.width = "50%"}
+1- Pvalues distribution
+
+```{r pvDistrib-plot, echo=FALSE,out.width = "30%", warning=FALSE}
 diff.plots$Pvalue.hist
 ```
 
-<!-- #### MAplot & Volcano plot -->
+2- MA plot
 
-
-```{r MA_plot, echo=FALSE,out.width = "50%",fig.show = "hold", warning=FALSE}
+```{r MA-plot, echo=FALSE,out.width = "30%", warning=FALSE}
 diff.plots$MA.plot
+```
+
+3- VolcanoPlot
+
+```{r Volcano-plot, echo=FALSE,out.width = "30%", warning=FALSE}
 diff.plots$Volcano.plot
 ```
 
 <!-- #### ComplexHeatmap -->
+
+3- Heatmap of DE 
+
+<!-- #### PCA on DE features -->
+4- PCA on DE 
+
+```{r PCAonDE, echo=FALSE,out.width = "30%",fig.show = "hold"}
+
+resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[contrast]]
+newDataset.SE <- dataset.SE[rownames(dataset.SE) %in% row.names(resTable)]
+newDataset.SE <- RFLOMICS::RunPCA(newDataset.SE)  
+
+RFLOMICS::plotPCA(newDataset.SE,
+                  PCA = "norm",
+                  PCs=c(1, 2), condition="groups")
+RFLOMICS::plotPCA(newDataset.SE,
+                  PCA = "norm",
+                  PCs=c(1, 3), condition="groups")
+```
 
 
 
@@ -49,26 +77,38 @@ diff.plots$Volcano.plot
 <!-- ``` -->
 
 <!-- #### Table -->
+5- Table
 
-```{r , results='asis', echo = FALSE, out.width = "70%"}
+```{r table, echo = FALSE, out.width = "70%"}
 
-  reactable(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],
-            defaultPageSize = 6, searchable = TRUE, paginationType = "simple",
-            columns = list(
-              logFC = colDef(
-                  style = function(value) {
-                      color <- if (value >= 0) {
-                        "#008000"
-                      } else if (value < 0) {
-                        "#e00000"
-                      }
-                      list(fontWeight = 600, color = color)
-                  }, format=colFormat(digits = 2)
-                ),
-              Abundance = colDef(format = colFormat(digits = 2)),
-              LR= colDef(format = colFormat(digits = 2))
-              )
+reactable(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],
+          showSortable = TRUE,
+          bordered = TRUE,
+          defaultPageSize = 6, searchable = TRUE, paginationType = "simple",
+          columns = list(
+            logFC = colDef(
+                style = function(value) {
+                    color <- if (value >= 0) {
+                      "#008000"
+                    } else if (value < 0) {
+                      "#e00000"
+                    }
+                    list(fontWeight = 600, color = color)
+                }, format=colFormat(digits = 2)
+              ),
+            Abundance = colDef(format = colFormat(digits = 2)),
+            LR= colDef(format = colFormat(digits = 2))
             )
+          )
+# DT::datatable(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]], 
+#                                                            options = list(dom = 'lfrtipB',
+#                                                                           rownames = FALSE,
+#                                                                           pageLength = 10,
+#                                                                           lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All")))) %>%
+#                                   formatStyle('logFC',
+#                                               backgroundColor = styleInterval(c(0, 0.01), c('royalblue', 'white', 'red2')),
+#                                               fontWeight = 'bold') %>% formatSignif(columns = 1:dim(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]])[2], digits = 3)
+
 
  write.table(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],
              file=paste0(contrastDir,"Table_of_DE_",omics.dic[[omictype]][["variableName"]],"_pvalmax_",
