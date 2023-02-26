@@ -27,9 +27,9 @@ for(i in 1:length(fact.names)){
   fact.ref[i] <- levels(rflomics.MAE@metadata$design@ExpDesign[,fact.names[i]])[1]
 }
 
-df <- data.frame("Names" = fact.names ,
-           "Type" = fact.types,
-           "Ref mod" = fact.ref)
+df <- data.frame("Factor.names" = fact.names ,
+           "Factor.Type" = fact.types,
+           "Ref.modality" = fact.ref)
 
 DT::datatable(df , rownames = FALSE ,options = list( pageLength = 6, scrollX = F, dom = 'tip'),
               class = 'cell-border stripe')
@@ -54,6 +54,8 @@ DT::datatable(loaded.data, rownames = FALSE,
 # kable_styling(kable(loaded.data, row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
 
 ```
+
+* This upset graph gives the number of common and specifics samples in the analyzed dataset(s).
 
 
 ```{r upsetSamples, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}

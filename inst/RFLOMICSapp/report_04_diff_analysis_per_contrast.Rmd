@@ -81,7 +81,7 @@ RFLOMICS::plotPCA(newDataset.SE,
 
 ```{r table, echo = FALSE, out.width = "70%"}
 
-reactable(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],
+reactable(signif(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],3),
           showSortable = TRUE,
           bordered = TRUE,
           defaultPageSize = 6, searchable = TRUE, paginationType = "simple",
@@ -94,12 +94,11 @@ reactable(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],
                       "#e00000"
                     }
                     list(fontWeight = 600, color = color)
-                }, format=colFormat(digits = 2)
-              ),
-            Abundance = colDef(format = colFormat(digits = 2)),
-            LR= colDef(format = colFormat(digits = 2))
+                }
+              )
             )
           )
+
 # DT::datatable(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]], 
 #                                                            options = list(dom = 'lfrtipB',
 #                                                                           rownames = FALSE,

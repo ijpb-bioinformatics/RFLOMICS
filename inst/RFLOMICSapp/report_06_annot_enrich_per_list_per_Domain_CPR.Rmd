@@ -91,7 +91,12 @@ dataPlot[[domain]] <- tmp@result[tmp@result$p.adjust < tmp@pvalueCutoff, ] %>% d
 #                    options = list(rownames = FALSE, pageLength = 5, lengthMenu = c(5, 10, 15, 20), scrollX = T))
 #
 
-reactable(dataPlot %>% purrr::reduce(rbind),rownames = FALSE,
+# Bind results domain
+
+dataPlot.rbind <- dataPlot %>% purrr::reduce(rbind)
+dataPlot.rbind[,5:7]<-signif(dataPlot.rbind[,5:6],3)
+
+reactable(dataPlot.rbind,rownames = FALSE,
           showSortable = TRUE,
           bordered = TRUE,
           defaultPageSize = 5, searchable = TRUE, paginationType = "simple")

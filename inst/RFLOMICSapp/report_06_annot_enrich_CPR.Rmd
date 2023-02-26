@@ -10,7 +10,7 @@ knitr::opts_chunk$set(
 
 <br>
 
-* **Contrast(s) annotation by `r ontology` ontology:**
+* **Annotation of the lists of `r omics.dic[[omictype]][["variableName"]]` by `r ontology` ontology:**
 
 Enrichment of type **Overrepresentation analysis (ORA)** was carried out for each list of `r omics.dic[[omictype]][["variableName"]]` 
 thanks to the **clusterProfiler** R-package and its **enrich...** functions.
@@ -24,7 +24,7 @@ This function determines the overrepresented `r ontology` terms in the gene list
 kable_styling(kable(dataset.SE@metadata[[annot]][[ontology]]$summary, row.names=FALSE, caption=NULL, format="html"), font_size=12)
 ```
 
-**Results by contrasts:**
+**Results by list(s) of `r omics.dic[[omictype]][["variableName"]]`**
 
 *Please click on the arrows to scroll down the results and click on the figure to zoom*
 

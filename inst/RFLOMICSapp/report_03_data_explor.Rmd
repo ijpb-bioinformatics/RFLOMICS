@@ -37,10 +37,9 @@ check$plot
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
 
 * By default, the *unexpressed genes* were filtered-out (`r length(dataset.raw.SE@metadata$rowSums.zero)` genes).
-* Then, *low expressed genes* were filtered-out using the *cpm* (counts per million) method. *Genes* with a cpm
-lower to `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff` in at least "`r dataset.SE@metadata$FilteringOptions$Filter_Strategy`" were filtered out ( `r length(dataset.raw.SE@metadata$FilteredFeatures)` genes).
+* Then, *low expressed genes* were filtered-out using the *cpm* (counts per million) method function of the R-package edgeR. *Genes* with a cpm lower to `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff` in at least "`r dataset.SE@metadata$FilteringOptions$Filter_Strategy`" were filtered out ( `r length(dataset.SE@metadata$FilteredFeatures)` genes).
 
-* The calcNormFactors function of the R-package edgeR `r dataset.SE@metadata$Normalization$methode` normalization method was applied. 
+* The calcNormFactors function of the R-package edgeR was used and the `r dataset.SE@metadata$Normalization$methode` normalization method was applied. 
 
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
 
@@ -131,4 +130,15 @@ Quality control's graphs before and after the pre-processing:
     + coordinates of samples on the axes 1 and 3
 
 
+```{r export,echo = FALSE}
+
+write.table(dataset.SE@metadata$rowSums.zero,
+             file=paste0(explorDir,"Table_of_non_expressed_",omics.dic[[omictype]][["variableName"]],".txt"),
+             sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
+
+write.table(dataset.SE@metadata$FilteredFeatures,
+             file=paste0(explorDir,"Table_of_low_expressed_",omics.dic[[omictype]][["variableName"]],".txt"),
+             sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
+ 
+```
 
