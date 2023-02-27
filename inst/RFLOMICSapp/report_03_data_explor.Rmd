@@ -36,6 +36,8 @@ check$plot
 
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
 
+Filtering and normalization strategies adapted from @Lambert2020ta
+
 * By default, the *unexpressed genes* were filtered-out (`r length(dataset.raw.SE@metadata$rowSums.zero)` genes).
 * Then, *low expressed genes* were filtered-out using the *cpm* (counts per million) method function of the R-package edgeR. *Genes* with a cpm lower to `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff` in at least "`r dataset.SE@metadata$FilteringOptions$Filter_Strategy`" were filtered out ( `r length(dataset.SE@metadata$FilteredFeatures)` genes).
 

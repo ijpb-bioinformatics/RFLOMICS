@@ -17,6 +17,9 @@ knitr::opts_chunk$set(
 Differential expression analysis was carried out for each selected contrast thanks to the `r dataset.SE@metadata[["DiffExpAnal"]]$method` model.
 
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
+
+Differential expression analysis strategy was adapted from @Lambert2020ta
+
 In a first time, parameters of the generalized linear model were estimated thanks to severals functions of the edgeR package 
 (1: estimateGLMCommonDisp(), 2: estimateGLMTrendedDisp(), 3: estimateGLMTagwiseDisp() and 4: glmFit()).
 In a second time, likelihood ratio test (LRT) were performed for each contrast thanks to the glmLRT() function of the
@@ -24,6 +27,9 @@ edgeR r-package.
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
 
 `r if(dataset.raw.SE@metadata$omicType != "proteomics") {"\\begin{comment}"}`
+
+Differential expression analysis strategy was adapted from @efstathiou2017a
+
 In a first time, parameters of the linear model were estimated thanks to limma::lmFit() function of the limma package.
 In a second time, contrasts.fit was used and empirical bayes statistics were obtained thanks to the eBayes() functions of the limma r-package.
 `r if(dataset.raw.SE@metadata$omicType != "proteomics") {"\\end{comment}"}`
@@ -94,3 +100,5 @@ out <- NULL
     
 knitr::asis_output(out)
 ```
+
+

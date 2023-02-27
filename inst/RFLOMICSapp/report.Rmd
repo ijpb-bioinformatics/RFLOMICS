@@ -134,5 +134,6 @@ writeLines(capture.output(devtools::session_info()),  paste0(outDir,"/","session
 
 # Bibliographie
 
+<div id="refs"></div>
 
 

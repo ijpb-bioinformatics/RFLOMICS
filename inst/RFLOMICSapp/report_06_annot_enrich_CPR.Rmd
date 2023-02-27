@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 * **Annotation of the lists of `r omics.dic[[omictype]][["variableName"]]` by `r ontology` ontology:**
 
 Enrichment of type **Overrepresentation analysis (ORA)** was carried out for each list of `r omics.dic[[omictype]][["variableName"]]` 
-thanks to the **clusterProfiler** R-package and its **enrich...** functions.
+thanks to the **clusterProfiler** R-package and its **enrich...** functions (@wu-a2021a).
 This function determines the overrepresented `r ontology` terms in the gene list when compared to a reference list. 
 
 **Summary:**

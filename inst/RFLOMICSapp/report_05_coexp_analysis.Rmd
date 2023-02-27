@@ -9,12 +9,15 @@ knitr::opts_chunk$set(
 )
 ```
 
+`r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
+Co-expression analysis strategy was adapted from @Lambert2020ta
+`r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
 
 Co-expression analysis was carried out on the `r dataset.SE@metadata[["CoExpAnal"]]$merge.type`
 of the following list of `r omics.dic[[omictype]][["variableName"]]`  `r dataset.SE@metadata$CoExpAnal$gene.list.names`. 
 `r dataset.SE@metadata[["CoExpAnal"]]$tools` was used to cluster the `r omics.dic[[omictype]][["variableName"]]`. 
 The gaussian mixture model was run on filtered (meanFilterCutoff was set to: `r dataset.SE@metadata[["CoExpAnal"]]$meanFilterCutoff`), 
-normalised (normalisation method was `r dataset.SE@metadata[["CoExpAnal"]]$normFactors`) 
+normalized (normalization method was `r dataset.SE@metadata[["CoExpAnal"]]$normFactors`) 
 and transformed (transformation method: `r dataset.SE@metadata[["CoExpAnal"]]$transformation`) count data.
 `r dataset.SE@metadata[["CoExpAnal"]]$replicates.nb` technical replicates were performed for each K in `r dataset.SE@metadata[["CoExpAnal"]]$K.range` (K=number of clusters). 
 The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
