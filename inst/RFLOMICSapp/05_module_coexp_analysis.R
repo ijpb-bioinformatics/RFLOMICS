@@ -165,7 +165,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
           fluidRow(
             
             column(8,
-                   materialSwitch(inputId = session$ns("clustermqCoseq"), label = "use remote cluster", value = FALSE, status = "success"),
+                   materialSwitch(inputId = session$ns("clustermqCoseq"), label = "use remote cluster", value = FALSE, status = "success")
             ),
             column(4, actionButton(session$ns("runCoSeq"),"Run")))
       ))
