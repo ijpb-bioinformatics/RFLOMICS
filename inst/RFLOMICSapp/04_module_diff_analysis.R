@@ -123,7 +123,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   #   -> combine data : union or intersection
   
   #### PCA axis for plot
-  
   observe({
     lapply(1:length(rea.values$Contrasts.Sel$contrast), function(i) {
       
@@ -136,6 +135,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     })
   })
   
+  ##================================ RUN =======================================##
+  
+  ### run diff
+  #######################
   observeEvent(input$runAnaDiff, {
     
     # check list of genes
@@ -234,6 +237,32 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     #----------------------#
     
   }, ignoreInit = TRUE)
+  
+  ### validate contrasts
+  #######################
+  observeEvent(input$validContrast, {
+    
+    rea.values[[dataset]]$diffValid  <- FALSE
+    rea.values[[dataset]]$coExpAnal  <- FALSE
+    rea.values[[dataset]]$diffAnnot  <- FALSE
+    rea.values[[dataset]]$coExpAnnot <- FALSE
+    
+    dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]] 
+    
+    # filter DEG according pvalue adj cut-off
+    
+    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal <-
+      dataset.SE@metadata$DiffExpAnal
+    
+    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]] <-
+      rea.values[[dataset]]$DiffValidContrast
+    
+    rea.values[[dataset]]$diffValid <- TRUE
+    rea.values$datasetDiff <- unique(c(rea.values$datasetDiff , dataset))
+    
+  }, ignoreInit = TRUE)
+  
+  ##============================== DISPLAY =====================================##
   
   # display results per contrast
   output$ContrastsResults <- renderUI({
@@ -392,8 +421,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     
   })
   
-  
-  
   # merge results on upset plot
   output$ResultsMerge <- renderUI({
     
@@ -417,30 +444,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       )
     }
   })
-  
-  # validate contrasts
-  observeEvent(input$validContrast, {
-    
-    rea.values[[dataset]]$diffValid  <- FALSE
-    rea.values[[dataset]]$coExpAnal  <- FALSE
-    rea.values[[dataset]]$diffAnnot  <- FALSE
-    rea.values[[dataset]]$coExpAnnot <- FALSE
-    
-    dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]] 
-    
-    # filter DEG according pvalue adj cut-off
-    
-    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal <-
-      dataset.SE@metadata$DiffExpAnal
-    
-    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]] <-
-      rea.values[[dataset]]$DiffValidContrast
-    
-    rea.values[[dataset]]$diffValid <- TRUE
-    rea.values$datasetDiff <- unique(c(rea.values$datasetDiff , dataset))
-    
-  }, ignoreInit = TRUE)
-  
   
   return(input)
 }

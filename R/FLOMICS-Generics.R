@@ -138,3 +138,7 @@ methods::setGeneric(
   def = function( object, ... ){standardGeneric("boxplot.DE.plot")}
 )
 
+methods::setGeneric(
+  name="coseq.profile.plot",
+  def = function( object, ... ){standardGeneric("coseq.profile.plot")}
+)

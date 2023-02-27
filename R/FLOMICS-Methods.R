@@ -1716,7 +1716,7 @@ methods::setMethod(f="boxplot.DE.plot",
 #' @seealso \code{\link{coseq::coseq}}
 methods::setMethod(f="runCoExpression",
                    signature="SummarizedExperiment",
-                   definition <- function(object, geneList, K=2:20, replicates=5, nameList, merge="union",
+                   definition <- function(object, K=2:20, replicates=5, nameList, merge="union",
                                           model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation, normFactors, clustermq=FALSE){
                      
                      
@@ -1727,6 +1727,12 @@ methods::setMethod(f="runCoExpression",
                      CoExpAnal[["merge.type"]]       <- merge
                      CoExpAnal[["replicates.nb"]]    <- replicates
                      CoExpAnal[["K.range"]]    <- K
+                     
+                     geneList <- dplyr::select(object@metadata$DiffExpAnal[["mergeDEF"]], DEF, all_of(nameList)) %>% 
+                       dplyr::mutate(intersection=dplyr::if_else(rowSums(dplyr::select(., contains(nameList))) == length(nameList), "YES", "NO"), 
+                                     union=dplyr::if_else(rowSums(dplyr::select(., contains(nameList))) !=0 , "YES", "NO")) %>% 
+                       dplyr::filter(union != "NO", get(merge) == "YES") 
+                     geneList <- geneList$DEF
                      
                      counts = SummarizedExperiment::assay(object)[geneList,]
                      
@@ -1813,6 +1819,56 @@ methods::setMethod(f="runCoExpression",
 
 
 # Pour utiliser la fonction repeatable(), "seed"  pourrait être ajouté en paramètre.
+
+
+
+
+
+
+#' @title coseq.profile.plot
+#'
+#' @param object An object of class \link{SummarizedExperiment}
+#' @param numCluster cluster number
+#' @param condition 
+#' @param observation 
+#' @export
+#' @exportMethod coseq.profile.plot
+#' @noRd
+
+methods::setMethod(f="coseq.profile.plot",
+                   signature="SummarizedExperiment",
+                   definition <- function(object, numCluster = 1, condition="groups", observation=NULL){
+                     
+                     coseq.res  <- object@metadata$CoExpAnal[["coseqResults"]]
+                     assays.data <- dplyr::filter(as.data.frame(coseq.res@assays@data[[1]]), get(paste0("Cluster_",numCluster)) > 0.8)
+                     
+                     y_profiles.gg <- coseq.res@y_profiles[rownames(assays.data),] %>% data.frame() %>% dplyr::mutate(observations=rownames(.)) %>% 
+                       reshape2::melt(id="observations", value.name = "y_profiles") %>%  dplyr::rename(samples = variable) %>%
+                       dplyr::full_join(object@metadata$Groups , by = "samples")
+                     
+                     #y_profiles.gg$samples <- factor(y_profiles.gg$samples, levels = unique(conds$samples))
+                     
+                     y_profiles.gg <- dplyr::arrange(y_profiles.gg, get(condition))
+                     y_profiles.gg$groups <- factor(y_profiles.gg$groups, levels = unique(y_profiles.gg$groups))
+                     
+                     p <- ggplot2::ggplot(data = y_profiles.gg, aes(x=groups, y=y_profiles)) +
+                       geom_boxplot(aes_string(fill = condition), outlier.size = 0.3) +
+                       theme(axis.text.x=element_text(angle=90, hjust=1)) +  xlab("Conditions") + ylab("Expression profiles") +
+                       ggtitle(paste0("Cluster : ",numCluster, "; nb_observations : ",dim(assays.data)[1]))
+                     
+                     if(!is.null(observation)){
+                       
+                       df <- dplyr::filter(y_profiles.gg, observations == observation) %>% 
+                         dplyr::group_by(groups) %>% 
+                         dplyr::summarise(mean.y_profiles=mean(y_profiles))
+                       p <- p + 
+                         geom_point(data = df, aes(x=groups, y=mean.y_profiles), color="red", size = 2) +
+                         geom_line( data = df, aes(x=groups, y=mean.y_profiles), color="red", group = 1) +
+                         ggtitle(paste0("Cluster : ",numCluster, "; nb_observations : ",dim(assays.data)[1], "; red : ", observation))
+                     }
+-                     
+                     return(p)
+                   })
 
 
 ######################## ANNOTATION USING CLUSTERPROFILER ########################

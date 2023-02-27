@@ -1735,7 +1735,7 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
   for (i in 1:nb_cluster){
     #print(i)
     #y_profiles[[i]] <- coseq.res@y_profiles[coseq.res@allResults[[nb_cluster-1]][,i] != 0,] %>%
-    y_profiles[[i]] <- coseq.res@y_profiles[coseq.res@allResults[[paste0("K=",nb_cluster)]][,i] != 0,] %>%
+    y_profiles[[i]] <- coseq.res@y_profiles[coseq.res@allResults[[paste0("K=",nb_cluster)]][,i] > 0.8,] %>%
       data.frame() %>% reshape2::melt() %>%  dplyr::rename(samples = variable) %>%
       dplyr::full_join(conds , by = "samples") %>% dplyr::mutate(cluster = i)
   }
