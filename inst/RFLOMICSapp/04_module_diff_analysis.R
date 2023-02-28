@@ -247,7 +247,11 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$diffAnnot  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
     
+    
+    
     dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]] 
+    dataset.SE@metadata$DiffExpEnrichAnal <- NULL
+    dataset.SE@metadata$CoExpEnrichAnal   <- NULL
     
     # filter DEG according pvalue adj cut-off
     

@@ -1974,6 +1974,10 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                              results_list[[listname]][[ont]] <- NULL
                            }
                          }
+                         else{
+                           overview_list[[listname]][[ont]] <- 0
+                           results_list[[listname]][[ont]] <- NULL
+                         }
                        }
                      }
                      
