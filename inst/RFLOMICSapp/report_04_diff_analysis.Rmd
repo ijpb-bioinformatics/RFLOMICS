@@ -94,10 +94,10 @@ write.table(DEF_mat, file=paste0(anaDiffDir,"/","Matrice_of_DE_",omics.dic[[omic
 out <- NULL
   
   for (contrast  in  dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]]$contrastName) {
+    # if( dim(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]])[1] != 0 ){
       out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"),"/RFLOMICSapp/","report_04_diff_analysis_per_contrast.Rmd"), quiet=TRUE))  
-      
-    }
-    
+    #}
+  }
 knitr::asis_output(out)
 ```
 

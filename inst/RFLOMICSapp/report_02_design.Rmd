@@ -35,9 +35,6 @@ DT::datatable(df , rownames = FALSE ,options = list( pageLength = 6, scrollX = F
               class = 'cell-border stripe')
 ```
 
-<!-- * `r paste0("Biological factor : ",  paste0(names(Bio.fact), collapse = ", "))` -->
-<!-- * `r paste0("Batch factor : ",  paste0(names(Batch.fact), collapse = ", "))` -->
-
 
 * Analyzed dataset(s):
 

@@ -7,6 +7,8 @@ dir.create(path=coexpDir)
 knitr::opts_chunk$set(
   fig.path=coexpDir
 )
+
+isResults <- dataset.SE@metadata$CoExpAnal[["results"]]
 ```
 
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
@@ -24,10 +26,15 @@ The best number of cluster (K) selected via the Integrated Completed Likelihood 
 was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
 
 
+`r if(isResults == TRUE) {"\\begin{comment}"}`
+No clustering results.
+`r if(isResults == TRUE) {"\\end{comment}"}`
+
+
 ### ICL 
 
 
-```{r ICL, echo=FALSE}
+```{r ICL, echo=FALSE, eval=isResults}
 plot.coseq.res <- dataset.SE@metadata[["CoExpAnal"]]$plots
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$ICL 
@@ -35,28 +42,29 @@ plot.coseq.res$ICL
 
 ### boxplots
 
-```{r boxplots_profile, echo=FALSE}
+```{r boxplots_profile, echo=FALSE, eval=isResults}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$boxplots
 ```
 
 ### probapost_boxplots 
 
-```{r boxplots_proba, echo=FALSE}
+```{r boxplots_proba, echo=FALSE, eval=isResults}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$probapost_boxplots 
 ```
 
 ### probapost_barplots
 
-```{r barplots_probapost, echo=FALSE}
+```{r barplots_probapost, echo=FALSE, eval=isResults}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$probapost_barplots
 ```
 
 
-```{r export,echo = FALSE}
-tab.clusters <- as.data.frame(ifelse(dataset.SE@metadata$CoExpAnal$coseqResults@allResults[[dataset.SE@metadata$CoExpAnal$cluster.nb]] > 0.5, 1,0))
+```{r export,echo = FALSE, eval=isResults}
+#tab.clusters <- as.data.frame(ifelse(dataset.SE@metadata$CoExpAnal$coseqResults@allResults[[dataset.SE@metadata$CoExpAnal$cluster.nb]] > 0.5, 1,0))
+tab.clusters <- dataset.SE@metadata$CoExpAnal$coseqResults@allResults[[dataset.SE@metadata$CoExpAnal$cluster.nb]]
 tab.clusters <-  rownames_to_column(tab.clusters,var="DEF")
       
 write.table(tab.clusters,

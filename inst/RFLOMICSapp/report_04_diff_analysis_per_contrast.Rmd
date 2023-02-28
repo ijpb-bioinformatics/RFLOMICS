@@ -15,18 +15,16 @@ dir.create(path=contrastDir)
 knitr::opts_chunk$set(
   fig.path=contrastDir
 )
+
+evalPCA <- dim(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]])[1] > 1
+evalExport <-  dim(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]])[1] > 0
 ```
 
 
 ```{r , echo=FALSE,out.width = "50%"}
-diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=contrast, 
-                            Adj.pvalue.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["Adj.pvalue.cutoff"]], 
-                            FC.cutoff = dataset.SE@metadata[["DiffExpAnal"]][["abs.FC.cutoff"]])
+diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=contrast)
 ```
 
-<!-- ### `r contrast` {.tabset} -->
-
-<!-- #### Pvalue -->
 
 1- Pvalues distribution
 
@@ -46,14 +44,13 @@ diff.plots$MA.plot
 diff.plots$Volcano.plot
 ```
 
-<!-- #### ComplexHeatmap -->
 
-3- Heatmap Heatmap of the euclidean distances with a link of Ward 
+3- Heatmap of the euclidean distances with a link of Ward 
 
-<!-- #### PCA on DE features -->
+
 4- PCA on DE 
 
-```{r PCAonDE, echo=FALSE,out.width = "30%",fig.show = "hold"}
+```{r PCAonDE, echo=FALSE,out.width = "30%",fig.show = "hold", eval = evalPCA}
 
 resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[contrast]]
 newDataset.SE <- dataset.SE[rownames(dataset.SE) %in% row.names(resTable)]
@@ -68,18 +65,9 @@ RFLOMICS::plotPCA(newDataset.SE,
 ```
 
 
-
-<!-- #### Volcano plot -->
-
-
-<!-- ```{r volcano_plot, echo=FALSE,out.width = "50%"} -->
-<!-- diff.plots$Volcano.plot -->
-<!-- ``` -->
-
-<!-- #### Table -->
 5- Table
 
-```{r table, echo = FALSE, out.width = "70%"}
+```{r table, echo = FALSE, out.width = "70%" , eval = evalExport}
 
 reactable(signif(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],3),
           showSortable = TRUE,
@@ -112,14 +100,12 @@ reactable(signif(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],3)
  write.table(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],
              file=paste0(contrastDir,"Table_of_DE_",omics.dic[[omictype]][["variableName"]],"_pvalmax_",
                          dataset.SE@metadata[["DiffExpAnal"]][["Adj.pvalue.cutoff"]],"_FCmin_",
-                         dataset.SE@metadata[["DiffExpAnal"]][["abs.FC.cutoff"]],".txt"),
+                         dataset.SE@metadata[["DiffExpAnal"]][["abs.logFC.cutoff"]],".txt"),
              sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
  
-write.table(dataset.SE@metadata[["DiffExpAnal"]][["DEF"]][[contrast]],
+ write.table(dataset.SE@metadata[["DiffExpAnal"]][["DEF"]][[contrast]],
              file=paste0(contrastDir,"Table_of_non_filtering_",omics.dic[[omictype]][["variableName"]],".txt"),
              sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
-
-  
 ```
 
 
