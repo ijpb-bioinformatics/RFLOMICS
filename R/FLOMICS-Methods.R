@@ -1967,7 +1967,12 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                          if(!is.null(results_list[[listname]][[ont]])){
                            
                            res <- results_list[[listname]][[ont]]@result
-                           overview_list[[listname]][[ont]] <- nrow(res[res$p.adjust < 0.1,])
+                           overview_list[[listname]][[ont]] <- nrow(res[res$p.adjust < list_args$pvalueCutoff,])
+                           
+                           if(overview_list[[listname]][[ont]] == 0){
+                             
+                             results_list[[listname]][[ont]] <- NULL
+                           }
                          }
                        }
                      }

@@ -182,7 +182,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
       getDEGlist_for_coseqAnalysis( matrix   = session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]],
                                     colnames = input$select, mergeType = input$unionInter)})
     
-    print(paste(length(DEG_list()), "genes", sep =" "))
+    print(paste(length(DEG_list()), omics.dic[[session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$omicType]]$variableName, sep =" "))
   })
   
   # update K value (min max)
@@ -265,8 +265,6 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     #----------------------#
     
     rea.values[[dataset]]$coExpAnal  <- TRUE
-    
-    toto <<- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
     
   }, ignoreInit = TRUE)
   

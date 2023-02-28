@@ -69,8 +69,10 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
   ns <- session$ns
   
   local.rea.values <- reactiveValues(dataset.SE = NULL)
-  local.rea.values$log2FC_lists  <- NULL 
-  local.rea.values$dom.select  <- NULL 
+  local.rea.values$KEGG   <- FALSE 
+  local.rea.values$custom <- FALSE 
+  local.rea.values$GO     <- FALSE 
+  
   
   # ---- settings: ----
   output$AnnotParam <- renderUI({
@@ -96,7 +98,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
         
         # select enrichDomain
         pickerInput(
-          inputId = ns("dom.select"), label = "Select Domain:",
+          inputId = ns("dom.select"), label = "Select Ontology:",
           choices = c("custom", "GO", "KEGG"),
           selected = "GO",
           options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
@@ -131,7 +133,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
           
           # select ontology
           pickerInput(
-            inputId = ns("ont.select"), label = "Select Ontology:",
+            inputId = ns("ont.select"), label = "Select Domain:",
             choices = c("ALL", "BP", "MF", "CC"),
             selected = "ALL",
             options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
@@ -203,6 +205,9 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     )
   })
   
+  
+  ##================================= RUN ====================================##
+  
   # ---- run Annotation  ----
   observeEvent(input$runEnrich_CPR, {
     
@@ -220,13 +225,14 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     #----------------------#
     
     # # reset everything
-    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata[["DiffExpEnrichAnal"]] <- NULL
-    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata[["CoExpEnrichAnal"]]   <- NULL
+    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata[["DiffExpEnrichAnal"]][[input$dom.select]] <- NULL
+    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata[["CoExpEnrichAnal"]][[input$dom.select]]   <- NULL
     
     rea.values[[dataset]]$diffAnnot  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
+    local.rea.values[[input$dom.select]] <- FALSE
     
-    dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
+    local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
     
     # ---- Checks: ----
     
@@ -355,85 +361,77 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     if(length(input$GeneList.diff) != 0){
       
       # run annotation
-      dataset.SE <- runAnnotationEnrichment_CPR(dataset.SE, list_args = list_args, from = "DiffExpAnal", 
-                                                dom.select = dom.select, Domain = Domain, annotation = annotation2)
+      local.rea.values$dataset.SE <- runAnnotationEnrichment_CPR(local.rea.values$dataset.SE, list_args = list_args, from = "DiffExpAnal", 
+                                                                 dom.select = dom.select, Domain = Domain, annotation = annotation2)
       
       rea.values[[dataset]]$diffAnnot <- TRUE
-      
-      
-
     }
     
     # ---- Annotation on COEXP results: ----
     if(length(input$GeneList.coseq) != 0){
-
-      dataset.SE <- runAnnotationEnrichment_CPR(dataset.SE, list_args = list_args, from = "CoExpAnal",
-                                                dom.select = dom.select, Domain = Domain, annotation = annotation2)
-
+      
+      local.rea.values$dataset.SE <- runAnnotationEnrichment_CPR(local.rea.values$dataset.SE, list_args = list_args, from = "CoExpAnal",
+                                                                 dom.select = dom.select, Domain = Domain, annotation = annotation2)
+      
       rea.values[[dataset]]$coExpAnnot <- TRUE
-
     }
     
-    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- dataset.SE
+    local.rea.values[[input$dom.select]] <- TRUE
+    
+    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- local.rea.values$dataset.SE
+    
+    toto <<- local.rea.values$dataset.SE
     
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
     #----------------------#
   })
   
-  ## ERROR message
-  output$warning <- renderUI({
-    if(rea.values[[dataset]]$diffAnnot == FALSE & rea.values[[dataset]]$coExpAnnot == FALSE) return()
-
-    dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
-    
-    # error message if no results
-    if(is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]][[input$dom.select]][["summary"]]) &
-       is.null(dataset.SE@metadata[["CoExpEnrichAnal"]][[input$dom.select]][["summary"]])) {
-      
-      showModal(modalDialog(title = "Error message", "There is no results for enrichment analysis! Check geneID."))
-    }
-    validate({
-      need(!is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]][[input$dom.select]][["summary"]]) |
-             !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]][[input$dom.select]][["summary"]]),
-           message = "There is no results for enrichment analysis! Check geneID.")
-    })
-    
-  })
-    
+  ####================================= DISPLAY ====================================####
   
   ### DIFF summary results 
   output$summary_diff <- renderUI({
     
-    if(rea.values[[dataset]]$diffAnnot == FALSE) return()
+    if(rea.values[[dataset]]$diffAnnot == FALSE || local.rea.values[[input$dom.select]] == FALSE) return()
     
     results <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata[["DiffExpEnrichAnal"]][[input$dom.select]]
     
-    fluidRow(
-      box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = "Summary",
-          DT::renderDataTable({
-            
-            DT::datatable(results[["summary"]], rownames = FALSE, options = list(pageLength = 10))
-          })
-      )
-    )
+    if(is.null(results[["summary"]])){
+      
+      fluidRow(
+        box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = "Summary from differential expression analysis",
+            "There is no results for enrichment analysis! Check geneID"))
+    }
+    else{
+      fluidRow(
+        box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "primary", title = "Summary from differential expression analysis",
+            DT::renderDataTable({ DT::datatable(results[["summary"]], rownames = FALSE, options = list(dom="t"))})))
+    }
   })
   
   ### coseq summary results 
   output$summary_coex <- renderUI({
     
-    if(rea.values[[dataset]]$coExpAnnot == FALSE) return()
+    if(rea.values[[dataset]]$coExpAnnot == FALSE || local.rea.values[[input$dom.select]] == FALSE) return()
     
     results <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata[["CoExpEnrichAnal"]][[input$dom.select]]
     
-    fluidRow(
-      box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = "Summary",
-          DT::renderDataTable({
-            
-            DT::datatable(results[["summary"]], rownames = FALSE, options = list(pageLength = 10))
-          })
-      )
-    )
+    if(is.null(results[["summary"]])){
+      
+      fluidRow(
+        box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", 
+            title = paste0(input$dom.select," : summary from co-expression analysis"),
+            "There is no results for enrichment analysis! Check geneID"))
+      
+    }
+    else{   
+      fluidRow(
+        hr(),
+        box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "primary", 
+            title = paste0(input$dom.select," : Summary from co-expression analysis"),
+            DT::renderDataTable({ DT::datatable(results[["summary"]], rownames = FALSE, options = list(dom="t")) })))
+    }
+    
   })
   
   ### DIFF display results
@@ -441,12 +439,11 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
   #---- Figure Code for diff results: ----
   output$AnnotResultsCPR_diff <- renderUI({
     
-    if(rea.values[[dataset]]$diffAnnot == FALSE) return()
+    if(rea.values[[dataset]]$diffAnnot == FALSE || is.null(local.rea.values$dataset.SE@metadata[["DiffExpEnrichAnal"]][[input$dom.select]][["summary"]])) return()
     
     dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
     
     results <- dataset.SE@metadata[["DiffExpEnrichAnal"]][[input$dom.select]]
-    
     
     ## log2FC of the genes (put colors on graphs)
     log2FC_lists <- lapply(input$GeneList.diff, function(listname){
@@ -455,226 +452,214 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       return(vect)
     })
     names(log2FC_lists) <- input$GeneList.diff
-
+    
     # foreach genes list selected (contrast)
     lapply(names(results[["enrichResult"]]), function(listname) {
       
       annot.nbr <- lapply(results[["enrichResult"]][[listname]], function(enrichResult.ont){
         if(!is.null(enrichResult.ont)) table(enrichResult.ont@result$p.adjust < 0.1)["TRUE"] }) %>% unlist() # %>% sum(na.rm = TRUE)
       
-      pseudo_title <- paste(annot.nbr, names(results[["enrichResult"]][[listname]])) %>%
-        paste(collapse = "; ")
+      # pseudo_title <- paste(annot.nbr, names(results[["enrichResult"]][[listname]])) %>%
+      #   paste(collapse = "; ")
       
       if(sum(annot.nbr, na.rm = TRUE) == 0){}
       
       data <- results[["enrichResult"]][[listname]]
-      log2FC_vect <- log2FC_lists[[listname]]
       
-      
-      tabPanel.list <- list(
-        #tabsetPanel(
+      if(length(data) == 0){
         
-        # ---- Tab Panel : Results table : ----
-        tabPanel("Result Table",
-                 # hr(),
-                 verticalLayout(
+        fluidRow(
+          box(width = 12, title = paste0(listname, " : 0 enriched terms found"), status = "danger")
+        )
+      }
+      else{
+        
+        log2FC_vect <- log2FC_lists[[listname]]
+        
+        tabPanel.list <- list(
+          #tabsetPanel(
+          # ---- Tab Panel : dotPlot : ----
+          tabPanel("DotPlot",
                    
-                   tags$br(),
-                   DT::renderDataTable({
-                     dataPlot <- data[[input[[paste0(listname, "-domain_DT")]]]]
-                     
-                     DT::datatable(dataPlot@result[dataPlot@result$p.adjust <  results$list_args$pvalueCutoff,], # sometimes it prints non significant results...
-                                   extensions = 'Buttons',
-                                   options = list(dom = 'lfrtipB', rownames = FALSE, pageLength = 5,
-                                                  lengthMenu = c(5, 10, 15, 20), scrollX = T,
-                                                  buttons = c('csv', 'excel')))
-                     
-                   }),
-                   fluidRow(
-                     column(12,
-                            radioButtons(inputId = ns(paste0(listname, "-domain_DT")), label="Domain",
-                                         choices = names(data), selected = names(data)[1], inline = TRUE)),
-                   )),
-        ),
-        # ---- Tab Panel : dotPlot : ----
-        tabPanel("DotPlot",
-                 
-                 verticalLayout(
-                   renderPlot({
-                     
-                     dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
-                     NbtoPlot <- min(nrow(dataPlot@result),input[[paste0(listname, "-top.over")]])
-                     Categories <- dataPlot@result$Description[1:NbtoPlot]
-                     if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
-                     
-                     dotplot(dataPlot, showCategory = Categories)
-                     
-                   }),
-                   fluidRow(
-                     column(3,
-                            numericInput(inputId = ns(paste0(listname, "-top.over")), label="Top terms:" , value=15 ,
-                                         min = 1, max=10000, step = 5)), # max code en dur : pas bien
-                     column(2,
-                            radioButtons(inputId = ns(paste0(listname, "-domain")), label="Domain",
-                                         choices = names(data), selected = names(data)[1], inline = FALSE, width = 1.5)),
-                     column(4,
-                            textInput(inputId = ns(paste0(listname, "-grep")), label="Search Expression")),
-                   )),
-                 
-        ),
-        # ---- Tab Panel : heatplot : ----
-        tabPanel("Heatplot",
-                 verticalLayout(
-                   renderPlot({
-                     
-                     dataPlot <- data[[input[[paste0(listname, "-domain_heat")]]]]
-                     NbtoPlot <- min(nrow(dataPlot@result),input[[paste0(listname, "-top.over_heat")]])
-                     Categories <- dataPlot@result$Description[1:NbtoPlot]
-                     if(input[[paste0(listname, "-grep_heat")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep_heat")]]), toupper(Categories))]
-                     if(length(Categories) == 0){ # TODO improve this, it doesn't work
-                       renderText(expr = {
-                         "There is no result to display \n
+                   verticalLayout(
+                     renderPlot({
+                       
+                       dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
+                       NbtoPlot <- min(nrow(dataPlot@result),input[[paste0(listname, "-top.over")]])
+                       Categories <- dataPlot@result$Description[1:NbtoPlot]
+                       if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
+                       
+                       dotplot(dataPlot, showCategory = Categories)
+                       
+                     })
+                   )
+          ),
+          # ---- Tab Panel : heatplot : ----
+          tabPanel("Heatplot",
+                   verticalLayout(
+                     renderPlot({
+                       
+                       dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
+                       NbtoPlot <- min(nrow(dataPlot@result),input[[paste0(listname, "-top.over")]])
+                       Categories <- dataPlot@result$Description[1:NbtoPlot]
+                       if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
+                       if(length(Categories) == 0){ # TODO improve this, it doesn't work
+                         renderText(expr = {
+                           "There is no result to display \n
                                  - The mapping was unsuccessful \n
                                  - The number of enriched terms found is 0, please refer to the overview panel to check this information \n
                                  - You searched for an expression that is not present in the first enriched terms, you can try to increase the number of terms to display to see if there is a change \n
                                  - You tried to display 0 results"
-                       })
-                     }else{
-                       suppressMessages(print(# delete warnings for scale fill replacement
-                         heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect) +
-                           labs(fill="log2FC") +
-                           scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-                           theme(axis.text.y = element_text(size = 10))
-                       ))
-                     }
-                   }),
-                   fluidRow(
-                     column(3,
-                            numericInput(inputId = ns(paste0(listname, "-top.over_heat")), label="Top terms:" , value=15 ,
-                                         min = 1, max=10000, step = 5)), # max code en dur : pas bien
-                     column(2,
-                            radioButtons(inputId = ns(paste0(listname, "-domain_heat")), label="Domain",
-                                         choices = names(data), selected = names(data)[1], inline = FALSE, width = 1.5)),
-                     column(4,
-                            textInput(inputId = ns(paste0(listname, "-grep_heat")), label="Search Expression")),
-                   )),
-                 
-        ) ,
-        # ---- Tab Panel : cnetplot : ----
-        tabPanel("Cnetplot",
-                 verticalLayout(
-                   renderPlot({
-                     
-                     dataPlot <- data[[input[[paste0(listname, "-domain_cnet")]]]]
-                     dataTab <- dataPlot@result[dataPlot@result$p.adjust <  results$list_args$pvalueCutoff, ]
-                     NbtoPlot <- min(nrow(dataTab),input[[paste0(listname, "-top.over_cnet")]])
-                     Categories <- dataTab$Description[1:NbtoPlot]
-                     if(input[[paste0(listname, "-grep_cnet")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep_cnet")]]), toupper(Categories))]
-                     
-                     node_label_arg <- "none"
-                     if(input[[paste0(listname, "-genesLabels_cnet")]] && input[[paste0(listname, "-termsLabels_cnet")]]){
-                       node_label_arg <- "all"
-                     }else if(input[[paste0(listname, "-genesLabels_cnet")]] && !input[[paste0(listname, "-termsLabels_cnet")]]){
-                       node_label_arg <- "gene"
-                     }else if(input[[paste0(listname, "-termsLabels_cnet")]] && !input[[paste0(listname, "-genesLabels_cnet")]]){
-                       node_label_arg <- "category"
-                     }
-                     
-                     suppressMessages(print( # delete warnings for scale fill replacement
-                       cnetplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, node_label = node_label_arg) +
-                         guides(colour=guide_colourbar(title = "log2FC")) +
-                         scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)
-                     ))
-                     
-                   }),
-                   fluidRow(
-                     column(3,
-                            numericInput(inputId = ns(paste0(listname, "-top.over_cnet")), label="Top terms:" , value=15 ,
-                                         min = 1, max=10000, step = 5)), # max code en dur : pas bien
-                     column(3,
-                            radioButtons(inputId = ns(paste0(listname, "-domain_cnet")), label="Domain",
-                                         choices = names(data), selected = names(data)[1], inline = FALSE, width = 1.5)),
-                     column(2,
-                            checkboxInput(inputId = ns(paste0(listname, "-genesLabels_cnet")), label = "Genes Labels", value = FALSE),
-                            checkboxInput(inputId = ns(paste0(listname, "-termsLabels_cnet")), label = "Terms Labels", value = TRUE)
-                     ),
-                     column(4,
-                            textInput(inputId = ns(paste0(listname, "-grep_cnet")), label="Search Expression")),
+                         })
+                       }else{
+                         suppressMessages(print(# delete warnings for scale fill replacement
+                           heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect) +
+                             labs(fill="log2FC") +
+                             scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+                             theme(axis.text.y = element_text(size = 10))
+                         ))
+                       }
+                     }),
                    )
-                 )
-        )
+                   
+          ) ,
+          # ---- Tab Panel : cnetplot : ----
+          tabPanel("Cnetplot",
+                   verticalLayout(
+                     renderPlot({
+                       
+                       dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
+                       dataTab <- dataPlot@result[dataPlot@result$p.adjust <  results$list_args$pvalueCutoff, ]
+                       NbtoPlot <- min(nrow(dataTab),input[[paste0(listname, "-top.over")]])
+                       Categories <- dataTab$Description[1:NbtoPlot]
+                       if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
+                       
+                       node_label_arg <- "none"
+                       if(input[[paste0(listname, "-genesLabels_cnet")]] && input[[paste0(listname, "-termsLabels_cnet")]]){
+                         node_label_arg <- "all"
+                       }else if(input[[paste0(listname, "-genesLabels_cnet")]] && !input[[paste0(listname, "-termsLabels_cnet")]]){
+                         node_label_arg <- "gene"
+                       }else if(input[[paste0(listname, "-termsLabels_cnet")]] && !input[[paste0(listname, "-genesLabels_cnet")]]){
+                         node_label_arg <- "category"
+                       }
+                       
+                       suppressMessages(print( # delete warnings for scale fill replacement
+                         cnetplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, node_label = node_label_arg) +
+                           guides(colour=guide_colourbar(title = "log2FC")) +
+                           scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)
+                       ))
+                       
+                     }),
+                     fluidRow(
+                       column(3,
+                              checkboxInput(inputId = ns(paste0(listname, "-genesLabels_cnet")), label = "Genes Labels", value = FALSE),
+                              checkboxInput(inputId = ns(paste0(listname, "-termsLabels_cnet")), label = "Terms Labels", value = TRUE)
+                       )
+                     )
+                   )
+          ),
+          # ---- Tab Panel : Results table : ----
+          tabPanel("Result Table",
+                   # hr(),
+                   verticalLayout(
+                     
+                     tags$br(),
+                     DT::renderDataTable({
+                       dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
+                       
+                       DT::datatable(dataPlot@result[dataPlot@result$p.adjust <  results$list_args$pvalueCutoff,], # sometimes it prints non significant results...
+                                     rownames = FALSE,
+                                     options = list( pageLength = 5,
+                                                    lengthMenu = c(5, 10, 15, 20), scrollX = T))
+                       
+                     })
+                   )
+          )
+          
+        )# TabsetPanel
         
-      )# TabsetPanel
-      
-      # ---- Tab Panel : only for KEGG, pathview : ----
-      if(input$dom.select == "KEGG")
-        tabPanel.list <- c(tabPanel.list,
-                           list(
-                             tabPanel("Pathview results",
-                                      fluidRow(
-                                        column(2,
-                                               selectInput(
-                                                 inputId = ns(paste0(listname, "-MAP.sel")), label = "Select map:",
-                                                 choices = sort(data[[1]]@result$ID[data[[1]]@result$p.adjust< results$list_args$pvalueCutoff]), multiple = FALSE, selectize = FALSE,
-                                                 size = 5
-                                               ),
+        # ---- Tab Panel : only for KEGG, pathview : ----
+        if(input$dom.select == "KEGG")
+          tabPanel.list <- c(tabPanel.list,
+                             list(
+                               tabPanel("Pathview results",
+                                        fluidRow(
+                                          column(2,
+                                                 selectInput(
+                                                   inputId = ns(paste0(listname, "-MAP.sel")), label = "Select map:",
+                                                   choices = sort(data[[1]]@result$ID[data[[1]]@result$p.adjust< results$list_args$pvalueCutoff]), multiple = FALSE, selectize = FALSE,
+                                                   size = 5
+                                                 ),
+                                          ),
                                         ),
-                                      ),
-                                      fluidRow(
-                                        column(12,
-                                               renderUI({
+                                        fluidRow(
+                                          column(12,
+                                                 renderUI({
+                                                   
+                                                   # From the browseKEGG function:
+                                                   link_to_map <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?",
+                                                                         input[[paste0(listname, "-MAP.sel")]],
+                                                                         "/",
+                                                                         data[[1]][input[[paste0(listname, "-MAP.sel")]], "geneID"])
+                                                   
+                                                   a(href=link_to_map, "Link to interactive map online")
+                                                   
+                                                 })),
+                                          column(12,
                                                  
-                                                 # From the browseKEGG function:
-                                                 link_to_map <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?",
-                                                                       input[[paste0(listname, "-MAP.sel")]],
-                                                                       "/",
-                                                                       data[[1]][input[[paste0(listname, "-MAP.sel")]], "geneID"])
-                                                 
-                                                 a(href=link_to_map, "Link to interactive map online")
-                                                 
-                                               })),
-                                        column(12,
-                                               
-                                               renderPlot({
-                                                 see_pathview(gene.data = log2FC_vect,
-                                                              pathway.id = input[[paste0(listname, "-MAP.sel")]],
-                                                              species = input$KEGG_org,
-                                                              gene.idtype = input$keytype,
-                                                              map.symbol = FALSE,
-                                                              same.layer = FALSE,
-                                                              low = list(gene = "blue"),
-                                                              mid = list(gene = "gray"),
-                                                              high = list(gene = "red"),
-                                                              na.col = "transparent"
-                                                              # cex = 1 # too much
-                                                 )
-                                               }, res = 300, width = 1000, height = 1000),
+                                                 renderPlot({
+                                                   see_pathview(gene.data = log2FC_vect,
+                                                                pathway.id = input[[paste0(listname, "-MAP.sel")]],
+                                                                species = input$KEGG_org,
+                                                                gene.idtype = input$keytype,
+                                                                map.symbol = FALSE,
+                                                                same.layer = FALSE,
+                                                                low = list(gene = "blue"),
+                                                                mid = list(gene = "gray"),
+                                                                high = list(gene = "red"),
+                                                                na.col = "transparent"
+                                                                # cex = 1 # too much
+                                                   )
+                                                 }, res = 300, width = 1000, height = 1000),
+                                          )
                                         )
-                                      )
+                               )
                              )
-                           )
-        )
-      
-      # display results
-      fluidRow(
+          )
         
-        box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = listname, #paste0(listname, " (", pseudo_title, ")"),
-            
-            do.call(what = tabsetPanel, args = tabPanel.list)
-            
-        ) # box
-      ) # fluidrow
+        # display results
+        fluidRow(
+          
+          box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success", title = listname, #paste0(listname, " (", pseudo_title, ")"),
+              
+              fluidRow(
+                column(4, 
+                       radioButtons(inputId = ns(paste0(listname, "-domain")), label="Domain",
+                                    choices = names(data), selected = names(data)[1])),
+                column(4,
+                       numericInput(inputId = ns(paste0(listname, "-top.over")), label="Top terms:" , value=15 ,
+                                    min = 1, max=10000, step = 5)), # max code en dur : pas bien
+                column(4,
+                       textInput(inputId = ns(paste0(listname, "-grep")), label="Search Expression"))
+              ),
+              fluidRow(
+                column(width = 12, 
+                       do.call(what = tabsetPanel, args = tabPanel.list)
+                )
+              )
+              
+          ) # box
+        ) # fluidrow
+      } # else
       
     })# lapply
-    # )
-    
   })
   
   
   #---- Figure Code for diff results: ----
   output$AnnotResultsCPR_coex <- renderUI({
     
-    if(rea.values[[dataset]]$coExpAnnot == FALSE) return()
+    if(rea.values[[dataset]]$coExpAnnot == FALSE || is.null(local.rea.values$dataset.SE@metadata[["DiffExpEnrichAnal"]][[input$dom.select]][["summary"]])) return()
     
     dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
     
@@ -701,216 +686,203 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       if(sum(annot.nbr, na.rm = TRUE) == 0){}
       
       data <- results[["enrichResult"]][[listname]]
-      log2FC_vect <- log2FC_lists[[listname]]
       
-      
-      tabPanel.list <- list(
-        #tabsetPanel(
+      if(length(data) == 0){
         
-        # ---- Tab Panel : Results table : ----
-        tabPanel("Result Table",
-                 # hr(),
-                 verticalLayout(
+        fluidRow(
+          box(width = 12, title = paste0(listname, " : 0 enriched terms found"), status = "danger")
+        )
+      }
+      else{
+        
+        log2FC_vect <- log2FC_lists[[listname]]
+        
+        
+        tabPanel.list <- list(
+          #tabsetPanel(
+          
+          # ---- Tab Panel : dotPlot : ----
+          tabPanel("DotPlot",
                    
-                   tags$br(),
-                   DT::renderDataTable({
-                     dataPlot <- data[[input[[paste0(listname, "-domain_DT")]]]]
-                     
-                     DT::datatable(dataPlot@result[dataPlot@result$p.adjust <  results$list_args$pvalueCutoff,], # sometimes it prints non significant results...
-                                   extensions = 'Buttons',
-                                   options = list(dom = 'lfrtipB', rownames = FALSE, pageLength = 5,
-                                                  lengthMenu = c(5, 10, 15, 20), scrollX = T,
-                                                  buttons = c('csv', 'excel')))
-                     
-                   }),
-                   fluidRow(
-                     column(12,
-                            radioButtons(inputId = ns(paste0(listname, "-domain_DT")), label="Domain",
-                                         choices = names(data), selected = names(data)[1], inline = TRUE)),
-                   )),
-        ),
-        # ---- Tab Panel : dotPlot : ----
-        tabPanel("DotPlot",
-                 
-                 verticalLayout(
-                   renderPlot({
-                     
-                     dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
-                     NbtoPlot <- min(nrow(dataPlot@result),input[[paste0(listname, "-top.over")]])
-                     Categories <- dataPlot@result$Description[1:NbtoPlot]
-                     if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
-                     
-                     dotplot(dataPlot, showCategory = Categories)
-                     
-                   }),
-                   fluidRow(
-                     column(3,
-                            numericInput(inputId = ns(paste0(listname, "-top.over")), label="Top terms:" , value=15 ,
-                                         min = 1, max=10000, step = 5)), # max code en dur : pas bien
-                     column(2,
-                            radioButtons(inputId = ns(paste0(listname, "-domain")), label="Domain",
-                                         choices = names(data), selected = names(data)[1], inline = FALSE, width = 1.5)),
-                     column(4,
-                            textInput(inputId = ns(paste0(listname, "-grep")), label="Search Expression")),
-                   )),
-                 
-        ),
-        # ---- Tab Panel : heatplot : ----
-        tabPanel("Heatplot",
-                 verticalLayout(
-                   renderPlot({
-                     
-                     dataPlot <- data[[input[[paste0(listname, "-domain_heat")]]]]
-                     NbtoPlot <- min(nrow(dataPlot@result),input[[paste0(listname, "-top.over_heat")]])
-                     Categories <- dataPlot@result$Description[1:NbtoPlot]
-                     if(input[[paste0(listname, "-grep_heat")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep_heat")]]), toupper(Categories))]
-                     if(length(Categories) == 0){ # TODO improve this, it doesn't work
-                       renderText(expr = {
-                         "There is no result to display \n
+                   verticalLayout(
+                     renderPlot({
+                       
+                       dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
+                       NbtoPlot <- min(nrow(dataPlot@result),input[[paste0(listname, "-top.over")]])
+                       Categories <- dataPlot@result$Description[1:NbtoPlot]
+                       if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
+                       
+                       dotplot(dataPlot, showCategory = Categories)
+                       
+                     }),
+                     ),
+                   
+          ),
+          # ---- Tab Panel : heatplot : ----
+          tabPanel("Heatplot",
+                   verticalLayout(
+                     renderPlot({
+                       
+                       dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
+                       NbtoPlot <- min(nrow(dataPlot@result),input[[paste0(listname, "-top.over")]])
+                       Categories <- dataPlot@result$Description[1:NbtoPlot]
+                       if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
+                       if(length(Categories) == 0){ # TODO improve this, it doesn't work
+                         renderText(expr = {
+                           "There is no result to display \n
                                  - The mapping was unsuccessful \n
                                  - The number of enriched terms found is 0, please refer to the overview panel to check this information \n
                                  - You searched for an expression that is not present in the first enriched terms, you can try to increase the number of terms to display to see if there is a change \n
                                  - You tried to display 0 results"
-                       })
-                     }else{
-                       suppressMessages(print(# delete warnings for scale fill replacement
-                         heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect) +
-                           labs(fill="log2FC") +
-                           scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-                           theme(axis.text.y = element_text(size = 10))
+                         })
+                       }else{
+                         suppressMessages(print(# delete warnings for scale fill replacement
+                           heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect) +
+                             labs(fill="log2FC") +
+                             scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+                             theme(axis.text.y = element_text(size = 10))
+                         ))
+                       }
+                     }),
+                    ),
+                   
+          ) ,
+          # ---- Tab Panel : cnetplot : ----
+          tabPanel("Cnetplot",
+                   verticalLayout(
+                     renderPlot({
+                       
+                       dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
+                       dataTab <- dataPlot@result[dataPlot@result$p.adjust <  results$list_args$pvalueCutoff, ]
+                       NbtoPlot <- min(nrow(dataTab),input[[paste0(listname, "-top.over")]])
+                       Categories <- dataTab$Description[1:NbtoPlot]
+                       if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
+                       
+                       node_label_arg <- "none"
+                       if(input[[paste0(listname, "-genesLabels_cnet")]] && input[[paste0(listname, "-termsLabels_cnet")]]){
+                         node_label_arg <- "all"
+                       }else if(input[[paste0(listname, "-genesLabels_cnet")]] && !input[[paste0(listname, "-termsLabels_cnet")]]){
+                         node_label_arg <- "gene"
+                       }else if(input[[paste0(listname, "-termsLabels_cnet")]] && !input[[paste0(listname, "-genesLabels_cnet")]]){
+                         node_label_arg <- "category"
+                       }
+                       
+                       suppressMessages(print( # delete warnings for scale fill replacement
+                         cnetplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, node_label = node_label_arg) +
+                           guides(colour=guide_colourbar(title = "log2FC")) +
+                           scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)
                        ))
-                     }
-                   }),
-                   fluidRow(
-                     column(3,
-                            numericInput(inputId = ns(paste0(listname, "-top.over_heat")), label="Top terms:" , value=15 ,
-                                         min = 1, max=10000, step = 5)), # max code en dur : pas bien
-                     column(2,
-                            radioButtons(inputId = ns(paste0(listname, "-domain_heat")), label="Domain",
-                                         choices = names(data), selected = names(data)[1], inline = FALSE, width = 1.5)),
-                     column(4,
-                            textInput(inputId = ns(paste0(listname, "-grep_heat")), label="Search Expression")),
-                   )),
-                 
-        ) ,
-        # ---- Tab Panel : cnetplot : ----
-        tabPanel("Cnetplot",
-                 verticalLayout(
-                   renderPlot({
-                     
-                     dataPlot <- data[[input[[paste0(listname, "-domain_cnet")]]]]
-                     dataTab <- dataPlot@result[dataPlot@result$p.adjust <  results$list_args$pvalueCutoff, ]
-                     NbtoPlot <- min(nrow(dataTab),input[[paste0(listname, "-top.over_cnet")]])
-                     Categories <- dataTab$Description[1:NbtoPlot]
-                     if(input[[paste0(listname, "-grep_cnet")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep_cnet")]]), toupper(Categories))]
-                     
-                     node_label_arg <- "none"
-                     if(input[[paste0(listname, "-genesLabels_cnet")]] && input[[paste0(listname, "-termsLabels_cnet")]]){
-                       node_label_arg <- "all"
-                     }else if(input[[paste0(listname, "-genesLabels_cnet")]] && !input[[paste0(listname, "-termsLabels_cnet")]]){
-                       node_label_arg <- "gene"
-                     }else if(input[[paste0(listname, "-termsLabels_cnet")]] && !input[[paste0(listname, "-genesLabels_cnet")]]){
-                       node_label_arg <- "category"
-                     }
-                     
-                     suppressMessages(print( # delete warnings for scale fill replacement
-                       cnetplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, node_label = node_label_arg) +
-                         guides(colour=guide_colourbar(title = "log2FC")) +
-                         scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)
-                     ))
-                     
-                   }),
-                   fluidRow(
-                     column(3,
-                            numericInput(inputId = ns(paste0(listname, "-top.over_cnet")), label="Top terms:" , value=15 ,
-                                         min = 1, max=10000, step = 5)), # max code en dur : pas bien
-                     column(3,
-                            radioButtons(inputId = ns(paste0(listname, "-domain_cnet")), label="Domain",
-                                         choices = names(data), selected = names(data)[1], inline = FALSE, width = 1.5)),
-                     column(2,
-                            checkboxInput(inputId = ns(paste0(listname, "-genesLabels_cnet")), label = "Genes Labels", value = FALSE),
-                            checkboxInput(inputId = ns(paste0(listname, "-termsLabels_cnet")), label = "Terms Labels", value = TRUE)
-                     ),
-                     column(4,
-                            textInput(inputId = ns(paste0(listname, "-grep_cnet")), label="Search Expression")),
+                       
+                     }),
+                     fluidRow(
+                       column(3,
+                              checkboxInput(inputId = ns(paste0(listname, "-genesLabels_cnet")), label = "Genes Labels", value = FALSE),
+                              checkboxInput(inputId = ns(paste0(listname, "-termsLabels_cnet")), label = "Terms Labels", value = TRUE)
+                       ),
+                     )
                    )
-                 )
-        )
+          ),# ---- Tab Panel : Results table : ----
+          tabPanel("Result Table",
+                   # hr(),
+                   verticalLayout(
+                     
+                     tags$br(),
+                     DT::renderDataTable({
+                       dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
+                       
+                       DT::datatable(dataPlot@result[dataPlot@result$p.adjust <  results$list_args$pvalueCutoff,], # sometimes it prints non significant results...
+                                     rownames = FALSE,
+                                     options = list( pageLength = 5,
+                                                    lengthMenu = c(5, 10, 15, 20), scrollX = T))
+                     }),
+                   ),
+          )
+        )# TabsetPanel
         
-      )# TabsetPanel
-      
-      # ---- Tab Panel : only for KEGG, pathview : ----
-      if(input$dom.select == "KEGG")
-        tabPanel.list <- c(tabPanel.list,
-                           list(
-                             tabPanel("Pathview results",
-                                      fluidRow(
-                                        column(2,
-                                               selectInput(
-                                                 inputId = ns(paste0(listname, "-MAP.sel")), label = "Select map:",
-                                                 choices = sort(data[[1]]@result$ID[data[[1]]@result$p.adjust< results$list_args$pvalueCutoff]), multiple = FALSE, selectize = FALSE,
-                                                 size = 5
-                                               ),
+        # ---- Tab Panel : only for KEGG, pathview : ----
+        if(input$dom.select == "KEGG")
+          tabPanel.list <- c(tabPanel.list,
+                             list(
+                               tabPanel("Pathview results",
+                                        fluidRow(
+                                          column(2,
+                                                 selectInput(
+                                                   inputId = ns(paste0(listname, "-MAP.sel")), label = "Select map:",
+                                                   choices = sort(data[[1]]@result$ID[data[[1]]@result$p.adjust< results$list_args$pvalueCutoff]), multiple = FALSE, selectize = FALSE,
+                                                   size = 5
+                                                 ),
+                                          ),
                                         ),
-                                      ),
-                                      fluidRow(
-                                        column(12,
-                                               renderUI({
+                                        fluidRow(
+                                          column(12,
+                                                 renderUI({
+                                                   
+                                                   # From the browseKEGG function:
+                                                   link_to_map <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?",
+                                                                         input[[paste0(listname, "-MAP.sel")]],
+                                                                         "/",
+                                                                         data[[1]][input[[paste0(listname, "-MAP.sel")]], "geneID"])
+                                                   
+                                                   a(href=link_to_map, "Link to interactive map online")
+                                                   
+                                                 })),
+                                          column(12,
                                                  
-                                                 # From the browseKEGG function:
-                                                 link_to_map <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?",
-                                                                       input[[paste0(listname, "-MAP.sel")]],
-                                                                       "/",
-                                                                       data[[1]][input[[paste0(listname, "-MAP.sel")]], "geneID"])
-                                                 
-                                                 a(href=link_to_map, "Link to interactive map online")
-                                                 
-                                               })),
-                                        column(12,
-                                               
-                                               renderPlot({
-                                                 see_pathview(gene.data = log2FC_vect,
-                                                              pathway.id = input[[paste0(listname, "-MAP.sel")]],
-                                                              species = input$KEGG_org,
-                                                              gene.idtype = input$keytype,
-                                                              map.symbol = FALSE,
-                                                              same.layer = FALSE,
-                                                              low = list(gene = "blue"),
-                                                              mid = list(gene = "gray"),
-                                                              high = list(gene = "red"),
-                                                              na.col = "transparent"
-                                                              # cex = 1 # too much
-                                                 )
-                                               }, res = 300, width = 1000, height = 1000),
+                                                 renderPlot({
+                                                   see_pathview(gene.data = log2FC_vect,
+                                                                pathway.id = input[[paste0(listname, "-MAP.sel")]],
+                                                                species = input$KEGG_org,
+                                                                gene.idtype = input$keytype,
+                                                                map.symbol = FALSE,
+                                                                same.layer = FALSE,
+                                                                low = list(gene = "blue"),
+                                                                mid = list(gene = "gray"),
+                                                                high = list(gene = "red"),
+                                                                na.col = "transparent"
+                                                                # cex = 1 # too much
+                                                   )
+                                                 }, res = 300, width = 1000, height = 1000),
+                                          )
                                         )
-                                      )
+                               )
                              )
-                           )
-        )
-      
-      # display results
-      fluidRow(
+          )
         
-        box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = listname, #paste0(listname, " (", pseudo_title, ")"),
-            
-            do.call(what = tabsetPanel, args = tabPanel.list)
-            
-        ) # box
-      ) # fluidrow
-      
+        # display results
+        fluidRow(
+          
+          box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success", title = listname, #paste0(listname, " (", pseudo_title, ")"),
+              
+              fluidRow(
+                column(4, 
+                       radioButtons(inputId = ns(paste0(listname, "-domain")), label="Domain",
+                                    choices = names(data), selected = names(data)[1])),
+                column(4,
+                       numericInput(inputId = ns(paste0(listname, "-top.over")), label="Top terms:" , value=15 ,
+                                    min = 1, max=10000, step = 5)), # max code en dur : pas bien
+                column(4,
+                       textInput(inputId = ns(paste0(listname, "-grep")), label="Search Expression"))
+              ),
+              fluidRow(
+                column(width = 12,
+                       do.call(what = tabsetPanel, args = tabPanel.list))
+              )
+          ) # box
+        ) # fluidrow
+      }
     })# lapply
     # )
     
   })
- 
+  
 }
 
 ######## ANNOTATION CLUSTERPROFILER #########
 
 # Code from: https://stackoverflow.com/questions/60141841/how-to-get-pathview-plot-displayed-directly-rather-than-saving-as-a-file-in-r
 # It deletes every file created by pathview
-see_pathview <- function(...)
-{
+see_pathview <- function(...){
+  
   msg <- capture.output(pathview::pathview(...), type = "message")
   msg <- grep("image file", msg, value = TRUE)
   filename <- sapply(strsplit(msg, " "), function(x) x[length(x)])

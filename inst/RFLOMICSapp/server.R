@@ -210,11 +210,11 @@ shinyServer(function(input, output, session) {
                 # ),
                 #### enrichment analysis CPR ####
                 ######################################
-                tabPanel("Annotation Enrichment",
-                         tags$br(),
-                         tags$br(),
-                         AnnotationEnrichmentClusterProfUI(paste0("proteomics",i))
-                )
+                # tabPanel("Annotation Enrichment",
+                #          tags$br(),
+                #          tags$br(),
+                #          AnnotationEnrichmentClusterProfUI(paste0("proteomics",i))
+                # )
               )
             })},
             "metabolomics" = {output[[paste0("metabolomicsAnalysisUI", i)]] <- renderUI({
