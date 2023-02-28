@@ -18,6 +18,8 @@ if(annot == 'DiffExpEnrichAnal'){
   log2FC_vect <- dataset.SE@metadata$DiffExpAnal$TopDEF[[listname]]$logFC
   names(log2FC_vect) <- rownames(dataset.SE@metadata$DiffExpAnal$TopDEF[[listname]])
 }
+
+
 ```
 
 
@@ -81,9 +83,11 @@ else{print(paste0(listname, " - in domain: ", domain, " - There was no enriched 
 dataPlot <- list()
 
 for(domain in names(dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]])){
-tmp <- dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]][[domain]]
-tmp@result$domain <- rep(domain,dim(tmp@result)[1])
-dataPlot[[domain]] <- tmp@result[tmp@result$p.adjust < tmp@pvalueCutoff, ] %>% dplyr::select(!c("geneID", "qvalue"))
+  if(length(domain) != 0){
+    tmp <- dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]][[domain]]
+    tmp@result$domain <- rep(domain,dim(tmp@result)[1])
+    dataPlot[[domain]] <- tmp@result[tmp@result$p.adjust < tmp@pvalueCutoff, ] %>% dplyr::select(!c("geneID", "qvalue"))
+  }
 }
 
 #DT::datatable(dataPlot, # sometimes it prints non significant results...
@@ -93,22 +97,25 @@ dataPlot[[domain]] <- tmp@result[tmp@result$p.adjust < tmp@pvalueCutoff, ] %>% d
 
 # Bind results domain
 
-dataPlot.rbind <- dataPlot %>% purrr::reduce(rbind)
-dataPlot.rbind[,5:7]<-signif(dataPlot.rbind[,5:6],3)
-
-reactable(dataPlot.rbind,rownames = FALSE,
-          showSortable = TRUE,
-          bordered = TRUE,
-          defaultPageSize = 5, searchable = TRUE, paginationType = "simple")
+if(length(dataPlot) != 0){
+  dataPlot.rbind <- dataPlot %>% purrr::reduce(rbind)
+  
+  dataPlot.rbind[,5:7]<-signif(dataPlot.rbind[,5:6],3)
+  
+  reactable(dataPlot.rbind,rownames = FALSE,
+            showSortable = TRUE,
+            bordered = TRUE,
+            defaultPageSize = 5, searchable = TRUE, paginationType = "simple")
+}
 
 ```
 
 ```{r, , echo=FALSE, message=FALSE, warning=FALSE}
 for(domain in names(dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]])){
-dataPlot <- dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]][[domain]]
-write.table(dataPlot@result[dataPlot@result$p.adjust < dataPlot@pvalueCutoff, ],
-            file=paste0(listnameDir,"Table_of_Enriched_terms_for_",domain,"_","pval_",dataPlot@pvalueCutoff,".txt"),
-            sep="\t",quote=FALSE,col.names=TRUE,row.names=FALSE)
+  dataPlot <- dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]][[domain]]
+  write.table(dataPlot@result[dataPlot@result$p.adjust < dataPlot@pvalueCutoff, ],
+              file=paste0(listnameDir,"Table_of_Enriched_terms_for_",domain,"_","pval_",dataPlot@pvalueCutoff,".txt"),
+              sep="\t",quote=FALSE,col.names=TRUE,row.names=FALSE)
 }
 ```
 
