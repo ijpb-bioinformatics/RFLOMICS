@@ -1877,19 +1877,19 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
   contrasts_select <- tabCorresp$tag
   
   tab1 <- SEobject@metadata$DiffExpAnal$mergeDEF %>%
-    dplyr::select(all_of(c("DEF", contrasts_select)))
+    dplyr::select(any_of(c("DEF", contrasts_select)))
   
   if(type == "intersection"){
     
     DETab <- tab1 %>%
-      mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
-      filter(SUMCOL==length(contrasts_select))
+      dplyr::mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
+      vfilter(SUMCOL==length(contrasts_select))
     
   }else{
     
     DETab <- tab1 %>%
-      mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
-      filter(SUMCOL>=1)
+      dplyr::mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
+      dplyr::filter(SUMCOL>=1)
   }
   
   SEobject <- SEobject[DETab$DEF,]
