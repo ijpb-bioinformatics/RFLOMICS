@@ -1883,7 +1883,7 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
     
     DETab <- tab1 %>%
       dplyr::mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
-      vfilter(SUMCOL==length(contrasts_select))
+      dplyr::filter(SUMCOL==length(contrasts_select))
     
   }else{
     
