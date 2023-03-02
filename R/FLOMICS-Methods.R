@@ -2367,6 +2367,7 @@ methods::setMethod(f="run_MOFA_analysis",
                      
                      data_opts$scale_views <- scale_views
                      train_opts$maxiter <- maxiter
+                     train_opts$verbose <- FALSE
                      model_opts$num_factors <- num_factors
                      
                      MOFAObject.untrained <- MOFA2::prepare_mofa(
