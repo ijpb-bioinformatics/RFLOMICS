@@ -76,7 +76,7 @@ MOFA_setting <- function(input, output, session, rea.values){
             column(12,
                    
                    pickerInput(
-                     inputId  = session$ns("MOFA_selectedContrast"),
+                     inputId  = session$ns("MOFA_selectedContrasts"),
                      label    = "Select contrast:",
                      choices  = listOfContrast,
                      options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
@@ -163,11 +163,11 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     # check nbr of contrast 
     # if less then 1 -> error message
-    if(length(input$MOFA_selectedContrast) == 0){
+    if(length(input$MOFA_selectedContrasts) == 0){
       showModal(modalDialog( title = "Error message", "Select at least one contast!"))
     }
     validate({
-      need(length(input$MOFA_selectedContrast) != 0, message="Select at least one contast!")
+      need(length(input$MOFA_selectedContrasts) != 0, message="Select at least one contast!")
     })
     
     #---- progress bar ----#
@@ -179,7 +179,7 @@ MOFA_setting <- function(input, output, session, rea.values){
       omicsToIntegrate = input$MOFA_selectedData,
       rnaSeq_transfo = input$MOFA_RNAseqTransfo,
       choice = "DE", 
-      contrasts_names = input$MOFA_selectedContrast,
+      contrasts_names = input$MOFA_selectedContrasts,
       type = input$MOFA_filtMode,
       group = NULL, 
       method = "MOFA"
@@ -218,15 +218,12 @@ MOFA_setting <- function(input, output, session, rea.values){
     # output$warnings <- renderText({local.rea.values$warnings})
     #### End of catchning warnings.
     
-    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_selected_contrasts"]] <- input$MOFA_selectedContrast
+    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_selected_contrasts"]] <- input$MOFA_selectedContrasts
     session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_selected_filter"]] <- input$MOFA_filtMode
     session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_untrained"]] <- listResMOFA$MOFAObject.untrained
     # session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_warnings"]] <- warnings
     session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_results"]] <- listResMOFA$MOFAObject.trained
-    
-    # FlomicsMultiAssay <<- session$userData$FlomicsMultiAssay # TODO delete
-    # save(FlomicsMultiAssay, file = "/home/ahulot/Documents/INRAE/Projets/rflomics/inst/ExamplesFiles/Flomics.MAE_221130.RData") # TODO delete
-    
+
     local.rea.values$runMOFA   <- TRUE
     
     #---- progress bar ----#
@@ -543,20 +540,22 @@ MOFA_setting <- function(input, output, session, rea.values){
                             renderPlot({
                               # TODO delete
                               # # load("inst/ExamplesFiles/FlomicsMultiAssay.RData")
-                              # load("inst/ExamplesFiles/Flomics.MAE_221130.RData")
+                              # # load("inst/ExamplesFiles/Flomics.MAE_221130.RData")
                               # local.rea.values <- list() ; input <- list()
                               # resMOFA <- FlomicsMultiAssay@metadata$MOFA$MOFA_results
-                              # input$factor_choice_network <- 2
+                              # input$factor_choice_network <- 1
                               # input$abs_weight_network <- 0.5
                               # input$network_layout <- "Circle"
                               # input$abs_min_cor_network <- 0.5
                               # input$posCol <- "red"
                               # input$negCol <- "green"
-                              # # input$colors_proteomics.set1.filtred <- RColorBrewer::brewer.pal(5, "Blues")
-                              # # input$colors_metabolomics.set2.filtred <- RColorBrewer::brewer.pal(5, "Oranges")
-                              # input$colors_RNAseq.set1.filtred <- RColorBrewer::brewer.pal(5, "Blues")
-                              # input$colors_proteomics.set2.filtred <- RColorBrewer::brewer.pal(5, "Oranges")
-                              # input$colors_metabolomics.set3.filtred <- RColorBrewer::brewer.pal(5, "Purples")
+                              # input$colors_proteomics.set1.filtred <- RColorBrewer::brewer.pal(5, "Blues")
+                              # input$colors_metabolomics.set2.filtred <- RColorBrewer::brewer.pal(5, "Oranges")
+                              # input$colors_proteomics.set1.filtred <- "Blues"
+                              # input$colors_metabolomics.set2.filtred <- "Oranges"
+                              # # input$colors_RNAseq.set1.filtred <- RColorBrewer::brewer.pal(5, "Blues")
+                              # # input$colors_proteomics.set2.filtred <- RColorBrewer::brewer.pal(5, "Oranges")
+                              # # input$colors_metabolomics.set3.filtred <- RColorBrewer::brewer.pal(5, "Purples")
                               # TODO end delete
                               
                               # Correlation matrix is done on all ZW, not on the selected factor. 
@@ -581,9 +580,16 @@ MOFA_setting <- function(input, output, session, rea.values){
                                 dplyr::filter(abs(F_selected)>input$abs_weight_network)
                               
                               if(nrow(feature_filtered)>0){
+                                
+                                omics_colors <- lapply(unique(feature_filtered$Table), FUN = function(omicTable){
+                                  RColorBrewer::brewer.pal(name = input[[paste0("colors_", omicTable)]], n = 5)
+                                })
+                                names(omics_colors) <- unique(feature_filtered$Table)
+                                
                                 feature_filtered <- feature_filtered %>% dplyr::group_by(Table) %>%
                                   dplyr::mutate(Color = cut(F_selected, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)))
-                                feature_filtered$Color2 <- sapply(1:nrow(feature_filtered), FUN = function(i)  input[[paste0("colors_", feature_filtered$Table[i])]][as.numeric(feature_filtered$Color[i])])
+                                feature_filtered$Color2 <- sapply(1:nrow(feature_filtered), 
+                                                                  FUN = function(i) omics_colors[[feature_filtered$Table[i]]][as.numeric(feature_filtered$Color[i])])
                                 
                                 # Layout
                                 layout_arg <- tolower(input$network_layout)
@@ -592,35 +598,40 @@ MOFA_setting <- function(input, output, session, rea.values){
                                 }
                                 
                                 # Network main graph
-                                cor_display <- cor_mat[rownames(cor_mat) %in% feature_filtered$EntityName, colnames(cor_mat)%in% feature_filtered$EntityName]
-                                qgraph_plot <- qgraph::qgraph(cor_display, minimum = input$abs_min_cor_network, 
-                                                              cut = 0,
-                                                              shape = "rectangle", labels = rownames(cor_display), vsize2 = 2, 
-                                                              vsize = sapply(rownames(cor_display), nchar)*1.1,  layout = layout_arg,
-                                                              esize = 2,
-                                                              groups = gsub("[.]filtred", "", features_metadata$Table[match(rownames(cor_display), rownames(features_metadata))]),
-                                                              posCol = input$posCol, negCol = input$negCol, 
-                                                              details = FALSE,  legend = FALSE,
-                                                              color = feature_filtered$Color2)
-                                qgraph_plot <- recordPlot()
+                                cor_display <- cor_mat[rownames(cor_mat) %in% feature_filtered$EntityName, colnames(cor_mat) %in% feature_filtered$EntityName]
                                 
-                                # Legend
-                                legend_matrix <- do.call("rbind", lapply(MOFA2::views_names(resMOFA), FUN = function(nam) input[[paste0("colors_", nam)]]))
-                                colnames(legend_matrix) <- c("(0,0.2]", "(0.2,0.4]", "(0.4,0.6]", "(0.6,0.8]", "(0.8, 1]")
-                                rownames(legend_matrix) <- gsub("[.]filtred|colors_", "", MOFA2::views_names(resMOFA))
-                                legend.reshape <- reshape2::melt(legend_matrix)
-                                
-                                gg.legend <-  ggplot2::ggplot(legend.reshape, ggplot2::aes(x = Var2, y = Var1)) + 
-                                  ggplot2::geom_tile(fill = legend.reshape$value) + xlab("") + ylab("") + 
-                                  theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(), 
-                                                     axis.ticks.y = element_blank(),
-                                                     # axis.text.y = element_blank(),
-                                                     axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-                                
-                                gg.legend <- ggpubr::ggarrange(gg.legend, nrow = 3, ncol = 1) 
-                                
-                                # Actual plotting
-                                ggpubr::ggarrange(plotlist = list(qgraph_plot, gg.legend), nrow = 1, ncol = 2, widths = c(3, 1))
+                                if(any(abs(cor_display[upper.tri(cor_display)])>=input$abs_min_cor_network)){
+                                  qgraph_plot <- qgraph::qgraph(cor_display, minimum = input$abs_min_cor_network, 
+                                                                cut = 0,
+                                                                shape = "rectangle", labels = rownames(cor_display), vsize2 = 2, 
+                                                                vsize = sapply(rownames(cor_display), nchar)*1.1,  layout = layout_arg,
+                                                                esize = 2,
+                                                                groups = gsub("[.]filtred", "", features_metadata$Table[match(rownames(cor_display), rownames(features_metadata))]),
+                                                                posCol = input$posCol, negCol = input$negCol, 
+                                                                details = FALSE,  legend = FALSE,
+                                                                color = feature_filtered$Color2[match(rownames(cor_display), feature_filtered$EntityName)])
+                                  qgraph_plot <- recordPlot()
+                                  
+                                  # Legend
+                                  legend_matrix <- do.call("rbind", lapply(MOFA2::views_names(resMOFA), FUN = function(nam) RColorBrewer::brewer.pal(5, input[[paste0("colors_", nam)]])))
+                                  colnames(legend_matrix) <- c("(0,0.2]", "(0.2,0.4]", "(0.4,0.6]", "(0.6,0.8]", "(0.8, 1]")
+                                  rownames(legend_matrix) <- gsub("[.]filtred|colors_", "", MOFA2::views_names(resMOFA))
+                                  legend.reshape <- reshape2::melt(legend_matrix)
+                                  
+                                  gg.legend <-  ggplot2::ggplot(legend.reshape, ggplot2::aes(x = Var2, y = Var1)) + 
+                                    ggplot2::geom_tile(fill = legend.reshape$value) + xlab("") + ylab("") + 
+                                    theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(), 
+                                                       axis.ticks.y = element_blank(),
+                                                       # axis.text.y = element_blank(),
+                                                       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+                                  
+                                  gg.legend <- ggpubr::ggarrange(gg.legend, nrow = 3, ncol = 1) 
+                                  
+                                  # Actual plotting
+                                  ggpubr::ggarrange(plotlist = list(qgraph_plot, gg.legend), nrow = 1, ncol = 2, widths = c(3, 1))
+                                }else{
+                                  renderText({print("There is nothing to plot. Please try to lower the absolute weight, the correlation threshold or change the factor.")})
+                                }
                               }else{
                                 renderText({print("There is nothing to plot. Please try to lower the absolute weight, the correlation threshold or change the factor.")})
                               }
