@@ -420,6 +420,28 @@ MOFA_setting <- function(input, output, session, rea.values){
                             })
                      ))
           ),
+          # ---- Tab panel ANOVA posteriori ----
+          tabPanel("Relations",
+                   
+                   renderTable({
+                     
+                     factors <- MOFA2::get_factors(resMOFA)
+                     
+                     res_aov <- lapply(1:ncol(session$userData$FlomicsMultiAssay@metadata$design@ExpDesign), FUN = function(i){
+                       aov1 <- aov(factors$group1  ~ session$userData$FlomicsMultiAssay@metadata$design@ExpDesign[,i])
+                       sapply(summary(aov1), FUN = function(list_res) list_res[["Pr(>F)"]][[1]])
+                     })
+                     names(res_aov) <- colnames(session$userData$FlomicsMultiAssay@metadata$design@ExpDesign)
+                     
+                     res_res <- do.call("rbind", res_aov)
+                     colnames(res_res) <- gsub("Response ", "", colnames(res_res))
+                     
+                     res_res
+                     
+                   }, striped = TRUE, rownames = TRUE)
+                   
+          ),
+          
           # ---- Tab panel Heatmap ----
           tabPanel("Heatmap",
                    
