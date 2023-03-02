@@ -262,7 +262,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
     MixOmics_res <- lapply(input$MO_selectedResponse, 
                            FUN = function(response_var){
                              
-                             list_args_run$selectedResponse <- response_var
+                             list_args_run_MO$selectedResponse <- response_var
                              res_mixOmics <- do.call("run_MixOmics_analysis", args = list_args_run_MO)
                              
                              return(
