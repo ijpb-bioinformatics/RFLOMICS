@@ -13,10 +13,42 @@ MixOmics_settingUI <- function(id){
       box(title = span(tagList(icon('chart-line'), "   ",a("MixOmics", href="http://mixomics.org/"), tags$small("(Scroll down for instructions)")  )),
           solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
           div(
-            h4(tags$span("Parameters set up:", style = "color:orange")),
-            p("This is where you have to put the parameters"),
+            h4(tags$span("Blocks settings:", style = "color:orange")),
+            p("You can choose which omics data you want to analyze together. It is required to have selected at least two to run an analysis."),
+            p("As of now, rflomics only allows you to run an analysis on filtered tables, taking into account differential analysis performed previously.
+            You can choose which contrasts you want to take the DE genes from. You can select multiple ones (defaults select all the contrasts) 
+              and choose to perform the analysis on the union or intersection of the DE lists."),
+            p("RNASeq data, given in the form of counts, will be processed using limma::voom transformation. 
+              If you have indicated a batch effect when loading your data, it will be corrected in all datatables using limma::removebatcheffect before running mixOmics, for each table."),
+            p("Link between tables and response is set to 0.5 automatically."),
+            
+            h4(tags$span("Analysis settings:", style = "color:orange")),
+            p("- Scale Datasets: XXXXXXXXXXXXXXXXX"),
+            p("- Components: number of components to be computed, default is 5"),
+            p("- Sparse Analysis: if checked, function block.splsda is run, a variable selection is performed for each component and each response variable"),
+            p("- Tuning cases: if \"sparse analysis\" is checked, to select the relevant features for each component, tuning has to be performed. Tuning cases determines the number of feature selection
+              to try and decide on. A little warning here: tuning cases are applied on each table and component, and all combinaisions are tested (for example: two datatables and five tuning cases will 
+              make 5*5 cases for each component to test), it can be quite long."),
+            
+            h4(tags$span("Response variables:", style = "color:orange")),
+            p("You can select as many response variables as you want, the analysis is performed on each of them separately. The same parameters are applied for all of them."),
             
             h4(tags$span("Outputs:", style = "color:orange")),
+            p("- Data Overview: shows how many samples and omic features are left per table after applying all filters. If you chose a sparse analysis, for each component, the number of
+              selected features will be displayd."),
+            p("- Explained variance: two graphs are displayed in this section. 
+              The first graph is showing the total explained variance per omic table. 
+              The second one is a detailed version, showing the percentage of explained variance per feature per omic data."), 
+            # The percentage of explained variance cannot be compared between views."),
+            p("- Individuals plot: coordinates of individuals on each component for each table. When toggled, ellipses force all windows to be on the same scale."),
+            p("- Features plot: similar to a pca correlation plot, coordinates of the (selected) features on the correlation circles for all datasets. "),
+            p("- Loadings: coefficients for the (selected) features for each dataset, by ascending order. Default is showing the first 25 entities for each block, on the first component."),
+            p("- Networks: similarity networks computed on selected components factors. It only shows the between table correlation, not the intra-table correlaction!"),
+            p("- CircosPlot: only available for sparse analyses. 
+                Similarity networks computed on selected components factors. It only shows the between table correlation, not the intra-table correlaction!"),
+            p("- CimPlot: only available for sparse analyses. 
+                For each component, shows the heatmap of selected features for all tables."),
+            
           ))),
     ##
     fluidRow(
@@ -48,8 +80,8 @@ MixOmics_setting <- function(input, output, session, rea.values){
                    column(12,
                           
                           pickerInput(
-                            inputId  = session$ns("MOselectedData"),
-                            label    = "Select dataset:",
+                            inputId  = session$ns("MO_selectedData"),
+                            label    = "Select dataset",
                             choices  = rea.values$datasetDiff,
                             options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                             multiple = TRUE,
@@ -59,8 +91,8 @@ MixOmics_setting <- function(input, output, session, rea.values){
                    column(12,
                           
                           pickerInput(
-                            inputId  = session$ns("MOselectedContrast"),
-                            label    = "Select contrasts:",
+                            inputId  = session$ns("MO_selectedContrast"),
+                            label    = "Select contrasts",
                             choices  = listOfContrast,
                             options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                             multiple = TRUE,
@@ -68,19 +100,19 @@ MixOmics_setting <- function(input, output, session, rea.values){
                  
                  # select mode of feature filtering
                  fluidRow(
-                   column(4,
-                          radioButtons(inputId  = session$ns("MOfiltMode"), 
+                   column(12,
+                          radioButtons(inputId  = session$ns("MO_filtMode"), 
                                        label    = "Select type of filtering:" ,
                                        choices  = c("union", "intersection"),
                                        selected = "union", inline = FALSE)),
-                   column(8,
-                          verbatimTextOutput(session$ns("mergeValue_mixOmics")))
+                   # column(8,
+                   #        verbatimTextOutput(session$ns("mergeValue_mixOmics")))
                  ),
                  # set parameters
                  fluidRow(
                    column(12,
-                          selectInput(inputId  = session$ns("MORNAseqTransfo"),
-                                      label    = "RNAseq transfo :",
+                          selectInput(inputId  = session$ns("MO_RNAseqTransfo"),
+                                      label    = "RNAseq transfo",
                                       choices  = c("limma (voom)"),
                                       selected = "limma (voom)")))
                  
@@ -89,10 +121,10 @@ MixOmics_setting <- function(input, output, session, rea.values){
                  
                  fluidRow(
                    column(12,
-                          column(6, checkboxInput(inputId = session$ns("scale_views"), label = "Scale Datasets", value = FALSE, width = NULL)),
-                          column(6, checkboxInput(inputId = session$ns("sparsity"), label = "Sparse analysis", value = FALSE, width = NULL)),
-                          column(6, numericInput(inputId = session$ns("ncomp"), label = "Components", value = 2, min = 1, max= 5)),
-                          column(6, numericInput(inputId = session$ns("cases_to_try"), label = "Tuning cases", value = 2, min = 1, max= 5)),
+                          column(6, checkboxInput(inputId = session$ns("MO_scale_views"), label = "Scale Datasets", value = FALSE, width = NULL)),
+                          column(6, checkboxInput(inputId = session$ns("MO_sparsity"), label = "Sparse analysis", value = FALSE, width = NULL)),
+                          column(6, numericInput(inputId = session$ns("MO_ncomp"), label = "Components", value = 5, min = 1, max= 20)),
+                          column(6, numericInput(inputId = session$ns("MO_cases_to_try"), label = "Tuning cases", value = 5, min = 1, max= 100)),
                           # column(6, numericInput(inputId = session$ns("link_datasets"), label = "Link between datasets", value = 1, min = 0, max= 1)),
                           # column(6, numericInput(inputId = session$ns("link_response"), label = "Link to response", value = 1, min = 0, max= 1))
                    ))
@@ -101,20 +133,11 @@ MixOmics_setting <- function(input, output, session, rea.values){
                  
                  # Select lists of dataset to integrate
                  fluidRow(
-                   # box(title = span(tagList(icon("sliders-h"), "  ", "Options")), width = 12, collapsible = TRUE, collapsed = TRUE,
-                   #     div(      
-                   #       h4(tags$span("Parameters set up:", style = "color:orange")),
-                   #       p("Selecting one feature will set the analysis to discriminant analysis"),
-                   #       p("Selecting more than one will set the analysis to non-discriminant: qualitative features will be turned into dummy variables and
-                   #               the analysis is conducted on the result quantitative response matrix")
-                   #     )
-                   # ),
                    column(12,
                           checkboxGroupInput(
-                            inputId  = session$ns("selectedResponse"),
-                            label    = "Select response variables:",
+                            inputId  = session$ns("MO_selectedResponse"),
+                            label    = "Select response variables",
                             choices  = c(colnames(colData(session$userData$FlomicsMultiAssay))),
-                            # options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                             selected = colnames(colData(session$userData$FlomicsMultiAssay))[1]))
                  ),
                  fluidRow(
@@ -129,28 +152,29 @@ MixOmics_setting <- function(input, output, session, rea.values){
   
   # TODO delete
   # input <- list()
-  # input$MOselectedData <- c("metabolomics.set2.filtred", "proteomics.set1.filtred")
-  # input$MOselectedContrast <- c("(imbibitionEI - imbibitionDS) in mean",            
+  # input$MO_selectedData <- c("metabolomics.set2.filtred", "proteomics.set1.filtred")
+  # input$MO_selectedContrast <- c("(imbibitionEI - imbibitionDS) in mean",            
   #                             "(imbibitionLI - imbibitionDS) in mean",            
   #                             "(imbibitionLI - imbibitionEI) in mean")
   
-  # Entities list
-  Ent_lists <- 
-    lapply(input$MOselectedData, FUN = function(namData){
-      lapply(session$userData$FlomicsMultiAssay@ExperimentList[[namData]]@metadata$DiffExpAnal$TopDEF[input$MOselectedContrast], 
-             rownames)
-    })
-  
-  # display number of selected entities
-  output$mergeValue_mixOmics <- renderText({
-    if(input$MOfiltMode == "union"){
-      print(sum(sapply(Ent_lists, FUN = function(listDE){length(unique(unlist(listDE)))})))
-    }else if(input$MOfiltMode == "intersection"){
-      print(sum(sapply(Ent_lists, FUN = function(listDE){
-        length(Reduce('intersect', listDE))
-      })))
-    }
-  })
+  # TODO Does not work
+  # # Entities list
+  # Ent_lists <- 
+  #   lapply(input$MO_selectedData, FUN = function(namData){
+  #     lapply(session$userData$FlomicsMultiAssay@ExperimentList[[namData]]@metadata$DiffExpAnal$TopDEF[input$MO_selectedContrast], 
+  #            rownames)
+  #   })
+  # 
+  # # display number of selected entities
+  # output$mergeValue_mixOmics <- renderText({
+  #   if(input$MO_filtMode == "union"){
+  #     print(sum(sapply(Ent_lists, FUN = function(listDE){length(unique(unlist(listDE)))})))
+  #   }else if(input$MO_filtMode == "intersection"){
+  #     print(sum(sapply(Ent_lists, FUN = function(listDE){
+  #       length(Reduce('intersect', listDE))
+  #     })))
+  #   }
+  # })
   
   
   ## observe the button run mixOmics
@@ -168,10 +192,9 @@ MixOmics_setting <- function(input, output, session, rea.values){
     print("# 8- MixOmics Analysis")
     
     local.rea.values$runMixOmics   <- FALSE
-    local.rea.values$preparedMixOmics  <- NULL
-    local.rea.values$resMixOmics <- NULL
-    session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_tuning_results"]] <- NULL
-    session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_results"]] <- NULL
+    preparedMixOmics  <- NULL
+    MixOmics_res <- NULL
+    session$userData$FlomicsMultiAssay@metadata[["mixOmics"]] <- NULL
     
     #---- progress bar ----#
     progress$inc(1/10, detail = paste("Checks ", 10, "%", sep=""))
@@ -179,18 +202,25 @@ MixOmics_setting <- function(input, output, session, rea.values){
     
     # TODO missing checks in here !!
     
+    if(is.null(input$MO_selectedResponse)){
+      showModal(modalDialog(title = "Error message", "To run MixOmics, please select at least one response variable"))
+    }
+    validate({ 
+      need(!is.null(input$MO_selectedResponse), "To run MixOmics, please select at least one response variable") 
+    })
+    
     #---- progress bar ----#
     progress$inc(1/10, detail = paste("Preparing object ", 20, "%", sep = ""))
     #----------------------#
     
     # Prepare for MixOmics run  
     print("#     =>Preparing data list")
-    local.rea.values$preparedMixOmics <- prepareForIntegration(session$userData$FlomicsMultiAssay,
-                                                               omicsToIntegrate = input$MOselectedData,
-                                                               rnaSeq_transfo = input$MORNAseqTransfo,
+    preparedMixOmics <- prepareForIntegration(session$userData$FlomicsMultiAssay,
+                                                               omicsToIntegrate = input$MO_selectedData,
+                                                               rnaSeq_transfo = input$MO_RNAseqTransfo,
                                                                choice = "DE", 
-                                                               contrasts_names = input$MOselectedContrast,
-                                                               type = input$MOfiltMode,
+                                                               contrasts_names = input$MO_selectedContrast,
+                                                               type = input$MO_filtMode,
                                                                group = NULL,
                                                                method = "MixOmics")
     #---- progress bar ----#
@@ -199,18 +229,18 @@ MixOmics_setting <- function(input, output, session, rea.values){
     
     # Run the analysis
     print("#     =>Running MixOmics")
-    local.rea.values$MixOmics_res <- lapply(input$selectedResponse, 
+    MixOmics_res <- lapply(input$MO_selectedResponse, 
                                             FUN = function(response_var){
-                                              res_mixOmics <- run_MixOmics_analysis(local.rea.values$preparedMixOmics,
-                                                                                    scale_views = input$scale_views,
+                                              res_mixOmics <- run_MixOmics_analysis(preparedMixOmics,
+                                                                                    scale_views = input$MO_scale_views,
                                                                                     selectedResponse = response_var,
-                                                                                    ncomp = input$ncomp,
+                                                                                    ncomp = input$MO_ncomp,
                                                                                     # link_datasets = input$link_datasets,
                                                                                     # link_resposne = input$link_response,      
                                                                                     link_datasets = 0.5,
                                                                                     link_resposne = 0.5,
-                                                                                    sparsity = input$sparsity,
-                                                                                    cases_to_try = input$cases_to_try)
+                                                                                    sparsity = input$MO_sparsity,
+                                                                                    cases_to_try = input$MO_cases_to_try)
                                               
                                               
                                               return(
@@ -220,12 +250,12 @@ MixOmics_setting <- function(input, output, session, rea.values){
                                                 )
                                               )
                                             })
-    names(local.rea.values$MixOmics_res) <- input$selectedResponse
+    names(MixOmics_res) <- input$MO_selectedResponse
     
     # Store results
     # session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_tuning_results"]] <- local.rea.values$MixOmics_res$tuning_res
     # session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_results"]] <- local.rea.values$MixOmics_res$analysis_res
-    session$userData$FlomicsMultiAssay@metadata[["mixOmics"]] <-  local.rea.values$MixOmics_res 
+    session$userData$FlomicsMultiAssay@metadata[["mixOmics"]] <- MixOmics_res 
 
     local.rea.values$runMixOmics <- TRUE
     
@@ -255,7 +285,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
                          df <- t(sapply(Data_res$X, dim))
                          colnames(df) <- c("Ind", "Features")
                          
-                         if(input$sparsity){
+                         if(input$MO_sparsity){
                            df <- cbind(df, do.call("rbind", Data_res$keepX))
                            colnames(df)[!colnames(df) %in% c("Ind", "Features")] <- paste("Comp", 1:length(Data_res$keepX[[1]]))
                          }
@@ -334,18 +364,19 @@ MixOmics_setting <- function(input, output, session, rea.values){
                               numericInput(inputId = session$ns(paste0(listname, "ind_comp_choice_1")),
                                            label = "Comp x:",
                                            min = 1,
-                                           max =  input$ncomp,
+                                           max =  input$MO_ncomp,
                                            value = 1, step = 1),
                               numericInput(inputId = session$ns(paste0(listname, "ind_comp_choice_2")),
                                            label = "Comp y:",
                                            min = 1,
-                                           max =  input$ncomp,
+                                           max =  input$MO_ncomp,
                                            value = 2, step = 1)
                        ),
-                       column(11 , renderPlot(mixOmics::plotIndiv(Data_res, 
-                                                                  comp = c(input[[paste0(listname, "ind_comp_choice_1")]], input[[paste0(listname, "ind_comp_choice_2")]]),
-                                                                  ellipse = input[[paste0(listname, "ellipse_choice")]],
-                                                                  legend = TRUE)))
+                       column(11 , renderPlot(suppressWarnings(
+                         mixOmics::plotIndiv(Data_res, 
+                                             comp = c(input[[paste0(listname, "ind_comp_choice_1")]], input[[paste0(listname, "ind_comp_choice_2")]]),
+                                             ellipse = input[[paste0(listname, "ellipse_choice")]],
+                                             legend = TRUE))))
               ),
               # ---- Tab panel Features ----
               tabPanel("Features",
@@ -354,12 +385,12 @@ MixOmics_setting <- function(input, output, session, rea.values){
                               numericInput(inputId = session$ns(paste0(listname, "var_comp_choice_1")),
                                            label = "Comp x:",
                                            min = 1,
-                                           max =  input$ncomp,
+                                           max =  input$MO_ncomp,
                                            value = 1, step = 1),
                               numericInput(inputId = session$ns(paste0(listname, "var_comp_choice_2")),
                                            label = "Comp y:",
                                            min = 1,
-                                           max =  input$ncomp,
+                                           max =  input$MO_ncomp,
                                            value = 2, step = 1)
                        ),
                        column(11 , renderPlot(mixOmics::plotVar(Data_res, 
@@ -373,7 +404,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
                               numericInput(inputId = session$ns(paste0(listname, "Load_comp_choice")),
                                            label = "Component:",
                                            min = 1,
-                                           max =  input$ncomp,
+                                           max =  input$MO_ncomp,
                                            value = 1, step = 1),
                               numericInput(inputId = session$ns(paste0(listname, "Load_ndisplay")),
                                            label = "Number of features to display:",
@@ -400,9 +431,9 @@ MixOmics_setting <- function(input, output, session, rea.values){
                                               value = 0.9, step = 0.05)),
                        column(11 , renderPlot(mixOmics::network(mat = Data_res, 
                                                                 # comp = 1:2, 
-                                                                blocks = 1:length(input$MOselectedData),
+                                                                blocks = 1:length(input$MO_selectedData),
                                                                 cutoff = input[[paste0(listname, "Network_cutoff")]], 
-                                                                shape.node = rep("rectangle", length(input$MOselectedData)))))
+                                                                shape.node = rep("rectangle", length(input$MO_selectedData)))))
               ), 
               # ---- Tab  Panel CircosPlot & cimPlot ----
               tabPanel("CircosPlot",
@@ -421,15 +452,26 @@ MixOmics_setting <- function(input, output, session, rea.values){
                        }
               ),
               tabPanel("CimPlot",
-                       column(1,),
-                       column(11, 
-                              if(is(Data_res, "block.splsda")){
-                                print("=> Rendering cimPlot, be patient!")
-                                renderPlot(mixOmics::cimDiablo(Data_res))
-                              }else{
-                                renderText({print("This plot is only available for sparse multi-block discriminant analysis results.")})
-                              }
-                       ),
+                       if(is(Data_res, "block.splsda")){
+                         print("=> Rendering cimPlot, be patient!")
+                         fluidRow(
+                         column(1,
+                                numericInput(inputId = session$ns(paste0(listname, "cimComp")),
+                                             label = "Comp",
+                                             min = 1,
+                                             max = input$MO_ncomp,
+                                             value = 1, step = 1)),
+                         column(12, 
+                                
+                                renderPlot(mixOmics::cimDiablo(Data_res, 
+                                                               legend.position = "bottomleft",
+                                                               size.legend = 0.8,
+                                                               comp = input[[paste0(listname, "cimComp")]])))
+                         )
+                       }else{
+                         renderText({print("This plot is only available for sparse multi-block discriminant analysis results.")})
+                       }
+                      
               ),
             ) # tabsetpanel
         ) #box
