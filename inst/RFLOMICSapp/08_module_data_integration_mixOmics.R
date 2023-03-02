@@ -192,9 +192,6 @@ MixOmics_setting <- function(input, output, session, rea.values){
     print("# 8- MixOmics Analysis")
     
     local.rea.values$runMixOmics   <- FALSE
-    preparedMixOmics  <- NULL
-    MixOmics_res <- NULL
-    session$userData$FlomicsMultiAssay@metadata[["mixOmics"]] <- NULL
     
     #---- progress bar ----#
     progress$inc(1/10, detail = paste("Checks ", 10, "%", sep=""))
@@ -202,6 +199,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
     
     # TODO missing checks in here !!
     
+    # Check selection of response variables (at least one)
     if(is.null(input$MO_selectedResponse)){
       showModal(modalDialog(title = "Error message", "To run MixOmics, please select at least one response variable"))
     }
@@ -209,54 +207,79 @@ MixOmics_setting <- function(input, output, session, rea.values){
       need(!is.null(input$MO_selectedResponse), "To run MixOmics, please select at least one response variable") 
     })
     
+    # check number of tables (at least two)
+    if(length(input$MO_selectedData)<2){
+      showModal(modalDialog(title = "Error message", "To run a multi-omic analysis, please select at least two tables"))
+    }
+    validate({ 
+      need(length(input$MO_selectedData)>=2, "To run a multi-omic analysis, please select at least two tables") 
+    })
+    
     #---- progress bar ----#
     progress$inc(1/10, detail = paste("Preparing object ", 20, "%", sep = ""))
     #----------------------#
     
     # Prepare for MixOmics run  
+    preparedMixOmics  <- NULL
+    MixOmics_res <- NULL
+    MAE_object <- session$userData$FlomicsMultiAssay
+    MAE_object@metadata[["mixOmics"]] <- NULL
+    
     print("#     =>Preparing data list")
-    preparedMixOmics <- prepareForIntegration(session$userData$FlomicsMultiAssay,
-                                                               omicsToIntegrate = input$MO_selectedData,
-                                                               rnaSeq_transfo = input$MO_RNAseqTransfo,
-                                                               choice = "DE", 
-                                                               contrasts_names = input$MO_selectedContrast,
-                                                               type = input$MO_filtMode,
-                                                               group = NULL,
-                                                               method = "MixOmics")
+    
+    list_args_prepare_MO <- list(
+      object = MAE_object,
+      omicsToIntegrate = input$MO_selectedData,
+      rnaSeq_transfo = input$MO_RNAseqTransfo,
+      choice = "DE", 
+      contrasts_names = input$MO_selectedContrast,
+      type = input$MO_filtMode,
+      group = NULL,
+      method = "MixOmics"
+    )
+    
+    preparedMixOmics <- do.call("prepareForIntegration", args = list_args_prepare_MO)
+    
     #---- progress bar ----#
     progress$inc(1/10, detail = paste("Running MixOmics ", 30, "%", sep = ""))
     #----------------------#
     
     # Run the analysis
     print("#     =>Running MixOmics")
+    
+    list_args_run_MO <- list(
+      object = preparedMixOmics,
+      scale_views = input$MO_scale_views,
+      ncomp = input$MO_ncomp,
+      # link_datasets = input$link_datasets,
+      # link_resposne = input$link_response,      
+      link_datasets = 0.5,
+      link_response = 0.5,
+      sparsity = input$MO_sparsity,
+      cases_to_try = input$MO_cases_to_try
+    )
+    
     MixOmics_res <- lapply(input$MO_selectedResponse, 
-                                            FUN = function(response_var){
-                                              res_mixOmics <- run_MixOmics_analysis(preparedMixOmics,
-                                                                                    scale_views = input$MO_scale_views,
-                                                                                    selectedResponse = response_var,
-                                                                                    ncomp = input$MO_ncomp,
-                                                                                    # link_datasets = input$link_datasets,
-                                                                                    # link_resposne = input$link_response,      
-                                                                                    link_datasets = 0.5,
-                                                                                    link_resposne = 0.5,
-                                                                                    sparsity = input$MO_sparsity,
-                                                                                    cases_to_try = input$MO_cases_to_try)
-                                              
-                                              
-                                              return(
-                                                list(
-                                                  "MixOmics_tuning_results" = res_mixOmics$tuning_res,
-                                                  "MixOmics_results" = res_mixOmics$analysis_res
-                                                )
-                                              )
-                                            })
+                           FUN = function(response_var){
+                             
+                             list_args_run$selectedResponse <- response_var
+                             res_mixOmics <- do.call("run_MixOmics_analysis", args = list_args_run_MO)
+                             
+                             return(
+                               list(
+                                 "MixOmics_tuning_results" = res_mixOmics$tuning_res,
+                                 "MixOmics_results" = res_mixOmics$analysis_res
+                               )
+                             )
+                           })
     names(MixOmics_res) <- input$MO_selectedResponse
     
     # Store results
     # session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_tuning_results"]] <- local.rea.values$MixOmics_res$tuning_res
     # session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_results"]] <- local.rea.values$MixOmics_res$analysis_res
-    session$userData$FlomicsMultiAssay@metadata[["mixOmics"]] <- MixOmics_res 
-
+    MAE_object@metadata[["mixOmics"]] <- MixOmics_res 
+    
+    session$userData$FlomicsMultiAssay <- MAE_object
     local.rea.values$runMixOmics <- TRUE
     
     #---- progress bar ----#
@@ -293,8 +316,6 @@ MixOmics_setting <- function(input, output, session, rea.values){
                          t(df) %>% DT::datatable()
                          
                        })),
-                       
-                       
                        
               ),
               # ---- Tab panel Explained Variance ----
@@ -455,23 +476,23 @@ MixOmics_setting <- function(input, output, session, rea.values){
                        if(is(Data_res, "block.splsda")){
                          print("=> Rendering cimPlot, be patient!")
                          fluidRow(
-                         column(1,
-                                numericInput(inputId = session$ns(paste0(listname, "cimComp")),
-                                             label = "Comp",
-                                             min = 1,
-                                             max = input$MO_ncomp,
-                                             value = 1, step = 1)),
-                         column(12, 
-                                
-                                renderPlot(mixOmics::cimDiablo(Data_res, 
-                                                               legend.position = "bottomleft",
-                                                               size.legend = 0.8,
-                                                               comp = input[[paste0(listname, "cimComp")]])))
+                           column(1,
+                                  numericInput(inputId = session$ns(paste0(listname, "cimComp")),
+                                               label = "Comp",
+                                               min = 1,
+                                               max = input$MO_ncomp,
+                                               value = 1, step = 1)),
+                           column(12, 
+                                  
+                                  renderPlot(mixOmics::cimDiablo(Data_res, 
+                                                                 legend.position = "bottomleft",
+                                                                 size.legend = 0.8,
+                                                                 comp = input[[paste0(listname, "cimComp")]])))
                          )
                        }else{
                          renderText({print("This plot is only available for sparse multi-block discriminant analysis results.")})
                        }
-                      
+                       
               ),
             ) # tabsetpanel
         ) #box
