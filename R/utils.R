@@ -1863,15 +1863,11 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
 #'
 
 filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
-  # SEobject <- FlomicsMultiAssay@ExperimentList$proteomics.set1.filtred
-  # SEobject <- object@ExperimentList[[grep("RNAseq", names(object@ExperimentList))]]
-  # contrasts_arg = c("H1", "H2")
-  # type = "intersection"
-  # contrasts_arg = c("(temperatureLow - temperatureElevated)", "(temperatureMedium - temperatureLow)")
-  # SEobject@metadata[["integration_contrasts"]] <- contrasts
+
+  # 03/03/2023 : change contrasts for Validcontrasts
   
-  tabCorresp <- SEobject@metadata$DiffExpAnal$contrasts %>% dplyr::select(contrastName, tag)
-  if("all" %in% contrasts_arg)   contrasts_arg <- SEobject@metadata$DiffExpAnal$contrasts$contrastName
+  tabCorresp <- SEobject@metadata$DiffExpAnal$Validcontrasts %>% dplyr::select(contrastName, tag)
+  if("all" %in% contrasts_arg)   contrasts_arg <- SEobject@metadata$DiffExpAnal$Validcontrasts$contrastName
   
   tabCorresp <- tabCorresp %>% dplyr::filter(contrastName %in% contrasts_arg)
   contrasts_select <- tabCorresp$tag
