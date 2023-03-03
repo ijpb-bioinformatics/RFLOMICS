@@ -23,7 +23,7 @@ MixOmics_settingUI <- function(id){
             p("Link between tables and response is set to 0.5 automatically."),
             
             h4(tags$span("Analysis settings:", style = "color:orange")),
-            p("- Scale Datasets: XXXXXXXXXXXXXXXXX"),
+            p("- Scale Datasets: in each table, scale every feature to unit variance"),
             p("- Components: number of components to be computed, default is 5"),
             p("- Sparse Analysis: if checked, function block.splsda is run, a variable selection is performed for each component and each response variable"),
             p("- Tuning cases: if \"sparse analysis\" is checked, to select the relevant features for each component, tuning has to be performed. Tuning cases determines the number of feature selection
@@ -39,7 +39,6 @@ MixOmics_settingUI <- function(id){
             p("- Explained variance: two graphs are displayed in this section. 
               The first graph is showing the total explained variance per omic table. 
               The second one is a detailed version, showing the percentage of explained variance per feature per omic data."), 
-            # The percentage of explained variance cannot be compared between views."),
             p("- Individuals plot: coordinates of individuals on each component for each table. When toggled, ellipses force all windows to be on the same scale."),
             p("- Features plot: similar to a pca correlation plot, coordinates of the (selected) features on the correlation circles for all datasets. "),
             p("- Loadings: coefficients for the (selected) features for each dataset, by ascending order. Default is showing the first 25 entities for each block, on the first component."),
@@ -102,11 +101,9 @@ MixOmics_setting <- function(input, output, session, rea.values){
                  fluidRow(
                    column(12,
                           radioButtons(inputId  = session$ns("MO_filtMode"), 
-                                       label    = "Select type of filtering:" ,
+                                       label    = "Select type of filtering" ,
                                        choices  = c("union", "intersection"),
                                        selected = "union", inline = FALSE)),
-                   # column(8,
-                   #        verbatimTextOutput(session$ns("mergeValue_mixOmics")))
                  ),
                  # set parameters
                  fluidRow(
@@ -121,18 +118,13 @@ MixOmics_setting <- function(input, output, session, rea.values){
                  
                  fluidRow(
                    column(12,
-                          column(6, checkboxInput(inputId = session$ns("MO_scale_views"), label = "Scale Datasets", value = FALSE, width = NULL)),
+                          column(6, checkboxInput(inputId = session$ns("MO_scale_views"), label = "Scale Datasets", value = TRUE, width = NULL)),
                           column(6, checkboxInput(inputId = session$ns("MO_sparsity"), label = "Sparse analysis", value = FALSE, width = NULL)),
                           column(6, numericInput(inputId = session$ns("MO_ncomp"), label = "Components", value = 5, min = 1, max= 20)),
                           column(6, numericInput(inputId = session$ns("MO_cases_to_try"), label = "Tuning cases", value = 5, min = 1, max= 100)),
                           # column(6, numericInput(inputId = session$ns("link_datasets"), label = "Link between datasets", value = 1, min = 0, max= 1)),
                           # column(6, numericInput(inputId = session$ns("link_response"), label = "Link to response", value = 1, min = 0, max= 1))
-                   ))
-             ),
-             box(title = span(tagList(icon("sliders"), "  ", "Response Variables")), width = 12, status = "warning",
-                 
-                 # Select lists of dataset to integrate
-                 fluidRow(
+                   ),
                    column(12,
                           checkboxGroupInput(
                             inputId  = session$ns("MO_selectedResponse"),
@@ -148,34 +140,6 @@ MixOmics_setting <- function(input, output, session, rea.values){
     )# taglist
     
   })
-  
-  
-  # TODO delete
-  # input <- list()
-  # input$MO_selectedData <- c("metabolomics.set2.filtred", "proteomics.set1.filtred")
-  # input$MO_selectedContrast <- c("(imbibitionEI - imbibitionDS) in mean",            
-  #                             "(imbibitionLI - imbibitionDS) in mean",            
-  #                             "(imbibitionLI - imbibitionEI) in mean")
-  
-  # TODO Does not work
-  # # Entities list
-  # Ent_lists <- 
-  #   lapply(input$MO_selectedData, FUN = function(namData){
-  #     lapply(session$userData$FlomicsMultiAssay@ExperimentList[[namData]]@metadata$DiffExpAnal$TopDEF[input$MO_selectedContrast], 
-  #            rownames)
-  #   })
-  # 
-  # # display number of selected entities
-  # output$mergeValue_mixOmics <- renderText({
-  #   if(input$MO_filtMode == "union"){
-  #     print(sum(sapply(Ent_lists, FUN = function(listDE){length(unique(unlist(listDE)))})))
-  #   }else if(input$MO_filtMode == "intersection"){
-  #     print(sum(sapply(Ent_lists, FUN = function(listDE){
-  #       length(Reduce('intersect', listDE))
-  #     })))
-  #   }
-  # })
-  
   
   ## observe the button run mixOmics
   observeEvent(input$runMixOmics, {
@@ -196,8 +160,6 @@ MixOmics_setting <- function(input, output, session, rea.values){
     #---- progress bar ----#
     progress$inc(1/10, detail = paste("Checks ", 10, "%", sep=""))
     #----------------------#
-    
-    # TODO missing checks in here !!
     
     # Check selection of response variables (at least one)
     if(is.null(input$MO_selectedResponse)){
@@ -254,7 +216,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
       # link_datasets = input$link_datasets,
       # link_resposne = input$link_response,      
       link_datasets = 0.5,
-      link_response = 0.5,
+      link_response = 1,
       sparsity = input$MO_sparsity,
       cases_to_try = input$MO_cases_to_try
     )
@@ -275,8 +237,6 @@ MixOmics_setting <- function(input, output, session, rea.values){
     names(MixOmics_res) <- input$MO_selectedResponse
     
     # Store results
-    # session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_tuning_results"]] <- local.rea.values$MixOmics_res$tuning_res
-    # session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][["MixOmics_results"]] <- local.rea.values$MixOmics_res$analysis_res
     MAE_object@metadata[["mixOmics"]] <- MixOmics_res 
     
     session$userData$FlomicsMultiAssay <- MAE_object
