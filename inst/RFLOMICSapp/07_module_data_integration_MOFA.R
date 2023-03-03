@@ -107,11 +107,11 @@ MOFA_setting <- function(input, output, session, rea.values){
                                selected = "TRUE"))),
           fluidRow(
             column(12,
-                   numericInput(inputId = session$ns("MOFA_numfactor"), label="num factors :", value=10, min = 5, max=15))),
+                   numericInput(inputId = session$ns("MOFA_numfactor"), label="Num factors:", value=10, min = 5, max=15))),
           
           fluidRow(
             column(12,
-                   numericInput(inputId = session$ns("MOFA_maxiter"), label="Max iteration :", value=1000, min = 1000, max=1000))),
+                   numericInput(inputId = session$ns("MOFA_maxiter"), label="Max iteration:", value=1000, min = 1000, max=1000))),
           
           fluidRow(
             column(4, actionButton(session$ns("runMOFA"),"Run"))) ##### ACTION BUTTON
@@ -162,7 +162,7 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     
     # check nbr of contrast 
-    # if less then 1 -> error message
+    # if less than 1 -> error message
     if(length(input$MOFA_selectedContrasts) == 0){
       showModal(modalDialog( title = "Error message", "Select at least one contast!"))
     }
@@ -223,7 +223,7 @@ MOFA_setting <- function(input, output, session, rea.values){
     session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_untrained"]] <- listResMOFA$MOFAObject.untrained
     # session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_warnings"]] <- warnings
     session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_results"]] <- listResMOFA$MOFAObject.trained
-
+    
     local.rea.values$runMOFA   <- TRUE
     
     #---- progress bar ----#
@@ -315,17 +315,17 @@ MOFA_setting <- function(input, output, session, rea.values){
                               
                               ggplot_list <- list()
                               for(i in min(input$WeightsPlot_Factors_select):max(input$WeightsPlot_Factors_select)){
-                                for(j in views_names(resMOFA)){
-                                  ggplot_list[[length(ggplot_list)+1]] <- plot_weights(resMOFA,
-                                                                                       view = j,
-                                                                                       factor = i,
-                                                                                       nfeatures = input$nfeat_choice_WeightsPlot,
-                                                                                       scale = input$scale_choice_WeightsPlot) + ggtitle(paste0(j, " - Factor ", i))
+                                for(j in MOFA2::views_names(resMOFA)){
+                                  ggplot_list[[length(ggplot_list)+1]] <- MOFA2::plot_weights(resMOFA,
+                                                                                              view = j,
+                                                                                              factor = i,
+                                                                                              nfeatures = input$nfeat_choice_WeightsPlot,
+                                                                                              scale = input$scale_choice_WeightsPlot) + ggtitle(paste0(j, " - Factor ", i))
                                 }
                               }
                               
                               ggpubr::ggarrange(plotlist = ggplot_list,
-                                                ncol = length(views_names(resMOFA)),
+                                                ncol = length(MOFA2::views_names(resMOFA)),
                                                 nrow = (max(input$WeightsPlot_Factors_select)-min(input$WeightsPlot_Factors_select)+1))
                               
                             }, execOnResize = TRUE) # width = 60, height = plot_height(), 
@@ -560,25 +560,6 @@ MOFA_setting <- function(input, output, session, rea.values){
                    fluidRow(
                      column(12,
                             renderPlot({
-                              # TODO delete
-                              # # load("inst/ExamplesFiles/FlomicsMultiAssay.RData")
-                              # # load("inst/ExamplesFiles/Flomics.MAE_221130.RData")
-                              # local.rea.values <- list() ; input <- list()
-                              # resMOFA <- FlomicsMultiAssay@metadata$MOFA$MOFA_results
-                              # input$factor_choice_network <- 1
-                              # input$abs_weight_network <- 0.5
-                              # input$network_layout <- "Circle"
-                              # input$abs_min_cor_network <- 0.5
-                              # input$posCol <- "red"
-                              # input$negCol <- "green"
-                              # input$colors_proteomics.set1.filtred <- RColorBrewer::brewer.pal(5, "Blues")
-                              # input$colors_metabolomics.set2.filtred <- RColorBrewer::brewer.pal(5, "Oranges")
-                              # input$colors_proteomics.set1.filtred <- "Blues"
-                              # input$colors_metabolomics.set2.filtred <- "Oranges"
-                              # # input$colors_RNAseq.set1.filtred <- RColorBrewer::brewer.pal(5, "Blues")
-                              # # input$colors_proteomics.set2.filtred <- RColorBrewer::brewer.pal(5, "Oranges")
-                              # # input$colors_metabolomics.set3.filtred <- RColorBrewer::brewer.pal(5, "Purples")
-                              # TODO end delete
                               
                               # Correlation matrix is done on all ZW, not on the selected factor. 
                               data_reconst_list <- lapply(MOFA2::get_weights(resMOFA), FUN = function(mat){
@@ -644,7 +625,6 @@ MOFA_setting <- function(input, output, session, rea.values){
                                     ggplot2::geom_tile(fill = legend.reshape$value) + xlab("") + ylab("") + 
                                     theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(), 
                                                        axis.ticks.y = element_blank(),
-                                                       # axis.text.y = element_blank(),
                                                        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
                                   
                                   gg.legend <- ggpubr::ggarrange(gg.legend, nrow = 3, ncol = 1) 
