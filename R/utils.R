@@ -1863,33 +1863,29 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
 #'
 
 filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
-  # SEobject <- FlomicsMultiAssay@ExperimentList$proteomics.set1.filtred
-  # SEobject <- object@ExperimentList[[grep("RNAseq", names(object@ExperimentList))]]
-  # contrasts_arg = c("H1", "H2")
-  # type = "intersection"
-  # contrasts_arg = c("(temperatureLow - temperatureElevated)", "(temperatureMedium - temperatureLow)")
-  # SEobject@metadata[["integration_contrasts"]] <- contrasts
+
+  # 03/03/2023 : change contrasts for Validcontrasts
   
-  tabCorresp <- SEobject@metadata$DiffExpAnal$contrasts %>% dplyr::select(contrastName, tag)
-  if("all" %in% contrasts_arg)   contrasts_arg <- SEobject@metadata$DiffExpAnal$contrasts$contrastName
+  tabCorresp <- SEobject@metadata$DiffExpAnal$Validcontrasts %>% dplyr::select(contrastName, tag)
+  if("all" %in% contrasts_arg)   contrasts_arg <- SEobject@metadata$DiffExpAnal$Validcontrasts$contrastName
   
   tabCorresp <- tabCorresp %>% dplyr::filter(contrastName %in% contrasts_arg)
   contrasts_select <- tabCorresp$tag
   
   tab1 <- SEobject@metadata$DiffExpAnal$mergeDEF %>%
-    dplyr::select(all_of(c("DEF", contrasts_select)))
+    dplyr::select(any_of(c("DEF", contrasts_select)))
   
   if(type == "intersection"){
     
     DETab <- tab1 %>%
-      mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
-      filter(SUMCOL==length(contrasts_select))
+      dplyr::mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
+      dplyr::filter(SUMCOL==length(contrasts_select))
     
   }else{
     
     DETab <- tab1 %>%
-      mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
-      filter(SUMCOL>=1)
+      dplyr::mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
+      dplyr::filter(SUMCOL>=1)
   }
   
   SEobject <- SEobject[DETab$DEF,]
@@ -1920,7 +1916,7 @@ rbe_function = function(object, SEobject){
   
   colBatch <- names(object@metadata$design@Factors.Type)[object@metadata$design@Factors.Type=="batch"]
   
-  print(paste0("#     =>Correction for Batch: ", paste(colBatch, collapse = " ")))
+  print(paste0("#     =>Correction for Batch: ", paste(colBatch, collapse = " "), " in ", SEobject@metadata$omicType))
   
   newFormula <- gsub(pattern = paste(colBatch, collapse = "[+]|"), "", object@metadata$design@Model.formula)
   newFormula <- gsub(pattern = "~ [+] ", "~ ", newFormula)

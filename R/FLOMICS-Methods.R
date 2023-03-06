@@ -535,10 +535,12 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
       stop("samples in omics data could be matched to experimental design")
     }
     
-    if(length(sample.intersect) < length(row.names(ExpDesign))){
-      
-      message("more than half of samples don't match to experimental design")
-    }
+    ##### Comment : 01/03/2023 : 
+    # TODO : uncomment !!!! 
+    # if(length(sample.intersect) < length(row.names(ExpDesign))){
+    #   
+    #   message("more than half of samples don't match to experimental design")
+    # }
     
     # select abundance from design table
     abundance <- dplyr::select(abundance, all_of(sample.intersect))
@@ -2279,8 +2281,10 @@ methods::setMethod(f="prepareForIntegration",
                        DGEObject = DGEList(counts = assayTransform,
                                            norm.factors = rnaDat@metadata$Normalization$coefNorm$norm.factors,
                                            lib.size = rnaDat@metadata$Normalization$coefNorm$lib.size,
-                                           samples = object@metadata$design@ExpDesign)
-                       limmaRes <- limma::voom(DGEObject, design = designMat)
+                                           samples = object@metadata$design@ExpDesign %>% 
+                                             dplyr::filter(row.names(object@metadata$design@ExpDesign) %in% colnames(assayTransform))
+                                           )
+                       limmaRes <- limma::voom(DGEObject, design = designMat[which(rownames(designMat) %in%  colnames(assayTransform)),]) 
                        
                        SummarizedExperiment::assay(rnaDat) <- limmaRes$E
                        rnaDat@metadata[["transform_results_all"]] <- limmaRes # changer l'appellation
@@ -2297,7 +2301,7 @@ methods::setMethod(f="prepareForIntegration",
                      
                      
                      # Transformation of proteomics/metabolomics data
-                     res <- lapply(omicsToIntegrate[omicsToIntegrate!="RNAseq"], FUN = function(omicName){
+                     res <- lapply(omicsToIntegrate[!grepl("RNAseq", omicsToIntegrate)], FUN = function(omicName){
                        # omicName = "proteomics"
                        
                        omicsDat <- object@ExperimentList[[grep(omicName, names(object@ExperimentList))]]
@@ -2363,6 +2367,7 @@ methods::setMethod(f="run_MOFA_analysis",
                      
                      data_opts$scale_views <- scale_views
                      train_opts$maxiter <- maxiter
+                     train_opts$verbose <- FALSE
                      model_opts$num_factors <- num_factors
                      
                      MOFAObject.untrained <- MOFA2::prepare_mofa(
