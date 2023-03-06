@@ -2301,7 +2301,7 @@ methods::setMethod(f="prepareForIntegration",
                      
                      
                      # Transformation of proteomics/metabolomics data
-                     res <- lapply(omicsToIntegrate[omicsToIntegrate!="RNAseq"], FUN = function(omicName){
+                     res <- lapply(omicsToIntegrate[!grepl("RNAseq", omicsToIntegrate)], FUN = function(omicName){
                        # omicName = "proteomics"
                        
                        omicsDat <- object@ExperimentList[[grep(omicName, names(object@ExperimentList))]]
