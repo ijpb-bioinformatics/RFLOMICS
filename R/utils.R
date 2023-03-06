@@ -1916,7 +1916,7 @@ rbe_function = function(object, SEobject){
   
   colBatch <- names(object@metadata$design@Factors.Type)[object@metadata$design@Factors.Type=="batch"]
   
-  print(paste0("#     =>Correction for Batch: ", paste(colBatch, collapse = " ")))
+  print(paste0("#     =>Correction for Batch: ", paste(colBatch, collapse = " "), " in ", SEobject@metadata$omicType))
   
   newFormula <- gsub(pattern = paste(colBatch, collapse = "[+]|"), "", object@metadata$design@Model.formula)
   newFormula <- gsub(pattern = "~ [+] ", "~ ", newFormula)
