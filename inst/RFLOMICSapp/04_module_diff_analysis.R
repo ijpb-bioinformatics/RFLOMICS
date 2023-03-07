@@ -423,7 +423,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                    )
             ),
             column(width = 2,
-                   checkboxInput(session$ns(paste0("checkbox_", vect[["tag"]])), "OK", value = FALSE)) 
+                   checkboxInput(session$ns(paste0("checkbox_", vect[["tag"]])), "OK", value = TRUE)) 
           )
         }
       })
