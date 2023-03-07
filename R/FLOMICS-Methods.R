@@ -1557,13 +1557,21 @@ methods::setMethod(f="boxplot.DE.plot",
                      
                      # check variable name
                      if(is.null(DE) | DE == "" | length(DE) !=1){
-                       stop("set variable name")
+                       message("set variable name")
+                       
+                       p <- ggplot() + theme_void() + ggtitle("set variable name") 
+                       
+                       return(p)
                      }
                      
                      # check presence of variable in SE
                      object.DE <- tryCatch(object[DE], error = function(e) e)
                      if(!is.null(object.DE$message)){
-                       stop(object.DE$message)
+                       message(object.DE$message)
+                       
+                       p <- ggplot() + theme_void() + ggtitle(object.DE$message) 
+                       
+                       return(p)
                      }
                      
                      switch (object.DE@metadata$omicType,
@@ -1660,7 +1668,7 @@ methods::setMethod(f="boxplot.DE.plot",
                      #geom_point(alpha = 1/100,size=0)
                      
                      
-                     print(p)
+                     return(p)
                      
                    }
 )

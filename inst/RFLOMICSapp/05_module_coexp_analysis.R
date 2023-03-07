@@ -327,7 +327,8 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                                                    choices  = c("groups", factors.bio), selected = "groups"),
                                       # selectInput(inputId = session$ns("observations"), label = "Observations(prob)",
                                       #             choices = cluster.comp[[input$selectCluster]], multiple = FALSE, selectize = FALSE, size = 5))
-                                      uiOutput(session$ns("observationsUI")))
+                                      uiOutput(session$ns("observationsUI"))
+                                  )
                            ),
                            column(9, 
                                   renderPlot({ 
@@ -360,9 +361,10 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
 
     choices <- rownames(assays.data)
     names(choices) <- paste0(choices, " (",assays.data[,clustr_num], ")")
-
-    selectInput(inputId = session$ns("observations"), label = "Observations(prob)",
-                choices = choices, multiple = FALSE, selectize = FALSE, size = 5)
+    
+    selectizeInput(
+      inputId = session$ns("observations"), label = "Observations(prob)",
+      choices = choices, multiple = FALSE)
   })
   
   ## summary

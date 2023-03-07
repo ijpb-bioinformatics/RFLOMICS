@@ -394,19 +394,25 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                          ### boxplot DE ###
                          tabPanel("boxplot DE",
                                   fluidRow(
-                                    column(3,
-                                           selectInput(
+                                    column(width = 3,
+                                           # selectInput(
+                                           #   inputId = session$ns(paste0(vect["contrastName"], "-DE")), label = "Select DE:",
+                                           #   choices = rownames(dplyr::arrange(dataset.SE@metadata$DiffExpAnal$TopDEF[[vect["contrastName"]]], Adj.pvalue)),
+                                           #   multiple = FALSE, selectize = FALSE,
+                                           #   size = 5 ),
+                                           
+                                           selectizeInput(
                                              inputId = session$ns(paste0(vect["contrastName"], "-DE")), label = "Select DE:",
                                              choices = rownames(dplyr::arrange(dataset.SE@metadata$DiffExpAnal$TopDEF[[vect["contrastName"]]], Adj.pvalue)),
-                                             multiple = FALSE, selectize = FALSE, 
-                                             size = 5 ),
+                                             multiple = FALSE),
+                                           
                                            #RadioButtonsConditionUI(session$ns(paste0(vect["contrastName"],"-DEcondition")))
                                            radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-DEcondition")),
                                                         label = 'Levels :',
                                                         choices = c("groups",factors.bio),
                                                         selected = factors.bio[1])
                                            ),
-                                    column(9,
+                                    column(width = 9,
                                            renderPlot({
                                              boxplot.DE.plot(object=dataset.SE, DE=input[[paste0(vect["contrastName"], "-DE")]], 
                                                              condition=input[[paste0(vect["contrastName"], "-DEcondition")]]) })
@@ -416,7 +422,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                        )
                    )
             ),
-            column(2,
+            column(width = 2,
                    checkboxInput(session$ns(paste0("checkbox_", vect[["tag"]])), "OK", value = FALSE)) 
           )
         }
