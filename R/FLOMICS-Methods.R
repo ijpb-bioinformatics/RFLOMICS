@@ -697,9 +697,9 @@ methods::setMethod(f="Library_size_barplot.plot",
                      }
                      
                      libSizeNorm <-  dplyr::full_join(object@metadata$Groups, data.frame ("value" = pseudo , "samples"=names(pseudo)), by="samples") %>%
-                       dplyr::group_by(groups)
+                       dplyr::arrange(groups)
                      
-                     libSizeNorm$samples <- factor(libSizeNorm$samples, levels = libSizeNorm$samples)
+                     libSizeNorm$samples <- factor(libSizeNorm$samples, levels = unique(libSizeNorm$samples))
                      
                      p <- ggplot(libSizeNorm, aes(x=samples, y=value, fill=groups)) + geom_bar( stat="identity" ) + ylab(ylab) +
                        theme(axis.text.x      = element_text(angle = 45, hjust = 1), legend.position  = "none") + labs(x = "", y = "Total read count per sample") + ggtitle(title)
