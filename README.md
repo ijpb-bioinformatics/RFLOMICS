@@ -21,9 +21,9 @@ RFLOMICS currently supports up to three types of omics: RNAseq, proteomics, and 
 - It can deal with **multi-factorial experiments** (up to 3 biological factors).
 - It can allows the remote computing for time/cpu consuming tasks **(clustermq package)**
 
-## Locally installation
+## Locally installation (single omics analysis)
 
-Download from https://forgemia.inra.fr/flomics/rflomics/-/tree/develop
+Download from https://forgemia.inra.fr/flomics/rflomics/-/tree/v0.1
 
 ``` {.r}
 install.packages("rflomics.tar.gz", repos = NULL, type = "source")
@@ -33,7 +33,7 @@ Or
 
 Clone from forgemia repository
 ```
-git clone -branch  develop  https://forgemia.inra.fr/flomics/rflomics.git
+git clone -branch  v0.1  https://forgemia.inra.fr/flomics/rflomics.git
 ```
 
 ``` {.r}
