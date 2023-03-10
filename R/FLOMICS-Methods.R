@@ -1876,8 +1876,8 @@ methods::setMethod(f="coseq.profile.plot",
                          geom_line( data = df, aes(x=groups, y=mean.y_profiles), color="red", group = 1) +
                          ggtitle(paste0("Cluster : ",numCluster, "; nb_observations : ",dim(assays.data)[1], "; red : ", observation))
                      }
--                     
-                     return(p)
+                     -                     
+                       return(p)
                    })
 
 
@@ -1899,9 +1899,9 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                    
                    definition <- function(object, 
                                           list_args = list(),
-                                          from = "DiffExpAnal",
-                                          dom.select = "custom",
-                                          Domain = NULL, annotation = NULL){
+                                          from = "DiffExpAnal", dom.select = "custom", Domain = "no-domain"){
+                     
+                     EnrichAnal <- list()
                      
                      # "Retrieving the lists of DE entities")
                      switch (from,
@@ -1926,6 +1926,8 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                      list_args$minGSSize    <- 10 # default in clusterprofiler
                      list_args$maxGSSize    <- 500 # default in clusterprofiler
                      list_args$universe     <- names(object)
+                     annotation <- list_args$annotation
+                     list_args$annotation <- NULL
                      
                      # for each list
                      results_list <- lapply(names(geneLists), FUN = function(listname){
@@ -1966,30 +1968,43 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                      })
                      names(results_list) <- names(geneLists)
                      
-                     
-                     EnrichAnal <- list()
-                     
                      ## summary
+                     
+                     # after filter
+                     #          BP  MF  CC
+                     # case1    10  22  4
+                     # case2    0   20  5
+                     # case3    0   0   0
+                     # case4    NA  10  3
+                     # case5    NA  NA  NA
+                     
+                     
                      overview_list <- list()
+                     term.list <- list()
                      for(listname in names(results_list)){
+                       
                        for(ont in names(results_list[[listname]])){
                          
                          if(!is.null(results_list[[listname]][[ont]])){
                            
                            res <- results_list[[listname]][[ont]]@result
-                           overview_list[[listname]][[ont]] <- nrow(res[res$p.adjust < list_args$pvalueCutoff,])
+                           res.n <- nrow(res[res$p.adjust < list_args$pvalueCutoff,])
+                           overview_list[[listname]][[ont]] <- res.n
                            
-                           if(overview_list[[listname]][[ont]] == 0){
-                             
-                             results_list[[listname]][[ont]] <- NULL
-                           }
+                           if(res.n == 0){ results_list[[listname]][[ont]]  <- NULL}
+                           else{ 
+                             term.list[[ont]][[listname]] <- data.frame(term = row.names(res[res$p.adjust < list_args$pvalueCutoff,]),
+                                                                        bin = rep(1, res.n)) 
+                             names(term.list[[ont]][[listname]]) <- c("term", listname)
+                             }
                          }
-                         else{
-                           overview_list[[listname]][[ont]] <- 0
-                           results_list[[listname]][[ont]] <- NULL
+                         else{  # case4
+                           #overview_list[[listname]][[ont]] <- NA
+                           results_list[[listname]][[ont]]  <- NULL
                          }
                        }
                      }
+                     EnrichAnal[["upset"]][[ont]] <- term.list[[ont]] %>% purrr::reduce(full_join, by = "term")
                      
                      if(length(overview_list) == 0){
                        
@@ -1997,9 +2012,11 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                      }
                      else{
                        dt_res <- as.data.frame(do.call("rbind", overview_list))
-                       dt_res <- dt_res %>% dplyr::mutate(Contrast = rownames(dt_res)) %>% dplyr::relocate(Contrast)
-                       
-                       EnrichAnal[["summary"]] <- dt_res
+                       if(!any(is.na(dt_res[,-1]))){
+                         
+                         dt_res <- dt_res %>% dplyr::mutate(Contrast = rownames(.)) %>% dplyr::relocate(Contrast)
+                         EnrichAnal[["summary"]] <- dt_res
+                       }
                      }
                      
                      EnrichAnal[["list_args"]]    <- list_args[names(list_args) %in% c("universe", "keytype", "pvalueCutoff", "qvalueCutoff", "OrgDb")]
@@ -2013,8 +2030,6 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                        
                        object@metadata[["CoExpEnrichAnal"]][[dom.select]] <- EnrichAnal
                      }
-                     
-                     print(names(object@metadata[["DiffExpEnrichAnal"]][[dom.select]]))
                      
                      return(object)
                    })
@@ -2291,7 +2306,7 @@ methods::setMethod(f="prepareForIntegration",
                                            lib.size = rnaDat@metadata$Normalization$coefNorm$lib.size,
                                            samples = object@metadata$design@ExpDesign %>% 
                                              dplyr::filter(row.names(object@metadata$design@ExpDesign) %in% colnames(assayTransform))
-                                           )
+                       )
                        limmaRes <- limma::voom(DGEObject, design = designMat[which(rownames(designMat) %in%  colnames(assayTransform)),]) 
                        
                        SummarizedExperiment::assay(rnaDat) <- limmaRes$E
