@@ -1,7 +1,7 @@
 ---
-title: "`r params$title` project"
-author: "Analyzes performed by RFLOMICS package"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+title: "`r params$title`"
+author: "Analyzis were performed by the RFLOMICS package (cite)"
+date: "The `r format(Sys.time(), '%d %B, %Y')`"
 bibliography: bibliography.bib
 output: 
   html_document:
@@ -48,6 +48,29 @@ projectName <- params$title
 # user may download this results as an archive from the shiny interface
 dir.create(path=outDir)
 ```
+
+<!-- enable to zoom by clicking on graphs in the report -->
+
+```{css zoom-lib-src, message=FALSE, warning=FALSE, echo=FALSE}
+### ZOOM 
+script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+```
+
+```{js zoom-jquery, message=FALSE, warning=FALSE, echo=FALSE}
+ $(document).ready(function() {
+    $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+    // onClick function for all plots (img's)
+    $('img:not(.zoomImg)').click(function() {
+      $('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+      $('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
+    });
+    // onClick function for zoomImg
+    $('img.zoomImg').click(function() {
+      $('.zoomDiv').css({opacity: '0', width: '0%'}); 
+    });
+  });
+```
+
 
 
 <!-- Experimental design -->
@@ -102,12 +125,15 @@ knitr::asis_output(out)
 
 # R Session
 
-```{r session, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE, message=TRUE, warning=TRUE}
-devtools::session_info()
+See **session_info.txt** files in the results directory.
+
+```{r session, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE}
+writeLines(capture.output(devtools::session_info()),  paste0(outDir,"/","session_info.txt"))
 ```
 
 
 # Bibliographie
 
+<div id="refs"></div>
 
 

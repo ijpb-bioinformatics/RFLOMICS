@@ -7,64 +7,68 @@ dir.create(path=coexpDir)
 knitr::opts_chunk$set(
   fig.path=coexpDir
 )
+
+isResults <- dataset.SE@metadata$CoExpAnal[["results"]]
 ```
 
+`r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
+Co-expression analysis strategy was adapted from @Lambert2020ta
+`r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
 
 Co-expression analysis was carried out on the `r dataset.SE@metadata[["CoExpAnal"]]$merge.type`
-of the following list of gene `r dataset.SE@metadata$CoExpAnal$gene.list.names`. 
-`r dataset.SE@metadata[["CoExpAnal"]]$tools` was used to cluster genes. 
+of the following list of `r omics.dic[[omictype]][["variableName"]]`  `r dataset.SE@metadata$CoExpAnal$gene.list.names`. 
+`r dataset.SE@metadata[["CoExpAnal"]]$tools` was used to cluster the `r omics.dic[[omictype]][["variableName"]]`. 
 The gaussian mixture model was run on filtered (meanFilterCutoff was set to: `r dataset.SE@metadata[["CoExpAnal"]]$meanFilterCutoff`), 
-normalised (normalisation method was `r dataset.SE@metadata[["CoExpAnal"]]$normFactors`) 
+normalized (normalization method was `r dataset.SE@metadata[["CoExpAnal"]]$normFactors`) 
 and transformed (transformation method: `r dataset.SE@metadata[["CoExpAnal"]]$transformation`) count data.
 `r dataset.SE@metadata[["CoExpAnal"]]$replicates.nb` technical replicates were performed for each K in `r dataset.SE@metadata[["CoExpAnal"]]$K.range` (K=number of clusters). 
 The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
 was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
 
 
+`r if(isResults == TRUE) {"\\begin{comment}"}`
+No clustering results.
+`r if(isResults == TRUE) {"\\end{comment}"}`
+
+
 ### ICL 
 
 
-```{r ICL, echo=FALSE}
+```{r , echo=FALSE, eval=isResults}
 plot.coseq.res <- dataset.SE@metadata[["CoExpAnal"]]$plots
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$ICL 
 ```
 
-
-### profiles  
-
-```{r profiles, echo=FALSE}
-par(mar = c(4, 4, .5, .1))
-plot.coseq.res$profiles 
-```
-
 ### boxplots
 
-```{r boxplots_profile, echo=FALSE}
+```{r , echo=FALSE, eval=isResults}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$boxplots
 ```
 
 ### probapost_boxplots 
 
-```{r boxplots_proba, echo=FALSE}
+```{r , echo=FALSE, eval=isResults}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$probapost_boxplots 
 ```
 
 ### probapost_barplots
 
-```{r barplots_probapost, echo=FALSE}
+```{r , echo=FALSE, eval=isResults}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$probapost_barplots
 ```
 
-### probapost_barplots
 
-```{r histogram_probapost, echo=FALSE}
-par(mar = c(4, 4, .5, .1))
-plot.coseq.res$probapost_histogram
-```   
+```{r,echo = FALSE, eval=isResults}
+#tab.clusters <- as.data.frame(ifelse(dataset.SE@metadata$CoExpAnal$coseqResults@allResults[[dataset.SE@metadata$CoExpAnal$cluster.nb]] > 0.5, 1,0))
+tab.clusters <- as.data.frame(dataset.SE@metadata$CoExpAnal$coseqResults@allResults[[dataset.SE@metadata$CoExpAnal$cluster.nb]])
+tab.clusters <-  tibble::rownames_to_column(tab.clusters,var="DEF")
+      
+write.table(tab.clusters,
+             file=paste0(coexpDir,"Table_of_DE_",omics.dic[[omictype]][["variableName"]],"_per_cluster",".txt"),
+             sep="\t",quote=FALSE,col.names=TRUE,row.names=FALSE)
 
-
-
+```

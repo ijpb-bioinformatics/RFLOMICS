@@ -23,48 +23,17 @@ knitr::opts_chunk$set(
 )
 ```
 
-
-
-
-<br>
 <br>
 <br>
 
-# 1. Install RFLOMICS via Docker:
-
-* install Docker
-
-https://docs.docker.com/engine/install/
-
-* Get the Dockerfile
+# 1. Run RFLOMICS
 
 ```{bash, eval=FALSE}
-https://forgemia.inra.fr/flomics/rflomics/-/blob/develop.0.1/Dockerfile
+library(RFLOMICS)
+RFLOMICS::runExample()
 ```
-
-* Build the Docker Image
-
-```{bash, eval=FALSE}
-docker build --file=Dockerfile --tag=rflomics .
-```
-
-* Run Docker
-
-```{bash, eval=FALSE}
-docker run -it -p 3838:3838 -v ${HOME}:/root --name='rflomics' --cpus 4 rflomics
-```
-
-* Open a web navigator and paste this url: 
-
-```{bash, eval=FALSE}
-http://0.0.0.0:3838
-```
-
-
 
 On the left side of interface, the different tab menu will appear as the analysis progresses to guide the user.
-
-
 
 # 2. Load Data
 
@@ -225,13 +194,38 @@ Then we select a lists of DGEs and clusters to annotate. By default the annotati
 
 ![ ](Images/capture_annotation.png){width=80%}
 
+## 4-5 Annotation and Enrichment analysis using clusterProfilR
+
+<p style='text-align: justify;'> We select the lists of DE genes or clusters to annotate. All available lists are selected by default. 
+
+<p style='text-align: justify;'> The enrichment analysis is performed using the [clusterProfiler R-package](https://www.sciencedirect.com/science/article/pii/S2666675821000667). For more information on the methods and the package, please see [The article](https://www.sciencedirect.com/science/article/pii/S2666675821000667), [Bioconductor Package](https://bioconductor.org/packages/release/bioc/html/clusterProfiler.html) and the [clusterProfiler Vignette](https://yulab-smu.top/biomedical-knowledge-mining-book/). 
+
+You can chose between several domains, depending on several parameters: 
+
+* custom: preferred option. A second panel of settings will ask for an annotation file (tabulated, at least two columns, one for the name of the gene, the other for the name or id of the annotation term) and a third panel will allow the user to indicate which columns indicates what. You can have as many domains/ontology as you want, just indicate the columns name that differentiate them in the right area;
+* GO (or GO:BP, GO:CC, GO:MF if only one GO domain is of interest). The user will have to chose a database library (org.*.db) installed on the libPath and the keytype of the entities (to make the connection with the annotation).  
+* KEGG: In the second setting panel, enter the three letters to identify the organism and the keytype of the entities. It requires to have an online connection. 
+
+Once everything is set and the analysis is conducted, several panels are displayed to show the results. 
+
+* Overview: shows a table with all results for all lists analyzed, for all domains (i.e. the number of terms found enriched). The light blue line indicates the current enrichment. 
+* Result Table: Details of the term for the current list. You can change the domain at the bottom.
+* DotPlot: shows the first XX terms of a specified domain ordered by adjusted p-values. 
+* Heatplot: shows the first XX terms (by adjusted pvalues), the involved genes in a heatmap. Colors are set according to the log2FC if the list is based on a differential analysis results or left gray if it is from coseq analysis. 
+* cnetplot: shows the first XX terms (by adjusted pvalues) in beige nodes and the involved genes in the form of a network. Colors are set according to the log2FC if the list is based on a differential analysis results or left gray if it is from coseq analysis. 
+
+<p style='text-align: justify;'>For most of the results, you can adjust the number of terms to plot and search for an expression to retrieve specific enriched terms. 
+
+![Results of the analysis for multiple lists](Images/Image_clusterprof1.png){width=80%}
+
+![Results displayed when using a differential analysis list](Images/Image2_clusterprof2.png){width=80%}
 
 # 5. Integration
 
-<p style='text-align: justify;'> Once at least two lists of DE genes are validated in the differental analysis tabs, the Integration step will appear in the side bar menu. Three sub menus are available. </p>
+<p style='text-align: justify;'> Once at least two lists of DE genes are validated in the differential analysis tabs, the Integration step will appear in the side bar menu. Three sub menus are available. </p>
 
 ## 5-1 Dataset analysis summary 
-<p style='text-align: justify;'> This panel summarizes the effects of the filtering steps on the selected datasets and the results of the differential anlayses. The first row shows how many samples and entities are left in each table. The integration will be performed on these datasets. 
+<p style='text-align: justify;'> This panel summarizes the effects of the filtering steps on the selected datasets and the results of the differential analyses. The first row shows how many samples and entities are left in each table. The integration will be performed on these datasets. 
 The second row shows the number of DE entities for each selected contrast and for each table, with the distinction between up-regulated and down-regulated entities. </p>
 
 ## 5-2 MOFA

@@ -101,23 +101,23 @@ shinyServer(function(input, output, session) {
         itemsOmics,
         list(
 
-          # #### analysis summary ####
-          # ########################
-          # tabItem(tabName = "omicsSum",
-          #         uiOutput(outputId = "omicsSum_UI")
-          # ),
+          #### analysis summary ####
+          ########################
+          tabItem(tabName = "omicsSum",
+                  uiOutput(outputId = "omicsSum_UI")
+          ),
 
-          # #### MOFA ####
-          # ########################
-          # tabItem(tabName = "withMOFA",
-          #         uiOutput(outputId = "withMOFA_UI")
-          # ),
-          # #### MixOmics ####
-          # ########################
-          # tabItem(tabName = "withMixOmics",
-          #         # h5("in coming :)")
-          #         uiOutput(outputId = "withMixOmics_UI") #### CHANGED 15/09/2022
-          # )
+          #### MOFA ####
+          ########################
+          tabItem(tabName = "withMOFA",
+                  uiOutput(outputId = "withMOFA_UI")
+          ),
+          #### MixOmics ####
+          ########################
+          tabItem(tabName = "withMixOmics",
+                  # h5("in coming :)")
+                  uiOutput(outputId = "withMixOmics_UI") #### CHANGED 15/09/2022
+          )
         )
 
       )
@@ -161,10 +161,17 @@ shinyServer(function(input, output, session) {
                 ),
                 #### enrichment analysis  ####
                 ######################################
+                # tabPanel("Annotation Enrichment",
+                #          tags$br(),
+                #          tags$br(),
+                #          AnnotationEnrichmentUI(paste0("RNAseq",i))
+                # ),
+                #### enrichment analysis  CPR ####
+                ######################################
                 tabPanel("Annotation Enrichment",
                          tags$br(),
                          tags$br(),
-                         AnnotationEnrichmentUI(paste0("RNAseq",i))
+                         AnnotationEnrichmentClusterProfUI(paste0("RNAseq",i))
                 )
               )
             })},
@@ -196,11 +203,18 @@ shinyServer(function(input, output, session) {
                 ),
                 #### enrichment analysis  ####
                 ######################################
-                tabPanel("Annotation Enrichment",
-                         tags$br(),
-                         tags$br(),
-                         AnnotationEnrichmentUI(paste0("proteomics",i))
-                )
+                # tabPanel("Annotation Enrichment",
+                #          tags$br(),
+                #          tags$br(),
+                #          AnnotationEnrichmentUI(paste0("proteomics",i))
+                # ),
+                #### enrichment analysis CPR ####
+                ######################################
+                # tabPanel("Annotation Enrichment",
+                #          tags$br(),
+                #          tags$br(),
+                #          AnnotationEnrichmentClusterProfUI(paste0("proteomics",i))
+                # )
               )
             })},
             "metabolomics" = {output[[paste0("metabolomicsAnalysisUI", i)]] <- renderUI({
@@ -245,22 +259,22 @@ shinyServer(function(input, output, session) {
     })
 
 
-    # #### MOFA data integration ####
-    # ###############################
-    # output$withMOFA_UI <- renderUI({
-    # 
-    #   MOFA_settingUI("mofaSetting")
-    # 
-    # })
-    
-    # ### ADDED 15/09/22
-    # #### MixOmics data integration ####
-    # ###################################
-    # output$withMixOmics_UI <- renderUI({
-    #   
-    #   MixOmics_settingUI("mixomicsSetting")
-    #   
-    # })
+    #### MOFA data integration ####
+    ###############################
+    output$withMOFA_UI <- renderUI({
+
+      MOFA_settingUI("mofaSetting")
+
+    })
+
+    ### ADDED 15/09/22
+    #### MixOmics data integration ####
+    ###################################
+    output$withMixOmics_UI <- renderUI({
+
+      MixOmics_settingUI("mixomicsSetting")
+
+    })
 
     ########################################################################
     ######################### MAIN #########################################
@@ -356,20 +370,20 @@ shinyServer(function(input, output, session) {
     #updateTabItems(session, "sbm", selected = "SetUpModelMenu")
 
 
-    # #### Item for each data integration tools #####
-    # # display tool Item
-    # output$Integration <- renderMenu({
-    # 
-    #   validate({
-    #     need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >= 2, message = "")
-    #   })
-    # 
-    #   menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'), startExpanded = FALSE,selected = FALSE,
-    #        menuSubItem(text = "Dataset analysis summary", tabName = "omicsSum" ),
-    #        menuSubItem(text = "with MOFA", tabName = "withMOFA" ),
-    #        menuSubItem(text = "with MixOmics", tabName = "withMixOmics")
-    #   )
-    # })
+    #### Item for each data integration tools #####
+    # display tool Item
+    output$Integration <- renderMenu({
+
+      validate({
+        need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >= 2, message = "")
+      })
+
+      menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'), startExpanded = FALSE,selected = FALSE,
+           menuSubItem(text = "Dataset analysis summary", tabName = "omicsSum" ),
+           menuSubItem(text = "with MOFA", tabName = "withMOFA" ),
+           menuSubItem(text = "with MixOmics", tabName = "withMixOmics")
+      )
+    })
 
     #### Item for report #####
     output$runReport <- renderUI({
@@ -410,7 +424,7 @@ shinyServer(function(input, output, session) {
 
             compCheck  = TRUE,
             message    = "",
-            
+
             DiffValidContrast = NULL,
             CoExpClusterNames = NULL,
             omicsType = omics
@@ -439,20 +453,25 @@ shinyServer(function(input, output, session) {
           ##########################################
           # Part7 : Enrichment Analysis
           ##########################################
-          callModule(module  = AnnotationEnrichment, id = paste0(omics, i),
+          # callModule(module  = AnnotationEnrichment, id = paste0(omics, i),
+          #            dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
+
+          ##########################################
+          # Part7 : Enrichment Analysis CPR
+          ##########################################
+          callModule(module  = AnnotationEnrichmentClusterProf, id = paste0(omics, i),
                      dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
-
-
+          
         })
       })
 
 
-      #callModule(module = omics_data_analysis_summary, id = "omics", rea.values = rea.values)
+      callModule(module = omics_data_analysis_summary, id = "omics", rea.values = rea.values)
 
-      #callModule(module = MOFA_setting, id = "mofaSetting", rea.values = rea.values)
-      
+      callModule(module = MOFA_setting, id = "mofaSetting", rea.values = rea.values)
+
       ### ADDED 15/09/2022
-      #callModule(module = MixOmics_setting, id = "mixomicsSetting", rea.values = rea.values)
+      callModule(module = MixOmics_setting, id = "mixomicsSetting", rea.values = rea.values)
 
     })
 
@@ -491,7 +510,7 @@ shinyServer(function(input, output, session) {
         # Set up parameters to pass to Rmd document
         print(file.path(outDir, RData.name))
         params <- list( FEdata = file.path(outDir, RData.name),
-                        title  = paste0(projectName, "project"),
+                        title  = paste0(projectName, " project"),
                         outDir = outDir)
 
         print(tempdir())
@@ -500,6 +519,8 @@ shinyServer(function(input, output, session) {
         # from the code in this app).
         rmarkdown::render(tempReport, output_file = file,
                           params = params,
+                          knit_root_dir=tempdir(),
+                          intermediates_dir=tempdir(),
                           envir = new.env(parent = globalenv()))
 
         rea.values$outdir <- dirname(file)

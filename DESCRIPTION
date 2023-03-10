@@ -2,54 +2,73 @@ Package: RFLOMICS
 Title: Interactive web application for Omics-data analysis
 Version: 0.0.0.9000
 Authors@R: 
-    c(person("Nadia", "Bessoltane",email = "nbessoltane@inrae.fr", role = c("aut", "cre")),
-    person("Delphine", "Charif", email = "dcharif@inrae.fr", role = c("aut")),
-    person("Gwendal", "Cueff", email = "ccueff@inrae.fr", role = c("aut")),
-    person("Audrey", "Hulot", email = "ahulot@inrae.fr", role = c("aut")),
-    person("Christine", "Paysant-Leroux", email = "cpaysantleroux@inrae.fr", role = c("aut")))
+    c(person("Nadia", "Bessoltane",email = "nadia.bessoltane@inrae.fr", role = c("aut", "cre")),
+    person("Delphine", "Charif", email = "delphine.charif@inrae.fr", role = c("aut")),
+    person("Gwendal", "Cueff", email = "gwendal.cueff@inrae.fr", role = c("aut")),
+    person("Audrey", "Hulot", email = "audrey.hulot@inrae.fr", role = c("aut")),
+    person("Christine", "Paysant-Leroux", email = "christine.paysant-le-roux@inrae.fr", role = c("aut")))
 Description: What the package does (one paragraph).
-Depends: R (>= 3.5.0)
+Depends: 
+    R (>= 3.5.0)
+biocViews:
 License: gpl-3 
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Suggests: 
     knitr,
     rmarkdown,
     testthat
 VignetteBuilder: knitr
 Imports: 
-    tidyr,
+    devtools,
+    shiny,
+    statmod,
+    shinydashboard,
+    shinyFiles,
+    shinyWidgets,
     shinyBS,
+    tidyr,
     reactable,
-    coseq,
     magrittr,
     tibble,
     stringr,
     purrr,
     stats,
-    SummarizedExperiment,
-    MultiAssayExperiment,
     data.table,
     methods,
     FactoMineR,
     dplyr,
-    edgeR,
-    S4Vectors,
     RColorBrewer,
     gridExtra,
     DT,
     venn,
     clustermq,
     ggplot2,
+    UpSetR,
     reshape2,
-    shiny,
     utils,
     kableExtra,
-    ComplexHeatmap,
-    EnhancedVolcano,
     ggpubr,
-    MOFA2,
     qgraph,
     colourpicker,
-    mixOmics
+    plotly,
+    pheatmap,
+    S4Vectors,
+    MultiAssayExperiment,
+    SummarizedExperiment,
+    edgeR,
+    coseq,
+    limma,
+    MOFA2,
+    mixOmics,
+    EnhancedVolcano,
+    ComplexHeatmap,
+    BiocParallel,
+    clusterProfiler,
+    pathview,
+    enrichplot,
+    AnnotationDbi,
+    org.At.tair.db,
+    vroom
+    

@@ -1,8 +1,6 @@
 # RFLOMICS : R package and Shiny interface for Integrative analysis of omics data
 
-
-# Introduction
-
+## Presentation
 
 <p style='text-align: justify;'>  The acquisition of **multi-omics data** in the context of **complex experimental design** is a widely used practice to 
 identify genes, proteins, metabolites and decipher the biological processes they are involved in. The investigation of each omics layer is a good first step to explore and extract relevant biological variability. The statistical integration could then
@@ -11,49 +9,86 @@ challenge with the needs of expert methods and parameters to take into account d
 Furthermore, applying different statistical methods from several tools is also a technical challenge in term of data management. 
 In this context, we developed RFLOMICS:  **R package coupled with a shiny application** dedicated to the management and analysis of multiple omics-datasets in the statistical framework of **vertical integration** of observations (i.e. analysis of omics data across experiments on the same individuals) see the figure below. </p>
 
-<img src="man/figures/Rflomics_Integration.png" align="center" width="600"/> 
-
-
 RFLOMICS currently supports up to three types of omics: RNAseq, proteomics, and metabolomics. 
-
-# Aims
-- Guarantee the relevance of the used methods and parameters (RNAseq workflow: [DicoExpress](https://plantmethods.biomedcentral.com/articles/10.1186/s13007-020-00611-7), [CATI Sysmics](https://sysmics.cati.inrae.fr/))
-- Ensure the reproducibility of analysis
-
-#  Features
 
 <img src="man/figures/Rflomics_features.png" align="center" width="600"/>
 
+**Aims**
+- Guarantee the relevance of the used methods and parameters (RNAseq workflow: [DicoExpress](https://plantmethods.biomedcentral.com/articles/10.1186/s13007-020-00611-7), [CATI Sysmics](https://sysmics.cati.inrae.fr/))
+- Ensure the reproducibility of analysis
+
+**Features**
 - It can deal with **multi-factorial experiments** (up to 3 biological factors).
-- It manages raw and processed (filtred, normalized) datasets **(MultiAssayExperiment package)**
 - It can allows the remote computing for time/cpu consuming tasks **(clustermq package)**
 
+## Locally installation
 
-     
-# Input
-- RNAseq (illumina data sequencing technology): matrix of gene expression based on raw reads count quantification.
+Download from https://forgemia.inra.fr/flomics/rflomics/-/tree/develop
 
-  -> gene_id in line and individuals in column
+``` {.r}
+install.packages("rflomics.tar.gz", repos = NULL, type = "source")
+```
 
-- Proteomic (LC-MS/MS mass spectrometry): matrix of protein abundances based on XIC quantification (Extracted ion chromatograms)
+Or
 
-  -> protein_id in line and individuals in column
+Clone from forgemia repository
+```
+git clone -branch  develop  https://forgemia.inra.fr/flomics/rflomics.git
+```
 
-  -> preprocessed matrix are expected for the moment (NA imputation, filtering)
+``` {.r}
+library(remotes)
 
-- Metabolomic (GC-MS mass spectrometry): matrix of metabolomic abundances based on XIC quantification (Extracted ion chromatograms)
+setwd("rflomics/")
 
-  -> metabolite_id in line and individuals in column
+remotes::install_local(upgrade="never")
+```
 
-  -> preprocessed matrix are expected for the moment (NA imputation, filtering)
+## Run rflomics
 
+``` {.r}
+library(RFLOMICS)
 
-# [Vignettes](docs/index.html)
+RFLOMICS::runRFLOMICS()
+```
 
-# Contact and support
+<!--## Install RFLOMICS via Docker
+
+* install Docker
+
+https://docs.docker.com/engine/install/
+
+* Get the Dockerfile
+
+```
+https://forgemia.inra.fr/flomics/rflomics/-/blob/develop.0.1/Dockerfile
+```
+
+* Build the Docker Image
+
+```
+docker build --file=Dockerfile --tag=rflomics .
+```
+
+* Run Docker
+
+```
+docker run -it -p 3838:3838 -v ${HOME}:/root --name='rflomics' --cpus 4 rflomics
+```
+
+* Open a web navigator and paste this url:
+
+```
+http://0.0.0.0:3838
+```
+-->
+
+### [Vignettes](https://flomics.pages.mia.inra.fr/rflomics/index.html)
+
+## Contact and support
 [ijpb-bioinfo-team](mailto:ijpb-bioinfo-team@inrae.fr)
 
-# References
+## References
 - [CATI Sysmics](https://sysmics.cati.inrae.fr/),
 - [Ilana L. et al. (2020), DiCoExpress](http://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=pubmed&id=32426025&retmode=ref&cmd=prlinks)
 - [MultiAssayExperiment package](https://bioconductor.org/packages/release/bioc/html/MultiAssayExperiment.html)

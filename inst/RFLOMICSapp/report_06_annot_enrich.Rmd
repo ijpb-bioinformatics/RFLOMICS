@@ -19,7 +19,6 @@ blabla
 
   out <- NULL
   
-
   for (listname  in  names(dataset.SE@metadata[[annot]]$results)){
       for(domain in unique(dataset.SE@metadata[[annot]]$results[[listname]]$Over_Under_Results$Domain)){
       out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_per_list_per_Domain.Rmd"), quiet=TRUE))

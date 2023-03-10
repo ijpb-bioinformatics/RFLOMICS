@@ -1,37 +1,61 @@
-# Packages
 
-library(plotly)
-library(DT)
+# shiny
+library(shiny)
+library(shinyWidgets)
+library(shinyBS)
+
+# data management
 library(magrittr)
-library(coseq)
-library(edgeR)
+library(SummarizedExperiment)
+library(MultiAssayExperiment)
 library(tibble)
 library(dplyr)
 library(tidyr)
 library(stringr)
 library(data.table)
-library(shinyWidgets)
-library(SummarizedExperiment)
-library(gridExtra)
-library(MultiAssayExperiment)
-library(FactoMineR)
-library(ggplot2)
 library(reshape2)
 library(kableExtra)
-library(shinyBS)
-library(MOFA2) 
-library(qgraph) ## ADDED August 2022
+library(DT)
+
+# graph / table
+library(plotly)
+library(gridExtra)
+library(ggplot2)
+library(qgraph)
 library(colourpicker)  ## ADDED August 2022 button to select colors
-# library(circlize) ## ADDED August 2022
-library(RColorBrewer) ## ADDED August 2022
-library(mixOmics) ## ADDED 15/09/22
+library(circlize)
+library(RColorBrewer)
+library(grid)
+library(png)
+
+# stat
+library(edgeR)
+library(FactoMineR)
+library(coseq)
+
+# enrichment
+# library(clusterProfiler)
+# library(enrichplot)
+# library(org.At.tair.db)
+# library(AnnotationDbi)
+# library(pathview)
+
+# data integration
+# library(MOFA2) 
+# library(mixOmics)
+
+# #############
+# MODULES
+
 source("00_module_common.R")
 source("01_module_load_data.R")
 source("02_module_set_stat_model.R")
 source("03_module_data_explor.R")
 source("04_module_diff_analysis.R")
 source("05_module_coexp_analysis.R")
-source("06_module_annot_enrichment.R")
+#source("06_module_annot_enrichment.R")
+
+source("06_module_annot_enrichment_clusterProf.R")
 source("07_module_data_integration_MOFA.R")
 source("08_module_data_integration_mixOmics.R") ### ADDED 15/09/2022
 source("coverPage.R")

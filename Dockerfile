@@ -65,13 +65,24 @@ RUN Rscript -e 'remotes::install_version("statmod",version="1.4.36")'
 
 WORKDIR /home
 
-RUN git clone --branch  rflomics_single_omics  https://forgemia.inra.fr/flomics/rflomics.git
+RUN git clone --branch  develop  https://forgemia.inra.fr/flomics/rflomics.git
 
 WORKDIR /home/rflomics
 
 RUN Rscript -e 'remotes::install_local(upgrade="never")'
 
 RUN echo "local(options(shiny.port = 3838, shiny.host = '0.0.0.0'))" >> /usr/local/lib/R/etc/Rprofile.site
+
+
+RUN addgroup --system rfuser \
+    && adduser --system --ingroup rfuser rfuser
+
+RUN chown -R rfuser:rfuser /home/rfuser
+
+USER rfuser
+
+WORKDIR /home/rfuser
+
 
 EXPOSE 3838
 

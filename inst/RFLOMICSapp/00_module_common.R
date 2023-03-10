@@ -47,18 +47,26 @@ RadioButtonsConditionUI <- function(id){
   )
 }
 
-RadioButtonsCondition <- function(input, output, session){
+RadioButtonsCondition <- function(input, output, session, typeFact){
 
   # select factors for color PCA plot
   output$condColor <- renderUI({
-
-    condition <- c("groups",names(session$userData$FlomicsMultiAssay@colData))
+    
+    factors <- session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% typeFact]
+    condition <- names(factors)
+    
+    if (! any(typeFact %in% "Meta")) 
+      condition <- c("groups", condition)
+    
     radioButtons(inputId = session$ns("condColorSelect"),
                  label = 'Levels :',
                  choices = condition,
-                 selected = "groups")
+                 selected = condition[1])
   })
 }
+
+
+
 
 ###### summary of all analysed data ####
 omics_data_analysis_summaryUI <- function(id){

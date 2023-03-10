@@ -293,7 +293,7 @@ AnnotationEnrichment <- function(input, output, session, dataset, rea.values){
           box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = listname, 
               
               verticalLayout(
-                renderPlot({ Enrichment.plot(dataset.SE, listNames=listname, from="CoExpEnrichAnal",
+                renderPlot({ Enrichment.plot(local.rea.values$dataset.SE, listNames=listname, from="CoExpEnrichAnal",
                                              Over_Under = input[[paste0(listname, "-Over_Under")]],
                                              top =        input[[paste0(listname, "-top.over")]],
                                              domain =     input[[paste0(listname, "-domain")]]) }),

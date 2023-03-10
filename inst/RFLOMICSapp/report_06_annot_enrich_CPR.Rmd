@@ -1,0 +1,42 @@
+
+```{r , echo=FALSE , message=FALSE, warning=FALSE}
+annotDir <- paste0(dataDir,"/","04-Enrichment_analysis_CPR/")
+dir.create(path=annotDir)
+
+knitr::opts_chunk$set(
+  fig.path=annotDir
+)
+```
+
+<br>
+
+* **Annotation of the lists of `r omics.dic[[omictype]][["variableName"]]` by `r ontology` ontology:**
+
+Enrichment of type **Overrepresentation analysis (ORA)** was carried out for each list of `r omics.dic[[omictype]][["variableName"]]` 
+thanks to the **clusterProfiler** R-package and its **enrich...** functions (@wu-a2021a).
+This function determines the overrepresented `r ontology` terms in the gene list when compared to a reference list. 
+
+**Summary:**
+
+<!-- ### summary per ontology and per contrast -->
+
+```{r ,  message=FALSE, warning=FALSE, echo=FALSE, results="asis", out.width = "50%"}
+kable_styling(kable(dataset.SE@metadata[[annot]][[ontology]]$summary, row.names=FALSE, caption=NULL, format="html"), font_size=12)
+```
+
+**Results by list(s) of `r omics.dic[[omictype]][["variableName"]]`**
+
+*Please click on the arrows to scroll down the results and click on the figure to zoom*
+
+```{r , message=FALSE, warning=FALSE, echo=FALSE}
+out <- NULL
+for (listname  in names(dataset.SE@metadata[[annot]][[ontology]]$enrichResult)){
+      out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_per_list_per_Domain_CPR.Rmd"), quiet=TRUE))
+}
+
+knitr::asis_output(out)
+```
+
+
+
+
