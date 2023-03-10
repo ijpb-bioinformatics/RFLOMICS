@@ -6,5 +6,4 @@ pages:
  artifacts:
     paths:
     - public
- only:
-    - develop
+    
