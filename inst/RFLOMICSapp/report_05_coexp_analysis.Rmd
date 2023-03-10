@@ -34,7 +34,7 @@ No clustering results.
 ### ICL 
 
 
-```{r ICL, echo=FALSE, eval=isResults}
+```{r , echo=FALSE, eval=isResults}
 plot.coseq.res <- dataset.SE@metadata[["CoExpAnal"]]$plots
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$ICL 
@@ -42,30 +42,30 @@ plot.coseq.res$ICL
 
 ### boxplots
 
-```{r boxplots_profile, echo=FALSE, eval=isResults}
+```{r , echo=FALSE, eval=isResults}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$boxplots
 ```
 
 ### probapost_boxplots 
 
-```{r boxplots_proba, echo=FALSE, eval=isResults}
+```{r , echo=FALSE, eval=isResults}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$probapost_boxplots 
 ```
 
 ### probapost_barplots
 
-```{r barplots_probapost, echo=FALSE, eval=isResults}
+```{r , echo=FALSE, eval=isResults}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$probapost_barplots
 ```
 
 
-```{r export,echo = FALSE, eval=isResults}
+```{r,echo = FALSE, eval=isResults}
 #tab.clusters <- as.data.frame(ifelse(dataset.SE@metadata$CoExpAnal$coseqResults@allResults[[dataset.SE@metadata$CoExpAnal$cluster.nb]] > 0.5, 1,0))
-tab.clusters <- dataset.SE@metadata$CoExpAnal$coseqResults@allResults[[dataset.SE@metadata$CoExpAnal$cluster.nb]]
-tab.clusters <-  rownames_to_column(tab.clusters,var="DEF")
+tab.clusters <- as.data.frame(dataset.SE@metadata$CoExpAnal$coseqResults@allResults[[dataset.SE@metadata$CoExpAnal$cluster.nb]])
+tab.clusters <-  tibble::rownames_to_column(tab.clusters,var="DEF")
       
 write.table(tab.clusters,
              file=paste0(coexpDir,"Table_of_DE_",omics.dic[[omictype]][["variableName"]],"_per_cluster",".txt"),
