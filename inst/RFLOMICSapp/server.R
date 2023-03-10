@@ -250,31 +250,31 @@ shinyServer(function(input, output, session) {
       })
     })
 
-    # #### analysis Summary ####
-    # ###############################
-    # output$omicsSum_UI <- renderUI({
-    # 
-    #   omics_data_analysis_summaryUI("omics")
-    # 
-    # })
+    #### analysis Summary ####
+    ###############################
+    output$omicsSum_UI <- renderUI({
+
+      omics_data_analysis_summaryUI("omics")
+
+    })
 
 
-    # #### MOFA data integration ####
-    # ###############################
-    # output$withMOFA_UI <- renderUI({
-    # 
-    #   MOFA_settingUI("mofaSetting")
-    # 
-    # })
+    #### MOFA data integration ####
+    ###############################
+    output$withMOFA_UI <- renderUI({
 
-    # ### ADDED 15/09/22
-    # #### MixOmics data integration ####
-    # ###################################
-    # output$withMixOmics_UI <- renderUI({
-    # 
-    #   MixOmics_settingUI("mixomicsSetting")
-    # 
-    # })
+      MOFA_settingUI("mofaSetting")
+
+    })
+
+    ### ADDED 15/09/22
+    #### MixOmics data integration ####
+    ###################################
+    output$withMixOmics_UI <- renderUI({
+
+      MixOmics_settingUI("mixomicsSetting")
+
+    })
 
     ########################################################################
     ######################### MAIN #########################################
@@ -372,18 +372,18 @@ shinyServer(function(input, output, session) {
 
     #### Item for each data integration tools #####
     # display tool Item
-    # output$Integration <- renderMenu({
-    # 
-    #   validate({
-    #     need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >= 2, message = "")
-    #   })
-    # 
-    #   menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'), startExpanded = FALSE,selected = FALSE,
-    #        menuSubItem(text = "Dataset analysis summary", tabName = "omicsSum" ),
-    #        menuSubItem(text = "with MOFA", tabName = "withMOFA" ),
-    #        menuSubItem(text = "with MixOmics", tabName = "withMixOmics")
-    #   )
-    # })
+    output$Integration <- renderMenu({
+
+      validate({
+        need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >= 2, message = "")
+      })
+
+      menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'), startExpanded = FALSE,selected = FALSE,
+           menuSubItem(text = "Dataset analysis summary", tabName = "omicsSum" ),
+           menuSubItem(text = "with MOFA", tabName = "withMOFA" ),
+           menuSubItem(text = "with MixOmics", tabName = "withMixOmics")
+      )
+    })
 
     #### Item for report #####
     output$runReport <- renderUI({
