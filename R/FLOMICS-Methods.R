@@ -1453,7 +1453,7 @@ methods::setMethod(f="DiffAnal.plot",
 methods::setMethod(f="heatmap.plot",
                    signature="SummarizedExperiment",
                    definition <- function(object, hypothesis, condition="none"){
-                     
+
                      if(is.null(object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]])){
                        stop("no DE variables")
                      }
@@ -1471,8 +1471,10 @@ methods::setMethod(f="heatmap.plot",
                        title = "plot only 2000 TOP DE variables"
                      }
                      
-                     m.def <- assays(object)[[1]][,object@metadata$Groups$samples]
-                     
+                     # 230317 :
+                     # m.def <- assays(object)[[1]][,object@metadata$Groups$samples]
+                     m.def <- assays(object)[[1]]
+                     m.def <- as.data.frame(m.def) %>% dplyr::select(any_of(object@metadata$Groups$samples))
                      
                      switch (object@metadata$omicType,
                              "RNAseq" = {
@@ -1497,7 +1499,6 @@ methods::setMethod(f="heatmap.plot",
                              }
                      )
                      
-                     
                      # filter by DE
                      m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
                      
@@ -1510,14 +1511,15 @@ methods::setMethod(f="heatmap.plot",
                        object@metadata$Groups[,condition] }else{NULL}
                      
                      # Color annotations
-                     df_annotation <- object@metadata$Groups %>% dplyr::select(!samples & !groups)
+                     df_annotation <- object@metadata$Groups %>% dplyr::select(!samples & !groups)  
+                     df_annotation <- df_annotation[match(colnames(m.def.filter.center), rownames(df_annotation)),] # 230317 :
                      
                      set.seed(10000) ; selectPal <- sample(rownames(RColorBrewer::brewer.pal.info),  size = ncol(df_annotation), replace = FALSE)
                      
                      color_list <- lapply(1:ncol(df_annotation), FUN = function(i){
                        annot_vect <- unique(df_annotation[,i])
                        
-                       col_vect <- RColorBrewer::brewer.pal(n = length(annot_vect), name = selectPal[i]) 
+                       col_vect <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(n = min(length(annot_vect), 8), name = selectPal[i]))(length(annot_vect)) # 230317 :
                        names(col_vect) <- annot_vect 
                        col_vect[!is.na(names(col_vect))] # RcolorBrewer::brewer.pal n is minimum 3, remove NA names if only 2 levels
                      })
