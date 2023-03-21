@@ -1614,11 +1614,11 @@ methods::setMethod(f="boxplot.DE.plot",
                                            pseudo <- log1p(SummarizedExperiment::assay(object.DE)) },
                                          
                                          "squareroot" = {
-                                           pseudo <- sqrt(SummarizedExperiment::assay(object.DE)) }
-                                         # "log2" = {
-                                         #   pseudo <- log2(SummarizedExperiment::assay(object.DE) +1 )},
-                                         # "log10" = {
-                                         #   pseudo <- log10(SummarizedExperiment::assay(object.DE)+1)}
+                                           pseudo <- sqrt(SummarizedExperiment::assay(object.DE)) }, ## TODO 230321
+                                         "log2" = {
+                                           pseudo <- log2(SummarizedExperiment::assay(object.DE) +1 )},
+                                         "log10" = {
+                                           pseudo <- log10(SummarizedExperiment::assay(object.DE)+1)}
                                  )
                                }
                              },
@@ -1642,11 +1642,11 @@ methods::setMethod(f="boxplot.DE.plot",
                                            pseudo <- log1p(SummarizedExperiment::assay(object.DE)) },
                                          
                                          "squareroot" = {
-                                           pseudo <- sqrt(SummarizedExperiment::assay(object.DE)) }
-                                         # "log2" = {
-                                         #   pseudo <- log2(SummarizedExperiment::assay(object.DE) +1 )},
-                                         # "log10" = {
-                                         #   pseudo <- log10(SummarizedExperiment::assay(object.DE)+1)}
+                                           pseudo <- sqrt(SummarizedExperiment::assay(object.DE)) },
+                                         "log2" = {
+                                           pseudo <- log2(SummarizedExperiment::assay(object.DE) +1 )}, ## TODO 230321
+                                         "log10" = {
+                                           pseudo <- log10(SummarizedExperiment::assay(object.DE)+1)}
                                  )
                                }
                              }
