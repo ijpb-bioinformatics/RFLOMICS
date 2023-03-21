@@ -139,7 +139,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       radioButtons(
         inputId  =session$ns("dataTransform"),
         label = "Does the data need to be transformed ?",
-        choices=c("log1p"="log1p","squareroot"="squareroot","no"="none"),
+        choices=c("log1p"="log1p","squareroot"="squareroot","no"="none", "log2" = "log2", "log10" = "log10"), ## TODO 230321
         selected="none"),
       hr(),
       
