@@ -767,11 +767,11 @@ methods::setMethod(f="Data_Distribution_plot",
                                            pseudo <- log1p(SummarizedExperiment::assay(object)) },
                                          
                                          "squareroot" = {
-                                           pseudo <- sqrt(SummarizedExperiment::assay(object)) }
-                                         # "log2" = {
-                                         #   pseudo <- log2(SummarizedExperiment::assay(object) +1 )},
-                                         # "log10" = {
-                                         #   pseudo <- log10(SummarizedExperiment::assay(object)+1)}
+                                           pseudo <- sqrt(SummarizedExperiment::assay(object)) },
+                                         "log2" = {
+                                           pseudo <- log2(SummarizedExperiment::assay(object) +1 )},
+                                         "log10" = {
+                                           pseudo <- log10(SummarizedExperiment::assay(object)+1)}
                                  )
                                }
                              },
@@ -795,11 +795,11 @@ methods::setMethod(f="Data_Distribution_plot",
                                            pseudo <- log1p(SummarizedExperiment::assay(object)) },
                                          
                                          "squareroot" = {
-                                           pseudo <- sqrt(SummarizedExperiment::assay(object)) }
-                                         # "log2" = {
-                                         #   pseudo <- log2(SummarizedExperiment::assay(object) +1 )},
-                                         # "log10" = {
-                                         #   pseudo <- log10(SummarizedExperiment::assay(object)+1)}
+                                           pseudo <- sqrt(SummarizedExperiment::assay(object)) },
+                                         "log2" = {
+                                           pseudo <- log2(SummarizedExperiment::assay(object) +1 )},
+                                         "log10" = {
+                                           pseudo <- log10(SummarizedExperiment::assay(object)+1)}
                                  )
                                }
                              }
@@ -1471,7 +1471,6 @@ methods::setMethod(f="heatmap.plot",
                        title = "plot only 2000 TOP DE variables"
                      }
                      
-                     # 230317 :
                      # m.def <- assays(object)[[1]][,object@metadata$Groups$samples]
                      m.def <- assays(object)[[1]]
                      m.def <- as.data.frame(m.def) %>% dplyr::select(any_of(object@metadata$Groups$samples))
@@ -1486,7 +1485,10 @@ methods::setMethod(f="heatmap.plot",
                                
                                switch (object@metadata$transform_method,
                                        "log1p"      = { m.def <- log1p(m.def) },
-                                       "squareroot" = { m.def <- sqrt(m.def) }
+                                       "squareroot" = { m.def <- sqrt(m.def) },
+                                       "log2"       = { m.def <- log2(m.def + 1) },
+                                       "log10"      = { m.def <- log10(m.def + 1) },
+                                       "none"       = { m.def <- m.def }
                                )
                              },
                              "metabolomics" = {
@@ -1494,7 +1496,10 @@ methods::setMethod(f="heatmap.plot",
                                
                                switch (object@metadata$transform_method,
                                        "log1p"      = { m.def <- log1p(m.def) },
-                                       "squareroot" = { m.def <- sqrt(m.def) }
+                                       "squareroot" = { m.def <- sqrt(m.def) },
+                                       "log2"       = { m.def <- log2(m.def + 1) },
+                                       "log10"      = { m.def <- log10(m.def + 1) },
+                                       "none"       = { m.def <- m.def }
                                )
                              }
                      )
@@ -1512,14 +1517,14 @@ methods::setMethod(f="heatmap.plot",
                      
                      # Color annotations
                      df_annotation <- object@metadata$Groups %>% dplyr::select(!samples & !groups)  
-                     df_annotation <- df_annotation[match(colnames(m.def.filter.center), rownames(df_annotation)),] # 230317 :
+                     df_annotation <- df_annotation[match(colnames(m.def.filter.center), rownames(df_annotation)),] 
                      
                      set.seed(10000) ; selectPal <- sample(rownames(RColorBrewer::brewer.pal.info),  size = ncol(df_annotation), replace = FALSE)
                      
                      color_list <- lapply(1:ncol(df_annotation), FUN = function(i){
                        annot_vect <- unique(df_annotation[,i])
                        
-                       col_vect <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(n = min(length(annot_vect), 8), name = selectPal[i]))(length(annot_vect)) # 230317 :
+                       col_vect <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(n = min(length(annot_vect), 8), name = selectPal[i]))(length(annot_vect)) 
                        names(col_vect) <- annot_vect 
                        col_vect[!is.na(names(col_vect))] # RcolorBrewer::brewer.pal n is minimum 3, remove NA names if only 2 levels
                      })
@@ -1614,7 +1619,7 @@ methods::setMethod(f="boxplot.DE.plot",
                                            pseudo <- log1p(SummarizedExperiment::assay(object.DE)) },
                                          
                                          "squareroot" = {
-                                           pseudo <- sqrt(SummarizedExperiment::assay(object.DE)) }, ## TODO 230321
+                                           pseudo <- sqrt(SummarizedExperiment::assay(object.DE)) }, 
                                          "log2" = {
                                            pseudo <- log2(SummarizedExperiment::assay(object.DE) +1 )},
                                          "log10" = {
@@ -1644,7 +1649,7 @@ methods::setMethod(f="boxplot.DE.plot",
                                          "squareroot" = {
                                            pseudo <- sqrt(SummarizedExperiment::assay(object.DE)) },
                                          "log2" = {
-                                           pseudo <- log2(SummarizedExperiment::assay(object.DE) +1 )}, ## TODO 230321
+                                           pseudo <- log2(SummarizedExperiment::assay(object.DE) +1 )}, 
                                          "log10" = {
                                            pseudo <- log10(SummarizedExperiment::assay(object.DE)+1)}
                                  )
