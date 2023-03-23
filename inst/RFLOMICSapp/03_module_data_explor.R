@@ -137,11 +137,17 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       # hr(),
       
       radioButtons(
-        inputId  =session$ns("dataTransform"),
-        label = "Does the data need to be transformed ?",
-        choices=c("log1p"="log1p","squareroot"="squareroot","no"="none", "log2" = "log2", "log10" = "log10"), ## TODO 230321
-        selected="none"),
+        inputId  = session$ns("dataTransform"),
+        label    = "Does the data need to be transformed?",
+        choices  = c("log1p"="log1p","squareroot"="squareroot","none"="none", "log2" = "log2", "log10" = "log10"), ## TODO 230321
+        selected = "none"),
       hr(),
+      
+      radioButtons(inputId = session$ns("selectProtMetNormMethod"),
+                  label    = "method",
+                  choices  =   c("median"="median","totalSum"="total sum", "none"="none"),
+                  selected = "none"),
+      
       
       actionButton(session$ns("run"),"Run")
     )
@@ -397,10 +403,10 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
               param.list <- list(Filter_Strategy = input$Filter_Strategy, CPM_Cutoff = input$FilterSeuil, NormMethod=input$selectNormMethod)
             },
             "proteomics" = {
-              param.list <- list(transform_method = input$dataTransform)
+              param.list <- list(transform_method = input$dataTransform, NormMethod=input$selectProtMetNormMethod)
             },
             "metabolomics" = {
-              param.list <- list(transform_method = input$dataTransform)
+              param.list <- list(transform_method = input$dataTransform, NormMethod=input$selectProtMetNormMethod)
             }
     )
     
@@ -445,16 +451,26 @@ process_data <- function(SE, dataset, samples , param.list = list(Filter_Strateg
            
            #### Run Normalisation ####
            print("#    => Counts normalization...")
-           SE.processed <- RunNormalization(SE.processed, param.list[["NormMethod"]])
+           SE.processed <- RunNormalization(SE.processed, NormMethod = param.list[["NormMethod"]])
          },
          "proteomics" = {
            print("#    => transformation data...")
            SE.processed <- TransformData(SE.new, transform_method = param.list[["transform_method"]])
            
+           if(param.list[["NormMethod"]] != "none"){
+             print("#    => Run normalization...")
+             SE.processed <- RunNormalization(SE.processed, NormMethod = param.list[["NormMethod"]])
+           }else{SE.processed@metadata[["Normalization"]]$methode <- "none" }
+           
          },
          "metabolomics" = {
            print("#    => transformation data...")
            SE.processed <- TransformData(SE.new, transform_method = param.list[["transform_method"]])
+           
+           if(param.list[["NormMethod"]] != "none"){
+             print("#    => Run normalization...")
+             SE.processed <- RunNormalization(SE.processed, NormMethod = param.list[["NormMethod"]])
+           }else{SE.processed@metadata[["Normalization"]]$methode <- "none" }
          }
   )
   
