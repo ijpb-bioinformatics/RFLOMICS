@@ -1273,7 +1273,7 @@ methods::setMethod(f="RunNormalization",
                      coefNorm  = switch(NormMethod,
                                         "TMM"        = TMM.Normalization(SummarizedExperiment::assay(object), object@metadata$Groups$groups),
                                         "median"     = 0, # to be computed everytime
-                                        "totalSum"   = sapply(SummarizedExperiment::assay(object), 2, FUN = function(sample_vect) {sum(sample_vect)})
+                                        "totalSum"   = sapply(SummarizedExperiment::assay(object), 2, FUN = function(sample_vect) {sum(sample_vect^2)})
                      )
                      object@metadata[["Normalization"]] <- list(methode = NormMethod, coefNorm = coefNorm)
                      return(object)
