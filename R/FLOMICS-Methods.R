@@ -669,7 +669,7 @@ methods::setMethod(f="RunPCA",
                      # if no transformation : differentiate RNASeq from the rest
                      else{
                        if(object@metadata$omicType == "RNAseq"){
-                         pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE) + 1)
+                         pseudo <- log2(SummarizedExperiment::assay(object) + 1)
                          object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = 5,graph = FALSE)
                        }else{
                          pseudo <- SummarizedExperiment::assay(object) # do nothing and compute the PCA
