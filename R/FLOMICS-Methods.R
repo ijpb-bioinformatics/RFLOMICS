@@ -2078,7 +2078,7 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                          }
                        }
                      }
-                     EnrichAnal[["upset"]][[ont]] <- term.list[[ont]] %>% purrr::reduce(full_join, by = "term")
+                     #EnrichAnal[["upset"]][[ont]] <- term.list[[ont]] %>% purrr::reduce(full_join, by = "term")
                      
                      if(length(overview_list) == 0){
                        
