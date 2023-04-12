@@ -628,13 +628,14 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 #' @description This function performs a principal component analysis on omic data stored in an object of class [\code{\link{SummarizedExperiment-class}]
 #' Results are stored in the metadata slot of the same object. If a "Normalization" slot is present in the metadata slot, then data are normalized before running the PCA according to the indicated transform method.
 #' @param object An object of class \link{SummarizedExperiment-class}.
+#' @param nbcp Number of components to compute. Default is 5.
 #' @return An object of class \link{SummarizedExperiment}
 #' @exportMethod RunPCA
 #' @examples
 #'
 methods::setMethod(f="RunPCA",
                    signature="SummarizedExperiment",
-                   definition <- function(object){
+                   definition <- function(object, nbcp = 5){
                      
                      # TODO change for a switch
                      
@@ -645,24 +646,24 @@ methods::setMethod(f="RunPCA",
                        if(object@metadata[["Normalization"]]$methode == "TMM"  && ! is.null(object@metadata[["Normalization"]]$coefNorm)){
                          pseudo <- log2(scale(SummarizedExperiment::assay(object)+1, center=FALSE,
                                               scale=object@metadata[["Normalization"]]$coefNorm$norm.factors*object@metadata[["Normalization"]]$coefNorm$lib.size))
-                         object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = 5, graph = FALSE)
+                         object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
                          
                        }
                        # Proteo and metabo median
                        else if(object@metadata[["Normalization"]]$methode == "median"){
                          pseudo <- apply(SummarizedExperiment::assay(object), 2, FUN = function(sample_vect) sample_vect - median(sample_vect)) 
                          
-                         object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = 5, graph = FALSE)
+                         object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
                        }
                        # Proteo and metabo totalSum
                        else if(object@metadata[["Normalization"]]$methode == "totalSum"){
                          pseudo <- apply(SummarizedExperiment::assay(object), 2, FUN = function(sample_vect) sample_vect/sum(sample_vect^2)) 
                          
-                         object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = 5, graph = FALSE)
+                         object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
                        }else{ # method = "none"
                          pseudo <- SummarizedExperiment::assay(object)
                          
-                         object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = 5, graph = FALSE)
+                         object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
                        }
                      }
   
@@ -670,10 +671,10 @@ methods::setMethod(f="RunPCA",
                      else{
                        if(object@metadata$omicType == "RNAseq"){
                          pseudo <- log2(SummarizedExperiment::assay(object) + 1)
-                         object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = 5,graph = FALSE)
+                         object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp,graph = FALSE)
                        }else{
                          pseudo <- SummarizedExperiment::assay(object) # do nothing and compute the PCA
-                         object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = 5,graph = FALSE)
+                         object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp,graph = FALSE)
                        }
                       }
                      
