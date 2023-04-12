@@ -5,13 +5,13 @@
 ### ExpDesign CLASS Constructor
 
 #' @title Constructor for the class \link{ExpDesign-class}
-#' @description This method initialize an object of class \link{ExpDesign-class}.
-#' @param ExpDesign a data.frame. Row names give the name of each sample which has been to be construct
+#' @description This method initializes an object of class \link{ExpDesign-class}.
+#' @param ExpDesign a data.frame. Row names give the name of each sample which has to be constructed
 #' by combining factor's modality separated by a "_" (EX: WT_treated_rep1). Column names give the name of
 #' an experimental factor which is a vector of character storing the factor modality for each sample.
 #' @param refList A list of string giving the reference modality for each factor.
-#' @param typeList A vector of string indicating the type of each experimental factor. Two types of effect
-#' are required ("Bio" or "batch")
+#' @param typeList A vector of string indicating the type of each experimental factor. Two types of effects
+#' are required ("Bio" or "batch"). A third one ("meta") is allowed but is not necessary.
 #' @return An object of class \link{ExpDesign-class}
 #' @examples
 #' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""),header = TRUE,row.names = 1, sep = "\t")
@@ -35,17 +35,17 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
   
   # check ExpDesign dimension
   if(dim(ExpDesign)[1] == 0 || dim(ExpDesign)[2] == 0){
-    stop("Error : ExpDesign matrix is impty!")
+    stop("Error: ExpDesign matrix is empty!")
   }
   
   # check refList length
   if(length(refList) != length(names(ExpDesign))){
-    stop("Error : refList length different to dimension of ExpDesign matrix!")
+    stop("Error: refList length is different from the dimension of ExpDesign matrix!")
   }
   
   # check typeList length
   if(length(typeList) != length(names(ExpDesign))){
-    stop("Error : typeList length different to dimension of ExpDesign matrix!")
+    stop("Error: typeList length is different from the dimension of ExpDesign matrix!")
   }
   
   # Create the List.Factors list with the choosen level of reference for each factor
@@ -102,8 +102,8 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 
 
 #' @title CheckExpDesignCompleteness
-#' @description This method check some experimental design characteristics.
-#'  Completed design and at least on biological and one batch factors are required for using RFLOMICS workflow.
+#' @description This method checks some experimental design characteristics.
+#'  A complete design and at least one biological and one batch factors are required for using RFLOMICS workflow.
 #' @param An object of class \link{MultiAssayExperiment-class}
 #' @param sampleList list of samples to check.
 #' @return a named list of two objects
@@ -138,12 +138,12 @@ methods::setMethod(f="CheckExpDesignCompleteness",
                      # check presence of bio factors
                      if (! table(Design@Factors.Type)["Bio"] %in% 1:3){
                        
-                       output[["error"]] <- "ERROR : no bio factor ! or nbr of bio factors exeed 3!"
+                       output[["error"]] <- "ERROR: no bio factor ! or nbr of bio factors exeed 3!"
                        
                      }
                      if (table(Design@Factors.Type)["batch"] == 0){
                        
-                       output[["error"]] <- "ERROR : no replicate!"
+                       output[["error"]] <- "ERROR: no replicate!"
                      }
                      
                      # count occurence of bio conditions
@@ -176,15 +176,15 @@ methods::setMethod(f="CheckExpDesignCompleteness",
                      # check if design is balanced
                      # check nbr of replicats
                      if(min(group_count$Count) == 0){
-                       message <- "ERROR : The experimental design is not complete."
+                       message <- "ERROR: The experimental design is not complete."
                        output[["error"]] <- message
                      }
                      else if(min(group_count$Count) == 1){
-                       message <- "ERROR : You need at least 2 biological replicates."
+                       message <- "ERROR: You need at least 2 biological replicates."
                        output[["error"]] <- message
                      }
                      else if(length(unique(group_count$Count)) != 1){
-                       message <- "WARNING : The experimental design is complete but not balanced."
+                       message <- "WARNING: The experimental design is complete but not balanced."
                        output[["warning"]] <- message
                      }
                      else{
@@ -214,8 +214,8 @@ methods::setMethod(f="Datasets_overview_plot",
                    signature="MultiAssayExperiment",
                    definition <- function(object){
                      
-                     if (class(object) != "MultiAssayExperiment") stop("ERROR : object is not MultiAssayExperiment class.")
-                     if (length(object@ExperimentList) == 0) stop("ERROR : object@ExperimentList is NULL")
+                     if (class(object) != "MultiAssayExperiment") stop("ERROR: object is not MultiAssayExperiment class.")
+                     if (length(object@ExperimentList) == 0) stop("ERROR: object@ExperimentList is NULL")
                      
                      nb_entities <-lapply(object@ExperimentList, function(SE){ dim(SE)[1] }) %>% unlist()
                      
@@ -247,7 +247,7 @@ methods::setMethod(f="Datasets_overview_plot",
 #' \item{pairwise comparison}
 #' \item{averaged expression}
 #' }
-#' @param model.formula a model formula
+#' @param model.formula a model formula (characters)
 #' @return An object of class [\code{\link{MultiAssayExperiment-class}}]
 #' @exportMethod getExpressionContrast
 #'
@@ -265,7 +265,7 @@ methods::setMethod(f="Datasets_overview_plot",
 #' typeList = Design.Factors.Type)
 #' Design.Factors.Name <- names(Design.File)
 #'
-#' # Set the model formulae
+#' # Set the model formula
 #' Design.formulae <- GetModelFormulae(Factors.Name = Design.Factors.Name,Factors.Type=Design.Factors.Type)
 #' Design.formulae[[1]]
 #'
@@ -349,7 +349,7 @@ methods::setMethod(f="getExpressionContrast",
 #
 
 #' @title getContrastMatrix
-#' @description Define contrast matrix or contrast list with contrast name and contrast coefficients
+#' @description Defines contrast matrix or contrast list with contrast name and contrast coefficients
 #' @param An object of class \link{MultiAssayExperiment-class}
 #' @param contrastList A vector of character of contrast
 #' @return An object of class \link{MultiAssayExperiment-class}
@@ -532,7 +532,7 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
     sample.intersect <- intersect(colnames(abundance), row.names(ExpDesign))
     if(length(sample.intersect) == 0){
       
-      stop("samples in omics data could be matched to experimental design")
+      stop("samples in omics data should match the names in experimental design")
     }
     
     ##### Comment : 01/03/2023 : 
@@ -625,8 +625,8 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 
 
 #' @title RunPCA
-#' @description This function performed a scaled principal component analysis on omic data stored in an object of class [\code{\link{MultiAssayExperiment-class}]
-#' Results are stored in the metadata slot.
+#' @description This function performs a principal component analysis on omic data stored in an object of class [\code{\link{SummarizedExperiment-class}]
+#' Results are stored in the metadata slot of the same object. If a "Normalization" slot is present in the metadata slot, then data are normalized before running the PCA according to the indicated transform method.
 #' @param object An object of class \link{SummarizedExperiment-class}.
 #' @return An object of class \link{SummarizedExperiment}
 #' @exportMethod RunPCA
@@ -666,7 +666,7 @@ methods::setMethod(f="RunPCA",
                        }
                      }
   
-                     # if no transformation : differentiate RNASeq from the rest
+                     # if no transformation: differentiate RNASeq from the rest
                      else{
                        if(object@metadata$omicType == "RNAseq"){
                          pseudo <- log2(SummarizedExperiment::assay(object) + 1)
