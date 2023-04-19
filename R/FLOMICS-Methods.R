@@ -463,7 +463,7 @@ methods::setMethod(f="getContrastMatrix",
 #' \itemize{
 #' \item{data:}{matrix of omic data}
 #' \item{meta:}{an optional quality check data}
-#' \item{omicType:}{Type of omic data type "None", "RNAseq", "proteomics" or "Metabolomics".}
+#' \item{omicType:}{Type of omic data type "None", "RNAseq", "proteomics" or "metabolomics".}
 #' }
 #' @param Design An object of class \link{ExpDesign-class}
 #' @param projectName Project name
@@ -671,10 +671,10 @@ methods::setMethod(f="RunPCA",
                      else{
                        if(object@metadata$omicType == "RNAseq"){
                          pseudo <- log2(SummarizedExperiment::assay(object) + 1)
-                         object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp,graph = FALSE)
+                         object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
                        }else{
                          pseudo <- SummarizedExperiment::assay(object) # do nothing and compute the PCA
-                         object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp,graph = FALSE)
+                         object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
                        }
                       }
                      
@@ -930,9 +930,9 @@ methods::setMethod(f= "plotPCA",
                              "raw"  = {title <- paste0("Raw ", object@metadata$omicType, " data")},
                              "norm" = {title <- switch (object@metadata$omicType,
                                                         "RNAseq" = { paste0("Filtred and normalized ", object@metadata$omicType," data (", object@metadata$Normalization$methode, ")")  },
-                                                        "proteomics" = {paste0("Transformed and normalizes", object@metadata$omicType," data (", object@metadata$transform_method, 
+                                                        "proteomics" = {paste0("Transformed and normalized ", object@metadata$omicType," data (", object@metadata$transform_method, 
                                                                                " - norm: ", object@metadata$Normalization$methode, ")")},
-                                                        "metabolomics" = {paste0("Transformed and normalizes", object@metadata$omicType," data (", object@metadata$transform_method, 
+                                                        "metabolomics" = {paste0("Transformed and normalized ", object@metadata$omicType," data (", object@metadata$transform_method, 
                                                                                  " - norm: ", object@metadata$Normalization$methode, ")")}
                              )}
                      )
