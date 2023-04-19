@@ -629,39 +629,61 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 #' Results are stored in the metadata slot of the same object. If a "Normalization" slot is present in the metadata slot, then data are normalized before running the PCA according to the indicated transform method.
 #' @param object An object of class \link{SummarizedExperiment-class}.
 #' @param nbcp Number of components to compute. Default is 5.
+#' @param transformData boolean. Does the data need to be transformed? If TRUE, expect to find a transform method in the object metadata slot "transform_method". 
 #' @return An object of class \link{SummarizedExperiment}
 #' @exportMethod RunPCA
 #' @examples
 #'
 methods::setMethod(f="RunPCA",
                    signature="SummarizedExperiment",
-                   definition <- function(object, nbcp = 5){
+                   definition <- function(object, nbcp = 5, transformData = FALSE, transformMethod = object@metadata[["transform_method"]]){
                      
                      # TODO change for a switch
+                     # 19/04/2023 : change function -> add parameter transformData and transformMethod
+                     
+                     ### Tests to delete
+                     # print(object@metadata[["transform_method"]])
+                     # object@metadata[["transform_method"]] <- "log1p"
+                     # transformMethod = object@metadata[["transform_method"]]
+                     ### 
+                     
+                     
+                     # Transformation of the data (log2, log10, etc.) 
+                     if(transformData){
+                       if(!is.null(object@metadata[["transform_method"]])){
+                         objectPCA <- RFLOMICS::TransformData(object, transform_method = transformMethod)
+                         pseudo <- SummarizedExperiment::assay(objectPCA)
+                       }else{
+                         message("PCA: asking for transforming the data but no transform method in the object. Keeping untransformed data")
+                         pseudo <- SummarizedExperiment::assay(object)
+                       }
+                     }else{
+                       pseudo <- SummarizedExperiment::assay(object)
+                     } # end if transform
                      
                      # if the data has undergone a transformation
-                     if(!is.null(object@metadata[["Normalization"]]$methode) || !is.null(object@metadata[["transform_method"]])){
+                     if(!is.null(object@metadata[["Normalization"]]$methode)){
                        
                        # RNASeq data
                        if(object@metadata[["Normalization"]]$methode == "TMM"  && ! is.null(object@metadata[["Normalization"]]$coefNorm)){
-                         pseudo <- log2(scale(SummarizedExperiment::assay(object)+1, center=FALSE,
+                         pseudo <- log2(scale(pseudo+1, center=FALSE,
                                               scale=object@metadata[["Normalization"]]$coefNorm$norm.factors*object@metadata[["Normalization"]]$coefNorm$lib.size))
                          object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
                          
                        }
                        # Proteo and metabo median
                        else if(object@metadata[["Normalization"]]$methode == "median"){
-                         pseudo <- apply(SummarizedExperiment::assay(object), 2, FUN = function(sample_vect) sample_vect - median(sample_vect)) 
+                         pseudo <- apply(pseudo, 2, FUN = function(sample_vect) sample_vect - median(sample_vect)) 
                          
                          object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
                        }
                        # Proteo and metabo totalSum
                        else if(object@metadata[["Normalization"]]$methode == "totalSum"){
-                         pseudo <- apply(SummarizedExperiment::assay(object), 2, FUN = function(sample_vect) sample_vect/sum(sample_vect^2)) 
+                         pseudo <- apply(pseudo, 2, FUN = function(sample_vect) sample_vect/sum(sample_vect^2)) 
                          
                          object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
                        }else{ # method = "none"
-                         pseudo <- SummarizedExperiment::assay(object)
+                         pseudo <- pseudo
                          
                          object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
                        }
@@ -670,10 +692,10 @@ methods::setMethod(f="RunPCA",
                      # if no transformation: differentiate RNASeq from the rest
                      else{
                        if(object@metadata$omicType == "RNAseq"){
-                         pseudo <- log2(SummarizedExperiment::assay(object) + 1)
+                         pseudo <- log2(pseudo + 1)
                          object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
                        }else{
-                         pseudo <- SummarizedExperiment::assay(object) # do nothing and compute the PCA
+                         pseudo <- pseudo # do nothing and compute the PCA
                          object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
                        }
                       }

@@ -411,7 +411,8 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     )
     
     print(paste0("# 3  => Data processing : ", dataset))
-    processed.SE <- process_data(SE = session$userData$FlomicsMultiAssay[[dataset]], dataset = dataset, samples = input$selectSamples, param.list = param.list)
+    processed.SE <- process_data(SE = session$userData$FlomicsMultiAssay[[dataset]], dataset = dataset, 
+                                 samples = input$selectSamples, param.list = param.list)
     
     local.rea.values$dataset.processed.SE <- processed.SE
     
@@ -436,7 +437,8 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
 ############## functions ###############
 ###
-process_data <- function(SE, dataset, samples , param.list = list(Filter_Strategy = "NbConditions", CPM_Cutoff = 1, NormMethod = "TMM", transform_method = "none")){
+process_data <- function(SE, dataset, samples , param.list = list(Filter_Strategy = "NbConditions", 
+                                                                  CPM_Cutoff = 1, NormMethod = "TMM", transform_method = "none")){
   
   print("#    => select samples")
   SE.new <- SE[, SE$primary %in% samples]
@@ -476,7 +478,7 @@ process_data <- function(SE, dataset, samples , param.list = list(Filter_Strateg
   
   #### Run PCA for filtred & normalized data ####
   print("#    => Compute PCA ")
-  SE.processed <- RunPCA(SE.processed)
+  SE.processed <- RunPCA(SE.processed) # 19/04/23 : nothing to change here, already transformed and replaced, normmethod available. 
   
   return(SE.processed)
 }
