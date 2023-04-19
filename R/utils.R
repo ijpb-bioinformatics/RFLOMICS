@@ -1973,3 +1973,22 @@ contrastName2contrastDir <- function(contrastName){
   tmp <- str_replace_all(tmp,"[:blank:]","_")
   return(tmp)
 }
+
+
+######## CHECKS FUNCTIONS ###########
+
+# check_NA: checks if there are NA/nan in the summarizedExperiment assay
+#' @title check_NA
+#'
+#' @param object An object of class \link{SummarizedExperiment}
+#' @return boolean. if TRUE, NA/nan are detected in the SE::assay.
+#' @export
+#' @examples
+#' @noRd
+#'
+check_NA <- function(object){
+  NA_detect <- ifelse(any(is.na(SummarizedExperiment::assay(object))), TRUE, FALSE)
+  return(NA_detect)
+}
+
+

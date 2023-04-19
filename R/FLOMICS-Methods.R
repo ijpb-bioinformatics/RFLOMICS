@@ -640,17 +640,11 @@ methods::setMethod(f="RunPCA",
                      
                      # TODO change for a switch
                      # 19/04/2023 : change function -> add parameter transformData and transformMethod
-                     
-                     ### Tests to delete
-                     # print(object@metadata[["transform_method"]])
-                     # object@metadata[["transform_method"]] <- "log1p"
-                     # transformMethod = object@metadata[["transform_method"]]
-                     ### 
-                     
-                     
+
                      # Transformation of the data (log2, log10, etc.) 
                      if(transformData){
                        if(!is.null(object@metadata[["transform_method"]])){
+                         print("PCA: transforming data")
                          objectPCA <- RFLOMICS::TransformData(object, transform_method = transformMethod)
                          pseudo <- SummarizedExperiment::assay(objectPCA)
                        }else{
@@ -660,6 +654,12 @@ methods::setMethod(f="RunPCA",
                      }else{
                        pseudo <- SummarizedExperiment::assay(object)
                      } # end if transform
+                     
+                     # Check for NA/nan
+                     if(RFLOMICS::check_NA(objectPCA)){
+                       message("STOP: NA or nan detected in your data")
+                       return(object)
+                     }
                      
                      # if the data has undergone a transformation
                      if(!is.null(object@metadata[["Normalization"]]$methode)){
