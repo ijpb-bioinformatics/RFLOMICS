@@ -630,6 +630,7 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 #' @param object An object of class \link{SummarizedExperiment-class}.
 #' @param nbcp Number of components to compute. Default is 5.
 #' @param transformData boolean. Does the data need to be transformed? If TRUE, expect to find a transform method in the object metadata slot "transform_method". 
+#' @param transformMethod character. Transformation method to be applied on the data. Needed when transformData is TRUE. Default is object metadata slot "transform_method".
 #' @return An object of class \link{SummarizedExperiment}
 #' @exportMethod RunPCA
 #' @examples
@@ -641,11 +642,24 @@ methods::setMethod(f="RunPCA",
                      # TODO change for a switch
                      # 19/04/2023 : change function -> add parameter transformData and transformMethod
 
+                     # Check for NA/nan
+                     if(RFLOMICS::check_NA(object)){
+                       message("STOP: NA or nan detected in your data")
+                       return(object)
+                     }
+                     
                      # Transformation of the data (log2, log10, etc.) 
                      if(transformData){
                        if(!is.null(object@metadata[["transform_method"]])){
                          print("PCA: transforming data")
                          objectPCA <- RFLOMICS::TransformData(object, transform_method = transformMethod)
+                         
+                         # Check for NA/nan
+                         if(RFLOMICS::check_NA(objectPCA)){
+                           message("STOP: NA or nan detected in your data")
+                           return(object)
+                         }
+                         
                          pseudo <- SummarizedExperiment::assay(objectPCA)
                        }else{
                          message("PCA: asking for transforming the data but no transform method in the object. Keeping untransformed data")
@@ -654,12 +668,6 @@ methods::setMethod(f="RunPCA",
                      }else{
                        pseudo <- SummarizedExperiment::assay(object)
                      } # end if transform
-                     
-                     # Check for NA/nan
-                     if(RFLOMICS::check_NA(objectPCA)){
-                       message("STOP: NA or nan detected in your data")
-                       return(object)
-                     }
                      
                      # if the data has undergone a transformation
                      if(!is.null(object@metadata[["Normalization"]]$methode)){
