@@ -1334,8 +1334,8 @@ methods::setMethod(f="RunNormalization",
 #' Objects are:
 #' \itemize{
 #' \item{contrasts: }{The selected contrasts for which the differential analysis has been conducted}
-#' \item{method: }{The method used for the differential analysis}
-#' \item{Adj.pvalue.method: The method applied for the pvalue adjustment}
+#' \item{method: }{The method used for the differential analysis. }
+#' \item{Adj.pvalue.method: The method applied for the pvalue adjustment.}
 #' \item{Adj.pvalue.cutoff: The threshold applied for the pvalue adjustment}
 #' \item{FDR: }{The false discovery rate given in input}
 #' \item{RawDEFres: }{a list giving for each contrast the raw results of the differential analysis method}
@@ -1346,12 +1346,11 @@ methods::setMethod(f="RunNormalization",
 #' @param object an object of class [\code\link{SummarizedExperiment}]
 #' @param design an object of class [\code{\link{ExpDesign-class}]
 #' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
-#' to run. Either "edgeRglmfit", "limmalmFit", ...
+#' to run. Either "edgeRglmfit" or "limmalmFit".
 #' @param contrastList The list of contrast to test
-#' @param Adj.pvalue.method The method choosen to adjust pvalue.
+#' @param Adj.pvalue.method The method choosen to adjust pvalue. Takes the same values as the ones of adj.p.adjust method.
 #' @param Adj.pvalue.cutoff The adjusted pvalue cut-off
 #' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
-#' @param filter_only A boolean indicating whether only filter on DE results have to be applied (\code{filter_only=TRUE}). FALSE by default.
 #' @return An object of class [\code\link{SummarizedExperiment}]
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
@@ -1362,7 +1361,7 @@ methods::setMethod(f="RunNormalization",
 methods::setMethod(f="RunDiffAnalysis",
                    signature="SummarizedExperiment",
                    definition <- function(object, design, Adj.pvalue.method="BH",
-                                          contrastList, DiffAnalysisMethod, Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE){
+                                          contrastList, DiffAnalysisMethod, Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, parallel = FALSE, nworkers = 1){
                      
                      contrastName <- NULL
                      Contrasts.Sel <- dplyr::filter(design@Contrasts.Sel, contrastName %in% contrastList)
@@ -1386,14 +1385,16 @@ methods::setMethod(f="RunDiffAnalysis",
                                                                                 Contrasts.Sel   = object@metadata$DiffExpAnal[["contrasts"]],
                                                                                 Contrasts.Coeff = design@Contrasts.Coeff,
                                                                                 FDR             = 1,
-                                                                                clustermq=clustermq)),
+                                                                                clustermq       = clustermq,
+                                                                                parallel        = parallel,
+                                                                                nworkers        = nworkers)),
                                        "limmalmFit"=try_rflomics(limma.AnaDiff(count_matrix      = SummarizedExperiment::assay(object),
                                                                                model_matrix      = model_matrix[colnames(object),],
                                                                                Contrasts.Sel     = object@metadata$DiffExpAnal[["contrasts"]],
                                                                                Contrasts.Coeff   = design@Contrasts.Coeff,
                                                                                Adj.pvalue.cutoff = 1,
                                                                                Adj.pvalue.method = Adj.pvalue.method,
-                                                                               clustermq=clustermq)))
+                                                                               clustermq         = clustermq)))
                      
                      if(! is.null(ListRes$value)){
                        if(! is.null(ListRes$value[["RawDEFres"]])){

@@ -33,6 +33,9 @@ library(edgeR)
 library(FactoMineR)
 library(coseq)
 
+# parallel
+library(parallel) # TODO change for biocparallel 
+
 # enrichment
 # library(clusterProfiler)
 # library(enrichplot)

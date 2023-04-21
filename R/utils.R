@@ -234,17 +234,24 @@ TMM.Normalization <- function(counts, groups){
 #' @param object an object of class [\code{\link{SummarizedExperiment}]
 #' @param design an object of class [\code{\link{ExpDesign-class}]
 #' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
+#' @param parallel boolean. Compute parallel differential analyses (only when clustermq is FALSE)
+#' @param nworkers integer. Number of core to use for the parallel operations. Only used when parallel is TRUE.
 #' @return A list of object of class [\code{\link{DGELRT}]
 #' @export
 #' @importFrom stats model.matrix as.formula
 #' @noRd
 #'
 #' @examples
-edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.factors, Contrasts.Sel, Contrasts.Coeff, FDR, clustermq = FALSE){
+edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.factors, Contrasts.Sel, Contrasts.Coeff, FDR, clustermq = FALSE,
+                          parallel = FALSE, nworkers = 1){
   
   z <- y <- NULL
   
   ListRes <- list()
+  
+  # check clustermq and parallel
+  if(clustermq && parallel) parallel <- FALSE 
+  if(!parallel) nworkers <- 1
   
   # Construct the DGE obect
   dge <- edgeR::DGEList(counts       = count_matrix,
@@ -294,11 +301,17 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
   }
   else{
     print("[cmd] apply model to each contrast")
-    ResGlm <-  lapply(Contrasts.Sel$contrast, function(x){
+    # ResGlm <-  BiocParallel::bplapply(Contrasts.Sel$contrast, function(x){
+    #   #print(unlist(Contrasts.Coeff[x,]))
+    #   try_rflomics(edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,])))
+    #   
+    # }, BPOPTIONS = bpoptions(workers = nworkers))
+    ResGlm <-  parallel::mclapply(Contrasts.Sel$contrast, function(x){
       #print(unlist(Contrasts.Coeff[x,]))
       try_rflomics(edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,])))
       
-    })
+    }, mc.cores = nworkers)
+    
   }
   
   # Create a table of jobs summary
