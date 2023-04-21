@@ -1506,11 +1506,10 @@ methods::setMethod(f="FilterDiffAnalysis",
 
 #' @title DiffAnal.plot
 #' @description
-#' This is an interface method which draw a MAplot from the results of a differential analysis
+#' This is an interface method which draw a MAplot, a volcano plot and the pvalues distribution from the results of a differential analysis
 #' performed on omic datasets stored in an object of class \link{SummarizedExperiment}
 #' @param object An object of class \link{SummarizedExperiment}
-#' @param data The name of the omic data for which the MAplot has to be drawn
-#' @param hypothesis The hypothesis for which the MAplot has to be drawn
+#' @param hypothesis The hypothesis for which the plots has to be drawn
 #' @return plot
 #' @exportMethod DiffAnal.plot
 #' @export

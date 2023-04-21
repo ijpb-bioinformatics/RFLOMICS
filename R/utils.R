@@ -614,7 +614,8 @@ MA.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypothesis
   #
   # return(p)
   Abundance <- logFC <- Adj.pvalue <- NULL
-  tmp <-dplyr::select(data,"Abundance","logFC","Adj.pvalue") %>% rename(., baseMeanLog2=Abundance, log2FoldChange=logFC, padj=Adj.pvalue)
+  tmp <-dplyr::select(data,"Abundance","logFC","Adj.pvalue") %>% 
+    dplyr::rename(., baseMeanLog2=Abundance, log2FoldChange=logFC, padj=Adj.pvalue)
   p <- ggpubr::ggmaplot(tmp, main = hypothesis,
                         fdr = Adj.pvalue.cutoff, fc = 2^logFC.cutoff, size = 0.4,
                         ylab = bquote(~Log[2] ~ "fold change"),
