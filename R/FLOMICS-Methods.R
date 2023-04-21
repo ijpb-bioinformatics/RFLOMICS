@@ -1539,10 +1539,13 @@ methods::setMethod(f="DiffAnal.plot",
 
 #' @title heatmap.plot
 #' @description
-#' This is an interface method which draw a meatmap from the results of a differential analysis
+#' This is an interface method which draw a heatmap from the results of a differential analysis
 #' performed on omic datasets stored in an object of class \link{SummarizedExperiment}
 #' @param object An object of class \link{SummarizedExperiment}
 #' @param hypothesis The hypothesis for which the MAplot has to be drawn
+#' @param condition characters. Default to none. Name of a feature in the design matrix, splits the samples on the heatmap according to its modalities.  
+#' @param plotHA boolean. If TRUE, plot the Heatmap. 
+#' @param title characters. Title of the heatmap. 
 #' @return plot
 #' @exportMethod heatmap.plot
 #' @export
@@ -1550,7 +1553,7 @@ methods::setMethod(f="DiffAnal.plot",
 #' @examples
 methods::setMethod(f="heatmap.plot",
                    signature="SummarizedExperiment",
-                   definition <- function(object, hypothesis, condition="none"){
+                   definition <- function(object, hypothesis, condition="none", plotHA = TRUE, title = ""){
 
                      if(is.null(object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]])){
                        stop("no DE variables")
@@ -1562,11 +1565,12 @@ methods::setMethod(f="heatmap.plot",
                        stop("no differentially expressed variables...")
                      }
                      
-                     title = ""
+                     
                      if(dim(resTable)[1] > 2000){
                        message("differentially expressed variables exceeding 2000 variables")
                        resTable <- resTable[1:2000,]
-                       title = "plot only 2000 TOP DE variables"
+                       title = ifelse(title== "", paste0(title, "plot only 2000 TOP DE variables"),
+                                                  paste0(title, "\nplot only 2000 TOP DE variables"))
                      }
                      
                      # m.def <- assays(object)[[1]][,object@metadata$Groups$samples]
@@ -1580,25 +1584,27 @@ methods::setMethod(f="heatmap.plot",
                                                    scale = object@metadata$Normalization$coefNorm$lib.size*object@metadata$Normalization$coefNorm$lib.size))
                              },
                              "proteomics" = {
-                               
-                               switch (object@metadata$transform_method,
-                                       "log1p"      = { m.def <- log1p(m.def) },
-                                       "squareroot" = { m.def <- sqrt(m.def) },
-                                       "log2"       = { m.def <- log2(m.def + 1) },
-                                       "log10"      = { m.def <- log10(m.def + 1) },
-                                       "none"       = { m.def <- m.def }
-                               )
+                               m.def <- m.def # data already processed at this point (applied on filtred)
+                               # switch (object@metadata$transform_method,
+                               #         "log1p"      = { m.def <- log1p(m.def) },
+                               #         "squareroot" = { m.def <- sqrt(m.def) },
+                               #         "log2"       = { m.def <- log2(m.def + 1) },
+                               #         "log10"      = { m.def <- log10(m.def + 1) },
+                               #         "none"       = { m.def <- m.def }
+                               # )
                              },
                              "metabolomics" = {
                                # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
                                
-                               switch (object@metadata$transform_method,
-                                       "log1p"      = { m.def <- log1p(m.def) },
-                                       "squareroot" = { m.def <- sqrt(m.def) },
-                                       "log2"       = { m.def <- log2(m.def + 1) },
-                                       "log10"      = { m.def <- log10(m.def + 1) },
-                                       "none"       = { m.def <- m.def }
-                               )
+                               m.def <- m.def # data already transformed at this point (applied on filtred)
+                               
+                               # switch (object@metadata$transform_method,
+                               #         "log1p"      = { m.def <- log1p(m.def) },
+                               #         "squareroot" = { m.def <- sqrt(m.def) },
+                               #         "log2"       = { m.def <- log2(m.def + 1) },
+                               #         "log10"      = { m.def <- log10(m.def + 1) },
+                               #         "none"       = { m.def <- m.def }
+                               # )
                              }
                      )
                      
@@ -1642,8 +1648,8 @@ methods::setMethod(f="heatmap.plot",
                                                    top_annotation = column_ha,
                                                    column_title = title)
                      
-                     ComplexHeatmap::draw(ha, merge_legend = TRUE)
-                     return(p)
+                     if(plotHA) ComplexHeatmap::draw(ha, merge_legend = TRUE)
+                     return(ha)
                    })
 
 
