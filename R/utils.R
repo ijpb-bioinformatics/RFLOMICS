@@ -2004,5 +2004,3 @@ check_NA <- function(object){
   NA_detect <- ifelse(any(is.na(SummarizedExperiment::assay(object))), TRUE, FALSE)
   return(NA_detect)
 }
-
-

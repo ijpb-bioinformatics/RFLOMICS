@@ -648,18 +648,18 @@ methods::setMethod(f="RunPCA",
                        return(object)
                      }
                      
-                     # Transformation of the data (log2, log10, etc.) 
+                     # Transformation of the data (log2, log10, etc.)
                      if(transformData){
                        if(!is.null(object@metadata[["transform_method"]])){
                          print("PCA: transforming data")
                          objectPCA <- RFLOMICS::TransformData(object, transform_method = transformMethod)
-                         
+
                          # Check for NA/nan
                          if(RFLOMICS::check_NA(objectPCA)){
                            message("STOP: NA or nan detected in your data")
                            return(object)
                          }
-                         
+
                          pseudo <- SummarizedExperiment::assay(objectPCA)
                        }else{
                          message("PCA: asking for transforming the data but no transform method in the object. Keeping untransformed data")
@@ -1303,8 +1303,8 @@ methods::setMethod(f="RunNormalization",
                      
                      coefNorm  = switch(NormMethod,
                                         "TMM"        = TMM.Normalization(SummarizedExperiment::assay(object), object@metadata$Groups$groups),
-                                        "median"     = 0, # to be computed everytime
-                                        "totalSum"   = sapply(SummarizedExperiment::assay(object), 2, FUN = function(sample_vect) {sum(sample_vect^2)})
+                                        "median"     = apply(SummarizedExperiment::assay(object), 2, FUN = function(sample_vect) {median(sample_vect)}),
+                                        "totalSum"   = apply(SummarizedExperiment::assay(object), 2, FUN = function(sample_vect) {sum(sample_vect^2)})
                      )
                      object@metadata[["Normalization"]] <- list(methode = NormMethod, coefNorm = coefNorm)
                      return(object)
@@ -1584,19 +1584,45 @@ methods::setMethod(f="heatmap.plot",
                                                    scale = object@metadata$Normalization$coefNorm$lib.size*object@metadata$Normalization$coefNorm$lib.size))
                              },
                              "proteomics" = {
-                               m.def <- m.def # data already processed at this point (applied on filtred)
-                               # switch (object@metadata$transform_method,
+                               m.def <- m.def # data already transformed at this point (applied on filtred)
+                              
+                               if(!is.null(object@metadata[["Normalization"]]$methode)){
+                                 
+                                 switch (object@metadata[["Normalization"]]$methode,
+                                         "none" = {
+                                           m.def <- m.def },
+                                         "median" = {
+                                           m.def <- t(t(m.def) - object@metadata[["Normalization"]]$coefNorm)},
+                                         "totalSum" = {
+                                           m.def <- t(t(m.def)/object@metadata[["Normalization"]]$coefNorm)}
+                                 )
+                               }
+                               
+                                # switch (object@metadata$transform_method,
                                #         "log1p"      = { m.def <- log1p(m.def) },
                                #         "squareroot" = { m.def <- sqrt(m.def) },
                                #         "log2"       = { m.def <- log2(m.def + 1) },
                                #         "log10"      = { m.def <- log10(m.def + 1) },
                                #         "none"       = { m.def <- m.def }
                                # )
+                               
+                              
                              },
                              "metabolomics" = {
-                               # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
                                
                                m.def <- m.def # data already transformed at this point (applied on filtred)
+                               
+                               if(!is.null(object@metadata[["Normalization"]]$methode)){
+                                 
+                                 switch (object@metadata[["Normalization"]]$methode,
+                                         "none" = {
+                                           m.def <- m.def },
+                                         "median" = {
+                                           m.def <- t(t(m.def) - object@metadata[["Normalization"]]$coefNorm)},
+                                         "totalSum" = {
+                                           m.def <- t(t(m.def)/object@metadata[["Normalization"]]$coefNorm)}
+                                 )
+                               }
                                
                                # switch (object@metadata$transform_method,
                                #         "log1p"      = { m.def <- log1p(m.def) },
@@ -1607,6 +1633,8 @@ methods::setMethod(f="heatmap.plot",
                                # )
                              }
                      )
+                     
+     
                      
                      # filter by DE
                      m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
@@ -1713,22 +1741,34 @@ methods::setMethod(f="boxplot.DE.plot",
                                }
                                # after transformation
                                else{
-                                 
+                                 pseudo <- SummarizedExperiment::assay(object.DE)
                                  x_lab  <- paste0(DE, " data")
                                  title  <- paste0("Transformed (" , object.DE@metadata$transform_method, ") : ", DE)
                                  
-                                 switch (object.DE@metadata$transform_method,
-                                         
-                                         "log1p" = {
-                                           pseudo <- log1p(SummarizedExperiment::assay(object.DE)) },
-                                         
-                                         "squareroot" = {
-                                           pseudo <- sqrt(SummarizedExperiment::assay(object.DE)) }, 
-                                         "log2" = {
-                                           pseudo <- log2(SummarizedExperiment::assay(object.DE) +1 )},
-                                         "log10" = {
-                                           pseudo <- log10(SummarizedExperiment::assay(object.DE)+1)}
-                                 )
+                                 # switch (object.DE@metadata$transform_method,
+                                 #         
+                                 #         "log1p" = {
+                                 #           pseudo <- log1p(SummarizedExperiment::assay(object.DE)) },
+                                 #         
+                                 #         "squareroot" = {
+                                 #           pseudo <- sqrt(SummarizedExperiment::assay(object.DE)) }, 
+                                 #         "log2" = {
+                                 #           pseudo <- log2(SummarizedExperiment::assay(object.DE) +1 )},
+                                 #         "log10" = {
+                                 #           pseudo <- log10(SummarizedExperiment::assay(object.DE)+1)}
+                                 # )
+                                 if(!is.null(object.DE@metadata[["Normalization"]]$methode)){
+                                   
+                                   switch (object.DE@metadata[["Normalization"]]$methode,
+                                           "none" = {
+                                             pseudo <- pseudo },
+                                           "median" = {
+                                             pseudo <- t(t(pseudo) - object.DE@metadata[["Normalization"]]$coefNorm)},
+                                           "totalSum" = {
+                                             pseudo <- t(t(pseudo)/object.DE@metadata[["Normalization"]]$coefNorm)}
+                                   )
+                                 }
+                                 
                                }
                              },
                              "metabolomics" = {
@@ -1742,21 +1782,33 @@ methods::setMethod(f="boxplot.DE.plot",
                                # after transformation
                                else{
                                  
+                                 pseudo <- SummarizedExperiment::assay(object.DE)
                                  x_lab  <- paste0(DE, " data")
                                  title  <- paste0("Transformed (" , object.DE@metadata$transform_method, ") : ", DE)
                                  
-                                 switch (object.DE@metadata$transform_method,
-                                         
-                                         "log1p" = {
-                                           pseudo <- log1p(SummarizedExperiment::assay(object.DE)) },
-                                         
-                                         "squareroot" = {
-                                           pseudo <- sqrt(SummarizedExperiment::assay(object.DE)) },
-                                         "log2" = {
-                                           pseudo <- log2(SummarizedExperiment::assay(object.DE) +1 )}, 
-                                         "log10" = {
-                                           pseudo <- log10(SummarizedExperiment::assay(object.DE)+1)}
-                                 )
+                                 # switch (object.DE@metadata$transform_method,
+                                 # 
+                                 #         "log1p" = {
+                                 #           pseudo <- log1p(SummarizedExperiment::assay(object.DE)) },
+                                 # 
+                                 #         "squareroot" = {
+                                 #           pseudo <- sqrt(SummarizedExperiment::assay(object.DE)) },
+                                 #         "log2" = {
+                                 #           pseudo <- log2(SummarizedExperiment::assay(object.DE) +1 )},
+                                 #         "log10" = {
+                                 #           pseudo <- log10(SummarizedExperiment::assay(object.DE)+1)}
+                                 # )
+                                 if(!is.null(object.DE@metadata[["Normalization"]]$methode)){
+                                   
+                                   switch (object.DE@metadata[["Normalization"]]$methode,
+                                           "none" = {
+                                             pseudo <- pseudo },
+                                           "median" = {
+                                             pseudo <- t(t(pseudo) - object.DE@metadata[["Normalization"]]$coefNorm)},
+                                           "totalSum" = {
+                                             pseudo <- t(t(pseudo)/object.DE@metadata[["Normalization"]]$coefNorm)}
+                                   )
+                                 }
                                }
                              }
                      )
