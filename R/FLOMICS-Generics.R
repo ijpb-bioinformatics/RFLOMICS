@@ -129,6 +129,11 @@ methods::setGeneric(
 )
 
 methods::setGeneric(
+  name="plot.CPR_Results",
+  def = function( object, ... ){standardGeneric("plot.CPR_Results")}
+)
+
+methods::setGeneric(
   name="heatmap.plot",
   def = function( object, ... ){standardGeneric("heatmap.plot")}
 )

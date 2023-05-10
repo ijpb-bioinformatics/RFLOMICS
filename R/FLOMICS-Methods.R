@@ -2113,7 +2113,7 @@ methods::setMethod(f="coseq.profile.plot",
 
 #' @title runAnnotationEnrichment_CPR
 #' @description This function performs overrepresentation analysis (ORA) using clusterprofiler functions. It can be used with custom annotation file (via enricher), GO (enrichGO) or KEGG (enrichKEGG) annotations. 
-#' @param object An object of class \link{MultiAssayExperiment}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param list_args list of arguments to pass to the func_to_use function. These arguments must match the ones from the clusterprofiler package. E.g: universe, keytype, pvalueCutoff, qvalueCutoff, etc. 
 #' @param from indicates if ListNames are from differential analysis results (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
 #' @param dom.select: is it a custom annotation, GO or KEGG annotations
@@ -2262,8 +2262,103 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                      return(object)
                    })
 
+#' @title plot.CPR_Results
+#' @description TODO 
+#' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param contrast the name of the contrast to consider. For Co expression analysis, it is expected to be one of "cluster.1", "cluster.2", etc. 
+#' @param ont the ontology (GO, KEGG or custom)
+#' @param Domain if the ontology is GO, expect one of BP, MF or CC. Default is NULL. 
+#' @param from what type of analysis to consider? One of 'DiffExpAnal' or 'CoExpAnal'
+#' @param type type of plot. Define the function used inside. One of dotplot, heatplot or cnetplot. 
+#' @param showCategory max number of terms to show.
+#' @param searchExpr expression to search in the showCategory terms. 
+#' @param node_label same as in enrichplot::cnetplot function, defines the labels on the graph. One of "all", "category" or "gene". Default is 'all'. 
+#' @param pvalueCutoff pvalueCutoff to define the enrichment threshold. Default is the one find in the clusterprofiler results in object. 
+#' @param  
+#' 
+#' @return A plot. 
+#' @export
+#' @exportMethod plot.CPR_Results
+#' @examples
+#'
 
-
+methods::setMethod(f="plot.CPR_Results",
+                   signature="SummarizedExperiment", 
+                   definition <- function(object, 
+                                          contrast,
+                                          ont, 
+                                          Domain = NULL, 
+                                          from = "DiffExpAnal",
+                                          type = "dotplot",
+                                          showCategory = 15,
+                                          searchExpr = "",
+                                          node_label = "all",
+                                          pvalueCutoff = object@metadata$DiffExpEnrichAnal[[ont]]$list_args$pvalueCutoff, ...){
+                     
+                     # if from diffExpAnal, then takes the log2FC by default.
+                     # -> what if the user want something else printed ?!
+                     # if from coexp, then no log2FC
+                     
+                     # dataPlot the enrichment results for correct ontology and contrast.
+                     if(from == "DiffExpAnal"){
+                       dataPlot <- object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult[[contrast]]
+                     }else{
+                       dataPlot <- object@metadata$CoExpAnal[[ont]]$enrichResult[[contrast]]
+                     }
+                     
+                     if(ont == "GO"){
+                       if(is.null(Domain)){
+                         stop("Ontology is GO, non null Domain (BP, CC or MF) is expected.")
+                       }else{
+                         dataPlot <- dataPlot[[Domain]]
+                       }
+                     }if(ont == "custom"){
+                       if(is.null(Domain)){Domain <- "no-domain"}
+                       
+                       if(!Domain %in% names(dataPlot)){stop(paste0("Domain is expected to be one of ", paste(names(dataPlot), collapse = ",")))
+                       }else{
+                         dataPlot <- dataPlot[[Domain]]
+                       }
+                     }
+                     
+                     
+                     log2FC_vect <- NULL
+                     # Get the log2FC if appropriate
+                     if(from == "DiffExpAnal"){
+                       log2FC_vect <-   object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
+                       names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
+                     }
+                     
+                     # Select cateogries to show
+                     dataTab <- dataPlot@result[dataPlot@result$p.adjust <  pvalueCutoff, ]
+                     NbtoPlot <- min(nrow(dataTab), showCategory)
+                     Categories <- dataTab$Description[1:NbtoPlot]
+                     if(searchExpr!="") Categories <- Categories[grep(toupper(searchExpr), toupper(Categories))]
+                     
+                     
+                     # Create the plot
+                     returnplot <- NULL
+                     if(type == "cnetplot"){
+                       suppressMessages( # delete warnings for scale fill replacement
+                         returnplot <- enrichplot::cnetplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, node_label = node_label, ...) +
+                           guides(colour=guide_colourbar(title = "log2FC")) +
+                           scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)
+                       )
+                     }else if(type == "heatplot"){
+                       suppressMessages(# delete warnings for scale fill replacement
+                         returnplot <- enrichplot::heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, ...) +
+                           labs(fill="log2FC") +
+                           scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+                           theme(axis.text.y = element_text(size = 10))
+                       )
+                     }else if(type == "dotplot"){
+                       returnplot <- enrichplot::dotplot(dataPlot, showCategory = Categories, ...)
+                     }
+                     
+                     
+                     return(returnplot)
+                     
+                   })
 
 #' @title runAnnotationEnrichment
 #' @description This function performs enrichment test from functional gene annotation data. This data could be
