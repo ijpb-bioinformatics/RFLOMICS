@@ -489,7 +489,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                          Categories <- dataPlot@result$Description[1:NbtoPlot]
                          if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
                          
-                         dotplot(dataPlot, showCategory = Categories)
+                         enrichplot::dotplot(dataPlot, showCategory = Categories)
                          
                        })
                      )
@@ -513,7 +513,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                            })
                          }else{
                            suppressMessages(print(# delete warnings for scale fill replacement
-                             heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect) +
+                             enrichplot::heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect) +
                                labs(fill="log2FC") +
                                scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
                                theme(axis.text.y = element_text(size = 10))
@@ -544,7 +544,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                          }
                          
                          suppressMessages(print( # delete warnings for scale fill replacement
-                           cnetplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, node_label = node_label_arg) +
+                           enrichplot::cnetplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, node_label = node_label_arg) +
                              guides(colour=guide_colourbar(title = "log2FC")) +
                              scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)
                          ))
@@ -713,7 +713,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                          Categories <- dataPlot@result$Description[1:NbtoPlot]
                          if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
                          
-                         dotplot(dataPlot, showCategory = Categories)
+                         enrichplot::dotplot(dataPlot, showCategory = Categories)
                          
                        }),
                      ),
@@ -738,7 +738,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                            })
                          }else{
                            suppressMessages(print(# delete warnings for scale fill replacement
-                             heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect) +
+                             enrichplot::heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect) +
                                labs(fill="log2FC") +
                                scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
                                theme(axis.text.y = element_text(size = 10))
@@ -769,7 +769,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                          }
                          
                          suppressMessages(print( # delete warnings for scale fill replacement
-                           cnetplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, node_label = node_label_arg) +
+                           enrichplot::cnetplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, node_label = node_label_arg) +
                              guides(colour=guide_colourbar(title = "log2FC")) +
                              scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)
                          ))
