@@ -1544,8 +1544,10 @@ methods::setMethod(f="DiffAnal.plot",
 #' @param object An object of class \link{SummarizedExperiment}
 #' @param hypothesis The hypothesis for which the MAplot has to be drawn
 #' @param condition characters. Default to none. Name of a feature in the design matrix, splits the samples on the heatmap according to its modalities.  
-#' @param plotHA boolean. If TRUE, plot the Heatmap. 
 #' @param title characters. Title of the heatmap. 
+#' @param annot_to_show vector. Names of the annotations to keep in the Heatmap. Default takes all available information.
+#' @param subset_list named list of vectors of modalities to subset and print on the heatmap. 
+#' @param draw_args,heatmap_args  named lists. Any additional parameter passed to ComplexHeatmap::Heatmap or ComplexHeatmap::draw
 #' @return plot
 #' @exportMethod heatmap.plot
 #' @export
@@ -1553,7 +1555,7 @@ methods::setMethod(f="DiffAnal.plot",
 #' @examples
 methods::setMethod(f="heatmap.plot",
                    signature="SummarizedExperiment",
-                   definition <- function(object, hypothesis, condition="none", plotHA = TRUE, title = ""){
+                   definition <- function(object, hypothesis, condition="none", title = "", annot_to_show = NULL, subset_list = NULL, draw_args = list(), heatmap_args = list()){
 
                      if(is.null(object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]])){
                        stop("no DE variables")
@@ -1643,20 +1645,54 @@ methods::setMethod(f="heatmap.plot",
                      
                      # Center
                      # m.def.filter.center <- scale(m.def.filter,center=TRUE,scale=FALSE)
-                     m.def.filter.center <- t(scale(t(m.def.filter),center = TRUE, scale = FALSE)) # Modified 221123 : centered by genes and not by samples
-                     column_split.value <- if(condition != "none"){
-                       object@metadata$Groups[,condition] }else{NULL}
-                     
-                     # Color annotations
+                     m.def.filter.center <- t(scale(t(m.def.filter), center = TRUE, scale = FALSE)) # Modified 221123 : centered by genes and not by samples
+         
+  
+                     # Annotations datatable
                      df_annotation <- object@metadata$Groups %>% dplyr::select(!samples & !groups)  
                      df_annotation <- df_annotation[match(colnames(m.def.filter.center), rownames(df_annotation)),] 
                      
+                     # Subset the dataset to print only interesting modalities
+                     if(!is.null(subset_list)){
+                       if(is.null(names(subset_list))){
+                         message("In plot.heatmap, subset_list argument needs a named list. Not subsetting")
+                       }else{ 
+                         samplesToKeep <- Reduce("intersect", lapply(
+                           1:length(subset_list),
+                           FUN = function(i){
+                             col_nam <- names(subset_list)[i]
+                             rownames(df_annotation[which(df_annotation[[col_nam]] %in% subset_list[[i]]),])
+                           }
+                         ))
+                         
+                         # print(samplesToKeep)
+                         
+                         df_annotation <- df_annotation[which(rownames(df_annotation)%in%samplesToKeep),]
+                         m.def.filter.center <- m.def.filter.center[, which(colnames(m.def.filter.center)%in%samplesToKeep)]
+                         
+                         # print(dim(df_annotation))
+                         # print(m.def.filter.center)
+                         
+                         df_annotation <- df_annotation[match(colnames(m.def.filter.center), rownames(df_annotation)),]
+                       }
+                     }
+                     
+                     # Select the right columns
+                     if(!is.null(annot_to_show)){
+                       df_annotation <- df_annotation %>% dplyr::select(any_of(annot_to_show))
+                     }
+                     
+                     # Split management
+                     column_split.value <- if(condition != "none"){ df_annotation[, condition] }else{NULL}
+                     
+                     # Color annotations
                      set.seed(10000) ; selectPal <- sample(rownames(RColorBrewer::brewer.pal.info),  size = ncol(df_annotation), replace = FALSE)
                      
                      color_list <- lapply(1:ncol(df_annotation), FUN = function(i){
                        annot_vect <- unique(df_annotation[,i])
                        
-                       col_vect <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(n = min(length(annot_vect), 8), name = selectPal[i]))(length(annot_vect)) 
+                        col_vect <-  grDevices::colorRampPalette(
+                          suppressWarnings({ RColorBrewer::brewer.pal(n = min(length(annot_vect), 8), name = selectPal[i])}))(length(annot_vect)) 
                        names(col_vect) <- annot_vect 
                        col_vect[!is.na(names(col_vect))] # RcolorBrewer::brewer.pal n is minimum 3, remove NA names if only 2 levels
                      })
@@ -1664,19 +1700,48 @@ methods::setMethod(f="heatmap.plot",
                      
                      column_ha <- ComplexHeatmap::HeatmapAnnotation(df = df_annotation, col = color_list)
                      
-                     # Drawing heatmap
-                     ha <- ComplexHeatmap::Heatmap(m.def.filter.center, name = "normalized counts\nor XIC",
-                                                   show_row_names= ifelse( dim(m.def.filter.center)[1] > 50, FALSE, TRUE),
-                                                   row_names_gp = grid::gpar(fontsize = 8),
-                                                   column_names_gp = grid::gpar(fontsize = 12),
-                                                   row_title_rot = 0 ,
-                                                   clustering_method_columns = "ward.D2",
-                                                   cluster_column_slice=FALSE,
-                                                   column_split = column_split.value,
-                                                   top_annotation = column_ha,
-                                                   column_title = title)
                      
-                     if(plotHA) ComplexHeatmap::draw(ha, merge_legend = TRUE)
+                     # names(formals(ComplexHeatmap::Heatmap))
+                     
+                     
+                     # Arguments for Heatmap
+                     heatmap_args <- c(
+                       list(matrix = m.def.filter.center,
+                            name = "normalized counts\nor XIC",
+                            show_row_names = ifelse( dim(m.def.filter.center)[1] > 50, FALSE, TRUE),
+                            row_names_gp = grid::gpar(fontsize = 8),
+                            column_names_gp = grid::gpar(fontsize = 12),
+                            row_title_rot = 0 ,
+                            clustering_method_columns = "ward.D2",
+                            cluster_column_slice = FALSE,
+                            column_split = column_split.value,
+                            top_annotation = column_ha,
+                            column_title = title),
+                       heatmap_args)
+                     
+                     # Arguments for drawing the heatmap
+                     draw_args <- c(list(merge_legend = TRUE),
+                                    draw_args)            
+
+                     # Drawing heatmap in a null file to not plot it
+                     pdf(file = NULL)
+                     ha <- do.call(ComplexHeatmap::Heatmap, heatmap_args)
+                     
+                     draw_args$object <- ha
+                     ha <- do.call(ComplexHeatmap::draw, draw_args)
+                     
+                     # ha <- ComplexHeatmap::draw(ComplexHeatmap::Heatmap(m.def.filter.center, name = "normalized counts\nor XIC",
+                     #                               show_row_names= ifelse( dim(m.def.filter.center)[1] > 50, FALSE, TRUE),
+                     #                               row_names_gp = grid::gpar(fontsize = 8),
+                     #                               column_names_gp = grid::gpar(fontsize = 12),
+                     #                               row_title_rot = 0 ,
+                     #                               clustering_method_columns = "ward.D2",
+                     #                               cluster_column_slice = FALSE,
+                     #                               column_split = column_split.value,
+                     #                               top_annotation = column_ha,
+                     #                               column_title = title, match.arg(..., names(formals(ComplexHeatmap::Heatmap)))),  merge_legend = TRUE, match.arg(..., names(formals(ComplexHeatmap::draw))))
+                     dev.off()
+                     
                      return(ha)
                    })
 
