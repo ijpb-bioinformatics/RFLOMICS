@@ -343,7 +343,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
               if(input$col_termName != "") annotation2[["name"]] <- annotation[[input$col_termName]]
               
               annotation2 <- data.frame(annotation2)
-              list_args[["annotation"]] <- annotation2
+              # list_args[["annotation"]] <- annotation2
             }
     )
     
@@ -362,7 +362,8 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     if(length(input$GeneList.diff) != 0){
       
       # run annotation
-      local.rea.values$dataset.SE <- runAnnotationEnrichment_CPR(local.rea.values$dataset.SE, list_args = list_args, from = "DiffExpAnal", 
+      local.rea.values$dataset.SE <- runAnnotationEnrichment_CPR(local.rea.values$dataset.SE, list_args = list_args, from = "DiffExpAnal",
+                                                                 annot = ifelse(dom.select == "custom", annotation2, NULL),
                                                                  dom.select = dom.select, Domain = Domain)
       
       rea.values[[dataset]]$diffAnnot <- TRUE
@@ -372,6 +373,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     if(length(input$GeneList.coseq) != 0){
       
       local.rea.values$dataset.SE <- runAnnotationEnrichment_CPR(local.rea.values$dataset.SE, list_args = list_args, from = "CoExpAnal",
+                                                                 annot = ifelse(dom.select == "custom", annotation2, NULL),
                                                                  dom.select = dom.select, Domain = Domain)
       
       rea.values[[dataset]]$coExpAnnot <- TRUE

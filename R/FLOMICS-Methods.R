@@ -2114,7 +2114,7 @@ methods::setMethod(f="coseq.profile.plot",
 #' @title runAnnotationEnrichment_CPR
 #' @description This function performs overrepresentation analysis (ORA) using clusterprofiler functions. It can be used with custom annotation file (via enricher), GO (enrichGO) or KEGG (enrichKEGG) annotations. 
 #' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
-#' @param list_args list of arguments to pass to the func_to_use function. These arguments must match the ones from the clusterprofiler package. E.g: universe, keytype, pvalueCutoff, qvalueCutoff, etc. 
+#' @param list_args list of arguments to pass to the enrichment function. These arguments must match the ones from the clusterprofiler package. E.g: universe, keytype, pvalueCutoff, qvalueCutoff, etc. 
 #' @param from indicates if ListNames are from differential analysis results (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
 #' @param dom.select: is it a custom annotation, GO or KEGG annotations
 #' @return A list of results from clusterprofiler.
@@ -2127,7 +2127,8 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                    
                    definition <- function(object, 
                                           list_args = list(),
-                                          from = "DiffExpAnal", dom.select = "custom", Domain = "no-domain"){
+                                          from = "DiffExpAnal", dom.select = "custom", Domain = "no-domain",
+                                          col_term = "term", col_gene = "gene", col_name = "name", col_domain = NULL, annot = NULL){
                      
                      EnrichAnal <- list()
                      
@@ -2147,15 +2148,37 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                              }
                      )
                      
-                     if(is.null(Domain)) { Domain <- "no-domain"}
+                     # Checks arguments
                      
-                     # common parameter
-                     list_args$qvalueCutoff <- 1 # no threshold on qvalue (default 0.2)
-                     list_args$minGSSize    <- 10 # default in clusterprofiler
-                     list_args$maxGSSize    <- 500 # default in clusterprofiler
-                     list_args$universe     <- names(object)
-                     annotation <- list_args$annotation
-                     list_args$annotation <- NULL
+                     if(dom.select == "custom"){
+                       if(is.null(annot)){stop("You need an annotation file for a custom enrichment")}
+                       if(nrow(annot)<1){stop("Your annotation file seems to have 0 lines")}
+                       if(length(intersect(c(col_term, col_gene), colnames(annot)))!= 2){
+                         stop("The name of columns for gene and term names don't match the ones of the annotation files")
+                         }
+                       
+                     }
+
+                     # Change Domain if needed
+                     if(is.null(Domain)) { Domain <- "no-domain"}
+                     if(!is.null(col_domain) && dom.select == "custom"){
+                       if(is.null(annot[[col_domain]])){stop("The column you indicated for the domain in your annotation file doesn't seem to exist.")}
+                       else{
+                         Domain <- unique(annot[[col_domain]])
+                         Domain <- Domain[!is.na(Domain)]
+                       }
+                     }
+                     
+                     # common parameters (is this useful ?)
+                     if(is.null(list_args$pvalueCutoff)) list_args$pvalueCutoff <- 0.05 # default in clusterprofiler
+                     if(is.null(list_args$qvalueCutoff)) list_args$qvalueCutoff <- 1 # no threshold on qvalue (default 0.2)
+                     if(is.null(list_args$minGSSize))    list_args$minGSSize    <- 10 # default in clusterprofiler
+                     if(is.null(list_args$maxGSSize))    list_args$maxGSSize    <- 500 # default in clusterprofiler
+                     if(is.null(list_args$universe))     list_args$universe     <- names(object)
+                     # annotation             <- list_args$annotation
+                     
+                     annotation             <- annot
+                     # list_args$annotation   <- NULL
                      
                      # for each list
                      results_list <- lapply(names(geneLists), FUN = function(listname){
@@ -2177,15 +2200,15 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                                    list_args$TERM2NAME <- NA
                                    annotation2 <- annotation
                                    
-                                   if(!is.null(annotation$domain)) {
-                                     annotation2 <- dplyr::filter(annotation, domain == ont)
+                                   if(ont!="no-domain"){
+                                     annotation2 <- dplyr::filter(annotation, get(col_domain) == ont)
                                    }
+
+                                   list_args$TERM2GENE <- list( "term" = annotation2[[col_term]], "gene"= annotation2[[col_gene]])
                                    
-                                   list_args$TERM2GENE <- list( "term" = annotation2$term, "gene"= annotation2$gene)
-                                   
-                                   if(!is.null(annotation2$name)){
-                                     tmp <- dplyr::select(annotation2, term, name) %>% unique()
-                                     list_args$TERM2NAME <- list("term" = tmp$term, "name"= tmp$name)
+                                   if(!is.null(annotation2[[col_name]])){
+                                     tmp <- dplyr::select(annotation2, tidyselect::all_of(c(col_term, col_name))) %>% unique()
+                                     list_args$TERM2NAME <- list("term" = tmp[[col_term]], "name"= tmp[[col_name]])
                                    }
                                  }
                          )
@@ -2296,7 +2319,7 @@ methods::setMethod(f="plot.CPR_Results",
                                           pvalueCutoff = object@metadata$DiffExpEnrichAnal[[ont]]$list_args$pvalueCutoff, ...){
                      
                      # if from diffExpAnal, then takes the log2FC by default.
-                     # -> what if the user want something else printed ?!
+                     # -> what if the user want something else printed ?! can modify it through scales ?
                      # if from coexp, then no log2FC
                      
                      # dataPlot the enrichment results for correct ontology and contrast.
@@ -2312,7 +2335,7 @@ methods::setMethod(f="plot.CPR_Results",
                        }else{
                          dataPlot <- dataPlot[[Domain]]
                        }
-                     }if(ont == "custom"){
+                     }else if(ont == "custom"){
                        if(is.null(Domain)){Domain <- "no-domain"}
                        
                        if(!Domain %in% names(dataPlot)){stop(paste0("Domain is expected to be one of ", paste(names(dataPlot), collapse = ",")))
