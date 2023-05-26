@@ -2149,8 +2149,8 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                      )
                      
                      # Checks arguments
-                     
                      if(dom.select == "custom"){
+                       
                        if(is.null(annot)){stop("You need an annotation file for a custom enrichment")}
                        if(nrow(annot)<1){stop("Your annotation file seems to have 0 lines")}
                        if(length(intersect(c(col_term, col_gene), colnames(annot)))!= 2){
@@ -2172,7 +2172,8 @@ methods::setMethod(f="runAnnotationEnrichment_CPR",
                      # common parameters (is this useful ?)
                      if(is.null(list_args$pvalueCutoff)) list_args$pvalueCutoff <- 0.05 # default in clusterprofiler
                      if(is.null(list_args$qvalueCutoff)) list_args$qvalueCutoff <- 1 # no threshold on qvalue (default 0.2)
-                     if(is.null(list_args$minGSSize))    list_args$minGSSize    <- 10 # default in clusterprofiler
+                     # if(is.null(list_args$minGSSize))    list_args$minGSSize    <- 10 # default in clusterprofiler
+                     if(is.null(list_args$minGSSize))    list_args$minGSSize    <- 3 # tried for SBML
                      if(is.null(list_args$maxGSSize))    list_args$maxGSSize    <- 500 # default in clusterprofiler
                      if(is.null(list_args$universe))     list_args$universe     <- names(object)
                      # annotation             <- list_args$annotation
