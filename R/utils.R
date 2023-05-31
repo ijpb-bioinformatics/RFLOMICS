@@ -1437,7 +1437,7 @@ coseq.error.manage <- function(coseq.res.list, K, replicates){
       }
     }
     
-    print("#     => error management : level 2 ")
+    print("#     => error management: level 2 ")
     ICL.vec <- unlist(lapply(1:nK_success.job, function(x){ (ICL(coseq.res.list[["value"]][[x]])) })) %>%
       lapply(., function(x){ if_else(is.na(x), "failed", "success") }) %>% unlist()
     
@@ -1685,27 +1685,26 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list){
   
   coseq.res.list <- lapply(1:replicates, function(x){
     
-    try_rflomics(coseq::coseq(counts, K=K, parallel= TRUE,
-                              model           =param.list[["model"]],
-                              transformation  =param.list[["transformation"]],
-                              meanFilterCutoff=param.list[["meanFilterCutoff"]],
-                              normFactors     =param.list[["normFactors"]],
-                              GaussianModel   =param.list[["GaussianModel"]]))})
-  
-  # coseq.res.list$value[[3]]@metadata$nbClusterError
-  
+    try_rflomics(coseq::coseq(counts, 
+                              K               = K, 
+                              parallel        = TRUE,
+                              model           = param.list[["model"]],
+                              transformation  = param.list[["transformation"]],
+                              meanFilterCutoff= param.list[["meanFilterCutoff"]],
+                              normFactors     = param.list[["normFactors"]],
+                              GaussianModel   = param.list[["GaussianModel"]]))})
   
   names(coseq.res.list) <- c(1:replicates)
   
   CoExpAnal <- list()
   
   # error managment
-  print("#     => error management : level 1 ")
+  print("#     => error management: level 1 ")
   coseq.error.management <- coseq.error.manage(coseq.res.list=coseq.res.list, K=K, replicates=replicates)
   
   nK_success   <- coseq.error.management$nK_success
   
-  # If they are at least the half of jobs succeed, valid results
+  # If at least the half of the jobs have succeeded, valid results
   if(nK_success != 0){
     
     CoExpAnal <- coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, conds = conds)

@@ -1954,9 +1954,30 @@ methods::setMethod(f="boxplot.DE.plot",
 #' @seealso \code{\link{coseq::coseq}}
 methods::setMethod(f="runCoExpression",
                    signature="SummarizedExperiment",
-                   definition <- function(object, K=2:20, replicates=5, nameList, merge="union",
-                                          model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation, normFactors, clustermq=FALSE){
+                   definition <- function(object,
+                                          nameList = NULL, 
+                                          K=2:20, replicates=5, 
+                                          merge="union",
+                                          model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", 
+                                          transformation = NULL, normFactors = NULL, 
+                                          clustermq=FALSE,
+                                          meanFilterCutoff = 50 # not used for proteomics and metabolomics
+                                          ){
                      
+                     
+                     # Check if nameList is missing
+                     if(is.null(nameList)){
+                       nameList <- RFLOMICS::getValidContrasts(object)
+                     }
+                     
+                     # Check if nameList is list of tags or contrast names
+                     # Convert if appropriate
+                     
+                     if(RFLOMICS::isContrastName(object, nameList)){
+                       nameList <- RFLOMICS::convertContrastToTag(object, nameList)
+                     }
+
+                     # Move onto the coexpression analysis
                      
                      CoExpAnal <- list()
                      
@@ -1964,7 +1985,7 @@ methods::setMethod(f="runCoExpression",
                      CoExpAnal[["gene.list.names"]]  <- nameList
                      CoExpAnal[["merge.type"]]       <- merge
                      CoExpAnal[["replicates.nb"]]    <- replicates
-                     CoExpAnal[["K.range"]]    <- K
+                     CoExpAnal[["K.range"]]          <- K
                      
                      geneList <- dplyr::select(object@metadata$DiffExpAnal[["mergeDEF"]], DEF, all_of(nameList)) %>% 
                        dplyr::mutate(intersection=dplyr::if_else(rowSums(dplyr::select(., contains(nameList))) == length(nameList), "YES", "NO"), 
@@ -1981,38 +2002,36 @@ methods::setMethod(f="runCoExpression",
                              
                              "RNAseq" = {
                                param.list[["model"]]            <- model
-                               param.list[["transformation"]]   <- "arcsin"
-                               param.list[["normFactors"]]      <- "TMM"
-                               param.list[["meanFilterCutoff"]] <- 50
                                param.list[["GaussianModel"]]    <- GaussianModel
+                               param.list[["transformation"]]   <- ifelse(!is.null(transformation), transformation, "arcsin")
+                               param.list[["normFactors"]]      <- ifelse(!is.null(normFactors), normFactors, "TMM")
+                               param.list[["meanFilterCutoff"]] <- meanFilterCutoff
                                
                              },
                              "proteomics" = {
                                # Print the selected GaussianModel
-                               print(paste("Use ",GaussianModel,sep=""))
-                               print("Scale each protein (center=TRUE,scale = TRUE)")
+                               print(paste("Use ", GaussianModel, sep=""))
+                               print("Scale each protein (center=TRUE, scale = TRUE)")
                                CoExpAnal[["transformation.prot"]] <- "scaleProt"
-                               counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
+                               counts[] <- t(apply(counts, 1, function(x){ scale(x, center=TRUE,scale = TRUE) }))
                                
                                # param
                                param.list[["model"]]            <- model
-                               param.list[["transformation"]]   <- "none"
-                               param.list[["normFactors"]]      <- "none"
-                               #param.list[["meanFilterCutoff"]] <- NULL
+                               param.list[["transformation"]]   <- ifelse(!is.null(transformation), transformation, "none")
+                               param.list[["normFactors"]]      <- ifelse(!is.null(normFactors), normFactors, "none")
                                param.list[["GaussianModel"]]    <- GaussianModel
                              },
                              "metabolomics" = {
                                # Print the selected GaussianModel
-                               print(paste("Use ",GaussianModel,sep=""))
-                               print("Scale each metabolite (center=TRUE,scale = TRUE)")
+                               print(paste("Use ", GaussianModel, sep=""))
+                               print("Scale each metabolite (center=TRUE, scale = TRUE)")
                                CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
                                counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
                                
                                # param
                                param.list[["model"]]            <- model
-                               param.list[["transformation"]]   <- "none"
-                               param.list[["normFactors"]]      <- "none"
-                               #param.list[["meanFilterCutoff"]] <- NULL
+                               param.list[["transformation"]]   <- ifelse(!is.null(transformation), transformation, "none")
+                               param.list[["normFactors"]]      <- ifelse(!is.null(normFactors), normFactors, "none")
                                param.list[["GaussianModel"]]    <- GaussianModel
                              }
                      )
