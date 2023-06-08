@@ -1961,7 +1961,9 @@ methods::setMethod(f="runCoExpression",
                                           model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", 
                                           transformation = NULL, normFactors = NULL, 
                                           clustermq=FALSE,
-                                          meanFilterCutoff = 50 # not used for proteomics and metabolomics
+                                          meanFilterCutoff = 50, # not used for proteomics and metabolomics
+                                          scale_per_feature = TRUE, # only applies to proteomics and metabolomics
+                                          verbose = TRUE
                                           ){
                      
                      
@@ -2010,10 +2012,12 @@ methods::setMethod(f="runCoExpression",
                              },
                              "proteomics" = {
                                # Print the selected GaussianModel
-                               print(paste("Use ", GaussianModel, sep=""))
-                               print("Scale each protein (center=TRUE, scale = TRUE)")
-                               CoExpAnal[["transformation.prot"]] <- "scaleProt"
-                               counts[] <- t(apply(counts, 1, function(x){ scale(x, center=TRUE,scale = TRUE) }))
+                               if(verbose) print(paste("Use ", GaussianModel, sep=""))
+                               if(scale_per_feature){
+                                 if(verbose) print("Scale each protein (center=TRUE, scale = TRUE)")
+                                 CoExpAnal[["transformation.prot"]] <- "scaleProt"
+                                 counts[] <- t(apply(counts, 1, function(x){ scale(x, center=TRUE,scale = TRUE) }))
+                               } 
                                
                                # param
                                param.list[["model"]]            <- model
@@ -2023,11 +2027,13 @@ methods::setMethod(f="runCoExpression",
                              },
                              "metabolomics" = {
                                # Print the selected GaussianModel
-                               print(paste("Use ", GaussianModel, sep=""))
-                               print("Scale each metabolite (center=TRUE, scale = TRUE)")
-                               CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
-                               counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
-                               
+                               if(verbose) print(paste("Use ", GaussianModel, sep=""))
+                               if(scale_per_feature){
+                                 if(verbose) print("Scale each metabolite (center=TRUE, scale = TRUE)")
+                                 CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
+                                 counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
+                               } 
+                    
                                # param
                                param.list[["model"]]            <- model
                                param.list[["transformation"]]   <- ifelse(!is.null(transformation), transformation, "none")
@@ -2040,23 +2046,45 @@ methods::setMethod(f="runCoExpression",
                      
                      # run coseq : on local machine or remote cluster
                      
-                     print("#     => coseq... ")
+                     if(verbose) print("#     => coseq... ")
                      
                      coseq.res.list <- list()
                      
-                     coseq.res.list <- switch (as.character(clustermq),
-                                               `FALSE` = {
-                                                 
-                                                 try_rflomics(
-                                                   runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
-                                                 
-                                               },
-                                               `TRUE` = {
-                                                 
-                                                 try_rflomics(
-                                                   runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
-                                                 
-                                               })
+                     if(verbose){
+                       
+                       coseq.res.list <- switch (as.character(clustermq),
+                                                 `FALSE` = {
+                                                   
+                                                   try_rflomics(
+                                                     runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, 
+                                                                    verbose = verbose, param.list=param.list))
+                                                 },
+                                                 `TRUE` = {
+                                                   
+                                                   try_rflomics(
+                                                     runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
+                                                   
+                                                 })
+                     }else{
+                       capture.output({
+                         suppressMessages(
+                           coseq.res.list <- 
+                             switch (as.character(clustermq),
+                                     `FALSE` = {
+                                       
+                                       try_rflomics(
+                                         runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, 
+                                                        verbose = verbose, param.list=param.list))
+                                     },
+                                     `TRUE` = {
+                                       
+                                       try_rflomics(
+                                         runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
+                                       
+                                     })
+                         )})
+                     }
+                     
                      
                      # If coseq could run (no problem with SSH connexion in case of clustermq=TRUE)
                      

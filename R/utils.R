@@ -1400,7 +1400,7 @@ try_rflomics <- function(expr) {
 #' @export
 #' @noRd
 #'
-coseq.error.manage <- function(coseq.res.list, K, replicates){
+coseq.error.manage <- function(coseq.res.list, K, replicates, verbose = TRUE){
   
   # Create a table of jobs summary
   error.list <- unlist(lapply(coseq.res.list, function(x){
@@ -1410,16 +1410,20 @@ coseq.error.manage <- function(coseq.res.list, K, replicates){
   # status of jobs
   nK_success.job <- table(error.list)["success"]
   
+  print(nK_success.job)
+  
   if(is.na(nK_success.job)){ nK_success.job <- 0 }
   
   # if at least one failed job
   # => generate table with error summary
-  K.list <- rep(paste0("K",min(K), "-", max(K)), each=replicates)
+  K.list <- rep(paste0("K", min(K), "-", max(K)), each=replicates)
   
-  jobs.tab <- data.frame(K= K.list, error.message=as.factor(error.list))
+  jobs.tab <- data.frame(K = K.list, error.message = as.factor(error.list))
   
-  jobs.tab.sum1 <- jobs.tab %>% dplyr::group_by(K,error.message) %>%
-    dplyr::summarise(n=dplyr::n()) %>%  dplyr::mutate(prop.failed=round((n/replicates)*100)) %>%
+  jobs.tab.sum1 <- jobs.tab %>% 
+    dplyr::group_by(K, error.message) %>%
+    dplyr::summarise(n=dplyr::n()) %>%  
+    dplyr::mutate(prop.failed=round((n/replicates)*100)) %>%
     dplyr::filter(error.message != "success")
   
   jobs.tab.sum <- jobs.tab.sum1
@@ -1435,11 +1439,15 @@ coseq.error.manage <- function(coseq.res.list, K, replicates){
       if(!is.null(coseq.res.list[[x]]$value)){
         coseq.res.list[["value"]][[x]] <- coseq.res.list[[x]]$value
       }
+      
     }
     
-    print("#     => error management: level 2 ")
-    ICL.vec <- unlist(lapply(1:nK_success.job, function(x){ (ICL(coseq.res.list[["value"]][[x]])) })) %>%
-      lapply(., function(x){ if_else(is.na(x), "failed", "success") }) %>% unlist()
+    if(verbose) print("#     => error management: level 2 ")
+    ICL.vec <- unlist(
+      lapply(1:nK_success.job, function(x){ 
+      (coseq::ICL(coseq.res.list[["value"]][[x]])) })) %>%
+      lapply(., function(x){ if_else(is.na(x), "failed", "success") }) %>% 
+      unlist()
     
     nK_success <- table(ICL.vec)["success"]
     
@@ -1618,7 +1626,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
   }))
   
   nK_success <- table(error.list)["success"]
-  print(paste0("#     => nbr of success jobs : ", nK_success))
+  print(paste0("#     => nbr of success jobs: ", nK_success))
   
   K.list <- rep(paste0("K=", K), each=replicates)
   
@@ -1676,7 +1684,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
 #' @export
 #' @noRd
 #'
-runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list){
+runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, verbose = TRUE, param.list){
   
   iter <- rep(K, replicates)
   nbr_iter <- length(iter)
@@ -1699,8 +1707,8 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list){
   CoExpAnal <- list()
   
   # error managment
-  print("#     => error management: level 1 ")
-  coseq.error.management <- coseq.error.manage(coseq.res.list=coseq.res.list, K=K, replicates=replicates)
+  if(verbose) print("#     => error management: level 1 ")
+  coseq.error.management <- coseq.error.manage(coseq.res.list=coseq.res.list, K=K, replicates=replicates, verbose = verbose)
   
   nK_success   <- coseq.error.management$nK_success
   

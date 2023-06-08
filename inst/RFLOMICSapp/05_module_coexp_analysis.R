@@ -151,15 +151,15 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
             column(12,
                    selectInput(session$ns("GaussianModel"),
                                
-                               label    = popify(actionLink("infoGaussianModel",paste0("Gaussian Model :", warning,"")),"","For proteomics or metabolomics data, coseq analysis may fail with default GaussianModel parameter. In this case, an error message will indicate to switch the other option: Gaussian_pk_Lk_Bk",options=list(container="body")),
+                               label    = popify(actionLink("infoGaussianModel",paste0("Gaussian Model:", warning,"")),"","For proteomics or metabolomics data, coseq analysis may fail with default GaussianModel parameter. In this case, an error message will indicate to switch the other option: Gaussian_pk_Lk_Bk",options=list(container="body")),
                                choices  = Gaussian,
                                selected = Gaussian[1]))
           ),
           fluidRow(
             column(8,
-                   sliderInput(session$ns("K.values"), label = "Number of clusters :", min=2, max=30, value=c(2,7), step=1)),
+                   sliderInput(session$ns("K.values"), label = "Number of clusters:", min=2, max=30, value=c(2,7), step=1)),
             column(4,
-                   numericInput(inputId = session$ns("iter"), label="Iteration :", value=5, min = 5, max=20, step = 5))
+                   numericInput(inputId = session$ns("iter"), label="Iteration:", value=5, min = 5, max=20, step = 5))
           ),
           hr(),
           fluidRow(
