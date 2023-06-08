@@ -138,13 +138,14 @@ methods::setMethod(f="CheckExpDesignCompleteness",
                      # check presence of bio factors
                      if (! table(Design@Factors.Type)["Bio"] %in% 1:3){
                        
-                       output[["error"]] <- "ERROR: no bio factor ! or nbr of bio factors exeed 3!"
+                       output[["error"]] <- "ERROR: no bio factor! or nbr of bio factors exeed 3!"
                        
                      }
                      if (table(Design@Factors.Type)["batch"] == 0){
                        
                        output[["error"]] <- "ERROR: no replicate!"
                      }
+                     
                      
                      # count occurence of bio conditions
                      if(is.null(sampleList)){
@@ -158,18 +159,28 @@ methods::setMethod(f="CheckExpDesignCompleteness",
                        sampleList <- sampleList.tmp$primary
                      }
                      
-                     dF.List <- lapply(1:dim(Design@ExpDesign)[2], function(i){
-                       factor(Design@ExpDesign[[i]], levels=unique(Design@ExpDesign[[i]]))
-                     })
-                     names(dF.List) <- names(Design@ExpDesign)
                      
-                     ExpDesign <- dplyr::filter(Design@ExpDesign, rownames(Design@ExpDesign) %in% sampleList)
+                     # Only work with bio and batch factors for the rest of the function
+                     namFact <- names(Design@Factors.Type)[Design@Factors.Type %in% c("Bio", "batch")]
+                     expDesign_mod <- Design@ExpDesign %>% dplyr::select(any_of(namFact))
+                     
+                     dF.List <- lapply(1:ncol(expDesign_mod), function(i){
+                       factor(expDesign_mod[[i]], levels=unique(expDesign_mod[[i]]))
+                     })
+                     names(dF.List) <- names(expDesign_mod)
+                     
+                     ExpDesign <- dplyr::filter(expDesign_mod, rownames(expDesign_mod) %in% sampleList)
                      
                      bio.fact <- names(dF.List[Design@Factors.Type == "Bio"])
                      tmp <- ExpDesign %>% dplyr::mutate(samples=row.names(.))
-                     group_count <- as.data.frame(dF.List) %>% table() %>% as.data.frame() %>% full_join(tmp, by=names(dF.List)) %>% 
+                     
+                     group_count <- as.data.frame(dF.List) %>% 
+                       table() %>% 
+                       as.data.frame() %>% 
+                       full_join(tmp, by=names(dF.List)) %>% 
                        mutate_at(.vars = "samples", .funs = function(x) dplyr::if_else(is.na(x), 0, 1)) %>%
-                       dplyr::group_by_at((bio.fact)) %>% dplyr::summarise(Count=sum(samples), .groups = "keep")
+                       dplyr::group_by_at((bio.fact)) %>% 
+                       dplyr::summarise(Count=sum(samples), .groups = "keep")
                      
                      # check presence of relicat / batch
                      # check if design is complete
