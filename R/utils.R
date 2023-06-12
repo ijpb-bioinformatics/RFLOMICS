@@ -1400,7 +1400,7 @@ try_rflomics <- function(expr) {
 #' @export
 #' @noRd
 #'
-coseq.error.manage <- function(coseq.res.list, K, replicates, verbose = TRUE){
+coseq.error.manage <- function(coseq.res.list, K, replicates){
   
   # Create a table of jobs summary
   error.list <- unlist(lapply(coseq.res.list, function(x){
@@ -1410,20 +1410,16 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, verbose = TRUE){
   # status of jobs
   nK_success.job <- table(error.list)["success"]
   
-  # print(nK_success.job)
-  
   if(is.na(nK_success.job)){ nK_success.job <- 0 }
   
   # if at least one failed job
   # => generate table with error summary
-  K.list <- rep(paste0("K", min(K), "-", max(K)), each=replicates)
+  K.list <- rep(paste0("K",min(K), "-", max(K)), each=replicates)
   
-  jobs.tab <- data.frame(K = K.list, error.message = as.factor(error.list))
+  jobs.tab <- data.frame(K= K.list, error.message=as.factor(error.list))
   
-  jobs.tab.sum1 <- jobs.tab %>% 
-    dplyr::group_by(K, error.message) %>%
-    dplyr::summarise(n=dplyr::n()) %>%  
-    dplyr::mutate(prop.failed=round((n/replicates)*100)) %>%
+  jobs.tab.sum1 <- jobs.tab %>% dplyr::group_by(K,error.message) %>%
+    dplyr::summarise(n=dplyr::n()) %>%  dplyr::mutate(prop.failed=round((n/replicates)*100)) %>%
     dplyr::filter(error.message != "success")
   
   jobs.tab.sum <- jobs.tab.sum1
@@ -1439,16 +1435,11 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, verbose = TRUE){
       if(!is.null(coseq.res.list[[x]]$value)){
         coseq.res.list[["value"]][[x]] <- coseq.res.list[[x]]$value
       }
-      
     }
     
-    if(verbose) print("#     => error management: level 2 ")
-    
-    ICL.vec <- unlist(
-      lapply(1:nK_success.job, function(x){ 
-      (coseq::ICL(coseq.res.list[["value"]][[x]])) })) %>%
-      lapply(., function(x){ if_else(is.na(x), "failed", "success") }) %>% 
-      unlist()
+    print("#     => error management : level 2 ")
+    ICL.vec <- unlist(lapply(1:nK_success.job, function(x){ (ICL(coseq.res.list[["value"]][[x]])) })) %>%
+      lapply(., function(x){ if_else(is.na(x), "failed", "success") }) %>% unlist()
     
     nK_success <- table(ICL.vec)["success"]
     
@@ -1488,13 +1479,8 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, verbose = TRUE){
     nK_success <- 0
   }
   
-  # TODO : delete
-  # print(jobs.tab.sum)
-  # print(nK_success)
-  
   return(list(jobs.tab.sum=jobs.tab.sum, nK_success=nK_success, coseq.res.list.values=coseq.res.list[["value"]]))
 }
-
 
 
 #' @title coseq.results.process
@@ -1689,14 +1675,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
 #' @export
 #' @noRd
 #'
-runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, verbose = TRUE, param.list){
-  
-  # counts = counts
-  # conds = object@metadata$Groups$groups
-  # K=K
-  # replicates=replicates
-  # verbose = verbose
-  # param.list=param.list
+runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list){
   
   iter <- rep(K, replicates)
   nbr_iter <- length(iter)
@@ -1705,51 +1684,27 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, verbose = TRUE
   
   coseq.res.list <- lapply(1:replicates, function(x){
     
-    
-    try_rflomics(coseq::coseq(counts, 
-                              K               = K, 
-                              parallel        = TRUE,
-                              model           = param.list[["model"]],
-                              transformation  = param.list[["transformation"]],
-                              meanFilterCutoff= param.list[["meanFilterCutoff"]],
-                              normFactors     = param.list[["normFactors"]],
-                              GaussianModel   = param.list[["GaussianModel"]]))
-    
-    # if(verbose){
-    #   try_rflomics(coseq::coseq(counts, 
-    #                             K               = K, 
-    #                             parallel        = TRUE,
-    #                             model           = param.list[["model"]],
-    #                             transformation  = param.list[["transformation"]],
-    #                             meanFilterCutoff= param.list[["meanFilterCutoff"]],
-    #                             normFactors     = param.list[["normFactors"]],
-    #                             GaussianModel   = param.list[["GaussianModel"]]))
-    # }else{
-    #   try_rflomics(capture.output({
-    #     suppressMessages(coseq::coseq(counts, 
-    #                                   K               = K, 
-    #                                   parallel        = TRUE,
-    #                                   model           = param.list[["model"]],
-    #                                   transformation  = param.list[["transformation"]],
-    #                                   meanFilterCutoff= param.list[["meanFilterCutoff"]],
-    #                                   normFactors     = param.list[["normFactors"]],
-    #                                   GaussianModel   = param.list[["GaussianModel"]]))}))
-    #   
-    # }
-  })
+    try_rflomics(coseq::coseq(counts, K=K, parallel= TRUE,
+                              model           =param.list[["model"]],
+                              transformation  =param.list[["transformation"]],
+                              meanFilterCutoff=param.list[["meanFilterCutoff"]],
+                              normFactors     =param.list[["normFactors"]],
+                              GaussianModel   =param.list[["GaussianModel"]]))})
+  
+  # coseq.res.list$value[[3]]@metadata$nbClusterError
+  
   
   names(coseq.res.list) <- c(1:replicates)
   
   CoExpAnal <- list()
   
   # error managment
-  if(verbose) print("#     => error management: level 1 ")
-  
-  coseq.error.management <- coseq.error.manage(coseq.res.list=coseq.res.list, K=K, replicates=replicates, verbose = verbose)
+  print("#     => error management : level 1 ")
+  coseq.error.management <- coseq.error.manage(coseq.res.list=coseq.res.list, K=K, replicates=replicates)
   
   nK_success   <- coseq.error.management$nK_success
   
-  # If at least the half of the jobs have succeeded, valid results
+  # If they are at least the half of jobs succeed, valid results
   if(nK_success != 0){
     
     CoExpAnal <- coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, conds = conds)

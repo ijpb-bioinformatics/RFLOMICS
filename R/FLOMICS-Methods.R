@@ -1954,47 +1954,9 @@ methods::setMethod(f="boxplot.DE.plot",
 #' @seealso \code{\link{coseq::coseq}}
 methods::setMethod(f="runCoExpression",
                    signature="SummarizedExperiment",
-                   definition <- function(object,
-                                          nameList = NULL, 
-                                          K=2:20, replicates=5, 
-                                          merge="union",
-                                          model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", 
-                                          transformation = NULL, normFactors = NULL, 
-                                          clustermq=FALSE,
-                                          meanFilterCutoff = 50, # not used for proteomics and metabolomics
-                                          scale_per_feature = TRUE, # only applies to proteomics and metabolomics
-                                          verbose = TRUE
-                                          ){
+                   definition <- function(object, K=2:20, replicates=5, nameList, merge="union",
+                                          model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation, normFactors, clustermq=FALSE){
                      
-            
-                     # MAE[["RNAseq_norm"]] <- RFLOMICS::setValidContrasts(MAE[["RNAseq_norm"]], selContrast$contrastName[1:10])
-                     # object = MAE[["RNAseq_norm"]]
-                     # nameList = paste0("H", 1:5)
-                     # K=2:20
-                     # replicates=5
-                     # merge="union"
-                     # model = "Normal"
-                     # GaussianModel = "Gaussian_pk_Lk_Ck"
-                     # transformation = "arcsin"
-                     # normFactors = "TMM"
-                     # clustermq = FALSE
-                     # meanFilterCutoff = 50
-                     # verbose = TRUE
-                     
-                     
-                     # Check if nameList is missing
-                     if(is.null(nameList)){
-                       nameList <- RFLOMICS::getValidContrasts(object)
-                     }
-                     
-                     # Check if nameList is list of tags or contrast names
-                     # Convert if appropriate
-                     
-                     if(RFLOMICS::isContrastName(object, nameList)){
-                       nameList <- RFLOMICS::convertContrastToTag(object, nameList)
-                     }
-
-                     # Move onto the coexpression analysis
                      
                      CoExpAnal <- list()
                      
@@ -2002,7 +1964,7 @@ methods::setMethod(f="runCoExpression",
                      CoExpAnal[["gene.list.names"]]  <- nameList
                      CoExpAnal[["merge.type"]]       <- merge
                      CoExpAnal[["replicates.nb"]]    <- replicates
-                     CoExpAnal[["K.range"]]          <- K
+                     CoExpAnal[["K.range"]]    <- K
                      
                      geneList <- dplyr::select(object@metadata$DiffExpAnal[["mergeDEF"]], DEF, all_of(nameList)) %>% 
                        dplyr::mutate(intersection=dplyr::if_else(rowSums(dplyr::select(., contains(nameList))) == length(nameList), "YES", "NO"), 
@@ -2015,45 +1977,42 @@ methods::setMethod(f="runCoExpression",
                      
                      # set default parameters based on data type
                      param.list <- list("meanFilterCutoff"=NULL)
-                     
                      switch (object@metadata$omicType,
                              
                              "RNAseq" = {
                                param.list[["model"]]            <- model
+                               param.list[["transformation"]]   <- "arcsin"
+                               param.list[["normFactors"]]      <- "TMM"
+                               param.list[["meanFilterCutoff"]] <- 50
                                param.list[["GaussianModel"]]    <- GaussianModel
-                               param.list[["transformation"]]   <- ifelse(!is.null(transformation), transformation, "arcsin")
-                               param.list[["normFactors"]]      <- ifelse(!is.null(normFactors), normFactors, "TMM")
-                               param.list[["meanFilterCutoff"]] <- meanFilterCutoff
                                
                              },
                              "proteomics" = {
                                # Print the selected GaussianModel
-                               if(verbose) print(paste("Use ", GaussianModel, sep=""))
-                               if(scale_per_feature){
-                                 if(verbose) print("Scale each protein (center=TRUE, scale = TRUE)")
-                                 CoExpAnal[["transformation.prot"]] <- "scaleProt"
-                                 counts[] <- t(apply(counts, 1, function(x){ scale(x, center=TRUE,scale = TRUE) }))
-                               } 
+                               print(paste("Use ",GaussianModel,sep=""))
+                               print("Scale each protein (center=TRUE,scale = TRUE)")
+                               CoExpAnal[["transformation.prot"]] <- "scaleProt"
+                               counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
                                
                                # param
                                param.list[["model"]]            <- model
-                               param.list[["transformation"]]   <- ifelse(!is.null(transformation), transformation, "none")
-                               param.list[["normFactors"]]      <- ifelse(!is.null(normFactors), normFactors, "none")
+                               param.list[["transformation"]]   <- "none"
+                               param.list[["normFactors"]]      <- "none"
+                               #param.list[["meanFilterCutoff"]] <- NULL
                                param.list[["GaussianModel"]]    <- GaussianModel
                              },
                              "metabolomics" = {
                                # Print the selected GaussianModel
-                               if(verbose) print(paste("Use ", GaussianModel, sep=""))
-                               if(scale_per_feature){
-                                 if(verbose) print("Scale each metabolite (center=TRUE, scale = TRUE)")
-                                 CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
-                                 counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
-                               } 
-                    
+                               print(paste("Use ",GaussianModel,sep=""))
+                               print("Scale each metabolite (center=TRUE,scale = TRUE)")
+                               CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
+                               counts[] <- t(apply(counts,1,function(x){ scale(x, center=TRUE,scale = TRUE) }))
+                               
                                # param
                                param.list[["model"]]            <- model
-                               param.list[["transformation"]]   <- ifelse(!is.null(transformation), transformation, "none")
-                               param.list[["normFactors"]]      <- ifelse(!is.null(normFactors), normFactors, "none")
+                               param.list[["transformation"]]   <- "none"
+                               param.list[["normFactors"]]      <- "none"
+                               #param.list[["meanFilterCutoff"]] <- NULL
                                param.list[["GaussianModel"]]    <- GaussianModel
                              }
                      )
@@ -2062,24 +2021,23 @@ methods::setMethod(f="runCoExpression",
                      
                      # run coseq : on local machine or remote cluster
                      
-                     if(verbose) print("#     => coseq... ")
+                     print("#     => coseq... ")
                      
                      coseq.res.list <- list()
-                       
+                     
                      coseq.res.list <- switch (as.character(clustermq),
-                                               "FALSE" = {
+                                               `FALSE` = {
                                                  
                                                  try_rflomics(
-                                                   runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, 
-                                                                  verbose = verbose, param.list=param.list))
+                                                   runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
+                                                 
                                                },
-                                               "TRUE" = {
+                                               `TRUE` = {
                                                  
                                                  try_rflomics(
                                                    runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
                                                  
                                                })
-                     
                      
                      # If coseq could run (no problem with SSH connexion in case of clustermq=TRUE)
                      
@@ -2099,11 +2057,6 @@ methods::setMethod(f="runCoExpression",
 
 
 # Pour utiliser la fonction repeatable(), "seed"  pourrait être ajouté en paramètre.
-
-
-
-
-
 
 #' @title coseq.profile.plot
 #'
