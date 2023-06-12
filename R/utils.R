@@ -1410,7 +1410,7 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, verbose = TRUE){
   # status of jobs
   nK_success.job <- table(error.list)["success"]
   
-  print(nK_success.job)
+  # print(nK_success.job)
   
   if(is.na(nK_success.job)){ nK_success.job <- 0 }
   
@@ -1443,6 +1443,7 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, verbose = TRUE){
     }
     
     if(verbose) print("#     => error management: level 2 ")
+    
     ICL.vec <- unlist(
       lapply(1:nK_success.job, function(x){ 
       (coseq::ICL(coseq.res.list[["value"]][[x]])) })) %>%
@@ -1486,6 +1487,10 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, verbose = TRUE){
   else{
     nK_success <- 0
   }
+  
+  # TODO : delete
+  # print(jobs.tab.sum)
+  # print(nK_success)
   
   return(list(jobs.tab.sum=jobs.tab.sum, nK_success=nK_success, coseq.res.list.values=coseq.res.list[["value"]]))
 }
@@ -1600,7 +1605,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
                  error    =function(e){ err <- e
                  NULL
                  }),
-        warning =function(w){ warn <- w
+        warning = function(w){ warn <- w
         invokeRestart("muffleWarning")}
       )
       list(value=value, warning=warn, error=err)
@@ -1686,12 +1691,20 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
 #'
 runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, verbose = TRUE, param.list){
   
+  # counts = counts
+  # conds = object@metadata$Groups$groups
+  # K=K
+  # replicates=replicates
+  # verbose = verbose
+  # param.list=param.list
+  
   iter <- rep(K, replicates)
   nbr_iter <- length(iter)
   coseq.res.list <- list()
   #set.seed(12345)
   
   coseq.res.list <- lapply(1:replicates, function(x){
+    
     
     try_rflomics(coseq::coseq(counts, 
                               K               = K, 
@@ -1700,7 +1713,30 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, verbose = TRUE
                               transformation  = param.list[["transformation"]],
                               meanFilterCutoff= param.list[["meanFilterCutoff"]],
                               normFactors     = param.list[["normFactors"]],
-                              GaussianModel   = param.list[["GaussianModel"]]))})
+                              GaussianModel   = param.list[["GaussianModel"]]))
+    
+    # if(verbose){
+    #   try_rflomics(coseq::coseq(counts, 
+    #                             K               = K, 
+    #                             parallel        = TRUE,
+    #                             model           = param.list[["model"]],
+    #                             transformation  = param.list[["transformation"]],
+    #                             meanFilterCutoff= param.list[["meanFilterCutoff"]],
+    #                             normFactors     = param.list[["normFactors"]],
+    #                             GaussianModel   = param.list[["GaussianModel"]]))
+    # }else{
+    #   try_rflomics(capture.output({
+    #     suppressMessages(coseq::coseq(counts, 
+    #                                   K               = K, 
+    #                                   parallel        = TRUE,
+    #                                   model           = param.list[["model"]],
+    #                                   transformation  = param.list[["transformation"]],
+    #                                   meanFilterCutoff= param.list[["meanFilterCutoff"]],
+    #                                   normFactors     = param.list[["normFactors"]],
+    #                                   GaussianModel   = param.list[["GaussianModel"]]))}))
+    #   
+    # }
+  })
   
   names(coseq.res.list) <- c(1:replicates)
   
@@ -1708,6 +1744,7 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, verbose = TRUE
   
   # error managment
   if(verbose) print("#     => error management: level 1 ")
+  
   coseq.error.management <- coseq.error.manage(coseq.res.list=coseq.res.list, K=K, replicates=replicates, verbose = verbose)
   
   nK_success   <- coseq.error.management$nK_success

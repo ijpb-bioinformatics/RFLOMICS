@@ -1966,6 +1966,21 @@ methods::setMethod(f="runCoExpression",
                                           verbose = TRUE
                                           ){
                      
+            
+                     # MAE[["RNAseq_norm"]] <- RFLOMICS::setValidContrasts(MAE[["RNAseq_norm"]], selContrast$contrastName[1:10])
+                     # object = MAE[["RNAseq_norm"]]
+                     # nameList = paste0("H", 1:5)
+                     # K=2:20
+                     # replicates=5
+                     # merge="union"
+                     # model = "Normal"
+                     # GaussianModel = "Gaussian_pk_Lk_Ck"
+                     # transformation = "arcsin"
+                     # normFactors = "TMM"
+                     # clustermq = FALSE
+                     # meanFilterCutoff = 50
+                     # verbose = TRUE
+                     
                      
                      # Check if nameList is missing
                      if(is.null(nameList)){
@@ -2000,6 +2015,7 @@ methods::setMethod(f="runCoExpression",
                      
                      # set default parameters based on data type
                      param.list <- list("meanFilterCutoff"=NULL)
+                     
                      switch (object@metadata$omicType,
                              
                              "RNAseq" = {
@@ -2049,41 +2065,20 @@ methods::setMethod(f="runCoExpression",
                      if(verbose) print("#     => coseq... ")
                      
                      coseq.res.list <- list()
-                     
-                     if(verbose){
                        
-                       coseq.res.list <- switch (as.character(clustermq),
-                                                 `FALSE` = {
-                                                   
-                                                   try_rflomics(
-                                                     runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, 
-                                                                    verbose = verbose, param.list=param.list))
-                                                 },
-                                                 `TRUE` = {
-                                                   
-                                                   try_rflomics(
-                                                     runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
-                                                   
-                                                 })
-                     }else{
-                       capture.output({
-                         suppressMessages(
-                           coseq.res.list <- 
-                             switch (as.character(clustermq),
-                                     `FALSE` = {
-                                       
-                                       try_rflomics(
-                                         runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, 
-                                                        verbose = verbose, param.list=param.list))
-                                     },
-                                     `TRUE` = {
-                                       
-                                       try_rflomics(
-                                         runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
-                                       
-                                     })
-                         )})
-                     }
+                     coseq.res.list <- switch (as.character(clustermq),
+                                               "FALSE" = {
+                                                 
+                                                 try_rflomics(
+                                                   runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, 
+                                                                  verbose = verbose, param.list=param.list))
+                                               },
+                                               "TRUE" = {
+                                                 
+                                                 try_rflomics(
+                                                   runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
+                                                 
+                                               })
                      
                      
                      # If coseq could run (no problem with SSH connexion in case of clustermq=TRUE)
