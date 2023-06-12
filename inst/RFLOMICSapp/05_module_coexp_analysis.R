@@ -124,7 +124,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
             
             column(12,
                    selectInput(session$ns("scale"),
-                               label    = popify(actionLink("infoScale",paste0("Scale by ", name , " : (help)")),"","By default for proteomics or metabolomics data,coseq is done onto Z-scores (data scaled by proteins or metabolites) to group them according to their expression profile rather than abundance",options=list(container="body")),
+                               label    = popify(actionLink("infoScale",paste0("Scale by ", name , ": (help)")),"","By default for proteomics or metabolomics data,coseq is done onto Z-scores (data scaled by proteins or metabolites) to group them according to their expression profile rather than abundance",options=list(container="body")),
                                choices  = Scale ,
                                selected = Scale[1])
             )
@@ -133,7 +133,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
           fluidRow(
             column(12,
                    selectInput(session$ns("model"),
-                               label    = "Default parameters :",
+                               label    = "Default parameters:",
                                choices  = model ,
                                selected = model[1]),
                    
@@ -151,15 +151,15 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
             column(12,
                    selectInput(session$ns("GaussianModel"),
                                
-                               label    = popify(actionLink("infoGaussianModel",paste0("Gaussian Model :", warning,"")),"","For proteomics or metabolomics data, coseq analysis may fail with default GaussianModel parameter. In this case, an error message will indicate to switch the other option: Gaussian_pk_Lk_Bk",options=list(container="body")),
+                               label    = popify(actionLink("infoGaussianModel",paste0("Gaussian Model:", warning,"")),"","For proteomics or metabolomics data, coseq analysis may fail with default GaussianModel parameter. In this case, an error message will indicate to switch the other option: Gaussian_pk_Lk_Bk",options=list(container="body")),
                                choices  = Gaussian,
                                selected = Gaussian[1]))
           ),
           fluidRow(
             column(8,
-                   sliderInput(session$ns("K.values"), label = "Number of clusters :", min=2, max=30, value=c(2,7), step=1)),
+                   sliderInput(session$ns("K.values"), label = "Number of clusters:", min=2, max=30, value=c(2,7), step=1)),
             column(4,
-                   numericInput(inputId = session$ns("iter"), label="Iteration :", value=5, min = 5, max=20, step = 5))
+                   numericInput(inputId = session$ns("iter"), label="Iteration:", value=5, min = 5, max=20, step = 5))
           ),
           hr(),
           fluidRow(
@@ -230,7 +230,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     
     #---- progress bar ----#
     progress <- shiny::Progress$new()
-    progress$set(message = "Run coseq : ", value = 0)
+    progress$set(message = "Run coseq: ", value = 0)
     on.exit(progress$close())
     progress$inc(1/2, detail = "In progress")
     #----------------------#
@@ -249,12 +249,12 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     # If an error occured
     if(isFALSE(local.rea.values$dataset.SE@metadata$CoExpAnal[["results"]])){
       
-      showModal(modalDialog( title = "Error message", paste0("No results ! ", as.character(local.rea.values$dataset.SE@metadata$CoExpAnal[["error"]]))))
+      showModal(modalDialog( title = "Error message", paste0("No results! ", as.character(local.rea.values$dataset.SE@metadata$CoExpAnal[["error"]]))))
     }
     
     validate(
       need(!isFALSE(local.rea.values$dataset.SE@metadata$CoExpAnal[["results"]]), 
-           paste0("No results !", as.character(local.rea.values$dataset.SE@metadata$CoExpAnal[["error"]])))
+           paste0("No results!", as.character(local.rea.values$dataset.SE@metadata$CoExpAnal[["error"]])))
     )
     
     session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- local.rea.values$dataset.SE
@@ -320,9 +320,9 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                            column(3, 
                                   ## select cluster to plot
                                   box(width = 14, background = "light-blue", title = NULL,
-                                      radioButtons(inputId = session$ns("selectCluster"), label = "Select cluster :",
+                                      radioButtons(inputId = session$ns("selectCluster"), label = "Select cluster:",
                                                    choices  = 1:nb_cluster, selected = 1),
-                                      radioButtons(inputId = session$ns("profile.condition"), label = "Condition :",
+                                      radioButtons(inputId = session$ns("profile.condition"), label = "Condition:",
                                                    choices  = c("groups", factors.bio), selected = "groups"),
                                       # selectInput(inputId = session$ns("observations"), label = "Observations(prob)",
                                       #             choices = cluster.comp[[input$selectCluster]], multiple = FALSE, selectize = FALSE, size = 5))

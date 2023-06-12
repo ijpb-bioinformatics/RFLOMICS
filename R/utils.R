@@ -1483,7 +1483,6 @@ coseq.error.manage <- function(coseq.res.list, K, replicates){
 }
 
 
-
 #' @title coseq.results.process
 #' @param coseqObjectList list of coseq object
 #' @return list plot of ICL, logLike and coseq object with min ICL
@@ -1592,7 +1591,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
                  error    =function(e){ err <- e
                  NULL
                  }),
-        warning =function(w){ warn <- w
+        warning = function(w){ warn <- w
         invokeRestart("muffleWarning")}
       )
       list(value=value, warning=warn, error=err)
@@ -1618,7 +1617,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
   }))
   
   nK_success <- table(error.list)["success"]
-  print(paste0("#     => nbr of success jobs : ", nK_success))
+  print(paste0("#     => nbr of success jobs: ", nK_success))
   
   K.list <- rep(paste0("K=", K), each=replicates)
   

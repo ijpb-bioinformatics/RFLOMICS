@@ -2069,11 +2069,6 @@ methods::setMethod(f="runCoExpression",
 
 # Pour utiliser la fonction repeatable(), "seed"  pourrait être ajouté en paramètre.
 
-
-
-
-
-
 #' @title coseq.profile.plot
 #'
 #' @param object An object of class \link{SummarizedExperiment}
