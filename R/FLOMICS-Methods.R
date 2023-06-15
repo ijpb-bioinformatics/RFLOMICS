@@ -2620,12 +2620,13 @@ methods::setMethod(f="prepareForIntegration",
                                            type = "union",
                                            group = NULL,
                                            method = c("MOFA", "MixOmics")){
-                     # object <- FlomicsMultiAssay
-                     # omicsToIntegrate = c("proteomics.set1", "metabolomics.set2")
+                     # object <- MAE
+                     # omicsToIntegrate = c("RNAseq_norm", "Met_norm")
                      # # omicsToIntegrate = c("RNAseq.set1", "proteomics.set2")
                      # # omicsToIntegrate = c("proteomics.set1", "metabolomics.set2")
                      # rnaSeq_transfo = "limma (voom)"
                      # choice = "DE"
+                     # contrasts_names = "all"
                      # contrasts_names = c("(temperatureLow - temperatureElevated)", "(temperatureMedium - temperatureLow)")
                      # type = "union"
                      # group = NULL
@@ -2737,9 +2738,9 @@ methods::setMethod(f="run_MOFA_analysis",
                      # object = FlomicsMultiAssay@metadata$MOFA_untrained
                      # scale_views = TRUE
                      
-                     data_opts <- get_default_data_options(object)
-                     model_opts <- get_default_model_options(object)
-                     train_opts <- get_default_training_options(object)
+                     data_opts  <- MOFA2::get_default_data_options(object)
+                     model_opts <- MOFA2::get_default_model_options(object)
+                     train_opts <- MOFA2::get_default_training_options(object)
                      
                      data_opts$scale_views <- scale_views
                      train_opts$maxiter <- maxiter
@@ -2799,10 +2800,10 @@ methods::setMethod(f="run_MixOmics_analysis",
                      # du coup ca demande de le faire aussi pour Y
                      # TODO : faudrait le faire directement dans preparedList ?
                      Y <- data.frame(object$metadata, stringsAsFactors = TRUE) %>%
-                       rownames_to_column(var = "rowNam") %>%
-                       arrange(rowNam) %>%
-                       column_to_rownames(var = "rowNam") %>%
-                       dplyr::select(all_of(selectedResponse))
+                       tibble::rownames_to_column(var = "rowNam") %>%
+                       dplyr::arrange(rowNam) %>%
+                       tibble::column_to_rownames(var = "rowNam") %>%
+                       dplyr::select(tidyselect::all_of(selectedResponse))
                      
                      # Is this a discriminant analysis?
                      if(ncol(Y) == 1 && is.factor(Y[,1])){
@@ -2818,7 +2819,7 @@ methods::setMethod(f="run_MixOmics_analysis",
                          }
                        }))
                        
-                       Y <- cbind(Y %>% select_if(is.numeric), YFactors)
+                       Y <- cbind(Y %>% dplyr::select_if(is.numeric), YFactors)
                        Y <- apply(Y, 2, as.numeric)
                        rownames(Y ) <- rowNam
                      }
@@ -2854,9 +2855,10 @@ methods::setMethod(f="run_MixOmics_analysis",
                                                 ncomp = ncomp,
                                                 scale = scale_views,
                                                 test.keepX = test_keepX,
-                                                folds = min(nrow(Y)-1, 10))
+                                                folds = min(floor(nrow(Y)/2), 10))
                        if(length(object$blocks)>1) list_tuning_args$design = Design_mat
                        
+                       # TODO find a way to specify the package into get function
                        list_res$tuning_res  <- do.call(get(tune_function), list_tuning_args)
                      }
                      
@@ -2869,6 +2871,7 @@ methods::setMethod(f="run_MixOmics_analysis",
                      if(length(object$blocks)>1) list_args$design = Design_mat
                      if(sparsity && !functionName %in% c("block.spls", "block.pls")) list_args$keepX <- list_res$tuning_res$choice.keepX
                      
+                     # TODO find a way to specify the package into get function
                      list_res$analysis_res <- do.call(get(functionName), list_args)
                      
                      return(list_res)
