@@ -53,6 +53,8 @@ getSelectedContrasts <- function(object){
 setValidContrasts <- function(object, 
                               contrasts){
   
+  # TODO : check if there are DE entities for each contrasts before really validating them.
+  
   if(is.character(contrasts)){
     if(class(object) == "SummarizedExperiment"){
       object@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName <- contrasts
@@ -122,6 +124,9 @@ sumORA <- function(SE, ont = NULL, from = "DiffExpEnrichAnal"){
 #' 
 
 sumDiffExp <- function(object){
+  
+  # TODO valid contrasts only by default
+  # TODO if asked by user (all = TRUE), then provide all results even non-validaed ones.
   
   pcut <- object@metadata$DiffExpAnal$Adj.pvalue.cutoff
   lcut <- object@metadata$DiffExpAnal$abs.logFC.cutoff
