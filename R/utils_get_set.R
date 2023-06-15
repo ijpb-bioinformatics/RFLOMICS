@@ -314,3 +314,26 @@ opDEList <- function(object, contrasts = NULL, operation = "union"){
   return(DETab$DEF)
   
 }
+
+
+# ---- Get omics experiments and their types (vector) ----
+
+#' @title Get omics experiments and their types
+#'
+#' @param object a MAE object (produced by Flomics). 
+#' @return a named vector with each omics name and its type.
+#' @export
+#'
+#' @examples 
+#' 
+
+getOmicsTypes <- function(object){
+  
+  if(class(object)!="MultiAssayExperiment") stop("Object is not a MultiAssayExperiment")
+  
+  sapply(names(object), FUN = function(x){
+    object[[x]]@metadata$omicType
+  })
+}
+
+
