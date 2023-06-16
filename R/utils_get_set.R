@@ -1,3 +1,23 @@
+# ---- Get Factor types : ----
+#' @title Get design matrix used for a differential analysis
+#'
+#' @param object a MAE object (produced by Flomics)
+#' @return a dataframe
+#' @export
+#'
+#' @examples 
+#' 
+
+getFactorTypes <- function(object){
+  if(class(object) == "MultiAssayExperiment"){
+    object@metadata$design@Factors.Type
+  }else{
+    stop("object is not a MultiAssayExperiment.")
+  }
+}
+
+# TODO add more getters for accessing bio, batch and meta directly.
+
 
 # ---- Get Design Matrix : ----
 #' @title Get design matrix used for a differential analysis
@@ -13,6 +33,25 @@ getDesignMat <- function(object){
   # TODO check if it exists... 
   if(class(object) == "MultiAssayExperiment"){
     object@metadata$design@ExpDesign
+  }else{
+    stop("object is not a MultiAssayExperiment.")
+  }
+}
+
+# ---- Get Model Formula : ----
+#' @title Get model formula from a Flomics multiassayexperiment. 
+#'
+#' @param object a MAE object (produced by Flomics)
+#' @return a formula
+#' @export
+#'
+#' @examples 
+#' 
+
+getModelFormula <- function(object){
+  # TODO check if it exists... 
+  if(class(object) == "MultiAssayExperiment"){
+    object@metadata$design@Model.formula
   }else{
     stop("object is not a MultiAssayExperiment.")
   }
@@ -264,7 +303,7 @@ convertContrastToTag <- function(object, contrasts){
 }
 
 
-# ---- Get union from list of contrasts ----
+# ---- Get union or intersection from list of contrasts ----
 
 # very similar to filter_DE_from_SE but returns a vector instead of a SE. 
 
@@ -282,6 +321,9 @@ convertContrastToTag <- function(object, contrasts){
 #' 
 opDEList <- function(object, contrasts = NULL, operation = "union"){
   
+  # object <- MAE[["RNAseq_norm"]]
+  # contrasts <- NULL
+  
   if(class(object)!="SummarizedExperiment") stop("Object is not a SummarizedExperiment")
   if(is.null(object@metadata$DiffExpAnal$Validcontrasts)) stop("Please validate your differential analyses first.")
   
@@ -292,6 +334,7 @@ opDEList <- function(object, contrasts = NULL, operation = "union"){
   
   tagsConcerned <- intersect(contrasts, validTags)
   # TODO : tagsConcerned empty <- do not continue.
+  if(length(tagsConcerned) == 0) stop("It seems there is no contrasts to select DE entities from.")
   
   df_DE <- RFLOMICS::getDEMatrix(object) %>% 
     dplyr::select(c("DEF", tidyselect::any_of(tagsConcerned)))
@@ -320,7 +363,7 @@ opDEList <- function(object, contrasts = NULL, operation = "union"){
 
 #' @title Get omics experiments and their types
 #'
-#' @param object a MAE object (produced by Flomics). 
+#' @param object a MAE object (produced by Flomics) or a Summarized Experiment object. 
 #' @return a named vector with each omics name and its type.
 #' @export
 #'
@@ -329,11 +372,33 @@ opDEList <- function(object, contrasts = NULL, operation = "union"){
 
 getOmicsTypes <- function(object){
   
-  if(class(object)!="MultiAssayExperiment") stop("Object is not a MultiAssayExperiment")
+  if(!class(object) %in% c("MultiAssayExperiment", "SummarizedExperiment"))
+    stop("Object is not a MultiAssayExperiment nor a SummarizedExperiment")
   
-  sapply(names(object), FUN = function(x){
-    object[[x]]@metadata$omicType
-  })
+  if(class(object) == "MultiAssayExperiment"){
+    sapply(names(object), FUN = function(x){
+      object[[x]]@metadata$omicType
+    })
+  }else{
+    object@metadata$omicType
+  }
+  
 }
 
+# ---- Get normalization coefficients ----
 
+#' @title Get normalization coefficients
+#'
+#' @param object a SE object (produced by Flomics). 
+#' @return Normalisation coefficient. If TMM was applied, a list with library size and coefficients.
+#' @export
+#'
+#' @examples 
+#' 
+
+getNormCoeff <- function(object){
+  
+  if(class(object)!="SummarizedExperiment") stop("Object is not a SummarizedExperiment")
+  
+  object@metadata$Normalization$coefNorm
+}
