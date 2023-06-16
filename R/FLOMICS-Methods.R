@@ -2612,7 +2612,7 @@ methods::setMethod(f="prepareForIntegration",
                    signature="MultiAssayExperiment",
                    
                    definition <-  function(object,
-                                           omicsToIntegrate = c("RNAseq", "proteomics", "metabolomics"),
+                                           omicsToIntegrate = NULL,
                                            rnaSeq_transfo = "limma (voom)",
                                            # choice = c("raw", "DE"),
                                            choice = "DE",
@@ -2620,6 +2620,8 @@ methods::setMethod(f="prepareForIntegration",
                                            type = "union",
                                            group = NULL,
                                            method = c("MOFA", "MixOmics")){
+                     
+                     # load("../Loudet_Olivier/StressNet_WxN_multiomics/MAE_stressNET.RData")
                      # object <- MAE
                      # omicsToIntegrate = c("RNAseq_norm", "Met_norm")
                      # # omicsToIntegrate = c("RNAseq.set1", "proteomics.set2")
@@ -2632,76 +2634,52 @@ methods::setMethod(f="prepareForIntegration",
                      # group = NULL
                      # method = "MixOmics"
                      
+                     if(is.null(omicsToIntegrate)) omicsToIntegrate <- names(object)
+                     
                      # Checking for batch effects
                      correct_batch <- FALSE
-                     if(any(object@metadata$design@Factors.Type=="batch")){
+                     ftypes <- RFLOMICS::getFactorTypes(object)
+                     
+                     if(any(ftypes=="batch")){
                        correct_batch <- TRUE
-                       colBatch <- names(object@metadata$design@Factors.Type)[object@metadata$design@Factors.Type=="batch"]
-                       # print(paste0("=># \t Correction for Batch: ", paste(colBatch, collapse = " ")))
+                       colBatch <- names(ftypes)[ftypes=="batch"]
                      }
-                     # else{
-                     # print("# \t => No batch effect found")
-                     # }
                      
-                     object@ExperimentList <- object@ExperimentList[grep("filtred", names(object@ExperimentList))]
-                     object <- object[,,paste0(omicsToIntegrate, ".filtred")]
+                     object <- object[,,omicsToIntegrate]
+                     omics_types <- RFLOMICS::getOmicsTypes(object)
                      
-                     # Transformation RNASeq using limma::voom
-                     if(length(grep("RNAseq", omicsToIntegrate)>0)){
-                       rnaDat <- object@ExperimentList[[grep("RNAseq", names(object@ExperimentList))]]
-                       assayTransform <- SummarizedExperiment::assay(rnaDat)
-                       
-                       rnaDat@metadata[["transform_method_integration"]] <- "none"
-                       
-                       designMat <- model.matrix(as.formula(object@metadata$design@Model.formula), data = object@metadata$design@ExpDesign)
-                       
-                       DGEObject = DGEList(counts = assayTransform,
-                                           norm.factors = rnaDat@metadata$Normalization$coefNorm$norm.factors,
-                                           lib.size = rnaDat@metadata$Normalization$coefNorm$lib.size,
-                                           samples = object@metadata$design@ExpDesign %>% 
-                                             dplyr::filter(row.names(object@metadata$design@ExpDesign) %in% colnames(assayTransform))
+                     # On each selected omics, according to its type, apply transformation if demanded. 
+                     # Filter DE entities
+                     # TODO : add a possibility of choice for keeping every entity (small tables)
+                     for(SEname in omicsToIntegrate){
+                       SEobject <- object[[SEname]]
+                       omicsType <- RFLOMICS::getOmicsTypes(SEobject)
+                       list_args <- list(object = object,
+                                         SEname = SEname,
+                                         correctBatch = correct_batch,
+                                         contrasts_names = contrasts_names,
+                                         type = type,
+                                         choice = choice)
+                       object <- switch(omicsType,
+                                        "RNAseq"       = { 
+                                          list_args$transformation <- rnaSeq_transfo
+                                          do.call("rnaseqRBETransform", list_args)
+                                        },
+                                        "proteomics"   = do.call("RBETransform", list_args),
+                                        "metabolomics" = do.call("RBETransform", list_args)
                        )
-                       limmaRes <- limma::voom(DGEObject, design = designMat[which(rownames(designMat) %in%  colnames(assayTransform)),]) 
-                       
-                       SummarizedExperiment::assay(rnaDat) <- limmaRes$E
-                       rnaDat@metadata[["transform_results_all"]] <- limmaRes # changer l'appellation
-                       rnaDat@metadata[["transform_method_integration"]] <- rnaSeq_transfo
-                       
-                       rnaDat@metadata[["correction_batch_method"]] <- "none"
-                       if(correct_batch) rnaDat <- rbe_function(object, rnaDat)
-                       
-                       rnaDat@metadata[["integration_choice"]] <- choice
-                       if(choice == "DE") rnaDat = filter_DE_from_SE(rnaDat, contrasts_arg = contrasts_names, type)
-                       
-                       object@ExperimentList[[grep("RNAseq", names(object@ExperimentList))]] <- rnaDat
                      }
-                     
-                     
-                     # Transformation of proteomics/metabolomics data
-                     res <- lapply(omicsToIntegrate[!grepl("RNAseq", omicsToIntegrate)], FUN = function(omicName){
-                       # omicName = "proteomics"
-                       
-                       omicsDat <- object@ExperimentList[[grep(omicName, names(object@ExperimentList))]]
-                       omicsDat@metadata[["transform_method_integration"]] <- omicsDat@metadata$transform_method
-                       
-                       omicsDat@metadata[["correction_batch_method"]] <- "none"
-                       if(correct_batch) omicsDat <- rbe_function(object, omicsDat)
-                       
-                       omicsDat@metadata[["integration_choice"]] <- choice
-                       if(choice == "DE")  omicsDat <- filter_DE_from_SE(omicsDat, contrasts_arg = contrasts_names, type)
-                       
-                       object@ExperimentList[[grep(omicName, names(object@ExperimentList))]] <<- omicsDat
-                       
-                       return(NULL)
-                     })
-                     
-                     
+                    
                      if(method == "MOFA"){ MOFAObject <- MOFA2::create_mofa(object,
                                                                             group =  group,
                                                                             extract_metadata = TRUE)
                      
                      return(MOFAObject)
+                     
                      }else if(method == "MixOmics"){
+                       
+                       # Common samples names:
+                      object <- object[,Reduce("intersect", colnames(object))]
                        
                        MixOmicsObject <- list(blocks = lapply(object@ExperimentList, FUN = function(SE)  t(assay(SE))),
                                               metadata = object@colData)
@@ -2859,7 +2837,7 @@ methods::setMethod(f="run_MixOmics_analysis",
                        if(length(object$blocks)>1) list_tuning_args$design = Design_mat
                        
                        # TODO find a way to specify the package into get function
-                       list_res$tuning_res  <- do.call(get(tune_function), list_tuning_args)
+                       list_res$tuning_res  <- do.call(getFromNamespace(tune_function, ns = "mixOmics"), list_tuning_args)
                      }
                      
                      # Model fitting
@@ -2872,7 +2850,7 @@ methods::setMethod(f="run_MixOmics_analysis",
                      if(sparsity && !functionName %in% c("block.spls", "block.pls")) list_args$keepX <- list_res$tuning_res$choice.keepX
                      
                      # TODO find a way to specify the package into get function
-                     list_res$analysis_res <- do.call(get(functionName), list_args)
+                     list_res$analysis_res <- do.call(getFromNamespace(functionName, ns = "mixOmics"), list_args)
                      
                      return(list_res)
                    })
