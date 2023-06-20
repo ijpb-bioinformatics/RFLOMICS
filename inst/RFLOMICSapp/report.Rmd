@@ -114,7 +114,7 @@ knitr::asis_output(out)
 
   out <- NULL
   
-  out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","MOFA2_integration.Rmd"), quiet=TRUE))
+  out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_07_MOFA2_integration.Rmd"), quiet=TRUE))
     
 knitr::asis_output(out)
 
@@ -122,6 +122,15 @@ knitr::asis_output(out)
 
 <!-- ## with MixOmix -->
 
+```{r , message=FALSE, warning=FALSE, echo=FALSE, eval = !is.null(rflomics.MAE@metadata$MOFA_results), hide = is.null(rflomics.MAE@metadata$MOFA_results) }
+
+#   out <- NULL
+#   
+#   out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_08_mixOmics_integration.Rmd"), quiet=TRUE))
+#     
+# knitr::asis_output(out)
+
+```
 
 # R Session
 
