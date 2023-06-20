@@ -138,14 +138,7 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     # untrainedMOFA <- NULL 
     # resMOFA <- NULL
-    preparedMOFA <- NULL
-    listResMOFA <- NULL
-    
-    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_selected_contrasts"]] <- NULL
-    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_selected_filter"]] <- NULL
-    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_untrained"]] <- NULL
-    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_warnings"]] <- NULL
-    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_results"]] <- NULL
+
     
     #---- progress bar ----#
     progress$inc(1/10, detail = paste("Checks ", 10, "%", sep=""))
@@ -176,29 +169,26 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     list_args_prepare_MOFA <- list(
       object = session$userData$FlomicsMultiAssay,
-      omicsToIntegrate = input$MOFA_selectedData,
+      omicsToIntegrate = paste0(input$MOFA_selectedData, ".filtred"),
       rnaSeq_transfo = input$MOFA_RNAseqTransfo,
       choice = "DE", 
       contrasts_names = input$MOFA_selectedContrasts,
       type = input$MOFA_filtMode,
       group = NULL, 
-      method = "MOFA"
-    )
-    
-    preparedMOFA <- do.call("prepareForIntegration", list_args_prepare_MOFA)
-    
-    #---- progress bar ----#
-    progress$inc(1/10, detail = paste("Running MOFA ", 30, "%", sep = ""))
-    #----------------------#
-    
-    list_run_MOFA <- list(
-      object = preparedMOFA,
+      method = "MOFA",
       scale_views = as.logical(input$MOFA_scaleViews),
       maxiter = input$MOFA_maxiter,
       num_factors = input$MOFA_numfactor
     )
     
-    listResMOFA <- do.call("run_MOFA_analysis", list_run_MOFA) 
+    
+    #---- progress bar ----#
+    progress$inc(1/10, detail = paste("Running MOFA ", 30, "%", sep = ""))
+    #----------------------#
+    
+    session$userData$FlomicsMultiAssay <- do.call(getFromNamespace("integrationWrapper", ns = "RFLOMICS"), list_args_prepare_MOFA)
+
+
     
     # untrainedMOFA <- listResMOFA$MOFAObject.untrained
     # resMOFA <- listResMOFA$MOFAObject.trained
@@ -217,12 +207,6 @@ MOFA_setting <- function(input, output, session, rea.values){
     # output <- list()
     # output$warnings <- renderText({local.rea.values$warnings})
     #### End of catchning warnings.
-    
-    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_selected_contrasts"]] <- input$MOFA_selectedContrasts
-    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_selected_filter"]] <- input$MOFA_filtMode
-    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_untrained"]] <- listResMOFA$MOFAObject.untrained
-    # session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_warnings"]] <- warnings
-    session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_results"]] <- listResMOFA$MOFAObject.trained
     
     local.rea.values$runMOFA   <- TRUE
     

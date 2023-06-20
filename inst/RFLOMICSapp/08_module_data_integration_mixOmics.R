@@ -182,69 +182,44 @@ MixOmics_setting <- function(input, output, session, rea.values){
     #----------------------#
     
     # Prepare for MixOmics run  
-    preparedMixOmics  <- NULL
-    MixOmics_res <- NULL
-    MAE_object <- session$userData$FlomicsMultiAssay
-    MAE_object@metadata[["mixOmics"]] <- NULL
-    
-    print("#     =>Preparing data list")
-    
-    list_args_prepare_MO <- list(
-      object = MAE_object,
-      omicsToIntegrate = input$MO_selectedData,
+
+    list_args_MO <- list(
+      object = session$userData$FlomicsMultiAssay,
+      omicsToIntegrate = paste0(input$MO_selectedData, ".filtred"),
       rnaSeq_transfo = input$MO_RNAseqTransfo,
       choice = "DE", 
       contrasts_names = input$MO_selectedContrast,
       type = input$MO_filtMode,
       group = NULL,
-      method = "MixOmics"
+      method = "MixOmics",
+      scale_views = input$MO_scale_views,
+      ncomp = input$MO_ncomp,   
+      link_datasets = 0.5,
+      link_response = 1,
+      sparsity = input$MO_sparsity,
+      cases_to_try = input$MO_cases_to_try,
+      selectedResponse = input$MO_selectedResponse
+      
     )
     
-    preparedMixOmics <- do.call("prepareForIntegration", args = list_args_prepare_MO)
-    
-    #---- progress bar ----#
+    # ---- progress bar ----#
     progress$inc(1/10, detail = paste("Running MixOmics ", 30, "%", sep = ""))
-    #----------------------#
+    # ----------------------#
     
     # Run the analysis
     print("#     =>Running MixOmics")
     
-    list_args_run_MO <- list(
-      object = preparedMixOmics,
-      scale_views = input$MO_scale_views,
-      ncomp = input$MO_ncomp,
-      # link_datasets = input$link_datasets,
-      # link_resposne = input$link_response,      
-      link_datasets = 0.5,
-      link_response = 1,
-      sparsity = input$MO_sparsity,
-      cases_to_try = input$MO_cases_to_try
-    )
-    
-    MixOmics_res <- lapply(input$MO_selectedResponse, 
-                           FUN = function(response_var){
-                             
-                             list_args_run_MO$selectedResponse <- response_var
-                             res_mixOmics <- do.call("run_MixOmics_analysis", args = list_args_run_MO)
-                             
-                             return(
-                               list(
-                                 "MixOmics_tuning_results" = res_mixOmics$tuning_res,
-                                 "MixOmics_results" = res_mixOmics$analysis_res
-                               )
-                             )
-                           })
-    names(MixOmics_res) <- input$MO_selectedResponse
-    
-    # Store results
-    MAE_object@metadata[["mixOmics"]] <- MixOmics_res 
-    
-    session$userData$FlomicsMultiAssay <- MAE_object
-    local.rea.values$runMixOmics <- TRUE
+    session$userData$FlomicsMultiAssay <- do.call(getFromNamespace("integrationWrapper", ns = "RFLOMICS"), list_args_MO)
+
+    print(names(session$userData$FlomicsMultiAssay@metadata[["mixOmics"]]))
     
     #---- progress bar ----#
     progress$inc(1, detail = paste("Finished ", 100,"%", sep = ""))
     #----------------------#
+    
+    local.rea.values$runMixOmics <- TRUE
+    
+
   })
   
   ## Output results
@@ -252,7 +227,9 @@ MixOmics_setting <- function(input, output, session, rea.values){
     
     if(!local.rea.values$runMixOmics) return()
     
-    lapply(names(session$userData$FlomicsMultiAssay@metadata[["mixOmics"]]), function(listname) { # ADD
+    lapply(names(session$userData$FlomicsMultiAssay@metadata[["mixOmics"]]), function(listname) { 
+      
+      # MAE@metadata$mixOmics$Genotype$MixOmics_results
       
       Data_res <- session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][[listname]]$MixOmics_results
       
