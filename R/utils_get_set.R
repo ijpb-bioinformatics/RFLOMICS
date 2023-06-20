@@ -333,7 +333,6 @@ opDEList <- function(object, contrasts = NULL, operation = "union"){
   validTags <- RFLOMICS::convertContrastToTag(object, RFLOMICS::getValidContrasts(object))
   
   tagsConcerned <- intersect(contrasts, validTags)
-  # TODO : tagsConcerned empty <- do not continue.
   if(length(tagsConcerned) == 0) stop("It seems there is no contrasts to select DE entities from.")
   
   df_DE <- RFLOMICS::getDEMatrix(object) %>% 
