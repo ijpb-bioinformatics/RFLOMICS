@@ -13,7 +13,7 @@
 #' @noRd
 #'
 
-filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
+filter_DE_from_SE <- function(SEobject, contrasts_arg = NULL, type = "union"){
   
   # SEobject = rnaDat
   # contrasts_arg = "all"
@@ -23,7 +23,7 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg, type = "union"){
   
   tabCorresp <- SEobject@metadata$DiffExpAnal$Validcontrasts %>% 
     dplyr::select(contrastName, tag)
-  if("all" %in% contrasts_arg)   contrasts_arg <- SEobject@metadata$DiffExpAnal$Validcontrasts$contrastName
+  if(is.null(contrasts_arg))   contrasts_arg <- SEobject@metadata$DiffExpAnal$Validcontrasts$contrastName
   
   tabCorresp <- tabCorresp %>% dplyr::filter(contrastName %in% contrasts_arg)
   contrasts_select <- tabCorresp$tag
@@ -115,7 +115,7 @@ rnaseqRBETransform <- function(object,
                                SEname, 
                                correctBatch = FALSE, 
                                transformation = "limma (voom)",
-                               contrasts_names = "all",
+                               contrasts_names = NULL,
                                type = "union",
                                choice = "DE"
                                ){
@@ -126,12 +126,12 @@ rnaseqRBETransform <- function(object,
 
   if(class(object) != "MultiAssayExperiment") stop("object is not a MultiAssyExperiment")
   
-  # SEname = "RNAseq_norm"
-  # correctBatch = TRUE
-  
   rnaDat <- object[[SEname]] 
   assayTransform <- SummarizedExperiment::assay(rnaDat)
-  if(!is.integer(assayTransform)) stop("It seems your RNASeq data is not count data")
+  if(!is.integer(assayTransform)){
+    message(paste0("You indicated RNASeq data for ", SEname, "but it is not recognized as count data")) 
+    print(assayTransform[1:3, 1:3])
+  }
   
   DMat      <- RFLOMICS::getDesignMat(object)
   coefNorm  <- RFLOMICS::getNormCoeff(rnaDat)
@@ -150,7 +150,6 @@ rnaseqRBETransform <- function(object,
   SummarizedExperiment::assay(rnaDat) <- limmaRes$E
   
   if(correctBatch) rnaDat <- RFLOMICS::rbe_function(object, rnaDat)
-  if(contrasts_names == "all") contrasts_names = NULL
   if(choice == "DE")  rnaDat = rnaDat[RFLOMICS::opDEList(rnaDat, contrasts = contrasts_names, operation = type),]
   
   rnaDat@metadata[["correction_batch"]]             <- correctBatch
@@ -179,7 +178,7 @@ rnaseqRBETransform <- function(object,
 RBETransform <- function(object,
                          SEname,
                          correctBatch = TRUE,
-                         contrasts_names = "all",
+                         contrasts_names = NULL,
                          type = "union",
                          choice = "DE"){
   
@@ -192,8 +191,7 @@ RBETransform <- function(object,
   omicsDat@metadata[["transform_method_integration"]] <- omicsDat@metadata$transform_method
   
   if(correctBatch) omicsDat <- RFLOMICS::rbe_function(object, omicsDat)
-  
-  if(contrasts_names == "all") contrasts_names = NULL
+
   if(choice == "DE")  omicsDat = omicsDat[RFLOMICS::opDEList(omicsDat, contrasts = contrasts_names, operation = type),]
   
   object[[SEname]] <- omicsDat
