@@ -102,6 +102,13 @@ methods::setGeneric(
   def = function( object, ... ){standardGeneric("resetFlomicsMultiAssay")}
 )
 
+
+methods::setGeneric(
+  name="integrationWrapper",
+  def = function( object, ... ){standardGeneric("integrationWrapper")}
+)
+
+
 methods::setGeneric(
   name="prepareForIntegration",
   def = function( object, ... ){standardGeneric("prepareForIntegration")}

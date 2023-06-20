@@ -2593,6 +2593,131 @@ methods::setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
 
 ######################## COMMON METHODS FOR OMICS INTEGRATION ########################
 
+
+#' @title integrationWrapper
+#' @description This function executes all the steps to ensure data integration from a \link{MultiAssayExperiment} object produced by FLOMICS. 
+#' @param object An object of class \link{MultiAssayExperiment}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param omicsToIntegrate vector of characters strings, referring to the names of the filtered table in 'object@ExperimentList'.
+#' @param rnaSeq_transfo character string, only supports 'limma (voom)' for now. Transformation of the rnaSeq data from counts to continuous data.
+#' @param choice character. If choice is set to 'DE', filters the object to take only the DE omics using differential analysis results stored in object. If choice is different than DE, no filtering is applied.
+#' @param contrasts_names contrasts names for the selection of DE entities.
+#' @param type one of union or intersection.
+#' @param group Not implemented yet in the interface. Useful for MOFA2 run.
+#' @return a MultiAssayExperiment object. 
+#' @export
+#' @exportMethod integrationWrapper
+#' @examples
+#'
+
+
+methods::setMethod(f="integrationWrapper",
+                   signature="MultiAssayExperiment",
+ 
+                   definition <- function(object,
+                                          omicsToIntegrate = NULL,
+                                          rnaSeq_transfo = "limma (voom)",
+                                          # choice = c("raw", "DE"),
+                                          choice = "DE",
+                                          contrasts_names = NULL,
+                                          type = "union",
+                                          group = NULL,
+                                          method = "MOFA",
+                                          scale_views = FALSE,
+                                          maxiter = 1000,
+                                          num_factors = 10,
+                                          selectedResponse = NULL,
+                                          ncomp = 2,
+                                          link_datasets = 1,
+                                          link_response = 1,
+                                          sparsity = FALSE,
+                                          cases_to_try = 5){
+                     
+                     
+                     method <- switch(toupper(method),
+                                     "MIXOMICS" = "MixOmics",
+                                     "MOFA" = "MOFA",
+                                     "MOFA2" = "MOFA",
+                                     "MOFA+" = "MOFA")
+                     
+                     preparedObject <- RFLOMICS::prepareForIntegration(object = object, 
+                                                                       omicsToIntegrate = omicsToIntegrate,
+                                                                       rnaSeq_transfo = rnaSeq_transfo,
+                                                                       choice = choice,
+                                                                       contrasts_names = contrasts_names,
+                                                                       type = type,
+                                                                       group = group,
+                                                                       method = method)
+                     
+                     if(toupper(method) == "MOFA"){
+                       
+                       object@metadata[["MOFA"]] <- NULL
+                       
+                       MOFA_run <- RFLOMICS::run_MOFA_analysis(object = preparedObject,
+                                                   scale_views = scale_views,
+                                                   maxiter = maxiter,
+                                                   num_factors = num_factors)
+                       
+                       object@metadata[["MOFA"]][["MOFA_results"]]            <- MOFA_run$MOFAObject.trained
+                       object@metadata[["MOFA"]][["MOFA_untrained"]]          <- MOFA_run$MOFAObject.untrained
+                       object@metadata[["MOFA"]][["MOFA_selected_filter"]]    <- type
+                       object@metadata[["MOFA"]][["MOFA_selected_contrasts"]] <- contrasts_names
+                       
+                     }else if(toupper(method) == "MIXOMICS"){
+                       
+                       object@metadata[["mixOmics"]] <- NULL
+                       # MixOmics_res <- list()
+                       
+                       # for(response_var in selectedResponse){
+                       #   
+                       #   res_mixOmics <- RFLOMICS::run_MixOmics_analysis(
+                       #     object = preparedObject,
+                       #     selectedResponse = response_var,
+                       #     scale_views = scale_views,
+                       #     ncomp = ncomp, 
+                       #     link_datasets = link_datasets,
+                       #     link_response = link_response,
+                       #     sparsity = sparsity,
+                       #     cases_to_try = cases_to_try
+                       #   )
+                       #   
+                       #   MixOmics_res[[response_var]] <-  list(
+                       #     "MixOmics_tuning_results" = res_mixOmics$tuning_res,
+                       #     "MixOmics_results"        = res_mixOmics$analysis_res
+                       #   )
+                       #   
+                       # }
+                       
+                       MixOmics_res <- lapply(selectedResponse,
+                                              FUN = function(response_var){
+
+                                                res_mixOmics <- run_MixOmics_analysis(
+                                                  object = preparedObject,
+                                                  selectedResponse = response_var,
+                                                  scale_views = scale_views,
+                                                  ncomp = ncomp,
+                                                  link_datasets = link_datasets,
+                                                  link_response = link_response,
+                                                  sparsity = sparsity,
+                                                  cases_to_try = cases_to_try
+                                                )
+
+                                                return(
+                                                  list(
+                                                    "MixOmics_tuning_results" = res_mixOmics$tuning_res,
+                                                    "MixOmics_results"        = res_mixOmics$analysis_res
+                                                  )
+                                                )
+                                              })
+                       names(MixOmics_res) <- selectedResponse
+                       
+                       object@metadata[["mixOmics"]] <- MixOmics_res 
+                     }
+                     
+                     return(object)
+                     
+                   }
+)
+
 #' @title prepareForIntegration
 #' @description This function transforms a MultiAssayExperiment produced by rflomics into an untrained MOFA objects or a list to use for mixOmics. It checks for batch effect to correct them prior to the integration.
 #' It also transforms RNASeq counts data into continuous data. This is the first step into the integration.
@@ -2616,23 +2741,14 @@ methods::setMethod(f="prepareForIntegration",
                                            rnaSeq_transfo = "limma (voom)",
                                            # choice = c("raw", "DE"),
                                            choice = "DE",
-                                           contrasts_names = "all",
+                                           contrasts_names = NULL,
                                            type = "union",
                                            group = NULL,
                                            method = c("MOFA", "MixOmics")){
                      
-                     # load("../Loudet_Olivier/StressNet_WxN_multiomics/MAE_stressNET.RData")
-                     # object <- MAE
-                     # omicsToIntegrate = c("RNAseq_norm", "Met_norm")
-                     # # omicsToIntegrate = c("RNAseq.set1", "proteomics.set2")
-                     # # omicsToIntegrate = c("proteomics.set1", "metabolomics.set2")
-                     # rnaSeq_transfo = "limma (voom)"
-                     # choice = "DE"
-                     # contrasts_names = "all"
-                     # contrasts_names = c("(temperatureLow - temperatureElevated)", "(temperatureMedium - temperatureLow)")
-                     # type = "union"
-                     # group = NULL
-                     # method = "MixOmics"
+                     
+                     
+                     
                      
                      if(is.null(omicsToIntegrate)) omicsToIntegrate <- names(object)
                      
@@ -2679,7 +2795,7 @@ methods::setMethod(f="prepareForIntegration",
                      }else if(method == "MixOmics"){
                        
                        # Common samples names:
-                      object <- object[,Reduce("intersect", colnames(object))]
+                      object <- object[ , Reduce("intersect", colnames(object))]
                        
                        MixOmicsObject <- list(blocks = lapply(object@ExperimentList, FUN = function(SE)  t(assay(SE))),
                                               metadata = object@colData)
@@ -2711,10 +2827,6 @@ methods::setMethod(f="run_MOFA_analysis",
                                                             maxiter = 1000,
                                                             num_factors = 10,
                                                             ...){
-                     
-                     # library(MOFA2)
-                     # object = FlomicsMultiAssay@metadata$MOFA_untrained
-                     # scale_views = TRUE
                      
                      data_opts  <- MOFA2::get_default_data_options(object)
                      model_opts <- MOFA2::get_default_model_options(object)
