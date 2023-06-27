@@ -21,11 +21,11 @@ params:
 
 
 ```{r , include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE, error = TRUE)
 options(knitr.duplicate.label = "allow")
 ```
 
-```{r library, echo=FALSE, message=FALSE, warning=FALSE}
+```{r library}
 
 library(RFLOMICS)
 library(dplyr)
@@ -46,17 +46,17 @@ projectName <- params$title
 ```{r , message=FALSE, warning=FALSE, echo=FALSE}
 # Create a directory to store all the results (tables and figures) of the project in a tmpdir
 # user may download this results as an archive from the shiny interface
-dir.create(path=outDir)
+dir.create(path = outDir, showWarnings = FALSE)
 ```
 
 <!-- enable to zoom by clicking on graphs in the report -->
 
-```{css zoom-lib-src, message=FALSE, warning=FALSE, echo=FALSE}
+```{css zoom-lib-src}
 ### ZOOM 
 script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
 ```
 
-```{js zoom-jquery, message=FALSE, warning=FALSE, echo=FALSE}
+```{js zoom-jquery}
  $(document).ready(function() {
     $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
     // onClick function for all plots (img's)
@@ -75,7 +75,7 @@ script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
 
 <!-- Experimental design -->
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE}
+```{r}
 
   out <- NULL
  
@@ -87,7 +87,7 @@ knitr::asis_output(out)
 
 <!-- single omics analysis -->
 
-```{r analysis, message=FALSE, warning=FALSE, echo=FALSE, eval=(length(rflomics.MAE@metadata$omicList) != 0 )}
+```{r analysis, eval=(length(rflomics.MAE@metadata$omicList) != 0 )}
 
   out <- NULL
   for (omictype in names(rflomics.MAE@metadata$omicList)){ 
@@ -110,25 +110,41 @@ knitr::asis_output(out)
 
 <!-- ## with MOFA -->
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE, eval = !is.null(rflomics.MAE@metadata$MOFA_results), hide = is.null(rflomics.MAE@metadata$MOFA_results) }
+`r if(is.null(rflomics.MAE@metadata$MOFA)) {"\\begin{comment}"}`
 
-  out <- NULL
-  
-  out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_07_MOFA2_integration.Rmd"), quiet=TRUE))
-    
+# MOFA2 Integration
+
+`r if(is.null(rflomics.MAE@metadata$MOFA)) {"\\end{comment}"}`
+
+```{r, eval = !is.null(rflomics.MAE@metadata$MOFA), hide = is.null(rflomics.MAE@metadata$MOFA) }
+
+out <- NULL
+
+out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_07_MOFA2_integration.Rmd"), quiet=TRUE))
+
 knitr::asis_output(out)
 
 ```
 
 <!-- ## with MixOmix -->
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE, eval = !is.null(rflomics.MAE@metadata$MOFA_results), hide = is.null(rflomics.MAE@metadata$MOFA_results) }
+`r if(is.null(rflomics.MAE@metadata$mixOmics)) {"\\begin{comment}"}`
 
-#   out <- NULL
-#   
-#   out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_08_mixOmics_integration.Rmd"), quiet=TRUE))
-#     
-# knitr::asis_output(out)
+# MixOmics Integration
+
+`r if(is.null(rflomics.MAE@metadata$mixOmics)) {"\\end{comment}"}`
+
+```{r, eval = !is.null(rflomics.MAE@metadata$mixOmics), hide = is.null(rflomics.MAE@metadata$mixOmics) }
+
+out <- NULL
+for (selectedResponse in names(rflomics.MAE@metadata$mixOmics)) { 
+  
+  child <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_08_mixOmics_integration.Rmd") 
+  
+  out <- c(out, knitr::knit_child(child, quiet = TRUE))  
+}
+
+knitr::asis_output(out)
 
 ```
 

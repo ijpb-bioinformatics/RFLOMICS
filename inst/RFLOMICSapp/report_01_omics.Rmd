@@ -3,7 +3,7 @@
 ```{r , echo=FALSE, message=FALSE, warning=FALSE}
 # Create a directory to report each dataset results
 dataDir <- paste0(outDir,"/",data)
-dir.create(path=dataDir)
+dir.create(path = dataDir, showWarnings = FALSE)
 ```
 
 

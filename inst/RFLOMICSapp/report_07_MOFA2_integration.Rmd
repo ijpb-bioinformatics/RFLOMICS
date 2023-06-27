@@ -1,11 +1,12 @@
 
-```{r MOFA_chunk_options, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+```{r MOFA_chunkoptions, include = FALSE, hide = TRUE, eval = TRUE}
+explorDir <- paste0(outDir,"/","Integration/MOFA2/")
+dir.create(path = explorDir)
+
+knitr::opts_chunk$set(fig.path = explorDir)
 ```
 
-# MOFA Integration
-
-```{r}
+```{r MOFA_extract}
 MOFARes <- rflomics.MAE@metadata[["MOFA"]][["MOFA_results"]]
 ```
 
@@ -17,7 +18,7 @@ MOFARes <- rflomics.MAE@metadata[["MOFA"]][["MOFA_results"]]
 <!-- TODO The above does not work... -->
 * Taking the <span style="color:blue">`r rflomics.MAE@metadata[["MOFA"]]$MOFA_selected_filter`</span> of lists of DE features lead to the following analysis setting: 
 
-```{r, fig.width=6.5, fig.height = 5, fig.align="center"}
+```{r MOFA2_data_overview, fig.width=6.5, fig.height = 5, fig.align="center"}
 MOFA2::plot_data_overview(MOFARes)
 ```
 
@@ -41,13 +42,13 @@ mat_cor <- mat_cor - diag(mat_cor)
 * Number of computed factors: `r MOFARes@dimensions$K` 
 * Is there a correlation >0.5 between two factors? `r ifelse(any(mat_cor>0.5), "YES, be careful, the results are unreliable.", "No.")`
 
-```{r, fig.width=4.5, fig.height = 4, fig.align="center"}
+```{r MOFA2_factor_cor, fig.width=4.5, fig.height = 4, fig.align="center"}
 MOFA2::plot_factor_cor(MOFARes)
 ```
 
 ### Explained Variance
 
-```{r, fig.width = 10, fig.height = 4, fig.align = "center"}
+```{r explained_variance, fig.width = 10, fig.height = 4, fig.align = "center"}
 g1 <- MOFA2::plot_variance_explained(MOFARes, plot_total = TRUE)[[2]] + # compute both per factor and per table by default.
   ggplot2::ggtitle("Total explained variance per omic data")
 g2 <- MOFA2::plot_variance_explained(MOFARes, x = "view", y = "factor") + ggplot2::ggtitle("Explained variance by factors and omic data")
@@ -61,27 +62,19 @@ The following image shows the weights of the features for each table and each fa
 
 ```{r}
 VarExp = MOFA2::get_variance_explained(MOFARes)$r2_per_factor$group1
-FactNum = apply(VarExp, 1, FUN = function(vect) any(vect>5)) # Percentage
-f.height = 5+2*length(which(FactNum))
-f.width = 5+2*length(MOFA2::views_names(MOFARes))
-# f.width = 15
-# f.height = 15
+FactNum = apply(VarExp, 1, FUN = function(vect) any(vect > 5)) # Percentage
+f.height = 5 + 2*length(which(FactNum))
+f.width  = 5 + 2*length(MOFA2::views_names(MOFARes))
 ```
 
 ```{r, fig.height = f.height, fig.width=f.width, fig.align = "center"}
 ggplot_list <- list()
-for(i in which(FactNum)){
+for (i in which(FactNum)) {
+  for (j in MOFA2::views_names(MOFARes)) {
 
-  for(j in MOFA2::views_names(MOFARes)){
-    # ggplot_list[[length(ggplot_list)+1]] <- MOFA2::plot_weights(MOFARes,
-    #                                                      view = j,
-    #                                                      factor = i,
-    #                                                      nfeatures = 10, 
-    #                                                      scale = TRUE) + ggplot2::ggtitle(paste0(j, " - Factor ", i))
-
-        ggplot_list[[length(ggplot_list)+1]] <- MOFA2::plot_top_weights(MOFARes,
+        ggplot_list[[length(ggplot_list) + 1]] <- MOFA2::plot_top_weights(MOFARes,
                                                          view = j,
-                                                         factor = i,
+                                                         factors = i,
                                                          nfeatures = 10, 
                                                          scale = TRUE) + ggplot2::ggtitle(paste0(j, " - Factor ", i))
   }
@@ -98,16 +91,25 @@ For all views, these heatmap show the 10 first features in term of weights for t
 
 ```{r, fig.width = 15, fig.height = 5, fig.show = "hide"}
 list_heat_views = list()
-for(nam in MOFA2::views_names(MOFARes)){
+for (nam in MOFA2::views_names(MOFARes)) {
   list_heat_views[[nam]] <- list()
   list_heat_views[[nam]][[1]] <- MOFA2::plot_data_heatmap(MOFARes, view = nam, factor = 1, features = 10, main = paste0(nam, " - Factor 1"), cellheight = 20, cellwidth = 12)$gtable
-  list_heat_views[[nam]][[2]]  <- MOFA2::plot_data_heatmap(MOFARes, view = nam, factor = 2, features = 10, main = paste0(nam, " - Factor 2"), cellheight = 20, cellwidth = 12)$gtable
+  list_heat_views[[nam]][[2]] <- MOFA2::plot_data_heatmap(MOFARes, view = nam, factor = 2, features = 10, main = paste0(nam, " - Factor 2"), cellheight = 20, cellwidth = 12)$gtable
 }
 ```
 
-```{r, fig.width = 12, fig.height = 7}
-res = lapply(list_heat_views, FUN = function(liste){
+```{r MOFA2_heatmaps, fig.width = 12, fig.height = 7}
+res <- lapply(list_heat_views, FUN = function(liste){
   gridExtra::grid.arrange(grobs = liste, ncol = 2)
 })
+```
+
+```{r MOFA2_export}
+write.table(MOFA2::get_factors(MOFARes, as.data.frame = TRUE),
+             file = paste0(explorDir, "Factors_values.txt"),
+             sep = "\t", quote = FALSE, col.names = TRUE, row.names = TRUE)
+write.table(MOFA2::get_weights(MOFARes, as.data.frame = TRUE),
+             file = paste0(explorDir, "Factors_weights.txt"),
+             sep = "\t", quote = FALSE, col.names = TRUE, row.names = TRUE)
 ```
 

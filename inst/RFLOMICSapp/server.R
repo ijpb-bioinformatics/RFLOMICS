@@ -492,7 +492,7 @@ shinyServer(function(input, output, session) {
         # Copy the report file to a temporary directory before processing it, in
         # case we don't have write permissions to the current working dir (which
         # can happen when deployed).
-        print(paste0("# ??- Creat html report... ", file))
+        print(paste0("# ??- Create html report... ", file))
         tempReport <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report.Rmd") # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         #tempReport <- file.path(tempdir(), "report.Rmd")

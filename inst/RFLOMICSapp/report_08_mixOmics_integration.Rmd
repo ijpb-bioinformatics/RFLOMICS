@@ -1,0 +1,79 @@
+## `r selectedResponse` 
+
+```{r setup, include = FALSE, hide = TRUE, eval = TRUE}
+explorDir <- paste0(outDir,"/","Integration/MixOmics/", selectedResponse, "/")
+dir.create(path = explorDir)
+
+knitr::opts_chunk$set(fig.path = explorDir)
+```
+
+```{r}
+Data_res <- rflomics.MAE@metadata$mixOmics[[selectedResponse]]$MixOmics_results
+```
+
+### Overview
+
+```{r mixOmics_overview}
+df <- RFLOMICS::sumMixOmics(rflomics.MAE, selectedResponse = "Repeat")
+t(df) %>% DT::datatable()
+```
+
+```{r mixOmics_varExp, fig.width = 12, fig.height = 5}
+RFLOMICS::plot_MO_varExp(rflomics.MAE, selectedResponse = "Repeat", mode = NULL)
+```
+
+### Idividuals plots
+
+#### Comp 1 - 2
+
+```{r mixOmics_plotInd12, fig.width = 12, fig.height = 5}
+mixOmics::plotIndiv(Data_res, comp = c(1,2), ellipse = FALSE, legend = TRUE)
+```
+
+#### Comp 2 - 3
+
+```{r mixOmics_plotInd23, fig.width = 12, fig.height = 5}
+mixOmics::plotIndiv(Data_res, comp = c(2,3), ellipse = FALSE, legend = TRUE)
+```
+
+### Loadings
+
+#### Comp 1
+
+```{r mixOmics_load1, fig.height = 5, fig.width=12}
+mixOmics::plotLoadings(Data_res, 
+                       comp = 1,
+                       ndisplay = 10)
+```
+
+#### Comp 2
+
+```{r mixOmics_load2, fig.height = 5, fig.width=12}
+mixOmics::plotLoadings(Data_res, 
+                       comp = 2,
+                       ndisplay = 10)
+```
+
+```{r mixOmics_export}
+loads <- do.call("rbind", lapply(names(Data_res$loadings), FUN = function(nam){
+  df <- data.frame(Data_res$loadings[[nam]])
+  df$Table <- nam
+  df %>% dplyr::relocate(Table)
+  }
+))
+
+write.table(loads, file = paste0(explorDir, selectedResponse, "_Loading_values.txt"),
+             sep = "\t", quote = FALSE, col.names = TRUE, row.names = TRUE)
+
+inds <- do.call("rbind", lapply(names(Data_res$variates), FUN = function(nam){
+  df <- data.frame(Data_res$variates[[nam]])
+  df$Table <- nam
+  df %>% dplyr::relocate(Table)
+  }
+))
+
+write.table(inds, file = paste0(explorDir, selectedResponse, "_Ind_coord.txt"),
+             sep = "\t", quote = FALSE, col.names = TRUE, row.names = TRUE)
+```
+
+

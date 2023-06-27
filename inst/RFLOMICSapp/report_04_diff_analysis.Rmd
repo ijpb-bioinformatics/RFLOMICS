@@ -65,7 +65,7 @@ for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
 
 
 ```{r , echo=FALSE, results="asis", eval=Diff.eval}
-kable_styling(kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("DE.Tot"=DE,"DE.Up"=DEup,"DE.Down"=DEdown)), row.names=FALSE, caption=NULL, format="html"), font_size=12)
+kableExtra::kable_styling(knitr::kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("DE.Tot"=DE,"DE.Up"=DEup,"DE.Down"=DEdown)), row.names=FALSE, caption=NULL, format="html"), font_size=12)
 ```
 
 
