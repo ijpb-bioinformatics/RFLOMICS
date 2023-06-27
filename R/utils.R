@@ -1884,11 +1884,11 @@ contrastName2contrastDir <- function(contrastName){
   # remplacement des comparaisons centrales
   tmp <- stringr::str_replace_all(contrastName,"[:blank:]-[:blank:]\\(","_vs_")
   # remplacement des comparaisons dans les parenthèses
-  tmp <- str_replace_all(tmp,"[:blank:]-[:blank:]","-")
+  tmp <- stringr::str_replace_all(tmp,"[:blank:]-[:blank:]","-")
   # suppression des parenthèses
-  tmp <- str_remove_all(tmp,c("\\(|\\)"))
+  tmp <- stringr::str_remove_all(tmp,c("\\(|\\)"))
   # remplcement des espaces par des _
-  tmp <- str_replace_all(tmp,"[:blank:]","_")
+  tmp <- stringr::str_replace_all(tmp,"[:blank:]","_")
   return(tmp)
 }
 

@@ -9,7 +9,7 @@
 #' 
 
 getFactorTypes <- function(object){
-  if(class(object) == "MultiAssayExperiment"){
+  if (class(object) == "MultiAssayExperiment") {
     object@metadata$design@Factors.Type
   }else{
     stop("object is not a MultiAssayExperiment.")
@@ -31,7 +31,7 @@ getFactorTypes <- function(object){
 
 getDesignMat <- function(object){
   # TODO check if it exists... 
-  if(class(object) == "MultiAssayExperiment"){
+  if (class(object) == "MultiAssayExperiment") {
     object@metadata$design@ExpDesign
   }else{
     stop("object is not a MultiAssayExperiment.")
@@ -50,7 +50,7 @@ getDesignMat <- function(object){
 
 getModelFormula <- function(object){
   # TODO check if it exists... 
-  if(class(object) == "MultiAssayExperiment"){
+  if (class(object) == "MultiAssayExperiment") {
     object@metadata$design@Model.formula
   }else{
     stop("object is not a MultiAssayExperiment.")
@@ -69,9 +69,9 @@ getModelFormula <- function(object){
 
 getSelectedContrasts <- function(object){
   # TODO check if it exists... 
-  if(class(object) == "MultiAssayExperiment"){
+  if (class(object) == "MultiAssayExperiment") {
     object@metadata$design@Contrasts.Sel
-  }else if(class(object) == "SummarizedExperiment"){
+  }else if (class(object) == "SummarizedExperiment") {
     object@metadata$DiffExpAnal$contrasts
   }else{
     stop("object is not a MultiAssayExperiment or a SummarizedExperiment.")
@@ -94,8 +94,8 @@ setValidContrasts <- function(object,
   
   # TODO : check if there are DE entities for each contrasts before really validating them.
   
-  if(is.character(contrasts)){
-    if(class(object) == "SummarizedExperiment"){
+  if (is.character(contrasts)) {
+    if (class(object) == "SummarizedExperiment") {
       object@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName <- contrasts
     }else{
       stop("object is not a SummarizedExperiment.")
@@ -115,9 +115,9 @@ setValidContrasts <- function(object,
 #' 
 getValidContrasts <- function(object){
   
-  if(class(object) == "SummarizedExperiment"){
+  if (class(object) == "SummarizedExperiment") {
     return(object@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName) 
-  }else if(class(object) == "MultiAssayExperiment"){
+  }else if (class(object) == "MultiAssayExperiment") {
     list_res <- lapply(names(object), FUN = function(tableName){
       object[[tableName]]@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName
     })
@@ -126,62 +126,8 @@ getValidContrasts <- function(object){
   }
 }
 
-# ---- Get summary from ORA : ----
 
-#' @title Get summary tables from ORA analyses - once an enrichment has been conducted. 
-#'
-#' @param object a SE object (produced by Flomics)
-#' @param ont either NULL, GO, KEGG or custom. if NULL, all tables are returned in a list. 
-#' @param from either DiffExpEnrichAnal or CoExpAnal. 
-#' @return a list of tables or a table 
-#' @export
-#'
-#' @examples 
-#' 
-sumORA <- function(SE, ont = NULL, from = "DiffExpEnrichAnal"){
-  
-  if(!is.null(ont)){
-    return(SE@metadata[[from]][[ont]]$summary)
-  }else{
-    list_res <- lapply(names(SE@metadata[[from]]), FUN = function(ontres){
-      SE@metadata[[from]][[ontres]]$summary
-    })
-    names(list_res) <- names(SE@metadata[[from]])
-    return(list_res)
-  }
-} 
 
-# ----- Get Summary for diffExpAnalysis : -----
-
-#' @title Get summary table from diffExpAnalysis analysis
-#'
-#' @param object a SE object (produced by Flomics)
-#' @return a table 
-#' @export
-#'
-#' @examples 
-#' 
-
-sumDiffExp <- function(object){
-  
-  # TODO valid contrasts only by default
-  # TODO if asked by user (all = TRUE), then provide all results even non-validaed ones.
-  
-  pcut <- object@metadata$DiffExpAnal$Adj.pvalue.cutoff
-  lcut <- object@metadata$DiffExpAnal$abs.logFC.cutoff
-  
-  df_sim <- lapply(object@metadata$DiffExpAnal$DEF, FUN = function(tab){
-    
-    tab  <- tab %>% dplyr::filter(Adj.pvalue < pcut) %>%
-      dplyr::filter(abs(logFC) > lcut)
-    
-    c("All"  = nrow(tab), 
-      "Up"   = nrow(tab %>% dplyr::filter(logFC>0)), 
-      "Down" = nrow(tab %>% dplyr::filter(logFC<0))
-    )
-  })
-  return(do.call("rbind", df_sim))
-}
 
 # ---- Get DE matrix from DiffExpAnalysis ----
 
@@ -196,8 +142,8 @@ sumDiffExp <- function(object){
 #' 
 getDEMatrix <- function(object){
   
-  if(class(object) == "SummarizedExperiment"){
-    if(!is.null(object@metadata$DiffExpAnal$mergeDEF)) return(object@metadata$DiffExpAnal$mergeDEF) 
+  if (class(object) == "SummarizedExperiment") {
+    if (!is.null(object@metadata$DiffExpAnal$mergeDEF)) return(object@metadata$DiffExpAnal$mergeDEF) 
     else stop("There is no DE matrix in this object.")
   }else stop("object is not a SummarizedExperiment.")
   
@@ -222,7 +168,7 @@ isContrastName <- function(object, contrastName){
   search_match   <- sapply(contrastName, FUN = function(cn){grep(cn, df_contrasts$contrastName, fixed = TRUE)})
   search_success <- sapply(search_match, identical, integer(0)) # if TRUE, not a success at all. 
   
-  if(!any(search_success)){
+  if (!any(search_success)) {
     # Congratulations, it's a contrast name!
     return(TRUE)
   }else return(FALSE)
@@ -248,7 +194,7 @@ isTagName <- function(object, tagName){
   search_match   <- sapply(tagName, FUN = function(cn){grep(cn, df_contrasts$tag, fixed = TRUE)})
   search_success <- sapply(search_match, identical, integer(0)) # if TRUE, not a success at all. 
   
-  if(!any(search_success)){
+  if (!any(search_success)) {
     # Congratulations, it's a tag name!
     return(TRUE)
   }else return(FALSE)
@@ -324,33 +270,33 @@ opDEList <- function(object, contrasts = NULL, operation = "union"){
   # object <- MAE[["RNAseq_norm"]]
   # contrasts <- NULL
   
-  if(class(object)!="SummarizedExperiment") stop("Object is not a SummarizedExperiment")
-  if(is.null(object@metadata$DiffExpAnal$Validcontrasts)) stop("Please validate your differential analyses first.")
+  if (class(object) != "SummarizedExperiment") stop("Object is not a SummarizedExperiment")
+  if (is.null(object@metadata$DiffExpAnal$Validcontrasts)) stop("Please validate your differential analyses first.")
   
-  if(is.null(contrasts)) contrasts <- RFLOMICS::getSelectedContrasts(object)[["tag"]]
-  if(RFLOMICS::isContrastName(object, contrasts)) contrasts <- RFLOMICS::convertContrastToTag(object, contrasts)
+  if (is.null(contrasts)) contrasts <- RFLOMICS::getSelectedContrasts(object)[["tag"]]
+  if (RFLOMICS::isContrastName(object, contrasts)) contrasts <- RFLOMICS::convertContrastToTag(object, contrasts)
   
   validTags <- RFLOMICS::convertContrastToTag(object, RFLOMICS::getValidContrasts(object))
   
   tagsConcerned <- intersect(contrasts, validTags)
-  if(length(tagsConcerned) == 0) stop("It seems there is no contrasts to select DE entities from.")
+  if (length(tagsConcerned) == 0) stop("It seems there is no contrasts to select DE entities from.")
   
   df_DE <- RFLOMICS::getDEMatrix(object) %>% 
     dplyr::select(c("DEF", tidyselect::any_of(tagsConcerned)))
   
-  if(operation == "intersection"){
+  if (operation == "intersection") {
     
     DETab <- df_DE %>%
-      dplyr::mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% 
+      dplyr::mutate(SUMCOL = dplyr::select(., tidyselect::starts_with("H")) %>% 
                       rowSums(na.rm = TRUE))  %>%
-      dplyr::filter(SUMCOL==length(validTags))
+      dplyr::filter(SUMCOL == length(validTags))
     
   }else{
     
     DETab <- df_DE %>%
-      dplyr::mutate(SUMCOL = dplyr::select(., starts_with("H")) %>% 
+      dplyr::mutate(SUMCOL = dplyr::select(., tidyselect::starts_with("H")) %>% 
                       rowSums(na.rm = TRUE))  %>%
-      dplyr::filter(SUMCOL>=1)
+      dplyr::filter(SUMCOL >= 1)
   }
   
   return(DETab$DEF)
@@ -371,10 +317,10 @@ opDEList <- function(object, contrasts = NULL, operation = "union"){
 
 getOmicsTypes <- function(object){
   
-  if(!class(object) %in% c("MultiAssayExperiment", "SummarizedExperiment"))
+  if (!class(object) %in% c("MultiAssayExperiment", "SummarizedExperiment"))
     stop("Object is not a MultiAssayExperiment nor a SummarizedExperiment")
   
-  if(class(object) == "MultiAssayExperiment"){
+  if (class(object) == "MultiAssayExperiment") {
     sapply(names(object), FUN = function(x){
       object[[x]]@metadata$omicType
     })
@@ -397,7 +343,10 @@ getOmicsTypes <- function(object){
 
 getNormCoeff <- function(object){
   
-  if(class(object)!="SummarizedExperiment") stop("Object is not a SummarizedExperiment")
+  if (class(object) != "SummarizedExperiment") stop("Object is not a SummarizedExperiment")
   
-  object@metadata$Normalization$coefNorm
+  return(object@metadata$Normalization$coefNorm)
 }
+
+
+
