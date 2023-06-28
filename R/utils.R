@@ -22,26 +22,26 @@ read_exp_design <- function(file){
   # read design and remove special characters
   # remove "_" from modality and factor names
   data <- vroom::vroom(file, delim = "\t", show_col_types = FALSE)  %>%
-    dplyr::mutate(dplyr::across(.cols = where(is.character), stringr::str_remove_all, pattern = "[.,;:#@!?()§$€%&<>|=+-/]")) %>%
-    dplyr::mutate(dplyr::across(.cols = where(is.character), stringr::str_remove_all, pattern = "[\\]\\[\'\"\ ]")) %>%
-    dplyr::mutate(dplyr::across(.cols = where(is.character), stringr::str_remove_all, pattern = fixed("\\"))) %>% 
-    dplyr::mutate(dplyr::across(.cols = c(-1),               stringr::str_remove_all, pattern = fixed("_"))) %>% 
-    dplyr::mutate(dplyr::across(.cols = where(is.character), as.factor)) 
+    dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), stringr::str_remove_all, pattern = "[.,;:#@!?()§$€%&<>|=+-/]")) %>%
+    dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), stringr::str_remove_all, pattern = "[\\]\\[\'\"\ ]")) %>%
+    dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), stringr::str_remove_all, pattern = stringr::fixed("\\"))) %>% 
+    dplyr::mutate(dplyr::across(.cols = c(-1),               stringr::str_remove_all, pattern = stringr::fixed("_"))) %>% 
+    dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), as.factor)) 
   
   names(data)  <- stringr::str_remove_all(string = names(data), pattern = "[.,;:#@!?()§$€%&<>|=+-/\\]\\[\'\"\ _]") %>%
-    stringr::str_remove_all(., pattern = fixed("\\"))
+    stringr::str_remove_all(., pattern = stringr::fixed("\\"))
   
   # check if there is duplication in sample names
   sample.dup <- as.vector(data[which(table(data[1]) > 1),1])[[1]]
   
-  if (length(sample.dup) !=0){
+  if (length(sample.dup) != 0) {
     
     stop(paste0("ERROR : duplicated sample names : ", paste0(sample.dup, collapse = ",")))
   }
   
   # check if there is duplication in factor names
   factor.dup <- as.vector(data[which(table(names(data[-1])) > 1),1])[[1]]
-  if (length(factor.dup) !=0){
+  if (length(factor.dup) != 0) {
     
     stop(paste0("ERROR : duplicated factor name : ", paste0(factor.dup, collapse = ",")))
   }
@@ -52,7 +52,7 @@ read_exp_design <- function(file){
   }) %>% purrr::reduce(c)
   
   mod.dup <- mod.list[duplicated(mod.list)]
-  if(length(mod.dup) != 0){
+  if(length(mod.dup) != 0) {
     
     stop(paste0("ERROR : modality used in more than one factor : ", paste0(mod.dup[1:10], collapse = ", ")))
   }
