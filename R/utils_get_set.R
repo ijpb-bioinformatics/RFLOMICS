@@ -348,5 +348,78 @@ getNormCoeff <- function(object){
   return(object@metadata$Normalization$coefNorm)
 }
 
+# ---- INTERNAL - Get a particular enrichment result ----
+# 
+#' @title Get a particular enrichment result
+#'
+#' @param object a SE object or a MAE object (produced by Flomics). 
+#' @return enrichment result.
+#' @noRd
+#' @keywords internal
 
+getEnrichRes <- function(object, 
+                         contrast = NULL,
+                         experiment = NULL,
+                         from = "DiffExpEnrichAnal",
+                         ont = "GO",
+                         domain = NULL){
+  
+  if (!class(object) %in% c("MultiAssayExperiment", "SummarizedExperiment"))
+    stop("Object is not a MultiAssayExperiment nor a SummarizedExperiment")
+  
+  res_return <- NULL
+  
+  if (class(object) %in% "SummarizedExperiment") {
+    
+    if (is.null(contrast)) res_return <- object@metadata[[from]][[ont]][["enrichResult"]]
+    else{
+      if (RFLOMICS::isTagName(object, contrast)) contrast <- RFLOMICS::convertTagToContrast(object, contrast)
+      res_return <- object@metadata[[from]][[ont]][["enrichResult"]][[contrast]]
+    }
+  }else if (class(object) %in% "MultiAssayExperiment") {
+    
+    if (is.null(experiment)) 
+      stop("Please indicate from which data you want to extract the enrichment results.")
+    
+    if (is.null(contrast)) res_return <- object[[experiment]]@metadata[[from]][[ont]][["enrichResult"]]
+    else{
+      if (RFLOMICS::isTagName(object, contrast)) contrast <- RFLOMICS::convertTagToContrast(object[[experiment]], contrast)
+      res_return <- object[[experiment]]@metadata[[from]][[ont]][["enrichResult"]][[contrast]]
+    }
+  }
+  
+  if (!is.null(domain) && !is.null(contrast)) return(res_return[[domain]])
+  else return(res_return)
+  
+}
 
+# ---- INTERNAL - Get a particular enrichment summary ----
+# TODO equivalent to sumORA (external)
+# 
+#' @title Get a particular enrichment result
+#'
+#' @param object a SE object or a MAE object (produced by Flomics). 
+#' @return enrichment summary
+#' @noRd
+#' @keywords internal
+
+getEnrichSum <- function(object, 
+                         experiment = NULL,
+                         from = "DiffExpEnrichAnal",
+                         dom = "GO"){
+  
+  if (!class(object) %in% c("MultiAssayExperiment", "SummarizedExperiment"))
+    stop("Object is not a MultiAssayExperiment nor a SummarizedExperiment")
+  
+  if (class(object) == "SummarizedExperiment") {
+    return(object@metadata[[from]][[dom]][["summary"]])
+  }else if (class(object) == "MultiAssayExperiment") {
+    
+    if (is.null(experiment)) 
+      stop("Please indicate from which data you want to extract the enrichment results.")
+    
+    return(object[[experiment]]@metadata[[from]][[dom]][["summary"]])
+    
+  }
+  
+}
