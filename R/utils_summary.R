@@ -43,13 +43,23 @@ sumDiffExp <- function(object){
 #'
 #' @examples 
 #' 
-sumORA <- function(SE, ont = NULL, from = "DiffExpEnrichAnal"){
+sumORA <- function(SE,  from = "DiffExpEnrichAnal", ont = NULL, contrast = NULL){
+  
+  if (!class(SE) %in% "SummarizedExperiment") stop("SE is not a summarizedExperiment.")
+  
+  if(!is.null(contrast)){
+    if(RFLOMICS::isTagName(SE, contrast)) contrast <- RFLOMICS::convertTagToContrast(SE, contrast)
+  }
   
   if (!is.null(ont)) {
-    return(SE@metadata[[from]][[ont]]$summary)
+    toReturn <- SE@metadata[[from]][[ont]]$summary
+    if(!is.null(contrast)) toReturn <- toReturn[which(toReturn$Contrast == contrast),]
+    return(toReturn)
   }else{
     list_res <- lapply(names(SE@metadata[[from]]), FUN = function(ontres){
-      SE@metadata[[from]][[ontres]]$summary
+      interRes <- SE@metadata[[from]][[ontres]]$summary
+      if(!is.null(contrast)) interRes <- interRes[which(interRes$Contrast == contrast),]
+      interRes
     })
     names(list_res) <- names(SE@metadata[[from]])
     return(list_res)
