@@ -176,6 +176,66 @@ methods::setMethod(f          = "runAnnotationEnrichment_CPR",
                      return(object)
                    })
 
+#' @title plot.CPRKEGG_Results
+#' @description TODO 
+#' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param contrast the name of the contrast to consider. For Co expression analysis, it is expected to be one of "cluster.1", "cluster.2", etc. 
+#' @param ont the ontology (GO, KEGG or custom)
+#' @param Domain if the ontology is GO, expect one of BP, MF or CC. Default is NULL. 
+#' @param from what type of analysis to consider? One of 'DiffExpAnal' or 'CoExpAnal'
+#' @param type type of plot. Define the function used inside. One of dotplot, heatplot or cnetplot. 
+#' @param showCategory max number of terms to show.
+#' @param searchExpr expression to search in the showCategory terms. 
+#' @param node_label same as in enrichplot::cnetplot function, defines the labels on the graph. One of "all", "category" or "gene". Default is 'all'. 
+#' @param pvalueCutoff pvalueCutoff to define the enrichment threshold. Default is the one find in the clusterprofiler results in object. 
+#' @param  
+#' 
+#' @return A plot. 
+#' @export
+#' @exportMethod plot.CPRKEGG_Results
+#' @examples
+
+methods::setMethod(f          = "plot.CPRKEGG_Results",
+                   signature  = "SummarizedExperiment", 
+                   definition = function(object, 
+                                         contrast, 
+                                         pathway_id = NULL,
+                                         species = "ath",
+                                         gene_idtype = "kegg",
+                                         from = "DiffExpAnal",
+                                         pvalueCutoff = object@metadata$DiffExpEnrichAnal[["KEGG"]]$list_args$pvalueCutoff, 
+                                         ...){
+                     
+                     if (from == "DiffExpAnal") {
+                       dataPlot <- object@metadata$DiffExpEnrichAnal[["KEGG"]]$enrichResult[[contrast]]
+                     }else{
+                       dataPlot <- object@metadata$CoExpAnal[["KEGG"]]$enrichResult[[contrast]]
+                     }
+                     
+                     log2FC_vect <- NULL
+                     # Get the log2FC if appropriate
+                     if (from == "DiffExpAnal") {
+                       log2FC_vect <-  object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
+                       names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
+                     }
+
+                     see_pathview(gene.data = log2FC_vect,
+                                  pathway.id = pathway_id,
+                                  species = species,
+                                  gene.idtype = gene_idtype,
+                                  map.symbol = FALSE,
+                                  same.layer = FALSE,
+                                  low = list(gene = "blue"),
+                                  mid = list(gene = "gray"),
+                                  high = list(gene = "red"),
+                                  na.col = "transparent"
+                                  # cex = 1 # too much
+                                  )
+                     
+                     return()
+                     
+                   })
+
 #' @title plot.CPR_Results
 #' @description TODO 
 #' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
@@ -240,7 +300,7 @@ methods::setMethod(f          = "plot.CPR_Results",
                      log2FC_vect <- NULL
                      # Get the log2FC if appropriate
                      if (from == "DiffExpAnal") {
-                       log2FC_vect <-   object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
+                       log2FC_vect <-  object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
                        names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
                      }
                      
@@ -269,7 +329,6 @@ methods::setMethod(f          = "plot.CPR_Results",
                      } else if (type == "dotplot") {
                        returnplot <- enrichplot::dotplot(dataPlot, showCategory = Categories, ...)
                      }
-                     
                      
                      return(returnplot)
                      
@@ -358,6 +417,8 @@ methods::setMethod(f          = "runAnnotationEnrichment",
                      return(object)
                    })
 
+
+# ---- Old Stuff ----
 
 #' Enrichment.plot
 #'

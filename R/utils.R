@@ -1863,6 +1863,29 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
 }
 
 
+######## INTERNAL - ANNOTATION CLUSTERPROFILER #########
+
+#' @title see_pathview
+#' @param ... Possible arguments for pathview function.
+#' @return nothing. Plot on the currently opened device. 
+#' @keywords internal
+#' @noRd
+#'
+# Code from: https://stackoverflow.com/questions/60141841/how-to-get-pathview-plot-displayed-directly-rather-than-saving-as-a-file-in-r
+# It deletes every file created by pathview
+see_pathview <- function(...){
+  
+  msg <- capture.output(pathview::pathview(...), type = "message")
+  msg <- grep("image file", msg, value = TRUE)
+  filename <- sapply(strsplit(msg, " "), function(x) x[length(x)])
+  img <- png::readPNG(filename)
+  grid::grid.raster(img)
+  nam <- stringr::str_split(filename, "[.]")
+  invisible(file.remove(filename))
+  invisible(file.remove(paste0(nam[[1]][1], ".xml")))
+  invisible(file.remove(paste0(nam[[1]][1], ".png")))
+  return()
+}
 
 ## contrastName to name of contrast directory
 # Exemple:
