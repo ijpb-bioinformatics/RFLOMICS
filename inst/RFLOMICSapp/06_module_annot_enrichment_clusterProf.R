@@ -157,7 +157,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
         ),
         
         ## alpha threshold
-        numericInput(inputId = ns("pValue"), label="Adjusted p-value threshold:", value = 0.01 , min = 0, max = 1, step = 0.01),
+        numericInput(inputId = ns("pValue"), label = "Adjusted p-value threshold:", value = 0.01 , min = 0, max = 1, step = 0.01),
         
         # run enrichment
         actionButton(inputId = ns("runEnrich_CPR"), label = "Run")
@@ -237,7 +237,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     # ---- Checks: ----
     
     # check list of genes
-    if(length(c(input$GeneList.diff, input$GeneList.coseq )) == 0){
+    if (length(c(input$GeneList.diff, input$GeneList.coseq )) == 0) {
       showModal(modalDialog( title = "Error message", "Please select at least 1 variable list."))
     }
     validate({ 
@@ -249,108 +249,105 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     annotation2 <- NULL
     col_domain_arg <- NULL
     
-    switch (input$dom.select,
-            #==== DB : GO ====
-            "GO" = {
-              
-              # check param
-              ## databases
-              if(input$db.select == ""){
-                showModal(modalDialog(title = "Error message", "Select databases..."))
-              }
-              validate({ 
-                need(input$db.select != "", "Select databases...") 
-              })
-              library(input$db.select, character.only = TRUE)
-              
-              ## ID type
-              accepted_keytypes <- AnnotationDbi::keytypes(get(input$db.select))
-              
-              if(!input$keytype.go %in% accepted_keytypes){
-                showModal(modalDialog(title = paste("Keytype must be one of: ", paste(accepted_keytypes, collapse = ", "), sep = " ")))
-              }
-              validate({ 
-                need(input$keytype.go %in% accepted_keytypes, message = paste("Keytype must be one of: ", paste(accepted_keytypes, collapse = ", "), sep = " ")) 
-              })
-              
-              # set list args
-              list_args[["OrgDb"]]   <- input$db.select
-              list_args[["keyType"]] <- input$keytype.go
-              
-              Domain <- input$ont.select
-              if (input$ont.select == "ALL") Domain <- c("MF", "BP", "CC")
-              
-            },
-            #==== DB : KEGG ====
-            "KEGG" = {
-              
-              # check param
-              ## ID key
-              if(!input$keytype.kegg %in% c("kegg", "ncbi-geneid", "ncib-proteinid", "uniprot")){
-                showModal(modalDialog( title = "KEGG keytype must be one of kegg, ncbi-geneid, ncbi-proteinid or uniprot"))
-              }
-              validate({ 
-                need(input$keytype.kegg %in% c("kegg", "ncbi-geneid", "ncib-proteinid", "uniprot"), message = "KEGG keytype must be one of kegg, ncbi-geneid, ncbi-proteinid or uniprot") 
-              })
-              
-              ## code organism KEGG_org
-              if(input$KEGG_org == ""){
-                showModal(modalDialog( title = "Error message", "set organism kegg code."))
-              }
-              validate({ 
-                need(input$KEGG_org != "", message = "Set organism kegg code.") 
-              })              
-              
-              # set list args
-              list_args[["organism"]] <- input$KEGG_org
-              list_args[["keyType"]]  <- input$keytype.kegg
-              
-            },
-            #==== custom annotation ====
-            "custom" = {
-              
-              # check param
-              ## if custom annotation file 
-              if(is.null(input$annotationFileCPR$datapath)){
-                showModal(modalDialog(title = "Error message", "load custom annotation file."))
-              }
-              # Check some custom elements and annotation file
-              if(input$col_geneName == "" || input$col_termID == ""){
-                showModal(modalDialog( title = "Error message", "Please choose columns names for the gene names/ID and the ontology terms ID!"))
-              }
-              validate({ 
-                need(input$col_geneName != "" && input$col_termID != "", message = "Please choose columns names for the gene names/ID and the ontology terms ID!")
-              })
-              # Check if geneName correspond to variable list
-              
-              #======
-              annotation <- fread(file = input$annotationFileCPR$datapath, sep="\t", header = TRUE)
-              list.char.rm <- c(".", " ", "")
-              annotation2 <- list()
-              
-              # if column with domain exist
-              if(input$col_domain != "") {
-                
-                # remove column with domain == c(".", " ", "")
-                domain.rm <- intersect(annotation[[input$col_domain]], list.char.rm)
-                if (length(domain.rm) != 0){
-                  annotation <- dplyr::filter(annotation, ! get(input$col_domain) %in% list.char.rm)
-                }
-                
-                annotation2[["domain"]] <- annotation[[input$col_domain]]
-                Domain <- unique(annotation2$domain)
-                col_domain_arg <- "domain"
-              }
-              
-              annotation2[["gene"]] <- annotation[[input$col_geneName]]
-              annotation2[["term"]] <- annotation[[input$col_termID]]
-              if(input$col_termName != "") annotation2[["name"]] <- annotation[[input$col_termName]]
-              
-              annotation2 <- data.frame(annotation2)
-              
-              # print(head(annotation2))
-              # list_args[["annotation"]] <- annotation2
-            }
+    switch(input$dom.select,
+           #==== DB : GO ====
+           "GO" = {
+             
+             # check param
+             ## databases
+             if (input$db.select == "") {
+               showModal(modalDialog(title = "Error message", "Select databases..."))
+             }
+             validate({ 
+               need(input$db.select != "", "Select databases...") 
+             })
+             library(input$db.select, character.only = TRUE)
+             
+             ## ID type
+             accepted_keytypes <- AnnotationDbi::keytypes(get(input$db.select))
+             
+             if (!input$keytype.go %in% accepted_keytypes) {
+               showModal(modalDialog(title = paste("Keytype must be one of: ", paste(accepted_keytypes, collapse = ", "), sep = " ")))
+             }
+             validate({ 
+               need(input$keytype.go %in% accepted_keytypes, message = paste("Keytype must be one of: ", paste(accepted_keytypes, collapse = ", "), sep = " ")) 
+             })
+             
+             # set list args
+             list_args[["OrgDb"]]   <- input$db.select
+             list_args[["keyType"]] <- input$keytype.go
+             
+             Domain <- input$ont.select
+             if (input$ont.select == "ALL") Domain <- c("MF", "BP", "CC")
+             
+           },
+           #==== DB : KEGG ====
+           "KEGG" = {
+             
+             # check param
+             ## ID key
+             if (!input$keytype.kegg %in% c("kegg", "ncbi-geneid", "ncib-proteinid", "uniprot")) {
+               showModal(modalDialog( title = "KEGG keytype must be one of kegg, ncbi-geneid, ncbi-proteinid or uniprot"))
+             }
+             validate({ 
+               need(input$keytype.kegg %in% c("kegg", "ncbi-geneid", "ncib-proteinid", "uniprot"), message = "KEGG keytype must be one of kegg, ncbi-geneid, ncbi-proteinid or uniprot") 
+             })
+             
+             ## code organism KEGG_org
+             if (input$KEGG_org == "") {
+               showModal(modalDialog( title = "Error message", "set organism kegg code."))
+             }
+             validate({ 
+               need(input$KEGG_org != "", message = "Set organism kegg code.") 
+             })              
+             
+             # set list args
+             list_args[["organism"]] <- input$KEGG_org
+             list_args[["keyType"]]  <- input$keytype.kegg
+             
+           },
+           #==== custom annotation ====
+           "custom" = {
+             
+             # check param
+             ## if custom annotation file 
+             if (is.null(input$annotationFileCPR$datapath)) {
+               showModal(modalDialog(title = "Error message", "load custom annotation file."))
+             }
+             # Check some custom elements and annotation file
+             if (input$col_geneName == "" || input$col_termID == "") {
+               showModal(modalDialog( title = "Error message", "Please choose columns names for the gene names/ID and the ontology terms ID!"))
+             }
+             validate({ 
+               need(input$col_geneName != "" && input$col_termID != "", message = "Please choose columns names for the gene names/ID and the ontology terms ID!")
+             })
+             # Check if geneName correspond to variable list
+             
+             #======
+             annotation <- data.table::fread(file = input$annotationFileCPR$datapath, sep="\t", header = TRUE)
+             list.char.rm <- c(".", " ", "")
+             annotation2 <- list()
+             
+             # if column with domain exist
+             if (input$col_domain != "") {
+               
+               # remove column with domain == c(".", " ", "")
+               domain.rm <- intersect(annotation[[input$col_domain]], list.char.rm)
+               if (length(domain.rm) != 0) {
+                 annotation <- dplyr::filter(annotation, !get(input$col_domain) %in% list.char.rm)
+               }
+               
+               annotation2[["domain"]] <- annotation[[input$col_domain]]
+               Domain <- unique(annotation2$domain)
+               col_domain_arg <- "domain"
+             }
+             
+             annotation2[["gene"]] <- annotation[[input$col_geneName]]
+             annotation2[["term"]] <- annotation[[input$col_termID]]
+             if (input$col_termName != "") annotation2[["name"]] <- annotation[[input$col_termName]]
+             
+             annotation2 <- data.frame(annotation2)
+           }
     )
     
     list_args[["pvalueCutoff"]] <- input$pValue
@@ -358,31 +355,31 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     print(paste("# 11- Enrichment Analysis...", dataset))
     
     #---- progress bar ----#
-    progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep=""))
+    progress$inc(1/2, detail = paste("Doing part ", 50,"%", sep = ""))
     #----------------------#
     
     ## run annotation
     dom.select <- input$dom.select
     
     # ---- Annotation on diff results: ----  
-    if(length(input$GeneList.diff) != 0){
+    if (length(input$GeneList.diff) != 0) {
       
       # run annotation
-      local.rea.values$dataset.SE <- runAnnotationEnrichment_CPR(local.rea.values$dataset.SE, list_args = list_args, from = "DiffExpAnal",
-                                                                 annot = annotation2,
-                                                                 dom.select = dom.select, Domain = Domain,
-                                                                 col_domain = col_domain_arg) 
+      local.rea.values$dataset.SE <- RFLOMICS::runAnnotationEnrichment_CPR(local.rea.values$dataset.SE, list_args = list_args, from = "DiffExpAnal",
+                                                                           annot = annotation2,
+                                                                           dom.select = dom.select, Domain = Domain,
+                                                                           col_domain = col_domain_arg) 
       
       rea.values[[dataset]]$diffAnnot <- TRUE
     }
     
     # ---- Annotation on COEXP results: ----
-    if(length(input$GeneList.coseq) != 0){
+    if (length(input$GeneList.coseq) != 0) {
       
-      local.rea.values$dataset.SE <- runAnnotationEnrichment_CPR(local.rea.values$dataset.SE, list_args = list_args, from = "CoExpAnal",
-                                                                 annot = annotation2,
-                                                                 dom.select = dom.select, Domain = Domain,
-                                                                 col_domain = col_domain_arg) 
+      local.rea.values$dataset.SE <- RFLOMICS::runAnnotationEnrichment_CPR(local.rea.values$dataset.SE, list_args = list_args, from = "CoExpAnal",
+                                                                           annot = annotation2,
+                                                                           dom.select = dom.select, Domain = Domain,
+                                                                           col_domain = col_domain_arg) 
       
       rea.values[[dataset]]$coExpAnnot <- TRUE
     }
@@ -392,7 +389,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- local.rea.values$dataset.SE
     
     #---- progress bar ----#
-    progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
+    progress$inc(1, detail = paste("Doing part ", 100,"%", sep = ""))
     #----------------------#
   })
   
@@ -401,19 +398,19 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
   ### DIFF summary results 
   output$summary_diff <- renderUI({
     
-    if(rea.values[[dataset]]$diffAnnot == FALSE || local.rea.values[[input$dom.select]] == FALSE) return()
+    if (rea.values[[dataset]]$diffAnnot == FALSE || local.rea.values[[input$dom.select]] == FALSE) return()
     
     results <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata[["DiffExpEnrichAnal"]][[input$dom.select]]
     
-    if(is.null(results[["summary"]])){
+    if (is.null(results[["summary"]])) {
       
       fluidRow(
-        box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = "Summary from differential expression analysis",
+        box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = "Summary from differential expression analysis",
             "There is no results for enrichment analysis! Check geneID"))
     }
     else{
       fluidRow(
-        box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "primary", title = "Summary from differential expression analysis",
+        box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "primary", title = "Summary from differential expression analysis",
             DT::renderDataTable({ DT::datatable(results[["summary"]], rownames = FALSE, options = list(pageLength = 6, dom = 'tip')) })))
     }
   })
@@ -421,14 +418,14 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
   ### coseq summary results 
   output$summary_coex <- renderUI({
     
-    if(rea.values[[dataset]]$coExpAnnot == FALSE || local.rea.values[[input$dom.select]] == FALSE) return()
+    if (rea.values[[dataset]]$coExpAnnot == FALSE || local.rea.values[[input$dom.select]] == FALSE) return()
     
     results <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata[["CoExpEnrichAnal"]][[input$dom.select]]
     
-    if(is.null(results[["summary"]])){
+    if (is.null(results[["summary"]])) {
       
       fluidRow(
-        box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", 
+        box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", 
             title = paste0(input$dom.select," : summary from co-expression analysis"),
             "There is no results for enrichment analysis! Check geneID"))
       
@@ -436,7 +433,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     else{   
       fluidRow(
         hr(),
-        box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "primary", 
+        box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "primary", 
             title = paste0(input$dom.select," : Summary from co-expression analysis"),
             DT::renderDataTable({ DT::datatable(results[["summary"]], rownames = FALSE, options = list(pageLength = 6, dom = 'tip')) })))
     }
@@ -448,22 +445,10 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
   #---- Figure Code for diff results: ----
   output$AnnotResultsCPR_diff <- renderUI({
     
-    if(rea.values[[dataset]]$diffAnnot == FALSE || is.null(local.rea.values$dataset.SE@metadata[["DiffExpEnrichAnal"]][[input$dom.select]][["summary"]])) return()
-    
-    dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
-    
-    results <- dataset.SE@metadata[["DiffExpEnrichAnal"]][[input$dom.select]]
-    
-    ## log2FC of the genes (put colors on graphs)
-    log2FC_lists <- lapply(input$GeneList.diff, function(listname){
-      vect <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[listname]][["logFC"]]
-      names(vect) <- rownames(dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[listname]])
-      return(vect)
-    })
-    names(log2FC_lists) <- input$GeneList.diff
+    if (rea.values[[dataset]]$diffAnnot == FALSE || is.null(local.rea.values$dataset.SE@metadata[["DiffExpEnrichAnal"]][[input$dom.select]][["summary"]])) return()
     
     # foreach genes list selected (contrast)
-    lapply(names(results[["enrichResult"]]), function(listname) {
+    lapply(names(RFLOMICS:::getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], ont = input$dom.select)), function(listname) {
       
       # annot.nbr <- lapply(results[["enrichResult"]][[listname]], function(enrichResult.ont){
       #   if(!is.null(enrichResult.ont)) table(enrichResult.ont@result$p.adjust < 0.1)["TRUE"] }) %>% unlist() # %>% sum(na.rm = TRUE)
@@ -473,18 +458,18 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       # 
       # if(sum(annot.nbr, na.rm = TRUE) == 0){}
       
-      data <- results[["enrichResult"]][[listname]]
-      
-      if(length(data) != 0){
-        if(sum(unlist(results$summary[which(results$summary$Contrast == listname),-1]), na.rm = TRUE) == 0){
+      if (length(RFLOMICS:::getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], ont = input$dom.select, contrast = listname)) != 0) {
+        if (sum(unlist(RFLOMICS::sumORA(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], ont = input$dom.select)[-1]), na.rm = TRUE) == 0) {
           
           fluidRow(
-            box(width = 12, title = paste0(listname, " : 0 enriched terms found"), status = "danger")
+            box(width = 12, title = paste0(listname, ": 0 enriched terms found"), status = "danger")
           )
         }
         else{
           
-          log2FC_vect <- log2FC_lists[[listname]]
+          choices <- names(RFLOMICS:::getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], 
+                                                   contrast = listname,
+                                                   ont = input$dom.select))
           
           tabPanel.list <- list(
             #tabsetPanel(
@@ -494,12 +479,13 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                      verticalLayout(
                        renderPlot({
                          
-                         dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
-                         NbtoPlot <- min(nrow(dataPlot@result),input[[paste0(listname, "-top.over")]])
-                         Categories <- dataPlot@result$Description[1:NbtoPlot]
-                         if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
-                         
-                         enrichplot::dotplot(dataPlot, showCategory = Categories)
+                         RFLOMICS::plot.CPR_Results(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
+                                                    contrast = listname, from = "DiffExpAnal",
+                                                    type = "dotplot", 
+                                                    ont = input$dom.select,
+                                                    Domain = input[[paste0(listname, "-domain")]],
+                                                    showCategory = input[[paste0(listname, "-top.over")]],
+                                                    searchExpr = input[[paste0(listname, "-grep")]])
                          
                        })
                      )
@@ -509,26 +495,13 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                      verticalLayout(
                        renderPlot({
                          
-                         dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
-                         NbtoPlot <- min(nrow(dataPlot@result),input[[paste0(listname, "-top.over")]])
-                         Categories <- dataPlot@result$Description[1:NbtoPlot]
-                         if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
-                         if(length(Categories) == 0){ # TODO improve this, it doesn't work
-                           renderText(expr = {
-                             "There is no result to display \n
-                                 - The mapping was unsuccessful \n
-                                 - The number of enriched terms found is 0, please refer to the overview panel to check this information \n
-                                 - You searched for an expression that is not present in the first enriched terms, you can try to increase the number of terms to display to see if there is a change \n
-                                 - You tried to display 0 results"
-                           })
-                         }else{
-                           suppressMessages(print(# delete warnings for scale fill replacement
-                             enrichplot::heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect) +
-                               labs(fill="log2FC") +
-                               scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-                               theme(axis.text.y = element_text(size = 10))
-                           ))
-                         }
+                         RFLOMICS::plot.CPR_Results(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
+                                                    contrast = listname, from = "DiffExpAnal",
+                                                    type = "heatplot", 
+                                                    ont = input$dom.select, 
+                                                    Domain = input[[paste0(listname, "-domain")]],
+                                                    showCategory = input[[paste0(listname, "-top.over")]],
+                                                    searchExpr = input[[paste0(listname, "-grep")]])
                        }),
                      )
                      
@@ -538,27 +511,23 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                      verticalLayout(
                        renderPlot({
                          
-                         dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
-                         dataTab <- dataPlot@result[dataPlot@result$p.adjust <  results$list_args$pvalueCutoff, ]
-                         NbtoPlot <- min(nrow(dataTab),input[[paste0(listname, "-top.over")]])
-                         Categories <- dataTab$Description[1:NbtoPlot]
-                         if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
-                         
                          node_label_arg <- "none"
-                         if(input[[paste0(listname, "-genesLabels_cnet")]] && input[[paste0(listname, "-termsLabels_cnet")]]){
+                         if (input[[paste0(listname, "-genesLabels_cnet")]] && input[[paste0(listname, "-termsLabels_cnet")]]) {
                            node_label_arg <- "all"
-                         }else if(input[[paste0(listname, "-genesLabels_cnet")]] && !input[[paste0(listname, "-termsLabels_cnet")]]){
+                         }else if (input[[paste0(listname, "-genesLabels_cnet")]] && !input[[paste0(listname, "-termsLabels_cnet")]]) {
                            node_label_arg <- "gene"
-                         }else if(input[[paste0(listname, "-termsLabels_cnet")]] && !input[[paste0(listname, "-genesLabels_cnet")]]){
+                         }else if (input[[paste0(listname, "-termsLabels_cnet")]] && !input[[paste0(listname, "-genesLabels_cnet")]]) {
                            node_label_arg <- "category"
                          }
                          
-                         suppressMessages(print( # delete warnings for scale fill replacement
-                           enrichplot::cnetplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, node_label = node_label_arg) +
-                             guides(colour=guide_colourbar(title = "log2FC")) +
-                             scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)
-                         ))
-                         
+                         RFLOMICS::plot.CPR_Results(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
+                                                    contrast = listname, from = "DiffExpAnal",
+                                                    type = "cnetplot", 
+                                                    ont = input$dom.select, 
+                                                    Domain = input[[paste0(listname, "-domain")]],
+                                                    showCategory = input[[paste0(listname, "-top.over")]],
+                                                    searchExpr = input[[paste0(listname, "-grep")]],
+                                                    node_label = node_label_arg)
                        }),
                        fluidRow(
                          column(3,
@@ -575,11 +544,15 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                        
                        tags$br(),
                        DT::renderDataTable({
-                         dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
                          
-                         DT::datatable(dataPlot@result[dataPlot@result$p.adjust <  results$list_args$pvalueCutoff,], # sometimes it prints non significant results...
+                         dataPlot <- RFLOMICS:::getEnrichRes(object = session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], 
+                                                             contrast = listname,
+                                                             ont = input$dom.select,
+                                                             domain = input[[paste0(listname, "-domain")]])
+                         
+                         DT::datatable(dataPlot@result[dataPlot@result$p.adjust <  input$pValue,], # sometimes it prints non significant results...
                                        rownames = FALSE,
-                                       options = list(pageLength = 5, lengthMenu = c(5, 10, 15, 20), scrollX = T))
+                                       options = list(pageLength = 5, lengthMenu = c(5, 10, 15, 20), scrollX = TRUE))
                          
                        })
                      )
@@ -588,15 +561,18 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
           )# TabsetPanel
           
           # ---- Tab Panel : only for KEGG, pathview : ----
-          if(input$dom.select == "KEGG")
+          if (input$dom.select == "KEGG") {
+            data <- RFLOMICS:::getEnrichRes(object = session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], 
+                                            contrast = listname,
+                                            ont = "KEGG")
             tabPanel.list <- c(tabPanel.list,
                                list(
                                  tabPanel("Pathview results",
                                           fluidRow(
                                             column(2,
-                                                   selectInput(
+                                                   selectInput( # TODO change this data thing
                                                      inputId = ns(paste0(listname, "-MAP.sel")), label = "Select map:",
-                                                     choices = sort(data[[1]]@result$ID[data[[1]]@result$p.adjust< results$list_args$pvalueCutoff]), multiple = FALSE, selectize = FALSE,
+                                                     choices = sort(data[[1]]@result$ID[data[[1]]@result$p.adjust < input$pValue]), multiple = FALSE, selectize = FALSE,
                                                      size = 5
                                                    ),
                                             ),
@@ -605,29 +581,28 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                             column(12,
                                                    renderUI({
                                                      
+                                                     
+                                                     
                                                      # From the browseKEGG function:
                                                      link_to_map <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?",
                                                                            input[[paste0(listname, "-MAP.sel")]],
                                                                            "/",
                                                                            data[[1]][input[[paste0(listname, "-MAP.sel")]], "geneID"])
                                                      
-                                                     a(href=link_to_map, "Link to interactive map online")
+                                                     a(href = link_to_map, "Link to interactive map online")
                                                      
                                                    })),
                                             column(12,
                                                    
                                                    renderPlot({
-                                                     see_pathview(gene.data = log2FC_vect,
-                                                                  pathway.id = input[[paste0(listname, "-MAP.sel")]],
-                                                                  species = input$KEGG_org,
-                                                                  gene.idtype = input$keytype,
-                                                                  map.symbol = FALSE,
-                                                                  same.layer = FALSE,
-                                                                  low = list(gene = "blue"),
-                                                                  mid = list(gene = "gray"),
-                                                                  high = list(gene = "red"),
-                                                                  na.col = "transparent"
-                                                                  # cex = 1 # too much
+                                                     
+                                                     # TODO test this when update clusterprofiler
+                                                     
+                                                     RFLOMICS::plot.CPRKEGG_Results(object = session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
+                                                                                    contrast = listname,
+                                                                                    pathway_id = input[[paste0(listname, "-MAP.sel")]],
+                                                                                    species = input$KEGG_org,
+                                                                                    gene_idtype = input$keytype
                                                      )
                                                    }, res = 300, width = 1000, height = 1000),
                                             )
@@ -635,21 +610,22 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                  )
                                )
             )
-          
+            
+          }
           # display results
           fluidRow(
             
-            box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success", title = listname, #paste0(listname, " (", pseudo_title, ")"),
+            box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success", title = listname,
                 
                 fluidRow(
                   column(4, 
-                         radioButtons(inputId = ns(paste0(listname, "-domain")), label="Domain",
-                                      choices = names(data), selected = names(data)[1])),
+                         radioButtons(inputId = ns(paste0(listname, "-domain")), label = "Domain",
+                                      choices = choices, selected = choices[1])),
                   column(4,
-                         numericInput(inputId = ns(paste0(listname, "-top.over")), label="Top terms:" , value=15 ,
-                                      min = 1, max=10000, step = 5)), # max code en dur : pas bien
+                         numericInput(inputId = ns(paste0(listname, "-top.over")), label = "Top terms:" , value=15 ,
+                                      min = 1, max = 10000, step = 5)), # max code en dur : pas bien
                   column(4,
-                         textInput(inputId = ns(paste0(listname, "-grep")), label="Search Expression"))
+                         textInput(inputId = ns(paste0(listname, "-grep")), label = "Search Expression"))
                 ),
                 fluidRow(
                   column(width = 12, 
@@ -665,97 +641,69 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     })# lapply
   })
   
-  #---- Figure Code for diff results: ----
+  #---- Figure Code for coExpression Analysis results: ----
   output$AnnotResultsCPR_coex <- renderUI({
     
-    if(rea.values[[dataset]]$coExpAnnot == FALSE || is.null(local.rea.values$dataset.SE@metadata[["DiffExpEnrichAnal"]][[input$dom.select]][["summary"]])) return()
-    
-    dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
-    
-    results <- dataset.SE@metadata[["CoExpEnrichAnal"]][[input$dom.select]]
-    
-    
-    ## log2FC of the genes (put colors on graphs)
-    log2FC_lists <- lapply(input$GeneList.diff, function(listname){
-      vect <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[listname]][["logFC"]]
-      names(vect) <- rownames(dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[listname]])
-      return(vect)
-    })
-    names(log2FC_lists) <- input$GeneList.diff
+    if (rea.values[[dataset]]$diffAnnot == FALSE || is.null(local.rea.values$dataset.SE@metadata[["CoExpEnrichAnal"]][[input$dom.select]][["summary"]])) return()
     
     # foreach genes list selected (contrast)
-    lapply(names(results[["enrichResult"]]), function(listname) {
+    lapply(names(RFLOMICS:::getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], from = "CoExpEnrichAnal", ont = input$dom.select)), function(listname) {
       
       # annot.nbr <- lapply(results[["enrichResult"]][[listname]], function(enrichResult.ont){
       #   if(!is.null(enrichResult.ont)) table(enrichResult.ont@result$p.adjust < 0.1)["TRUE"] }) %>% unlist() # %>% sum(na.rm = TRUE)
       # 
-      # pseudo_title <- paste(annot.nbr, names(results[["enrichResult"]][[listname]])) %>%
-      #   paste(collapse = "; ")
+      # # pseudo_title <- paste(annot.nbr, names(results[["enrichResult"]][[listname]])) %>%
+      # #   paste(collapse = "; ")
       # 
       # if(sum(annot.nbr, na.rm = TRUE) == 0){}
       
-      
-      
-      data <- results[["enrichResult"]][[listname]]
-      
-      if(length(data) != 0){
-        if(sum(unlist(results$summary[which(results$summary$Contrast == listname),-1]), na.rm = TRUE) == 0){
+      if (length(RFLOMICS:::getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], from = "CoExpEnrichAnal", ont = input$dom.select, contrast = listname)) != 0) {
+        if (sum(unlist(RFLOMICS::sumORA(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], from = "CoExpEnrichAnal", ont = input$dom.select)[-1]), na.rm = TRUE) == 0) {
           
           fluidRow(
-            box(width = 12, title = paste0(listname, " : 0 enriched terms found"), status = "danger")
+            box(width = 12, title = paste0(listname, ": 0 enriched terms found"), status = "danger")
           )
         }
         else{
           
-          log2FC_vect <- log2FC_lists[[listname]]
+          choices <- names(RFLOMICS:::getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], 
+                                                   from = "CoExpEnrichAnal",
+                                                   contrast = listname,
+                                                   ont = input$dom.select))
           
           tabPanel.list <- list(
             #tabsetPanel(
-            
             # ---- Tab Panel : dotPlot : ----
             tabPanel("DotPlot",
                      
                      verticalLayout(
                        renderPlot({
                          
-                         dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
-                         NbtoPlot <- min(nrow(dataPlot@result),input[[paste0(listname, "-top.over")]])
-                         Categories <- dataPlot@result$Description[1:NbtoPlot]
-                         if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
+                         RFLOMICS::plot.CPR_Results(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
+                                                    contrast = listname, from = "CoExpEnrichAnal",
+                                                    type = "dotplot", 
+                                                    ont = input$dom.select,
+                                                    Domain = input[[paste0(listname, "-domain")]],
+                                                    showCategory = input[[paste0(listname, "-top.over")]],
+                                                    searchExpr = input[[paste0(listname, "-grep")]])
                          
-                         enrichplot::dotplot(dataPlot, showCategory = Categories)
-                         
-                       }),
-                     ),
-                     
+                       })
+                     )
             ),
             # ---- Tab Panel : heatplot : ----
             tabPanel("Heatplot",
                      verticalLayout(
                        renderPlot({
                          
-                         dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
-                         NbtoPlot <- min(nrow(dataPlot@result),input[[paste0(listname, "-top.over")]])
-                         Categories <- dataPlot@result$Description[1:NbtoPlot]
-                         if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
-                         if(length(Categories) == 0){ # TODO improve this, it doesn't work
-                           renderText(expr = {
-                             "There is no result to display \n
-                                 - The mapping was unsuccessful \n
-                                 - The number of enriched terms found is 0, please refer to the overview panel to check this information \n
-                                 - You searched for an expression that is not present in the first enriched terms, you can try to increase the number of terms to display to see if there is a change \n
-                                 - You tried to display 0 results"
-                           })
-                         }else{
-                           suppressMessages(print(# delete warnings for scale fill replacement
-                             enrichplot::heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect) +
-                               labs(fill="log2FC") +
-                               scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-                               theme(axis.text.y = element_text(size = 10))
-                           ))
-                         }
+                         RFLOMICS::plot.CPR_Results(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
+                                                    contrast = listname, from = "CoExpEnrichAnal",
+                                                    type = "heatplot", 
+                                                    ont = input$dom.select, 
+                                                    Domain = input[[paste0(listname, "-domain")]],
+                                                    showCategory = input[[paste0(listname, "-top.over")]],
+                                                    searchExpr = input[[paste0(listname, "-grep")]])
                        }),
-                     ),
+                     )
                      
             ) ,
             # ---- Tab Panel : cnetplot : ----
@@ -763,147 +711,84 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                      verticalLayout(
                        renderPlot({
                          
-                         dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
-                         dataTab <- dataPlot@result[dataPlot@result$p.adjust <  results$list_args$pvalueCutoff, ]
-                         NbtoPlot <- min(nrow(dataTab),input[[paste0(listname, "-top.over")]])
-                         Categories <- dataTab$Description[1:NbtoPlot]
-                         if(input[[paste0(listname, "-grep")]]!="") Categories <- Categories[grep(toupper(input[[paste0(listname, "-grep")]]), toupper(Categories))]
-                         
                          node_label_arg <- "none"
-                         if(input[[paste0(listname, "-genesLabels_cnet")]] && input[[paste0(listname, "-termsLabels_cnet")]]){
+                         if (input[[paste0(listname, "-genesLabels_cnet")]] && input[[paste0(listname, "-termsLabels_cnet")]]) {
                            node_label_arg <- "all"
-                         }else if(input[[paste0(listname, "-genesLabels_cnet")]] && !input[[paste0(listname, "-termsLabels_cnet")]]){
+                         }else if (input[[paste0(listname, "-genesLabels_cnet")]] && !input[[paste0(listname, "-termsLabels_cnet")]]) {
                            node_label_arg <- "gene"
-                         }else if(input[[paste0(listname, "-termsLabels_cnet")]] && !input[[paste0(listname, "-genesLabels_cnet")]]){
+                         }else if (input[[paste0(listname, "-termsLabels_cnet")]] && !input[[paste0(listname, "-genesLabels_cnet")]]) {
                            node_label_arg <- "category"
                          }
                          
-                         suppressMessages(print( # delete warnings for scale fill replacement
-                           enrichplot::cnetplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, node_label = node_label_arg) +
-                             guides(colour=guide_colourbar(title = "log2FC")) +
-                             scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)
-                         ))
-                         
+                         RFLOMICS::plot.CPR_Results(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
+                                                    contrast = listname, from = "CoExpEnrichAnal",
+                                                    type = "cnetplot", 
+                                                    ont = input$dom.select, 
+                                                    Domain = input[[paste0(listname, "-domain")]],
+                                                    showCategory = input[[paste0(listname, "-top.over")]],
+                                                    searchExpr = input[[paste0(listname, "-grep")]],
+                                                    node_label = node_label_arg)
                        }),
                        fluidRow(
                          column(3,
                                 checkboxInput(inputId = ns(paste0(listname, "-genesLabels_cnet")), label = "Genes Labels", value = FALSE),
                                 checkboxInput(inputId = ns(paste0(listname, "-termsLabels_cnet")), label = "Terms Labels", value = TRUE)
-                         ),
+                         )
                        )
                      )
-            ),# ---- Tab Panel : Results table : ----
+            ),
+            # ---- Tab Panel : Results table : ----
             tabPanel("Result Table",
                      # hr(),
                      verticalLayout(
                        
                        tags$br(),
                        DT::renderDataTable({
-                         dataPlot <- data[[input[[paste0(listname, "-domain")]]]]
                          
-                         DT::datatable(dataPlot@result[dataPlot@result$p.adjust <  results$list_args$pvalueCutoff,], # sometimes it prints non significant results...
+                         dataPlot <- RFLOMICS:::getEnrichRes(object = session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], 
+                                                             from = "CoExpEnrichAnal",
+                                                             contrast = listname,
+                                                             ont = input$dom.select,
+                                                             domain = input[[paste0(listname, "-domain")]])
+                         
+                         DT::datatable(dataPlot@result[dataPlot@result$p.adjust <  input$pValue,], # sometimes it prints non significant results...
                                        rownames = FALSE,
-                                       options = list( pageLength = 5,
-                                                       lengthMenu = c(5, 10, 15, 20), scrollX = T))
-                       }),
-                     ),
+                                       options = list(pageLength = 5, lengthMenu = c(5, 10, 15, 20), scrollX = TRUE))
+                         
+                       })
+                     )
             )
-          )# TabsetPanel
-          
-          # ---- Tab Panel : only for KEGG, pathview : ----
-          if(input$dom.select == "KEGG")
-            tabPanel.list <- c(tabPanel.list,
-                               list(
-                                 tabPanel("Pathview results",
-                                          fluidRow(
-                                            column(2,
-                                                   selectInput(
-                                                     inputId = ns(paste0(listname, "-MAP.sel")), label = "Select map:",
-                                                     choices = sort(data[[1]]@result$ID[data[[1]]@result$p.adjust< results$list_args$pvalueCutoff]), multiple = FALSE, selectize = FALSE,
-                                                     size = 5
-                                                   ),
-                                            ),
-                                          ),
-                                          fluidRow(
-                                            column(12,
-                                                   renderUI({
-                                                     
-                                                     # From the browseKEGG function:
-                                                     link_to_map <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?",
-                                                                           input[[paste0(listname, "-MAP.sel")]],
-                                                                           "/",
-                                                                           data[[1]][input[[paste0(listname, "-MAP.sel")]], "geneID"])
-                                                     
-                                                     a(href=link_to_map, "Link to interactive map online")
-                                                     
-                                                   })),
-                                            column(12,
-                                                   
-                                                   renderPlot({
-                                                     see_pathview(gene.data = log2FC_vect,
-                                                                  pathway.id = input[[paste0(listname, "-MAP.sel")]],
-                                                                  species = input$KEGG_org,
-                                                                  gene.idtype = input$keytype,
-                                                                  map.symbol = FALSE,
-                                                                  same.layer = FALSE,
-                                                                  low = list(gene = "blue"),
-                                                                  mid = list(gene = "gray"),
-                                                                  high = list(gene = "red"),
-                                                                  na.col = "transparent"
-                                                                  # cex = 1 # too much
-                                                     )
-                                                   }, res = 300, width = 1000, height = 1000),
-                                            )
-                                          )
-                                 )
-                               )
-            )
+            
+          )
           
           # display results
           fluidRow(
             
-            box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success", title = listname, #paste0(listname, " (", pseudo_title, ")"),
+            box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success", title = listname,
                 
                 fluidRow(
                   column(4, 
-                         radioButtons(inputId = ns(paste0(listname, "-domain")), label="Domain",
-                                      choices = names(data), selected = names(data)[1])),
+                         radioButtons(inputId = ns(paste0(listname, "-domain")), label = "Domain",
+                                      choices = choices, selected = choices[1])),
                   column(4,
-                         numericInput(inputId = ns(paste0(listname, "-top.over")), label="Top terms:" , value=15 ,
-                                      min = 1, max=10000, step = 5)), # max code en dur : pas bien
+                         numericInput(inputId = ns(paste0(listname, "-top.over")), label = "Top terms:" , value = 15 ,
+                                      min = 1, max = 10000, step = 5)), # max code en dur : pas bien
                   column(4,
-                         textInput(inputId = ns(paste0(listname, "-grep")), label="Search Expression"))
+                         textInput(inputId = ns(paste0(listname, "-grep")), label = "Search Expression"))
                 ),
                 fluidRow(
-                  column(width = 12,
-                         do.call(what = tabsetPanel, args = tabPanel.list))
+                  column(width = 12, 
+                         do.call(what = tabsetPanel, args = tabPanel.list)
+                  )
                 )
+                
             ) # box
           ) # fluidrow
-        }
-      }
+        } # else
+      } # if
+      
     })# lapply
-    # )
-    
   })
   
 }
 
-######## ANNOTATION CLUSTERPROFILER #########
-
-# Code from: https://stackoverflow.com/questions/60141841/how-to-get-pathview-plot-displayed-directly-rather-than-saving-as-a-file-in-r
-# It deletes every file created by pathview
-see_pathview <- function(...){
-  
-  msg <- capture.output(pathview::pathview(...), type = "message")
-  msg <- grep("image file", msg, value = TRUE)
-  filename <- sapply(strsplit(msg, " "), function(x) x[length(x)])
-  img <- png::readPNG(filename)
-  # grid::grid.raster(img, width = dim(img)[1]*2, height = dim(img)[2]*2) # does not work
-  grid::grid.raster(img)
-  nam <- str_split(filename, "[.]")
-  invisible(file.remove(filename))
-  invisible(file.remove(paste0(nam[[1]][1], ".xml")))
-  invisible(file.remove(paste0(nam[[1]][1], ".png")))
-  return()
-}
