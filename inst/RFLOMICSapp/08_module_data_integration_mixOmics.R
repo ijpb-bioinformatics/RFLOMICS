@@ -158,11 +158,11 @@ MixOmics_setting <- function(input, output, session, rea.values){
     local.rea.values$runMixOmics   <- FALSE
     
     #---- progress bar ----#
-    progress$inc(1/10, detail = paste("Checks ", 10, "%", sep=""))
+    progress$inc(1/10, detail = paste("Checks ", 10, "%", sep = ""))
     #----------------------#
     
     # Check selection of response variables (at least one)
-    if(is.null(input$MO_selectedResponse)){
+    if (is.null(input$MO_selectedResponse)) {
       showModal(modalDialog(title = "Error message", "To run MixOmics, please select at least one response variable"))
     }
     validate({ 
@@ -170,11 +170,11 @@ MixOmics_setting <- function(input, output, session, rea.values){
     })
     
     # check number of tables (at least two)
-    if(length(input$MO_selectedData)<2){
+    if (length(input$MO_selectedData) < 2) {
       showModal(modalDialog(title = "Error message", "To run a multi-omic analysis, please select at least two tables"))
     }
     validate({ 
-      need(length(input$MO_selectedData)>=2, "To run a multi-omic analysis, please select at least two tables") 
+      need(length(input$MO_selectedData) >= 2, "To run a multi-omic analysis, please select at least two tables") 
     })
     
     #---- progress bar ----#
@@ -182,7 +182,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
     #----------------------#
     
     # Prepare for MixOmics run  
-
+    
     list_args_MO <- list(
       object = session$userData$FlomicsMultiAssay,
       omicsToIntegrate = paste0(input$MO_selectedData, ".filtred"),
@@ -210,7 +210,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
     print("#     =>Running MixOmics")
     
     session$userData$FlomicsMultiAssay <- do.call(getFromNamespace("integrationWrapper", ns = "RFLOMICS"), list_args_MO)
-
+    
     print(names(session$userData$FlomicsMultiAssay@metadata[["mixOmics"]]))
     
     #---- progress bar ----#
@@ -219,13 +219,13 @@ MixOmics_setting <- function(input, output, session, rea.values){
     
     local.rea.values$runMixOmics <- TRUE
     
-
+    
   })
   
   ## Output results
   output$MOResultViewUI <- renderUI({
     
-    if(!local.rea.values$runMixOmics) return()
+    if (!local.rea.values$runMixOmics) return()
     
     lapply(names(session$userData$FlomicsMultiAssay@metadata[["mixOmics"]]), function(listname) { 
       
@@ -235,7 +235,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
       
       fluidRow(
         
-        box(width=12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success", title = listname,
+        box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success", title = listname,
             
             tabsetPanel(
               # ---- Tab panel Overview ----
@@ -245,7 +245,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
                          df <- t(sapply(Data_res$X, dim))
                          colnames(df) <- c("Ind", "Features")
                          
-                         if(input$MO_sparsity){
+                         if (input$MO_sparsity) {
                            df <- cbind(df, do.call("rbind", Data_res$keepX))
                            colnames(df)[!colnames(df) %in% c("Ind", "Features")] <- paste("Comp", 1:length(Data_res$keepX[[1]]))
                          }
@@ -257,61 +257,10 @@ MixOmics_setting <- function(input, output, session, rea.values){
               ),
               # ---- Tab panel Explained Variance ----
               tabPanel("Explained Variance",
-                       column(6, renderPlot({
-                         dat_explained <- reshape2::melt(do.call("rbind", Data_res$prop_expl_var))
-                         colnames(dat_explained) <- c("Dataset", "Component", "% of explained variance")
-                         dat_explained$`% of explained variance` <- dat_explained$`% of explained variance`*100
+                       column(12, renderPlot({
                          
-                         # print(dat_explained) # TODO delete
-                         
-                         dat_comb <- dat_explained %>% 
-                           dplyr::group_by(Dataset) %>% 
-                           dplyr::summarise("Cumulative Explained Variance" = sum(`% of explained variance`))
-                         
-                         # print(dat_comb) # TODO delete
-                         
-                         if(is(Data_res, "block.splsda") || is(Data_res, "block.plsda")){
-                           dat_comb <- dat_comb %>% dplyr::filter(Dataset!="Y")
-                         }
-                         
-                         ggplot2::ggplot(dat_comb, aes(x = Dataset, y = `Cumulative Explained Variance`)) +
-                           geom_col(fill = "darkblue") + 
-                           theme_classic() +
-                           theme(
-                             axis.text = element_text(size = 12),
-                             axis.line = element_blank(),
-                             axis.ticks =  element_blank(),
-                             strip.text = element_text(size = 12),
-                           ) + ylab("") + ggtitle("Cumulative explained variance")  
-                         
-                         
-                       })),
-                       
-                       column(6 , renderPlot({
-                         dat_explained <- reshape2::melt(do.call("rbind", Data_res$prop_expl_var))
-                         colnames(dat_explained) <- c("Dataset", "Component", "% of explained variance")
-                         dat_explained$`% of explained variance` <- dat_explained$`% of explained variance`*100
-                         
-                         # print(dat_explained) # TODO delete
-                         
-                         if(is(Data_res, "block.splsda") || is(Data_res, "block.plsda")){
-                           dat_explained <- dat_explained %>% dplyr::filter(Dataset!="Y")
-                         }
-                         
-                         # Chunk of code to be cohesive with MOFA2::plot_explained_variance
-                         ggplot2::ggplot(dat_explained, aes(x = Dataset, y = Component)) +
-                           geom_tile(aes(fill = `% of explained variance`)) + 
-                           theme_classic() +
-                           theme(
-                             axis.text = element_text(size = 12),
-                             axis.line = element_blank(),
-                             axis.ticks =  element_blank(),
-                             strip.text = element_text(size = 12),
-                           ) + ylab("") +  
-                           scale_fill_gradientn(colors=c("gray97","darkblue"), guide="colorbar", limits=c(min(dat_explained$`% of explained variance`),
-                                                                                                          max(dat_explained$`% of explained variance`))) + 
-                           ggtitle("Percentage of explained variance \n per component per block")
-                         
+                         RFLOMICS::plot_MO_varExp(session$userData$FlomicsMultiAssay, 
+                                                  selectedResponse = listname)
                        })),
                        
               ),
@@ -395,7 +344,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
               ), 
               # ---- Tab  Panel CircosPlot & cimPlot ----
               tabPanel("CircosPlot",
-                       if(is(Data_res, "block.splsda")){
+                       if (is(Data_res, "block.splsda")) {
                          fluidRow(
                            column(1, numericInput(inputId = session$ns(paste0(listname, "Circos_cutoff")),
                                                   label = "Cutoff:",
@@ -410,7 +359,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
                        }
               ),
               tabPanel("CimPlot",
-                       if(is(Data_res, "block.splsda")){
+                       if (is(Data_res, "block.splsda")) {
                          print("=> Rendering cimPlot, be patient!")
                          fluidRow(
                            column(1,

@@ -206,18 +206,21 @@ plot_MO_varExp <- function(object, selectedResponse, mode = NULL){
   if (is.null(object@metadata$mixOmics[[selectedResponse]])) stop("It seems you didn't run MixOmics on this particular variable.")
   
   Data_res <- object@metadata$mixOmics[[selectedResponse]]$MixOmics_results
+  gg_return <- NULL
   
   if (is.null(mode)) {
-    return(ggpubr::ggarrange(RFLOMICS:::plot_MO_1(Data_res),
-                             RFLOMICS:::plot_MO_2(Data_res), 
-                             ncol = 2))
+    gg_return <- ggpubr::ggarrange(RFLOMICS:::plot_MO_1(Data_res),
+                                   RFLOMICS:::plot_MO_2(Data_res), 
+                                   ncol = 2)
   }
-  else if (toupper(mode) == "cumulative") {
-    return(RFLOMICS:::plot_MO_1(Data_res)) 
+  else if (tolower(mode) == "cumulative") {
+    gg_return <- RFLOMICS:::plot_MO_1(Data_res)
   }
-  else if (toupper(mode) == "comp") {
-    return(RFLOMICS:::plot_MO_2(Data_res))
+  else if (tolower(mode) == "comp") {
+    gg_return <- RFLOMICS:::plot_MO_2(Data_res)
   }
+  
+  return(gg_return)
 }
 
 #' @title Plot cumulative Explained variance for mixOmics results
@@ -278,6 +281,8 @@ plot_MO_2 <- function(Data_res){
                                   limits = c(min(dat_explained$`% of explained variance`),
                                              max(dat_explained$`% of explained variance`))) + 
     ggplot2::ggtitle("Percentage of explained variance \n per component per block")
+  
+  return(gg2)
 }
 
 
