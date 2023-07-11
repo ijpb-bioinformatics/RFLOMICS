@@ -472,7 +472,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                                    ont = input$dom.select))
           
           tabPanel.list <- list(
-            #tabsetPanel(
             # ---- Tab Panel : dotPlot : ----
             tabPanel("DotPlot",
                      
