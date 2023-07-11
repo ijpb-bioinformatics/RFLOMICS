@@ -279,3 +279,129 @@ plot_MO_2 <- function(Data_res){
                                              max(dat_explained$`% of explained variance`))) + 
     ggplot2::ggtitle("Percentage of explained variance \n per component per block")
 }
+
+
+#---- MOFA2 - plot network ----
+
+#' @title Plot correlation network between omics from MOFA2 results
+#'
+#' @param object a MOFA result
+#' @param factor_choice chose weight from this factor
+#' @param abs_weight_network threshold of weight to select entities to print
+#' @param abs_min_cor_network correlation threshold 
+#' @param network_layout one of spring, circle , circle + omics
+#' @param omics_colors named list of colors palettes, one for each omics (can be NULL) 
+#' @param posCol colors of positive edges
+#' @param negCol colors of negative edges
+#' 
+#' @return A ggplot2 graph
+#' @export
+#' 
+MOFA_cor_network <- function(resMOFA,
+                             factor_choice = 1,
+                             abs_weight_network = 0.5,
+                             abs_min_cor_network = 0.5,
+                             network_layout = "Circle + omics",
+                             omics_colors = NULL,
+                             posCol = "red",
+                             negCol = "blue"
+){
+  
+  # resMOFA <- rflomics.MAE@metadata$MOFA$MOFA_results
+  # factor_choice = 1
+  # abs_weight_network  = 0.5
+  # network_layout = "circle"
+  # omics_colors <- NULL
+  # abs_min_cor_network = 0.5
+  # posCol = "red"
+  # negCol = "blue"
+  
+  
+  # Correlation matrix is done on all ZW, not on the selected factor. 
+  data_reconst_list <- lapply(MOFA2::get_weights(resMOFA), FUN = function(mat){
+    MOFA2::get_factors(resMOFA)$group1 %*% t(mat)})
+  data_reconst <- do.call(cbind, data_reconst_list)
+  cor_mat <- stats::cor(data_reconst)
+  
+  
+  features_metadata <- do.call(rbind, lapply(1:length(MOFA2::get_weights(resMOFA)), FUN = function(i){
+    mat_weights <- data.frame(MOFA2::get_weights(resMOFA, scale = TRUE)[[i]])
+    mat_weights$Table <- names(MOFA2::get_weights(resMOFA))[i]
+    return(mat_weights)
+  }))
+  
+  factor_selected <- paste0("Factor", factor_choice)
+  
+  feature_filtered <- features_metadata %>% 
+    tibble::rownames_to_column("EntityName") %>%
+    dplyr::mutate(F_selected = abs(get(factor_selected))) %>% 
+    dplyr::arrange(desc(abs(F_selected))) %>% 
+    dplyr::group_by(Table) %>% 
+    dplyr::filter(abs(F_selected) > abs_weight_network)
+  
+  if (nrow(feature_filtered) > 0) {
+    
+    if(is.null(omics_colors)){
+      omics_colors <- as.list(rownames(brewer.pal.info)[1:length(unique(feature_filtered$Table))]) 
+      names(omics_colors) <- unique(feature_filtered$Table)
+    }
+    
+    omics_colors <- lapply(unique(feature_filtered$Table), FUN = function(omicTable){
+      RColorBrewer::brewer.pal(name = omics_colors[[omicTable]], n = 5)
+    })
+    names(omics_colors) <- unique(feature_filtered$Table)
+    
+    feature_filtered <- feature_filtered %>% dplyr::group_by(Table) %>%
+      dplyr::mutate(Color = cut(F_selected, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)))
+    feature_filtered$Color2 <- sapply(1:nrow(feature_filtered), 
+                                      FUN = function(i) omics_colors[[feature_filtered$Table[i]]][as.numeric(feature_filtered$Color[i])])
+    
+    # Layout
+    layout_arg <- tolower(network_layout)
+    if (tolower(layout_arg) == tolower("Circle + omics")) {
+      layout_arg <- "groups"
+    }
+    
+    # Network main graph
+    cor_display <- cor_mat[rownames(cor_mat) %in% feature_filtered$EntityName, colnames(cor_mat) %in% feature_filtered$EntityName]
+    
+    if (any(abs(cor_display[upper.tri(cor_display)]) >= abs_min_cor_network)) {
+      qgraph_plot <- qgraph::qgraph(cor_display, minimum = abs_min_cor_network, 
+                                    cut = 0,
+                                    shape = "rectangle", labels = rownames(cor_display), vsize2 = 2, 
+                                    vsize = sapply(rownames(cor_display), nchar)*1.1,  layout = layout_arg,
+                                    esize = 2,
+                                    groups = gsub("[.]filtred", "", features_metadata$Table[match(rownames(cor_display), rownames(features_metadata))]),
+                                    posCol = posCol, negCol = negCol, 
+                                    details = FALSE,  legend = FALSE,
+                                    color = feature_filtered$Color2[match(rownames(cor_display), feature_filtered$EntityName)])
+      qgraph_plot <- recordPlot()
+      
+      # Legend
+      legend_matrix <- do.call("rbind", omics_colors)
+      colnames(legend_matrix) <- c("(0,0.2]", "(0.2,0.4]", "(0.4,0.6]", "(0.6,0.8]", "(0.8, 1]")
+      rownames(legend_matrix) <- gsub("[.]filtred", "", rownames(legend_matrix))
+      legend.reshape <- reshape2::melt(legend_matrix)
+      
+      gg.legend <-  ggplot2::ggplot(legend.reshape, ggplot2::aes(x = Var2, y = Var1)) + 
+        ggplot2::geom_tile(fill = legend.reshape$value) + ggplot2::xlab("") + ggplot2::ylab("") + 
+        ggplot2::theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = ggplot2::element_blank(), panel.border = ggplot2::element_blank(), 
+                                    axis.ticks.y = ggplot2::element_blank(),
+                                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1))
+      
+      gg.legend <- ggpubr::ggarrange(gg.legend, nrow = 3, ncol = 1) 
+      
+      # Actual plotting
+      ggpubr::ggarrange(plotlist = list(qgraph_plot, gg.legend), nrow = 1, ncol = 2, widths = c(3, 1))
+      
+      
+      
+    }else{
+      print("There is nothing to plot. Please try to lower the absolute weight, the correlation threshold or change the factor.")
+    }
+  }else{
+    print("There is nothing to plot. Please try to lower the absolute weight, the correlation threshold or change the factor.")
+  }
+}
+
+
