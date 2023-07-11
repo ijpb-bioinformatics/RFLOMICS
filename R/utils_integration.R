@@ -306,17 +306,7 @@ MOFA_cor_network <- function(resMOFA,
                              posCol = "red",
                              negCol = "blue"
 ){
-  
-  # resMOFA <- rflomics.MAE@metadata$MOFA$MOFA_results
-  # factor_choice = 1
-  # abs_weight_network  = 0.5
-  # network_layout = "circle"
-  # omics_colors <- NULL
-  # abs_min_cor_network = 0.5
-  # posCol = "red"
-  # negCol = "blue"
-  
-  
+
   # Correlation matrix is done on all ZW, not on the selected factor. 
   data_reconst_list <- lapply(MOFA2::get_weights(resMOFA), FUN = function(mat){
     MOFA2::get_factors(resMOFA)$group1 %*% t(mat)})
