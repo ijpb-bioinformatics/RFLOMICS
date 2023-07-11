@@ -298,21 +298,30 @@ MOFA_setting <- function(input, output, session, rea.values){
                             renderPlot({
                               
                               ggplot_list <- list()
-                              for(i in min(input$WeightsPlot_Factors_select):max(input$WeightsPlot_Factors_select)){
-                                for(j in MOFA2::views_names(resMOFA)){
-                                  ggplot_list[[length(ggplot_list)+1]] <- MOFA2::plot_weights(resMOFA,
-                                                                                              view = j,
-                                                                                              factor = i,
-                                                                                              nfeatures = input$nfeat_choice_WeightsPlot,
-                                                                                              scale = input$scale_choice_WeightsPlot) + ggtitle(paste0(j, " - Factor ", i))
-                                }
-                              }
+                              ggplot_list <- lapply(min(input$WeightsPlot_Factors_select):max(input$WeightsPlot_Factors_select), FUN = function(i) {
+                                
+                                res_inter <- list()
+                                res_inter <- lapply(MOFA2::views_names(resMOFA), FUN = function(vname) {
+                                  
+                                  res_inter[[length(res_inter) + 1]] <- MOFA2::plot_weights(resMOFA,
+                                                                                            view = vname,
+                                                                                            factors = i,
+                                                                                            nfeatures = input$nfeat_choice_WeightsPlot,
+                                                                                            scale = input$scale_choice_WeightsPlot) 
+                                  res_inter[[length(res_inter)]] <- res_inter[[length(res_inter)]] + ggtitle(paste0(vname, " - Factor ", i))
+                                                                                            
+                                  return(res_inter)
+                                })
+                                
+                                return(unlist(res_inter, recursive = FALSE))
+                              })
+                              ggplot_list <- unlist(ggplot_list, recursive = FALSE)
                               
                               ggpubr::ggarrange(plotlist = ggplot_list,
                                                 ncol = length(MOFA2::views_names(resMOFA)),
-                                                nrow = (max(input$WeightsPlot_Factors_select)-min(input$WeightsPlot_Factors_select)+1))
+                                                nrow = (max(input$WeightsPlot_Factors_select) - min(input$WeightsPlot_Factors_select) + 1))
                               
-                            }, execOnResize = TRUE) # width = 60, height = plot_height(), 
+                            }, execOnResize = TRUE)
                             
                      ))
           ),
@@ -381,14 +390,14 @@ MOFA_setting <- function(input, output, session, rea.values){
                               color_by_par <- input$color_by_MOFA
                               group_by_par <- input$group_by_MOFA
                               shape_by_par <- input$shape_by_MOFA
-                              if(input$color_by_MOFA == "none") color_by_par <- "group"
-                              if(input$group_by_MOFA == "none") group_by_par <- "group"
-                              if(input$shape_by_MOFA == "none") shape_by_par <- NULL
+                              if (input$color_by_MOFA == "none") color_by_par <- "group"
+                              if (input$group_by_MOFA == "none") group_by_par <- "group"
+                              if (input$shape_by_MOFA == "none") shape_by_par <- NULL
                               dodge_par <- FALSE
-                              if(any(input$add_violin_MOFA, input$add_boxplot_MOFA)) dodge_par = TRUE
+                              if (any(input$add_violin_MOFA, input$add_boxplot_MOFA)) dodge_par = TRUE
                               
                               
-                              plot_factor(resMOFA,
+                              MOFA2::plot_factor(resMOFA,
                                           factors = min(input$factors_choices_MOFA):max(input$factors_choices_MOFA), 
                                           color_by = color_by_par,
                                           group_by = group_by_par, 
@@ -467,7 +476,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                      column(12, # heatmap is too large with just renderPlot. 
                             renderPlot({
                               annot_samples_values <- input$annot_samples_MOFA
-                              if(input$annot_samples_MOFA == "none") annot_samples_values <- NULL
+                              if (input$annot_samples_MOFA == "none") annot_samples_values <- NULL
                               
                               observeEvent(input$view_choice_heatmap_MOFA, {
                                 updateSliderInput(session, 
@@ -566,7 +575,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                                 dplyr::group_by(Table) %>% 
                                 dplyr::filter(abs(F_selected)>input$abs_weight_network)
                               
-                              if(nrow(feature_filtered)>0){
+                              if (nrow(feature_filtered) > 0) {
                                 
                                 omics_colors <- lapply(unique(feature_filtered$Table), FUN = function(omicTable){
                                   RColorBrewer::brewer.pal(name = input[[paste0("colors_", omicTable)]], n = 5)
@@ -580,14 +589,14 @@ MOFA_setting <- function(input, output, session, rea.values){
                                 
                                 # Layout
                                 layout_arg <- tolower(input$network_layout)
-                                if(tolower(layout_arg) == tolower("Circle + omics")){
+                                if (tolower(layout_arg) == tolower("Circle + omics")) {
                                   layout_arg <- "groups"
                                 }
                                 
                                 # Network main graph
                                 cor_display <- cor_mat[rownames(cor_mat) %in% feature_filtered$EntityName, colnames(cor_mat) %in% feature_filtered$EntityName]
                                 
-                                if(any(abs(cor_display[upper.tri(cor_display)])>=input$abs_min_cor_network)){
+                                if (any(abs(cor_display[upper.tri(cor_display)]) >= input$abs_min_cor_network)) {
                                   qgraph_plot <- qgraph::qgraph(cor_display, minimum = input$abs_min_cor_network, 
                                                                 cut = 0,
                                                                 shape = "rectangle", labels = rownames(cor_display), vsize2 = 2, 
@@ -606,10 +615,10 @@ MOFA_setting <- function(input, output, session, rea.values){
                                   legend.reshape <- reshape2::melt(legend_matrix)
                                   
                                   gg.legend <-  ggplot2::ggplot(legend.reshape, ggplot2::aes(x = Var2, y = Var1)) + 
-                                    ggplot2::geom_tile(fill = legend.reshape$value) + xlab("") + ylab("") + 
-                                    theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(), 
-                                                       axis.ticks.y = element_blank(),
-                                                       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+                                    ggplot2::geom_tile(fill = legend.reshape$value) + ggplot2::xlab("") + ggplot2::ylab("") + 
+                                    ggplot2::theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = ggplot2::element_blank(), panel.border = ggplot2::element_blank(), 
+                                                                axis.ticks.y = ggplot2::element_blank(),
+                                                                axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1))
                                   
                                   gg.legend <- ggpubr::ggarrange(gg.legend, nrow = 3, ncol = 1) 
                                   
