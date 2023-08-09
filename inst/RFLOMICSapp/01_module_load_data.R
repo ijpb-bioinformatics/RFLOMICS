@@ -17,13 +17,11 @@ LoadOmicsDataUI <- function(id){
           fluidRow(
             column(width = 12,
                    # 1- set project name
-                   column(width = 4, textInput(inputId = ns("projectName"), label = "Project name")),
+                   column(width = 3, textInput(inputId = ns("projectName"), label = "Project name")),
                    # 2- matrix count/abundance input
-                   column(width = 8, fileInput(inputId = ns("Experimental.Design.file"), label = "Experimental Design (tsv)",
-                                               accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
-                   # #metadata
-                   # column(width = 4, fileInput(inputId = ns("metadata.file"), label = "metadata (tsv)",
-                   #                             accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")))
+                   column(width = 7, fileInput(inputId = ns("Experimental.Design.file"), label = "Experimental Design (tsv)",
+                                               accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"))),
+                   column(width = 2, actionButton(inputId = ns("loadEx_metadata"), label = "Load Example Metadata", icon = shiny::icon("file-import"))),
             )
           ),
           fluidRow(
@@ -36,7 +34,8 @@ LoadOmicsDataUI <- function(id){
       )
     ),
     fluidRow( uiOutput(outputId = ns("LoadDataUI"))),
-    fluidRow( column(width = 6, actionButton(inputId = ns("loadData"),"load Data"))),
+    fluidRow( column(width = 2, actionButton(inputId = ns("loadData"),"load Data")),
+              column(width = 2, actionButton(inputId = ns("loadExData"),"load Example Data", icon = shiny::icon("file-import")))),
     br(),
     
     fluidRow(
@@ -48,10 +47,9 @@ LoadOmicsDataUI <- function(id){
   
 }
 
-
 LoadOmicsData <- function(input, output, session, rea.values){
   
-  local.rea.values <- reactiveValues(plots = FALSE, ExpDesign = NULL, FactorList = NULL)
+  local.rea.values <- reactiveValues(plots = FALSE, ExpDesign = NULL, FactorList = NULL, dataPath = NULL, listInputs = NULL)
   
   observe({
     
@@ -60,7 +58,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     rea.values$analysis <- FALSE
     
     rea.values$contrastMat  <- NULL
-    #FlomicsMultiAssay      <<- NULL
     session$userData$FlomicsMultiAssay <- NULL
     
     rea.values$validate.status <- 0
@@ -68,6 +65,21 @@ LoadOmicsData <- function(input, output, session, rea.values){
   })
   
   
+  # ---- Datapath depending on the button ----
+  # load user own metadata file
+  observeEvent(input$Experimental.Design.file, {
+    local.rea.values$dataPath <- NULL
+    local.rea.values$dataPath <- input$Experimental.Design.file$datapath
+  })
+  
+  # load example metadata file
+  observeEvent(input$loadEx_metadata, {
+    local.rea.values$dataPath <- NULL
+    local.rea.values$dataPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt")
+    
+  })
+  
+  # ---- Load experimental design ----
   ##########################################
   # (1) load experimental design
   ##########################################
@@ -78,7 +90,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
   # => set ref for each factor
   # => set type of factors (bio, batch, meta)
   
-  observeEvent(input$Experimental.Design.file, {
+  observeEvent(local.rea.values$dataPath, {
     
     # reset
     rea.values$loadData <- FALSE
@@ -95,11 +107,14 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     print("# 1- Load data ...")
     
-    print("#    => Load experimental design...")
+    if (local.rea.values$dataPath == paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt")) {
+      print("#    => Load example experiment design...")
+    }else print("#    => Load experimental design...")
     
     # read and check design file
-    design.tt <- tryCatch(expr = read_exp_design(file = input$Experimental.Design.file$datapath),
-                          error=function(e) e, warning=function(w) w)
+    design.tt <- tryCatch(expr = RFLOMICS::read_exp_design(file = local.rea.values$dataPath),
+                          error = function(e) e, warning = function(w) w)
+    
     
     if(!is.null(design.tt$message)){
       
@@ -131,7 +146,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
       
       # condition list
       box(width = 12, background = "green", # Valid colors are: red, yellow, aqua, blue, light-blue, green, navy, teal, olive, lime, orange, fuchsia, purple, maroon, black.
-          tags$b("The list and order of conditions :"),
+          tags$b("The list and order of conditions:"),
           fluidRow(
             lapply(names(ExpDesign.tbl), function(i) {
               
@@ -174,7 +189,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
       column(width = 12,
              
              # Construct the form to set the reference factor level
-             tags$b("Set the type and the reference fo each design factor :"),
+             tags$b("Set the type and the reference fo each design factor:"),
              fluidRow(
                lapply(names(ExpDesign.tbl), function(i){
                  
@@ -191,7 +206,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     })
   })
   
-  
+  # ---- Load Data ----
   ##########################################
   # (2) load data
   ##########################################
@@ -219,13 +234,14 @@ LoadOmicsData <- function(input, output, session, rea.values){
                  textInput(inputId = session$ns("DataName1"), label="Dataset name", value="set1")
           )
         ),
-        
         uiOutput(   outputId = session$ns("toAddData2")),
-        actionButton(inputId = session$ns("addData"),"Add data")
+        actionButton(inputId = session$ns("addData"),   "Add data")
     )
   })
   
-  # as soon as the "add data" buttom has been clicked
+  
+  # ---- observe Event add Data ----
+  # as soon as the "add data" button has been clicked
   # => a new select/file Input was display
   # =>
   addDataNum <- 1
@@ -239,30 +255,179 @@ LoadOmicsData <- function(input, output, session, rea.values){
         fluidRow(
           column(2,
                  # omic type
-                 selectInput(inputId=session$ns(paste0('omicType', addDataNum)), label='Omic type', choices = c("None"="none", "RNAseq"="RNAseq", "Proteomics"="proteomics", "Metabolomics"="metabolomics"), selected = "none")),
+                 selectInput(inputId = session$ns(paste0('omicType', addDataNum)), label = 'Omic type', choices = c("None" = "none", "RNAseq" = "RNAseq", "Proteomics" = "proteomics", "Metabolomics" = "metabolomics"), selected = "none")),
           column(6,
                  # matrix count/abundance input
-                 fileInput(inputId=session$ns(paste0("data", addDataNum)), "Dataset matrix (tsv)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
+                 fileInput(inputId = session$ns(paste0("data", addDataNum)), "Dataset matrix (tsv)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
+          
           # column(4,
           #        # metadata/QC bioinfo
           #        fileInput(inputId=session$ns(paste0("metadataQC", addDataNum)), "QC or metadata (tsv)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
           column(3,
                  # dataset Name
-                 textInput(inputId=session$ns(paste0("DataName", addDataNum)), label="Dataset name", value=paste0("set", as.character(addDataNum))))
+                 textInput(inputId = session$ns(paste0("DataName", addDataNum)), label = "Dataset name", value=paste0("set", as.character(addDataNum))))
         ),
         
-        uiOutput(session$ns(paste("toAddData",addDataNum + 1,sep="")))
+        uiOutput(session$ns(paste("toAddData", addDataNum + 1, sep = "")))
       )
     })
   })
   
+  # ---- Add example data observeEvent ----
+  
+  # observeEvent(input$addExData, {
+  #   addDataNum <<- 3
+  #   
+  #   input[["omicType1"]] <- "RNAseq"
+  #   input[["data1"]][["dataPath"]] <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")  
+  #   
+  #   input[["omicType2"]] <- "Proteomics"
+  #   input[["data2"]][["dataPath"]] <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")  
+  #   
+  #   input[["omicType3"]] <- "Metabolomics"
+  #   input[["data3"]][["dataPath"]] <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")  
+  #   
+  #   
+  # })
+  # 
+  # ---- observeEvent loadData | loadExData ----
+  
+  observeEvent(input$loadExData, {
+    
+    local.rea.values$listInputs <- NULL
+    
+    rea.values$loadData <- FALSE
+    rea.values$model    <- FALSE
+    rea.values$analysis <- FALSE
+    rea.values$Contrasts.Sel <- NULL
+    rea.values$datasetList   <- NULL
+    rea.values$datasetDiff   <- NULL
+    rea.values$Contrasts.Sel <- NULL
+    
+    session$userData$FlomicsMultiAssay <- NULL
+    
+    local.rea.values$plots <- FALSE
+    
+    inputs <- list()
+    rea.values$validate.status <- 0
+    
+    # RNASeq
+    data.mat.tt <- tryCatch(RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")), 
+                            error = function(e) e, warning = function(w) w)
+    dataName <- "RNAseq.set1"
+    inputs[[dataName]] <- list("omicType" = "RNAseq", "data" = data.mat.tt, "meta" = NULL) 
+    
+    # Metabolomic
+    data.mat.tt <- tryCatch(RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
+                            error = function(e) e, warning = function(w) w)
+    dataName <- "metabolomics.set2"
+    inputs[[dataName]] <- list("omicType" = "metabolomics", "data" = data.mat.tt, "meta" = NULL) 
+    
+    # proteomics
+    data.mat.tt <- tryCatch(RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")), 
+                            error = function(e) e, warning = function(w) w)
+    dataName <- "proteomics.set3"
+    inputs[[dataName]] <- list("omicType" = "proteomics", "data" = data.mat.tt, "meta" = NULL) 
+    
+    local.rea.values$listInputs <- inputs
+    
+    
+  })
+  
+  observeEvent(input$loadData, {
+    
+    local.rea.values$listInputs <- NULL
+    
+    rea.values$loadData <- FALSE
+    rea.values$model    <- FALSE
+    rea.values$analysis <- FALSE
+    rea.values$Contrasts.Sel <- NULL
+    rea.values$datasetList   <- NULL
+    rea.values$datasetDiff   <- NULL
+    rea.values$Contrasts.Sel <- NULL
+    
+    session$userData$FlomicsMultiAssay <- NULL
+    
+    print("#    => Load omics data...")
+    inputs <- list()
+    #### list of omic data laoded from interface
+    rea.values$validate.status <- 0
+    dataName.vec <- c()
+    for (k in 1:addDataNum){
+      
+      if(input[[paste0("omicType", k)]] != "none"){
+        
+        ### omics type ###
+        omicType <- input[[paste0("omicType", k)]]
+        
+        ### dataset name ### 
+        # => check presence of dataname
+        dataName.tmp <- gsub("[[:space:]]", "", input[[paste0("DataName", k)]])
+        
+        if(dataName.tmp == ""){
+          showModal(modalDialog( title = "Error message", "Dataset names is required: dataset ", k ))
+          rea.values$validate.status <- 1
+        }
+        dataName <- paste0(omicType, ".", dataName.tmp)
+        dataName.vec <- c(dataName.vec, dataName)
+        
+        # => check duplicat dataset name
+        if(any(duplicated(dataName.vec)) == TRUE){
+          showModal(modalDialog( title = "Error message", "Dataset names must be unique: dataset ", (1:addDataNum)[duplicated(dataName.vec)] ))
+          rea.values$validate.status <- 1
+        }
+        
+        #### omics dataset
+        # => check omics data
+        if(is.null(input[[paste0("data", k)]])){
+          showModal(modalDialog( title = "Error message", "omics dataset is required: dataset ", k ))
+          rea.values$validate.status <- 1
+        }
+        validate({ need(expr = !is.null(input[[paste0("data", k)]]), message="error") })
+        
+        # => read data matrix
+        dataFile <- input[[paste0("data", k)]]
+        data.mat.tt <- tryCatch(RFLOMICS::read_omics_data(file = dataFile$datapath), error=function(e) e, warning=function(w) w)
+        
+        if(!is.null(data.mat.tt$message)){
+          
+          showModal(modalDialog( title = "Error message", data.mat.tt$message)) 
+          rea.values$validate.status <- 1
+        }
+        validate({ need(expr = is.null(data.mat.tt$message), message=data.mat.tt$message) })
+        
+        data.mat <- data.mat.tt
+        inputs[[dataName]][["omicType"]] <- omicType
+        inputs[[dataName]][["data"]] <- data.mat
+        
+        #### read meta data file
+        # if(!is.null(input[[paste0("metadataQC", k)]])){
+        #   print("# ... metadata QC...")
+        #   qcFile <- input[[paste0("metadataQC", k)]]
+        #   QCmat  <- read_metaData(qcFile$datapath)
+        #   
+        #   validate({ need(!is.null(QCmat), message="") })
+        #   
+        #   inputs[[dataName]][["meta"]] <- QCmat
+        #   #inputs[[dataName]][["qcFile"]] <- input[[paste0("metadataQC", k)]]$datapath ####
+        # }
+        inputs[[dataName]][["meta"]]     <- NULL
+        
+        validate({ need(rea.values$validate.status == 0, message = "error") })
+      }
+    }
+    
+    local.rea.values$listInputs <- inputs
+    
+  })
+  
+  # ---- observe Event load Data ----
   # as soon as the "load" buttom has been clicked
   # => create ExpDesign object
   # => create flomicsMultiAssay object
   # => upsetR
-  observeEvent(input$loadData, {
-    
-    #print(paste0("loadData ", input$loadData))
+  observeEvent(local.rea.values$listInputs, {
+
     ### load Design
     
     # reset objects and UI
@@ -274,25 +439,28 @@ LoadOmicsData <- function(input, output, session, rea.values){
     rea.values$datasetDiff   <- NULL
     rea.values$Contrasts.Sel <- NULL
     
-    session$userData$FlomicsMultiAssay        <- NULL
+    session$userData$FlomicsMultiAssay <- NULL
     #session$userData$Design   <- NULL
     
     local.rea.values$plots <- FALSE
     # #updateTabItems(session, "tabs", selected = "importData")
     
     ### check project name
-    if(input$projectName == ""){
+    if (input$projectName == "") {
       showModal(modalDialog(title = "Error message", "project name is required"))
     }
     validate({ need(input$projectName != "", message="project name is required") })
     
     
     ### check Experimental Design
-    if(is.null(input$Experimental.Design.file)){
+    # if(is.null(input$Experimental.Design.file)){
+    #   showModal(modalDialog(title = "Error message", "Experimental Design is required"))
+    # }
+    # validate({ need(! is.null(input$Experimental.Design.file), message="Set a name") })
+    if (is.null(local.rea.values$dataPath)) {
       showModal(modalDialog(title = "Error message", "Experimental Design is required"))
     }
-    validate({ need(! is.null(input$Experimental.Design.file), message="Set a name") })
-    
+    validate({ need(! is.null(local.rea.values$dataPath), message = "Experimental Design is required") })
     
     ExpDesign.tbl <- local.rea.values$ExpDesign
     
@@ -302,8 +470,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     dF.List.ref  <- vector()
     
     rea.values$validate.status <- 0
-    
-    #factor.names <- stringr::str_remove(stringr::str_subset(string = names(input), pattern = "dF.Type."), pattern = "dF.Type.")
     
     for(dFac in names(ExpDesign.tbl)){
       
@@ -330,89 +496,13 @@ LoadOmicsData <- function(input, output, session, rea.values){
     inputs <- list()
     #### list of omic data laoded from interface
     rea.values$validate.status <- 0
-    dataName.vec <- c()
-    for (k in 1:addDataNum){
-      
-      if(input[[paste0("omicType", k)]] != "none"){
-        
-        ### omics type ###
-        omicType <- input[[paste0("omicType", k)]]
-        
-        ### dataset name ### 
-        # => check presence of dataname
-        dataName.tmp <- gsub("[[:space:]]", "", input[[paste0("DataName", k)]])
-        
-        if(dataName.tmp == ""){
-          showModal(modalDialog( title = "Error message", "Dataset names is required : dataset ", k ))
-          rea.values$validate.status <- 1
-        }
-        dataName <- paste0(omicType, ".", dataName.tmp)
-        dataName.vec <- c(dataName.vec, dataName)
-        
-        # => check duplicat dataset name
-        if(any(duplicated(dataName.vec)) == TRUE){
-          showModal(modalDialog( title = "Error message", "Dataset names must be unique : dataset ", (1:addDataNum)[duplicated(dataName.vec)] ))
-          rea.values$validate.status <- 1
-        }
-        
-        #### omics dataset
-        # => check omics data
-        if(is.null(input[[paste0("data", k)]])){
-          showModal(modalDialog( title = "Error message", "omics dataset is required : dataset ", k ))
-          rea.values$validate.status <- 1
-        }
-        validate({ need(expr = !is.null(input[[paste0("data", k)]]), message="error") })
-        
-        # => read data matrix
-        dataFile <- input[[paste0("data", k)]]
-        data.mat.tt <- tryCatch(read_omics_data(file = dataFile$datapath), error=function(e) e, warning=function(w) w)
-        
-        if(!is.null(data.mat.tt$message)){
-          
-          showModal(modalDialog( title = "Error message", data.mat.tt$message)) 
-          rea.values$validate.status <- 1
-        }
-        validate({ need(expr = is.null(data.mat.tt$message), message=data.mat.tt$message) })
-        
-        data.mat <- data.mat.tt
-        inputs[[dataName]][["omicType"]] <- omicType
-        inputs[[dataName]][["data"]] <- data.mat
-        
-        #### read meta data file
-        # if(!is.null(input[[paste0("metadataQC", k)]])){
-        #   print("# ... metadata QC...")
-        #   qcFile <- input[[paste0("metadataQC", k)]]
-        #   QCmat  <- read_metaData(qcFile$datapath)
-        #   
-        #   validate({ need(!is.null(QCmat), message="") })
-        #   
-        #   inputs[[dataName]][["meta"]] <- QCmat
-        #   #inputs[[dataName]][["qcFile"]] <- input[[paste0("metadataQC", k)]]$datapath ####
-        # }
-        inputs[[dataName]][["meta"]]     <- NULL
-        
-        validate({ need(rea.values$validate.status == 0, message="error") })
-      }
-    }
-    
-    # FlomicsMultiAssay.try <- RFLOMICS::try_rflomics(FlomicsMultiAssay.constructor(inputs = inputs,
-    #                                                                     ExpDesign = ExpDesign.tbl,
-    #                                                                     refList = dF.List.ref,
-    #                                                                     typeList = dF.Type.dFac,
-    #                                                                     projectName=input$projectName))
-    # 
-    # if(!is.null(FlomicsMultiAssay.try[["error"]])) {
-    #   showModal(modalDialog( title = "Error message", as.character(FlomicsMultiAssay.try[["error"]])))
-    # }
-    # validate({ need(is.null(FlomicsMultiAssay.try[["error"]]), message="error") })
-    
-    
-    FlomicsMultiAssay.try <- tryCatch(FlomicsMultiAssay.constructor(inputs = inputs,
-                                                                    ExpDesign = ExpDesign.tbl,
-                                                                    refList = dF.List.ref,
-                                                                    typeList = dF.Type.dFac,
-                                                                    projectName=input$projectName),
-                                      error=function(e) e, warning=function(w) w)
+   
+    FlomicsMultiAssay.try <- tryCatch(RFLOMICS::FlomicsMultiAssay.constructor(inputs      = local.rea.values$listInputs,
+                                                                              ExpDesign   = ExpDesign.tbl,
+                                                                              refList     = dF.List.ref,
+                                                                              typeList    = dF.Type.dFac,
+                                                                              projectName = input$projectName),
+                                      error = function(e) e, warning = function(w) w)
     
     if(!is.null(FlomicsMultiAssay.try$message)) {
       showModal(modalDialog( title = "Error message", FlomicsMultiAssay.try$message))
@@ -422,32 +512,23 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     session$userData$FlomicsMultiAssay <- FlomicsMultiAssay.try
     
-    # FlomicsMultiAssay[, complete.cases(FlomicsMultiAssay), ]
-    # colData(FlomicsMultiAssay)[!complete.cases(FlomicsMultiAssay),]
-    # intersectColumns(FlomicsMultiAssay)
-    
     # => completeness
     #### check experimental design : experimental design must be a complete and balanced.
     
     print(paste0("#    => Design Completeness Check..."))
     
-    local.rea.values$completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
-    
-    # session$userData$FlomicsMultiAssay@metadata$completeCheck[["error"]]   <- local.rea.values$completeCheckRes[["error"]]
-    # session$userData$FlomicsMultiAssay@metadata$completeCheck[["warning"]] <- local.rea.values$completeCheckRes[["warning"]]
+    local.rea.values$completeCheckRes <- RFLOMICS::CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
     
     # plot : ok
     local.rea.values$plots <- TRUE
     
-    if(!is.null(local.rea.values$completeCheckRes[["error"]])){
-      #rea.values$loadData <- FALSE
-      #rea.values$model    <- FALSE
+    if (!is.null(local.rea.values$completeCheckRes[["error"]])){
       showModal(modalDialog(title = "Error message", local.rea.values$completeCheckRes[["error"]]))
       rea.values$validate.status <- 1
     }
     
     # continue only if message is true or warning
-    validate({ need(is.null(local.rea.values$completeCheckRes[["error"]]) ,message=local.rea.values$completeCheckRes[["error"]]) })
+    validate({ need(is.null(local.rea.values$completeCheckRes[["error"]]), message = local.rea.values$completeCheckRes[["error"]]) })
     
     # 
     rea.values$datasetList <- session$userData$FlomicsMultiAssay@metadata$omicList
@@ -465,7 +546,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
   output$CompletenessUI <- renderUI({
     
     if (local.rea.values$plots == FALSE) return()
-    #if (rea.values$loadData == FALSE) return()
     
     print(paste0("#    => Completeness plot..."))
     
@@ -487,7 +567,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
   output$summaryMAE <- renderUI({
     
     if (local.rea.values$plots == FALSE) return()
-    #if (rea.values$loadData == FALSE) return()
     
     print(paste0("#    => overview plot..."))
     

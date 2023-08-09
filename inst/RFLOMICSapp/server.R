@@ -7,7 +7,7 @@ rm(list = ls())
 
 #### ADDED 220805 - Increasing maximum possible size of loaded files (default is only 5MB)
 # https://stackoverflow.com/questions/18037737/how-to-change-maximum-upload-size-exceeded-restriction-in-shiny-and-save-user
-options(shiny.maxRequestSize=100*1024^2) # 100 MB limit.
+options(shiny.maxRequestSize = 100*1024^2) # 100 MB limit.
 
 shinyServer(function(input, output, session) {
 
@@ -297,7 +297,6 @@ shinyServer(function(input, output, session) {
     # check design (complete and balanced)
     inputData <- callModule(LoadOmicsData, "data", rea.values)
 
-
     ##########################################
     # Part2 : Set GLM model
     ##########################################
@@ -305,20 +304,20 @@ shinyServer(function(input, output, session) {
     # display set up model Item
     # if no error message
     inputModel <- list()
-    observeEvent(inputData[["loadData"]], {
-
+    # observeEvent(inputData[["loadData"]], {
+    observeEvent(rea.values[["loadData"]], {
       #subitems(NULL)
 
       #continue only if message is true or warning
       validate({
-        need(rea.values$validate.status == 0, message="set design step failed")
+        need(rea.values$validate.status == 0, message = "set design step failed")
       })
 
       # display design menu
       output$SetUpModelMenu <- renderMenu({
 
         validate({
-          need(rea.values$loadData == TRUE, message="")
+          need(rea.values$loadData == TRUE, message = "No loaded Data")
         })
         menuItem(text = "Experimental Design", tabName = "SetUpModel", icon = icon('vials'))
       })
