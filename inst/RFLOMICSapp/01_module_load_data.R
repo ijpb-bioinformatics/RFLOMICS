@@ -308,6 +308,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     local.rea.values$plots <- FALSE
     
+    print("#    => Load example omics data...")
+    
     inputs <- list()
     rea.values$validate.status <- 0
     
@@ -491,8 +493,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
                       (length(stringr::str_subset(dF.Type.dFac, "batch")) %in% 1:2), message="") })
     
     #### load omics data
-    ####
-    print("#    => Load omics data...")
     inputs <- list()
     #### list of omic data laoded from interface
     rea.values$validate.status <- 0
