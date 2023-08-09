@@ -11,7 +11,7 @@ AnnotationEnrichmentClusterProfUI <- function(id){
   #name space for id
   ns <- NS(id)
   
-  tagList(  
+  htmltools::tagList(  
     fluidRow(
       box(title = span(tagList(icon("chart-pie"), " ", a("ClusterProfiler/", href="https://bioconductor.org/packages/release/bioc/vignettes/clusterProfiler/inst/doc/clusterProfiler.html"), 
                                a("Pathview",         href="https://bioconductor.org/packages/devel/bioc/vignettes/pathview/inst/doc/pathview.pdf"), "   " , tags$small("(Scroll down for instructions)"))),
@@ -75,7 +75,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
   
   
   # ---- settings: ----
-  output$AnnotParam <- renderUI({
+  output$AnnotParam <-   renderUI({
     
     validate(
       need(rea.values[[dataset]]$diffValid != FALSE, "Please run diff analysis and validate your choices...")
@@ -84,85 +84,124 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     ## gene lists
     ListNames.diff  <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName
     
-    box(title = span(tagList(icon("sliders"), "  ", "Setting")), width = 14, status = "warning",
-        
-        # select DEG list
-        pickerInput(
-          inputId = ns("GeneList.diff"), label = "Select DEG lists:", 
-          choices = ListNames.diff, multiple = TRUE, selected = ListNames.diff,
-          options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
-        ),
-        
-        # select clusters
-        uiOutput(ns("GeneList.coseqCPRUI")),
-        
-        # select enrichDomain
-        pickerInput(
-          inputId = ns("dom.select"), label = "Select Ontology:",
-          choices = c("custom", "GO", "KEGG"),
-          selected = "GO",
-          options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
-        ),
-        
-        # custum
-        conditionalPanel(
-          condition = paste0("input[\'", ns('dom.select'), "\'] == \'custom\'"),
+    
+    omicsType <- session$userData$FlomicsMultiAssay[[dataset]]@metadata$omicType
+
+    if (omicsType %in% c("RNAseq", "proteomics")) {
+      
+      box(title = span(tagList(icon("sliders"), "  ", "Setting")), width = 14, status = "warning",
+          
+          # select DEG list
+          pickerInput(
+            inputId = ns("GeneList.diff"), label = "Select DEG lists:", 
+            choices = ListNames.diff, multiple = TRUE, selected = ListNames.diff,
+            options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+          ),
+          
+          # select clusters
+          uiOutput(ns("GeneList.coseqCPRUI")),
+          
+          # select enrichDomain
+          pickerInput(
+            inputId = ns("dom.select"), label = "Select Ontology:",
+            choices = c("custom", "GO", "KEGG"),
+            selected = "GO",
+            options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+          ),
+          
+          # custum
+          conditionalPanel(
+            condition = paste0("input[\'", ns('dom.select'), "\'] == \'custom\'"),
+            fileInput(inputId = ns("annotationFileCPR"), label = "Annotation file:",
+                      accept  = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
+            
+            uiOutput(ns("selectColumnsFromCustomAnnot"))
+          ),
+          
+          # KEGG 
+          conditionalPanel(
+            condition = paste0("input[\'", ns('dom.select'), "\'] == \'KEGG\'"),
+            
+            pickerInput(
+              inputId = ns("keytype.kegg"), label = "Select id type:",
+              choices = c("", "kegg", "ncbi-geneid", "ncib-proteinid", "uniprot"),
+              selected = "",
+              options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")),
+            
+            # type organism 
+            textInput(inputId = ns("KEGG_org"), 
+                      label = "Organism: (eg. ath)", value = "", 
+                      width = NULL, placeholder = NULL)
+          ),
+          conditionalPanel(
+            condition = paste0("input[\'", ns('dom.select'), "\'] == \'GO\'"),
+            
+            # select ontology
+            pickerInput(
+              inputId = ns("ont.select"), label = "Select Domain:",
+              choices = c("ALL", "BP", "MF", "CC"),
+              selected = "ALL",
+              options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+            ),
+            
+            # select database
+            pickerInput(
+              inputId = ns("db.select"), label = "Select Data Base:",
+              choices = c("", dir(.libPaths())[grep("org.*db", dir(.libPaths()))]),
+              selected = "",
+              options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+            ),
+            
+            # select keytype
+            pickerInput(
+              inputId = ns("keytype.go"), label = "Select id type:",
+              choices = c("", "ENTREZID", "SYMBOL",  "TAIR", "ENSEMBL", "PMID", "REFSEQ", "GENENAME"),
+              selected = "",
+              options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+            )
+          ),
+          
+          ## alpha threshold
+          numericInput(inputId = ns("pValue"), label = "Adjusted p-value threshold:", value = 0.01 , min = 0, max = 1, step = 0.01),
+          
+          # run enrichment
+          actionButton(inputId = ns("runEnrich_CPR"), label = "Run")
+      )
+      
+    }else if (omicsType == "metabolomics") {
+      box(title = span(tagList(icon("sliders"), "  ", "Setting")), width = 14, status = "warning",
+          
+          # select DEG list
+          pickerInput(
+            inputId = ns("GeneList.diff"), label = "Select DEG lists:", 
+            choices = ListNames.diff, multiple = TRUE, selected = ListNames.diff,
+            options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+          ),
+          
+          # select clusters
+          uiOutput(ns("GeneList.coseqCPRUI")),
+          
+          # select enrichDomain
+          pickerInput(
+            inputId = ns("dom.select"), label = "Select Ontology:",
+            choices = c("custom"),
+            selected = "custom",
+            options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+          ),
+          
+          # custum
           fileInput(inputId = ns("annotationFileCPR"), label = "Annotation file:",
                     accept  = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
           
-          uiOutput(ns("selectColumnsFromCustomAnnot"))
-        ),
-        
-        # KEGG 
-        conditionalPanel(
-          condition = paste0("input[\'", ns('dom.select'), "\'] == \'KEGG\'"),
+          uiOutput(ns("selectColumnsFromCustomAnnot")),
           
-          pickerInput(
-            inputId = ns("keytype.kegg"), label = "Select id type:",
-            choices = c("", "kegg", "ncbi-geneid", "ncib-proteinid", "uniprot"),
-            selected = "",
-            options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")),
+          ## alpha threshold
+          numericInput(inputId = ns("pValue"), label = "Adjusted p-value threshold:", value = 0.01 , min = 0, max = 1, step = 0.01),
           
-          # type organism 
-          textInput(inputId = ns("KEGG_org"), 
-                    label = "Organism: (eg. ath)", value = "", 
-                    width = NULL, placeholder = NULL)
-        ),
-        conditionalPanel(
-          condition = paste0("input[\'", ns('dom.select'), "\'] == \'GO\'"),
-          
-          # select ontology
-          pickerInput(
-            inputId = ns("ont.select"), label = "Select Domain:",
-            choices = c("ALL", "BP", "MF", "CC"),
-            selected = "ALL",
-            options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
-          ),
-          
-          # select database
-          pickerInput(
-            inputId = ns("db.select"), label = "Select Data Base:",
-            choices = c("", dir(.libPaths())[grep("org.*db", dir(.libPaths()))]),
-            selected = "",
-            options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
-          ),
-          
-          # select keytype
-          pickerInput(
-            inputId = ns("keytype.go"), label = "Select id type:",
-            choices = c("", "ENTREZID", "SYMBOL",  "TAIR", "ENSEMBL", "PMID", "REFSEQ", "GENENAME"),
-            selected = "",
-            options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
-          )
-        ),
-        
-        ## alpha threshold
-        numericInput(inputId = ns("pValue"), label = "Adjusted p-value threshold:", value = 0.01 , min = 0, max = 1, step = 0.01),
-        
-        # run enrichment
-        actionButton(inputId = ns("runEnrich_CPR"), label = "Run")
-    )
-    
+          # run enrichment
+          actionButton(inputId = ns("runEnrich_CPR"), label = "Run")
+      )
+    }
   })
   
   # ---- if custom annoattion ----
@@ -351,6 +390,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     )
     
     list_args[["pvalueCutoff"]] <- input$pValue
+    list_args[["minGSSize"]] <- 10
     
     print(paste("# 11- Enrichment Analysis...", dataset))
     
@@ -368,7 +408,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       local.rea.values$dataset.SE <- RFLOMICS::runAnnotationEnrichment_CPR(local.rea.values$dataset.SE, list_args = list_args, from = "DiffExpAnal",
                                                                            annot = annotation2,
                                                                            dom.select = dom.select, Domain = Domain,
-                                                                           col_domain = col_domain_arg) 
+                                                                           col_domain = col_domain_arg)  
       
       rea.values[[dataset]]$diffAnnot <- TRUE
     }

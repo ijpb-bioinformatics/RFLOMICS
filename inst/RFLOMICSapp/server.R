@@ -208,13 +208,13 @@ shinyServer(function(input, output, session) {
                 #          tags$br(),
                 #          AnnotationEnrichmentUI(paste0("proteomics",i))
                 # ),
-                #### enrichment analysis CPR ####
-                ######################################
-                # tabPanel("Annotation Enrichment",
-                #          tags$br(),
-                #          tags$br(),
-                #          AnnotationEnrichmentClusterProfUI(paste0("proteomics",i))
-                # )
+                ### enrichment analysis CPR ####
+                #####################################
+                tabPanel("Annotation Enrichment",
+                         tags$br(),
+                         tags$br(),
+                         AnnotationEnrichmentClusterProfUI(paste0("proteomics",i))
+                )
               )
             })},
             "metabolomics" = {output[[paste0("metabolomicsAnalysisUI", i)]] <- renderUI({
@@ -241,7 +241,13 @@ shinyServer(function(input, output, session) {
                          tags$br(),
                          tags$br(),
                          CoSeqAnalysisUI(paste0("metabolomics",i))
-                         #verbatimTextOutput("Asuivre")
+                ),
+                ### enrichment analysis CPR ####
+                #####################################
+                tabPanel("Annotation Enrichment",
+                         tags$br(),
+                         tags$br(),
+                         AnnotationEnrichmentClusterProfUI(paste0("metabolomics",i))
                 )
               )
             })},
