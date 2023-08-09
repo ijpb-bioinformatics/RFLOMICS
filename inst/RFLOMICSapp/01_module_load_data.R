@@ -273,23 +273,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     })
   })
   
-  # ---- Add example data observeEvent ----
-  
-  # observeEvent(input$addExData, {
-  #   addDataNum <<- 3
-  #   
-  #   input[["omicType1"]] <- "RNAseq"
-  #   input[["data1"]][["dataPath"]] <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")  
-  #   
-  #   input[["omicType2"]] <- "Proteomics"
-  #   input[["data2"]][["dataPath"]] <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")  
-  #   
-  #   input[["omicType3"]] <- "Metabolomics"
-  #   input[["data3"]][["dataPath"]] <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")  
-  #   
-  #   
-  # })
-  # 
   # ---- observeEvent loadData | loadExData ----
   
   observeEvent(input$loadExData, {
