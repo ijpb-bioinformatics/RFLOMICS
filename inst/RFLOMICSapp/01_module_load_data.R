@@ -430,12 +430,22 @@ LoadOmicsData <- function(input, output, session, rea.values){
     local.rea.values$plots <- FALSE
     # #updateTabItems(session, "tabs", selected = "importData")
     
+    ### check listInputs # no reason to check for null?
+    if (is.null(local.rea.values$listInputs)) {
+      showModal(modalDialog(title = "Error message", "Please load data"))
+    }
+    validate({ need(!is.null(local.rea.values$listInputs), message = "Please load data") })
+    
+    if (length(local.rea.values$listInputs) == 0) {
+      showModal(modalDialog(title = "Error message", "Please load data"))
+    }
+    validate({ need(length(local.rea.values$listInputs) > 0, message = "Please load data") })
+  
     ### check project name
     if (input$projectName == "") {
       showModal(modalDialog(title = "Error message", "project name is required"))
     }
     validate({ need(input$projectName != "", message="project name is required") })
-    
     
     ### check Experimental Design
     # if(is.null(input$Experimental.Design.file)){
