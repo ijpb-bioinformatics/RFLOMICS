@@ -549,10 +549,12 @@ LoadOmicsData <- function(input, output, session, rea.values){
            isolate({ local.rea.values$completeCheckRes[["plot"]] })
          ),
          hr(),
-         tags$i("You **must** have a **complete design** (i.e. all possible combinations of factor's level).
-                     **Balanced design** (presence of the same number of replicats for all
+         tags$div(
+           HTML("<em>You <b>must</b> have a <b>complete design</b> (i.e. all possible combinations of factor's levels).
+                     <b>Balanced design</b> (presence of the same number of replicates for all
                      possible combinations) is not required  but advised.
-                     You **must** also have at least one biological factor and 2 replicats")
+                     You <b>must</b> also have at least one biological factor and 2 replicates</em>")
+         )
     )
   })
   
