@@ -79,15 +79,15 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
   groups$samples <- factor(groups$samples, levels = unique(groups$samples))
   groups$groups  <- factor(groups$groups,  levels = unique(groups$groups))
   
-  Design = new(Class = "ExpDesign",
-               ExpDesign=as.data.frame(ExpDesign),
-               List.Factors=dF.List,
-               Factors.Type=typeList,
-               Groups=groups,
-               Model.formula=vector(),
-               Contrasts.List=list(),
-               Contrasts.Sel=data.frame(),
-               Contrasts.Coeff=data.frame())
+  Design = new(Class           = "ExpDesign",
+               ExpDesign       = as.data.frame(ExpDesign),
+               List.Factors    = dF.List,
+               Factors.Type    = typeList,
+               Groups          = groups,
+               Model.formula   = vector(),
+               Contrasts.List  = list(),
+               Contrasts.Sel   = data.frame(),
+               Contrasts.Coeff = data.frame())
   
   return(Design)
 }
@@ -123,8 +123,8 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 #' @examples
 #' @noRd
 
-methods::setMethod(f="CheckExpDesignCompleteness",
-                   signature="MultiAssayExperiment",
+methods::setMethod(f         = "CheckExpDesignCompleteness",
+                   signature = "MultiAssayExperiment",
                    definition <- function(object, sampleList=NULL){
                      
                      Design <- object@metadata$design
@@ -155,17 +155,17 @@ methods::setMethod(f="CheckExpDesignCompleteness",
                        
                        #sampleList <- sampleMap(object)$primary
                        sampleList.tmp <- dplyr::group_by(data.frame(sampleMap(object)), primary) %>% dplyr::count() %>% 
-                         dplyr::ungroup() %>% mutate(max=max(n)) %>% filter(n==max)
+                         dplyr::ungroup() %>% dplyr::mutate(max=max(n)) %>% dplyr::filter(n==max)
                        sampleList <- sampleList.tmp$primary
                      }
                      
                      
                      # Only work with bio and batch factors for the rest of the function
                      namFact <- names(Design@Factors.Type)[Design@Factors.Type %in% c("Bio", "batch")]
-                     expDesign_mod <- Design@ExpDesign %>% dplyr::select(any_of(namFact))
+                     expDesign_mod <- Design@ExpDesign %>% dplyr::select(tidyselect::any_of(namFact))
                      
                      dF.List <- lapply(1:ncol(expDesign_mod), function(i){
-                       factor(expDesign_mod[[i]], levels=unique(expDesign_mod[[i]]))
+                       factor(expDesign_mod[[i]], levels = unique(expDesign_mod[[i]]))
                      })
                      names(dF.List) <- names(expDesign_mod)
                      
@@ -177,8 +177,8 @@ methods::setMethod(f="CheckExpDesignCompleteness",
                      group_count <- as.data.frame(dF.List) %>% 
                        table() %>% 
                        as.data.frame() %>% 
-                       full_join(tmp, by=names(dF.List)) %>% 
-                       mutate_at(.vars = "samples", .funs = function(x) dplyr::if_else(is.na(x), 0, 1)) %>%
+                       dplyr::full_join(tmp, by=names(dF.List)) %>% 
+                       dplyr::mutate_at(.vars = "samples", .funs = function(x) dplyr::if_else(is.na(x), 0, 1)) %>%
                        dplyr::group_by_at((bio.fact)) %>% 
                        dplyr::summarise(Count=sum(samples), .groups = "keep")
                      
@@ -203,7 +203,7 @@ methods::setMethod(f="CheckExpDesignCompleteness",
                      }
                      
                      ### plot
-                     output[["plot"]] <- plotExperimentalDesign(group_count, message=message)
+                     output[["plot"]] <- RFLOMICS::plotExperimentalDesign(group_count, message=message)
                      output[["counts"]] <- group_count
                      return(output)
                    })
@@ -221,26 +221,26 @@ methods::setMethod(f="CheckExpDesignCompleteness",
 #' @exportMethod Datasets_overview_plot
 #' @return plot
 
-methods::setMethod(f="Datasets_overview_plot",
-                   signature="MultiAssayExperiment",
+methods::setMethod(f         = "Datasets_overview_plot",
+                   signature = "MultiAssayExperiment",
                    definition <- function(object){
                      
                      if (class(object) != "MultiAssayExperiment") stop("ERROR: object is not MultiAssayExperiment class.")
                      if (length(object@ExperimentList) == 0) stop("ERROR: object@ExperimentList is NULL")
                      
-                     nb_entities <-lapply(object@ExperimentList, function(SE){ dim(SE)[1] }) %>% unlist()
+                     nb_entities <- lapply(object@ExperimentList, function(SE){ dim(SE)[1] }) %>% unlist()
                      
                      data <- data.frame(nb_entities = nb_entities, assay = names(nb_entities)) %>%
                        dplyr::full_join(data.frame(sampleMap(object)), by="assay") %>%
                        dplyr::mutate(y.axis = paste0(assay, "\n", "n=", nb_entities)) %>% dplyr::arrange(primary)
                      
-                     p <- ggplot(data, aes(x=primary, y=y.axis)) +
-                       geom_tile(aes(fill = y.axis), colour = "grey50") +
-                       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-                             panel.background = element_blank(), axis.ticks = element_blank(), legend.position="none",
-                             axis.text.x = element_text(angle = 90, hjust = 1)) +
-                       xlab(paste0("Samples (k=", length(unique(sampleMap(object)$primary)), ")")) +
-                       ylab("")
+                     p <- ggplot2::ggplot(data, ggplot2::aes(x=primary, y=y.axis)) +
+                       ggplot2::geom_tile(aes(fill = y.axis), colour = "grey50") +
+                       ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
+                             panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), legend.position="none",
+                             axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
+                       ggplot2::xlab(paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")")) +
+                       ggplot2::ylab("")
                      
                      print(p)
                      
@@ -258,7 +258,7 @@ methods::setMethod(f="Datasets_overview_plot",
 #' \item{pairwise comparison}
 #' \item{averaged expression}
 #' }
-#' @param model.formula a model formula (characters)
+#' @param model.formula a model formula (characters or formula)
 #' @return An object of class [\code{\link{MultiAssayExperiment-class}}]
 #' @exportMethod getExpressionContrast
 #'
@@ -285,14 +285,16 @@ methods::setMethod(f="Datasets_overview_plot",
 #'
 #' @author Christine Paysant-Le Roux
 #' @noRd
-methods::setMethod(f="getExpressionContrast",
-                   signature="MultiAssayExperiment",
+methods::setMethod(f          = "getExpressionContrast",
+                   signature  = "MultiAssayExperiment",
                    definition <- function(object, model.formula){
                      
                      Design <- object@metadata$design
                      
                      # model formula
-                     modelFormula <- formula(model.formula)
+                     if (class(model.formula) == "formula") model.formula <- as.character(model.formula)
+                     # modelFormula <- formula(model.formula) # deprecated? 
+                     modelFormula <- formula(paste(model.formula, collapse = " "))
                      
                      #Design@Model.formula <- formula(model.formula)
                      Design@Model.formula <- model.formula
@@ -329,11 +331,11 @@ methods::setMethod(f="getExpressionContrast",
                      # define all interaction contrasts
                      if(length(treatmentFactorsList) != 1){
                        if(interactionPresent){
-                         labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
-                         labelOrder <- attr(terms.formula(modelFormula), "order")
-                         twoWayInteractionInDesign <- labelsIntoDesign[which(labelOrder==2)]
-                         groupInteractionToKeep <- gsub(":", " vs ", twoWayInteractionInDesign)
-                         allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList, groupInteractionToKeep)
+                         labelsIntoDesign            <- attr(terms.formula(modelFormula),"term.labels")
+                         labelOrder                  <- attr(terms.formula(modelFormula), "order")
+                         twoWayInteractionInDesign   <- labelsIntoDesign[which(labelOrder == 2)]
+                         groupInteractionToKeep      <- gsub(":", " vs ", twoWayInteractionInDesign)
+                         allInteractionsContrasts_df <- RFLOMICS::defineAllInteractionContrasts(treatmentFactorsList, groupInteractionToKeep)
                          
                          listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
                        }

@@ -101,7 +101,7 @@ read_omics_data <- function(file){
   # read omics data and remove special characters
   data <- vroom::vroom(file, delim = "\t", show_col_types = FALSE)
   names(data)  <- stringr::str_remove_all(string = names(data), pattern = "[.,;:#@!?()§$€%&<>|=+-/\\]\\[\'\"\ ]") %>%
-    stringr::str_remove_all(., pattern = fixed("\\"))
+    stringr::str_remove_all(., pattern = stringr::fixed("\\"))
   
   # check if there is duplication in sample names
   sample.dup <- as.vector(data[which(table(names(data[-1])) > 1),1])[[1]]
@@ -145,7 +145,7 @@ read_omics_data <- function(file){
 GetDesignFromNames <- function(samples_name){
   
   # Get the number of design factor and the factors from the names of the count matrix
-  nb_dFac <- stringr::str_count(samples_name,pattern="_")+1
+  nb_dFac <- stringr::str_count(samples_name, pattern = "_") + 1
   # Test if the number of factor are the same for all sample names
   try(if(var(nb_dFac) != 0 ) stop("Column names do not have the same level of factor"))
   nb_dFac <- nb_dFac[1]
@@ -169,6 +169,7 @@ GetDesignFromNames <- function(samples_name){
 #'
 #' @param FacBio a vector of character giving the name of the bio factors.
 #' @param FacBatch a vector of character giving the name of the batch factors.
+#' @param MAE a MultiAssayExperiment produced by RFLOMICS. Default is null. If not null, overwrite FacBio and FacBatch.
 #'
 #' @return a named list of object of class formula
 #' @export
@@ -181,7 +182,15 @@ GetDesignFromNames <- function(samples_name){
 #'
 #' GetModelFormulae(FacBio=c("Genotype","Temperature"), FacBatch=c("Replicat", "laboratory"))
 #' 
-GetModelFormulae <- function(FacBio=NULL, FacBatch=NULL){
+GetModelFormulae <- function(FacBio=NULL, FacBatch=NULL, MAE = NULL){
+  
+  MAE <- MAE
+  
+  if (!is.null(MAE)) { 
+    facTypes <- RFLOMICS::getFactorTypes(MAE)
+    FacBio   <- names(facTypes)[facTypes == "Bio"]
+    FacBatch <- names(facTypes)[facTypes == "batch"]
+  }
   
   # Initialize
   formulae <- list()
@@ -858,8 +867,8 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
   col.panel.u <- col.panel[col.panel %in% unique(counts$status)]
   
   switch (length(factors),
-          "1" = { p <- ggplot(counts ,aes_string(x = factors[1], y = 1)) + theme(axis.text.y = element_blank()) + ylab("") },
-          "2" = { p <- ggplot(counts ,aes_string(x = factors[1], y = factors[2])) },
+          "1" = { p <- ggplot2::ggplot(counts ,ggplot2::aes_string(x = factors[1], y = 1)) + ggplot2::theme(axis.text.y = ggplot2::element_blank()) + ggplot2::ylab("") },
+          "2" = { p <- ggplot2::ggplot(counts ,ggplot2::aes_string(x = factors[1], y = factors[2])) },
           "3" = {
             #get factor with min conditions -> to select for "facet_grid"
             factors.l <- lapply(factors, function(x){ length(unique(counts[[x]])) }) %>% unlist()
@@ -871,14 +880,14 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
             #add column to rename facet_grid
             counts <- counts %>% dplyr::mutate(grid = paste0(factor.min, "=",get(factor.min)))
             
-            p <- ggplot(counts ,aes_string(x = factors[1], y = factors[2])) +
-              facet_grid(grid~.) })
+            p <- ggplot2::ggplot(counts ,ggplot2::aes_string(x = factors[1], y = factors[2])) +
+              ggplot2::facet_grid(grid~.) })
   
-  p <- p + geom_tile(aes(fill = status), color = "white", size = 1, width = 1, height = 1)  + geom_text(aes(label = Count)) +
-    scale_fill_manual(values = names(col.panel.u), breaks = col.panel.u) +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          axis.ticks = element_blank(), axis.text.x=element_text(angle=90, hjust=1)) +
-    ggtitle(message)
+  p <- p + ggplot2::geom_tile(aes(fill = status), color = "white", size = 1, width = 1, height = 1)  + ggplot2::geom_text(aes(label = Count)) +
+    ggplot2::scale_fill_manual(values = names(col.panel.u), breaks = col.panel.u) +
+    ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
+          axis.ticks = ggplot2::element_blank(), axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
+    ggplot2::ggtitle(message)
   
   return(p)
 }
@@ -1155,10 +1164,10 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
   comparisonPart1 <- comparisonPart2 <- comparisonPart3 <- comparisonPart4 <- NULL
   fixPart1 <- fixPart3 <- fixFactor1 <- fixFactor3 <- NULL
   
-  df_part1<- define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 1, 2, 2)
-  df_part2<- define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 2, 1, 2)
-  df_part3<- define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 3, 2, 1)
-  df_part4<- define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 4, 1, 1)
+  df_part1 <- RFLOMICS::define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 1, 2, 2)
+  df_part2 <- RFLOMICS::define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 2, 1, 2)
+  df_part3 <- RFLOMICS::define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 3, 2, 1)
+  df_part4 <- RFLOMICS::define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 4, 1, 1)
   df_interactionContrasts <- cbind(df_part1, df_part2, df_part3, df_part4)
   #df_interactionContrasts[, contrast := paste0("(", "(", contrastPart1, " - ", contrastPart2, ")"," - ", "(", contrastPart3, " - ", contrastPart4, ")", ")")]
   #df_interactionContrasts[, groupComparison := paste0("(", comparisonPart1, " - ", comparisonPart2, ")", " vs ", "(", fixPart1, " - ", fixPart3, ")")]
@@ -1177,7 +1186,7 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
                         "contrastPart3", "comparisonPart3", "fixFactor3", "fixPart3", "outsideGroup3",
                         "contrastPart4", "comparisonPart4", "fixFactor4", "fixPart4")
   #df_interactionContrasts[, (colnamesToDelete) := NULL]
-  df_interactionContrasts <- df_interactionContrasts %>% dplyr::select(-all_of(colnamesToDelete))
+  df_interactionContrasts <- df_interactionContrasts %>% dplyr::select(-tidyselect::all_of(colnamesToDelete))
   
   
   data.table::setnames(df_interactionContrasts, "outsideGroup4", "outsideGroup")
@@ -1228,7 +1237,7 @@ defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteraction
     j <- vecForj[k]
     #print(paste("i:",i))
     #print(paste("j:",j))
-    dataTableToCreate <- defineInteractionConstrastForPairsOfFactors(treatmentFactorsList, i, j)
+    dataTableToCreate <- RFLOMICS::defineInteractionConstrastForPairsOfFactors(treatmentFactorsList, i, j)
     allInteractionsContrasts_df <- rbind(allInteractionsContrasts_df, dataTableToCreate)
   }
   if(!missing(groupInteractionToKeep)){
@@ -1301,7 +1310,7 @@ assignVectorToGroups <- function(treatmentFactorsList = treatmentFactorsList, mo
   # assign binary vector to each group
   modelMatrixColnames <- colnames(modelMatrix)
   # treatmentCondenv <- new.env()
-  binaryVectorsList <- lapply(treatmentGroups, function(x) computeGroupVector(x, modelMatrixColnames, interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction))
+  binaryVectorsList <- lapply(treatmentGroups, function(x) RFLOMICS::computeGroupVector(x, modelMatrixColnames, interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction))
   names(binaryVectorsList) <- treatmentGroups
   groupDF <- as.data.frame(binaryVectorsList, row.names = modelMatrixColnames)
   mapply(function(x, value) assign(x, value, pos = treatmentCondenv), treatmentGroups, binaryVectorsList)
