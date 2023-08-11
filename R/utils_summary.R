@@ -2,20 +2,33 @@
 
 #' @title Get summary table from diffExpAnalysis analysis
 #'
-#' @param object a SE object (produced by Flomics)
+#' @param object a SE object (produced by Flomics) or a MAE
 #' @return a table 
 #' @export
 #'
 #' @examples 
 #' 
 
-sumDiffExp <- function(object){
+sumDiffExp <- function(object, SE.name = NULL){
   
   # TODO valid contrasts only by default
   # TODO if asked by user (all = TRUE), then provide all results even non-validated ones.
   
+  if (class(object) == "MultiAssayExperiment") {
+    if (!is.null(SE.name)) {
+      object <- object[[SE.name]]
+    }
+  }
+  
   pcut <- object@metadata$DiffExpAnal$Adj.pvalue.cutoff
   lcut <- object@metadata$DiffExpAnal$abs.logFC.cutoff
+  n_entities <- nrow(SummarizedExperiment::assay(object))
+  n_samples  <- ncol(SummarizedExperiment::assay(object))
+  
+  cat("Parameters:\n|adjusted-pvalue cutoff: ", pcut, 
+      "\n|logFC cutoff: ", lcut, 
+      "\n|number of features: ", n_entities,
+      "\n|number of samples: ", n_samples, "\n")
   
   df_sim <- lapply(object@metadata$DiffExpAnal$DEF, FUN = function(tab){
     
