@@ -60,6 +60,49 @@ getModelFormula <- function(object){
 # ---- Get possible contrasts : ----
 #' @title Get selected contrasts for the differential analysis
 #'
+#' @param object a MAE object (produced by Flomics)  
+#' @param typeContrast the type of contrast from which the possible contrasts are extracted. Default is all contrasts types. 
+#' @param modalities specific levels for the contrast selection
+#' @param returnTable return a dataTable with all contrasts information
+#' @return a character vector or a dataTable
+#' @export
+#'
+#' @examples 
+#' 
+
+getPossibleContrasts <- function(object, typeContrast = c("simple", "averaged", "interaction"),
+                                 modalities = NULL, returnTable = FALSE){
+
+  if (class(object) == "MultiAssayExperiment") {
+  
+    if (is.null(typeContrast)) typeContrast <- c("simple", "averaged", "interaction")
+    
+    allContrasts <- MAE@metadata$design@Contrasts.List
+    allContrasts <- allContrasts[which(names(allContrasts) %in% typeContrast)]
+    # allContrasts$fill <- TRUE # do.call need this
+    allContrastsdt <- data.table::rbindlist(allContrasts, fill = TRUE)
+
+    if (!is.null(modalities)) {
+      
+      allVarMod <- lapply(RFLOMICS::getDesignMat(MAE), FUN = function(vect) levels(factor(vect))[levels(factor(vect)) %in% modalities])
+      allVarMod <- Filter(length, allVarMod)
+      
+      allVarMod <- paste0(rep(names(allVarMod), times = sapply(allVarMod, length)), unlist(allVarMod))
+      
+      allContrastsdt <- allContrastsdt[grep(paste(allVarMod, collapse = "|"), allContrastsdt$contrastName),]
+    }
+    
+    if (returnTable) return(allContrastsdt)
+    else return(allContrastsdt$contrast)
+
+  }else{
+    stop("object is not a MultiAssayExperiment or a SummarizedExperiment.")
+  }
+}
+
+# ---- Get selected contrasts : ----
+#' @title Get selected contrasts for the differential analysis
+#'
 #' @param object a MAE object (produced by Flomics) or a SE (expect to find a diffAnalysis slot.)
 #' @return a dataTable
 #' @export
