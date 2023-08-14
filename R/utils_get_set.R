@@ -308,18 +308,19 @@ convertContrastToTag <- function(object, contrasts){
 #'
 #' @examples 
 #' 
-opDEList <- function(object, contrasts = NULL, operation = "union"){
+opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "union"){
   
-  # object <- MAE[["RNAseq_norm"]]
-  # contrasts <- NULL
   
-  if (class(object) != "SummarizedExperiment") stop("Object is not a SummarizedExperiment")
-  if (is.null(object@metadata$DiffExpAnal$Validcontrasts)) stop("Please validate your differential analyses first.")
+  if (!class(object) %in% c("SummarizedExperiment", "MultiAssayExperiment")) stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
+  if (class(object) == "MultiAssayExperiment" && is.null(SE.name)) stop("Please provide SE.name argument.")
   
+  # if (is.null(object@metadata$DiffExpAnal$Validcontrasts)) stop("Please validate your differential analyses first.")
+
   if (is.null(contrasts)) contrasts <- RFLOMICS::getSelectedContrasts(object)[["tag"]]
   if (RFLOMICS::isContrastName(object, contrasts)) contrasts <- RFLOMICS::convertContrastToTag(object, contrasts)
   
-  validTags <- RFLOMICS::convertContrastToTag(object, RFLOMICS::getValidContrasts(object))
+  if(!is.null(object@metadata$DiffExpAnal$Validcontrasts)) validTags <- RFLOMICS::convertContrastToTag(object, RFLOMICS::getValidContrasts(object))
+  else validTags <- contrasts
   
   tagsConcerned <- intersect(contrasts, validTags)
   if (length(tagsConcerned) == 0) stop("It seems there is no contrasts to select DE entities from.")
