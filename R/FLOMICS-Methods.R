@@ -154,7 +154,7 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                        #   purrr::reduce(dplyr::union)
                        
                        #sampleList <- sampleMap(object)$primary
-                       sampleList.tmp <- dplyr::group_by(data.frame(sampleMap(object)), primary) %>% dplyr::count() %>% 
+                       sampleList.tmp <- dplyr::group_by(data.frame(MultiAssayExperiment::sampleMap(object)), primary) %>% dplyr::count() %>% 
                          dplyr::ungroup() %>% dplyr::mutate(max=max(n)) %>% dplyr::filter(n==max)
                        sampleList <- sampleList.tmp$primary
                      }
@@ -771,7 +771,7 @@ methods::setMethod(f="Library_size_barplot.plot",
                      warnning <- NULL
                      
                      if (object@metadata$omicType != "RNAseq"){
-                       stop("WARNING : data are not RNAseq!")
+                       stop("WARNING: data are not RNAseq!")
                      }
                      
                      abundances <- SummarizedExperiment::assay(object)
@@ -789,13 +789,17 @@ methods::setMethod(f="Library_size_barplot.plot",
                        title <- "Raw data"
                      }
                      
-                     libSizeNorm <-  dplyr::full_join(object@metadata$Groups, data.frame ("value" = pseudo , "samples"=names(pseudo)), by="samples") %>%
+                     libSizeNorm <-  dplyr::full_join(object@metadata$Groups, data.frame("value" = pseudo , "samples" = names(pseudo)), by = "samples") %>%
                        dplyr::arrange(groups)
                      
                      libSizeNorm$samples <- factor(libSizeNorm$samples, levels = unique(libSizeNorm$samples))
                      
-                     p <- ggplot(libSizeNorm, aes(x=samples, y=value, fill=groups)) + geom_bar( stat="identity" ) + ylab(ylab) +
-                       theme(axis.text.x      = element_text(angle = 45, hjust = 1), legend.position  = "none") + labs(x = "", y = "Total read count per sample") + ggtitle(title)
+                     p <- ggplot2::ggplot(libSizeNorm, ggplot2::aes(x = samples, y = value, fill = groups)) + 
+                       ggplot2::geom_bar(stat = "identity" ) + 
+                       ggplot2::ylab(ylab) + # useful?
+                       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1), legend.position  = "none") + 
+                       ggplot2::labs(x = "", y = "Total read count per sample") + 
+                       ggplot2::ggtitle(title)
                      #axis.text.x     = element_blank(),
                      #axis.ticks      = element_blank())
                      #legend.key.size = unit(0.3, "cm"))
@@ -805,7 +809,17 @@ methods::setMethod(f="Library_size_barplot.plot",
                    })
 
 
+methods::setMethod(f          = "Library_size_barplot.plot",
+                   signature  = "MultiAssayExperiment",
+                   definition = function(object, SE.name){
+                     
+                     if (RFLOMICS::getOmicsTypes(object[[SE.name]]) == "RNAseq") {
+                       return(RFLOMICS::Library_size_barplot.plot(object[[SE.name]]))
+                     }else{
+                       stop("This function only applies to RNAseq data")
+                     }
 
+                   })
 
 
 #' @title Data_Distribution_plot
@@ -936,14 +950,17 @@ methods::setMethod(f="Data_Distribution_plot",
                      
                      switch (plot,
                              "density" = {
-                               p <- ggplot2::ggplot(pseudo.gg) + geom_density(aes(x=value, group = samples, color=groups), trim=FALSE) +
-                                 xlab(x_lab) + theme(legend.position='none') + ggtitle(title)
+                               p <- ggplot2::ggplot(pseudo.gg) + 
+                                 ggplot2::geom_density(ggplot2::aes(x=value, group = samples, color=groups), trim=FALSE) +
+                                 ggplot2::xlab(x_lab) + 
+                                 ggplot2::theme(legend.position='none') + 
+                                 ggplot2::ggtitle(title)
                              },
                              "boxplot" = {
-                               p <- ggplot(pseudo.gg, aes(x=samples, y=value,label = features)) +
-                                 ggplot2::geom_boxplot(aes(fill=groups), outlier.size = 0.3) +
-                                 theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +
-                                 xlab("") + ylab(x_lab) + ggtitle(title) #+
+                               p <- ggplot2::ggplot(pseudo.gg, ggplot2::aes(x=samples, y=value,label = features)) +
+                                 ggplot2::geom_boxplot(ggplot2::aes(fill=groups), outlier.size = 0.3) +
+                                 ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1), legend.position = "none") +
+                                 ggplot2::xlab("") + ggplot2::ylab(x_lab) + ggplot2::ggtitle(title) #+
                                #geom_point(alpha = 1/100,size=0)
                              })
                      
@@ -952,6 +969,15 @@ methods::setMethod(f="Data_Distribution_plot",
                    }
 )
 
+
+methods::setMethod(f          = "Data_Distribution_plot",
+                   signature  = "MultiAssayExperiment",
+                   definition = function(object, SE.name, plot = "boxplot"){
+                     
+                     RFLOMICS::Data_Distribution_plot(object = object[[SE.name]],
+                                                      plot = plot)
+                     
+                   })
 
 #' @title plotPCA
 #' @description This function plot the factorial map from a PCA object stored
@@ -996,16 +1022,16 @@ methods::setMethod(f= "plotPCA",
                      
                      
                      
-                     p <- ggplot(score, aes_string(x=PC1, y=PC2, color=condition))  +
+                     p <- ggplot2::ggplot(score, ggplot2::aes_string(x=PC1, y=PC2, color=condition))  +
                        ggplot2::geom_point(size=2) +
-                       ggplot2::geom_text(aes(label=samples), size=2, vjust = 0) +
-                       xlab(paste(PC1, " (",var1,"%)", sep="")) +
-                       ylab(paste(PC2, " (",var2,"%)", sep="")) +
+                       ggplot2::geom_text(ggplot2::aes(label=samples), size=2, vjust = 0) +
+                       ggplot2::xlab(paste(PC1, " (",var1,"%)", sep="")) +
+                       ggplot2::ylab(paste(PC2, " (",var2,"%)", sep="")) +
                        ggplot2::geom_hline(yintercept=0, linetype="dashed", color = "red") +
                        ggplot2::geom_vline(xintercept=0, linetype="dashed", color = "red") +
-                       theme(strip.text.x = element_text(size=8, face="bold.italic"),
-                             strip.text.y = element_text(size=8, face="bold.italic")) +
-                       ggtitle(title)
+                       ggplot2::theme(strip.text.x = ggplot2::element_text(size=8, face="bold.italic"),
+                             strip.text.y = ggplot2::element_text(size=8, face="bold.italic")) +
+                       ggplot2::ggtitle(title)
                      
                      # ellipse corr
                      aa <- dplyr::select(score, tidyselect::all_of(condition), PC1, PC2)
@@ -1222,7 +1248,15 @@ methods::setMethod(f= "TransformData",
                      return(objectTransform)
                    })
 
-
+methods::setMethod(f= "TransformData",
+                   signature = "MultiAssayExperiment",
+                   definition <- function(object, SE.name, transform_method = "log2"){
+                     
+                     object[[SE.name]] <- RFLOMICS::TransformData(object[[SE.name]])
+                     
+                     return(object)
+                     
+                   })
 
 ########################################## FILTER DATA #################
 
@@ -2058,6 +2092,17 @@ methods::setMethod(f="boxplot.DE.plot",
 )
 
 
+methods::setMethod(f          = "boxplot.DE.plot",
+                   signature  = "MultiAssayExperiment",
+                   definition = function(object, SE.name, DE = NULL, condition="groups"){
+                   
+                     RFLOMICS::boxplot.DE.plot(object = object[[SE.name]], 
+                                               DE = DE,
+                                               condition = condition)
+                     
+                   })
+
+
 ################################### CO-EXPRESSION #############################
 
 
@@ -2120,11 +2165,11 @@ methods::setMethod(f="runCoExpression",
                      CoExpAnal[["gene.list.names"]]  <- nameList
                      CoExpAnal[["merge.type"]]       <- merge
                      CoExpAnal[["replicates.nb"]]    <- replicates
-                     CoExpAnal[["K.range"]]    <- K
+                     CoExpAnal[["K.range"]]          <- K
                      
-                     geneList <- dplyr::select(object@metadata$DiffExpAnal[["mergeDEF"]], DEF, all_of(nameList)) %>% 
-                       dplyr::mutate(intersection=dplyr::if_else(rowSums(dplyr::select(., contains(nameList))) == length(nameList), "YES", "NO"), 
-                                     union=dplyr::if_else(rowSums(dplyr::select(., contains(nameList))) !=0 , "YES", "NO")) %>% 
+                     geneList <- dplyr::select(object@metadata$DiffExpAnal[["mergeDEF"]], DEF, tidyselect::all_of(nameList)) %>% 
+                       dplyr::mutate(intersection = dplyr::if_else(rowSums(dplyr::select(., tidyselect::contains(nameList))) == length(nameList), "YES", "NO"), 
+                                     union = dplyr::if_else(rowSums(dplyr::select(., tidyselect::contains(nameList))) != 0 , "YES", "NO")) %>% 
                        dplyr::filter(union != "NO", get(merge) == "YES") 
                      geneList <- geneList$DEF
                      
@@ -2212,6 +2257,27 @@ methods::setMethod(f="runCoExpression",
                    })
 
 
+methods::setMethod(f          = "runCoExpression",
+                   signature  = "MultiAssayExperiment",
+                   definition = function(object, SE.name, K=2:20, replicates=5, nameList, merge="union",
+                                         model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation, normFactors, clustermq=FALSE){
+                     
+                     
+                     object[[SE.name]] <- RFLOMICS::runCoExpression(object = object[[SE.name]],
+                                                                    K = K,
+                                                                    replicates = replicates,
+                                                                    nameList = nameList, 
+                                                                    merge = merge, 
+                                                                    model = model,
+                                                                    GaussianModel = GaussianModel,
+                                                                    transformation = transformation,
+                                                                    normFactors = normFactors,
+                                                                    clustermq = clustermq)
+                     
+                     return(object)
+                     
+                   })
+
 # Pour utiliser la fonction repeatable(), "seed"  pourrait être ajouté en paramètre.
 
 #' @title coseq.profile.plot
@@ -2240,10 +2306,11 @@ methods::setMethod(f="coseq.profile.plot",
                      y_profiles.gg <- dplyr::arrange(y_profiles.gg, get(condition))
                      y_profiles.gg$groups <- factor(y_profiles.gg$groups, levels = unique(y_profiles.gg$groups))
                      
-                     p <- ggplot2::ggplot(data = y_profiles.gg, aes(x=groups, y=y_profiles)) +
-                       geom_boxplot(aes_string(fill = condition), outlier.size = 0.3) +
-                       theme(axis.text.x=element_text(angle=90, hjust=1)) +  xlab("Conditions") + ylab("Expression profiles") +
-                       ggtitle(paste0("Cluster : ",numCluster, "; nb_observations : ",dim(assays.data)[1]))
+                     p <- ggplot2::ggplot(data = y_profiles.gg, ggplot2::aes(x = groups, y = y_profiles)) +
+                       ggplot2::geom_boxplot(ggplot2::aes_string(fill = condition), outlier.size = 0.3) +
+                       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +  
+                       ggplot2::xlab("Conditions") + ggplot2::ylab("Expression profiles") +
+                       ggplot2::ggtitle(paste0("Cluster: ",numCluster, "; nb_observations : ", dim(assays.data)[1]))
                      
                      if(!is.null(observation)){
                        
@@ -2253,10 +2320,22 @@ methods::setMethod(f="coseq.profile.plot",
                        p <- p + 
                          geom_point(data = df, aes(x=groups, y=mean.y_profiles), color="red", size = 2) +
                          geom_line( data = df, aes(x=groups, y=mean.y_profiles), color="red", group = 1) +
-                         ggtitle(paste0("Cluster : ",numCluster, "; nb_observations : ",dim(assays.data)[1], "; red : ", observation))
+                         ggtitle(paste0("Cluster: ",numCluster, "; nb_observations : ", dim(assays.data)[1], "; red : ", observation))
                      }
                      -                     
                        return(p)
+                   })
+
+
+methods::setMethod(f          = "coseq.profile.plot",
+                   signature  = "MultiAssayExperiment",
+                   definition = function(object, SE.name, numCluster = 1, condition="groups", observation=NULL){
+                     
+                     RFLOMICS::coseq.profile.plot(object = object[[SE.name]],
+                                                  numCluster = numCluster,
+                                                  condition = condition,
+                                                  observation = observation)
+                     
                    })
 
 
