@@ -139,13 +139,13 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       radioButtons(
         inputId  = session$ns("dataTransform"),
         label    = "Does the data need to be transformed?",
-        choices  = c("log1p"="log1p","squareroot"="squareroot","none"="none", "log2" = "log2", "log10" = "log10"), ## TODO 230321
+        choices  = c("log1p" = "log1p","squareroot" = "squareroot","none" = "none", "log2" = "log2", "log10" = "log10"), 
         selected = "none"),
       hr(),
       
       radioButtons(inputId = session$ns("selectProtMetNormMethod"),
                   label    = "method",
-                  choices  =   c("median"="median","totalSum"="total sum", "none"="none"),
+                  choices  =   c("median" = "median","totalSum" = "totalSum", "none" = "none"),
                   selected = "none"),
       
       
@@ -236,7 +236,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
                  column(width = 6, 
                         #RadioButtonsConditionUI(session$ns("factors"))
                         radioButtons(inputId = session$ns("PCA.factor.condition"),
-                                     label = 'Levels :',
+                                     label = 'Levels:',
                                      choices = c("groups",factors.bio, factors.batch),
                                      selected = "groups")),
                  column(width = 6, UpdateRadioButtonsUI(session$ns("factors")))
@@ -283,7 +283,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
                                          column(width = 6, 
                                                 #RadioButtonsConditionUI(session$ns("meta"))
                                                 radioButtons(inputId = session$ns("PCA.meta.condition"),
-                                                             label = 'Levels :',
+                                                             label = 'Levels:',
                                                              choices = factors.meta,
                                                              selected = factors.meta[1])),
                                          column(width = 6, UpdateRadioButtonsUI(session$ns("meta")))
@@ -301,7 +301,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   #### QC plot for raw/processed data
   # library size plot only for RNAseq data
   output$raw.LibSize <- renderPlot({
-    Library_size_barplot.plot(session$userData$FlomicsMultiAssay[[dataset]])
+    Library_size_barplot.plot(session$userData$FlomicsMultiAssay[[dataset]], raw = TRUE)
   })
   output$norm.LibSize <- renderPlot({
     
@@ -311,7 +311,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   
   # value (count/intensity) distribution (boxplot/density)
   output$raw.boxplot <- renderPlot({
-    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[dataset]], plot = "boxplot")
+    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[dataset]], plot = "boxplot", raw = TRUE)
   })
   output$norm.boxplot <- renderPlot({
     if(rea.values[[dataset]]$process == FALSE) return()
@@ -320,7 +320,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   })
   
   output$raw.CountDist <- renderPlot({
-    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[dataset]], plot = "density")
+    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[dataset]], plot = "density", raw = TRUE)
   })
   output$norm.CountDist <- renderPlot({
     if(rea.values[[dataset]]$process == FALSE) return()

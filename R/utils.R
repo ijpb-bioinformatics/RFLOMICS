@@ -1925,18 +1925,95 @@ contrastName2contrastDir <- function(contrastName){
 }
 
 
-######## CHECKS FUNCTIONS ###########
+######## INTERNAL - CHECKS FUNCTIONS ###########
 
 # check_NA: checks if there are NA/nan in the summarizedExperiment assay
 #' @title check_NA
 #'
 #' @param object An object of class \link{SummarizedExperiment}
 #' @return boolean. if TRUE, NA/nan are detected in the SE::assay.
-#' @export
 #' @examples
+#' @keywords internal
 #' @noRd
 #'
 check_NA <- function(object){
   NA_detect <- ifelse(any(is.na(SummarizedExperiment::assay(object))), TRUE, FALSE)
   return(NA_detect)
+}
+
+
+######## INTERNAL - Transform the Data ###########
+
+# apply_transformation: apply the transformation method stored in object@metadata[["transform_method"]] and modify the assay.
+#' @title apply_transformation
+#'
+#' @param object An object of class \link{SummarizedExperiment}
+#' @examples
+#' @keywords internal
+#' @noRd
+#'
+
+apply_transformation <- function(object){
+  
+  if (is.null(object@metadata[["transform"]][["transform_method"]])) 
+    stop("Expect transformation method.")
+  
+  if (object@metadata[["transform"]][["transformed"]]) 
+    message("WARNING: data were already transformed before!")
+  
+  transform_method <- object@metadata[["transform"]][["transform_method"]]
+  assayTransform <- SummarizedExperiment::assay(object, withDimnames = TRUE)
+  
+  switch(transform_method,
+         "log1p"      = { SummarizedExperiment::assay(object) <- log1p(assayTransform)     },
+         "log2"       = { SummarizedExperiment::assay(object) <- log2(assayTransform + 1)  },
+         "log10"      = { SummarizedExperiment::assay(object) <- log10(assayTransform + 1) },
+         "squareroot" = { SummarizedExperiment::assay(object) <- sqrt(assayTransform)      },
+         "none"       = { SummarizedExperiment::assay(object) <- assayTransform            }
+  )
+  
+  object@metadata[["transform"]][["transformed"]] <- TRUE
+  
+  return(object)
+}
+
+######## INTERNAL - Normalize the Data ###########
+
+# apply_norm: apply the normalization method stored in object@metadata[["Normalization"]] and modify the assay.
+#' @title apply_norm
+#'
+#' @param object An object of class \link{SummarizedExperiment}
+#' @description apply the normalization to the assay. Usually, after the transformation, 
+#' unless in the case of counts RNASeq data (TMM), where log2 is the second step.
+#' @examples
+#' @keywords internal
+#' @noRd
+#'
+
+apply_norm <- function(object){
+  
+  if (is.null(object@metadata[["Normalization"]])) 
+    stop("Expect normalization method.")
+  
+  if (object@metadata[["Normalization"]]$normalized) 
+    message("WARNING: data were already normalized before!")
+  
+  norm_method <- object@metadata[["Normalization"]]$methode
+  coefNorm    <- object@metadata[["Normalization"]]$coefNorm
+  
+  assayTransform   <- SummarizedExperiment::assay(object)
+  
+  switch(norm_method,
+         # "median"   = { SummarizedExperiment::assay(object) <- apply(assayTransform, 2, FUN = function(sample_vect) {sample_vect - median(sample_vect)})},
+         # "totalSum" = { SummarizedExperiment::assay(object) <- apply(assayTransform, 2, FUN = function(sample_vect) {sample_vect/sum(sample_vect^2)})   },
+         "median"   = { SummarizedExperiment::assay(object) <- sweep(assayTransform, 2, coefNorm, "-")},
+         "totalSum" = { SummarizedExperiment::assay(object) <- sweep(assayTransform, 2, coefNorm, "/")},
+         "TMM"      = { 
+           scales_factors <- object@metadata[["Normalization"]]$coefNorm$norm.factors*object@metadata[["Normalization"]]$coefNorm$lib.size
+           SummarizedExperiment::assay(object) <- scale(assayTransform + 1, center = FALSE, scale = scales_factors)
+         },
+         "none"     = { SummarizedExperiment::assay(object) <- assayTransform }
+  )
+  
+  return(object)
 }
