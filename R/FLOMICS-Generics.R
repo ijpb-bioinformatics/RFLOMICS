@@ -9,11 +9,28 @@ methods::setGeneric(
   def  = function(object, ... ){standardGeneric("mvQCdata")}
 )
 
+# ---- Transformation and normalization: ----
+
 methods::setGeneric(
   name = "RunNormalization",
-  def  = function(object, ... ){standardGeneric("RunNormalization")}
+  def  = function(object, NormMethod = NULL, ... ){standardGeneric("RunNormalization")}
 )
 
+methods::setGeneric(
+  name = "TransformData",
+  def  = function(object, 
+                  transform_method = NULL, 
+                  modify_assay = FALSE, ...){standardGeneric("TransformData")}
+)
+
+methods::setGeneric(
+  name = "FilterLowAbundance",
+  def  = function(object, 
+                  Filter_Strategy = "NbConditions", 
+                  CPM_Cutoff = 5, ... ){standardGeneric("FilterLowAbundance")}
+)
+
+# ---- Diff Analysis ----
 
 methods::setGeneric(
   name = "RunDiffAnalysis",
@@ -30,15 +47,9 @@ methods::setGeneric(
   def  = function(object, ... ){standardGeneric("plotPCA")}
 )
 
-methods::setGeneric(
-  name = "TransformData",
-  def  = function(object, ... ){standardGeneric("TransformData")}
-)
 
-methods::setGeneric(
-  name = "FilterLowAbundance",
-  def  = function(object, ... ){standardGeneric("FilterLowAbundance")}
-)
+
+
 
 methods::setGeneric(
   name = "RunPCA",
