@@ -1687,18 +1687,18 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
 runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list){
   
   iter <- rep(K, replicates)
-  nbr_iter <- length(iter)
+  # nbr_iter <- length(iter)
   coseq.res.list <- list()
   #set.seed(12345)
   
   coseq.res.list <- lapply(1:replicates, function(x){
     
-    try_rflomics(coseq::coseq(counts, K=K, parallel= TRUE,
-                              model           =param.list[["model"]],
-                              transformation  =param.list[["transformation"]],
-                              meanFilterCutoff=param.list[["meanFilterCutoff"]],
-                              normFactors     =param.list[["normFactors"]],
-                              GaussianModel   =param.list[["GaussianModel"]]))})
+    try_rflomics(coseq::coseq(counts, K = K, parallel = TRUE,
+                              model            = param.list[["model"]],
+                              transformation   = param.list[["transformation"]],
+                              meanFilterCutoff = param.list[["meanFilterCutoff"]],
+                              normFactors      = param.list[["normFactors"]],
+                              GaussianModel    = param.list[["GaussianModel"]]))})
   
   # coseq.res.list$value[[3]]@metadata$nbClusterError
   
@@ -1716,7 +1716,7 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list){
   # If they are at least the half of jobs succeed, valid results
   if(nK_success != 0){
     
-    CoExpAnal <- coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, conds = conds)
+    CoExpAnal <- RFLOMICS::coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, conds = conds)
     CoExpAnal[["warning"]] <- coseq.res.list$warning
     
     if(nK_success/length(iter) < 0.8){
@@ -1872,148 +1872,3 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
 }
 
 
-######## INTERNAL - ANNOTATION CLUSTERPROFILER #########
-
-#' @title see_pathview
-#' @param ... Possible arguments for pathview function.
-#' @return nothing. Plot on the currently opened device. 
-#' @keywords internal
-#' @noRd
-#'
-# Code from: https://stackoverflow.com/questions/60141841/how-to-get-pathview-plot-displayed-directly-rather-than-saving-as-a-file-in-r
-# It deletes every file created by pathview
-see_pathview <- function(...){
-  
-  msg <- capture.output(pathview::pathview(...), type = "message")
-  msg <- grep("image file", msg, value = TRUE)
-  filename <- sapply(strsplit(msg, " "), function(x) x[length(x)])
-  img <- png::readPNG(filename)
-  grid::grid.raster(img)
-  nam <- stringr::str_split(filename, "[.]")
-  invisible(file.remove(filename))
-  invisible(file.remove(paste0(nam[[1]][1], ".xml")))
-  invisible(file.remove(paste0(nam[[1]][1], ".png")))
-  return()
-}
-
-## contrastName to name of contrast directory
-# Exemple:
-# contrastName
-# "(temperatureMedium - temperatureElevated) in imbibitionEI - (temperatureMedium - temperatureElevated) in imbibitionDS"
-# contrastDir
-# "temperatureMedium-temperatureElevated_in_imbibitionEI_vs_temperatureMedium-temperatureElevated_in_imbibitionDS"
-
-#' Title
-#'
-#' @param a string: contrastName
-#'
-#' @return a string: contrastDir
-#'
-#' @export
-#' @examples
-#' @noRd
-contrastName2contrastDir <- function(contrastName){
-  # remplacement des comparaisons centrales
-  tmp <- stringr::str_replace_all(contrastName,"[:blank:]-[:blank:]\\(","_vs_")
-  # remplacement des comparaisons dans les parenthèses
-  tmp <- stringr::str_replace_all(tmp,"[:blank:]-[:blank:]","-")
-  # suppression des parenthèses
-  tmp <- stringr::str_remove_all(tmp,c("\\(|\\)"))
-  # remplcement des espaces par des _
-  tmp <- stringr::str_replace_all(tmp,"[:blank:]","_")
-  return(tmp)
-}
-
-
-######## INTERNAL - CHECKS FUNCTIONS ###########
-
-# check_NA: checks if there are NA/nan in the summarizedExperiment assay
-#' @title check_NA
-#'
-#' @param object An object of class \link{SummarizedExperiment}
-#' @return boolean. if TRUE, NA/nan are detected in the SE::assay.
-#' @examples
-#' @keywords internal
-#' @noRd
-#'
-check_NA <- function(object){
-  NA_detect <- ifelse(any(is.na(SummarizedExperiment::assay(object))), TRUE, FALSE)
-  return(NA_detect)
-}
-
-
-######## INTERNAL - Transform the Data ###########
-
-# apply_transformation: apply the transformation method stored in object@metadata[["transform_method"]] and modify the assay.
-#' @title apply_transformation
-#'
-#' @param object An object of class \link{SummarizedExperiment}
-#' @examples
-#' @keywords internal
-#' @noRd
-#'
-
-apply_transformation <- function(object){
-  
-  if (is.null(object@metadata[["transform"]][["transform_method"]])) 
-    stop("Expect transformation method.")
-  
-  if (object@metadata[["transform"]][["transformed"]]) 
-    message("WARNING: data were already transformed before!")
-  
-  transform_method <- object@metadata[["transform"]][["transform_method"]]
-  assayTransform <- SummarizedExperiment::assay(object, withDimnames = TRUE)
-  
-  switch(transform_method,
-         "log1p"      = { SummarizedExperiment::assay(object) <- log1p(assayTransform)     },
-         "log2"       = { SummarizedExperiment::assay(object) <- log2(assayTransform + 1)  },
-         "log10"      = { SummarizedExperiment::assay(object) <- log10(assayTransform + 1) },
-         "squareroot" = { SummarizedExperiment::assay(object) <- sqrt(assayTransform)      },
-         "none"       = { SummarizedExperiment::assay(object) <- assayTransform            }
-  )
-  
-  object@metadata[["transform"]][["transformed"]] <- TRUE
-  
-  return(object)
-}
-
-######## INTERNAL - Normalize the Data ###########
-
-# apply_norm: apply the normalization method stored in object@metadata[["Normalization"]] and modify the assay.
-#' @title apply_norm
-#'
-#' @param object An object of class \link{SummarizedExperiment}
-#' @description apply the normalization to the assay. Usually, after the transformation, 
-#' unless in the case of counts RNASeq data (TMM), where log2 is the second step.
-#' @examples
-#' @keywords internal
-#' @noRd
-#'
-
-apply_norm <- function(object){
-  
-  if (is.null(object@metadata[["Normalization"]])) 
-    stop("Expect normalization method.")
-  
-  if (object@metadata[["Normalization"]]$normalized) 
-    message("WARNING: data were already normalized before!")
-  
-  norm_method <- object@metadata[["Normalization"]]$methode
-  coefNorm    <- object@metadata[["Normalization"]]$coefNorm
-  
-  assayTransform   <- SummarizedExperiment::assay(object)
-  
-  switch(norm_method,
-         # "median"   = { SummarizedExperiment::assay(object) <- apply(assayTransform, 2, FUN = function(sample_vect) {sample_vect - median(sample_vect)})},
-         # "totalSum" = { SummarizedExperiment::assay(object) <- apply(assayTransform, 2, FUN = function(sample_vect) {sample_vect/sum(sample_vect^2)})   },
-         "median"   = { SummarizedExperiment::assay(object) <- sweep(assayTransform, 2, coefNorm, "-")},
-         "totalSum" = { SummarizedExperiment::assay(object) <- sweep(assayTransform, 2, coefNorm, "/")},
-         "TMM"      = { 
-           scales_factors <- object@metadata[["Normalization"]]$coefNorm$norm.factors*object@metadata[["Normalization"]]$coefNorm$lib.size
-           SummarizedExperiment::assay(object) <- scale(assayTransform + 1, center = FALSE, scale = scales_factors)
-         },
-         "none"     = { SummarizedExperiment::assay(object) <- assayTransform }
-  )
-  
-  return(object)
-}
