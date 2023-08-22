@@ -653,51 +653,52 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 methods::setMethod(f          = "RunPCA",
                    signature  = "SummarizedExperiment",
                    definition <- function(object, nbcp = 5, raw = FALSE){
-
-                     # Check for NA/nan
-                     if(RFLOMICS:::check_NA(object)){
-                       message("STOP: NA or nan detected in your data")
-                       return(object)
-                     }
                      
-                     # Compute PCA on raw data
-                     # Assume assay(object) is untransformed and un-normalized
-                     if (raw) {
-                       
-                       if (object@metadata[["transform"]][["transformed"]])
-                         message("WARNING: your data are not raw (transformed)")
-                       
-                       if (object@metadata[["Normalization"]]$normalized) 
-                         message("WARNING: your data are not raw (normalized)")
-                       
-                       pseudo <- SummarizedExperiment::assay(object)
-                       
-                       if (object@metadata$omicType == "RNAseq") {
-                         pseudo <- log2(pseudo + 1) 
-                         object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
-                       } else {
-                         object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
-                       }
-                       
-                       return(object)
-                     }
+                     object2 <- RFLOMICS:::checkTransNorm(object, raw = raw)
+                     pseudo  <- SummarizedExperiment::assay(object2)
                      
-                     # Compute PCA, transform and normalize the data if needed.
-                     else{
-                       
-                      objectPCA <- object
-
-                      if (!objectPCA@metadata[["transform"]][["transformed"]]) objectPCA <- RFLOMICS:::apply_transformation(objectPCA)
-                      if (!objectPCA@metadata[["Normalization"]]$normalized)   objectPCA <- RFLOMICS:::apply_norm(objectPCA)
-                
-                      pseudo <- SummarizedExperiment::assay(objectPCA)
-                       
-                      if (objectPCA@metadata$omicType == "RNAseq")  pseudo <- log2(pseudo) # + 1 in apply norm
-                       
-                       object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
-                       
-                       return(object)
-                     }
+                     if(raw) object@metadata[["PCAlist"]][["raw"]]  <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
+                     else    object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
+                     
+                     return(object)
+                     
+                     #  ### OLD CODE
+                     # if (raw) {
+                     #   
+                     #   if (object@metadata[["transform"]][["transformed"]])
+                     #     message("WARNING: your data are not raw (transformed)")
+                     #   
+                     #   if (object@metadata[["Normalization"]]$normalized) 
+                     #     message("WARNING: your data are not raw (normalized)")
+                     #   
+                     #   pseudo <- SummarizedExperiment::assay(object)
+                     #   
+                     #   if (object@metadata$omicType == "RNAseq") {
+                     #     pseudo <- log2(pseudo + 1) 
+                     #     object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
+                     #   } else {
+                     #     object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
+                     #   }
+                     #   
+                     #   return(object)
+                     # }
+                     # 
+                     # # Compute PCA, transform and normalize the data if needed.
+                     # else{
+                     #   
+                     #  objectPCA <- object
+                     # 
+                     #  if (!objectPCA@metadata[["transform"]][["transformed"]]) objectPCA <- RFLOMICS:::apply_transformation(objectPCA)
+                     #  if (!objectPCA@metadata[["Normalization"]]$normalized)   objectPCA <- RFLOMICS:::apply_norm(objectPCA)
+                     # 
+                     #  pseudo <- SummarizedExperiment::assay(objectPCA)
+                     #   
+                     #  if (objectPCA@metadata$omicType == "RNAseq")  pseudo <- log2(pseudo) # + 1 in apply norm
+                     #   
+                     #   object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
+                     #   
+                     #   return(object)
+                     # }
                      
                      
                      
@@ -889,47 +890,28 @@ methods::setMethod(f          = "Data_Distribution_plot",
                    signature  = "SummarizedExperiment",
                    definition <- function(object, plot = "boxplot", raw = FALSE){
 
+                     object2 <- RFLOMICS:::checkTransNorm(object, raw = raw)
+                     pseudo  <- SummarizedExperiment::assay(object2)
+                     
+                     x_lab  <- paste0(object2@metadata$omicType, " data")
+                     if (object2@metadata$omicType == "RNAseq") {
+                       x_lab  <- paste0("log2(", object2@metadata$omicType, " data)")
+                     }
+                     
                      # Raw data 
-                     if (raw) {
-                       
-                       pseudo <- SummarizedExperiment::assay(object)
-                       
-                       if (object@metadata$omicType == "RNAseq") {
-                         pseudo <- log2(pseudo + 1) 
-                         x_lab  <- paste0("log2(", object@metadata$omicType, " data)")
-                         title  <- paste0(object@metadata$omicType, " raw data")
-                       } else {
-                         x_lab  <- paste0(object@metadata$omicType, " data")
-                         title  <- paste0(object@metadata$omicType, " raw data")
-                       }
+                     if (raw) {  title  <- paste0(object2@metadata$omicType, " raw data") 
                        
                      } else {
                       # Already normalized or transformed Data
+                       title  <- paste0(object2@metadata$omicType, " data")
                        
-                       x_lab  <- paste0(object@metadata$omicType, " data")
-                       title  <- paste0(object@metadata$omicType, " data")
+                       if (object2@metadata[["transform"]][["transformed"]]) 
+                         title  <- paste0("Transformed (", object2@metadata[["transform"]][["transform_method"]], ") ", title)
+                     
+                       if (object2@metadata[["Normalization"]]$normalized) 
+                         title <- paste0(title, " - normalization: ", object2@metadata[["Normalization"]]$methode)
                        
-                       # object <- MAE[["Metabolites"]]
-                       
-                       if (!object@metadata[["transform"]][["transformed"]] && object@metadata[["transform"]][["transform_method"]] != "none") {
-                         object <- RFLOMICS:::apply_transformation(object)
-                         title  <- paste0("Transformed (", object@metadata[["transform"]][["transform_method"]], ") ", title)
-                       }
-                       if (!object@metadata[["Normalization"]]$normalized && object@metadata[["Normalization"]][["methode"]] != "none") {
-                         object <- RFLOMICS:::apply_norm(object)
-                         title <- paste0(title, " - normalization: ", object@metadata[["Normalization"]]$methode)
-                       }                     
-                       
-                       pseudo <- SummarizedExperiment::assay(object)
-                       
-                       if (object@metadata$omicType == "RNAseq") {
-                         pseudo <- log2(pseudo) # +1 in NormMethod
-                         x_lab  <- paste0("log2(", object@metadata$omicType, " data)")
-                        }
-                       
-                       
-                        
-                      
+                       if (object2@metadata$omicType == "RNAseq") { x_lab  <- paste0("log2(", object2@metadata$omicType, " data)")}               
                      }
                      
                      # switch(object@metadata$omicType,
@@ -1117,10 +1099,13 @@ methods::setMethod(f= "plotPCA",
                      switch (PCA,
                              "raw"  = {title <- paste0("Raw ", object@metadata$omicType, " data")},
                              "norm" = {title <- switch (object@metadata$omicType,
-                                                        "RNAseq" = { paste0("Filtred and normalized ", object@metadata$omicType," data (", object@metadata$Normalization$methode, ")")  },
-                                                        "proteomics" = {paste0("Transformed and normalized ", object@metadata$omicType," data (", object@metadata$transform_method, 
+                                                        "RNAseq" = { paste0("Filtred and normalized ", object@metadata$omicType, 
+                                                                            " data (", object@metadata$Normalization$methode, ")")  },
+                                                        "proteomics" = {paste0("Transformed and normalized ", object@metadata$omicType, 
+                                                                               " data (", object@metadata$transform$transform_method, 
                                                                                " - norm: ", object@metadata$Normalization$methode, ")")},
-                                                        "metabolomics" = {paste0("Transformed and normalized ", object@metadata$omicType," data (", object@metadata$transform_method, 
+                                                        "metabolomics" = {paste0("Transformed and normalized ", object@metadata$omicType, 
+                                                                                 " data (", object@metadata$transform$transform_method, 
                                                                                  " - norm: ", object@metadata$Normalization$methode, ")")}
                              )}
                      )
@@ -1319,27 +1304,41 @@ methods::setMethod(f="mvQCdata",
 #' @exportMethod TransformData
 #'
 #' @examples
-methods::setMethod(f= "TransformData",
-                   signature = "SummarizedExperiment",
-                   definition <- function(object, transform_method = "log2", modify_assay = FALSE){
+methods::setMethod(f          = "TransformData",
+                   signature  = "SummarizedExperiment",
+                   definition = function(object, transform_method = NULL, modify_assay = FALSE){
                      
-                     objectTransform <- object
-                     
-                     # assayTransform  <- SummarizedExperiment::assay(objectTransform)
-                     objectTransform@metadata[["transform"]][["transform_method"]] <- transform_method  
-                     
-                     if (modify_assay){
-                       objectTransform <- RFLOMICS:::apply_transformation(object)
-                       objectTransform@metadata[["transform"]][["transformed"]] <- TRUE
+                     if (is.null(transform_method)) {
+                       if (!modify_assay && RFLOMICS::getOmicsTypes(object) == "RNAseq") {
+                         message("No transform method indicated, no assay modification asked, RNAseq detected -> transformation_method set to \"none\"")
+                         transform_method <- "none"
+                       } else {
+                         message("No transform method indicated, using log2 transformation")
+                         transform_method <- "log2"
+                       }
                      }
                      
-                     return(objectTransform)
+                     if (RFLOMICS::getOmicsTypes(object) == "RNAseq" && transform_method != "none") {
+                       message("Transformation other than 'none' are not allowed for RNAseq for now. Forcing none transformation. 
+                               Data will be transformed using log2 after the normalization is ran.")
+                       transform_method <- "none"
+                     }
+                     
+                     object@metadata[["transform"]][["transform_method"]] <- transform_method  
+                     
+                     if (modify_assay) {
+                       object <- RFLOMICS:::apply_transformation(object)
+                     }
+                     
+                     return(object)
                      
                    })
 
+
+
 methods::setMethod(f          = "TransformData",
                    signature  = "MultiAssayExperiment",
-                   definition = function(object, SE.name, transform_method = "log2", modify_assay = FALSE){
+                   definition = function(object, SE.name, transform_method = NULL, modify_assay = FALSE){
                      
                      object[[SE.name]] <- RFLOMICS::TransformData(object[[SE.name]], 
                                                                   transform_method = transform_method, 
@@ -1432,7 +1431,7 @@ methods::setMethod(f          = "FilterLowAbundance",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, Filter_Strategy = "NbConditions", CPM_Cutoff = 5){
                      
-                     if(RFLOMICS::getOmicsTypes(object[[SE.name]]) == "RNAseq"){
+                     if (RFLOMICS::getOmicsTypes(object[[SE.name]]) == "RNAseq") {
                        object[[SE.name]] <- RFLOMICS::FilterLowAbundance(object          = object[[SE.name]], 
                                                                          Filter_Strategy = Filter_Strategy, 
                                                                          CPM_Cutoff      = CPM_Cutoff)
@@ -1470,20 +1469,49 @@ methods::setMethod(f          = "FilterLowAbundance",
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @examples
 #'
-methods::setMethod(f="RunNormalization",
-                   signature="SummarizedExperiment",
-                   definition <- function(object, NormMethod){
+methods::setMethod(f          = "RunNormalization",
+                   signature  = "SummarizedExperiment",
+                   definition = function(object, NormMethod = NULL){
+                     
+                     if (object@metadata[["Normalization"]]$normalized) 
+                       message("WARNING: data were already normalized before!")
+                     
+                     if (object@metadata[["transform"]][["transformed"]]) 
+                       message("WARNING: data were transformed before!")
+                     
+                     if (is.null(NormMethod)) {
+                       if (RFLOMICS::getOmicsTypes(object) == "RNAseq" && object@metadata[["transform"]][["transform_method"]] == "none") {
+                         message("Using TMM normalization for RNAseq (counts) data")
+                         NormMethod <- "TMM"
+                       } else {
+                         NormMethod <- "none"
+                       }
+                     }
+                     
+                     if (RFLOMICS::getOmicsTypes(object) == "RNAseq" && NormMethod != "TMM") {
+                       message("Forcing TMM normalization for RNAseq (counts) data")
+                       NormMethod <- "TMM"
+                     }
+                     
+                     object2 <- object
+                     
+                     # Run normalization on transformed data (except for RNAseq data, transformation is expected to be "none" anyway)
+                     if (!object@metadata[["transform"]][["transformed"]] && object@metadata[["transform"]][["transform_method"]] != "none")
+                       object2 <- RFLOMICS:::apply_transformation(object2)
                      
                      coefNorm  = switch(NormMethod,
-                                        "TMM"        = TMM.Normalization(SummarizedExperiment::assay(object), object@metadata$Groups$groups),
-                                        "median"     = apply(SummarizedExperiment::assay(object), 2, FUN = function(sample_vect) {median(sample_vect)}),
-                                        "totalSum"   = apply(SummarizedExperiment::assay(object), 2, FUN = function(sample_vect) {sum(sample_vect^2)})
+                                        "TMM"        = TMM.Normalization(SummarizedExperiment::assay(object2), object2@metadata$Groups$groups),
+                                        "median"     = apply(SummarizedExperiment::assay(object2), 2, FUN = function(sample_vect) {median(sample_vect)}),
+                                        "totalSum"   = apply(SummarizedExperiment::assay(object2), 2, FUN = function(sample_vect) {sum(sample_vect^2)}),
+                                        "none"       = rep(1, ncol(SummarizedExperiment::assay(object2)))
                      )
-                     object@metadata[["Normalization"]]$methode <- NormMethod
+                     
+                     object@metadata[["Normalization"]]$methode  <- NormMethod
                      object@metadata[["Normalization"]]$coefNorm <- coefNorm
                      
                      return(object)
                    })
+
 
 methods::setMethod(f          = "RunNormalization",
                    signature  = "MultiAssayExperiment",

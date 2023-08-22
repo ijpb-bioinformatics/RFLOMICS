@@ -316,7 +316,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   output$norm.boxplot <- renderPlot({
     if(rea.values[[dataset]]$process == FALSE) return()
     
-    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]], plot = "boxplot")
+    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]], plot = "boxplot", raw = FALSE)
   })
   
   output$raw.CountDist <- renderPlot({
@@ -325,7 +325,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   output$norm.CountDist <- renderPlot({
     if(rea.values[[dataset]]$process == FALSE) return()
     
-    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]], plot = "density")
+    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".filtred")]], plot = "density", raw = FALSE)
   })
   
   # PCA plot
@@ -347,7 +347,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     #condGroup <- input$`factors-condColorSelect`[1]
     condGroup <- input$PCA.factor.condition
     
-    RFLOMICS::plotPCA(local.rea.values$dataset.processed.SE, PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
+    RFLOMICS::plotPCA(local.rea.values$dataset.processed.SE, PCA = "norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
     
   })
   
