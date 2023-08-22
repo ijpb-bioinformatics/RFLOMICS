@@ -652,132 +652,16 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 #'
 methods::setMethod(f          = "RunPCA",
                    signature  = "SummarizedExperiment",
-                   definition <- function(object, nbcp = 5, raw = FALSE){
+                   definition = function(object, nbcp = 5, raw = FALSE){
                      
                      object2 <- RFLOMICS:::checkTransNorm(object, raw = raw)
                      pseudo  <- SummarizedExperiment::assay(object2)
                      
-                     if(raw) object@metadata[["PCAlist"]][["raw"]]  <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
+                     if (raw) object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
                      else    object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
                      
                      return(object)
                      
-                     #  ### OLD CODE
-                     # if (raw) {
-                     #   
-                     #   if (object@metadata[["transform"]][["transformed"]])
-                     #     message("WARNING: your data are not raw (transformed)")
-                     #   
-                     #   if (object@metadata[["Normalization"]]$normalized) 
-                     #     message("WARNING: your data are not raw (normalized)")
-                     #   
-                     #   pseudo <- SummarizedExperiment::assay(object)
-                     #   
-                     #   if (object@metadata$omicType == "RNAseq") {
-                     #     pseudo <- log2(pseudo + 1) 
-                     #     object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
-                     #   } else {
-                     #     object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
-                     #   }
-                     #   
-                     #   return(object)
-                     # }
-                     # 
-                     # # Compute PCA, transform and normalize the data if needed.
-                     # else{
-                     #   
-                     #  objectPCA <- object
-                     # 
-                     #  if (!objectPCA@metadata[["transform"]][["transformed"]]) objectPCA <- RFLOMICS:::apply_transformation(objectPCA)
-                     #  if (!objectPCA@metadata[["Normalization"]]$normalized)   objectPCA <- RFLOMICS:::apply_norm(objectPCA)
-                     # 
-                     #  pseudo <- SummarizedExperiment::assay(objectPCA)
-                     #   
-                     #  if (objectPCA@metadata$omicType == "RNAseq")  pseudo <- log2(pseudo) # + 1 in apply norm
-                     #   
-                     #   object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
-                     #   
-                     #   return(object)
-                     # }
-                     
-                     
-                     
-                     ### OLD CODE
-                     # # Transformation of the data (log2, log10, etc.)
-                     # if(transformData){
-                     #   if(!is.null(object@metadata[["transform_method"]])){
-                     #     print("PCA: transforming data")
-                     #     objectPCA <- RFLOMICS::TransformData(object, transform_method = transformMethod)
-                     # 
-                     #     # Check for NA/nan
-                     #     if(RFLOMICS::check_NA(objectPCA)){
-                     #       message("STOP: NA or nan detected in your data")
-                     #       return(object)
-                     #     }
-                     # 
-                     #     pseudo <- SummarizedExperiment::assay(objectPCA)
-                     #   }else{
-                     #     message("PCA: asking for transforming the data but no transform method in the object. Keeping untransformed data")
-                     #     pseudo <- SummarizedExperiment::assay(object)
-                     #   }
-                     # }else{
-                     #   pseudo <- SummarizedExperiment::assay(object)
-                     # } # end if transform
-                     # 
-                     # # if the data has undergone a transformation
-                     # if(!is.null(object@metadata[["Normalization"]]$methode)){
-                     #   
-                     #   # RNASeq data
-                     #   if(object@metadata[["Normalization"]]$methode == "TMM"  && ! is.null(object@metadata[["Normalization"]]$coefNorm)){
-                     #     pseudo <- log2(scale(pseudo+1, center=FALSE,
-                     #                          scale=object@metadata[["Normalization"]]$coefNorm$norm.factors*object@metadata[["Normalization"]]$coefNorm$lib.size))
-                     #     object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
-                     #     
-                     #   }
-                     #   # Proteo and metabo median
-                     #   else if(object@metadata[["Normalization"]]$methode == "median"){
-                     #     pseudo <- apply(pseudo, 2, FUN = function(sample_vect) sample_vect - median(sample_vect)) 
-                     #     
-                     #     object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
-                     #   }
-                     #   # Proteo and metabo totalSum
-                     #   else if(object@metadata[["Normalization"]]$methode == "totalSum"){
-                     #     pseudo <- apply(pseudo, 2, FUN = function(sample_vect) sample_vect/sum(sample_vect^2)) 
-                     #     
-                     #     object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
-                     #   }else{ # method = "none"
-                     #     pseudo <- pseudo
-                     #     
-                     #     object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
-                     #   }
-                     # }
-                     # 
-                     # # if no transformation: differentiate RNASeq from the rest
-                     # else{
-                     #   if(object@metadata$omicType == "RNAseq"){
-                     #     pseudo <- log2(pseudo + 1)
-                     #     object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
-                     #   }else{
-                     #     pseudo <- pseudo # do nothing and compute the PCA
-                     #     object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
-                     #   }
-                     #  }
-                     
-                     
-                     ### OLD CODE (older)
-                     # # if the data has undergone a transformation (meta or prot data)
-                     # else if(! is.null(object@metadata$transform_method)){
-                     #   pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE) + 1) # pourquoi du log2 ?! 
-                     #   object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = 5,graph=F)
-                     # }
-                     # 
-                     # # if no transformation
-                     # else{
-                     #   pseudo <- log2(scale(SummarizedExperiment::assay(object), center=FALSE) + 1)
-                     #   object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = 5,graph=F)
-                     # }
-                     # return(object)
-                     # 
                    }
 )
 
@@ -830,19 +714,6 @@ methods::setMethod(f          = "Library_size_barplot.plot",
                        pseudo <- pseudo %>% colSums(., na.rm = TRUE)
                        title <- paste0("Filtered and normalized (", object@metadata$Normalization$methode, ") data")
                      }
-                     
-                     # # normalized data
-                     # if(! is.null(object@metadata$Normalization)) {
-                     #   pseudo  <- scale(SummarizedExperiment::assay(object), center=FALSE,
-                     #                    scale=object@metadata$Normalization$coefNorm$norm.factors*object@metadata$Normalization$coefNorm$lib.size) %>% colSums(., na.rm = TRUE)
-                     #   title <- paste0("Filtered and normalized (", object@metadata$Normalization$methode, ") data")
-                     # }
-                     # 
-                     # # raw data
-                     # else{
-                     #   pseudo  <- SummarizedExperiment::assay(object) %>% colSums(., na.rm = TRUE)
-                     #   title <- "Raw data"
-                     # }
                      
                      libSizeNorm <-  dplyr::full_join(object@metadata$Groups, data.frame("value" = pseudo , "samples" = names(pseudo)), by = "samples") %>%
                        dplyr::arrange(groups)
@@ -914,118 +785,6 @@ methods::setMethod(f          = "Data_Distribution_plot",
                        if (object2@metadata$omicType == "RNAseq") { x_lab  <- paste0("log2(", object2@metadata$omicType, " data)")}               
                      }
                      
-                     # switch(object@metadata$omicType,
-                     #        "RNAseq" = {
-                     #          
-                     #          # before normalization
-                     #          if (is.null(object@metadata[["Normalization"]]$coefNorm)) {
-                     #            pseudo <- log2(SummarizedExperiment::assay(object) + 1)
-                     #            x_lab  <- paste0("log2(", object@metadata$omicType, " data)")
-                     #            title  <- paste0(object@metadata$omicType, " raw data")
-                     #            
-                     #          }
-                     #          # after normalization
-                     #          else{
-                     #            pseudo <- log2(scale(SummarizedExperiment::assay(object) + 1, center = FALSE,
-                     #                                 scale = object@metadata[["Normalization"]]$coefNorm$norm.factors*object@metadata[["Normalization"]]$coefNorm$lib.size))
-                     #            x_lab  <- paste0("log2(", object@metadata$omicType, " data)")
-                     #            title  <- paste0("Filtered and normalized ", object@metadata$omicType, " (",
-                     #                             object@metadata$Normalization$methode, ") data")
-                     #          }
-                     #        },
-                     #        "proteomics" = {
-                     #          # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
-                     #          if (is.null(object@metadata$transform_method) || 
-                     #              object@metadata$transform_method == "none" || 
-                     #              is.null(object@metadata[["Normalization"]]$methode)) {
-                     #            
-                     #            pseudo <- SummarizedExperiment::assay(object)
-                     #            x_lab  <- paste0(object@metadata$omicType, " data")
-                     #            title  <- paste0(object@metadata$omicType, " raw data")
-                     #            
-                     #          }
-                     #          # after transformation
-                     #          else{
-                     #            
-                     #            x_lab  <- paste0(object@metadata$omicType, " data")
-                     #            title  <- paste0("Transformed ", object@metadata$omicType, " (" , object@metadata$transform_method, ") data")
-                     #            if (is.null(object@metadata[["Normalization"]]$methode)) title <- paste0(title, " - No Normalization")
-                     #            else if (object@metadata[["Normalization"]]$methode != "none") title <- paste0(title, " - normalization: ", object@metadata[["Normalization"]]$methode)
-                     #            
-                     #            switch(object@metadata$transform_method,
-                     #                   "log1p" = {
-                     #                     pseudo <- log1p(SummarizedExperiment::assay(object)) },
-                     #                   "squareroot" = {
-                     #                     pseudo <- sqrt(SummarizedExperiment::assay(object)) },
-                     #                   "log2" = {
-                     #                     pseudo <- log2(SummarizedExperiment::assay(object) + 1 )},
-                     #                   "log10" = {
-                     #                     pseudo <- log10(SummarizedExperiment::assay(object) + 1)}
-                     #            )
-                     #            
-                     #          }
-                     #          
-                     #          # Normalization is after the transformation 
-                     #          if (!is.null(object@metadata[["Normalization"]]$methode)) {
-                     #            
-                     #            switch(object@metadata[["Normalization"]]$methode,
-                     #                   "none" = {
-                     #                     pseudo <- pseudo },
-                     #                   "median" = {
-                     #                     pseudo <- apply(pseudo, 2, FUN = function(sample_vect) sample_vect - median(sample_vect)) },
-                     #                   "totalSum" = {
-                     #                     pseudo <- apply(pseudo, 2, FUN = function(sample_vect) sample_vect/sum(sample_vect^2))}
-                     #            )
-                     #          }
-                     #        },
-                     #        "metabolomics" = {
-                     #          # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
-                     #          if (is.null(object@metadata$transform_method) || 
-                     #              object@metadata$transform_method == "none" || 
-                     #              is.null(object@metadata[["Normalization"]]$methode)) {
-                     #            pseudo <- SummarizedExperiment::assay(object)
-                     #            x_lab  <- paste0(object@metadata$omicType, " data")
-                     #            title  <- paste0(object@metadata$omicType, " raw data")
-                     #            
-                     #          }
-                     #          # after transformation
-                     #          else{
-                     #            
-                     #            x_lab  <- paste0(object@metadata$omicType, " data")
-                     #            title  <- paste0("Transformed ", object@metadata$omicType, " (" , object@metadata$transform_method, ") data")
-                     #            if (is.null(object@metadata[["Normalization"]]$methode)) title <- paste0(title, " - No Normalization")
-                     #            else if (object@metadata[["Normalization"]]$methode != "none") title <- paste0(title, " - normalization: ", object@metadata[["Normalization"]]$methode)
-                     #            
-                     #            switch(object@metadata$transform_method,
-                     #                   
-                     #                   "log1p" = {
-                     #                     pseudo <- log1p(SummarizedExperiment::assay(object)) },
-                     #                   "squareroot" = {
-                     #                     pseudo <- sqrt(SummarizedExperiment::assay(object)) },
-                     #                   "log2" = {
-                     #                     pseudo <- log2(SummarizedExperiment::assay(object) + 1 )},
-                     #                   "log10" = {
-                     #                     pseudo <- log10(SummarizedExperiment::assay(object) + 1 )}
-                     #            )
-                     #            
-                     #            
-                     #          }
-                     #          
-                     #          # Normalization is after the transformation 
-                     #          if (!is.null(object@metadata[["Normalization"]]$methode)) {
-                     #            
-                     #            switch(object@metadata[["Normalization"]]$methode,
-                     #                   "none" = {
-                     #                     pseudo <- pseudo },
-                     #                   "median" = {
-                     #                     pseudo <- apply(pseudo, 2, FUN = function(sample_vect) sample_vect - median(sample_vect)) },
-                     #                   "totalSum" = {
-                     #                     pseudo <- apply(pseudo, 2, FUN = function(sample_vect) sample_vect/sum(sample_vect^2))}
-                     #            )
-                     #          }
-                     #        }
-                     # )
-                     # 
                      pseudo.gg <- pseudo %>% reshape2::melt()
                      colnames(pseudo.gg) <- c("features", "samples", "value")
                      
@@ -1876,13 +1635,16 @@ methods::setMethod(f          = "heatmap.plot",
                      
                      # m.def <- assays(object)[[1]][,object@metadata$Groups$samples]
                      
-                     object2 <- object
+                     object2 <- RFLOMICS:::checkTransNorm(object, raw = FALSE)
+                     m.def  <- SummarizedExperiment::assay(object2)
                      
-                     if (!object2@metadata[["transform"]][["transformed"]]) object2 <- RFLOMICS:::apply_transformation(object2)
-                     if (!object2@metadata[["Normalization"]]$normalized)   object2 <- RFLOMICS:::apply_norm(object2)
-                     
-                     m.def <- SummarizedExperiment::assays(object2)[[1]]
-                     if (object2@metadata$omicType == "RNAseq")  m.def <- log2(m.def) 
+                     # object2 <- object
+                     # 
+                     # if (!object2@metadata[["transform"]][["transformed"]]) object2 <- RFLOMICS:::apply_transformation(object2)
+                     # if (!object2@metadata[["Normalization"]]$normalized)   object2 <- RFLOMICS:::apply_norm(object2)
+                     # 
+                     # m.def <- SummarizedExperiment::assays(object2)[[1]]
+                     # if (object2@metadata$omicType == "RNAseq")  m.def <- log2(m.def) 
                      m.def <- as.data.frame(m.def) %>% dplyr::select(tidyselect::any_of(object2@metadata$Groups$samples))
                      
                      # switch (object@metadata$omicType,
@@ -2096,10 +1858,12 @@ methods::setMethod(f          = "boxplot.DE.plot",
                        return(p)
                      }
                      
-                     if (!raw) {
-                       if (!object@metadata[["transform"]][["transformed"]]) object <- RFLOMICS:::apply_transformation(object)
-                       if (!object@metadata[["Normalization"]]$normalized)   object <- RFLOMICS:::apply_norm(object)
-                     }
+                     # if (!raw) {
+                     #   if (!object@metadata[["transform"]][["transformed"]]) object <- RFLOMICS:::apply_transformation(object)
+                     #   if (!object@metadata[["Normalization"]]$normalized)   object <- RFLOMICS:::apply_norm(object)
+                     # }
+                     
+                     object2 <- RFLOMICS:::checkTransNorm(object, raw = raw)
                      
                      # check presence of variable in SE
                      object.DE <- tryCatch(object[DE], error = function(e) e)
@@ -2131,20 +1895,19 @@ methods::setMethod(f          = "boxplot.DE.plot",
                        if (object.DE@metadata$omicType != "RNAseq") {
                          
                          title <- DE
+                         pseudo <- SummarizedExperiment::assay(object.DE)
                          
                          if (!object.DE@metadata[["transform"]][["transformed"]] && object.DE@metadata[["transform"]][["transform_method"]] != "none") {
                            title  <- paste0("Transformed (", object.DE@metadata[["transform"]][["transform_method"]], ") ", title)
                          }
                          if (!object.DE@metadata[["Normalization"]]$normalized && object.DE@metadata[["Normalization"]][["methode"]] != "none") {
                            title <- paste0(title, " - normalization: ", object.DE@metadata[["Normalization"]]$methode)
-                         }                     
-                         
-                         pseudo <- SummarizedExperiment::assay(object.DE)
+                         }             
                          x_lab  <- paste0(DE, " data")
                          
                        } else {
                          
-                         pseudo <- log2(SummarizedExperiment::assay(object.DE)) # +1 inside the norm method
+                         # pseudo <- log2(SummarizedExperiment::assay(object.DE)) # +1 inside the norm method
                          title <- DE
                          x_lab  <- paste0("log2(", DE, " data)") 
                          
