@@ -44,12 +44,8 @@ methods::setGeneric(
 
 methods::setGeneric(
   name = "plotPCA",
-  def  = function(object, ... ){standardGeneric("plotPCA")}
+  def  = function(object, PCA, PCs = c(1,2), condition = "groups", ... ){standardGeneric("plotPCA")}
 )
-
-
-
-
 
 methods::setGeneric(
   name = "RunPCA",
