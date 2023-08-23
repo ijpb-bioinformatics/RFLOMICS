@@ -371,13 +371,13 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                              
                                              # 230317 :
                                              newDataset.SE <- dataset.SE[, which(colnames(dataset.SE) %in% dataset.SE@metadata$Groups$samples)]
-                                             newDataset.SE <- RFLOMICS::RunPCA(newDataset.SE[row.names(newDataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]])]) 
+                                             newDataset.SE <-  RunPCA(newDataset.SE[row.names(newDataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]])]) 
                                              
                                              PC1.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Firstaxis")]][1])
                                              PC2.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Secondaxis")]][1])
                                              condGroup <- input[[paste0(vect["contrastName"],"-pca.DE.condColorSelect")]][1]
                                              
-                                             RFLOMICS::plotPCA(newDataset.SE,  PCA = "norm", PCs = c(PC1.value, PC2.value), condition = condGroup)
+                                              plotPCA(newDataset.SE,  PCA = "norm", PCs = c(PC1.value, PC2.value), condition = condGroup)
                                            })
                                     )
                                   ),

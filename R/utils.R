@@ -187,7 +187,7 @@ GetModelFormulae <- function(FacBio=NULL, FacBatch=NULL, MAE = NULL){
   MAE <- MAE
   
   if (!is.null(MAE)) { 
-    facTypes <- RFLOMICS::getFactorTypes(MAE)
+    facTypes <-  getFactorTypes(MAE)
     FacBio   <- names(facTypes)[facTypes == "Bio"]
     FacBatch <- names(facTypes)[facTypes == "batch"]
   }
@@ -1164,10 +1164,10 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
   comparisonPart1 <- comparisonPart2 <- comparisonPart3 <- comparisonPart4 <- NULL
   fixPart1 <- fixPart3 <- fixFactor1 <- fixFactor3 <- NULL
   
-  df_part1 <- RFLOMICS::define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 1, 2, 2)
-  df_part2 <- RFLOMICS::define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 2, 1, 2)
-  df_part3 <- RFLOMICS::define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 3, 2, 1)
-  df_part4 <- RFLOMICS::define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 4, 1, 1)
+  df_part1 <-  define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 1, 2, 2)
+  df_part2 <-  define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 2, 1, 2)
+  df_part3 <-  define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 3, 2, 1)
+  df_part4 <-  define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 4, 1, 1)
   df_interactionContrasts <- cbind(df_part1, df_part2, df_part3, df_part4)
   #df_interactionContrasts[, contrast := paste0("(", "(", contrastPart1, " - ", contrastPart2, ")"," - ", "(", contrastPart3, " - ", contrastPart4, ")", ")")]
   #df_interactionContrasts[, groupComparison := paste0("(", comparisonPart1, " - ", comparisonPart2, ")", " vs ", "(", fixPart1, " - ", fixPart3, ")")]
@@ -1237,7 +1237,7 @@ defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteraction
     j <- vecForj[k]
     #print(paste("i:",i))
     #print(paste("j:",j))
-    dataTableToCreate <- RFLOMICS::defineInteractionConstrastForPairsOfFactors(treatmentFactorsList, i, j)
+    dataTableToCreate <-  defineInteractionConstrastForPairsOfFactors(treatmentFactorsList, i, j)
     allInteractionsContrasts_df <- rbind(allInteractionsContrasts_df, dataTableToCreate)
   }
   if(!missing(groupInteractionToKeep)){
@@ -1310,7 +1310,7 @@ assignVectorToGroups <- function(treatmentFactorsList = treatmentFactorsList, mo
   # assign binary vector to each group
   modelMatrixColnames <- colnames(modelMatrix)
   # treatmentCondenv <- new.env()
-  binaryVectorsList <- lapply(treatmentGroups, function(x) RFLOMICS::computeGroupVector(x, modelMatrixColnames, interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction))
+  binaryVectorsList <- lapply(treatmentGroups, function(x)  computeGroupVector(x, modelMatrixColnames, interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction))
   names(binaryVectorsList) <- treatmentGroups
   groupDF <- as.data.frame(binaryVectorsList, row.names = modelMatrixColnames)
   mapply(function(x, value) assign(x, value, pos = treatmentCondenv), treatmentGroups, binaryVectorsList)
@@ -1716,7 +1716,7 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list){
   # If they are at least the half of jobs succeed, valid results
   if(nK_success != 0){
     
-    CoExpAnal <- RFLOMICS::coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, conds = conds)
+    CoExpAnal <-  coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, conds = conds)
     CoExpAnal[["warning"]] <- coseq.res.list$warning
     
     if(nK_success/length(iter) < 0.8){

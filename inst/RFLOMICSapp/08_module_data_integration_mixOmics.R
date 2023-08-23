@@ -259,7 +259,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
               tabPanel("Explained Variance",
                        column(12, renderPlot({
                          
-                         RFLOMICS::plot_MO_varExp(session$userData$FlomicsMultiAssay, 
+                          plot_MO_varExp(session$userData$FlomicsMultiAssay, 
                                                   selectedResponse = listname)
                        })),
                        

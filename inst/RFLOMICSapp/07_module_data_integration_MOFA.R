@@ -557,7 +557,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                               colors_list <- lapply(MOFA2::views_names(resMOFA), FUN = function(nam) input[[paste0("colors_", nam)]])
                               names(colors_list) <- MOFA2::views_names(resMOFA)
                               
-                              RFLOMICS::MOFA_cor_network(resMOFA = resMOFA, 
+                               MOFA_cor_network(resMOFA = resMOFA, 
                                                          factor_choice = input$factor_choice_network,
                                                          abs_weight_network = input$abs_weight_network, 
                                                          network_layout = input$network_layout,

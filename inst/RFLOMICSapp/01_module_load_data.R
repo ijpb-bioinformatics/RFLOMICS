@@ -112,7 +112,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     }else print("#    => Load experimental design...")
     
     # read and check design file
-    design.tt <- tryCatch(expr = RFLOMICS::read_exp_design(file = local.rea.values$dataPath),
+    design.tt <- tryCatch(expr =  read_exp_design(file = local.rea.values$dataPath),
                           error = function(e) e, warning = function(w) w)
     
     
@@ -297,19 +297,19 @@ LoadOmicsData <- function(input, output, session, rea.values){
     rea.values$validate.status <- 0
     
     # RNASeq
-    data.mat.tt <- tryCatch(RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")), 
+    data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")), 
                             error = function(e) e, warning = function(w) w)
     dataName <- "RNAseq.set1"
     inputs[[dataName]] <- list("omicType" = "RNAseq", "data" = data.mat.tt, "meta" = NULL) 
     
     # Metabolomic
-    data.mat.tt <- tryCatch(RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
+    data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
                             error = function(e) e, warning = function(w) w)
     dataName <- "metabolomics.set2"
     inputs[[dataName]] <- list("omicType" = "metabolomics", "data" = data.mat.tt, "meta" = NULL) 
     
     # proteomics
-    data.mat.tt <- tryCatch(RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")), 
+    data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")), 
                             error = function(e) e, warning = function(w) w)
     dataName <- "proteomics.set3"
     inputs[[dataName]] <- list("omicType" = "proteomics", "data" = data.mat.tt, "meta" = NULL) 
@@ -372,7 +372,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
         
         # => read data matrix
         dataFile <- input[[paste0("data", k)]]
-        data.mat.tt <- tryCatch(RFLOMICS::read_omics_data(file = dataFile$datapath), error=function(e) e, warning=function(w) w)
+        data.mat.tt <- tryCatch( read_omics_data(file = dataFile$datapath), error=function(e) e, warning=function(w) w)
         
         if(!is.null(data.mat.tt$message)){
           
@@ -490,7 +490,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     #### list of omic data laoded from interface
     rea.values$validate.status <- 0
    
-    FlomicsMultiAssay.try <- tryCatch(RFLOMICS::FlomicsMultiAssay.constructor(inputs      = local.rea.values$listInputs,
+    FlomicsMultiAssay.try <- tryCatch( FlomicsMultiAssay.constructor(inputs      = local.rea.values$listInputs,
                                                                               ExpDesign   = ExpDesign.tbl,
                                                                               refList     = dF.List.ref,
                                                                               typeList    = dF.Type.dFac,
@@ -510,7 +510,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     print(paste0("#    => Design Completeness Check..."))
     
-    local.rea.values$completeCheckRes <- RFLOMICS::CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
+    local.rea.values$completeCheckRes <-  CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
     
     # plot : ok
     local.rea.values$plots <- TRUE
@@ -566,7 +566,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     print(paste0("#    => overview plot..."))
     
     box(width = 6, status = "warning", title = "Dataset(s) overview", solidHeader = TRUE,
-        renderPlot( isolate({ RFLOMICS::Datasets_overview_plot(session$userData$FlomicsMultiAssay) })),
+        renderPlot( isolate({  Datasets_overview_plot(session$userData$FlomicsMultiAssay) })),
     )
     #}
   })
@@ -579,7 +579,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
 
 read_metaData <- function(input.file){
   
-  res <- RFLOMICS::try_rflomics(read.table(input.file, header = TRUE,row.names = 1, sep = "\t"))
+  res <-  try_rflomics(read.table(input.file, header = TRUE,row.names = 1, sep = "\t"))
   
   # If an error occured
   if(!is.null(res[["error"]]))

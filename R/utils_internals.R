@@ -162,19 +162,19 @@ checkTransNorm <- function(object, raw = FALSE) {
   if (class(object) != "SummarizedExperiment") stop("Object is not a SummarizedExperiment")
 
   # check things
-  if (RFLOMICS:::check_NA(object)) stop("NA detected in the assay.")
+  if (check_NA(object)) stop("NA detected in the assay.")
 
   # No transformation (except for RNAseq, which expect counts...)
   if (raw) {
     if (object@metadata[["transform"]][["transformed"]]) message("WARNING: your data are not raw (transformed)")
     if (object@metadata[["Normalization"]]$normalized) message("WARNING: your data are not raw (normalized)")
 
-    if (RFLOMICS::getOmicsTypes(object) == "RNAseq") {
+    if (getOmicsTypes(object) == "RNAseq") {
       SummarizedExperiment::assay(object) <- log2(SummarizedExperiment::assay(object) + 1)
     }
   } else {
     # if RNAseq
-    if (RFLOMICS::getOmicsTypes(object) == "RNAseq") {
+    if (getOmicsTypes(object) == "RNAseq") {
       # Really depends if TMM is the normalization or not.
       # Make it easier: force TMM and log2.
 
@@ -185,7 +185,7 @@ checkTransNorm <- function(object, raw = FALSE) {
       } # +1 in the apply_norm function
 
       if (object@metadata[["Normalization"]][["normalized"]] && object@metadata[["Normalization"]][["methode"]] != "TMM") {
-        message("RNAseq counts expects TMM normalization. Data were already normalized with another method. 
+        message("RNAseq counts expects TMM normalization. Data were already normalized with another method.
                 Skipping to the end without transforming or normalizing data.")
       }
 
@@ -201,24 +201,24 @@ checkTransNorm <- function(object, raw = FALSE) {
         # Force TMM normalization
         if (object@metadata[["Normalization"]][["methode"]] != "TMM") {
           message("For RNAseq data (counts), only TMM applies for now. Forcing TMM normalization.")
-          object <- RFLOMICS::RunNormalization(object, NormMethod = "TMM")
+          object <- RunNormalization(object, NormMethod = "TMM")
         }
 
         # Finally transforming the data.
-        object <- RFLOMICS:::apply_transformation(object) # none
-        object <- RFLOMICS:::apply_norm(object) # TMM
+        object <- apply_transformation(object) # none
+        object <- apply_norm(object) # TMM
         SummarizedExperiment::assay(object) <- log2(SummarizedExperiment::assay(object)) # +1 in the apply_norm function
       }
     } else {
       # in case any other omics type (does not expect counts)
       # transform and norm
-      if (!object@metadata[["transform"]][["transformed"]]) object <- RFLOMICS:::apply_transformation(object)
-      if (!object@metadata[["Normalization"]][["normalized"]]) object <- RFLOMICS:::apply_norm(object)
+      if (!object@metadata[["transform"]][["transformed"]]) object <- apply_transformation(object)
+      if (!object@metadata[["Normalization"]][["normalized"]]) object <- apply_norm(object)
     }
   }
 
   # check things
-  if (RFLOMICS:::check_NA(object)) stop("NA detected in the assay.")
+  if (check_NA(object)) stop("NA detected in the assay.")
 
   return(object)
 }

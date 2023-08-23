@@ -206,7 +206,7 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                      }
                      
                      ### plot
-                     output[["plot"]] <- RFLOMICS::plotExperimentalDesign(group_count, message=message)
+                     output[["plot"]] <-  plotExperimentalDesign(group_count, message=message)
                      output[["counts"]] <- group_count
                      return(output)
                    })
@@ -240,8 +240,8 @@ methods::setMethod(f         = "Datasets_overview_plot",
                      p <- ggplot2::ggplot(data, ggplot2::aes(x=primary, y=y.axis)) +
                        ggplot2::geom_tile(aes(fill = y.axis), colour = "grey50") +
                        ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-                             panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), legend.position="none",
-                             axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
+                                      panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), legend.position="none",
+                                      axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
                        ggplot2::xlab(paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")")) +
                        ggplot2::ylab("")
                      
@@ -338,7 +338,7 @@ methods::setMethod(f          = "getExpressionContrast",
                          labelOrder                  <- attr(terms.formula(modelFormula), "order")
                          twoWayInteractionInDesign   <- labelsIntoDesign[which(labelOrder == 2)]
                          groupInteractionToKeep      <- gsub(":", " vs ", twoWayInteractionInDesign)
-                         allInteractionsContrasts_df <- RFLOMICS::defineAllInteractionContrasts(treatmentFactorsList, groupInteractionToKeep)
+                         allInteractionsContrasts_df <-  defineAllInteractionContrasts(treatmentFactorsList, groupInteractionToKeep)
                          
                          listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
                        }
@@ -417,17 +417,17 @@ methods::setMethod(f          = "getContrastMatrix",
                      colnames(modelMatrix)[colnames(modelMatrix) == "(Intercept)"] <- "Intercept"
                      # assign treatment conditions(group) to boolean vectors according to the design model matrix
                      #treatmentCondenv <- new.env()
-                     RFLOMICS::assignVectorToGroups(treatmentFactorsList    = treatmentFactorsList,
-                                                    modelMatrix             = modelMatrix,
-                                                    interactionPresent      = interactionPresent,
-                                                    isThreeOrderInteraction = isThreeOrderInteraction,
-                                                    treatmentCondenv        = treatmentCondenv)
+                     assignVectorToGroups(treatmentFactorsList    = treatmentFactorsList,
+                                          modelMatrix             = modelMatrix,
+                                          interactionPresent      = interactionPresent,
+                                          isThreeOrderInteraction = isThreeOrderInteraction,
+                                          treatmentCondenv        = treatmentCondenv)
                      # get the coefficient vector associated with each selected contrast
                      # contrast <- allSimpleContrast_df$contrast[1]
                      colnamesGLMdesign <- colnames(modelMatrix)
                      
                      #coefficientsMatrix <- sapply(selectedContrasts$contrast, function(x) returnContrastCoefficients(x, colnamesGLMdesign, treatmentCondenv = treatmentCondenv))
-                     coefficientsMatrix <- sapply(selectedContrasts, function(x) RFLOMICS::returnContrastCoefficients(x, colnamesGLMdesign, treatmentCondenv = treatmentCondenv))
+                     coefficientsMatrix <- sapply(selectedContrasts, function(x)  returnContrastCoefficients(x, colnamesGLMdesign, treatmentCondenv = treatmentCondenv))
                      
                      #coefficientsMatrix <- MASS::as.fractions(coefficientsMatrix)
                      colnames(coefficientsMatrix) <- selectedContrasts
@@ -530,7 +530,7 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
     ExpDesign      <- dplyr::arrange(ExpDesign, get(i))
   }
   
-  Design <- RFLOMICS::ExpDesign.constructor(ExpDesign = ExpDesign, refList = refList, typeList = typeList)
+  Design <-  ExpDesign.constructor(ExpDesign = ExpDesign, refList = refList, typeList = typeList)
   
   
   ## creat SE object of each dataset
@@ -548,7 +548,7 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
     # check overlap between design and data
     sample.intersect <- intersect(colnames(abundance), row.names(ExpDesign))
     if(length(sample.intersect) == 0){
-        stop("samples in omics data should match the names in experimental design")
+      stop("samples in omics data should match the names in experimental design")
     }
     
     ##### Comment : 01/03/2023 : 
@@ -599,12 +599,12 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
                                                                      rowSums.zero  = genes_flt0,
                                                                      Normalization = list(methode = "none", coefNorm = NULL, normalized = FALSE),
                                                                      transform     = list(transform_method = "none", transformed = FALSE)
-                                                                     ))
+                                                     ))
     
     #SummarizedExperimentList[[dataName]] <- SE[, SE$primary %in% row.names(ExpDesign)]
     
     #### run PCA for raw count
-    SummarizedExperimentList[[dataName]] <- RFLOMICS::RunPCA(SE, raw = TRUE)
+    SummarizedExperimentList[[dataName]] <-  RunPCA(SE, raw = TRUE)
     
     # metadata for sampleMap for MultiAssayExperiment
     listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
@@ -657,7 +657,7 @@ methods::setMethod(f          = "RunPCA",
                    signature  = "SummarizedExperiment",
                    definition = function(object, nbcp = 5, raw = FALSE){
                      
-                     object2 <- RFLOMICS:::checkTransNorm(object, raw = raw)
+                     object2 <-  checkTransNorm(object, raw = raw)
                      pseudo  <- SummarizedExperiment::assay(object2)
                      
                      if (raw) object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
@@ -673,9 +673,9 @@ methods::setMethod(f          = "RunPCA",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, nbcp = 5, raw = FALSE){
                      
-                     object[[SE.name]] <- RFLOMICS::RunPCA(object[[SE.name]], 
-                                                           nbcp = nbcp, 
-                                                           raw  = raw)
+                     object[[SE.name]] <-  RunPCA(object[[SE.name]], 
+                                                  nbcp = nbcp, 
+                                                  raw  = raw)
                      
                      return(object)
                      
@@ -710,10 +710,10 @@ methods::setMethod(f          = "Library_size_barplot.plot",
                        title  <- "Raw data"
                        
                      }else {
-                      
+                       
                        # RNAseq, not expected to find any transformation method.
-                       if (!object@metadata[["Normalization"]]$normalized) pseudo <- SummarizedExperiment::assay(RFLOMICS:::apply_norm(object)) 
-  
+                       if (!object@metadata[["Normalization"]]$normalized) pseudo <- SummarizedExperiment::assay( apply_norm(object)) 
+                       
                        pseudo <- pseudo %>% colSums(., na.rm = TRUE)
                        title <- paste0("Filtered and normalized (", object@metadata$Normalization$methode, ") data")
                      }
@@ -742,12 +742,12 @@ methods::setMethod(f          = "Library_size_barplot.plot",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, raw = FALSE){
                      
-                     if (RFLOMICS::getOmicsTypes(object[[SE.name]]) == "RNAseq") {
-                       return(RFLOMICS::Library_size_barplot.plot(object[[SE.name]], raw = raw))
+                     if ( getOmicsTypes(object[[SE.name]]) == "RNAseq") {
+                       return( Library_size_barplot.plot(object[[SE.name]], raw = raw))
                      }else{
                        stop("This function only applies to RNAseq data")
                      }
-
+                     
                    })
 
 
@@ -763,8 +763,8 @@ methods::setMethod(f          = "Library_size_barplot.plot",
 methods::setMethod(f          = "Data_Distribution_plot",
                    signature  = "SummarizedExperiment",
                    definition <- function(object, plot = "boxplot", raw = FALSE){
-
-                     object2 <- RFLOMICS:::checkTransNorm(object, raw = raw)
+                     
+                     object2 <-  checkTransNorm(object, raw = raw)
                      pseudo  <- SummarizedExperiment::assay(object2)
                      
                      x_lab  <- paste0(object2@metadata$omicType, " data")
@@ -774,14 +774,14 @@ methods::setMethod(f          = "Data_Distribution_plot",
                      
                      # Raw data 
                      if (raw) {  title  <- paste0(object2@metadata$omicType, " raw data") 
-                       
+                     
                      } else {
-                      # Already normalized or transformed Data
+                       # Already normalized or transformed Data
                        title  <- paste0(object2@metadata$omicType, " data")
                        
                        if (object2@metadata[["transform"]][["transformed"]]) 
                          title  <- paste0("Transformed (", object2@metadata[["transform"]][["transform_method"]], ") ", title)
-                     
+                       
                        if (object2@metadata[["Normalization"]]$normalized) 
                          title <- paste0(title, " - normalization: ", object2@metadata[["Normalization"]]$methode)
                        
@@ -822,9 +822,9 @@ methods::setMethod(f          = "Data_Distribution_plot",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, plot = "boxplot", raw = FALSE){
                      
-                     RFLOMICS::Data_Distribution_plot(object = object[[SE.name]],
-                                                      plot = plot,
-                                                      raw = raw)
+                     Data_Distribution_plot(object = object[[SE.name]],
+                                            plot = plot,
+                                            raw = raw)
                      
                    })
 
@@ -882,15 +882,15 @@ methods::setMethod(f= "plotPCA",
                        ggplot2::geom_hline(yintercept=0, linetype="dashed", color = "red") +
                        ggplot2::geom_vline(xintercept=0, linetype="dashed", color = "red") +
                        ggplot2::theme(strip.text.x = ggplot2::element_text(size=8, face="bold.italic"),
-                             strip.text.y = ggplot2::element_text(size=8, face="bold.italic")) +
+                                      strip.text.y = ggplot2::element_text(size=8, face="bold.italic")) +
                        ggplot2::ggtitle(title)
                      
                      # ellipse corr
                      aa <- dplyr::select(score, tidyselect::all_of(condition), PC1, PC2)
                      bb <- FactoMineR::coord.ellipse(aa, bary = TRUE)
                      p <- p + ggplot2::geom_polygon(data = bb$res, aes_string(x=PC1, y=PC2, fill = condition),
-                                           show.legend = FALSE,
-                                           alpha = 0.1)
+                                                    show.legend = FALSE,
+                                                    alpha = 0.1)
                      
                      
                      # if(condition != "groups"){
@@ -908,7 +908,7 @@ methods::setMethod(f          = "plotPCA",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, PCA, PCs=c(1,2), condition="groups"){
                      
-                     RFLOMICS::plotPCA(object[[SE.name]], PCA, PCs, condition)
+                     plotPCA(object[[SE.name]], PCA, PCs, condition)
                      
                    })
 
@@ -1071,7 +1071,7 @@ methods::setMethod(f          = "TransformData",
                    definition = function(object, transform_method = NULL, modify_assay = FALSE){
                      
                      if (is.null(transform_method)) {
-                       if (!modify_assay && RFLOMICS::getOmicsTypes(object) == "RNAseq") {
+                       if (!modify_assay &&  getOmicsTypes(object) == "RNAseq") {
                          message("No transform method indicated, no assay modification asked, RNAseq detected -> transformation_method set to \"none\"")
                          transform_method <- "none"
                        } else {
@@ -1080,7 +1080,7 @@ methods::setMethod(f          = "TransformData",
                        }
                      }
                      
-                     if (RFLOMICS::getOmicsTypes(object) == "RNAseq" && transform_method != "none") {
+                     if ( getOmicsTypes(object) == "RNAseq" && transform_method != "none") {
                        message("Transformation other than 'none' are not allowed for RNAseq for now. Forcing none transformation. 
                                Data will be transformed using log2 after the normalization is ran.")
                        transform_method <- "none"
@@ -1089,7 +1089,7 @@ methods::setMethod(f          = "TransformData",
                      object@metadata[["transform"]][["transform_method"]] <- transform_method  
                      
                      if (modify_assay) {
-                       object <- RFLOMICS:::apply_transformation(object)
+                       object <-  apply_transformation(object)
                      }
                      
                      return(object)
@@ -1100,9 +1100,9 @@ methods::setMethod(f          = "TransformData",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, transform_method = NULL, modify_assay = FALSE){
                      
-                     object[[SE.name]] <- RFLOMICS::TransformData(object[[SE.name]], 
-                                                                  transform_method = transform_method, 
-                                                                  modify_assay = modify_assay)
+                     object[[SE.name]] <-  TransformData(object[[SE.name]], 
+                                                         transform_method = transform_method, 
+                                                         modify_assay = modify_assay)
                      
                      return(object)
                      
@@ -1191,10 +1191,10 @@ methods::setMethod(f          = "FilterLowAbundance",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, Filter_Strategy = "NbConditions", CPM_Cutoff = 5){
                      
-                     if (RFLOMICS::getOmicsTypes(object[[SE.name]]) == "RNAseq") {
-                       object[[SE.name]] <- RFLOMICS::FilterLowAbundance(object          = object[[SE.name]], 
-                                                                         Filter_Strategy = Filter_Strategy, 
-                                                                         CPM_Cutoff      = CPM_Cutoff)
+                     if ( getOmicsTypes(object[[SE.name]]) == "RNAseq") {
+                       object[[SE.name]] <-  FilterLowAbundance(object          = object[[SE.name]], 
+                                                                Filter_Strategy = Filter_Strategy, 
+                                                                CPM_Cutoff      = CPM_Cutoff)
                        return(object)
                      }else{
                        message("Can't apply this method to omics types other than RNAseq.")
@@ -1240,7 +1240,7 @@ methods::setMethod(f          = "RunNormalization",
                        message("WARNING: data were transformed before!")
                      
                      if (is.null(NormMethod)) {
-                       if (RFLOMICS::getOmicsTypes(object) == "RNAseq" && object@metadata[["transform"]][["transform_method"]] == "none") {
+                       if ( getOmicsTypes(object) == "RNAseq" && object@metadata[["transform"]][["transform_method"]] == "none") {
                          message("Using TMM normalization for RNAseq (counts) data")
                          NormMethod <- "TMM"
                        } else {
@@ -1248,7 +1248,7 @@ methods::setMethod(f          = "RunNormalization",
                        }
                      }
                      
-                     if (RFLOMICS::getOmicsTypes(object) == "RNAseq" && NormMethod != "TMM") {
+                     if ( getOmicsTypes(object) == "RNAseq" && NormMethod != "TMM") {
                        message("Forcing TMM normalization for RNAseq (counts) data")
                        NormMethod <- "TMM"
                      }
@@ -1257,23 +1257,23 @@ methods::setMethod(f          = "RunNormalization",
                      
                      # Run normalization on transformed data (except for RNAseq data, transformation is expected to be "none" anyway)
                      if (!object@metadata[["transform"]][["transformed"]] && object@metadata[["transform"]][["transform_method"]] != "none")
-                       object2 <- RFLOMICS:::apply_transformation(object2)
+                       object2 <-  apply_transformation(object2)
                      
                      switch(NormMethod,
-                                        "TMM"        = {coefNorm  <- TMM.Normalization(SummarizedExperiment::assay(object2), object2@metadata$Groups$groups) },
-                                        "median"     = {coefNorm  <- apply(SummarizedExperiment::assay(object2), 2, FUN = function(sample_vect) {median(sample_vect)}) },
-                                        "totalSum"   = {coefNorm  <- apply(SummarizedExperiment::assay(object2), 2, FUN = function(sample_vect) {sum(sample_vect^2)}) },
-                                        "none"       = {coefNorm  <- rep(1, ncol(SummarizedExperiment::assay(object2))) },
-                                        { message("Could not recognize the normalization method, applying 'none'. Please check your parameters.")
-                                          NormMethod <- "none"
-                                          coefNorm  <-  rep(1, ncol(SummarizedExperiment::assay(object2)))
-                                          }
+                            "TMM"        = {coefNorm  <- TMM.Normalization(SummarizedExperiment::assay(object2), object2@metadata$Groups$groups) },
+                            "median"     = {coefNorm  <- apply(SummarizedExperiment::assay(object2), 2, FUN = function(sample_vect) {median(sample_vect)}) },
+                            "totalSum"   = {coefNorm  <- apply(SummarizedExperiment::assay(object2), 2, FUN = function(sample_vect) {sum(sample_vect^2)}) },
+                            "none"       = {coefNorm  <- rep(1, ncol(SummarizedExperiment::assay(object2))) },
+                            { message("Could not recognize the normalization method, applying 'none'. Please check your parameters.")
+                              NormMethod <- "none"
+                              coefNorm  <-  rep(1, ncol(SummarizedExperiment::assay(object2)))
+                            }
                      )
                      
                      object@metadata[["Normalization"]]$methode  <- NormMethod
                      object@metadata[["Normalization"]]$coefNorm <- coefNorm
                      
-                     if (modify_assay) object <- RFLOMICS:::apply_norm(object)
+                     if (modify_assay) object <-  apply_norm(object)
                      
                      return(object)
                    })
@@ -1283,9 +1283,9 @@ methods::setMethod(f          = "RunNormalization",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, NormMethod, modify_assay = FALSE){
                      
-                     object[[SE.name]] <- RFLOMICS::RunNormalization(object       = object[[SE.name]],
-                                                                     NormMethod   = NormMethod,
-                                                                     modify_assay = modify_assay)
+                     object[[SE.name]] <-  RunNormalization(object       = object[[SE.name]],
+                                                            NormMethod   = NormMethod,
+                                                            modify_assay = modify_assay)
                      
                      return(object)
                      
@@ -1359,9 +1359,9 @@ methods::setMethod(f         = "RunDiffAnalysis",
                        
                        object2 <- object
                        
-                       if (!object2@metadata[["transform"]][["transformed"]]) object2 <- RFLOMICS:::apply_transformation(object2)
-                       if (!object2@metadata[["Normalization"]]$normalized)   object2 <- RFLOMICS:::apply_norm(object2)
-
+                       if (!object2@metadata[["transform"]][["transformed"]]) object2 <-  apply_transformation(object2)
+                       if (!object2@metadata[["Normalization"]]$normalized)   object2 <-  apply_norm(object2)
+                       
                      }
                      
                      # move in ExpDesign Constructor
@@ -1370,23 +1370,23 @@ methods::setMethod(f         = "RunDiffAnalysis",
                      
                      ListRes <- switch(DiffAnalysisMethod,
                                        "edgeRglmfit" = try_rflomics(edgeR.AnaDiff(count_matrix  = SummarizedExperiment::assay(object),
-                                                                                model_matrix    = model_matrix[colnames(object),],
-                                                                                group           = object@metadata$Normalization$coefNorm$group,
-                                                                                lib.size        = object@metadata$Normalization$coefNorm$lib.size,
-                                                                                norm.factors    = object@metadata$Normalization$coefNorm$norm.factors,
-                                                                                Contrasts.Sel   = object@metadata$DiffExpAnal[["contrasts"]],
-                                                                                Contrasts.Coeff = design@Contrasts.Coeff,
-                                                                                FDR             = 1,
-                                                                                clustermq       = clustermq,
-                                                                                parallel        = parallel,
-                                                                                nworkers        = nworkers)),
+                                                                                  model_matrix    = model_matrix[colnames(object),],
+                                                                                  group           = object@metadata$Normalization$coefNorm$group,
+                                                                                  lib.size        = object@metadata$Normalization$coefNorm$lib.size,
+                                                                                  norm.factors    = object@metadata$Normalization$coefNorm$norm.factors,
+                                                                                  Contrasts.Sel   = object@metadata$DiffExpAnal[["contrasts"]],
+                                                                                  Contrasts.Coeff = design@Contrasts.Coeff,
+                                                                                  FDR             = 1,
+                                                                                  clustermq       = clustermq,
+                                                                                  parallel        = parallel,
+                                                                                  nworkers        = nworkers)),
                                        "limmalmFit" = try_rflomics(limma.AnaDiff(count_matrix    = SummarizedExperiment::assay(object2),
-                                                                               model_matrix      = model_matrix[colnames(object2),],
-                                                                               Contrasts.Sel     = object2@metadata$DiffExpAnal[["contrasts"]],
-                                                                               Contrasts.Coeff   = design@Contrasts.Coeff,
-                                                                               Adj.pvalue.cutoff = 1,
-                                                                               Adj.pvalue.method = Adj.pvalue.method,
-                                                                               clustermq         = clustermq)))
+                                                                                 model_matrix      = model_matrix[colnames(object2),],
+                                                                                 Contrasts.Sel     = object2@metadata$DiffExpAnal[["contrasts"]],
+                                                                                 Contrasts.Coeff   = design@Contrasts.Coeff,
+                                                                                 Adj.pvalue.cutoff = 1,
+                                                                                 Adj.pvalue.method = Adj.pvalue.method,
+                                                                                 clustermq         = clustermq)))
                      
                      if(! is.null(ListRes$value)){
                        if(! is.null(ListRes$value[["RawDEFres"]])){
@@ -1404,7 +1404,7 @@ methods::setMethod(f         = "RunDiffAnalysis",
                      }
                      
                      ## filtering
-                     object <- RFLOMICS::FilterDiffAnalysis(object = object, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff)
+                     object <-  FilterDiffAnalysis(object = object, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff)
                      
                      return(object)
                    })
@@ -1414,7 +1414,7 @@ methods::setMethod(f         = "RunDiffAnalysis",
 methods::setMethod(f          = "RunDiffAnalysis",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, design = NULL, Adj.pvalue.method="BH",
-                                          contrastList = NULL, DiffAnalysisMethod = NULL, Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, parallel = FALSE, nworkers = 1){
+                                         contrastList = NULL, DiffAnalysisMethod = NULL, Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, parallel = FALSE, nworkers = 1){
                      
                      # Check for design existence inside MAE object
                      if (is.null(design)) {
@@ -1431,28 +1431,28 @@ methods::setMethod(f          = "RunDiffAnalysis",
                      # Type of DiffAnalysis automatically decided if argument is null
                      if (is.null(DiffAnalysisMethod)) {
                        
-                       switch(RFLOMICS::getOmicsTypes(object[[SE.name]]),
-                              "RNAseq" = {DiffAnalysisMethod = "edgeRglmfit"
-                              message("DiffAnalyseMethod was missing. Detected omic type is RNASeq, using edgeRglmFit for differential analysis.")},
-                              "proteomics" = {DiffAnalysisMethod = "limmalmFit"
-                              message("DiffAnalyseMethod was missing. Detected omic type is proteomics, using limmalmFit for differential analysis.")},
-                              "metabolomics" = {DiffAnalysisMethod = "limmalmFit"
-                              message("DiffAnalyseMethod was missing. Detected omic type is metabolomics, using limmalmFit for differential analysis.")}
+                       switch( getOmicsTypes(object[[SE.name]]),
+                               "RNAseq" = {DiffAnalysisMethod = "edgeRglmfit"
+                               message("DiffAnalyseMethod was missing. Detected omic type is RNASeq, using edgeRglmFit for differential analysis.")},
+                               "proteomics" = {DiffAnalysisMethod = "limmalmFit"
+                               message("DiffAnalyseMethod was missing. Detected omic type is proteomics, using limmalmFit for differential analysis.")},
+                               "metabolomics" = {DiffAnalysisMethod = "limmalmFit"
+                               message("DiffAnalyseMethod was missing. Detected omic type is metabolomics, using limmalmFit for differential analysis.")}
                        )
                        
                      }
                      
-                     object[[SE.name]] <- RFLOMICS::RunDiffAnalysis(object = object[[SE.name]],
-                                                                    design = design, 
-                                                                    Adj.pvalue.method = Adj.pvalue.method,
-                                                                    contrastList = contrastList,
-                                                                    DiffAnalysisMethod = DiffAnalysisMethod,
-                                                                    Adj.pvalue.cutoff = Adj.pvalue.cutoff,
-                                                                    logFC.cutoff = logFC.cutoff,
-                                                                    clustermq = clustermq,
-                                                                    parallel = parallel,
-                                                                    nworkers = nworkers
-                                                                    )
+                     object[[SE.name]] <-  RunDiffAnalysis(object = object[[SE.name]],
+                                                           design = design, 
+                                                           Adj.pvalue.method = Adj.pvalue.method,
+                                                           contrastList = contrastList,
+                                                           DiffAnalysisMethod = DiffAnalysisMethod,
+                                                           Adj.pvalue.cutoff = Adj.pvalue.cutoff,
+                                                           logFC.cutoff = logFC.cutoff,
+                                                           clustermq = clustermq,
+                                                           parallel = parallel,
+                                                           nworkers = nworkers
+                     )
                      return(object)
                    })
 
@@ -1544,9 +1544,9 @@ methods::setMethod(f          = "FilterDiffAnalysis",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0){
                      
-                     object[[SE.name]] <- RFLOMICS::FilterDiffAnalysis(object = object[[SE.name]],
-                                                                       Adj.pvalue.cutoff = Adj.pvalue.cutoff,
-                                                                       logFC.cutoff = logFC.cutoff)
+                     object[[SE.name]] <-  FilterDiffAnalysis(object = object[[SE.name]],
+                                                              Adj.pvalue.cutoff = Adj.pvalue.cutoff,
+                                                              logFC.cutoff = logFC.cutoff)
                      
                      return(object)
                      
@@ -1573,7 +1573,7 @@ methods::setMethod(f="DiffAnal.plot",
                    
                    definition <- function(object, hypothesis, typeofplots = c("MA.plot", "volcano", "histogram")){
                      
-                     if (RFLOMICS::isTagName(object, hypothesis)) hypothesis <- RFLOMICS::convertTagToContrast(object, hypothesis)
+                     if ( isTagName(object, hypothesis)) hypothesis <-  convertTagToContrast(object, hypothesis)
                      
                      plots <- list()
                      
@@ -1583,9 +1583,9 @@ methods::setMethod(f="DiffAnal.plot",
                      logFC.cutoff      <- object@metadata$DiffExpAnal[["abs.logFC.cutoff"]]
                      Adj.pvalue.cutoff <- object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]
                      
-                     if ("MA.plot" %in% typeofplots) plots[["MA.plot"]]        <- RFLOMICS::MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
-                     if ("volcano" %in% typeofplots) plots[["Volcano.plot"]]   <- RFLOMICS::Volcano.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
-                     if ("histogram" %in% typeofplots) plots[["Pvalue.hist"]]  <- RFLOMICS::pvalue.plot(data =resTable, hypothesis=hypothesis)
+                     if ("MA.plot" %in% typeofplots) plots[["MA.plot"]]        <-  MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
+                     if ("volcano" %in% typeofplots) plots[["Volcano.plot"]]   <-  Volcano.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
+                     if ("histogram" %in% typeofplots) plots[["Pvalue.hist"]]  <-  pvalue.plot(data =resTable, hypothesis=hypothesis)
                      return(plots)
                    })
 
@@ -1594,11 +1594,11 @@ methods::setMethod(f          = "DiffAnal.plot",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, hypothesis, typeofplots = c("MA.plot", "volcano", "histogram")){
                      
-                     if (RFLOMICS::isTagName(object, hypothesis)) hypothesis <- RFLOMICS::convertTagToContrast(object, hypothesis)
+                     if ( isTagName(object, hypothesis)) hypothesis <-  convertTagToContrast(object, hypothesis)
                      
-                     return(RFLOMICS::DiffAnal.plot(object      = object[[SE.name]],
-                                                    hypothesis  = hypothesis,
-                                                    typeofplots = typeofplots))
+                     return( DiffAnal.plot(object      = object[[SE.name]],
+                                           hypothesis  = hypothesis,
+                                           typeofplots = typeofplots))
                      
                    })
 
@@ -1622,7 +1622,7 @@ methods::setMethod(f          = "DiffAnal.plot",
 methods::setMethod(f          = "heatmap.plot",
                    signature  = "SummarizedExperiment",
                    definition <- function(object, hypothesis, condition="none", title = "", annot_to_show = NULL, subset_list = NULL, draw_args = list(), heatmap_args = list()){
-
+                     
                      if(is.null(object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]])){
                        stop("no DE variables")
                      }
@@ -1638,18 +1638,18 @@ methods::setMethod(f          = "heatmap.plot",
                        message("differentially expressed variables exceeding 2000 variables")
                        resTable <- resTable[1:2000,]
                        title = ifelse(title == "", paste0(title, "plot only 2000 TOP DE variables"),
-                                                  paste0(title, "\nplot only 2000 TOP DE variables"))
+                                      paste0(title, "\nplot only 2000 TOP DE variables"))
                      }
                      
                      # m.def <- assays(object)[[1]][,object@metadata$Groups$samples]
                      
-                     object2 <- RFLOMICS:::checkTransNorm(object, raw = FALSE)
+                     object2 <-  checkTransNorm(object, raw = FALSE)
                      m.def  <- SummarizedExperiment::assay(object2)
                      
                      # object2 <- object
                      # 
-                     # if (!object2@metadata[["transform"]][["transformed"]]) object2 <- RFLOMICS:::apply_transformation(object2)
-                     # if (!object2@metadata[["Normalization"]]$normalized)   object2 <- RFLOMICS:::apply_norm(object2)
+                     # if (!object2@metadata[["transform"]][["transformed"]]) object2 <-  apply_transformation(object2)
+                     # if (!object2@metadata[["Normalization"]]$normalized)   object2 <-  apply_norm(object2)
                      # 
                      # m.def <- SummarizedExperiment::assays(object2)[[1]]
                      # if (object2@metadata$omicType == "RNAseq")  m.def <- log2(m.def) 
@@ -1701,18 +1701,18 @@ methods::setMethod(f          = "heatmap.plot",
                      #                       m.def <- t(t(m.def)/object@metadata[["Normalization"]]$coefNorm)}
                      #             )
                      #           }
-                               
-                               # switch (object@metadata$transform_method,
-                               #         "log1p"      = { m.def <- log1p(m.def) },
-                               #         "squareroot" = { m.def <- sqrt(m.def) },
-                               #         "log2"       = { m.def <- log2(m.def + 1) },
-                               #         "log10"      = { m.def <- log10(m.def + 1) },
-                               #         "none"       = { m.def <- m.def }
-                               # )
-                             # }
+                     
+                     # switch (object@metadata$transform_method,
+                     #         "log1p"      = { m.def <- log1p(m.def) },
+                     #         "squareroot" = { m.def <- sqrt(m.def) },
+                     #         "log2"       = { m.def <- log2(m.def + 1) },
+                     #         "log10"      = { m.def <- log10(m.def + 1) },
+                     #         "none"       = { m.def <- m.def }
+                     # )
+                     # }
                      # )
                      
-     
+                     
                      
                      # filter by DE
                      m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
@@ -1722,8 +1722,8 @@ methods::setMethod(f          = "heatmap.plot",
                      # Center
                      # m.def.filter.center <- scale(m.def.filter,center=TRUE,scale=FALSE)
                      m.def.filter.center <- t(scale(t(m.def.filter), center = TRUE, scale = FALSE)) # Modified 221123 : centered by genes and not by samples
-         
-  
+                     
+                     
                      # Annotations datatable
                      df_annotation <- object@metadata$Groups %>% dplyr::select(!samples & !groups)  
                      df_annotation <- df_annotation[match(colnames(m.def.filter.center), rownames(df_annotation)),] 
@@ -1767,8 +1767,8 @@ methods::setMethod(f          = "heatmap.plot",
                      color_list <- lapply(1:ncol(df_annotation), FUN = function(i){
                        annot_vect <- unique(df_annotation[,i])
                        
-                        col_vect <-  grDevices::colorRampPalette(
-                          suppressWarnings({ RColorBrewer::brewer.pal(n = min(length(annot_vect), 8), name = selectPal[i])}))(length(annot_vect)) 
+                       col_vect <-  grDevices::colorRampPalette(
+                         suppressWarnings({ RColorBrewer::brewer.pal(n = min(length(annot_vect), 8), name = selectPal[i])}))(length(annot_vect)) 
                        names(col_vect) <- annot_vect 
                        col_vect[!is.na(names(col_vect))] # RcolorBrewer::brewer.pal n is minimum 3, remove NA names if only 2 levels
                      })
@@ -1779,7 +1779,7 @@ methods::setMethod(f          = "heatmap.plot",
                      
                      # names(formals(ComplexHeatmap::Heatmap))
                      
-                     namArg <- ifelse(RFLOMICS::getOmicsTypes(object) == "RNAseq", "normalized counts", "XIC")
+                     namArg <- ifelse( getOmicsTypes(object) == "RNAseq", "normalized counts", "XIC")
                      
                      # Arguments for Heatmap
                      heatmap_args <- c(
@@ -1799,7 +1799,7 @@ methods::setMethod(f          = "heatmap.plot",
                      # Arguments for drawing the heatmap
                      draw_args <- c(list(merge_legend = TRUE),
                                     draw_args)            
-
+                     
                      # Drawing heatmap in a null file to not plot it
                      pdf(file = NULL)
                      ha <- do.call(ComplexHeatmap::Heatmap, heatmap_args)
@@ -1828,21 +1828,21 @@ methods::setMethod(f          = "heatmap.plot",
                    definition = function(object, SE.name, hypothesis, condition="none", title = "", annot_to_show = NULL, subset_list = NULL, draw_args = list(), heatmap_args = list()){
                      
                      
-                     if (RFLOMICS::isTagName(object, hypothesis)) hypothesis <- RFLOMICS::convertTagToContrast(object, hypothesis)
+                     if ( isTagName(object, hypothesis)) hypothesis <-  convertTagToContrast(object, hypothesis)
                      
-                     return(RFLOMICS::heatmap.plot(object        = object[[SE.name]],
-                                                   hypothesis    = hypothesis,
-                                                   condition     = condition,
-                                                   title         = title,
-                                                   annot_to_show = annot_to_show,
-                                                   subset_list   = subset_list,
-                                                   draw_args     = draw_args,
-                                                   heatmap_args  = heatmap_args))
+                     return( heatmap.plot(object        = object[[SE.name]],
+                                          hypothesis    = hypothesis,
+                                          condition     = condition,
+                                          title         = title,
+                                          annot_to_show = annot_to_show,
+                                          subset_list   = subset_list,
+                                          draw_args     = draw_args,
+                                          heatmap_args  = heatmap_args))
                      
                    })
-                   
-                   
-                   
+
+
+
 
 #' @title boxplot.DE.plot
 #'
@@ -1855,7 +1855,7 @@ methods::setMethod(f          = "heatmap.plot",
 
 methods::setMethod(f          = "boxplot.DE.plot",
                    signature  = "SummarizedExperiment",
-                   definition <- function(object, DE = NULL, condition="groups", raw = FALSE){
+                   definition = function(object, DE = NULL, condition="groups", raw = FALSE){
                      
                      # check variable name
                      if (is.null(DE) | DE == "" | length(DE) != 1) {
@@ -1865,13 +1865,8 @@ methods::setMethod(f          = "boxplot.DE.plot",
                        
                        return(p)
                      }
-                     
-                     # if (!raw) {
-                     #   if (!object@metadata[["transform"]][["transformed"]]) object <- RFLOMICS:::apply_transformation(object)
-                     #   if (!object@metadata[["Normalization"]]$normalized)   object <- RFLOMICS:::apply_norm(object)
-                     # }
-                     
-                     object2 <- RFLOMICS:::checkTransNorm(object, raw = raw)
+
+                     object <-  checkTransNorm(object, raw = raw)
                      
                      # check presence of variable in SE
                      object.DE <- tryCatch(object[DE], error = function(e) e)
@@ -1915,90 +1910,12 @@ methods::setMethod(f          = "boxplot.DE.plot",
                          
                        } else {
                          
-                         # pseudo <- log2(SummarizedExperiment::assay(object.DE)) # +1 inside the norm method
+                         pseudo <- log2(SummarizedExperiment::assay(object.DE)) 
                          title <- DE
                          x_lab  <- paste0("log2(", DE, " data)") 
                          
                        }
                      }
-                     
-                     
-                     
-                     # switch(object.DE@metadata$omicType,
-                     #         "RNAseq" = {
-                     #           
-                     #           # before normalization
-                     #           if(is.null(object.DE@metadata[["Normalization"]]$coefNorm)){
-                     #             pseudo <- log2(SummarizedExperiment::assay(object.DE))
-                     #             x_lab  <- paste0("log2(", DE, " data)")
-                     #             title  <- paste0(DE)
-                     #             
-                     #           }
-                     #           # after normalization
-                     #           else{
-                     #             pseudo <- log2(scale(SummarizedExperiment::assay(object.DE)+1, center=FALSE,
-                     #                                  scale=object.DE@metadata[["Normalization"]]$coefNorm$norm.factors*object.DE@metadata[["Normalization"]]$coefNorm$lib.size))
-                     #             x_lab  <- paste0("log2(",DE, " data)")
-                     #             title  <- paste0("Filtered and normalized (",object.DE@metadata$Normalization$methode, ") : " , DE)
-                     #           }
-                     #         },
-                     #         "proteomics" = {
-                     #           # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
-                     #           if(object.DE@metadata$transform_method == "none" || is.null(object.DE@metadata$transform_method)){
-                     #             pseudo <- SummarizedExperiment::assay(object.DE)
-                     #             x_lab  <- paste0(DE, " data")
-                     #             title  <- paste0(DE)
-                     #             
-                     #           }
-                     #           # after transformation
-                     #           else{
-                     #             pseudo <- SummarizedExperiment::assay(object.DE)
-                     #             x_lab  <- paste0(DE, " data")
-                     #             title  <- paste0("Transformed (" , object.DE@metadata$transform_method, ") : ", DE)
-                     #             
-                     #             if(!is.null(object.DE@metadata[["Normalization"]]$methode)){
-                     #               
-                     #               switch (object.DE@metadata[["Normalization"]]$methode,
-                     #                       "none" = {
-                     #                         pseudo <- pseudo },
-                     #                       "median" = {
-                     #                         pseudo <- t(t(pseudo) - object.DE@metadata[["Normalization"]]$coefNorm)},
-                     #                       "totalSum" = {
-                     #                         pseudo <- t(t(pseudo)/object.DE@metadata[["Normalization"]]$coefNorm)}
-                     #               )
-                     #             }
-                     #             
-                     #           }
-                     #         },
-                     #         "metabolomics" = {
-                     #           # before rflomics transformation (plot without log2; because we don't know if input prot/meta are transformed or not)
-                     #           if(object.DE@metadata$transform_method == "none" || is.null(object.DE@metadata$transform_method)){
-                     #             pseudo <- SummarizedExperiment::assay(object.DE)
-                     #             x_lab  <- paste0(DE, " data")
-                     #             title  <- paste0(DE)
-                     #             
-                     #           }
-                     #           # after transformation
-                     #           else{
-                     #             
-                     #             pseudo <- SummarizedExperiment::assay(object.DE)
-                     #             x_lab  <- paste0(DE, " data")
-                     #             title  <- paste0("Transformed (" , object.DE@metadata$transform_method, ") : ", DE)
-                     #             
-                     #             if(!is.null(object.DE@metadata[["Normalization"]]$methode)){
-                     #               
-                     #               switch (object.DE@metadata[["Normalization"]]$methode,
-                     #                       "none" = {
-                     #                         pseudo <- pseudo },
-                     #                       "median" = {
-                     #                         pseudo <- t(t(pseudo) - object.DE@metadata[["Normalization"]]$coefNorm)},
-                     #                       "totalSum" = {
-                     #                         pseudo <- t(t(pseudo)/object.DE@metadata[["Normalization"]]$coefNorm)}
-                     #               )
-                     #             }
-                     #           }
-                     #         }
-                     # )
                      
                      pseudo.gg <- pseudo %>% reshape2::melt()
                      colnames(pseudo.gg) <- c("features", "samples", "value")
@@ -2017,7 +1934,6 @@ methods::setMethod(f          = "boxplot.DE.plot",
                        xlab("") + ylab(x_lab) + ggtitle(title) #+
                      #geom_point(alpha = 1/100,size=0)
                      
-                     
                      return(p)
                      
                    }
@@ -2027,10 +1943,10 @@ methods::setMethod(f          = "boxplot.DE.plot",
 methods::setMethod(f          = "boxplot.DE.plot",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, DE = NULL, condition="groups"){
-                   
-                     RFLOMICS::boxplot.DE.plot(object = object[[SE.name]], 
-                                               DE = DE,
-                                               condition = condition)
+                     
+                     boxplot.DE.plot(object = object[[SE.name]], 
+                                     DE = DE,
+                                     condition = condition)
                      
                    })
 
@@ -2105,8 +2021,8 @@ methods::setMethod(f="runCoExpression",
                        dplyr::filter(union != "NO", get(merge) == "YES") 
                      geneList <- geneList$DEF
                      
-                     # if (!object@metadata[["transform"]][["transformed"]]) object <- RFLOMICS:::apply_transformation(object)
-                     # if (!object@metadata[["Normalization"]]$normalized)   object <- RFLOMICS:::apply_norm(object)
+                     # if (!object@metadata[["transform"]][["transformed"]]) object <-  apply_transformation(object)
+                     # if (!object@metadata[["Normalization"]]$normalized)   object <-  apply_norm(object)
                      # counts = SummarizedExperiment::assay(object)[geneList,]
                      
                      
@@ -2125,8 +2041,8 @@ methods::setMethod(f="runCoExpression",
                                
                              },
                              "proteomics" = {
-                               if (!object@metadata[["transform"]][["transformed"]]) object <- RFLOMICS:::apply_transformation(object)
-                               if (!object@metadata[["Normalization"]]$normalized)   object <- RFLOMICS:::apply_norm(object)
+                               if (!object@metadata[["transform"]][["transformed"]]) object <-  apply_transformation(object)
+                               if (!object@metadata[["Normalization"]]$normalized)   object <-  apply_norm(object)
                                
                                counts = SummarizedExperiment::assay(object)[geneList,]
                                
@@ -2144,8 +2060,8 @@ methods::setMethod(f="runCoExpression",
                                param.list[["GaussianModel"]]    <- GaussianModel
                              },
                              "metabolomics" = {
-                               if (!object@metadata[["transform"]][["transformed"]]) object <- RFLOMICS:::apply_transformation(object)
-                               if (!object@metadata[["Normalization"]]$normalized)   object <- RFLOMICS:::apply_norm(object)
+                               if (!object@metadata[["transform"]][["transformed"]]) object <-  apply_transformation(object)
+                               if (!object@metadata[["Normalization"]]$normalized)   object <-  apply_norm(object)
                                
                                counts = SummarizedExperiment::assay(object)[geneList,]
                                
@@ -2209,16 +2125,16 @@ methods::setMethod(f          = "runCoExpression",
                                          model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation, normFactors, clustermq=FALSE){
                      
                      
-                     object[[SE.name]] <- RFLOMICS::runCoExpression(object = object[[SE.name]],
-                                                                    K = K,
-                                                                    replicates = replicates,
-                                                                    nameList = nameList, 
-                                                                    merge = merge, 
-                                                                    model = model,
-                                                                    GaussianModel = GaussianModel,
-                                                                    transformation = transformation,
-                                                                    normFactors = normFactors,
-                                                                    clustermq = clustermq)
+                     object[[SE.name]] <-  runCoExpression(object = object[[SE.name]],
+                                                           K = K,
+                                                           replicates = replicates,
+                                                           nameList = nameList, 
+                                                           merge = merge, 
+                                                           model = model,
+                                                           GaussianModel = GaussianModel,
+                                                           transformation = transformation,
+                                                           normFactors = normFactors,
+                                                           clustermq = clustermq)
                      
                      return(object)
                      
@@ -2277,10 +2193,10 @@ methods::setMethod(f          = "coseq.profile.plot",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, numCluster = 1, condition="groups", observation=NULL){
                      
-                     RFLOMICS::coseq.profile.plot(object = object[[SE.name]],
-                                                  numCluster = numCluster,
-                                                  condition = condition,
-                                                  observation = observation)
+                     coseq.profile.plot(object = object[[SE.name]],
+                                        numCluster = numCluster,
+                                        condition = condition,
+                                        observation = observation)
                      
                    })
 
