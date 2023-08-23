@@ -154,13 +154,16 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                        #   purrr::reduce(dplyr::union)
                        
                        #sampleList <- sampleMap(object)$primary
-                       sampleList.tmp <- dplyr::group_by(data.frame(MultiAssayExperiment::sampleMap(object)), primary) %>% dplyr::count() %>% 
-                         dplyr::ungroup() %>% dplyr::mutate(max=max(n)) %>% dplyr::filter(n==max)
+                       sampleList.tmp <- dplyr::group_by(data.frame(MultiAssayExperiment::sampleMap(object)), primary) %>% 
+                         dplyr::count() %>% 
+                         dplyr::ungroup() %>% 
+                         dplyr::mutate(max = max(n)) %>% 
+                         dplyr::filter(n == max)
                        sampleList <- sampleList.tmp$primary
                      }
                      
                      
-                     # Only work with bio and batch factors for the rest of the function
+                     # Only works with bio and batch factors for the rest of the function
                      namFact <- names(Design@Factors.Type)[Design@Factors.Type %in% c("Bio", "batch")]
                      expDesign_mod <- Design@ExpDesign %>% dplyr::select(tidyselect::any_of(namFact))
                      
@@ -1093,8 +1096,6 @@ methods::setMethod(f          = "TransformData",
                      
                    })
 
-
-
 methods::setMethod(f          = "TransformData",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, transform_method = NULL, modify_assay = FALSE){
@@ -1230,7 +1231,7 @@ methods::setMethod(f          = "FilterLowAbundance",
 #'
 methods::setMethod(f          = "RunNormalization",
                    signature  = "SummarizedExperiment",
-                   definition = function(object, NormMethod = NULL){
+                   definition = function(object, NormMethod = NULL, modify_assay = FALSE){
                      
                      if (object@metadata[["Normalization"]]$normalized) 
                        message("WARNING: data were already normalized before!")
@@ -1258,15 +1259,21 @@ methods::setMethod(f          = "RunNormalization",
                      if (!object@metadata[["transform"]][["transformed"]] && object@metadata[["transform"]][["transform_method"]] != "none")
                        object2 <- RFLOMICS:::apply_transformation(object2)
                      
-                     coefNorm  = switch(NormMethod,
-                                        "TMM"        = TMM.Normalization(SummarizedExperiment::assay(object2), object2@metadata$Groups$groups),
-                                        "median"     = apply(SummarizedExperiment::assay(object2), 2, FUN = function(sample_vect) {median(sample_vect)}),
-                                        "totalSum"   = apply(SummarizedExperiment::assay(object2), 2, FUN = function(sample_vect) {sum(sample_vect^2)}),
-                                        "none"       = rep(1, ncol(SummarizedExperiment::assay(object2)))
+                     switch(NormMethod,
+                                        "TMM"        = {coefNorm  <- TMM.Normalization(SummarizedExperiment::assay(object2), object2@metadata$Groups$groups) },
+                                        "median"     = {coefNorm  <- apply(SummarizedExperiment::assay(object2), 2, FUN = function(sample_vect) {median(sample_vect)}) },
+                                        "totalSum"   = {coefNorm  <- apply(SummarizedExperiment::assay(object2), 2, FUN = function(sample_vect) {sum(sample_vect^2)}) },
+                                        "none"       = {coefNorm  <- rep(1, ncol(SummarizedExperiment::assay(object2))) },
+                                        { message("Could not recognize the normalization method, applying 'none'. Please check your parameters.")
+                                          NormMethod <- "none"
+                                          coefNorm  <-  rep(1, ncol(SummarizedExperiment::assay(object2)))
+                                          }
                      )
                      
                      object@metadata[["Normalization"]]$methode  <- NormMethod
                      object@metadata[["Normalization"]]$coefNorm <- coefNorm
+                     
+                     if (modify_assay) object <- RFLOMICS:::apply_norm(object)
                      
                      return(object)
                    })
@@ -1274,10 +1281,11 @@ methods::setMethod(f          = "RunNormalization",
 
 methods::setMethod(f          = "RunNormalization",
                    signature  = "MultiAssayExperiment",
-                   definition = function(object, SE.name, NormMethod){
+                   definition = function(object, SE.name, NormMethod, modify_assay = FALSE){
                      
-                     object[[SE.name]] <- RFLOMICS::RunNormalization(object     = object[[SE.name]],
-                                                                     NormMethod = NormMethod)
+                     object[[SE.name]] <- RFLOMICS::RunNormalization(object       = object[[SE.name]],
+                                                                     NormMethod   = NormMethod,
+                                                                     modify_assay = modify_assay)
                      
                      return(object)
                      
@@ -2256,9 +2264,9 @@ methods::setMethod(f="coseq.profile.plot",
                          dplyr::group_by(groups) %>% 
                          dplyr::summarise(mean.y_profiles=mean(y_profiles))
                        p <- p + 
-                         geom_point(data = df, aes(x=groups, y=mean.y_profiles), color="red", size = 2) +
-                         geom_line( data = df, aes(x=groups, y=mean.y_profiles), color="red", group = 1) +
-                         ggtitle(paste0("Cluster: ",numCluster, "; nb_observations : ", dim(assays.data)[1], "; red : ", observation))
+                         ggplot2::geom_point(data = df, ggplot2::aes(x = groups, y = mean.y_profiles), color = "red", size = 2) +
+                         ggplot2::geom_line( data = df, ggplot2::aes(x = groups, y = mean.y_profiles), color = "red", group = 1) +
+                         ggplot2::ggtitle(paste0("Cluster: ",numCluster, "; nb_observations : ", dim(assays.data)[1], "; red : ", observation))
                      }
                      -                     
                        return(p)
