@@ -1871,4 +1871,31 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
   
 }
 
+## contrastName to name of contrast directory
+# Exemple:
+# contrastName
+# "(temperatureMedium - temperatureElevated) in imbibitionEI - (temperatureMedium - temperatureElevated) in imbibitionDS"
+# contrastDir
+# "temperatureMedium-temperatureElevated_in_imbibitionEI_vs_temperatureMedium-temperatureElevated_in_imbibitionDS"
+
+#' Title
+#'
+#' @param a string: contrastName
+#'
+#' @return a string: contrastDir
+#'
+#' @export
+#' @examples
+#' @noRd
+contrastName2contrastDir <- function(contrastName){
+  # remplacement des comparaisons centrales
+  tmp <- stringr::str_replace_all(contrastName,"[:blank:]-[:blank:]\\(","_vs_")
+  # remplacement des comparaisons dans les parenthèses
+  tmp <- stringr::str_replace_all(tmp,"[:blank:]-[:blank:]","-")
+  # suppression des parenthèses
+  tmp <- stringr::str_remove_all(tmp,c("\\(|\\)"))
+  # remplcement des espaces par des _
+  tmp <- stringr::str_replace_all(tmp,"[:blank:]","_")
+  return(tmp)
+}
 
