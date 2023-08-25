@@ -338,7 +338,7 @@ methods::setMethod(f          = "getExpressionContrast",
                          labelOrder                  <- attr(terms.formula(modelFormula), "order")
                          twoWayInteractionInDesign   <- labelsIntoDesign[which(labelOrder == 2)]
                          groupInteractionToKeep      <- gsub(":", " vs ", twoWayInteractionInDesign)
-                         allInteractionsContrasts_df <-  defineAllInteractionContrasts(treatmentFactorsList, groupInteractionToKeep)
+                         allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList, groupInteractionToKeep)
                          
                          listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
                        }
@@ -657,7 +657,7 @@ methods::setMethod(f          = "RunPCA",
                    signature  = "SummarizedExperiment",
                    definition = function(object, nbcp = 5, raw = FALSE){
                      
-                     object2 <-  checkTransNorm(object, raw = raw)
+                     object2 <- checkTransNorm(object, raw = raw)
                      pseudo  <- SummarizedExperiment::assay(object2)
                      
                      if (raw) object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = nbcp, graph = FALSE)
@@ -699,7 +699,7 @@ methods::setMethod(f          = "Library_size_barplot.plot",
                      value    <- NULL
                      warnning <- NULL
                      
-                     if (object@metadata$omicType != "RNAseq") stop("WARNING: data are not RNAseq!")
+                     if (getOmicsTypes(object) != "RNAseq") stop("WARNING: data are not RNAseq!")
                      
                      abundances <- SummarizedExperiment::assay(object)
                      samples    <- colnames(abundances)
@@ -712,10 +712,10 @@ methods::setMethod(f          = "Library_size_barplot.plot",
                      }else {
                        
                        # RNAseq, not expected to find any transformation method.
-                       if (!object@metadata[["Normalization"]]$normalized) pseudo <- SummarizedExperiment::assay( apply_norm(object)) 
+                       if (!isNorm(object)) pseudo <- SummarizedExperiment::assay(apply_norm(object)) 
                        
                        pseudo <- pseudo %>% colSums(., na.rm = TRUE)
-                       title <- paste0("Filtered and normalized (", object@metadata$Normalization$methode, ") data")
+                       title <- paste0("Filtered and normalized (", getNorm(object), ") data")
                      }
                      
                      libSizeNorm <-  dplyr::full_join(object@metadata$Groups, data.frame("value" = pseudo , "samples" = names(pseudo)), by = "samples") %>%
@@ -742,7 +742,7 @@ methods::setMethod(f          = "Library_size_barplot.plot",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, raw = FALSE){
                      
-                     if ( getOmicsTypes(object[[SE.name]]) == "RNAseq") {
+                     if (getOmicsTypes(object[[SE.name]]) == "RNAseq") {
                        return( Library_size_barplot.plot(object[[SE.name]], raw = raw))
                      }else{
                        stop("This function only applies to RNAseq data")
@@ -760,73 +760,85 @@ methods::setMethod(f          = "Library_size_barplot.plot",
 #' @importFrom ggplot2 geom_density xlab
 #' @noRd
 
-methods::setMethod(f          = "Data_Distribution_plot",
-                   signature  = "SummarizedExperiment",
-                   definition <- function(object, plot = "boxplot", raw = FALSE){
-                     
-                     object2 <-  checkTransNorm(object, raw = raw)
-                     pseudo  <- SummarizedExperiment::assay(object2)
-                     
-                     x_lab  <- paste0(object2@metadata$omicType, " data")
-                     if (object2@metadata$omicType == "RNAseq") {
-                       x_lab  <- paste0("log2(", object2@metadata$omicType, " data)")
-                     }
-                     
-                     # Raw data 
-                     if (raw) {  title  <- paste0(object2@metadata$omicType, " raw data") 
-                     
-                     } else {
-                       # Already normalized or transformed Data
-                       title  <- paste0(object2@metadata$omicType, " data")
-                       
-                       if (object2@metadata[["transform"]][["transformed"]]) 
-                         title  <- paste0("Transformed (", object2@metadata[["transform"]][["transform_method"]], ") ", title)
-                       
-                       if (object2@metadata[["Normalization"]]$normalized) 
-                         title <- paste0(title, " - normalization: ", object2@metadata[["Normalization"]]$methode)
-                       
-                       if (object2@metadata$omicType == "RNAseq") { x_lab  <- paste0("log2(", object2@metadata$omicType, " data)")}               
-                     }
-                     
-                     pseudo.gg <- pseudo %>% reshape2::melt()
-                     colnames(pseudo.gg) <- c("features", "samples", "value")
-                     
-                     pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by = "samples") %>%
-                       dplyr::arrange(groups)
-                     
-                     pseudo.gg$samples <- factor(pseudo.gg$samples, levels = unique(pseudo.gg$samples))
-                     
-                     switch(plot,
-                            "density" = {
-                              p <- ggplot2::ggplot(pseudo.gg) + 
-                                ggplot2::geom_density(ggplot2::aes(x = value, group = samples, color = groups), trim = FALSE) +
-                                ggplot2::xlab(x_lab) + 
-                                ggplot2::theme(legend.position = 'none') + 
-                                ggplot2::ggtitle(title)
-                            },
-                            "boxplot" = {
-                              p <- ggplot2::ggplot(pseudo.gg, ggplot2::aes(x = samples, y = value,label = features)) +
-                                ggplot2::geom_boxplot(ggplot2::aes(fill = groups), outlier.size = 0.3) +
-                                ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1), legend.position = "none") +
-                                ggplot2::xlab("") + ggplot2::ylab(x_lab) + ggplot2::ggtitle(title) #+
-                              #geom_point(alpha = 1/100,size=0)
-                            })
-                     
-                     print(p)
-                     
-                   }
+methods::setMethod(
+  f = "Data_Distribution_plot",
+  signature = "SummarizedExperiment",
+  definition = function(object, plot = "boxplot", raw = FALSE) {
+    
+    object2 <- checkTransNorm(object, raw = raw)
+    pseudo <- SummarizedExperiment::assay(object2)
+
+    omicsType <- getOmicsTypes(object2)
+    
+    x_lab <- paste0(omicsType, " data")
+    if (omicsType == "RNAseq") {
+      x_lab <- paste0("log2(", omicsType, " data)")
+    }
+
+    # Raw data
+    if (raw) {
+      title <- paste0(omicsType, " raw data")
+    } else {
+      # Already normalized or transformed Data
+      title <- paste0(omicsType, " data")
+
+      if (isTransformed(object2)) {
+        title <- paste0("Transformed (", getTrans(object2), ") ", title)
+      }
+
+      if (isNorm(object2)) {
+        title <- paste0(title, " - normalization: ", getNorm(object2))
+      }
+
+      if (omicsType == "RNAseq") {
+        x_lab <- paste0("log2(", omicsType, " data)")
+      }
+    }
+
+    pseudo.gg <- pseudo %>% reshape2::melt()
+    colnames(pseudo.gg) <- c("features", "samples", "value")
+
+    pseudo.gg <- pseudo.gg %>%
+      dplyr::full_join(object@metadata$Groups, by = "samples") %>%
+      dplyr::arrange(groups)
+
+    pseudo.gg$samples <- factor(pseudo.gg$samples, levels = unique(pseudo.gg$samples))
+
+    switch(plot,
+      "density" = {
+        p <- ggplot2::ggplot(pseudo.gg) +
+          ggplot2::geom_density(ggplot2::aes(x = value, group = samples, color = groups), trim = FALSE) +
+          ggplot2::xlab(x_lab) +
+          ggplot2::theme(legend.position = "none") +
+          ggplot2::ggtitle(title)
+      },
+      "boxplot" = {
+        p <- ggplot2::ggplot(pseudo.gg, ggplot2::aes(x = samples, y = value, label = features)) +
+          ggplot2::geom_boxplot(ggplot2::aes(fill = groups), outlier.size = 0.3) +
+          ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1), legend.position = "none") +
+          ggplot2::xlab("") +
+          ggplot2::ylab(x_lab) +
+          ggplot2::ggtitle(title) #+
+        # geom_point(alpha = 1/100,size=0)
+      }
+    )
+
+    print(p)
+  }
 )
 
 
-methods::setMethod(f          = "Data_Distribution_plot",
-                   signature  = "MultiAssayExperiment",
-                   definition = function(object, SE.name, plot = "boxplot", raw = FALSE){
-                     
-                     Data_Distribution_plot(object = object[[SE.name]],
-                                            plot = plot,
-                                            raw = raw)
-                     
-                   })
+methods::setMethod(
+  f = "Data_Distribution_plot",
+  signature = "MultiAssayExperiment",
+  definition = function(object, SE.name, plot = "boxplot", raw = FALSE) {
+    Data_Distribution_plot(
+      object = object[[SE.name]],
+      plot = plot,
+      raw = raw
+    )
+  }
+)
 
 #' @title plotPCA
 #' @description This function plot the factorial map from a PCA object stored
@@ -1217,14 +1229,15 @@ methods::setMethod(f          = "FilterLowAbundance",
 #' \item{For Metabolomic data:}{}
 #' }
 #' @param object An object of class \link{SummarizedExperiment}
-#' @param data The name of the data set for which the normalization has to be performed.
 #' @param NormMethod Normalization method
+#' @param modify_assay Does the normalization have to be applied or just stored for later? Recommended it stays FALSE.
 #' @return An object of class \link{SummarizedExperiment}
 #' The applied normalization method and computed scaling factors (by samples) are stored as a named list
 #' ("normalization") of two elements (respectively "methode" and "coefNorm") in the metadata slot of a
 #' given data set, stored itself in the ExperimentList slot of a \link{SummarizedExperiment} object.
 #' @exportMethod RunNormalization
 #' @seealso TMM.Normalization
+#' @rdname RunNormalization
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @examples
@@ -1278,7 +1291,10 @@ methods::setMethod(f          = "RunNormalization",
                      return(object)
                    })
 
-
+#' @rdname RunNormalization
+#' @title RunNormalization
+#' @param SE.name the name of the data the normalization have to be applied to. 
+#' @exportMethod RunNormalization
 methods::setMethod(f          = "RunNormalization",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, NormMethod, modify_assay = FALSE){
@@ -1337,6 +1353,7 @@ methods::setMethod(f          = "RunNormalization",
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod RunDiffAnalysis
+#' @rdname RunDiffAnalysis
 #' @examples
 #'
 #'
@@ -1346,6 +1363,8 @@ methods::setMethod(f         = "RunDiffAnalysis",
                                           contrastList, DiffAnalysisMethod, Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, parallel = FALSE, nworkers = 1){
                      
                      contrastName <- NULL
+                     
+                     # TODO if contrastList missing, takes contrasts.Sel
                      Contrasts.Sel <- dplyr::filter(design@Contrasts.Sel, contrastName %in% contrastList)
                      
                      object@metadata$DiffExpAnal <- list()
@@ -1359,8 +1378,8 @@ methods::setMethod(f         = "RunDiffAnalysis",
                        
                        object2 <- object
                        
-                       if (!object2@metadata[["transform"]][["transformed"]]) object2 <-  apply_transformation(object2)
-                       if (!object2@metadata[["Normalization"]]$normalized)   object2 <-  apply_norm(object2)
+                       if (!isTransformed(object2)) object2 <-  apply_transformation(object2)
+                       if (!isNorm(object2))        object2 <-  apply_norm(object2)
                        
                      }
                      
@@ -1393,6 +1412,7 @@ methods::setMethod(f         = "RunDiffAnalysis",
                          object@metadata$DiffExpAnal[["results"]] <- TRUE
                          object@metadata$DiffExpAnal[["RawDEFres"]] <- ListRes$value[["RawDEFres"]]
                          object@metadata$DiffExpAnal[["DEF"]] <- ListRes$value[["TopDEF"]]
+                         # if(DiffAnalysisMethod == "limmalmFit") object@metadata$DiffExpAnal[["dataCall"]] <- SummarizedExperiment::assay(object2) # TODO delete
                        }else{
                          object@metadata$DiffExpAnal[["results"]]    <- FALSE
                          object@metadata$DiffExpAnal[["ErrorStats"]] <- ListRes$value[["ErrorTab"]]
@@ -1410,7 +1430,10 @@ methods::setMethod(f         = "RunDiffAnalysis",
                    })
 
 
-
+#' @rdname RunDiffAnalysis
+#' @title RunDiffAnalysis
+#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment 
+#' @exportMethod RunDiffAnalysis
 methods::setMethod(f          = "RunDiffAnalysis",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, design = NULL, Adj.pvalue.method="BH",
@@ -1469,7 +1492,7 @@ methods::setMethod(f          = "RunDiffAnalysis",
 #'
 #' @return
 #' @exportMethod FilterDiffAnalysis
-#'
+#' @rdname FilterDiffAnalysis
 #' @examples
 #'
 methods::setMethod(f          = "FilterDiffAnalysis",
@@ -1539,7 +1562,10 @@ methods::setMethod(f          = "FilterDiffAnalysis",
                      return(object)
                    })
 
-
+#' @rdname FilterDiffAnalysis
+#' @title FilterDiffAnalysis
+#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @exportMethod FilterDiffAnalysis
 methods::setMethod(f          = "FilterDiffAnalysis",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0){
@@ -1565,6 +1591,7 @@ methods::setMethod(f          = "FilterDiffAnalysis",
 #' @param typeofplots The plots you want to return. Default is all possible plots: MA plot, Volcano plot and non adjusted pvalues histogram.
 #' @return plot
 #' @exportMethod DiffAnal.plot
+#' @rdname DiffAnal.plot
 #' @export
 #'
 #' @examples
@@ -1589,7 +1616,10 @@ methods::setMethod(f="DiffAnal.plot",
                      return(plots)
                    })
 
-
+#' @rdname DiffAnal.plot
+#' @title DiffAnal.plot
+#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @exportMethod DiffAnal.plot
 methods::setMethod(f          = "DiffAnal.plot",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, hypothesis, typeofplots = c("MA.plot", "volcano", "histogram")){
@@ -1617,6 +1647,7 @@ methods::setMethod(f          = "DiffAnal.plot",
 #' @return plot
 #' @exportMethod heatmap.plot
 #' @export
+#' @rdname heatmap.plot
 #'
 #' @examples
 methods::setMethod(f          = "heatmap.plot",
@@ -1645,75 +1676,9 @@ methods::setMethod(f          = "heatmap.plot",
                      
                      object2 <-  checkTransNorm(object, raw = FALSE)
                      m.def  <- SummarizedExperiment::assay(object2)
-                     
-                     # object2 <- object
-                     # 
-                     # if (!object2@metadata[["transform"]][["transformed"]]) object2 <-  apply_transformation(object2)
-                     # if (!object2@metadata[["Normalization"]]$normalized)   object2 <-  apply_norm(object2)
-                     # 
-                     # m.def <- SummarizedExperiment::assays(object2)[[1]]
-                     # if (object2@metadata$omicType == "RNAseq")  m.def <- log2(m.def) 
+         
                      m.def <- as.data.frame(m.def) %>% dplyr::select(tidyselect::any_of(object2@metadata$Groups$samples))
-                     
-                     # switch (object@metadata$omicType,
-                     #         "RNAseq" = {
-                     #           
-                     #           m.def <- log2(scale(m.def+1, center = FALSE,
-                     #                               scale = object@metadata$Normalization$coefNorm$lib.size*object@metadata$Normalization$coefNorm$lib.size))
-                     #         },
-                     #         "proteomics" = {
-                     #           m.def <- m.def # data already transformed at this point (applied on filtred)
-                     #          
-                     #           if(!is.null(object@metadata[["Normalization"]]$methode)){
-                     #             
-                     #             switch (object@metadata[["Normalization"]]$methode,
-                     #                     "none" = {
-                     #                       m.def <- m.def },
-                     #                     "median" = {
-                     #                       m.def <- t(t(m.def) - object@metadata[["Normalization"]]$coefNorm)},
-                     #                     "totalSum" = {
-                     #                       m.def <- t(t(m.def)/object@metadata[["Normalization"]]$coefNorm)}
-                     #             )
-                     #           }
-                     #           
-                     #            # switch (object@metadata$transform_method,
-                     #           #         "log1p"      = { m.def <- log1p(m.def) },
-                     #           #         "squareroot" = { m.def <- sqrt(m.def) },
-                     #           #         "log2"       = { m.def <- log2(m.def + 1) },
-                     #           #         "log10"      = { m.def <- log10(m.def + 1) },
-                     #           #         "none"       = { m.def <- m.def }
-                     #           # )
-                     #           
-                     #          
-                     #         },
-                     #         "metabolomics" = {
-                     #           
-                     #           m.def <- m.def # data already transformed at this point (applied on filtred)
-                     #           
-                     #           if(!is.null(object@metadata[["Normalization"]]$methode)){
-                     #             
-                     #             switch (object@metadata[["Normalization"]]$methode,
-                     #                     "none" = {
-                     #                       m.def <- m.def },
-                     #                     "median" = {
-                     #                       m.def <- t(t(m.def) - object@metadata[["Normalization"]]$coefNorm)},
-                     #                     "totalSum" = {
-                     #                       m.def <- t(t(m.def)/object@metadata[["Normalization"]]$coefNorm)}
-                     #             )
-                     #           }
-                     
-                     # switch (object@metadata$transform_method,
-                     #         "log1p"      = { m.def <- log1p(m.def) },
-                     #         "squareroot" = { m.def <- sqrt(m.def) },
-                     #         "log2"       = { m.def <- log2(m.def + 1) },
-                     #         "log10"      = { m.def <- log10(m.def + 1) },
-                     #         "none"       = { m.def <- m.def }
-                     # )
-                     # }
-                     # )
-                     
-                     
-                     
+     
                      # filter by DE
                      m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
                      
@@ -1745,9 +1710,6 @@ methods::setMethod(f          = "heatmap.plot",
                          
                          df_annotation <- df_annotation[which(rownames(df_annotation) %in% samplesToKeep),]
                          m.def.filter.center <- m.def.filter.center[, which(colnames(m.def.filter.center) %in% samplesToKeep)]
-                         
-                         # print(dim(df_annotation))
-                         # print(m.def.filter.center)
                          
                          df_annotation <- df_annotation[match(colnames(m.def.filter.center), rownames(df_annotation)),]
                        }
@@ -1807,30 +1769,24 @@ methods::setMethod(f          = "heatmap.plot",
                      draw_args$object <- ha
                      ha <- do.call(ComplexHeatmap::draw, draw_args)
                      
-                     # ha <- ComplexHeatmap::draw(ComplexHeatmap::Heatmap(m.def.filter.center, name = "normalized counts\nor XIC",
-                     #                               show_row_names= ifelse( dim(m.def.filter.center)[1] > 50, FALSE, TRUE),
-                     #                               row_names_gp = grid::gpar(fontsize = 8),
-                     #                               column_names_gp = grid::gpar(fontsize = 12),
-                     #                               row_title_rot = 0 ,
-                     #                               clustering_method_columns = "ward.D2",
-                     #                               cluster_column_slice = FALSE,
-                     #                               column_split = column_split.value,
-                     #                               top_annotation = column_ha,
-                     #                               column_title = title, match.arg(..., names(formals(ComplexHeatmap::Heatmap)))),  merge_legend = TRUE, match.arg(..., names(formals(ComplexHeatmap::draw))))
                      dev.off()
                      
                      return(ha)
                    })
 
 
+#' @rdname heatmap.plot
+#' @title heatmap.plot
+#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @exportMethod heatmap.plot
 methods::setMethod(f          = "heatmap.plot",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, hypothesis, condition="none", title = "", annot_to_show = NULL, subset_list = NULL, draw_args = list(), heatmap_args = list()){
                      
                      
-                     if ( isTagName(object, hypothesis)) hypothesis <-  convertTagToContrast(object, hypothesis)
+                     if (isTagName(object, hypothesis)) hypothesis <- convertTagToContrast(object, hypothesis)
                      
-                     return( heatmap.plot(object        = object[[SE.name]],
+                     return(heatmap.plot(object        = object[[SE.name]],
                                           hypothesis    = hypothesis,
                                           condition     = condition,
                                           title         = title,
@@ -1866,7 +1822,7 @@ methods::setMethod(f          = "boxplot.DE.plot",
                        return(p)
                      }
 
-                     object <-  checkTransNorm(object, raw = raw)
+                     object <- checkTransNorm(object, raw = raw)
                      
                      # check presence of variable in SE
                      object.DE <- tryCatch(object[DE], error = function(e) e)
@@ -1886,32 +1842,28 @@ methods::setMethod(f          = "boxplot.DE.plot",
                          title  <- DE
                          
                        } else {
-                         
                          pseudo <- log2(SummarizedExperiment::assay(object.DE) + 1)
                          
                          x_lab  <- paste0("log2(", DE, " data)")
                          title  <- DE
-                         
                        }
-                       
                      } else{ 
                        if (object.DE@metadata$omicType != "RNAseq") {
                          
                          title <- DE
                          pseudo <- SummarizedExperiment::assay(object.DE)
-                         
-                         if (!object.DE@metadata[["transform"]][["transformed"]] && object.DE@metadata[["transform"]][["transform_method"]] != "none") {
-                           title  <- paste0("Transformed (", object.DE@metadata[["transform"]][["transform_method"]], ") ", title)
-                         }
-                         if (!object.DE@metadata[["Normalization"]]$normalized && object.DE@metadata[["Normalization"]][["methode"]] != "none") {
-                           title <- paste0(title, " - normalization: ", object.DE@metadata[["Normalization"]]$methode)
-                         }             
                          x_lab  <- paste0(DE, " data")
                          
+                         if (isTransformed(object.DE) && getTrans(object.DE) != "none") {
+                           title  <- paste0("Transformed (", getTrans(object.DE), ") ", title)
+                         }
+                         if (isNorm(object.DE) && getNorm(object.DE) != "none") {
+                           title <- paste0(title, " - normalization: ", getNorm(object.DE))
+                         }  
                        } else {
                          
-                         pseudo <- log2(SummarizedExperiment::assay(object.DE)) 
-                         title <- DE
+                         pseudo <- SummarizedExperiment::assay(object.DE) 
+                         title  <- DE
                          x_lab  <- paste0("log2(", DE, " data)") 
                          
                        }
@@ -1927,11 +1879,13 @@ methods::setMethod(f          = "boxplot.DE.plot",
                      
                      pseudo.gg$groups <- factor(pseudo.gg$groups, levels = unique(pseudo.gg$groups))
                      
-                     p <- ggplot(pseudo.gg, aes(x=groups, y=value, label = features)) +
-                       ggplot2::geom_boxplot(aes(fill=get(condition))) +
-                       theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-                       guides(fill=guide_legend(title="condition")) + 
-                       xlab("") + ylab(x_lab) + ggtitle(title) #+
+                     p <- ggplot2::ggplot(pseudo.gg, ggplot2::aes(x=groups, y=value, label = features)) +
+                       ggplot2::geom_boxplot(ggplot2::aes(fill=get(condition))) +
+                       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)) +
+                       ggplot2::guides(fill=guide_legend(title="condition")) + 
+                       ggplot2::xlab("") + 
+                       ggplot2::ylab(x_lab) + 
+                       ggtitle(title) #+
                      #geom_point(alpha = 1/100,size=0)
                      
                      return(p)
@@ -1939,7 +1893,11 @@ methods::setMethod(f          = "boxplot.DE.plot",
                    }
 )
 
+# @rdname boxplot.DE.plot
 
+#' @title boxplot.DE.plot
+#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @exportMethod boxplot.DE.plot
 methods::setMethod(f          = "boxplot.DE.plot",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, DE = NULL, condition="groups"){
@@ -2001,6 +1959,8 @@ methods::setMethod(f          = "boxplot.DE.plot",
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod runCoExpression
 #' @seealso \code{\link{coseq::coseq}}
+#' @rdname runCoExpression
+#' 
 methods::setMethod(f="runCoExpression",
                    signature="SummarizedExperiment",
                    definition <- function(object, K=2:20, replicates=5, nameList, merge="union",
@@ -2118,7 +2078,10 @@ methods::setMethod(f="runCoExpression",
                      return(object)
                    })
 
-
+#' @rdname runCoExpression
+#' @title runCoExpression
+#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @exportMethod runCoExpression
 methods::setMethod(f          = "runCoExpression",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, K=2:20, replicates=5, nameList, merge="union",

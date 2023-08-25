@@ -457,7 +457,7 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
     ListRes[[2]] <- lapply(ListRes[[1]], function(x){
       
       fit2 <- limma::eBayes(x, robust=TRUE)
-      res <- limma::topTable(fit2, adjust=Adj.pvalue.method, number=Inf, sort.by="AveExpr")
+      res <- limma::topTable(fit2, adjust.method = Adj.pvalue.method, number=Inf, sort.by="AveExpr")
       DEPs <- res[res$adj.P.Val <= Adj.pvalue.cutoff,]
       return(DEPs)
     })

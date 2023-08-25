@@ -377,7 +377,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                              PC2.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Secondaxis")]][1])
                                              condGroup <- input[[paste0(vect["contrastName"],"-pca.DE.condColorSelect")]][1]
                                              
-                                              plotPCA(newDataset.SE,  PCA = "norm", PCs = c(PC1.value, PC2.value), condition = condGroup)
+                                              RFLOMICS::plotPCA(newDataset.SE,  PCA = "norm", PCs = c(PC1.value, PC2.value), condition = condGroup)
                                            })
                                     )
                                   ),

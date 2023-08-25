@@ -222,3 +222,30 @@ checkTransNorm <- function(object, raw = FALSE) {
 
   return(object)
 }
+
+######## INTERNAL - isNorm, isTransform, getNorm, getTransform ###########
+
+#' @title isNorm, isTransform, getNorm, getTransform
+#'
+#' @param object An object of class \link{SummarizedExperiment}
+#' @description
+#' @examples
+#' @keywords internal
+#' @noRd
+#'
+
+isTransformed <- function(object) {
+  object@metadata[["transform"]][["transformed"]]
+}
+
+isNorm <- function(object) {
+  object@metadata[["Normalization"]][["normalized"]]
+}
+
+getNorm <- function(object) {
+  object@metadata[["Normalization"]][["methode"]]
+}
+
+getTrans <- function(object) {
+  object@metadata[["transform"]][["transform_method"]]
+}

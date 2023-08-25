@@ -16,7 +16,6 @@ getFactorTypes <- function(object) {
 
 # TODO add more getters for accessing bio, batch and meta directly.
 
-
 # ---- Get Design Matrix : ----
 #' @title Get design matrix used for a differential analysis
 #'
@@ -178,102 +177,6 @@ getDEMatrix <- function(object) {
   }
 }
 
-# ----- Check if character vectors are contrasts Names : -----
-
-#' @title Check if character vectors are contrasts Names
-#'
-#' @param object a MAE object or a SE object (produced by Flomics). If it's a summarizedExperiment, expect to find
-#'  a slot of differential analysis.
-#' @param contrastName vector of characters.
-#' @return boolean. TRUE if all of contrastName are indeed contrasts Names.
-#' @export
-#'
-#' @examples
-isContrastName <- function(object, contrastName) {
-  df_contrasts <- getSelectedContrasts(object)
-
-  search_match <- sapply(contrastName, FUN = function(cn) {
-    grep(cn, df_contrasts$contrastName, fixed = TRUE)
-  })
-  search_success <- sapply(search_match, identical, integer(0)) # if TRUE, not a success at all.
-
-  if (!any(search_success)) {
-    # Congratulations, it's a contrast name!
-    return(TRUE)
-  } else {
-    return(FALSE)
-  }
-}
-
-# ----- Check if character vectors are tags Names : -----
-
-#' @title Check if character vectors are tags Names
-#'
-#' @param object a MAE object or a SE object (produced by Flomics). If it's a summarizedExperiment, expect to find
-#'  a slot of differential analysis.
-#' @param tagName vector of characters.
-#' @return boolean. TRUE if all of tagName are indeed tags Names.
-#' @export
-#'
-#' @examples
-isTagName <- function(object, tagName) {
-  df_contrasts <- getSelectedContrasts(object)
-
-  search_match <- sapply(tagName, FUN = function(cn) {
-    grep(cn, df_contrasts$tag, fixed = TRUE)
-  })
-  search_success <- sapply(search_match, identical, integer(0)) # if TRUE, not a success at all.
-
-  if (!any(search_success)) {
-    # Congratulations, it's a tag name!
-    return(TRUE)
-  } else {
-    return(FALSE)
-  }
-}
-
-
-# ---- convert tag to contrastName ----
-
-#' @title Convert tags names to contrast Names
-#'
-#' @param object a MAE object or a SE object (produced by Flomics). If it's a summarizedExperiment, expects to find
-#'  a slot of differential analysis.
-#' @param tagName Vector of characters, expect to be tags (in the form of H1, H2, etc.).
-#' @return character vector, contrastNames associated to tags.
-#' @export
-#'
-#' @examples
-convertTagToContrast <- function(object, tagName) {
-  df_contrasts <- getSelectedContrasts(object)
-
-  df_contrasts %>%
-    dplyr::filter(tag %in% tagName) %>%
-    dplyr::select(contrastName) %>%
-    unlist(use.names = FALSE)
-}
-
-# ---- convert contrastName to tag ----
-
-#' @title Convert contrast Names names to tags
-#'
-#' @param object a MAE object or a SE object (produced by Flomics). If it's a summarizedExperiment, expects to find
-#'  a slot of differential analysis.
-#' @param contrasts Vector of characters, expect to be contrast names.
-#' @return character vector, tags associated to contrast names.
-#' @export
-#'
-#' @examples
-convertContrastToTag <- function(object, contrasts) {
-  df_contrasts <- getSelectedContrasts(object)
-
-  df_contrasts %>%
-    dplyr::filter(contrastName %in% contrasts) %>%
-    dplyr::select(tag) %>%
-    unlist(use.names = FALSE)
-}
-
-
 # ---- Get union or intersection from list of contrasts ----
 
 # very similar to filter_DE_from_SE but returns a vector instead of a SE.
@@ -370,6 +273,7 @@ getNormCoeff <- function(object) {
 #'
 #' @param object a SE object or a MAE object (produced by Flomics).
 #' @return enrichment result.
+#' @export
 #' @noRd
 #' @keywords internal
 
@@ -439,4 +343,96 @@ getEnrichSum <- function(object,
 
     return(object[[experiment]]@metadata[[from]][[dom]][["summary"]])
   }
+}
+
+
+# ----- INTERNAL - Check if character vectors are contrasts Names : -----
+
+#' @title Check if character vectors are contrasts Names
+#'
+#' @param object a MAE object or a SE object (produced by Flomics). If it's a summarizedExperiment, expect to find
+#'  a slot of differential analysis.
+#' @param contrastName vector of characters.
+#' @return boolean. TRUE if all of contrastName are indeed contrasts Names.
+#' @noRd
+#' @keywords internal
+isContrastName <- function(object, contrastName) {
+  df_contrasts <- getSelectedContrasts(object)
+  
+  search_match <- sapply(contrastName, FUN = function(cn) {
+    grep(cn, df_contrasts$contrastName, fixed = TRUE)
+  })
+  search_success <- sapply(search_match, identical, integer(0)) # if TRUE, not a success at all.
+  
+  if (!any(search_success)) {
+    # Congratulations, it's a contrast name!
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+# ----- INTERNAL - Check if character vectors are tags Names : -----
+
+#' @title Check if character vectors are tags Names
+#'
+#' @param object a MAE object or a SE object (produced by Flomics). If it's a summarizedExperiment, expect to find
+#'  a slot of differential analysis.
+#' @param tagName vector of characters.
+#' @return boolean. TRUE if all of tagName are indeed tags Names.
+#' @noRd
+#' @keywords internal
+isTagName <- function(object, tagName) {
+  df_contrasts <- getSelectedContrasts(object)
+  
+  search_match <- sapply(tagName, FUN = function(cn) {
+    grep(cn, df_contrasts$tag, fixed = TRUE)
+  })
+  search_success <- sapply(search_match, identical, integer(0)) # if TRUE, not a success at all.
+  
+  if (!any(search_success)) {
+    # Congratulations, it's a tag name!
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+
+# ---- INTERNAL - convert tag to contrastName ----
+
+#' @title Convert tags names to contrast Names
+#'
+#' @param object a MAE object or a SE object (produced by Flomics). If it's a summarizedExperiment, expects to find
+#'  a slot of differential analysis.
+#' @param tagName Vector of characters, expect to be tags (in the form of H1, H2, etc.).
+#' @return character vector, contrastNames associated to tags.
+#' @noRd
+#' @keywords internal
+convertTagToContrast <- function(object, tagName) {
+  df_contrasts <- getSelectedContrasts(object)
+  
+  df_contrasts %>%
+    dplyr::filter(tag %in% tagName) %>%
+    dplyr::select(contrastName) %>%
+    unlist(use.names = FALSE)
+}
+
+# ---- INTERNAL - convert contrastName to tag ----
+
+#' @title Convert contrast Names names to tags
+#'
+#' @param object a MAE object or a SE object (produced by Flomics). If it's a summarizedExperiment, expects to find
+#'  a slot of differential analysis.
+#' @param contrasts Vector of characters, expect to be contrast names.
+#' @return character vector, tags associated to contrast names.
+#' @noRd
+#' @keywords internal
+convertContrastToTag <- function(object, contrasts) {
+  df_contrasts <- getSelectedContrasts(object)
+  
+  df_contrasts %>%
+    dplyr::filter(contrastName %in% contrasts) %>%
+    dplyr::select(tag) %>%
+    unlist(use.names = FALSE)
 }
