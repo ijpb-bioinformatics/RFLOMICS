@@ -4,8 +4,7 @@
 #' @param object a MAE object (produced by Flomics)
 #' @return a dataframe
 #' @export
-#'
-#' @examples
+#' 
 getFactorTypes <- function(object) {
   if (class(object) == "MultiAssayExperiment") {
     object@metadata$design@Factors.Type
@@ -23,7 +22,6 @@ getFactorTypes <- function(object) {
 #' @return a dataframe
 #' @export
 #'
-#' @examples
 getDesignMat <- function(object) {
   # TODO check if it exists...
   if (class(object) == "MultiAssayExperiment") {
@@ -40,7 +38,6 @@ getDesignMat <- function(object) {
 #' @return a formula
 #' @export
 #'
-#' @examples
 getModelFormula <- function(object) {
   # TODO check if it exists...
   if (class(object) == "MultiAssayExperiment") {
@@ -60,7 +57,6 @@ getModelFormula <- function(object) {
 #' @return a character vector or a dataTable
 #' @export
 #'
-#' @examples
 getPossibleContrasts <- function(object, typeContrast = c("simple", "averaged", "interaction"),
                                  modalities = NULL, returnTable = FALSE) {
   if (class(object) == "MultiAssayExperiment") {
@@ -97,7 +93,6 @@ getPossibleContrasts <- function(object, typeContrast = c("simple", "averaged", 
 #' @return a dataTable
 #' @export
 #'
-#' @examples
 getSelectedContrasts <- function(object) {
   # TODO check if it exists...
   if (class(object) == "MultiAssayExperiment") {
@@ -117,7 +112,6 @@ getSelectedContrasts <- function(object) {
 #' @return a Flomics SE or MAE
 #' @export
 #'
-#' @examples
 setValidContrasts <- function(object,
                               contrasts) {
   # TODO : check if there are DE entities for each contrasts before really validating them.
@@ -139,7 +133,6 @@ setValidContrasts <- function(object,
 #' @return a list of vectors (if object is a MAE) or a vector of contrasts names (if object is a SE)
 #' @export
 #'
-#' @examples
 getValidContrasts <- function(object) {
   if (class(object) == "SummarizedExperiment") {
     return(object@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName)
@@ -164,7 +157,6 @@ getValidContrasts <- function(object) {
 #' @return a matrix of results from the differential analyses.
 #' @export
 #'
-#' @examples
 getDEMatrix <- function(object) {
   if (class(object) == "SummarizedExperiment") {
     if (!is.null(object@metadata$DiffExpAnal$mergeDEF)) {
@@ -191,7 +183,6 @@ getDEMatrix <- function(object) {
 #' @return vector of unique DE entities
 #' @export
 #'
-#' @examples
 opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "union") {
   if (!class(object) %in% c("SummarizedExperiment", "MultiAssayExperiment")) stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
   if (class(object) == "MultiAssayExperiment" && is.null(SE.name)) stop("Please provide SE.name argument.")
@@ -237,7 +228,6 @@ opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "unio
 #' @return a named vector with each omics name and its type.
 #' @export
 #'
-#' @examples
 getOmicsTypes <- function(object) {
   if (!class(object) %in% c("MultiAssayExperiment", "SummarizedExperiment")) {
     stop("Object is not a MultiAssayExperiment nor a SummarizedExperiment")
@@ -260,7 +250,6 @@ getOmicsTypes <- function(object) {
 #' @return Normalisation coefficient. If TMM was applied, a list with library size and coefficients.
 #' @export
 #'
-#' @examples
 getNormCoeff <- function(object) {
   if (class(object) != "SummarizedExperiment") stop("Object is not a SummarizedExperiment")
 

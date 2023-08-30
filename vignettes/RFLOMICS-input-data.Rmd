@@ -28,9 +28,9 @@ This file is edited by the user and must contain a header with explicit column n
 It is advised that each factor's modality starts with a letter (for example, for a factor called Month, it is better to write M1 rather than 1).
 
 ```{r ImportDesign, output="asis"}
-ExpDesign.file <- file.path(path=path.package("RFLOMICS"), 
-                            file="/ExamplesFiles/ecoseed/condition.txt")
-
+# ExpDesign.file <- file.path(path=path.package("RFLOMICS"), 
+#                             file="/ExamplesFiles/ecoseed/condition.txt")
+ExpDesign.file <- file.path(paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
 ExpDesign      <- read.table(file = ExpDesign.file, header = TRUE, row.names = 1, sep = "\t")
 
 DT::datatable(ExpDesign)
@@ -47,8 +47,10 @@ The first file **(mandatory)** provide matrix-likes of abundance of omics data :
 
 ```{r RNAseq, output="asis"}
 
-geneCount.file <- file.path(path = path.package("RFLOMICS"), 
-                            file ="/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")
+# geneCount.file <- file.path(path = path.package("RFLOMICS"), 
+#                             file ="/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")
+geneCount.file <- file.path(paste0(system.file(package = "RFLOMICS"),
+                                   "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
 geneCount      <- read.table(file = geneCount.file, header = TRUE, row.names = 1, sep = "\t")
 
 DT::datatable(geneCount[1:10, 1:5])
@@ -58,8 +60,10 @@ DT::datatable(geneCount[1:10, 1:5])
 ### **Proteomics data**
 
 ```{r Proteomics, output="asis"}
-protAbundance.file <- file.path(path = path.package("RFLOMICS"), 
-                                file ="/ExamplesFiles/ecoseed/proteome_ecoseed.txt")
+# protAbundance.file <- file.path(path = path.package("RFLOMICS"), 
+#                                 file ="/ExamplesFiles/ecoseed/proteome_ecoseed.txt")
+protAbundance.file <- file.path(paste0(system.file(package = "RFLOMICS"),
+                                   "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
 protAbundance <- read.table(file = protAbundance.file, header = TRUE, row.names = 1, sep = "\t")
 
 DT::datatable(protAbundance[1:10, 1:5])
@@ -69,8 +73,10 @@ DT::datatable(protAbundance[1:10, 1:5])
 ### **Metabolomics data**
 
 ```{r Metabolomics, output="asis"}
-metaAbundance.file <- file.path(path = path.package("RFLOMICS"), 
-                                file ="/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")
+# metaAbundance.file <- file.path(path = path.package("RFLOMICS"), 
+#                                 file ="/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")
+metaAbundance.file <- file.path(paste0(system.file(package = "RFLOMICS"),
+                                   "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"))
 metaAbundance <- read.table(file = metaAbundance.file, header = TRUE, row.names = 1, sep = "\t")
 
 DT::datatable(metaAbundance[1:10, 1:5])
@@ -104,7 +110,9 @@ The column 4 => source or type (ex. GO domain : biological_process)
 
 ```{r, output="asis"}
 
-annot.genes.file <- file.path(path=path.package("RFLOMICS"), file="/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt")
+# annot.genes.file <- file.path(path=path.package("RFLOMICS"), file="/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt")
+annot.genes.file <- file.path(paste0(system.file(package = "RFLOMICS"),
+                                   "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt"))
 annot.genes <- read.table(file = annot.genes.file, header = TRUE, sep="\t", )
 colnames(annot.genes) <- c("geneID", "Term", "Name", "Domain")
 

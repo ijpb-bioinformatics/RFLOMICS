@@ -6,11 +6,10 @@
 #' @title filter_DE_from_SE
 #'
 #' @param SEobject An object of class \link{SummarizedExperiment}
-#' @param contrasts_arg
-#' @param type
+#' @param contrasts_arg the name (or names) of the contrasts to consider.
+#' @param type type of union for the entities, either union or intersection.
 #' @return An object of class \link{SummarizedExperiment}
 #' @export
-#' @examples
 #' @noRd
 #'
 
@@ -54,7 +53,6 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg = NULL, type = "union"){
 #' @param SEobject An object of class \link{SummarizedExperiment}
 #' @return An object of class \link{SummarizedExperiment}
 #' @export
-#' @examples
 #' @noRd
 #'
 rbe_function = function(object, SEobject){
@@ -99,7 +97,6 @@ rbe_function = function(object, SEobject){
 #' No other option for now. 
 #' @return An object of class \link{MultiAssayExperiment}
 #' @export
-#' @examples
 #' @noRd
 #'
 
@@ -164,7 +161,6 @@ rnaseqRBETransform <- function(object,
 #' @param correctBatch if TRUE, correction of batch effects. 
 #' @return An object of class \link{MultiAssayExperiment}
 #' @export
-#' @examples
 #' @noRd
 #'
 
@@ -196,7 +192,6 @@ RBETransform <- function(object,
 #' @param mode Can be NULL (default), "cumulative" or "comp". Defines the type of graph to return
 #' @return An object of class \link{MultiAssayExperiment}
 #' @export
-#' @examples
 #'
 
 plot_MO_varExp <- function(object, selectedResponse, mode = NULL){
@@ -229,7 +224,7 @@ plot_MO_varExp <- function(object, selectedResponse, mode = NULL){
 #' @param selectedResponse a character string. 
 #' @return A ggplot2 graph
 #' @keywords internal
-#' @NoRd
+#' @noRd
 
 plot_MO_1 <- function(Data_res){
   dat_explained <- reshape2::melt(do.call("rbind", Data_res$prop_expl_var))

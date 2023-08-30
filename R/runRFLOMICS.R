@@ -1,9 +1,8 @@
-#' @description
+#' @title runrFLOMICS
+#' @description running this function will open the shiny application. 
 #' Run the shiny application
 #' @return shinyApp
 #' @export
-#'
-#' @examples
 #'
 runRFLOMICS <- function() {
   appDir <- system.file("RFLOMICSapp", package = "RFLOMICS")

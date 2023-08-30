@@ -9,7 +9,6 @@
 #' @return A list of results from clusterprofiler.
 #' @export
 #' @exportMethod runAnnotationEnrichment_CPR
-#' @examples
 methods::setMethod(
   f = "runAnnotationEnrichment_CPR",
   signature = "SummarizedExperiment",
@@ -188,12 +187,11 @@ methods::setMethod(
 #' @param searchExpr expression to search in the showCategory terms.
 #' @param node_label same as in enrichplot::cnetplot function, defines the labels on the graph. One of "all", "category" or "gene". Default is 'all'.
 #' @param pvalueCutoff pvalueCutoff to define the enrichment threshold. Default is the one find in the clusterprofiler results in object.
-#' @param
+#' @param ... Not in use at the moment
 #'
 #' @return A plot.
 #' @export
 #' @exportMethod plot.CPRKEGG_Results
-#' @examples
 methods::setMethod(
   f = "plot.CPRKEGG_Results",
   signature = "SummarizedExperiment",
@@ -248,12 +246,11 @@ methods::setMethod(
 #' @param searchExpr expression to search in the showCategory terms.
 #' @param node_label same as in enrichplot::cnetplot function, defines the labels on the graph. One of "all", "category" or "gene". Default is 'all'.
 #' @param pvalueCutoff pvalueCutoff to define the enrichment threshold. Default is the one find in the clusterprofiler results in object.
-#' @param
+#' @param ... additionnal parameters for cnetplot, heatplot or enrichplot functions.
 #'
 #' @return A plot.
 #' @export
 #' @exportMethod plot.CPR_Results
-#' @examples
 methods::setMethod(
   f = "plot.CPR_Results",
   signature = "SummarizedExperiment",
@@ -337,147 +334,4 @@ methods::setMethod(
 
 
 
-# ---- Old Stuff ----
 
-#' Enrichment.plot
-#'
-#' @param object An object of class \link{SummarizedExperiment}
-#' @param Over_Under "overrepresented" or "underrepresented" (default : overrepresented)
-#' @param top level of enriched terms to display
-#' @param listNames vector of DGEs or cluster names (default : all enriched lists)
-#' @param from  "DiffExpAnal" or "CoExpAnal". default "DiffExpAnal"
-#' @return plot
-#' @export
-#' @exportMethod Enrichment.plot
-#' @importFrom dplyr desc
-#' @examples
-Enrichment.plot <- function(object, Over_Under = "overrepresented", top = 50,
-                            domain = NULL, listNames = NULL, from = c("DiffExpEnrichAnal", "CoExpEnrichAnal")) {
-  Decision <- Pvalue_over <- Pvalue_under <- Pvalue <- NULL
-  Term <- Domain <- Trial_Success <- scale_size <- tail <- NULL
-
-  # if Over_Under are not recognized we choose default value == overrepresented
-  if (!Over_Under %in% c("overrepresented", "underrepresented")) {
-    Over_Under <- "overrepresented"
-  }
-
-  if (!is.numeric(top)) {
-    top <- "NA"
-    Top.tag <- ""
-  } else {
-    Top.tag <- paste0("Top ", top)
-  }
-
-  # if listNames is null we take all results
-  if (is.null(listNames)) {
-    listNames <- names(object@metadata[[from]][["results"]])
-  }
-
-  p <- list()
-  for (listname in listNames) {
-    data <- object@metadata[[from]][["results"]][[listname]][["Over_Under_Results"]] %>% dplyr::filter(Domain %in% domain)
-
-    data_ord <- switch(Over_Under,
-      "overrepresented" = {
-        dplyr::filter(data, Decision == Over_Under) %>%
-          dplyr::arrange(desc(Pvalue_over)) %>%
-          dplyr::mutate(Pvalue = Pvalue_over)
-      },
-      "underrepresented" = {
-        dplyr::filter(data, Decision == Over_Under) %>%
-          dplyr::arrange(desc(Pvalue_under)) %>%
-          dplyr::mutate(Pvalue = Pvalue_under)
-      }
-    )
-
-    data_ord$Term <- factor(data_ord$Term, levels = data_ord$Term)
-
-    Urn_effective <- data$Urn_effective[1]
-    Trial_effective <- data$Trial_effective[1]
-
-    p[[listname]] <- ggplot2::ggplot(data = tail(data_ord, n = top), aes(x = sort(Trial_Success), y = Term, size = Urn_Success, color = Pvalue)) +
-      geom_point(alpha = 0.5) +
-      scale_size(range = c(0.1, 10)) +
-      scale_color_gradient(low = "blue", high = "red") +
-      ylab("") +
-      xlab("Count") +
-      ggtitle(paste0(listname, " :\n ", Over_Under, " ", Top.tag, "terms in ", domain, "\n", " (Urn effective = ", Urn_effective, "; Trial effective = ", Trial_effective, ")"))
-  }
-
-  return(p)
-}
-
-#' @title runAnnotationEnrichment
-#' @description This function performs enrichment test from functional gene annotation data. This data could be
-#' GO, KEGG or other... For instance, the hypergeometric test is applied. Parameters used are those
-#' recommended in DiCoExpress workflow (see the paper in reference)
-#' @param object An object of class \link{SummarizedExperiment}
-#' @param CoExpListNames A list of clusters names.
-#' @param from  "DiffExpAnal" or "CoExpAnal". default "DiffExpAnal"
-#' @param alpha The pvalue cut-off
-#' @param probaMethod The probabilistic method to use.
-#' @param annotation The gene annotation file.
-#' @return An object of class \link{SummarizedExperiment}
-#' @references
-#' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
-#' @exportMethod runAnnotationEnrichment
-#'
-methods::setMethod(
-  f = "runAnnotationEnrichment",
-  signature = "SummarizedExperiment",
-  definition = function(object,
-                        annotation,
-                        alpha = 0.01,
-                        probaMethod = "hypergeometric",
-                        ListNames = object@metadata$DiffExpAnal[["contrasts"]]$contrastName,
-                        from = "DiffExpAnal") {
-    EnrichAnal <- list()
-    EnrichAnal[["list.names"]] <- ListNames
-    EnrichAnal[["alpha"]] <- alpha
-    EnrichAnal[["proba.test"]] <- probaMethod
-
-
-    ## list of gene list to annotate
-    geneLists <- list()
-    if (from == "DiffExpAnal") {
-      geneLists <- lapply(ListNames, function(listname) {
-        row.names(object@metadata$DiffExpAnal[["TopDEF"]][[listname]])
-      })
-      names(geneLists) <- ListNames
-    } else if (from == "CoExpAnal") {
-      # geneLists.coseq <- lapply(CoExpListNames, function(listname){
-
-      geneLists <- object@metadata[["CoExpAnal"]][["clusters"]][ListNames]
-      # })
-      # names(geneLists.coseq) <- CoExpListNames
-    }
-
-
-    Results <- list()
-    count.na <- 0
-    for (geneList in names(geneLists)) {
-      if (length(intersect(geneLists[[geneList]], annotation$geneID)) != 0) {
-        Results[[geneList]] <- switch(probaMethod,
-          "hypergeometric" = EnrichmentHyperG(annotation, geneLists[[geneList]], alpha = 0.01)
-        )
-      } else {
-        Results[[geneList]] <- NULL
-        count.na <- count.na + 1
-      }
-    }
-
-    if (count.na == length(names(geneLists))) {
-      EnrichAnal[["results"]] <- NULL
-    } else {
-      EnrichAnal[["results"]] <- Results
-    }
-
-    if (from == "DiffExpAnal") {
-      object@metadata[["DiffExpEnrichAnal"]] <- EnrichAnal
-    } else if (from == "CoExpAnal") {
-      object@metadata[["CoExpEnrichAnal"]] <- EnrichAnal
-    }
-
-    return(object)
-  }
-)

@@ -6,7 +6,6 @@
 #' @return a table
 #' @export
 #'
-#' @examples
 sumDiffExp <- function(object, SE.name = NULL) {
   # TODO valid contrasts only by default
   # TODO if asked by user (all = TRUE), then provide all results even non-validated ones.
@@ -54,7 +53,6 @@ sumDiffExp <- function(object, SE.name = NULL) {
 #' @return a list of tables or a table
 #' @export
 #'
-#' @examples
 sumORA <- function(SE, from = "DiffExpEnrichAnal", ont = NULL, contrast = NULL) {
   if (!class(SE) %in% "SummarizedExperiment") stop("SE is not a summarizedExperiment.")
 
@@ -86,7 +84,6 @@ sumORA <- function(SE, from = "DiffExpEnrichAnal", ont = NULL, contrast = NULL) 
 #' @return A data frame or a list of dataframe (if selectedResponse is NULL).
 #' @export
 #'
-#' @examples
 sumMixOmics <- function(object, selectedResponse = NULL) {
   if (class(object) != "MultiAssayExperiment") stop("Object is not a MultiAssayExperiment.")
   if (is.null(object@metadata$mixOmics)) stop("It seems this object has no mixOmics results.")
@@ -108,7 +105,7 @@ sumMixOmics <- function(object, selectedResponse = NULL) {
 #' @param selectedResponse a character string.
 #' @return A data frame.
 #' @keywords internal
-#' @NoRd
+#' @noRd
 
 getOneMORes <- function(object, selectedResponse) {
   Data_res <- object@metadata$mixOmics[[selectedResponse]]$MixOmics_results

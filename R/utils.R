@@ -9,8 +9,7 @@ magrittr::`%>%`
 #' @param file experimental design file
 #' @return data.frame
 #' @export
-#'
-#' @examples 
+#' 
 read_exp_design <- function(file){
   
   if(!file.exists(file))
@@ -90,7 +89,7 @@ read_exp_design <- function(file){
 #' @return data.frame
 #' @export
 #'
-#' @examples 
+
 read_omics_data <- function(file){
   
   if(!file.exists(file))
@@ -139,7 +138,6 @@ read_omics_data <- function(file){
 #' @export
 #' @noRd
 #'
-#' @examples
 #'
 #'
 GetDesignFromNames <- function(samples_name){
@@ -229,7 +227,7 @@ GetModelFormulae <- function(FacBio=NULL, FacBatch=NULL, MAE = NULL){
 #' @return a data.frame with a row for each sample and columns group, lib.size and norm.factors containing the group labels, library sizes and normalization factors. Other columns can be optionally added to give more detailed sample information.
 #' @export
 #' @noRd
-#' @examples
+
 TMM.Normalization <- function(counts, groups){
   dge <- edgeR::DGEList(counts=counts, group=groups)
   dge <- edgeR::calcNormFactors(dge,method="TMM")
@@ -240,17 +238,17 @@ TMM.Normalization <- function(counts, groups){
 
 #' @title edgeR.AnaDiff
 #'
-#' @param object an object of class [\code{\link{SummarizedExperiment}]
-#' @param design an object of class [\code{\link{ExpDesign-class}]
+#' @param object an object of class \link{SummarizedExperiment}]
+#' @param design an object of class \link{ExpDesign-class}
 #' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
 #' @param parallel boolean. Compute parallel differential analyses (only when clustermq is FALSE)
 #' @param nworkers integer. Number of core to use for the parallel operations. Only used when parallel is TRUE.
-#' @return A list of object of class [\code{\link{DGELRT}]
+#' @return A list of object of class \link{DGELRT}
 #' @export
 #' @importFrom stats model.matrix as.formula
 #' @noRd
 #'
-#' @examples
+
 edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.factors, Contrasts.Sel, Contrasts.Coeff, FDR, clustermq = FALSE,
                           parallel = FALSE, nworkers = 1){
   
@@ -378,15 +376,15 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
 
 #' @title limma.AnaDiff
 #'
-#' @param object an object of class [\code{\link{SummarizedExperiment}]
-#' @param design an object of class [\code{\link{ExpDesign-class}]
+#' @param object an object of class \link{SummarizedExperiment}
+#' @param design an object of class \link{ExpDesign-class}
 #' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
 #' @return A list
 #' @export
 #' @importFrom stats model.matrix as.formula
 #' @noRd
 #'
-#' @examples
+
 
 limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.Coeff, Adj.pvalue.cutoff, Adj.pvalue.method,clustermq){
   
@@ -489,16 +487,16 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
 
 #' @title colorPlot
 #'
-#' @param design
-#' @param ColData
-#' @param condition
+#' @param design design
+#' @param ColData ColData from summarizedExperiment
+#' @param condition Factor for the color of the plot. Default is samples, it takes all bio factors modalities to color the plot.
 #'
-#' @return
+#' @return a color palette
 #' @export
 #' @importFrom grDevices colorRampPalette
 #' @importFrom RColorBrewer brewer.pal
 #' @noRd
-#' @examples
+
 colorPlot <- function(design, ColData, condition="samples"){
   
   getPalette <- colorRampPalette(brewer.pal(9, "Set1"))
@@ -575,12 +573,11 @@ plotDistr <- function(abundances, dataType, transform_method){
 
 #' pvalue.plot
 #'
-#' @param data
-#' @param pngFile
+#' @param data dataframe (ggplot2)
+#' @param hypothesis the contrast, useful for plot title
 #' @return plot
 #' @export
 #' @importFrom ggplot2 geom_histogram
-#' @examples
 #' @noRd
 pvalue.plot <- function(data, hypothesis=hypothesis){
   
@@ -599,13 +596,13 @@ utils::globalVariables(names(data))
 
 #' MA.plot
 #'
-#' @param data
-#' @param pngFile
-#' @param FDRcutoff
+#' @param data dataframe (ggplot2)
+#' @param Adj.pvalue.cutoff adjusted pvalue cutoff
+#' @param logFC.cutoff log2FC cutoff (absolute value)
+#' @param hypothesis the contrast, useful for plot title
 #' @return MA plot
 #' @export
 #' @importFrom ggplot2 aes geom_point scale_colour_manual ggsave
-#' @examples
 #' @noRd
 MA.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypothesis){
   
@@ -648,16 +645,14 @@ MA.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypothesis
 
 #' Title
 #'
-#' @param data
-#' @param Adj.pvalue.cutoff
-#' @param FC.cutoff
-#' @param hypothesis
-#' @param pngFile
+#' @param data dataframe (ggplot2)
+#' @param Adj.pvalue.cutoff adjusted pvalue cutoff
+#' @param logFC.cutoff log2FC cutoff (absolute value)
+#' @param hypothesis the contrast, useful for plot title
 #'
-#' @return
+#' @return a volcano plot, made with the \link{EnhancedVolcano} package.
 #' @export
 #' @noRd
-#' @examples
 #'
 Volcano.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis){
   
@@ -919,11 +914,10 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
 #' @param i
 #' @param j
 #'
-#' @return
+#' @return a dataframe of contrasts
 #' @export
 #' @importFrom utils combn
 #' @noRd
-#' @examples
 #' @author Christine Paysant-Le Roux
 define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
   
@@ -969,10 +963,9 @@ define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
 #' @param treatmentFactorsList
 #' @param i
 #' @noRd
-#' @return
+#' @return a data frame with all simple contrasts
 #' @export
 #' @importFrom dplyr all_of
-#' @examples
 #' @author Christine Paysant-Le Roux
 simpleContrastForOneFactor <- function (treatmentFactorsList, i){
   
@@ -1025,12 +1018,11 @@ simpleContrastForOneFactor <- function (treatmentFactorsList, i){
 
 #' define all simple contrasts
 #'
-#' @param treatmentFactorsList
+#' @param treatmentFactorsList list of treatment factors
 #'
-#' @return
+#' @return a data frame with all simple contrasts
 #' @export
 #' @noRd
-#' @examples
 #' @author Christine Paysant-Le Roux
 defineAllSimpleContrasts <- function(treatmentFactorsList){
   # create a data table with 5 columns
@@ -1052,7 +1044,6 @@ defineAllSimpleContrasts <- function(treatmentFactorsList){
 #' @return allAveragedContrasts_df : a data frame with all the averaged contrasts
 #' @export
 #' @noRd
-#' @examples
 #' @author Christine Paysant-Le Roux
 define_averaged_contrasts <- function(allSimpleContrast_df){
   
@@ -1085,10 +1076,9 @@ define_averaged_contrasts <- function(allSimpleContrast_df){
 #' @param row_i
 #' @param row_j
 #'
-#' @return
+#' @return a dataframe with part of the interaction contrasts definition
 #' @export
 #' @noRd
-#' @examples
 #' @author Christine Paysant-Le Roux
 define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, row_i, row_j) {
   
@@ -1147,16 +1137,16 @@ define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, 
                        c(nameColumnContrast, nameColumnComparison, nameFixFactor, namePartFixFactor, nameOutsideGroup))
   return(df_comparisonPart)
 }
+
 #' define interaction constrast for pairs of biological factors
 #'
 #' @param treatmentFactorsList
 #' @param i
 #' @param j
 #'
-#' @return
+#' @return a dataframe
 #' @export
 #' @noRd
-#' @examples
 #' @author Christine Paysant-Le Roux
 defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i, j){
   
@@ -1216,10 +1206,9 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
 #' @param treatmentFactorsList
 #' @param groupInteractionToKeep
 #'
-#' @return
+#' @return a dataframe with all the interaction contrasts
 #' @export
 #' @noRd
-#' @examples
 #' @author Christine Paysant-Le Roux
 defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteractionToKeep = NULL){
   
@@ -1261,7 +1250,6 @@ defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteraction
 #' @return a binary vector (a single vector of 0 and 1) returning the matched group string(s) from a grepl match on the design model matrix colnames
 #' @export
 #' @noRd
-#' @examples
 #' @author Christine Paysant-Le Roux
 computeGroupVector <- function(treatmentGroups, colnamesMatrixDesign, interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction) {
   vectorLength <- length(colnamesMatrixDesign)
@@ -1302,7 +1290,6 @@ computeGroupVector <- function(treatmentGroups, colnamesMatrixDesign, interactio
 #' @return
 #' @export
 #' @noRd
-#' @examples
 #' @author Christine Paysant-Le Roux
 assignVectorToGroups <- function(treatmentFactorsList = treatmentFactorsList, modelMatrix = modelMatrix,  interactionPresent = interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction, treatmentCondenv = treatmentCondenv){
   # treatment conditions (group) compatible with colnames of the design model matrix
@@ -1326,7 +1313,6 @@ assignVectorToGroups <- function(treatmentFactorsList = treatmentFactorsList, mo
 #' @noRd
 #' @return
 #' @export
-#' @examples
 #' @author Christine Paysant-Le Roux
 returnContrastCoefficients <- function(contrast, colnamesGLMdesign, treatmentCondenv){
   expression <- NULL
@@ -1349,7 +1335,6 @@ returnContrastCoefficients <- function(contrast, colnamesGLMdesign, treatmentCon
 #' @param mergeType
 #' @return list of genes
 #' @export
-#' @examples
 #' @noRd
 #'
 getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1], mergeType="union"){
@@ -1885,7 +1870,6 @@ EnrichmentHyperG <- function(annotation, geneList, alpha = 0.01){
 #' @return a string: contrastDir
 #'
 #' @export
-#' @examples
 #' @noRd
 contrastName2contrastDir <- function(contrastName){
   # remplacement des comparaisons centrales

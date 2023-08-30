@@ -120,7 +120,6 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 #'  }
 #'  
 #' @exportMethod CheckExpDesignCompleteness
-#' @examples
 #' @noRd
 
 methods::setMethod(f         = "CheckExpDesignCompleteness",
@@ -220,7 +219,7 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
 #' @title Datasets overview plot
 #' @description This function plot overview of loaded datasets aligned per sample 
 #' (n=number of entities (genes/metabolites/proteins); k=number of samples)
-#' @param An object of class \link{MultiAssayExperiment-class}
+#' @param object An object of class \link{MultiAssayExperiment-class}
 #' @exportMethod Datasets_overview_plot
 #' @return plot
 
@@ -366,7 +365,7 @@ methods::setMethod(f          = "getExpressionContrast",
 
 #' @title getContrastMatrix
 #' @description Defines contrast matrix or contrast list with contrast name and contrast coefficients
-#' @param An object of class \link{MultiAssayExperiment-class}
+#' @param object An object of class \link{MultiAssayExperiment-class}
 #' @param contrastList A vector of character of contrast
 #' @return An object of class \link{MultiAssayExperiment-class}
 #' @seealso getExpressionContrast
@@ -644,15 +643,15 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 
 
 #' @title RunPCA
-#' @description This function performs a principal component analysis on omic data stored in an object of class [\code{\link{SummarizedExperiment-class}]
+#' @description This function performs a principal component analysis on omic data stored in an object of class \link{SummarizedExperiment-class}
 #' Results are stored in the metadata slot of the same object. If a "Normalization" slot is present in the metadata slot, then data are normalized before running the PCA according to the indicated transform method.
 #' @param object An object of class \link{SummarizedExperiment-class}.
 #' @param nbcp Number of components to compute. Default is 5.
 #' @param raw boolean. Does the pca have to be ran on raw data or transformed and normalized data? Default is FALSE, pca is ran on transformed and normalized data.
 #' @return An object of class \link{SummarizedExperiment}
 #' @exportMethod RunPCA
-#' @examples
-#'
+#' @rdname RunPCA
+#' 
 methods::setMethod(f          = "RunPCA",
                    signature  = "SummarizedExperiment",
                    definition = function(object, nbcp = 5, raw = FALSE){
@@ -668,7 +667,10 @@ methods::setMethod(f          = "RunPCA",
                    }
 )
 
-
+#' @rdname RunPCA
+#' @title RunPCA
+#' @param SE.name the name of the data the normalization have to be applied to. 
+#' @exportMethod RunPCA
 methods::setMethod(f          = "RunPCA",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, nbcp = 5, raw = FALSE){
@@ -690,8 +692,8 @@ methods::setMethod(f          = "RunPCA",
 #' @return plot
 #' @export
 #' @importFrom ggplot2 ggplot geom_bar xlab ylab element_text ggtitle
+#' @rdname Library_size_barplot.plot
 #' @noRd
-#' @examples
 methods::setMethod(f          = "Library_size_barplot.plot",
                    signature  = "SummarizedExperiment",
                    definition <- function(object, raw = FALSE){
@@ -737,7 +739,11 @@ methods::setMethod(f          = "Library_size_barplot.plot",
                      
                    })
 
-
+#' @rdname Library_size_barplot.plot
+#' @noRd
+#' @title Library_size_barplot.plot
+#' @param SE.name the name of the data the normalization have to be applied to. 
+#' @exportMethod Library_size_barplot.plot
 methods::setMethod(f          = "Library_size_barplot.plot",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, raw = FALSE){
@@ -758,6 +764,7 @@ methods::setMethod(f          = "Library_size_barplot.plot",
 #' @export
 #' @exportMethod Data_Distribution_plot
 #' @importFrom ggplot2 geom_density xlab
+#' @rdname Data_Distribution_plot
 #' @noRd
 
 methods::setMethod(
@@ -827,7 +834,11 @@ methods::setMethod(
   }
 )
 
-
+#' @rdname Data_Distribution_plot
+#' @noRd
+#' @title Data_Distribution_plot
+#' @param SE.name the name of the data the normalization have to be applied to. 
+#' @exportMethod Data_Distribution_plot
 methods::setMethod(
   f = "Data_Distribution_plot",
   signature = "MultiAssayExperiment",
@@ -848,10 +859,10 @@ methods::setMethod(
 #' @param PCA This argument indicates whether the scaled PCA has to be performed on raw [\sQuote{raw}] or normalized [\sQuote{norm}] data.
 #' @param PCs A vector giving the two axis that have to be drawn for the factorial map
 #' @param condition All combination of level's factor
-#' @return
+#' @return PCA plot (ggplot2 object)
 #' @exportMethod plotPCA
-#' @examples
 #' @rdname plotPCA
+#' 
 methods::setMethod(f= "plotPCA",
                    signature = "SummarizedExperiment",
                    definition <- function(object, PCA, PCs=c(1,2), condition="groups"){
@@ -916,6 +927,10 @@ methods::setMethod(f= "plotPCA",
                      
                    })
 
+#' @rdname plotPCA
+#' @title plotPCA
+#' @param SE.name the name of the data the normalization have to be applied to. 
+#' @exportMethod plotPCA
 methods::setMethod(f          = "plotPCA",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, PCA, PCs=c(1,2), condition="groups"){
@@ -923,145 +938,6 @@ methods::setMethod(f          = "plotPCA",
                      plotPCA(object[[SE.name]], PCA, PCs, condition)
                      
                    })
-
-
-#' @title mvQCdesign
-#' @description mvQCdesign is for multivariate quality check of design. For each design factor (one color for each),
-#' and each PCA axis this function plot the coordinates of the sample in a PCA axis (y-axis) in an
-#' increasing order along the x-axis. It allows to have a quick view of the variability associated to each factor.
-#' @param object An object of class \link{MultiAssayExperiment}
-#' @param data The name of the omic data for which the PCA plot has to be drawn
-#' @param axis The number of PCA axis to keep
-#' @param PCA This argument indicates which PCA results to plot: raw ("raw") or normalised ("normalised")
-#' @param pngFile The name of the png file for saving the plot.
-#' @examples
-#' @exportMethod mvQCdesign
-#'
-#' @rdname mvQCdesign
-
-methods::setMethod(f="mvQCdesign",
-                   signature="MultiAssayExperiment",
-                   definition <- function(object, data, PCA=c("raw","norm"), axis=5, pngFile=NULL){
-                     
-                     # Stop if the PCA object does not exist
-                     resPCA <- object[[data]]@metadata[["PCAlist"]][[PCA]]
-                     
-                     if(is.null(resPCA)){
-                       stop(paste0(PCA,"PCA does not exist for the ",data," data"))
-                     }
-                     
-                     n_dFac <-  object@metadata$colDataStruc["n_dFac"]
-                     
-                     # corespondance between coordinate and factor modalities thanks to the sample's name
-                     tab_tmp <- merge(as.data.frame(resPCA$ind$coord),as.data.frame(object@colData),by='row.names',all=TRUE)
-                     
-                     df <- list()
-                     bigdf <- list()
-                     
-                     for(i in 1:n_dFac){
-                       
-                       Factor <-  object@colData[,i]
-                       FactorName <- names(object@colData)[i]
-                       nF <- length(Factor)
-                       
-                       for(j in 1:axis){
-                         Dim=paste0("Dim.",j)
-                         # select the coordinates and the factor columns
-                         df[[j]] <- dplyr::select(tab_tmp, all_of(FactorName),all_of(Dim)) %>%
-                           # rename
-                           dplyr::rename(.,"Levels"=FactorName,"y"=starts_with("Dim.")) %>%
-                           # sort by factor modalities then by coordinate
-                           dplyr::arrange(Levels,y) %>%
-                           # add column
-                           dplyr::mutate(.,"x"=1:nF,
-                                         "Axis"=rep(paste("PCA",j, "\n(",round(resPCA$eig[j,2],1),"%)",sep=""),nF),
-                                         "FactorN"=rep(FactorName,nF))
-                         
-                       }
-                       bigdf[[i]] <- dplyr::bind_rows(df)
-                     }
-                     big <- dplyr::bind_rows(bigdf)
-                     
-                     out <- by(data = big, INDICES = big$FactorN, FUN = function(m) {
-                       
-                       m <- droplevels(m)
-                       
-                       m <- ggplot(m,aes(y=y,x=x,colour=Levels))+
-                         ggplot2::geom_bar(stat = "identity",position = ggplot2::position_dodge(),aes(fill=Levels))+
-                         facet_grid(as.factor(FactorN)~Axis) +
-                         labs(x = "Samples", y="Coordinates \n on the PCA axis")+
-                         theme(axis.title.y = element_text(size = 10),
-                               axis.title.x=element_text(size = 10),
-                               axis.text.x=element_blank(),
-                               axis.ticks.x=element_blank())
-                     })
-                     p <- do.call(gridExtra::grid.arrange, c(out,ncol=1))
-                     print(p)
-                     
-                     
-                     if(! is.null(pngFile)){
-                       ggplot2::ggsave(filename = pngFile,  plot = p)
-                     }
-                   })
-
-# copier coldataStruct dans metadata
-# tester que PCA existe
-#
-
-#' @title mvQCdata
-#' @description mvQCdata is for multivariate quality check of metadata.
-#' This function helps to control if some experimental parameters given as metadata (numeric one) in input
-#' explain much variability than expected in the data or if their effect could be confused with biological one.
-#' This function correlates quantitative variable describing technical aspect for each sample with
-#' their coordinate on the PCA axis.
-#' \itemize{
-#' \item{Technical parameters from sample preparation as the day of the RNAseq library preparation}
-#' \item{Statistics results after the bioinformatics workflow as the percent of sequences with primers or % of rrna in the library}
-#'  }
-#' @param object An object of class \link{MultiAssayExperiment-class}
-#' @param data The name of the omic data for which the PCA plot has to be drawn
-#' @param axis The number of PCA axis to keep
-#' @param PCA This argument indicates which type of PCA results to take: on raw ("raw") or normalized ("norm") data.
-#' @param pngFile The name of the png file for saving the plot.
-#' @exportMethod mvQCdata
-#' @rdname mvQCdata
-methods::setMethod(f="mvQCdata",
-                   signature="MultiAssayExperiment",
-                   definition <- function(object, data, PCA=c("raw","norm"),axis=3, pngFile=NULL){
-                     
-                     resPCA <- object[[data]]@metadata[["PCAlist"]][[PCA]]
-                     cc <- c(RColorBrewer::brewer.pal(9, "Set1"))
-                     
-                     n_dFac <- object@metadata$colDataStruc["n_dFac"]
-                     n_qcFac <- dim(object[[data]]@colData[,-c(1:2)])[2]
-                     var <- names(object[[data]]@colData[,-c(1:2)])
-                     
-                     corA=list()
-                     VarAxis = list()
-                     for(i in 1:axis){
-                       corA[[i]] <- cor(resPCA$ind$coord[,i],
-                                        as.data.frame(object[[data]]@colData[,-c(1:2)]),
-                                        method="spearman")
-                       VarAxis[[i]] <- paste("\n(Var=",round(resPCA$eig[i,2],1),")",sep="")
-                     }
-                     
-                     df = data.frame("QCparam"=rep(var,axis),
-                                     "Spearman"= unlist(corA),
-                                     "Axis"=rep(paste(rep("Axis",axis),1:axis,VarAxis,sep=""), each=n_qcFac))
-                     
-                     p <- ggplot(df,aes(x=Axis, y=abs(Spearman),fill=QCparam))+
-                       geom_bar(stat="identity",position=ggplot2::position_dodge(),width=0.7)+ggplot2::ylim(0,1)+
-                       ggplot2::labs(x = "Axis number", y="Cor(Coord_dFactor_PCA,QCparam)")
-                     
-                     print(p)
-                     
-                     if (!is.null(pngFile)){
-                       ggplot2::ggsave(filename = pngFile, plot = p)
-                     }
-                     
-                   })
-
-
 
 ########################################## TRANSFORM DATA #################
 
@@ -1076,8 +952,8 @@ methods::setMethod(f="mvQCdata",
 #' @return An object of class \link{SummarizedExperiment}
 #'
 #' @exportMethod TransformData
-#'
-#' @examples
+#' @rdname TransformData
+#' 
 methods::setMethod(f          = "TransformData",
                    signature  = "SummarizedExperiment",
                    definition = function(object, transform_method = NULL, modify_assay = FALSE){
@@ -1108,6 +984,10 @@ methods::setMethod(f          = "TransformData",
                      
                    })
 
+#' @rdname TransformData
+#' @title TransformData
+#' @param SE.name the name of the data the normalization have to be applied to. 
+#' @exportMethod TransformData
 methods::setMethod(f          = "TransformData",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, transform_method = NULL, modify_assay = FALSE){
@@ -1152,8 +1032,10 @@ methods::setMethod(f          = "TransformData",
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod FilterLowAbundance
-#' @seealso edgeR::filterByExpr
-#' @examples
+#' @seealso edgeR::filterByExpr#' 
+#' @rdname FilterLowAbundance
+
+
 methods::setMethod(f         = "FilterLowAbundance",
                    signature = "SummarizedExperiment",
                    definition <- function(object, Filter_Strategy = "NbConditions", CPM_Cutoff = 5){
@@ -1198,7 +1080,10 @@ methods::setMethod(f         = "FilterLowAbundance",
                      
                    })
 
-
+#' @rdname FilterLowAbundance
+#' @title FilterLowAbundance
+#' @param SE.name the name of the data the normalization have to be applied to. 
+#' @exportMethod FilterLowAbundance
 methods::setMethod(f          = "FilterLowAbundance",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, Filter_Strategy = "NbConditions", CPM_Cutoff = 5){
@@ -1240,8 +1125,7 @@ methods::setMethod(f          = "FilterLowAbundance",
 #' @rdname RunNormalization
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
-#' @examples
-#'
+
 methods::setMethod(f          = "RunNormalization",
                    signature  = "SummarizedExperiment",
                    definition = function(object, NormMethod = NULL, modify_assay = FALSE){
@@ -1341,22 +1225,20 @@ methods::setMethod(f          = "RunNormalization",
 #' \item{TopDEF: }{a list giving for each contrast a data.frame of differential expressed features by Adj.pvalue.cutoff}
 #' \item{mergeDEF: }{A data frame indicating for each features in row, if it is DE in a given contrasts in column}
 #' }
-#' @param object an object of class [\code\link{SummarizedExperiment}]
-#' @param design an object of class [\code{\link{ExpDesign-class}]
+#' @param object an object of class \link{SummarizedExperiment}
+#' @param design an object of class \link{ExpDesign-class}
 #' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
 #' to run. Either "edgeRglmfit" or "limmalmFit".
 #' @param contrastList The list of contrast to test
 #' @param Adj.pvalue.method The method choosen to adjust pvalue. Takes the same values as the ones of adj.p.adjust method.
 #' @param Adj.pvalue.cutoff The adjusted pvalue cut-off
 #' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
-#' @return An object of class [\code\link{SummarizedExperiment}]
+#' @return An object of class \link{SummarizedExperiment}
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod RunDiffAnalysis
 #' @rdname RunDiffAnalysis
-#' @examples
-#'
-#'
+#' 
 methods::setMethod(f         = "RunDiffAnalysis",
                    signature = "SummarizedExperiment",
                    definition <- function(object, design, Adj.pvalue.method="BH",
@@ -1488,12 +1370,14 @@ methods::setMethod(f          = "RunDiffAnalysis",
 
 #' Title
 #'
-#' @param SummarizedExperiment
+#' @param object A SummarizedExperiment object
+#' @param Adj.pvalue.cutoff adjusted pvalue cutoff. Default is 0.05.
+#' @param logFC.cutoff cutoff for absolute value of log2FC. Default is 0. 
 #'
-#' @return
+#' @return A SummarizedExperiment object or a MultiAssayExperiment, depending on the object type, 
+#' where the differential analysis results have been actualized with the new parameters.
 #' @exportMethod FilterDiffAnalysis
 #' @rdname FilterDiffAnalysis
-#' @examples
 #'
 methods::setMethod(f          = "FilterDiffAnalysis",
                    signature  = "SummarizedExperiment",
@@ -1593,8 +1477,7 @@ methods::setMethod(f          = "FilterDiffAnalysis",
 #' @exportMethod DiffAnal.plot
 #' @rdname DiffAnal.plot
 #' @export
-#'
-#' @examples
+#' 
 methods::setMethod(f="DiffAnal.plot",
                    signature="SummarizedExperiment",
                    
@@ -1648,8 +1531,7 @@ methods::setMethod(f          = "DiffAnal.plot",
 #' @exportMethod heatmap.plot
 #' @export
 #' @rdname heatmap.plot
-#'
-#' @examples
+#' 
 methods::setMethod(f          = "heatmap.plot",
                    signature  = "SummarizedExperiment",
                    definition <- function(object, hypothesis, condition="none", title = "", annot_to_show = NULL, subset_list = NULL, draw_args = list(), heatmap_args = list()){
@@ -1893,8 +1775,7 @@ methods::setMethod(f          = "boxplot.DE.plot",
                    }
 )
 
-# @rdname boxplot.DE.plot
-
+#' @rdname boxplot.DE.plot
 #' @title boxplot.DE.plot
 #' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
 #' @exportMethod boxplot.DE.plot
@@ -1927,6 +1808,7 @@ methods::setMethod(f          = "boxplot.DE.plot",
 #' \code{normFactors="none",  \code{meanFilterCutoff = NULL}
 #'
 #' @return
+#' An S4 object of class \link{SummarizedExperiment}
 #' All the results are stored as a named list \code{CoExpAnal} in the metadata slot of a
 #' given \code{SummarizedExperiment} object. Objects are:
 #' The runCoExpression method return several results, for \link{coseq} method, objects are:
@@ -1954,7 +1836,6 @@ methods::setMethod(f          = "boxplot.DE.plot",
 #' @param normFactors The type of estimator to be used to normalize for differences in library size.
 #' By default, it is the "TMM" one.
 #' @param merge \code{"union"} or \code{"intersection"}
-#' @return An S4 object of class \link{SummarizedExperiment}
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod runCoExpression
@@ -2151,7 +2032,10 @@ methods::setMethod(f="coseq.profile.plot",
                        return(p)
                    })
 
-
+#' @rdname coseq.profile.plot
+#' @title coseq.profile.plot
+#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @exportMethod coseq.profile.plot
 methods::setMethod(f          = "coseq.profile.plot",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, numCluster = 1, condition="groups", observation=NULL){
@@ -2174,7 +2058,6 @@ methods::setMethod(f          = "coseq.profile.plot",
 #' @return An object of class \link{MultiAssayExperiment}
 #' @export
 #' @exportMethod resetFlomicsMultiAssay
-#' @examples
 #' @noRd
 #'
 methods::setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",

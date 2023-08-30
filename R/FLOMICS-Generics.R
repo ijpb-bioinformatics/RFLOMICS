@@ -1,3 +1,7 @@
+#' @import MultiAssayExperiment
+#' @import SummarizedExperiment
+# @importClassesFrom MultiAssayExperiment
+# @importClassesFrom SummarizedExperiment
 
 methods::setGeneric(
   name = "mvQCdesign",
@@ -34,12 +38,23 @@ methods::setGeneric(
 
 methods::setGeneric(
   name = "RunDiffAnalysis",
-  def  = function(object, ... ){standardGeneric("RunDiffAnalysis")}
+  def  = function(object,  
+                  design, 
+                  Adj.pvalue.method="BH",
+                  contrastList, 
+                  DiffAnalysisMethod, 
+                  Adj.pvalue.cutoff = 0.05, 
+                  logFC.cutoff = 0, 
+                  clustermq=FALSE, 
+                  parallel = FALSE, 
+                  nworkers = 1, ... ){standardGeneric("RunDiffAnalysis")}
 )
 
 methods::setGeneric(
   name = "FilterDiffAnalysis",
-  def  = function(object, ... ){standardGeneric("FilterDiffAnalysis")}
+  def  = function(object, 
+                  Adj.pvalue.cutoff = 0.05, 
+                  logFC.cutoff = 0, ... ){standardGeneric("FilterDiffAnalysis")}
 )
 
 methods::setGeneric(
@@ -49,12 +64,12 @@ methods::setGeneric(
 
 methods::setGeneric(
   name = "RunPCA",
-  def  = function(object, ... ){standardGeneric("RunPCA")}
+  def  = function(object, nbcp = 5, raw = FALSE, ... ){standardGeneric("RunPCA")}
 )
 
 methods::setGeneric(
   name = "CheckExpDesignCompleteness",
-  def  = function(object, ... ){standardGeneric("CheckExpDesignCompleteness")}
+  def  = function(object, sampleList=NULL, ... ){standardGeneric("CheckExpDesignCompleteness")}
 )
 
 methods::setGeneric(
@@ -65,86 +80,51 @@ methods::setGeneric(
 
 methods::setGeneric(
   name = "getContrastMatrix",
-  def  = function(object, ... ){standardGeneric("getContrastMatrix")}
+  def  = function(object, model.formula, ... ){standardGeneric("getContrastMatrix")}
 )
 
-methods::setGeneric(
-  name = "runAnnotationEnrichment",
-  def  = function(object, ... ){standardGeneric("runAnnotationEnrichment")}
-)
+
 
 methods::setGeneric(
   name = "runCoExpression",
-  def  = function(object, ... ){standardGeneric("runCoExpression")}
+  def  = function(object, 
+                  K=2:20, 
+                  replicates=5, 
+                  nameList, 
+                  merge="union",
+                  model = "Normal", 
+                  GaussianModel = "Gaussian_pk_Lk_Ck",
+                  transformation, 
+                  normFactors, 
+                  clustermq=FALSE, ... ){standardGeneric("runCoExpression")}
 )
 
 methods::setGeneric(
   name = "DiffAnal.plot",
-  def  = function(object, ... ){standardGeneric("DiffAnal.plot")}
+  def  = function(object, hypothesis, 
+                  typeofplots = c("MA.plot", "volcano", "histogram"), ... ){standardGeneric("DiffAnal.plot")}
 )
 
 
 methods::setGeneric(
   name = "Data_Distribution_plot",
-  def  = function(object, ... ){standardGeneric("Data_Distribution_plot")}
+  def  = function(object, plot = "boxplot", raw = FALSE, ... ){standardGeneric("Data_Distribution_plot")}
 )
 
 methods::setGeneric(
   name = "Library_size_barplot.plot",
-  def  = function(object, ... ){standardGeneric("Library_size_barplot.plot")}
+  def  = function(object, raw = FALSE, ... ){standardGeneric("Library_size_barplot.plot")}
 )
 
-methods::setGeneric(
-  name = "Enrichment.plot",
-  def  = function(object, ... ){standardGeneric("Enrichment.plot")}
-)
 
 methods::setGeneric(
   name = "resetFlomicsMultiAssay",
-  def  = function(object, ... ){standardGeneric("resetFlomicsMultiAssay")}
-)
-
-
-methods::setGeneric(
-  name = "integrationWrapper",
-  def  = function(object, ... ){standardGeneric("integrationWrapper")}
-)
-
-
-methods::setGeneric(
-  name = "prepareForIntegration",
-  def  = function(object, ... ){standardGeneric("prepareForIntegration")}
-)
-
-methods::setGeneric(
-  name = "run_MOFA_analysis",
-  def  = function(object, ... ){standardGeneric("run_MOFA_analysis")}
-
+  def  = function(object, results, datasets = NULL, ... ){standardGeneric("resetFlomicsMultiAssay")}
 )
 
 methods::setGeneric(
   name = "Datasets_overview_plot",
   def  = function(object, ... ){standardGeneric("Datasets_overview_plot")}
-)
-
-methods::setGeneric(
-  name = "run_MixOmics_analysis",
-  def  = function(object, ... ){standardGeneric("run_MixOmics_analysis")}
-)
-
-methods::setGeneric(
-  name = "runAnnotationEnrichment_CPR",
-  def  = function(object, ... ){standardGeneric("runAnnotationEnrichment_CPR")}
-)
-
-methods::setGeneric(
-  name = "plot.CPRKEGG_Results",
-  def  = function(object, ... ){standardGeneric("plot.CPRKEGG_Results")}
-)
-
-methods::setGeneric(
-  name = "plot.CPR_Results",
-  def  = function(object, ... ){standardGeneric("plot.CPR_Results")}
 )
 
 methods::setGeneric(
@@ -160,4 +140,117 @@ methods::setGeneric(
 methods::setGeneric(
   name = "coseq.profile.plot",
   def  = function(object, ... ){standardGeneric("coseq.profile.plot")}
+)
+
+##### ANNOTATION ######
+
+methods::setGeneric(
+  name = "runAnnotationEnrichment",
+  def  = function(object, ... ){standardGeneric("runAnnotationEnrichment")}
+)
+
+methods::setGeneric(
+  name = "Enrichment.plot",
+  def  = function(object, ... ){standardGeneric("Enrichment.plot")}
+)
+
+
+methods::setGeneric(
+  name = "runAnnotationEnrichment_CPR",
+  def  = function(object,
+                  list_args = list(),
+                  from = "DiffExpAnal",
+                  dom.select = "custom",
+                  Domain = "no-domain",
+                  col_term = "term",
+                  col_gene = "gene",
+                  col_name = "name",
+                  col_domain = NULL,
+                  annot = NULL, ... ){standardGeneric("runAnnotationEnrichment_CPR")}
+)
+
+methods::setGeneric(
+  name = "plot.CPRKEGG_Results",
+  def  = function(object,
+                  contrast,
+                  pathway_id = NULL,
+                  species = "ath",
+                  gene_idtype = "kegg",
+                  from = "DiffExpAnal",
+                  pvalueCutoff = object@metadata$DiffExpEnrichAnal[["KEGG"]]$list_args$pvalueCutoff,
+                  ...){standardGeneric("plot.CPRKEGG_Results")}
+)
+
+methods::setGeneric(
+  name = "plot.CPR_Results",
+  def  = function(object,
+                  contrast,
+                  ont,
+                  Domain = NULL,
+                  from = "DiffExpAnal",
+                  type = "dotplot",
+                  showCategory = 15,
+                  searchExpr = "",
+                  node_label = "all",
+                  pvalueCutoff = object@metadata$DiffExpEnrichAnal[[ont]]$list_args$pvalueCutoff,
+                  ...){standardGeneric("plot.CPR_Results")}
+)
+
+##### INTEGRATION ####
+
+methods::setGeneric(
+  name = "integrationWrapper",
+  def  = function(object,
+                  omicsToIntegrate = NULL,
+                  rnaSeq_transfo = "limma (voom)",
+                  choice = "DE",
+                  contrasts_names = NULL,
+                  type = "union",
+                  group = NULL,
+                  method = "MOFA",
+                  scale_views = FALSE,
+                  maxiter = 1000,
+                  num_factors = 10,
+                  selectedResponse = NULL,
+                  ncomp = 2,
+                  link_datasets = 1,
+                  link_response = 1,
+                  sparsity = FALSE,
+                  cases_to_try = 5, ... ){standardGeneric("integrationWrapper")}
+)
+
+
+methods::setGeneric(
+  name = "prepareForIntegration",
+  def  = function(object,
+                  omicsToIntegrate = NULL,
+                  rnaSeq_transfo = "limma (voom)",
+                  choice = "DE",
+                  contrasts_names = NULL,
+                  type = "union",
+                  group = NULL,
+                  method = c("MOFA", "MixOmics"), ... ){standardGeneric("prepareForIntegration")}
+)
+
+methods::setGeneric(
+  name = "run_MOFA_analysis",
+  def  = function(object,
+                  scale_views = FALSE,
+                  maxiter = 1000,
+                  num_factors = 10,
+                  ...){standardGeneric("run_MOFA_analysis")}
+  
+)
+
+methods::setGeneric(
+  name = "run_MixOmics_analysis",
+  def  = function(object,
+                  scale_views = FALSE,
+                  selectedResponse = NULL,
+                  ncomp = 2,
+                  link_datasets = 1,
+                  link_response = 1,
+                  sparsity = FALSE,
+                  cases_to_try = 5,
+                  ...){standardGeneric("run_MixOmics_analysis")}
 )

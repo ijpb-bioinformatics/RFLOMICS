@@ -13,7 +13,6 @@
 #' @return a MultiAssayExperiment object.
 #' @export
 #' @exportMethod integrationWrapper
-#' @examples
 methods::setMethod(
   f = "integrationWrapper",
   signature = "MultiAssayExperiment",
@@ -112,7 +111,6 @@ methods::setMethod(
 #' @return An untrained MOFA object or a list of dataset
 #' @export
 #' @exportMethod prepareForIntegration
-#' @examples
 methods::setMethod(
   f = "prepareForIntegration",
   signature = "MultiAssayExperiment",
@@ -196,10 +194,9 @@ methods::setMethod(
 #' @return A list with an untrained MOFA object (containing all options for the run) and a trained MOFA object
 #' @export
 #' @exportMethod run_MOFA_analysis
-#' @examples
 methods::setMethod(
   f = "run_MOFA_analysis",
-  signature = "MOFA",
+  signature = "MultiAssayExperiment",
   definition = function(object,
                         scale_views = FALSE,
                         maxiter = 1000,
@@ -247,7 +244,6 @@ methods::setMethod(
 #' @return A mixOmics result.
 #' @export
 #' @exportMethod run_MixOmics_analysis
-#' @examples
 methods::setMethod(
   f = "run_MixOmics_analysis",
   signature = "list",
@@ -330,7 +326,6 @@ methods::setMethod(
       )
       if (length(object$blocks) > 1) list_tuning_args$design <- Design_mat
 
-      # TODO find a way to specify the package into get function
       list_res$tuning_res <- do.call(getFromNamespace(tune_function, ns = "mixOmics"), list_tuning_args)
     }
 
@@ -345,7 +340,6 @@ methods::setMethod(
     if (length(object$blocks) > 1) list_args$design <- Design_mat
     if (sparsity && !functionName %in% c("block.spls", "block.pls")) list_args$keepX <- list_res$tuning_res$choice.keepX
 
-    # TODO find a way to specify the package into get function
     list_res$analysis_res <- do.call(getFromNamespace(functionName, ns = "mixOmics"), list_args)
 
     return(list_res)
