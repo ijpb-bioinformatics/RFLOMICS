@@ -68,7 +68,7 @@ GLM_model <- function(input, output, session, rea.values){
       session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(object=session$userData$FlomicsMultiAssay, 
                                                                    results = c("DiffExpAnal", "CoExpAnal", "DiffExpEnrichAnal", "CoExpEnrichAnal"))
       print("# 2- statistical setting...")
-      print(paste0("#    => Choice of model : ", input$model.formulae))
+      print(paste0("#    => Choice of model: ", input$model.formulae))
 
       # => Set the model formulae
       session$userData$FlomicsMultiAssay@metadata$design@Model.formula <- input$model.formulae
@@ -156,7 +156,7 @@ GLM_model <- function(input, output, session, rea.values){
       # check if user has selected the contrasts to test
       if(length(contrast.sel.vec) == 0){
 
-        showModal(modalDialog( title = "Error message", "Please select the hypotheses to test."))
+        showModal(modalDialog(title = "Error message", "Please select the hypotheses to test."))
         #rea.values$validate.status <- 1
       }
 

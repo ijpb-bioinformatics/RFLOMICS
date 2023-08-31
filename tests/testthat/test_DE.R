@@ -88,7 +88,7 @@ test_that("Diff Analysis on metabolomics returns the same result within and outs
   ListResMet <- lapply(ResGlmMet, function(x){
     fit2 <- limma::eBayes(x, robust = TRUE)
     res  <- limma::topTable(fit2, adjust.method = "BH", number = Inf, sort.by = "AveExpr") %>% 
-      dplyr::rename(x, "Abundance" = "AveExpr","pvalue" = "P.Value", "Adj.pvalue" = "adj.P.Val")
+      dplyr::rename("Abundance" = "AveExpr","pvalue" = "P.Value", "Adj.pvalue" = "adj.P.Val")
     return(res)
   })
 

@@ -21,10 +21,10 @@ read_exp_design <- function(file){
   # read design and remove special characters
   # remove "_" from modality and factor names
   data <- vroom::vroom(file, delim = "\t", show_col_types = FALSE)  %>%
-    dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), stringr::str_remove_all, pattern = "[.,;:#@!?()§$€%&<>|=+-/]")) %>%
-    dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), stringr::str_remove_all, pattern = "[\\]\\[\'\"\ ]")) %>%
-    dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), stringr::str_remove_all, pattern = stringr::fixed("\\"))) %>% 
-    dplyr::mutate(dplyr::across(.cols = c(-1),               stringr::str_remove_all, pattern = stringr::fixed("_"))) %>% 
+    dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), ~stringr::str_remove_all(.x, pattern = "[.,;:#@!?()§$€%&<>|=+-/]"))) %>%
+    dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), ~stringr::str_remove_all(.x, pattern = "[\\]\\[\'\"\ ]"))) %>%
+    dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), ~stringr::str_remove_all(.x, pattern = stringr::fixed("\\")))) %>% 
+    dplyr::mutate(dplyr::across(.cols = c(-1), ~stringr::str_remove_all(.x, pattern = stringr::fixed("_")))) %>% 
     dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), as.factor)) 
   
   names(data)  <- stringr::str_remove_all(string = names(data), pattern = "[.,;:#@!?()§$€%&<>|=+-/\\]\\[\'\"\ _]") %>%
@@ -35,14 +35,14 @@ read_exp_design <- function(file){
   
   if (length(sample.dup) != 0) {
     
-    stop(paste0("ERROR : duplicated sample names : ", paste0(sample.dup, collapse = ",")))
+    stop(paste0("ERROR: duplicated sample names: ", paste0(sample.dup, collapse = ",")))
   }
   
   # check if there is duplication in factor names
   factor.dup <- as.vector(data[which(table(names(data[-1])) > 1),1])[[1]]
   if (length(factor.dup) != 0) {
     
-    stop(paste0("ERROR : duplicated factor name : ", paste0(factor.dup, collapse = ",")))
+    stop(paste0("ERROR: duplicated factor name: ", paste0(factor.dup, collapse = ",")))
   }
   
   # check if same name of moralities are used in diff factor
@@ -53,7 +53,7 @@ read_exp_design <- function(file){
   mod.dup <- mod.list[duplicated(mod.list)]
   if(length(mod.dup) != 0) {
     
-    stop(paste0("ERROR : modality used in more than one factor : ", paste0(mod.dup[1:10], collapse = ", ")))
+    stop(paste0("ERROR: modality used in more than one factor: ", paste0(mod.dup[1:10], collapse = ", ")))
   }
   
   # warning if number of factors exceed n = 10
@@ -61,7 +61,7 @@ read_exp_design <- function(file){
   if (dim(data)[2]-1 >= n){
     
     data <- data[, 1:n]
-    message(paste0("WARNING : large number of columns ! only the first ", n," will be displayed"))
+    message(paste0("WARNING: large number of columns! only the first ", n," will be displayed"))
   }
   
   # check nbr of modality of the 5th fist columns
@@ -72,7 +72,7 @@ read_exp_design <- function(file){
   
   if(ratio != 1)
   {
-    message("WARNING : The select input contains a large number of options")
+    message("WARNING: The select input contains a large number of options")
   }
   
   data            <- data.frame(data) 
@@ -94,7 +94,7 @@ read_omics_data <- function(file){
   
   if(!file.exists(file))
   {
-    stop(paste0("ERROR : ", file, " don't exist !"))
+    stop(paste0("ERROR: ", file, " don't exist!"))
   }
   
   # read omics data and remove special characters
@@ -107,7 +107,7 @@ read_omics_data <- function(file){
   
   if (length(sample.dup) !=0){
     
-    stop(paste0("ERROR : duplicated sample names : ", paste0(sample.dup, collapse = ",")))
+    stop(paste0("ERROR: duplicated sample names: ", paste0(sample.dup, collapse = ",")))
   }
   
   # check if there is duplication in factor names
@@ -115,7 +115,7 @@ read_omics_data <- function(file){
   
   if (length(entity.dup) !=0){
     
-    stop(paste0("ERROR : duplicated feature names : ", paste0(entity.dup, collapse = ",")))
+    stop(paste0("ERROR: duplicated feature names: ", paste0(entity.dup, collapse = ",")))
   }
   
   data            <- data.frame(data) 
@@ -566,11 +566,6 @@ plotDistr <- function(abundances, dataType, transform_method){
 }
 
 
-
-
-
-
-
 #' pvalue.plot
 #'
 #' @param data dataframe (ggplot2)
@@ -727,130 +722,10 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
   if(ncol(counts) < 2){
     stop("data frame with less than 2 columns")
   }
-  # if(ncol(counts) == 5){
-  #   x <- names(counts)[1]
-  #   y <- names(counts)[2]
-  #   row <- names(counts)[3]
-  #   col <- names(counts)[4]
-  # } else if(ncol(counts) == 4){
-  #   x <- names(counts)[1]
-  #   y <- names(counts)[2]
-  #   row <- names(counts)[3]
-  #   col <- NULL
-  # } else if(ncol(counts) == 3){
-  #   x <- names(counts)[1]
-  #   y <- names(counts)[2]
-  #   row <- NULL
-  #   col <- NULL
-  # } else if(ncol(counts) == 2){
-  #   x <- NULL
-  #   y <- names(counts)[1]
-  #   row <- NULL
-  #   col <- NULL
-  # } else {
-  #   stop("data frame with less than 2 columns")
-  # }
-  # # rename two first column names of counts with x and y
-  # if(!is.null(x)){
-  #   x_lab <- names(counts)[names(counts)==x]
-  #   names(counts)[names(counts)==x] <- 'x'
-  # } else {
-  #   x_lab <- ""
-  #   counts$x <- rep(1, nrow(counts))
-  # }
-  #
-  # y_lab = names(counts)[names(counts)==y]
-  # names(counts)[names(counts)==y] <- 'y'
-  # # get the levels of one factor
-  # getFactorLevels <- function(counts, factorVar){
-  #   if(!is.numeric(counts[[factorVar]])){
-  #     counts[[factorVar]] = factor(counts[[factorVar]])
-  #     x_vals = as.character(levels(counts[[factorVar]]))
-  #   }else{
-  #     x_vals = as.character(sort(unique(counts[[factorVar]])))
-  #   }
-  #   return(x_vals)
-  # }
-  # x_vals <- getFactorLevels(counts, "x")
-  # # recode factor with integer (1 for the first level, 2 for the second level, etc)
-  # counts$x = as.numeric(factor(counts$x))
-  # y_vals <- getFactorLevels(counts, "y")
-  # counts$y = as.numeric(factor(counts$y))
-  # # cell border size
-  # if(length(unique(counts$y))>length(unique(counts$x))){
-  #   cell_border_size = cell_border_size/length(unique(counts$y))
-  # }else{
-  #   cell_border_size = cell_border_size/length(unique(counts$x))
-  # }
-  # # for row or col (for faceting)
-  # # replace colname with variable name and each level with the paste of the factor name, =, the factor level
-  # replaceRowOrColIntoCounts <- function(counts, facetingVariable, newColumnName){
-  #   if(!is.factor(counts[,names(counts)== facetingVariable])){
-  #     counts[,names(counts) == facetingVariable] = factor(counts[,names(counts) == facetingVariable])
-  #   }
-  #   levels(counts[,names(counts) == facetingVariable]) = paste(
-  #     names(counts)[names(counts) == facetingVariable]
-  #     , levels(counts[,names(counts) == facetingVariable])
-  #     , sep = ' = '
-  #   )
-  #   names(counts)[names(counts) == facetingVariable] = newColumnName
-  #   return(counts)
-  # }
-  #
-  # if(!is.null(row)){
-  #   counts <- replaceRowOrColIntoCounts (counts, row, "row")
-  # }
-  # if(!is.null(col)){
-  #   counts <- replaceRowOrColIntoCounts (counts, col, "col")
-  # }
-  # # calculate parameters for geom_rect
-  # # xmin - (required) left edge of rectangle
-  # # xmax - (required) right edge of rectangle
-  # # ymin - (required) bottom edge of rectangle
-  # # ymax - (required) top edge of rectangle
-  # counts$ymin = counts$y-.5
-  # counts$ymax = counts$y+.5
-  # counts$xmin = counts$x-.5
-  # counts$xmax = counts$x+.5
-  #
-  # counts$Count <- as.factor(counts$Count)
-  #
-  # p <- ggplot2::ggplot( data = counts, aes_string(ymin = 'ymin', ymax = 'ymax', xmin = 'xmin', xmax = 'xmax' , fill = 'Count')) + geom_rect() + labs(x=x_lab,y=y_lab) + ggtitle(message)
-  # p <- p + theme(
-  #   panel.grid.major = element_blank()
-  #   , panel.grid.minor = element_blank()
-  #   , legend.background = element_rect(colour='transparent',fill='transparent')
-  # )
-  # if(cell_border_size>0){
-  #   p = p + geom_rect(
-  #     size = cell_border_size
-  #     , colour = 'grey90'
-  #     , show.legend = FALSE
-  #   )
-  # }
-  # p = p + scale_x_continuous(
-  #   breaks = sort(unique(counts$x))
-  #   , labels = x_vals
-  # )
-  # p = p + scale_y_continuous(
-  #   breaks = sort(unique(counts$y))
-  #   , labels = y_vals
-  # )
-  # if(!is.null(row)){
-  #   if(!is.null(col)){
-  #     p = p + facet_grid(row~col)
-  #   }
-  #   else{
-  #     p = p + facet_grid(row~.)
-  #   }
-  # }else{
-  #   if(!is.null(col)){
-  #     p = p + facet_grid(.~col)
-  #   }
-  # }
-  
-  #add color column
-  # #00BA38
+ 
+  # #add color column
+  # # #00BA38
+
   counts <- counts %>% dplyr::mutate(status = dplyr::if_else(Count > 2 , "pass", dplyr::if_else(Count == 2 , "warning", "error")))
   
   #list of factor names
@@ -878,16 +753,14 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
             p <- ggplot2::ggplot(counts ,ggplot2::aes_string(x = factors[1], y = factors[2])) +
               ggplot2::facet_grid(grid~.) })
   
-  p <- p + ggplot2::geom_tile(aes(fill = status), color = "white", size = 1, width = 1, height = 1)  + ggplot2::geom_text(aes(label = Count)) +
+  p <- p + ggplot2::geom_tile(ggplot2::aes(fill = status), color = "white", size = 1, width = 1, height = 1)  + ggplot2::geom_text(ggplot2::aes(label = Count)) +
     ggplot2::scale_fill_manual(values = names(col.panel.u), breaks = col.panel.u) +
     ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-          axis.ticks = ggplot2::element_blank(), axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
+                   axis.ticks = ggplot2::element_blank(), axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
     ggplot2::ggtitle(message)
   
   return(p)
 }
-
-
 
 ######################################## get contrast ##################################################
 
@@ -910,9 +783,9 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
 ## functions to define part of simple contrasts
 #' define part of simple contrast data frame
 #'
-#' @param treatmentFactorsList
-#' @param i
-#' @param j
+#' @param treatmentFactorsList list
+#' @param i i
+#' @param j j
 #'
 #' @return a dataframe of contrasts
 #' @export
@@ -960,8 +833,8 @@ define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
 }
 #' compute a data table with all pairwise comparisons of one factor
 #'
-#' @param treatmentFactorsList
-#' @param i
+#' @param treatmentFactorsList list
+#' @param i i
 #' @noRd
 #' @return a data frame with all simple contrasts
 #' @export
@@ -1069,12 +942,12 @@ define_averaged_contrasts <- function(allSimpleContrast_df){
 
 #' define a data frame with part of interaction contrast
 #'
-#' @param treatmentFactorsList
-#' @param i
-#' @param j
-#' @param k
-#' @param row_i
-#' @param row_j
+#' @param treatmentFactorsList list
+#' @param i i 
+#' @param j j
+#' @param k k
+#' @param row_i row_i
+#' @param row_j row_j
 #'
 #' @return a dataframe with part of the interaction contrasts definition
 #' @export
@@ -1140,9 +1013,9 @@ define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, 
 
 #' define interaction constrast for pairs of biological factors
 #'
-#' @param treatmentFactorsList
-#' @param i
-#' @param j
+#' @param treatmentFactorsList list
+#' @param i i
+#' @param j j
 #'
 #' @return a dataframe
 #' @export
@@ -1203,8 +1076,8 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
 
 #' define all interaction contrasts
 #'
-#' @param treatmentFactorsList
-#' @param groupInteractionToKeep
+#' @param treatmentFactorsList list
+#' @param groupInteractionToKeep tokeep
 #'
 #' @return a dataframe with all the interaction contrasts
 #' @export
@@ -1287,7 +1160,7 @@ computeGroupVector <- function(treatmentGroups, colnamesMatrixDesign, interactio
 #' @param modelMatrix: numeric matrix giving the design matrix of the GLM.
 #' @param treatmentCondenv: the environment to use
 #'
-#' @return
+#' @return binary vector
 #' @export
 #' @noRd
 #' @author Christine Paysant-Le Roux
@@ -1307,11 +1180,11 @@ assignVectorToGroups <- function(treatmentFactorsList = treatmentFactorsList, mo
 
 #' return contrast coefficients
 #'
-#' @param contrast
-#' @param colnamesGLMdesign
+#' @param contrast contrast considered
+#' @param colnamesGLMdesign colnames
 #' @param treatmentCondenv: the environment to use
 #' @noRd
-#' @return
+#' @return the contrast vector
 #' @export
 #' @author Christine Paysant-Le Roux
 returnContrastCoefficients <- function(contrast, colnamesGLMdesign, treatmentCondenv){
@@ -1330,9 +1203,9 @@ returnContrastCoefficients <- function(contrast, colnamesGLMdesign, treatmentCon
 
 #' return gene list
 #'
-#' @param matrix
-#' @param colnames
-#' @param mergeType
+#' @param matrix matrix of DE results
+#' @param colnames colnames
+#' @param mergeType either union or intersection.
 #' @return list of genes
 #' @export
 #' @noRd
@@ -1388,8 +1261,8 @@ try_rflomics <- function(expr) {
 
 #' @title coseq.error.manage
 #' @param coseq.res.list list of coseq object
-#' @param K
-#' @param replicates
+#' @param K number of group
+#' @param replicates number of replication to run
 #' @return list plot of ICL, logLike and coseq object with min ICL
 #' @export
 #' @noRd
@@ -1431,7 +1304,7 @@ coseq.error.manage <- function(coseq.res.list, K, replicates){
       }
     }
     
-    print("#     => error management : level 2 ")
+    print("#     => error management: level 2 ")
     ICL.vec <- unlist(lapply(1:nK_success.job, function(x){ (ICL(coseq.res.list[["value"]][[x]])) })) %>%
       lapply(., function(x){ if_else(is.na(x), "failed", "success") }) %>% unlist()
     
@@ -1558,8 +1431,8 @@ coseq.results.process <- function(coseqObjectList, K, conds){
 
 #' @title run Coseq for co-expression analysis on cluster
 #' @param counts matrix
-#' @param K
-#' @param replicates
+#' @param K number of groups
+#' @param replicates number of replication to run
 #' @param param.list list of coseq parameters
 #' @return coseqResults
 #' @export
@@ -1662,8 +1535,8 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
 
 #' @title run Coseq for co-expression analysis on cluster
 #' @param counts matrix
-#' @param K
-#' @param replicates
+#' @param K number of groups
+#' @param replicates number of replication to run
 #' @param param.list list of coseq parameters
 #' @return coseqResults
 #' @export
@@ -1693,7 +1566,7 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list){
   CoExpAnal <- list()
   
   # error managment
-  print("#     => error management : level 1 ")
+  print("#     => error management: level 1 ")
   coseq.error.management <- coseq.error.manage(coseq.res.list=coseq.res.list, K=K, replicates=replicates)
   
   nK_success   <- coseq.error.management$nK_success
@@ -1727,7 +1600,7 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list){
 #' @param coseq.res coseq object
 #' @param selectedCluster cluster num
 #' @param conds condition matrix
-#' @return
+#' @return boxplot profiles.
 #' @export
 #' @importFrom ggplot2 geom_boxplot facet_wrap theme element_blank
 #' @noRd
@@ -1765,7 +1638,7 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
 ################################### ANNOTATION #############################
 
 #' @title EnrichmentHyperG
-#' @param alpha
+#' @param alpha pvalue threshold
 #' @param annotation gene annotation
 #' @param geneList gene list
 #' @return list

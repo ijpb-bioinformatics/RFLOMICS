@@ -102,7 +102,7 @@ MOFA_setting <- function(input, output, session, rea.values){
           fluidRow(
             column(12,
                    selectInput(session$ns("MOFA_scaleViews"),
-                               label    = "Scale views :",
+                               label    = "Scale views:",
                                choices  = c("FALSE", "TRUE"),
                                selected = "TRUE"))),
           fluidRow(

@@ -39,10 +39,10 @@ methods::setGeneric(
 methods::setGeneric(
   name = "RunDiffAnalysis",
   def  = function(object,  
-                  design, 
+                  design = NULL,
                   Adj.pvalue.method="BH",
-                  contrastList, 
-                  DiffAnalysisMethod, 
+                  contrastList = NULL, 
+                  DiffAnalysisMethod = NULL, 
                   Adj.pvalue.cutoff = 0.05, 
                   logFC.cutoff = 0, 
                   clustermq=FALSE, 

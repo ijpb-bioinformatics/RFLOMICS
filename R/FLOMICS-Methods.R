@@ -137,7 +137,7 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                      # check presence of bio factors
                      if (! table(Design@Factors.Type)["Bio"] %in% 1:3){
                        
-                       output[["error"]] <- "ERROR: no bio factor! or nbr of bio factors exeed 3!"
+                       output[["error"]] <- "ERROR: no bio factor! or nbr of bio factors exceed 3!"
                        
                      }
                      if (table(Design@Factors.Type)["batch"] == 0){
@@ -1795,17 +1795,17 @@ methods::setMethod(f          = "boxplot.DE.plot",
 
 
 #' @title runCoExpression
-#' @description This is an interface method which performed co-expression/co-abundance analysis
+#' @description This is an interface method which performs co-expression/co-abundance analysis
 #' of omic-data.
-#' @details For instance, only the coseq function of the package coseq is proposed.
+#' @details For now, only the coseq function of the coseq package is used.
 #' For RNAseq data, parameters used are those recommended in DiCoExpress workflow (see the reference).
 #' This parameters are: \code{model="normal"}, \code{transformation="arcsin"}, \code{GaussianModel="Gaussian_pk_Lk_Ck"},
 #' \code{normFactors="TMM"}, \code{meanFilterCutoff = 50}
-#' For proteomic or metabolomic, data are scaled by protein or metabolite to groups them by expression
+#' For proteomic or metabolomic, data are scaled by protein or metabolite to group them by expression
 #' profiles rather than by expression intensity.
 #' After data scaling, recommended parameters (from \code{coseq} developers) for co-expression analysis are:
 #' \code{model="normal"}, \code{transformation="none"}, \code{GaussianModel="Gaussian_pk_Lk_Ck"},
-#' \code{normFactors="none",  \code{meanFilterCutoff = NULL}
+#' \code{normFactors="none"},  \code{meanFilterCutoff = NULL}.
 #'
 #' @return
 #' An S4 object of class \link{SummarizedExperiment}
@@ -1861,15 +1861,11 @@ methods::setMethod(f="runCoExpression",
                                      union = dplyr::if_else(rowSums(dplyr::select(., tidyselect::contains(nameList))) != 0 , "YES", "NO")) %>% 
                        dplyr::filter(union != "NO", get(merge) == "YES") 
                      geneList <- geneList$DEF
-                     
-                     # if (!object@metadata[["transform"]][["transformed"]]) object <-  apply_transformation(object)
-                     # if (!object@metadata[["Normalization"]]$normalized)   object <-  apply_norm(object)
-                     # counts = SummarizedExperiment::assay(object)[geneList,]
-                     
+
                      
                      # set default parameters based on data type
                      param.list <- list("meanFilterCutoff"=NULL)
-                     switch (object@metadata$omicType,
+                     switch(object@metadata$omicType,
                              
                              "RNAseq" = {
                                counts = SummarizedExperiment::assay(object)[geneList,]
@@ -1882,9 +1878,7 @@ methods::setMethod(f="runCoExpression",
                                
                              },
                              "proteomics" = {
-                               if (!object@metadata[["transform"]][["transformed"]]) object <-  apply_transformation(object)
-                               if (!object@metadata[["Normalization"]]$normalized)   object <-  apply_norm(object)
-                               
+                               object <- checkTransNorm(object)
                                counts = SummarizedExperiment::assay(object)[geneList,]
                                
                                # Print the selected GaussianModel
@@ -1901,9 +1895,7 @@ methods::setMethod(f="runCoExpression",
                                param.list[["GaussianModel"]]    <- GaussianModel
                              },
                              "metabolomics" = {
-                               if (!object@metadata[["transform"]][["transformed"]]) object <-  apply_transformation(object)
-                               if (!object@metadata[["Normalization"]]$normalized)   object <-  apply_norm(object)
-                               
+                               object <- checkTransNorm(object)
                                counts = SummarizedExperiment::assay(object)[geneList,]
                                
                                # Print the selected GaussianModel

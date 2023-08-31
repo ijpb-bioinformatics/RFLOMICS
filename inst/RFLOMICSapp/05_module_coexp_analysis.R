@@ -301,7 +301,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     FC.tmp.mat <- as.matrix(FC.tmp[,-1])
     dimnames(FC.tmp.mat)[[1]] <- FC.tmp$id
     
-    box(title = paste0("Number of clusters : ", nb_cluster), status = "warning", solidHeader = TRUE, width = 14,
+    box(title = paste0("Number of clusters: ", nb_cluster), status = "warning", solidHeader = TRUE, width = 14,
         
         tabBox( id = "runClustering", width = 12,
                 

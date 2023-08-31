@@ -14,9 +14,9 @@ QCNormalizationTabUI <- function(id){
           width = 12, status = "warning", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE,
           
           p("For each diagnostic plot, both raw and processed (filtered, normalized, ...) data are displayed with expertised default parameters."),
-          p("- You may first have a look at to default processed plots to eventually identify outliers sample"),
-          p("- You may check onto the ACP factorial map to control that samples group with the replicat of the same condition."),
-          p("- You may play with filtered parameters to see if it improved the grouping"),
+          p("- You may first have a look at the default processed plots to eventually identify outliers sample"),
+          p("- You may check onto the PCA factorial map to control that samples are groupped with the replicat of the same condition."),
+          p("- You may play with filtered parameters to see if it improves the grouping"),
           p("- If not, you may remove outliers from the sample list, update the analysis and check again."),
           p("- To quickly overview the % of variability which is associated to each design factors, go to PCA (2/2) ")
       )
@@ -61,7 +61,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     # sample list :
     pickerInput(
       inputId  = session$ns("selectSamples"),
-      label    = "Sample list :",
+      label    = "Sample list:",
       choices  = sampleList,
       options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
       multiple = TRUE,
@@ -104,7 +104,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     paramRNAseq.list <- list(
       
       fluidRow(
-        column(12, h5("Low count Filtering (CPM) :")),
+        column(12, h5("Low count Filtering (CPM):")),
         column(8,
                selectInput(inputId  = session$ns("Filter_Strategy"),
                            label    = "Stategy",
@@ -119,7 +119,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       ),
       fluidRow(
         column(12,
-               h5("Gene count normalization :"),
+               h5("Gene count normalization:"),
                selectInput(inputId  = session$ns("selectNormMethod"),
                            label    = "method",
                            choices  =  list("TMM (edgeR)" = "TMM"),
@@ -410,7 +410,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
             }
     )
     
-    print(paste0("# 3  => Data processing : ", dataset))
+    print(paste0("# 3  => Data processing: ", dataset))
     processed.SE <- process_data(SE = session$userData$FlomicsMultiAssay[[dataset]], dataset = dataset, 
                                  samples = input$selectSamples, param.list = param.list)
     

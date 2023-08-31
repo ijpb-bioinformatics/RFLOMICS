@@ -39,9 +39,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   output$instruction <- renderUI({
     box(title = span(tagList(icon("cogs"), "  ",  a(names(method), href="https://bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf"), tags$small("(Scroll down for instructions)")  )),
         solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
-        p("Differential expression analysis is conducted for each hypothesis. There is just two options to set (the ajusted-pvalue cut-off and the |logFC| cut-off).
+        p("Differential expression analysis is conducted for each hypothesis. There are two options to set (the adjusted-pvalue cut-off and the |logFC| cut-off).
           The results will appear in blocks (one per hypothesis) with 3 outputs:"),
-        p("- the distribution of pvalue's : which has to be validated", a("(some help to identify the good shapes)", href="Pvalue_distrib.pdf"),""),
+        p("- the distribution of pvalue's: which has to be validated", a("(some help to identify the good shapes)", href="Pvalue_distrib.pdf"),""),
         p("- the MA plot (DE genes in red will varie with the p-value cutoff)"),
         p("- the table of statistics per gene/protein/metabolite (Number of stats displayed will varie with the p-value cutoff)")
     )
@@ -80,7 +80,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                           multiple = TRUE, selected = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName),
                         
                         # method for Diff analysis
-                        selectInput(inputId  = session$ns("AnaDiffMethod"), label = "Method :",
+                        selectInput(inputId  = session$ns("AnaDiffMethod"), label = "Method:",
                                     choices  = method,
                                     selected = method),
                         
@@ -321,7 +321,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
           fluidRow(
             column(10,
                    box(width=14, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success",
-                       title = tags$h5(paste0(vect["tag"], " : ", vect["contrastName"],"  [#DE: ", stats$gDE," (up: ", stats$pgDEup,"%, ", "down: ", stats$pgDEdown,"%)]")),
+                       title = tags$h5(paste0(vect["tag"], ": ", vect["contrastName"],"  [#DE: ", stats$gDE," (up: ", stats$pgDEup,"%, ", "down: ", stats$pgDEdown,"%)]")),
                        
                        tabsetPanel(
                          
@@ -386,7 +386,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                     column(width = 6, 
                                            #RadioButtonsConditionUI(session$ns(paste0(vect["contrastName"],"-diff")))
                                            radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-pca.DE.condColorSelect")),
-                                                        label = 'Levels :',
+                                                        label = 'Levels:',
                                                         choices = c("groups",factors.bio),
                                                         selected = "groups")),
                                     column(width = 6, UpdateRadioButtonsUI(session$ns(paste0(vect["contrastName"],"-diff"))))
@@ -411,7 +411,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                            
                                            #RadioButtonsConditionUI(session$ns(paste0(vect["contrastName"],"-DEcondition")))
                                            radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-DEcondition")),
-                                                        label = 'Levels :',
+                                                        label = 'Levels:',
                                                         choices = c("groups",factors.bio),
                                                         selected = factors.bio[1])
                                            ),

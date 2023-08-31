@@ -591,7 +591,7 @@ read_metaData <- function(input.file){
     
     if(!is.null(res$primary) | !is.null(res$colname)){
       
-      showModal(modalDialog( title = "Error message", "metadata file must contient at least 2 colomns named : primary (?) and colname(?)"))
+      showModal(modalDialog( title = "Error message", "metadata file must contient at least 2 colomns named: primary (?) and colname(?)"))
       return(NULL)
       
     }
