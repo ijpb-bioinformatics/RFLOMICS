@@ -273,7 +273,6 @@ shinyServer(function(input, output, session) {
 
     })
 
-    ### ADDED 15/09/22
     #### MixOmics data integration ####
     ###################################
     output$withMixOmics_UI <- renderUI({

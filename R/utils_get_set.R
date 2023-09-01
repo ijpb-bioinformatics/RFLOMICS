@@ -173,7 +173,7 @@ getDEMatrix <- function(object) {
 
 # very similar to filter_DE_from_SE but returns a vector instead of a SE.
 
-#' @title Get union vector of DE entities from list of contrasts
+#' @title Operation on differential analyses lists. Get union vector of DE entities from list of contrasts
 #'
 #' @param object a SE object (produced by Flomics). Expects to find a slot with differential analyses results.
 #' @param contrasts Vector of characters, expect to be contrast names. Default is null, the operation (union) is performed
@@ -187,8 +187,8 @@ opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "unio
   if (!class(object) %in% c("SummarizedExperiment", "MultiAssayExperiment")) stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
   if (class(object) == "MultiAssayExperiment" && is.null(SE.name)) stop("Please provide SE.name argument.")
 
-  # if (is.null(object@metadata$DiffExpAnal$Validcontrasts)) stop("Please validate your differential analyses first.")
-
+  if (class(object) == "MultiAssayExperiment") object <- object[[SE.name]] 
+  
   if (is.null(contrasts)) contrasts <- getSelectedContrasts(object)[["tag"]]
   if (isContrastName(object, contrasts)) contrasts <- convertContrastToTag(object, contrasts)
 

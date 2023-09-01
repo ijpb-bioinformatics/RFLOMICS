@@ -1225,7 +1225,8 @@ methods::setMethod(f          = "RunNormalization",
 #' \item{TopDEF: }{a list giving for each contrast a data.frame of differential expressed features by Adj.pvalue.cutoff}
 #' \item{mergeDEF: }{A data frame indicating for each features in row, if it is DE in a given contrasts in column}
 #' }
-#' @param object an object of class \link{SummarizedExperiment}
+#' @param object an object of class \link{SummarizedExperiment} or \link{MultiAssayExperiment} 
+#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment 
 #' @param design an object of class \link{ExpDesign-class}
 #' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
 #' to run. Either "edgeRglmfit" or "limmalmFit".
@@ -1314,7 +1315,6 @@ methods::setMethod(f         = "RunDiffAnalysis",
 
 #' @rdname RunDiffAnalysis
 #' @title RunDiffAnalysis
-#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment 
 #' @exportMethod RunDiffAnalysis
 methods::setMethod(f          = "RunDiffAnalysis",
                    signature  = "MultiAssayExperiment",
@@ -1371,8 +1371,9 @@ methods::setMethod(f          = "RunDiffAnalysis",
 #' Title
 #'
 #' @param object A SummarizedExperiment object
-#' @param Adj.pvalue.cutoff adjusted pvalue cutoff. Default is 0.05.
-#' @param logFC.cutoff cutoff for absolute value of log2FC. Default is 0. 
+#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @param Adj.pvalue.cutoff adjusted pvalue cutoff. Default is the parameter from the differential analysis.
+#' @param logFC.cutoff cutoff for absolute value of log2FC. Default is the parameter from the differential analysis. 
 #'
 #' @return A SummarizedExperiment object or a MultiAssayExperiment, depending on the object type, 
 #' where the differential analysis results have been actualized with the new parameters.
@@ -1381,17 +1382,24 @@ methods::setMethod(f          = "RunDiffAnalysis",
 #'
 methods::setMethod(f          = "FilterDiffAnalysis",
                    signature  = "SummarizedExperiment",
-                   definition <- function(object, Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0){
+                   definition <- function(object, Adj.pvalue.cutoff = NULL, logFC.cutoff = NULL){
                      
                      if(is.null(object@metadata$DiffExpAnal[["RawDEFres"]])){
                        stop("can't filter the DiffExpAnal object because it doesn't exist")
                      }
                      
+                     if (is.null(Adj.pvalue.cutoff)) 
+                       Adj.pvalue.cutoff <- object@metadata$DiffExpAnal$Adj.pvalue.cutoff
+                     
+                     if (is.null(logFC.cutoff))
+                       logFC.cutoff <- object@metadata$DiffExpAnal$abs.logFC.cutoff
+                     
+                     
                      object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
                      object@metadata$DiffExpAnal[["abs.logFC.cutoff"]]  <- logFC.cutoff
                      
                      ## TopDEF: Top differential expressed features
-                     DEF_filtred <- lapply(1:length(object@metadata$DiffExpAnal[["DEF"]]),function(x){
+                     DEF_filtred <- lapply(1:length(object@metadata$DiffExpAnal[["DEF"]]), function(x){
                        res <- object@metadata$DiffExpAnal[["DEF"]][[x]]
                        keep <- (res$Adj.pvalue <= Adj.pvalue.cutoff) & (abs(res$logFC) > logFC.cutoff)
                        res <- res[keep,]
@@ -1448,17 +1456,34 @@ methods::setMethod(f          = "FilterDiffAnalysis",
 
 #' @rdname FilterDiffAnalysis
 #' @title FilterDiffAnalysis
-#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
 #' @exportMethod FilterDiffAnalysis
 methods::setMethod(f          = "FilterDiffAnalysis",
                    signature  = "MultiAssayExperiment",
-                   definition = function(object, SE.name, Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0){
+                   definition = function(object, SE.name, 
+                                         Adj.pvalue.cutoff = NULL, logFC.cutoff = NULL){
                      
-                     object[[SE.name]] <-  FilterDiffAnalysis(object = object[[SE.name]],
-                                                              Adj.pvalue.cutoff = Adj.pvalue.cutoff,
-                                                              logFC.cutoff = logFC.cutoff)
+                     if(!SE.name %in% names(object))
+                       stop(paste0(SE.name, " isn't the name of an experiment in ", object))
                      
-                     return(object)
+                     if (is.null(Adj.pvalue.cutoff) && is.null(logFC.cutoff)){
+                       
+                       message("Parameter Adj.pvalue.cutoff and logFC.cutoff are both NULL. Not changing anything")
+                       return(object)
+                       
+                     }else{
+                       
+                       if (is.null(Adj.pvalue.cutoff)) 
+                         Adj.pvalue.cutoff <- object[[SE.name]]@metadata$DiffExpAnal$Adj.pvalue.cutoff
+                       
+                       if (is.null(logFC.cutoff))
+                         logFC.cutoff <- object[[SE.name]]@metadata$DiffExpAnal$abs.logFC.cutoff
+                       
+                       object[[SE.name]] <-  FilterDiffAnalysis(object = object[[SE.name]],
+                                                                Adj.pvalue.cutoff = Adj.pvalue.cutoff,
+                                                                logFC.cutoff = logFC.cutoff)
+                       
+                       return(object)
+                     }
                      
                    })
 
@@ -1507,11 +1532,11 @@ methods::setMethod(f          = "DiffAnal.plot",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, hypothesis, typeofplots = c("MA.plot", "volcano", "histogram")){
                      
-                     if ( isTagName(object, hypothesis)) hypothesis <-  convertTagToContrast(object, hypothesis)
+                     if (isTagName(object, hypothesis)) hypothesis <-  convertTagToContrast(object, hypothesis)
                      
-                     return( DiffAnal.plot(object      = object[[SE.name]],
-                                           hypothesis  = hypothesis,
-                                           typeofplots = typeofplots))
+                     return(DiffAnal.plot(object      = object[[SE.name]],
+                                          hypothesis  = hypothesis,
+                                          typeofplots = typeofplots))
                      
                    })
 
@@ -1534,20 +1559,27 @@ methods::setMethod(f          = "DiffAnal.plot",
 #' 
 methods::setMethod(f          = "heatmap.plot",
                    signature  = "SummarizedExperiment",
-                   definition <- function(object, hypothesis, condition="none", title = "", annot_to_show = NULL, subset_list = NULL, draw_args = list(), heatmap_args = list()){
+                   definition = function(object, 
+                                         hypothesis, 
+                                         condition="none", 
+                                         title = "", 
+                                         annot_to_show = NULL, 
+                                         subset_list = NULL, 
+                                         draw_args = list(), 
+                                         heatmap_args = list()){
                      
-                     if(is.null(object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]])){
+                     if (is.null(object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]])) {
                        stop("no DE variables")
                      }
                      
                      resTable <- dplyr::arrange(object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]], Adj.pvalue)
                      
-                     if(dim(resTable)[1] == 0){
+                     if (dim(resTable)[1] == 0) {
                        stop("no differentially expressed variables...")
                      }
                      
                      
-                     if(dim(resTable)[1] > 2000){
+                     if (dim(resTable)[1] > 2000) {
                        message("differentially expressed variables exceeding 2000 variables")
                        resTable <- resTable[1:2000,]
                        title = ifelse(title == "", paste0(title, "plot only 2000 TOP DE variables"),
@@ -1620,10 +1652,7 @@ methods::setMethod(f          = "heatmap.plot",
                      
                      column_ha <- ComplexHeatmap::HeatmapAnnotation(df = df_annotation, col = color_list)
                      
-                     
-                     # names(formals(ComplexHeatmap::Heatmap))
-                     
-                     namArg <- ifelse( getOmicsTypes(object) == "RNAseq", "normalized counts", "XIC")
+                     namArg <- ifelse(getOmicsTypes(object) == "RNAseq", "normalized counts", "XIC")
                      
                      # Arguments for Heatmap
                      heatmap_args <- c(
@@ -1669,13 +1698,13 @@ methods::setMethod(f          = "heatmap.plot",
                      if (isTagName(object, hypothesis)) hypothesis <- convertTagToContrast(object, hypothesis)
                      
                      return(heatmap.plot(object        = object[[SE.name]],
-                                          hypothesis    = hypothesis,
-                                          condition     = condition,
-                                          title         = title,
-                                          annot_to_show = annot_to_show,
-                                          subset_list   = subset_list,
-                                          draw_args     = draw_args,
-                                          heatmap_args  = heatmap_args))
+                                         hypothesis    = hypothesis,
+                                         condition     = condition,
+                                         title         = title,
+                                         annot_to_show = annot_to_show,
+                                         subset_list   = subset_list,
+                                         draw_args     = draw_args,
+                                         heatmap_args  = heatmap_args))
                      
                    })
 
@@ -1825,7 +1854,8 @@ methods::setMethod(f          = "boxplot.DE.plot",
 #' \item{\code{plots:} }{The plots of \code{coseq} results}
 #' }
 #' @param object An object of class \link{SummarizedExperiment}
-#' @param geneList A list of genes
+#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @param nameList names of the contrasts from which the DE entities are taken. Can be NULL, in that case every contrasts from the differential analysis is taken into consideration.
 #' @param K Number of clusters (a single value or a vector of values)
 #' @param replicates The number of iteration for each K.
 #' @param model Type of mixture model to use \code{"Poisson"} or \code{"normal"}. By default, it is the normal.
@@ -1844,72 +1874,80 @@ methods::setMethod(f          = "boxplot.DE.plot",
 #' 
 methods::setMethod(f="runCoExpression",
                    signature="SummarizedExperiment",
-                   definition <- function(object, K=2:20, replicates=5, nameList, merge="union",
-                                          model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation, normFactors, clustermq=FALSE){
+                   definition <- function(object, K=2:20, replicates=5, nameList = NULL, merge="union",
+                                          model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", 
+                                          transformation = NULL, normFactors = NULL, clustermq=FALSE,
+                                          meanFilterCutoff = NULL){
                      
+                    if (is.null(object@metadata$DiffExpAnal[["mergeDEF"]]))
+                      stop("Please run a differential analysis. runCoExpression uses these results.")
+                     
+                    if (is.null(nameList) && !is.null(getValidContrasts(object)[["tag"]])) 
+                      nameList <- getValidContrasts(object)[["tag"]]
+                    else if (is.null(nameList) && is.null(getValidContrasts(object)[["tag"]])) 
+                      nameList <- colnames(object@metadata$DiffExpAnal[["mergeDEF"]])[-1]
                      
                      CoExpAnal <- list()
                      
-                     CoExpAnal[["tools"]]            <- "CoSeq"
+                     CoExpAnal[["tools"]]            <- "Coseq"
                      CoExpAnal[["gene.list.names"]]  <- nameList
                      CoExpAnal[["merge.type"]]       <- merge
                      CoExpAnal[["replicates.nb"]]    <- replicates
                      CoExpAnal[["K.range"]]          <- K
                      
-                     geneList <- dplyr::select(object@metadata$DiffExpAnal[["mergeDEF"]], DEF, tidyselect::all_of(nameList)) %>% 
-                       dplyr::mutate(intersection = dplyr::if_else(rowSums(dplyr::select(., tidyselect::contains(nameList))) == length(nameList), "YES", "NO"), 
-                                     union = dplyr::if_else(rowSums(dplyr::select(., tidyselect::contains(nameList))) != 0 , "YES", "NO")) %>% 
-                       dplyr::filter(union != "NO", get(merge) == "YES") 
-                     geneList <- geneList$DEF
+                     # geneList <- dplyr::select(object@metadata$DiffExpAnal[["mergeDEF"]], DEF, tidyselect::all_of(nameList)) %>% 
+                     #   dplyr::mutate(intersection = dplyr::if_else(rowSums(dplyr::select(., tidyselect::contains(nameList))) == length(nameList), "YES", "NO"), 
+                     #                 union = dplyr::if_else(rowSums(dplyr::select(., tidyselect::contains(nameList))) != 0 , "YES", "NO")) %>% 
+                     #   dplyr::filter(union != "NO", get(merge) == "YES") 
+                     # geneList <- geneList$DEF
 
+                     geneList <- opDEList(object = object, contrasts = nameList, operation = merge)
                      
                      # set default parameters based on data type
-                     param.list <- list("meanFilterCutoff"=NULL)
+                     param.list <- list("meanFilterCutoff" = meanFilterCutoff,
+                                        "model" = model,
+                                        "GaussianModel" = GaussianModel)
+                     
                      switch(object@metadata$omicType,
                              
                              "RNAseq" = {
-                               counts = SummarizedExperiment::assay(object)[geneList,]
+                               counts = data.frame(SummarizedExperiment::assay(object)) %>% 
+                                 dplyr::filter(rownames(.) %in% geneList)
                                
-                               param.list[["model"]]            <- model
-                               param.list[["transformation"]]   <- "arcsin"
-                               param.list[["normFactors"]]      <- "TMM"
-                               param.list[["meanFilterCutoff"]] <- 50
-                               param.list[["GaussianModel"]]    <- GaussianModel
+                               param.list[["transformation"]]   <- ifelse(is.null(transformation), "arcsin", transformation)
+                               param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "TMM", normFactors)
+                               param.list[["meanFilterCutoff"]] <- ifelse(is.null(meanFilterCutoff), 50, meanFilterCutoff)
                                
                              },
                              "proteomics" = {
                                object <- checkTransNorm(object)
-                               counts = SummarizedExperiment::assay(object)[geneList,]
+                               counts = data.frame(SummarizedExperiment::assay(object)) %>% 
+                                 dplyr::filter(rownames(.) %in% geneList)
                                
                                # Print the selected GaussianModel
                                print(paste("Use ", GaussianModel, sep = ""))
-                               print("Scale each protein (center=TRUE,scale = TRUE)")
+                               print("Scale each protein (center = TRUE, scale = TRUE)")
                                CoExpAnal[["transformation.prot"]] <- "scaleProt"
-                               counts[] <- t(apply(counts,1,function(x){ scale(x, center = TRUE, scale = TRUE) }))
+                               counts[] <- t(apply(counts,1,function(x){scale(x, center = TRUE, scale = TRUE) }))
                                
                                # param
-                               param.list[["model"]]            <- model
-                               param.list[["transformation"]]   <- "none"
-                               param.list[["normFactors"]]      <- "none"
-                               #param.list[["meanFilterCutoff"]] <- NULL
-                               param.list[["GaussianModel"]]    <- GaussianModel
+                               param.list[["transformation"]]   <- ifelse(is.null(transformation), "none", transformation)
+                               param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "none", normFactors)
                              },
                              "metabolomics" = {
                                object <- checkTransNorm(object)
-                               counts = SummarizedExperiment::assay(object)[geneList,]
+                               counts = data.frame(SummarizedExperiment::assay(object)) %>% 
+                                 dplyr::filter(rownames(.) %in% geneList)
                                
                                # Print the selected GaussianModel
-                               print(paste("Use ",GaussianModel,sep=""))
-                               print("Scale each metabolite (center=TRUE,scale = TRUE)")
+                               print(paste("Use ", GaussianModel, sep= ""))
+                               print("Scale each metabolite (center = TRUE,scale = TRUE)")
                                CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
                                counts[] <- t(apply(counts,1,function(x){ scale(x, center = TRUE, scale = TRUE) }))
                                
                                # param
-                               param.list[["model"]]            <- model
-                               param.list[["transformation"]]   <- "none"
-                               param.list[["normFactors"]]      <- "none"
-                               #param.list[["meanFilterCutoff"]] <- NULL
-                               param.list[["GaussianModel"]]    <- GaussianModel
+                               param.list[["transformation"]]   <- ifelse(is.null(transformation), "none", transformation)
+                               param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "none", normFactors)
                              }
                      )
                      
@@ -1923,15 +1961,20 @@ methods::setMethod(f="runCoExpression",
                      
                      coseq.res.list <- switch (as.character(clustermq),
                                                `FALSE` = {
-                                                 
                                                  try_rflomics(
-                                                   runCoseq_local(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
-                                                 
+                                                   runCoseq_local(counts, 
+                                                                  conds = object@metadata$Groups$groups,
+                                                                  K=K, 
+                                                                  replicates=replicates, 
+                                                                  param.list=param.list))
                                                },
                                                `TRUE` = {
-                                                 
                                                  try_rflomics(
-                                                   runCoseq_clustermq(counts, conds = object@metadata$Groups$groups, K=K, replicates=replicates, param.list=param.list))
+                                                   runCoseq_clustermq(counts, 
+                                                                      conds = object@metadata$Groups$groups, 
+                                                                      K=K, 
+                                                                      replicates=replicates, 
+                                                                      param.list=param.list))
                                                  
                                                })
                      
@@ -1953,13 +1996,17 @@ methods::setMethod(f="runCoExpression",
 
 #' @rdname runCoExpression
 #' @title runCoExpression
-#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
 #' @exportMethod runCoExpression
 methods::setMethod(f          = "runCoExpression",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, K=2:20, replicates=5, nameList, merge="union",
-                                         model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation, normFactors, clustermq=FALSE){
+                                         model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", 
+                                         transformation = NULL, normFactors = NULL, clustermq=FALSE,
+                                         meanFilterCutoff = NULL){
                      
+                     
+                     if (!SE.name %in% names(object)) 
+                       stop(paste0(SE.name, " is not part of ", object))
                      
                      object[[SE.name]] <-  runCoExpression(object = object[[SE.name]],
                                                            K = K,
@@ -1970,7 +2017,8 @@ methods::setMethod(f          = "runCoExpression",
                                                            GaussianModel = GaussianModel,
                                                            transformation = transformation,
                                                            normFactors = normFactors,
-                                                           clustermq = clustermq)
+                                                           clustermq = clustermq,
+                                                           meanFilterCutoff = meanFilterCutoff)
                      
                      return(object)
                      
@@ -1981,6 +2029,7 @@ methods::setMethod(f          = "runCoExpression",
 #' @title coseq.profile.plot
 #'
 #' @param object An object of class \link{SummarizedExperiment}
+#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
 #' @param numCluster cluster number
 #' @param condition 
 #' @param observation 
@@ -2026,7 +2075,6 @@ methods::setMethod(f="coseq.profile.plot",
 
 #' @rdname coseq.profile.plot
 #' @title coseq.profile.plot
-#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
 #' @exportMethod coseq.profile.plot
 methods::setMethod(f          = "coseq.profile.plot",
                    signature  = "MultiAssayExperiment",
@@ -2063,7 +2111,7 @@ methods::setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
                      else{
                        # check if given dataset name include in datasets presente in MultiAssayExperiment object
                        if(!datasets %in% paste0(unlist(object@metadata$omicList), ".filtred")){
-                         print("Warning : The given dataset name is not present in MultiAssayExperiment object")
+                         print("Warning: The given dataset name is not present in MultiAssayExperiment object")
                          return(object)
                        }
                      }

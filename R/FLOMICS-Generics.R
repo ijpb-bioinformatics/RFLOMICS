@@ -3,6 +3,8 @@
 # @importClassesFrom MultiAssayExperiment
 # @importClassesFrom SummarizedExperiment
 
+# ---- old stuff ----
+
 methods::setGeneric(
   name = "mvQCdesign",
   def  = function(object, ... ){standardGeneric("mvQCdesign")}
@@ -53,9 +55,11 @@ methods::setGeneric(
 methods::setGeneric(
   name = "FilterDiffAnalysis",
   def  = function(object, 
-                  Adj.pvalue.cutoff = 0.05, 
-                  logFC.cutoff = 0, ... ){standardGeneric("FilterDiffAnalysis")}
+                  Adj.pvalue.cutoff = NULL, 
+                  logFC.cutoff = NULL, ... ){standardGeneric("FilterDiffAnalysis")}
 )
+
+# ---- PCA ----
 
 methods::setGeneric(
   name = "plotPCA",
@@ -66,6 +70,8 @@ methods::setGeneric(
   name = "RunPCA",
   def  = function(object, nbcp = 5, raw = FALSE, ... ){standardGeneric("RunPCA")}
 )
+
+# ---- Design ----
 
 methods::setGeneric(
   name = "CheckExpDesignCompleteness",
@@ -83,21 +89,34 @@ methods::setGeneric(
   def  = function(object, model.formula, ... ){standardGeneric("getContrastMatrix")}
 )
 
+methods::setGeneric(
+  name = "Datasets_overview_plot",
+  def  = function(object, ... ){standardGeneric("Datasets_overview_plot")}
+)
 
+# ---- Co Expression ----
 
 methods::setGeneric(
   name = "runCoExpression",
   def  = function(object, 
                   K=2:20, 
                   replicates=5, 
-                  nameList, 
-                  merge="union",
+                  nameList = NULL, 
+                  merge = "union",
                   model = "Normal", 
                   GaussianModel = "Gaussian_pk_Lk_Ck",
-                  transformation, 
-                  normFactors, 
-                  clustermq=FALSE, ... ){standardGeneric("runCoExpression")}
+                  transformation = NULL, 
+                  normFactors = NULL, 
+                  clustermq=FALSE,
+                  meanFilterCutoff = NULL, ... ){standardGeneric("runCoExpression")}
 )
+
+methods::setGeneric(
+  name = "coseq.profile.plot",
+  def  = function(object, ... ){standardGeneric("coseq.profile.plot")}
+)
+
+# ---- Diff Plots ----
 
 methods::setGeneric(
   name = "DiffAnal.plot",
@@ -116,17 +135,6 @@ methods::setGeneric(
   def  = function(object, raw = FALSE, ... ){standardGeneric("Library_size_barplot.plot")}
 )
 
-
-methods::setGeneric(
-  name = "resetFlomicsMultiAssay",
-  def  = function(object, results, datasets = NULL, ... ){standardGeneric("resetFlomicsMultiAssay")}
-)
-
-methods::setGeneric(
-  name = "Datasets_overview_plot",
-  def  = function(object, ... ){standardGeneric("Datasets_overview_plot")}
-)
-
 methods::setGeneric(
   name = "heatmap.plot",
   def  = function(object, ... ){standardGeneric("heatmap.plot")}
@@ -137,12 +145,7 @@ methods::setGeneric(
   def  = function(object, ... ){standardGeneric("boxplot.DE.plot")}
 )
 
-methods::setGeneric(
-  name = "coseq.profile.plot",
-  def  = function(object, ... ){standardGeneric("coseq.profile.plot")}
-)
-
-##### ANNOTATION ######
+#---- ANNOTATION ----
 
 methods::setGeneric(
   name = "runAnnotationEnrichment",
@@ -196,7 +199,7 @@ methods::setGeneric(
                   ...){standardGeneric("plot.CPR_Results")}
 )
 
-##### INTEGRATION ####
+# ---- INTEGRATION ----
 
 methods::setGeneric(
   name = "integrationWrapper",
@@ -253,4 +256,11 @@ methods::setGeneric(
                   sparsity = FALSE,
                   cases_to_try = 5,
                   ...){standardGeneric("run_MixOmics_analysis")}
+)
+
+# ---- RESET ----
+
+methods::setGeneric(
+  name = "resetFlomicsMultiAssay",
+  def  = function(object, results, datasets = NULL, ... ){standardGeneric("resetFlomicsMultiAssay")}
 )
