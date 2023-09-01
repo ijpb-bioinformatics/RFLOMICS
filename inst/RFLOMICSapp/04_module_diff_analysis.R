@@ -193,7 +193,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                     DiffAnalysisMethod = input$AnaDiffMethod,
                                     clustermq          = input$clustermq,
                                     Adj.pvalue.cutoff  = input$Adj.pvalue.cutoff, 
-                                    logFC.cutoff       = input$abs.logFC.cutoff)
+                                    logFC.cutoff       = input$abs.logFC.cutoff,
+                                    cmd                = TRUE)
     }
     else{
       

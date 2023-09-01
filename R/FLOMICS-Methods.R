@@ -1243,7 +1243,9 @@ methods::setMethod(f          = "RunNormalization",
 methods::setMethod(f         = "RunDiffAnalysis",
                    signature = "SummarizedExperiment",
                    definition <- function(object, design, Adj.pvalue.method="BH",
-                                          contrastList, DiffAnalysisMethod, Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, parallel = FALSE, nworkers = 1){
+                                          contrastList, DiffAnalysisMethod, 
+                                          Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, parallel = FALSE, nworkers = 1,
+                                          cmd = FALSE){
                      
                      contrastName <- NULL
                      
@@ -1281,14 +1283,16 @@ methods::setMethod(f         = "RunDiffAnalysis",
                                                                                   FDR             = 1,
                                                                                   clustermq       = clustermq,
                                                                                   parallel        = parallel,
-                                                                                  nworkers        = nworkers)),
+                                                                                  nworkers        = nworkers,
+                                                                                  cmd             = cmd)),
                                        "limmalmFit" = try_rflomics(limma.AnaDiff(count_matrix    = SummarizedExperiment::assay(object2),
                                                                                  model_matrix      = model_matrix[colnames(object2),],
                                                                                  Contrasts.Sel     = object2@metadata$DiffExpAnal[["contrasts"]],
                                                                                  Contrasts.Coeff   = design@Contrasts.Coeff,
                                                                                  Adj.pvalue.cutoff = 1,
                                                                                  Adj.pvalue.method = Adj.pvalue.method,
-                                                                                 clustermq         = clustermq)))
+                                                                                 clustermq         = clustermq,
+                                                                                 cmd               = cmd)))
                      
                      if(! is.null(ListRes$value)){
                        if(! is.null(ListRes$value[["RawDEFres"]])){
@@ -1319,7 +1323,9 @@ methods::setMethod(f         = "RunDiffAnalysis",
 methods::setMethod(f          = "RunDiffAnalysis",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, design = NULL, Adj.pvalue.method="BH",
-                                         contrastList = NULL, DiffAnalysisMethod = NULL, Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, parallel = FALSE, nworkers = 1){
+                                         contrastList = NULL, DiffAnalysisMethod = NULL,
+                                         Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, 
+                                         parallel = FALSE, nworkers = 1, cmd = FALSE){
                      
                      # Check for design existence inside MAE object
                      if (is.null(design)) {
@@ -1356,7 +1362,8 @@ methods::setMethod(f          = "RunDiffAnalysis",
                                                            logFC.cutoff = logFC.cutoff,
                                                            clustermq = clustermq,
                                                            parallel = parallel,
-                                                           nworkers = nworkers
+                                                           nworkers = nworkers,
+                                                           cmd = cmd
                      )
                      return(object)
                    })

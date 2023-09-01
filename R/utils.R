@@ -250,7 +250,7 @@ TMM.Normalization <- function(counts, groups){
 #'
 
 edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.factors, Contrasts.Sel, Contrasts.Coeff, FDR, clustermq = FALSE,
-                          parallel = FALSE, nworkers = 1){
+                          parallel = FALSE, nworkers = 1, cmd = FALSE){
   
   z <- y <- NULL
   
@@ -267,13 +267,13 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
                         norm.factors = norm.factors)
   
   # Run the model
-  print("[cmd] dge <- edgeR::estimateGLMCommonDisp(dge, design=model_matrix)")
+  if(cmd) print("[cmd] dge <- edgeR::estimateGLMCommonDisp(dge, design=model_matrix)")
   dge <- edgeR::estimateGLMCommonDisp(dge, design=model_matrix)
-  print("[cmd] dge <- edgeR::estimateGLMTrendedDisp(dge, design=model_matrix)")
+  if(cmd) print("[cmd] dge <- edgeR::estimateGLMTrendedDisp(dge, design=model_matrix)")
   dge <- edgeR::estimateGLMTrendedDisp(dge, design=model_matrix)
-  print("[cmd] dge <- edgeR::estimateGLMTagwiseDisp(dge, design=model_matrix)")
+  if(cmd) print("[cmd] dge <- edgeR::estimateGLMTagwiseDisp(dge, design=model_matrix)")
   dge <- edgeR::estimateGLMTagwiseDisp(dge, design=model_matrix)
-  print("[cmd] fit.f <- edgeR::glmFit(dge,design=model_matrix)")
+  if(cmd) print("[cmd] fit.f <- edgeR::glmFit(dge,design=model_matrix)")
   fit.f <- edgeR::glmFit(dge,design=model_matrix)
   
   
@@ -307,7 +307,7 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
     
   }
   else{
-    print("[cmd] apply model to each contrast")
+    if(cmd) print("[cmd] apply model to each contrast")
     # ResGlm <-  BiocParallel::bplapply(Contrasts.Sel$contrast, function(x){
     #   #print(unlist(Contrasts.Coeff[x,]))
     #   try_rflomics(edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,])))
@@ -386,7 +386,8 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
 #'
 
 
-limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.Coeff, Adj.pvalue.cutoff, Adj.pvalue.method,clustermq){
+limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.Coeff, 
+                          Adj.pvalue.cutoff, Adj.pvalue.method,clustermq, cmd = FALSE){
   
   ListRes <- list()
   
@@ -423,7 +424,7 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
     
   }
   else{
-    print("[cmd] fit contrasts")
+    if(cmd) print("[cmd] fit contrasts")
     ResGlm <-  lapply(Contrasts.Sel$contrast, function(x){
       #print(paste0(x," : ",as.vector(unlist(Contrasts.Coeff[x,]))))
       try_rflomics(limma::contrasts.fit(fit, contrasts  = as.vector(unlist(Contrasts.Coeff[x,]))))
@@ -1214,7 +1215,7 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
   
   if (length(colnames) == 0 ){ return(NULL) }
   
-  matrix_sum <- matrix %>% dplyr::mutate(sum = dplyr::select(., all_of(colnames)) %>% rowSums(.))
+  matrix_sum <- matrix %>% dplyr::mutate(sum = dplyr::select(., tidyselect::all_of(colnames)) %>% rowSums(.))
   
   DEG_list <- switch(mergeType,
                      
