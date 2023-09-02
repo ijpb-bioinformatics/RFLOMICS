@@ -20,7 +20,6 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(
   refList = c("Repeat" = "rep1", "temperature" = "Low", "imbibition" = "DS"),
   typeList = c("Repeat" = "batch", "temperature" = "Bio", "imbibition" = "Bio"))
 
-completeCheck <- RFLOMICS::CheckExpDesignCompleteness(MAE)
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
 MAE <- MAE |>
   RFLOMICS::getExpressionContrast(model.formula = formulae[[1]]) 
