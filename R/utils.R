@@ -723,10 +723,10 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
   if(ncol(counts) < 2){
     stop("data frame with less than 2 columns")
   }
- 
+  
   # #add color column
   # # #00BA38
-
+  
   counts <- counts %>% dplyr::mutate(status = dplyr::if_else(Count > 2 , "pass", dplyr::if_else(Count == 2 , "warning", "error")))
   
   #list of factor names
@@ -1274,7 +1274,7 @@ try_rflomics <- function(expr) {
 #' @export
 #' @noRd
 #'
-coseq.error.manage <- function(coseq.res.list, K, replicates){
+coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
   
   # Create a table of jobs summary
   error.list <- unlist(lapply(coseq.res.list, function(x){
@@ -1312,7 +1312,7 @@ coseq.error.manage <- function(coseq.res.list, K, replicates){
       }
     }
     
-    print("#     => error management: level 2 ")
+    if (cmd) print("#     => error management: level 2 ")
     ICL.vec <- unlist(lapply(1:nK_success.job, function(x){ (coseq::ICL(coseq.res.list[["value"]][[x]])) })) %>%
       lapply(., function(x){ ifelse(is.na(x), "failed", "success") }) %>% unlist()
     
@@ -1418,7 +1418,7 @@ coseq.results.process <- function(coseqObjectList, K, conds){
     ggplot2::geom_boxplot(ggplot2::aes(x = as.factor(K), y = logLike, group = K)) + 
     ggplot2::xlab("K") +
     ggplot2::geom_text(data = logLike.n, ggplot2::aes(x = 1:length(K), y = max(logLike.vec, na.rm = TRUE), 
-                                                    label = paste0("n=", n)), col = 'red', size = 4)
+                                                      label = paste0("n=", n)), col = 'red', size = 4)
   
   
   # process results
@@ -1461,10 +1461,19 @@ coseq.results.process <- function(coseqObjectList, K, conds){
 #' @export
 #' @noRd
 #'
-runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list){
+runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list, silent = TRUE, cmd = FALSE){
   
-  iter <-  rep(K, each = replicates)
-  nbr_iter <- length(iter)
+  print("I'm here !")
+  
+  # iter <-  rep(K, each = replicates)
+  # seed_arg = rep(1:replicates, max(K) - 1)  
+  
+  df_args <- data.frame(x = rep(K, each = replicates),
+                        seed_arg = rep(1:replicates, max(K) - 1) )
+  # colnames(df_args) = c("x", "seed_arg")
+  
+  # nbr_iter <- length(iter)
+  nbr_iter <- nrow(df_args)
   coseq.res.list <- list()
   set.seed(12345)
   
@@ -1472,7 +1481,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
   param.list[["object"]] <- counts
   param.list[["K"]] <- K
   
-  fx <- function(x){
+  fx <- function(x, seed_arg){
     
     try_rflomics <- function(expr) {
       warn <- err <- NULL
@@ -1486,21 +1495,44 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
       )
       list(value = value, warning = warn, error = err)
     }
-    
-    try_rflomics(coseq::coseq(object = param.list[["object"]], 
-                              K = x,
-                              model = model,
-                              transformation = param.list$transformation,
-                              GaussianModel = param.list$GaussianModel,
-                              normFactors = param.list$normFactors,
-                              meanFilterCutoff = param.list$meanFilterCutoff))
+    if (silent) { 
+      co <- suppressMessages(capture.output(
+        res <- try_rflomics(coseq::coseq(object = param.list[["object"]], 
+                                         K = x,
+                                         model = param.list$model,
+                                         transformation = param.list$transformation,
+                                         GaussianModel = param.list$GaussianModel,
+                                         normFactors = param.list$normFactors,
+                                         meanFilterCutoff = param.list$meanFilterCutoff,
+                                         seed = seed_arg))
+      ))
+    }else{
+      print("I'm here now !")
+      res <- try_rflomics(coseq::coseq(object = param.list[["object"]], 
+                                       K = x,
+                                       model = param.list$model,
+                                       transformation = param.list$transformation,
+                                       GaussianModel = param.list$GaussianModel,
+                                       normFactors = param.list$normFactors,
+                                       meanFilterCutoff = param.list$meanFilterCutoff,
+                                       seed = seed_arg))
+    }
+    return(res)
   }
-  coseq.res.list <- clustermq::Q(fx, x = iter, export = param.list, n_jobs = nbr_iter, pkgs = "coseq")
+  
+  # coseq.res.list <- clustermq::Q(fx,
+  #                                x = iter, seed_arg = rep(1:replicates, replicates), 
+  #                                export = param.list, n_jobs = nbr_iter, pkgs = "coseq")
+  # 
+  coseq.res.list <- clustermq::Q(fun = fx,
+                                 df = df_args, 
+                                 export = param.list, n_jobs = nbr_iter, pkgs = "coseq")
+
   names(coseq.res.list) <- c(1:nbr_iter)
   
   CoExpAnal <- list()
   
-  print("#     => error management ")
+  if (cmd) print("#     => error management ")
   
   # Create a table of jobs summary
   error.list <- unlist(lapply(coseq.res.list, function(x){
@@ -1508,7 +1540,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
   }))
   
   nK_success <- table(error.list)["success"]
-  print(paste0("#     => nbr of success jobs: ", nK_success))
+  if (cmd) print(paste0("#     => nbr of success jobs: ", nK_success))
   
   K.list <- rep(paste0("K=", K), each = replicates)
   
@@ -1522,7 +1554,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
   # If they are at least the half of K which succeed, valid results
   if(nK_success !=0 ){
     
-    print("#     => process results ")
+    if (cmd) print("#     => process results ")
     # Generate the list of results
     #coseq.res.list[["value"]] <- lapply(coseq.res.list,function(x){x$value})
     coseq.res.list[["value"]] <- list()
@@ -1566,31 +1598,52 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
 #' @export
 #' @noRd
 #'
-runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list){
+runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list, silent = TRUE, cmd = FALSE){
   
   iter <- rep(K, replicates)
   coseq.res.list <- list()
   
   # set.seed(12345)
-  coseq.res.list <- lapply(1:replicates, function(x){
+  if (silent) {
     
-    try_rflomics(coseq::coseq(counts, K = K, parallel = TRUE,
-                              model            = param.list[["model"]],
-                              transformation   = param.list[["transformation"]],
-                              meanFilterCutoff = param.list[["meanFilterCutoff"]],
-                              normFactors      = param.list[["normFactors"]],
-                              GaussianModel    = param.list[["GaussianModel"]],
-                              seed = x))
-    })
+    coseq.res.list <- lapply(1:replicates, function(x){
+      
+      co <- capture.output(suppressMessages(
+        res <- try_rflomics(
+          coseq::coseq(counts, K = K, parallel = TRUE,
+                       model            = param.list[["model"]],
+                       transformation   = param.list[["transformation"]],
+                       meanFilterCutoff = param.list[["meanFilterCutoff"]],
+                       normFactors      = param.list[["normFactors"]],
+                       GaussianModel    = param.list[["GaussianModel"]],
+                       seed = x)
+        )))
+      return(res)
+    })  
+    
+  }else{
+    coseq.res.list <- lapply(1:replicates, function(x){
+      
+      try_rflomics(coseq::coseq(counts, K = K, parallel = TRUE,
+                                model            = param.list[["model"]],
+                                transformation   = param.list[["transformation"]],
+                                meanFilterCutoff = param.list[["meanFilterCutoff"]],
+                                normFactors      = param.list[["normFactors"]],
+                                GaussianModel    = param.list[["GaussianModel"]],
+                                seed = x))
+    })  
+  }
+  
   names(coseq.res.list) <- c(1:replicates)
   
   CoExpAnal <- list()
   
   # error managment
-  print("#     => error management: level 1 ")
+  if (cmd) print("#     => error management: level 1 ")
   coseq.error.management <- coseq.error.manage(coseq.res.list = coseq.res.list, 
                                                K = K, 
-                                               replicates = replicates)
+                                               replicates = replicates,
+                                               cmd = cmd)
   
   nK_success   <- coseq.error.management$nK_success
   
