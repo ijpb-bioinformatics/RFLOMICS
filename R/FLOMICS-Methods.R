@@ -1873,6 +1873,8 @@ methods::setMethod(f          = "boxplot.DE.plot",
 #' @param normFactors The type of estimator to be used to normalize for differences in library size.
 #' By default, it is the "TMM" one.
 #' @param merge \code{"union"} or \code{"intersection"}
+#' @param silent if TRUE, coseq run silently (without any console print or message)
+#' @param cmd if TRUE, print steps of the analysis. Used inside the coseq module in the shiny interface.
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod runCoExpression
@@ -1884,7 +1886,8 @@ methods::setMethod(f="runCoExpression",
                    definition <- function(object, K=2:20, replicates=5, nameList = NULL, merge="union",
                                           model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", 
                                           transformation = NULL, normFactors = NULL, clustermq=FALSE,
-                                          meanFilterCutoff = NULL){
+                                          meanFilterCutoff = NULL,
+                                          silent = TRUE, cmd = FALSE){
                      
                     if (is.null(object@metadata$DiffExpAnal[["mergeDEF"]]))
                       stop("Please run a differential analysis. runCoExpression uses these results.")
@@ -1932,8 +1935,8 @@ methods::setMethod(f="runCoExpression",
                                  dplyr::filter(rownames(.) %in% geneList)
                                
                                # Print the selected GaussianModel
-                               print(paste("Use ", GaussianModel, sep = ""))
-                               print("Scale each protein (center = TRUE, scale = TRUE)")
+                               if (cmd) print(paste("Use ", GaussianModel, sep = ""))
+                               if (cmd) print("Scale each protein (center = TRUE, scale = TRUE)")
                                CoExpAnal[["transformation.prot"]] <- "scaleProt"
                                counts[] <- t(apply(counts,1,function(x){scale(x, center = TRUE, scale = TRUE) }))
                                
@@ -1947,8 +1950,8 @@ methods::setMethod(f="runCoExpression",
                                  dplyr::filter(rownames(.) %in% geneList)
                                
                                # Print the selected GaussianModel
-                               print(paste("Use ", GaussianModel, sep= ""))
-                               print("Scale each metabolite (center = TRUE,scale = TRUE)")
+                               if (cmd) print(paste("Use ", GaussianModel, sep= ""))
+                               if (cmd) print("Scale each metabolite (center = TRUE,scale = TRUE)")
                                CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
                                counts[] <- t(apply(counts,1,function(x){ scale(x, center = TRUE, scale = TRUE) }))
                                
@@ -1962,26 +1965,30 @@ methods::setMethod(f="runCoExpression",
                      
                      # run coseq : on local machine or remote cluster
                      
-                     print("#     => coseq... ")
+                     if (cmd) print("#     => coseq... ")
                      
                      coseq.res.list <- list()
                      
-                     coseq.res.list <- switch (as.character(clustermq),
+                     coseq.res.list <- switch(as.character(clustermq),
                                                `FALSE` = {
                                                  try_rflomics(
                                                    runCoseq_local(counts, 
                                                                   conds = object@metadata$Groups$groups,
-                                                                  K=K, 
-                                                                  replicates=replicates, 
-                                                                  param.list=param.list))
+                                                                  K = K, 
+                                                                  replicates = replicates, 
+                                                                  param.list = param.list,
+                                                                  silent = silent,
+                                                                  cmd = cmd))
                                                },
                                                `TRUE` = {
                                                  try_rflomics(
                                                    runCoseq_clustermq(counts, 
                                                                       conds = object@metadata$Groups$groups, 
-                                                                      K=K, 
-                                                                      replicates=replicates, 
-                                                                      param.list=param.list))
+                                                                      K = K, 
+                                                                      replicates = replicates, 
+                                                                      param.list = param.list,
+                                                                      silent = silent, 
+                                                                      cmd = cmd))
                                                  
                                                })
                      
@@ -2009,7 +2016,7 @@ methods::setMethod(f          = "runCoExpression",
                    definition = function(object, SE.name, K=2:20, replicates=5, nameList, merge="union",
                                          model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", 
                                          transformation = NULL, normFactors = NULL, clustermq=FALSE,
-                                         meanFilterCutoff = NULL){
+                                         meanFilterCutoff = NULL, silent = TRUE, cmd = FALSE){
                      
                      
                      if (!SE.name %in% names(object)) 
@@ -2025,7 +2032,9 @@ methods::setMethod(f          = "runCoExpression",
                                                            transformation = transformation,
                                                            normFactors = normFactors,
                                                            clustermq = clustermq,
-                                                           meanFilterCutoff = meanFilterCutoff)
+                                                           meanFilterCutoff = meanFilterCutoff,
+                                                           silent = silent,
+                                                           cmd = cmd)
                      
                      return(object)
                      

@@ -241,7 +241,8 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                                                    merge=input$unionInter, nameList=input$select,
                                                    K=input$K.values[1]:input$K.values[2], replicates = input$iter,
                                                    model  = input$model, transformation=input$transfo, normFactors=input$norm,
-                                                   GaussianModel =input$GaussianModel, clustermq = input$clustermqCoseq)
+                                                   GaussianModel =input$GaussianModel, clustermq = input$clustermqCoseq, 
+                                                   cmd = TRUE, silent = FALSE)
     
     
     session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- local.rea.values$dataset.SE
