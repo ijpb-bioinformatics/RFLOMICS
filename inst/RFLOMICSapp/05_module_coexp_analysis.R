@@ -222,8 +222,6 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
       need(length(input$select) != 0, message="Please select at least 1 DEG list")
     })
     
-    print(paste("# 10- Co-expression analysis... ", dataset))
-    
     local.rea.values$dataset.SE@metadata$CoExpAnal   <- list()
     local.rea.values$dataset.SE@metadata$CoExpEnrichAnal  <- list()
     #FlomicsMultiAssay <- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("CoExpAnal"))
@@ -237,12 +235,12 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     
     
     # run coseq
-    local.rea.values$dataset.SE <- runCoExpression(object=local.rea.values$dataset.SE, 
-                                                   merge=input$unionInter, nameList=input$select,
-                                                   K=input$K.values[1]:input$K.values[2], replicates = input$iter,
-                                                   model  = input$model, transformation=input$transfo, normFactors=input$norm,
-                                                   GaussianModel =input$GaussianModel, clustermq = input$clustermqCoseq, 
-                                                   cmd = TRUE, silent = FALSE)
+    local.rea.values$dataset.SE <- runCoExpression(object = local.rea.values$dataset.SE, 
+                                                   merge = input$unionInter, nameList = input$select,
+                                                   K = input$K.values[1]:input$K.values[2], replicates = input$iter,
+                                                   model  = input$model, transformation = input$transfo, normFactors = input$norm,
+                                                   GaussianModel = input$GaussianModel, clustermq = input$clustermqCoseq, 
+                                                   cmd = FALSE, silent = TRUE)
     
     
     session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- local.rea.values$dataset.SE
