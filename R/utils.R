@@ -1462,9 +1462,7 @@ coseq.results.process <- function(coseqObjectList, K, conds){
 #' @noRd
 #'
 runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list, silent = TRUE, cmd = FALSE){
-  
-  print("I'm here !")
-  
+
   # iter <-  rep(K, each = replicates)
   # seed_arg = rep(1:replicates, max(K) - 1)  
   
@@ -1504,10 +1502,10 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
                                          GaussianModel = param.list$GaussianModel,
                                          normFactors = param.list$normFactors,
                                          meanFilterCutoff = param.list$meanFilterCutoff,
-                                         seed = seed_arg))
+                                         seed = seed_arg, 
+                                         verbose = FALSE))
       ))
     }else{
-      print("I'm here now !")
       res <- try_rflomics(coseq::coseq(object = param.list[["object"]], 
                                        K = x,
                                        model = param.list$model,
@@ -1616,7 +1614,8 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list, si
                        meanFilterCutoff = param.list[["meanFilterCutoff"]],
                        normFactors      = param.list[["normFactors"]],
                        GaussianModel    = param.list[["GaussianModel"]],
-                       seed = x)
+                       seed = x, 
+                       verbose = FALSE)
         )))
       return(res)
     })  
@@ -1659,6 +1658,11 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list, si
       CoExpAnal[["error"]] <- TRUE
     }
     
+    if (cmd) { 
+      print(paste0("#     => Number of clusters: ", 
+                   max(unique(coseq::clusters(CoExpAnal$coseqResults)))))
+    }
+    
   }else{
     
     CoExpAnal[["results"]] <- FALSE
@@ -1666,9 +1670,6 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list, si
   }
   
   CoExpAnal[["stats"]] <- coseq.error.management$jobs.tab.sum
-  
-  CoExpAnal[["counts"]] <- counts
-  CoExpAnal[["conds"]] <- conds
   
   return(CoExpAnal)
 }
