@@ -1884,7 +1884,7 @@ methods::setMethod(f          = "boxplot.DE.plot",
 methods::setMethod(f="runCoExpression",
                    signature="SummarizedExperiment",
                    definition <- function(object, K=2:20, replicates=5, nameList = NULL, merge="union",
-                                          model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", 
+                                          model = "Normal", GaussianModel = NULL, 
                                           transformation = NULL, normFactors = NULL, clustermq=FALSE,
                                           meanFilterCutoff = NULL,
                                           silent = TRUE, cmd = FALSE){
@@ -1914,25 +1914,22 @@ methods::setMethod(f="runCoExpression",
                      geneList <- opDEList(object = object, contrasts = nameList, operation = merge)
                      
                      # set default parameters based on data type
-                     param.list <- list("meanFilterCutoff" = meanFilterCutoff,
-                                        "model" = model,
-                                        "GaussianModel" = GaussianModel)
+                     param.list <- list("model" = model)
                      
                      switch(object@metadata$omicType,
                              
                              "RNAseq" = {
-                               counts = data.frame(SummarizedExperiment::assay(object)) %>% 
-                                 dplyr::filter(rownames(.) %in% geneList)
+                               counts <- SummarizedExperiment::assay(object)[geneList,]
                                
                                param.list[["transformation"]]   <- ifelse(is.null(transformation), "arcsin", transformation)
                                param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "TMM", normFactors)
                                param.list[["meanFilterCutoff"]] <- ifelse(is.null(meanFilterCutoff), 50, meanFilterCutoff)
+                               param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Ck", GaussianModel)
                                
-                             },
+                              },
                              "proteomics" = {
                                object <- checkTransNorm(object)
-                               counts = data.frame(SummarizedExperiment::assay(object)) %>% 
-                                 dplyr::filter(rownames(.) %in% geneList)
+                               counts <- SummarizedExperiment::assay(object)[geneList,]
                                
                                # Print the selected GaussianModel
                                if (cmd) print(paste("Use ", GaussianModel, sep = ""))
@@ -1943,11 +1940,11 @@ methods::setMethod(f="runCoExpression",
                                # param
                                param.list[["transformation"]]   <- ifelse(is.null(transformation), "none", transformation)
                                param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "none", normFactors)
-                             },
+                               param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Bk", GaussianModel)
+                              },
                              "metabolomics" = {
                                object <- checkTransNorm(object)
-                               counts = data.frame(SummarizedExperiment::assay(object)) %>% 
-                                 dplyr::filter(rownames(.) %in% geneList)
+                               counts <- SummarizedExperiment::assay(object)[geneList,]
                                
                                # Print the selected GaussianModel
                                if (cmd) print(paste("Use ", GaussianModel, sep= ""))
@@ -1958,6 +1955,7 @@ methods::setMethod(f="runCoExpression",
                                # param
                                param.list[["transformation"]]   <- ifelse(is.null(transformation), "none", transformation)
                                param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "none", normFactors)
+                               param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Bk", GaussianModel)
                              }
                      )
                      
@@ -1966,6 +1964,13 @@ methods::setMethod(f="runCoExpression",
                      # run coseq : on local machine or remote cluster
                      
                      if (cmd) print("#     => coseq... ")
+                     
+                     conds <- object@metadata$Groups
+                     counts <- counts[, match(rownames(conds), colnames(counts))]
+                     if (!identical(colnames(counts), rownames(conds), attrib.as.set = FALSE)) {
+                       stop("colnames counts and rownames conds don't match!")
+                     }
+                     conds <- conds$groups
                      
                      coseq.res.list <- list()
                      
@@ -2014,7 +2019,7 @@ methods::setMethod(f="runCoExpression",
 methods::setMethod(f          = "runCoExpression",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, K=2:20, replicates=5, nameList, merge="union",
-                                         model = "Normal", GaussianModel = "Gaussian_pk_Lk_Ck", 
+                                         model = "Normal", GaussianModel = NULL, 
                                          transformation = NULL, normFactors = NULL, clustermq=FALSE,
                                          meanFilterCutoff = NULL, silent = TRUE, cmd = FALSE){
                      

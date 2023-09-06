@@ -104,11 +104,13 @@ methods::setGeneric(
                   nameList = NULL, 
                   merge = "union",
                   model = "Normal", 
-                  GaussianModel = "Gaussian_pk_Lk_Ck",
+                  GaussianModel = NULL,
                   transformation = NULL, 
                   normFactors = NULL, 
-                  clustermq=FALSE,
-                  meanFilterCutoff = NULL, ... ){standardGeneric("runCoExpression")}
+                  clustermq = FALSE,
+                  meanFilterCutoff = NULL, 
+                  silent = TRUE,
+                  cmd = FALSE,  ... ){standardGeneric("runCoExpression")}
 )
 
 methods::setGeneric(
