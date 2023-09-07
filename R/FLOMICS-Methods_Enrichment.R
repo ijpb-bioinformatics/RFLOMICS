@@ -2,17 +2,21 @@
 
 #' @title runAnnotationEnrichment_CPR
 #' @description This function performs overrepresentation analysis (ORA) using clusterprofiler functions. It can be used with custom annotation file (via enricher), GO (enrichGO) or KEGG (enrichKEGG) annotations.
-#' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param object An object of class \link{SummarizedExperiment} or \link{MultiAssayExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param SE.name name of the experiment to consider if object is a MultiAssayExperiment.
+#' @param nameList name of contrasts (tags or names) from which to extract DE genes if from is DiffExpAnal. 
 #' @param list_args list of arguments to pass to the enrichment function. These arguments must match the ones from the clusterprofiler package. E.g: universe, keytype, pvalueCutoff, qvalueCutoff, etc.
 #' @param from indicates if ListNames are from differential analysis results (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
 #' @param dom.select: is it a custom annotation, GO or KEGG annotations
 #' @return A list of results from clusterprofiler.
 #' @export
 #' @exportMethod runAnnotationEnrichment_CPR
+#' @rdname runAnnotationEnrichment_CPR
 methods::setMethod(
   f = "runAnnotationEnrichment_CPR",
   signature = "SummarizedExperiment",
   definition = function(object,
+                        nameList = NULL,
                         list_args = list(),
                         from = "DiffExpAnal",
                         dom.select = "custom",
@@ -22,22 +26,42 @@ methods::setMethod(
                         col_name = "name",
                         col_domain = NULL,
                         annot = NULL) {
+  
     EnrichAnal <- list()
 
+    if (is.null(object@metadata$DiffExpAnal)) {
+      stop("There is no differential analysis. Please run a differential analysis before running enrichment")
+    }
+    
     # "Retrieving the lists of DE entities")
     switch(from,
-      "DiffExpAnal" = {
-        geneLists <- lapply(object@metadata$DiffExpAnal$Validcontrasts$contrastName, function(contrastName) {
-          row.names(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]])
-        })
-        names(geneLists) <- object@metadata$DiffExpAnal$Validcontrasts$contrastName
-      },
-      "CoExpAnal" = {
-        geneLists <- lapply(object@metadata[["CoExpAnal"]][["clusters"]], function(clusters) {
-          clusters
-        })
-        names(geneLists) <- names(object@metadata[["CoExpAnal"]][["clusters"]])
-      }
+           "DiffExpAnal" = {
+             contrasts <- NULL
+             
+             if (is.null(getValidContrasts(object))) contrasts <- getSelectedContrasts(object)$contrastName
+             else contrasts <- getValidContrasts(object)                 
+             
+             if (!is.null(nameList)) {
+               if (isTagName(object, nameList)) nameList <- convertTagToContrast(object, nameList)
+               
+               contrasts <- intersect(contrasts, nameList)
+             }  
+             
+             geneLists <- lapply(contrasts, function(contrastName) {
+               row.names(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]])
+             })
+             names(geneLists) <- contrasts
+             
+           },
+           "CoExpAnal" = {
+             namesClust <- names(object@metadata[["CoExpAnal"]][["clusters"]])
+             namesClust <- intersect(namesClust, nameList)
+             
+             geneLists <- lapply(namesClust, function(namClust) {
+               object@metadata[["CoExpAnal"]][["clusters"]][[namClust]]
+             })
+             names(geneLists) <- namesClust
+           }
     )
 
     # Checks arguments
@@ -78,6 +102,7 @@ methods::setMethod(
 
     # for each list
     results_list <- lapply(names(geneLists), FUN = function(listname) {
+      # listname <- names(geneLists)[1]
       list_args$gene <- geneLists[[listname]]
       results_ont <- lapply(Domain, FUN = function(ont) {
         switch(dom.select,
@@ -174,6 +199,40 @@ methods::setMethod(
     return(object)
   }
 )
+
+#' @rdname runAnnotationEnrichment_CPR
+#' @title runAnnotationEnrichment_CPR
+#' @exportMethod runAnnotationEnrichment_CPR
+methods::setMethod(
+  f = "runAnnotationEnrichment_CPR",
+  signature = "MultiAssayExperiment",
+  definition = function(object,
+                        SE.name,
+                        nameList = NULL,
+                        list_args = list(),
+                        from = "DiffExpAnal",
+                        dom.select = "custom",
+                        Domain = "no-domain",
+                        col_term = "term",
+                        col_gene = "gene",
+                        col_name = "name",
+                        col_domain = NULL,
+                        annot = NULL) {
+    
+    object[[SE.name]] <- runAnnotationEnrichment_CPR(object = object[[SE.name]],
+                                                     nameList = nameList,
+                                                     list_args = list_args,
+                                                     from = from,
+                                                     dom.select = dom.select,
+                                                     Domain = Domain, 
+                                                     col_term = col_term,
+                                                     col_gene = col_gene,
+                                                     col_domain = col_domain,
+                                                     annot = annot)
+    
+    return(object)
+    
+  })
 
 #' @title plot.CPRKEGG_Results
 #' @description TODO
@@ -273,7 +332,7 @@ methods::setMethod(
     if (from == "DiffExpAnal") {
       dataPlot <- object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult[[contrast]]
     } else {
-      dataPlot <- object@metadata$CoExpAnal[[ont]]$enrichResult[[contrast]]
+      dataPlot <- object@metadata$CoExpEnrichAnal[[ont]]$enrichResult[[contrast]]
     }
 
     if (ont == "GO") {

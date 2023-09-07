@@ -56,6 +56,11 @@ sumDiffExp <- function(object, SE.name = NULL) {
 sumORA <- function(SE, from = "DiffExpEnrichAnal", ont = NULL, contrast = NULL) {
   if (!class(SE) %in% "SummarizedExperiment") stop("SE is not a summarizedExperiment.")
 
+  if (toupper(from) %in% c("DIFFEXPANAL", "DIFFEXPENRICHANAL")) from <- "DiffExpEnrichAnal"
+  if (toupper(from) %in% c("COEXPANAL", "COEXPENRICHANAL"))     from <- "CoExpEnrichAnal"
+  
+  # cat("|From: ", from, "\n")
+  
   if (!is.null(contrast)) {
     if (isTagName(SE, contrast)) contrast <- convertTagToContrast(SE, contrast)
   }

@@ -272,32 +272,44 @@ getEnrichRes <- function(object,
                          from = "DiffExpEnrichAnal",
                          ont = "GO",
                          domain = NULL) {
+  
   if (!class(object) %in% c("MultiAssayExperiment", "SummarizedExperiment")) {
     stop("Object is not a MultiAssayExperiment nor a SummarizedExperiment")
   }
 
+  if (toupper(from) %in% c("DIFFEXPANAL", "DIFFEXPENRICHANAL")) from <- "DiffExpEnrichAnal"
+  if (toupper(from) %in% c("COEXPANAL", "COEXPENRICHANAL"))     from <- "CoExpEnrichAnal"
+
+  classObj <- NULL
+  if (class(object) %in% "SummarizedExperiment") classObj <- "SE"
+  if (class(object) %in% "MultiAssayExperiment") classObj <- "MAE"
+  
   res_return <- NULL
-
-  if (class(object) %in% "SummarizedExperiment") {
-    if (is.null(contrast)) {
-      res_return <- object@metadata[[from]][[ont]][["enrichResult"]]
-    } else {
-      if (isTagName(object, contrast)) contrast <- convertTagToContrast(object, contrast)
-      res_return <- object@metadata[[from]][[ont]][["enrichResult"]][[contrast]]
-    }
-  } else if (class(object) %in% "MultiAssayExperiment") {
-    if (is.null(experiment)) {
-      stop("Please indicate from which data you want to extract the enrichment results.")
-    }
-
-    if (is.null(contrast)) {
-      res_return <- object[[experiment]]@metadata[[from]][[ont]][["enrichResult"]]
-    } else {
-      if (isTagName(object, contrast)) contrast <- convertTagToContrast(object[[experiment]], contrast)
-      res_return <- object[[experiment]]@metadata[[from]][[ont]][["enrichResult"]][[contrast]]
-    }
-  }
-
+  
+  switch(classObj,
+         "SE" = {
+           if (is.null(contrast)) {
+             res_return <- object@metadata[[from]][[ont]][["enrichResult"]]
+           } else {
+             if (isTagName(object, contrast)) contrast <- convertTagToContrast(object, contrast)
+             res_return <- object@metadata[[from]][[ont]][["enrichResult"]][[contrast]]
+           }
+         },
+         "MAE" = {
+           if (is.null(experiment)) {
+             stop("Please indicate from which data you want to extract the enrichment results.")
+           }
+           
+           if (is.null(contrast)) {
+             res_return <- object[[experiment]]@metadata[[from]][[ont]][["enrichResult"]]
+           } else {
+             if (isTagName(object, contrast)) contrast <- convertTagToContrast(object[[experiment]], contrast)
+             res_return <- object[[experiment]]@metadata[[from]][[ont]][["enrichResult"]][[contrast]]
+           }
+         },
+         stop("Object is not a MultiAssayExperiment nor a SummarizedExperiment")
+  )
+  
   if (!is.null(domain) && !is.null(contrast)) {
     return(res_return[[domain]])
   } else {

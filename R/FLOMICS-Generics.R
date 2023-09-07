@@ -163,6 +163,7 @@ methods::setGeneric(
 methods::setGeneric(
   name = "runAnnotationEnrichment_CPR",
   def  = function(object,
+                  nameList = NULL,
                   list_args = list(),
                   from = "DiffExpAnal",
                   dom.select = "custom",
