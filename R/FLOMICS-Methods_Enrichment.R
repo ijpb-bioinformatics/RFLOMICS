@@ -259,18 +259,25 @@ methods::setMethod(
                         pathway_id = NULL,
                         species = "ath",
                         gene_idtype = "kegg",
-                        from = "DiffExpAnal",
-                        pvalueCutoff = object@metadata$DiffExpEnrichAnal[["KEGG"]]$list_args$pvalueCutoff,
+                        from = "DiffExpEnrichAnal",
+                        pvalueCutoff = NULL,
                         ...) {
-    if (from == "DiffExpAnal") {
-      dataPlot <- object@metadata$DiffExpEnrichAnal[["KEGG"]]$enrichResult[[contrast]]
+
+    
+    if (toupper(from) %in% toupper(c("DiffExpAnal", "DiffExpEnrichAnal"))) {
+      from <- "DiffExpEnrichAnal"
     } else {
-      dataPlot <- object@metadata$CoExpAnal[["KEGG"]]$enrichResult[[contrast]]
+      from <- "CoExpEnrichAnal"
     }
+    
+    if(isTagName(object, contrast)) contrast <- convertTagToContrast(object, contrast)
+    
+    # dataPlot <- object@metadata[[from]][["KEGG"]]$enrichResult[[contrast]]$`no-domain`
+    if (is.null(pvalueCutoff)) pvalueCutoff <- object@metadata[[from]][["KEGG"]]$list_args$pvalueCutoff
 
     log2FC_vect <- NULL
     # Get the log2FC if appropriate
-    if (from == "DiffExpAnal") {
+    if (from == "DiffExpEnrichAnal") {
       log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
       names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
     }
@@ -341,7 +348,7 @@ methods::setMethod(
       } else {
         dataPlot <- dataPlot[[Domain]]
       }
-    } else if (ont == "custom") {
+    } else if (ont == "custom" || ont == "KEGG") {
       if (is.null(Domain)) {
         Domain <- "no-domain"
       }
@@ -372,7 +379,7 @@ methods::setMethod(
     returnplot <- NULL
     if (type == "cnetplot") {
       suppressMessages( # delete warnings for scale fill replacement
-        returnplot <- enrichplot::cnetplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, node_label = node_label, ...) +
+        returnplot <- enrichplot::cnetplot(dataPlot, showCategory = Categories, color.params = list(foldChange = log2FC_vect), node_label = node_label, ...) +
           ggplot2::guides(colour = ggplot2::guide_colourbar(title = "log2FC")) +
           ggplot2::scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)
       )

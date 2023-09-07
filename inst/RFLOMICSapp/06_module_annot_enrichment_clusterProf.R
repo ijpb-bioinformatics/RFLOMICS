@@ -610,17 +610,27 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
           # ---- Tab Panel : only for KEGG, pathview : ----
           if (input$dom.select == "KEGG") {
             data <-   getEnrichRes(object = session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], 
-                                            contrast = listname,
-                                            ont = "KEGG")
+                                            contrast = listname, from = "DiffExpEnrichAnal",
+                                            ont = "KEGG")[["no-domain"]]@result
+            
+            mapChoices <- sort(data$ID[data$p.adjust < input$pValue])
+            
+            # data <- getEnrichRes(object = rflomics.MAE[["RNAseq.set1.filtred"]],
+            #                            contrast = "H1",
+            #                            ont = "KEGG")[["no-domain"]]@result
+            # mapChoices <- sort(data$ID[data$p.adjust < 0.1])
+            
             tabPanel.list <- c(tabPanel.list,
                                list(
                                  tabPanel("Pathview results",
                                           fluidRow(
                                             column(2,
+                                                   
                                                    selectInput( # TODO change this data thing
                                                      inputId = ns(paste0(listname, "-MAP.sel")), label = "Select map:",
-                                                     choices = sort(data[[1]]@result$ID[data[[1]]@result$p.adjust < input$pValue]), multiple = FALSE, selectize = FALSE,
-                                                     size = 5
+                                                     choices = mapChoices, multiple = FALSE, selectize = FALSE,
+                                                     size = 5,
+                                                     selected = mapChoices[1]
                                                    ),
                                             ),
                                           ),
@@ -634,9 +644,9 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                                      link_to_map <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?",
                                                                            input[[paste0(listname, "-MAP.sel")]],
                                                                            "/",
-                                                                           data[[1]][input[[paste0(listname, "-MAP.sel")]], "geneID"])
+                                                                           data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
                                                      
-                                                     a(href = link_to_map, "Link to interactive map online")
+                                                     a(href = link_to_map, "Link to interactive map online", target = "_blank")
                                                      
                                                    })),
                                             column(12,
@@ -647,9 +657,10 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                                      
                                                       plot.CPRKEGG_Results(object = session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
                                                                                     contrast = listname,
+                                                                                    from = "DiffExpEnrichAnal",
                                                                                     pathway_id = input[[paste0(listname, "-MAP.sel")]],
                                                                                     species = input$KEGG_org,
-                                                                                    gene_idtype = input$keytype
+                                                                                    gene_idtype = input$keytype.kegg
                                                      )
                                                    }, res = 300, width = 1000, height = 1000),
                                             )
