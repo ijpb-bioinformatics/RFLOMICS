@@ -3,10 +3,16 @@ library(RFLOMICS)
 
 # ---- Construction of objects for the tests ----
 
-## ---- Construction MAE RFLOMICS ready for coseq analysis : ----
+RNAdat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
+corresp <- read.table(file = "inst/ExamplesFiles/ecoseed/transcript_genes.txt", sep = "\t", header = TRUE)
+
+# Use gene id to ease use of clusterprofiler
+RNAdat <- RNAdat[corresp$ensembl_transcript_id,]
+rownames(RNAdat) <- corresp$ensembl_gene_id[match(corresp$ensembl_transcript_id, rownames(RNAdat))]
+
+## ---- Construction MAE RFLOMICS ready for CPR analysis : ----
 MAE <- RFLOMICS::FlomicsMultiAssay.constructor(
-  list("RNAtest"     = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-                            "omicType" = "RNAseq"),
+  list("RNAtest"     = list("data" = RNAdat, "omicType" = "RNAseq"),
        "metatest" = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
                          "omicType" = "metabolomics"),
        "protetest" = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")), 
@@ -17,13 +23,14 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(
   refList = c("Repeat" = "rep1", "temperature" = "Low", "imbibition" = "DS"),
   typeList = c("Repeat" = "batch", "temperature" = "Bio", "imbibition" = "Bio"))
 
+
+
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
 MAE <- MAE |>
   RFLOMICS::getExpressionContrast(model.formula = formulae[[1]]) 
 MAE <- MAE  |> RFLOMICS::getContrastMatrix(contrastList = c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
                                                             "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3",
                                                             "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" )) 
-contrastsDF <- RFLOMICS::getSelectedContrasts(MAE)
 
 MAE2 <- MAE
 
@@ -37,9 +44,137 @@ MAE <- MAE |>
   RunDiffAnalysis(   SE.name = "protetest", DiffAnalysisMethod = "limmalmFit")  |>
   RunDiffAnalysis(   SE.name = "RNAtest",   DiffAnalysisMethod = "edgeRglmfit") |>
   FilterDiffAnalysis(SE.name = "RNAtest",   Adj.pvalue.cutoff = 0.05, logFC.cutoff = 1.5) |>
-  runCoExpression(   SE.name = "RNAtest")   |>
-  runCoExpression(   SE.name = "protetest") |>
-  runCoExpression(   SE.name = "metatest")
+  runCoExpression(   SE.name = "RNAtest",   K = 2:12, replicates = 2)   |>
+  runCoExpression(   SE.name = "protetest", K = 2:12, replicates = 2)   |>
+  runCoExpression(   SE.name = "metatest",  K = 2:12, replicates = 2)
+
+
+# ---- Annotation test function - DiffExpEnrichment ----
+# 
+
+test_that("it's running from diffExpAnal - GO - RNASeq", {
+  
+  # Selecting only one contrast
+  expect_no_error({
+   MAE <- runAnnotationEnrichment_CPR(MAE, nameList = "H1", SE.name = "RNAtest", dom.select = "GO",
+                                     list_args = list(OrgDb = "org.At.tair.db", 
+                                                      keyType = "TAIR", 
+                                                      pvalueCutoff = 0.05),
+                                     Domain = c("BP", "MF", "CC"))
+  })
+  
+  expect({
+    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H1", ont = "GO", domain = "BP")
+    nrow(obj@result) > 0
+  }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
+  
+  # All contrasts
+  expect_no_error({
+    MAE <- runAnnotationEnrichment_CPR(MAE, SE.name = "RNAtest", dom.select = "GO",
+                                     list_args = list(OrgDb = "org.At.tair.db", 
+                                                      keyType = "TAIR", 
+                                                      pvalueCutoff = 0.05),
+                                     Domain = c("BP", "MF", "CC"))
+                  
+  })
+  
+  expect({
+    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H2", ont = "GO", domain = "BP")
+    nrow(obj@result) > 0
+  }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
+  
+
+  
+})
+
+test_that("it's running from diffExpAnal - Custom - RNASeq", {
+  
+  df_custom <- vroom::vroom(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/GO_annotations/Arabidopsis_thaliana_Ensembl_55.txt"))
+  
+  # intersect(rownames(MAE[["RNAtest"]]), df_custom$Gene.stable.ID)
+  
+  MAE <- runAnnotationEnrichment_CPR(MAE, SE.name = "RNAtest", dom.select = "custom",
+                                     list_args = list(pvalueCutoff = 0.05),
+                                     col_term = "GO term accession", 
+                                     col_gene = "Gene stable ID",
+                                     col_name = "GO term name",
+                                     col_domain = "GO domain",
+                                     annot = df_custom)
+  
+  # Selecting only one contrast
+  expect_no_error({
+    MAE <- runAnnotationEnrichment_CPR(MAE, nameList = "H1", SE.name = "RNAtest", dom.select = "custom",
+                                       list_args = list(pvalueCutoff = 0.05),
+                                       col_term = "GO.term.accession", 
+                                       col_gene = "Gene.stable.ID",
+                                       col_name = "GO.term.name",
+                                       col_domain = "GO.domain",
+                                       annot = df_custom)
+  })
+  
+  expect({
+    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H1", ont = "GO", domain = "BP")
+    nrow(obj@result) > 0
+  }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
+  
+  # All contrasts
+  expect_no_error({
+    MAE <- runAnnotationEnrichment_CPR(MAE, SE.name = "RNAtest", dom.select = "GO",
+                                       list_args = list(OrgDb = "org.At.tair.db", 
+                                                        keyType = "TAIR", 
+                                                        pvalueCutoff = 0.05),
+                                       Domain = c("BP", "MF", "CC"))
+    
+  })
+  
+  expect({
+    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H2", ont = "GO", domain = "BP")
+    nrow(obj@result) > 0
+  }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
+  
+  
+  
+})
+
+
+# ---- Annotation test function - CoExpression enrichment ----
+
+test_that("it's running from CoExpAnal - GO - RNASeq", {
+  
+  expect_no_error({
+    MAE <- runAnnotationEnrichment_CPR(MAE, SE.name = "RNAtest", from = "CoExpAnal", dom.select = "GO",
+                                       list_args = list(OrgDb = "org.At.tair.db", 
+                                                        keyType = "TAIR", 
+                                                        pvalueCutoff = 0.05),
+                                       Domain = c("BP", "MF", "CC"))
+    
+  })
+  
+  expect({
+    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "cluster.1", ont = "GO", domain = "BP", from = "CoExpAnal")
+    nrow(obj@result) > 0
+  }, failure_message = "(GO RNAseq from CoExp) - There is no result in the enrichment metadata part.")
+
+  
+  expect_no_error({
+    MAE <- runAnnotationEnrichment_CPR(MAE, SE.name = "RNAtest", nameList = c("cluster.1", "cluster.2") ,
+                                       from = "CoExpAnal", dom.select = "GO",
+                                       list_args = list(OrgDb = "org.At.tair.db", 
+                                                        keyType = "TAIR", 
+                                                        pvalueCutoff = 0.05),
+                                       Domain = c("BP", "MF", "CC"))
+    
+  })
+  sumORA(MAE[["RNAtest"]], from = "CoExpAnal")
+  
+  expect({
+    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "cluster.1", ont = "GO", domain = "BP", from = "CoExpAnal")
+    nrow(obj@result) > 0
+  }, failure_message = "(GO RNAseq from CoExp) - There is no result in the enrichment metadata part.")
+  
+})
+
+
 
 
 

@@ -238,7 +238,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     ListNames.coseq <- names(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["clusters"]])
     
     pickerInput(
-      inputId = ns("GeneList.coseq"), label = "Select Clusters :",
+      inputId = ns("GeneList.coseq"), label = "Select Clusters:",
       choices = ListNames.coseq, multiple = TRUE, selected = ListNames.coseq,
       options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
     )
@@ -263,7 +263,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     progress$inc(1/10, detail = "in progress...")
     #----------------------#
     
-    # # reset everything
+    # reset everything
     session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata[["DiffExpEnrichAnal"]][[input$dom.select]] <- NULL
     session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata[["CoExpEnrichAnal"]][[input$dom.select]]   <- NULL
     
@@ -363,7 +363,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
              # Check if geneName correspond to variable list
              
              #======
-             annotation <- data.table::fread(file = input$annotationFileCPR$datapath, sep="\t", header = TRUE)
+             annotation <- data.table::fread(file = input$annotationFileCPR$datapath, sep = "\t", header = TRUE)
              list.char.rm <- c(".", " ", "")
              annotation2 <- list()
              
@@ -405,10 +405,14 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     if (length(input$GeneList.diff) != 0) {
       
       # run annotation
-      local.rea.values$dataset.SE <-  runAnnotationEnrichment_CPR(local.rea.values$dataset.SE, list_args = list_args, from = "DiffExpAnal",
-                                                                           annot = annotation2,
-                                                                           dom.select = dom.select, Domain = Domain,
-                                                                           col_domain = col_domain_arg)  
+      local.rea.values$dataset.SE <-  runAnnotationEnrichment_CPR(object = local.rea.values$dataset.SE, 
+                                                                  nameList = input$GeneList.diff,
+                                                                  list_args = list_args, 
+                                                                  from = "DiffExpAnal",
+                                                                  annot = annotation2,
+                                                                  dom.select = dom.select, 
+                                                                  Domain = Domain,
+                                                                  col_domain = col_domain_arg)  
       
       rea.values[[dataset]]$diffAnnot <- TRUE
     }
@@ -416,10 +420,14 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     # ---- Annotation on COEXP results: ----
     if (length(input$GeneList.coseq) != 0) {
       
-      local.rea.values$dataset.SE <-  runAnnotationEnrichment_CPR(local.rea.values$dataset.SE, list_args = list_args, from = "CoExpAnal",
-                                                                           annot = annotation2,
-                                                                           dom.select = dom.select, Domain = Domain,
-                                                                           col_domain = col_domain_arg) 
+      local.rea.values$dataset.SE <-  runAnnotationEnrichment_CPR(local.rea.values$dataset.SE, 
+                                                                  nameList = input$GeneList.coseq,
+                                                                  list_args = list_args, 
+                                                                  from = "CoExpAnal",
+                                                                  annot = annotation2,
+                                                                  dom.select = dom.select, 
+                                                                  Domain = Domain,
+                                                                  col_domain = col_domain_arg) 
       
       rea.values[[dataset]]$coExpAnnot <- TRUE
     }
@@ -466,7 +474,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       
       fluidRow(
         box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", 
-            title = paste0(input$dom.select," : summary from co-expression analysis"),
+            title = paste0(input$dom.select,": summary from co-expression analysis"),
             "There is no results for enrichment analysis! Check geneID"))
       
     }
@@ -474,7 +482,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       fluidRow(
         hr(),
         box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "primary", 
-            title = paste0(input$dom.select," : Summary from co-expression analysis"),
+            title = paste0(input$dom.select,": Summary from co-expression analysis"),
             DT::renderDataTable({ DT::datatable(results[["summary"]], rownames = FALSE, options = list(pageLength = 6, dom = 'tip')) })))
     }
     
@@ -498,7 +506,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       # 
       # if(sum(annot.nbr, na.rm = TRUE) == 0){}
       
-      if (length( getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], ont = input$dom.select, contrast = listname)) != 0) {
+      if (length(getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], ont = input$dom.select, contrast = listname)) != 0) {
         if (sum(unlist( sumORA(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], ont = input$dom.select)[-1]), na.rm = TRUE) == 0) {
           
           fluidRow(
@@ -696,7 +704,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       # 
       # if(sum(annot.nbr, na.rm = TRUE) == 0){}
       
-      if (length(  getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], from = "CoExpEnrichAnal", ont = input$dom.select, contrast = listname)) != 0) {
+      if (length( getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], from = "CoExpEnrichAnal", ont = input$dom.select, contrast = listname)) != 0) {
         if (sum(unlist( sumORA(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], from = "CoExpEnrichAnal", ont = input$dom.select)[-1]), na.rm = TRUE) == 0) {
           
           fluidRow(
@@ -705,7 +713,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
         }
         else{
           
-          choices <- names( getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], 
+          cluster_choices <- names( getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], 
                                                    from = "CoExpEnrichAnal",
                                                    contrast = listname,
                                                    ont = input$dom.select))
@@ -808,7 +816,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                 fluidRow(
                   column(4, 
                          radioButtons(inputId = ns(paste0(listname, "-domain")), label = "Domain",
-                                      choices = choices, selected = choices[1])),
+                                      choices = cluster_choices, selected = cluster_choices[1])),
                   column(4,
                          numericInput(inputId = ns(paste0(listname, "-top.over")), label = "Top terms:" , value = 15 ,
                                       min = 1, max = 10000, step = 5)), # max code en dur : pas bien
