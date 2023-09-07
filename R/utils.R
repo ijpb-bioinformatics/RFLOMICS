@@ -1522,9 +1522,9 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
   #                                x = iter, seed_arg = rep(1:replicates, replicates), 
   #                                export = param.list, n_jobs = nbr_iter, pkgs = "coseq")
   # 
-  coseq.res.list <- clustermq::Q(fun = fx,
-                                 df = df_args, 
-                                 export = param.list, n_jobs = nbr_iter, pkgs = "coseq")
+  coseq.res.list <- clustermq::Q_rows(fun = fx,
+                                      df = df_args, 
+                                      export = param.list, n_jobs = nbr_iter, pkgs = "coseq")
 
   names(coseq.res.list) <- c(1:nbr_iter)
   
@@ -1534,7 +1534,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
   
   # Create a table of jobs summary
   error.list <- unlist(lapply(coseq.res.list, function(x){
-    ifelse(is.null(x$error),"success",as.character(x$error))
+    ifelse(is.null(x$error), "success", as.character(x$error))
   }))
   
   nK_success <- table(error.list)["success"]
