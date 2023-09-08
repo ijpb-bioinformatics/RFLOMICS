@@ -615,18 +615,13 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
             
             mapChoices <- sort(data$ID[data$p.adjust < input$pValue])
             
-            # data <- getEnrichRes(object = rflomics.MAE[["RNAseq.set1.filtred"]],
-            #                            contrast = "H1",
-            #                            ont = "KEGG")[["no-domain"]]@result
-            # mapChoices <- sort(data$ID[data$p.adjust < 0.1])
-            
             tabPanel.list <- c(tabPanel.list,
                                list(
                                  tabPanel("Pathview results",
                                           fluidRow(
                                             column(2,
                                                    
-                                                   selectInput( # TODO change this data thing
+                                                   selectInput(
                                                      inputId = ns(paste0(listname, "-MAP.sel")), label = "Select map:",
                                                      choices = mapChoices, multiple = FALSE, selectize = FALSE,
                                                      size = 5,
@@ -646,14 +641,13 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                                                            "/",
                                                                            data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
                                                      
+                                                     # TODO clicking on the url reload the app. Why?! Leave target = blank for now.
                                                      a(href = link_to_map, "Link to interactive map online", target = "_blank")
                                                      
                                                    })),
                                             column(12,
                                                    
                                                    renderPlot({
-                                                     
-                                                     # TODO test this when update clusterprofiler
                                                      
                                                       plot.CPRKEGG_Results(object = session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
                                                                                     contrast = listname,
