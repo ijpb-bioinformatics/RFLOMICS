@@ -54,8 +54,9 @@ methods::setMethod(
              
            },
            "CoExpAnal" = {
+             
              namesClust <- names(object@metadata[["CoExpAnal"]][["clusters"]])
-             namesClust <- intersect(namesClust, nameList)
+             if (!is.null(nameList)) namesClust <- intersect(namesClust, nameList)
              
              geneLists <- lapply(namesClust, function(namClust) {
                object@metadata[["CoExpAnal"]][["clusters"]][[namClust]]

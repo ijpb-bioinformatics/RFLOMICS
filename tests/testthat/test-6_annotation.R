@@ -4,7 +4,7 @@ library(RFLOMICS)
 # ---- Construction of objects for the tests ----
 
 RNAdat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
-corresp <- read.table(file = "inst/ExamplesFiles/ecoseed/transcript_genes.txt", sep = "\t", header = TRUE)
+corresp <- read.table(file = paste0(system.file(package = "RFLOMICS"),"/ExamplesFiles/ecoseed/transcript_genes.txt"), sep = "\t", header = TRUE)
 
 # Use gene id to ease use of clusterprofiler
 RNAdat <- RNAdat[corresp$ensembl_transcript_id,]
@@ -91,8 +91,6 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
   
   df_custom <- vroom::vroom(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/GO_annotations/Arabidopsis_thaliana_Ensembl_55.txt"))
   
-  # intersect(rownames(MAE[["RNAtest"]]), df_custom$Gene.stable.ID)
-  
   MAE <- runAnnotationEnrichment_CPR(MAE, SE.name = "RNAtest", dom.select = "custom",
                                      list_args = list(pvalueCutoff = 0.05),
                                      col_term = "GO term accession", 
@@ -101,23 +99,26 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
                                      col_domain = "GO domain",
                                      annot = df_custom)
   
-  # Selecting only one contrast
+  expect(!is.null(MAE[["RNAtest"]]@metadata$DiffExpEnrichAnal$custom$summary), failure_message = "Custom RNAseq didn't work (summary not present)")
+  
+  # Selecting only one contrast, custom file
   expect_no_error({
     MAE <- runAnnotationEnrichment_CPR(MAE, nameList = "H1", SE.name = "RNAtest", dom.select = "custom",
                                        list_args = list(pvalueCutoff = 0.05),
-                                       col_term = "GO.term.accession", 
-                                       col_gene = "Gene.stable.ID",
-                                       col_name = "GO.term.name",
-                                       col_domain = "GO.domain",
+                                       col_term = "GO term accession", 
+                                       col_gene = "Gene stable ID",
+                                       col_name = "GO term name",
+                                       col_domain = "GO domain",
                                        annot = df_custom)
   })
   
   expect({
-    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H1", ont = "GO", domain = "BP")
+    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H1", ont = "custom", domain = "biological_process")
     nrow(obj@result) > 0
   }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
   
-  # All contrasts
+  
+  # All contrasts, GO database
   expect_no_error({
     MAE <- runAnnotationEnrichment_CPR(MAE, SE.name = "RNAtest", dom.select = "GO",
                                        list_args = list(OrgDb = "org.At.tair.db", 
@@ -150,6 +151,7 @@ test_that("it's running from CoExpAnal - GO - RNASeq", {
     
   })
   
+  
   expect({
     obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "cluster.1", ont = "GO", domain = "BP", from = "CoExpAnal")
     nrow(obj@result) > 0
@@ -165,7 +167,6 @@ test_that("it's running from CoExpAnal - GO - RNASeq", {
                                        Domain = c("BP", "MF", "CC"))
     
   })
-  sumORA(MAE[["RNAtest"]], from = "CoExpAnal")
   
   expect({
     obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "cluster.1", ont = "GO", domain = "BP", from = "CoExpAnal")
