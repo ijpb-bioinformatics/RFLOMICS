@@ -33,12 +33,20 @@ methods::setMethod(
                         link_response = 1,
                         sparsity = FALSE,
                         cases_to_try = 5) {
+    
     method <- switch(toupper(method),
       "MIXOMICS" = "MixOmics",
-      "MOFA" = "MOFA",
+      "MOFA"  = "MOFA",
       "MOFA2" = "MOFA",
       "MOFA+" = "MOFA"
     )
+    
+    if (any(!omicsToIntegrate %in% names(object))) {
+      stop("There are omics to integrate that are not names from the object")
+    }
+    
+    if (RFLOMICS:::isTagName(object, contrasts_names)) 
+      contrasts_names <- RFLOMICS:::convertTagToContrast(object, contrasts_names)
 
     preparedObject <- prepareForIntegration(
       object = object,
@@ -68,6 +76,8 @@ methods::setMethod(
     } else if (toupper(method) == "MIXOMICS") {
       object@metadata[["mixOmics"]] <- NULL
 
+      if (is.null(selectedResponse)) selectedResponse <- colnames(object@metadata$design@ExpDesign)
+      
       MixOmics_res <- lapply(selectedResponse,
         FUN = function(response_var) {
           res_mixOmics <- run_MixOmics_analysis(
@@ -194,27 +204,30 @@ methods::setMethod(
 #' @return A list with an untrained MOFA object (containing all options for the run) and a trained MOFA object
 #' @export
 #' @exportMethod run_MOFA_analysis
+#' @importClassesFrom MOFA2 MOFA
+#' 
 methods::setMethod(
   f = "run_MOFA_analysis",
-  signature = "MultiAssayExperiment",
+  signature = "MOFA",
   definition = function(object,
                         scale_views = FALSE,
                         maxiter = 1000,
                         num_factors = 10,
                         ...) {
-    data_opts <- MOFA2::get_default_data_options(object)
+    
+    data_opts  <- MOFA2::get_default_data_options(object)
     model_opts <- MOFA2::get_default_model_options(object)
     train_opts <- MOFA2::get_default_training_options(object)
 
-    data_opts$scale_views <- scale_views
-    train_opts$maxiter <- maxiter
-    train_opts$verbose <- FALSE
+    data_opts$scale_views  <- scale_views
+    train_opts$maxiter     <- maxiter
+    train_opts$verbose     <- FALSE
     model_opts$num_factors <- num_factors
 
     MOFAObject.untrained <- MOFA2::prepare_mofa(
-      object = object,
-      data_options = data_opts,
-      model_options = model_opts,
+      object           = object,
+      data_options     = data_opts,
+      model_options    = model_opts,
       training_options = train_opts
     )
 
@@ -322,7 +335,7 @@ methods::setMethod(
         ncomp = ncomp,
         scale = scale_views,
         test.keepX = test_keepX,
-        folds = min(floor(nrow(Y) / 2), 10)
+        folds = min(floor(nrow(Y) / 2), 10) # TODO ???
       )
       if (length(object$blocks) > 1) list_tuning_args$design <- Design_mat
 
