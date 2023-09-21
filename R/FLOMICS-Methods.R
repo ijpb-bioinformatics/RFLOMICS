@@ -294,9 +294,10 @@ methods::setMethod(f          = "getExpressionContrast",
                      Design <- object@metadata$design
                      
                      # model formula
-                     if (class(model.formula) == "formula") model.formula <- as.character(model.formula)
-                     # modelFormula <- formula(model.formula) # deprecated? 
-                     modelFormula <- formula(paste(model.formula, collapse = " "))
+                     if (is(model.formula, "formula")) model.formula <- paste(as.character(model.formula), collapse = " ")
+                     modelFormula <- formula(model.formula) 
+                     # modelFormula <- formula(paste(model.formula, collapse = " "))
+                     # modelFormula <- model.formula
                      
                      #Design@Model.formula <- formula(model.formula)
                      Design@Model.formula <- model.formula
