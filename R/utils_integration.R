@@ -56,7 +56,7 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg = NULL, type = "union"){
 #' @noRd
 #'
 rbe_function = function(object, SEobject){
-  
+
   assayTransform <- SummarizedExperiment::assay(SEobject)
   ftypes <- RFLOMICS::getFactorTypes(object)
   colBatch <- names(ftypes)[ftypes == "batch"]
@@ -117,14 +117,15 @@ rnaseqRBETransform <- function(object,
   
   rnaDat <- object[[SEname]] 
   assayTransform <- SummarizedExperiment::assay(rnaDat)
-  if (!is.integer(assayTransform)) {
+  
+  if (!is.integer(assayTransform) && !identical(assayTransform, floor(assayTransform))) {
     message(paste0("You indicated RNASeq data for ", SEname, "but it is not recognized as count data")) 
     print(assayTransform[1:3, 1:3])
   }
   
-  DMat      <- RFLOMICS::getDesignMat(object)
-  coefNorm  <- RFLOMICS::getNormCoeff(rnaDat)
-  designMat <- model.matrix(as.formula(RFLOMICS::getModelFormula(object)), data = DMat)
+  DMat      <- getDesignMat(object)
+  coefNorm  <- getNormCoeff(rnaDat)
+  designMat <- model.matrix(formula(getModelFormula(object)), data = DMat)
   
   DGEObject <- edgeR::DGEList(
     counts       = assayTransform,
@@ -139,8 +140,9 @@ rnaseqRBETransform <- function(object,
   
   SummarizedExperiment::assay(rnaDat) <- limmaRes$E
   
-  if (correctBatch)    rnaDat <- RFLOMICS::rbe_function(object, rnaDat)
-  if (choice == "DE")  rnaDat <- rnaDat[RFLOMICS::opDEList(rnaDat, contrasts = contrasts_names, operation = type),]
+  if (correctBatch)    rnaDat <- rbe_function(object, rnaDat)
+  
+  if (choice == "DE")  rnaDat <- rnaDat[opDEList(rnaDat, contrasts = contrasts_names, operation = type),]
   
   rnaDat@metadata[["correction_batch"]]             <- correctBatch
   rnaDat@metadata[["transform_results_all"]]        <- limmaRes 
@@ -175,8 +177,8 @@ RBETransform <- function(object,
   omicsDat@metadata[["correction_batch"]]             <- correctBatch
   omicsDat@metadata[["transform_method_integration"]] <- omicsDat@metadata$transform_method
   
-  if (correctBatch)    omicsDat <- RFLOMICS::rbe_function(object, omicsDat)
-  if (choice == "DE")  omicsDat <- omicsDat[RFLOMICS::opDEList(omicsDat, contrasts = contrasts_names, operation = type),]
+  if (correctBatch)    omicsDat <- rbe_function(object, omicsDat)
+  if (choice == "DE")  omicsDat <- omicsDat[opDEList(omicsDat, contrasts = contrasts_names, operation = type),]
   
   object[[SEname]] <- omicsDat
   
@@ -204,15 +206,15 @@ plot_MO_varExp <- function(object, selectedResponse, mode = NULL){
   gg_return <- NULL
   
   if (is.null(mode)) {
-    gg_return <- ggpubr::ggarrange(RFLOMICS:::plot_MO_1(Data_res),
-                                   RFLOMICS:::plot_MO_2(Data_res), 
+    gg_return <- ggpubr::ggarrange(plot_MO_1(Data_res),
+                                   plot_MO_2(Data_res), 
                                    ncol = 2)
   }
   else if (tolower(mode) == "cumulative") {
-    gg_return <- RFLOMICS:::plot_MO_1(Data_res)
+    gg_return <- plot_MO_1(Data_res)
   }
   else if (tolower(mode) == "comp") {
-    gg_return <- RFLOMICS:::plot_MO_2(Data_res)
+    gg_return <- plot_MO_2(Data_res)
   }
   
   return(gg_return)
