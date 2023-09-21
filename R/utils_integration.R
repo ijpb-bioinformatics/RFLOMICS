@@ -17,13 +17,13 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg = NULL, type = "union"){
   
   tabCorresp <- SEobject@metadata$DiffExpAnal$Validcontrasts %>% 
     dplyr::select(contrastName, tag)
-  if(is.null(contrasts_arg))   contrasts_arg <- SEobject@metadata$DiffExpAnal$Validcontrasts$contrastName
+  if (is.null(contrasts_arg))   contrasts_arg <- SEobject@metadata$DiffExpAnal$Validcontrasts$contrastName
   
   tabCorresp <- tabCorresp %>% dplyr::filter(contrastName %in% contrasts_arg)
   contrasts_select <- tabCorresp$tag
   
   tab1 <- SEobject@metadata$DiffExpAnal$mergeDEF %>%
-    dplyr::select(any_of(c("DEF", contrasts_select)))
+    dplyr::select(tidyselect::any_of(c("DEF", contrasts_select)))
   
   if(type == "intersection"){
     
@@ -55,13 +55,17 @@ filter_DE_from_SE <- function(SEobject, contrasts_arg = NULL, type = "union"){
 #' @export
 #' @noRd
 #'
-rbe_function = function(object, SEobject){
-
+rbe_function = function(object, SEobject, cmd = FALSE){
+  
   assayTransform <- SummarizedExperiment::assay(SEobject)
   ftypes <- RFLOMICS::getFactorTypes(object)
   colBatch <- names(ftypes)[ftypes == "batch"]
   
-  print(paste0("#     =>Correction for Batch: ", paste(colBatch, collapse = " "), " in ", SEobject@metadata$omicType))
+  if (cmd) {
+    print(paste0("#     =>Correction for Batch: ", 
+                 paste(colBatch, collapse = " "), 
+                 " in ", SEobject@metadata$omicType))
+  }
   
   newFormula <- gsub(pattern = paste(paste(colBatch, "[+]"),  collapse = "|"), "", RFLOMICS::getModelFormula(object))
   newFormula <- gsub(pattern = "~ [+] ", "~ ", newFormula) # use ?
@@ -106,7 +110,8 @@ rnaseqRBETransform <- function(object,
                                transformation = "limma (voom)",
                                contrasts_names = NULL,
                                type = "union",
-                               choice = "DE"
+                               choice = "DE",
+                               cmd = FALSE
 ){
   
   # TODO : check if differential analysis has been performed.
@@ -171,7 +176,8 @@ RBETransform <- function(object,
                          correctBatch = TRUE,
                          contrasts_names = NULL,
                          type = "union",
-                         choice = "DE"){
+                         choice = "DE",
+                         cmd = FALSE){
   
   omicsDat <- object[[SEname]]
   omicsDat@metadata[["correction_batch"]]             <- correctBatch
@@ -308,7 +314,7 @@ MOFA_cor_network <- function(resMOFA,
                              posCol = "red",
                              negCol = "blue"
 ){
-
+  
   # Correlation matrix is done on all ZW, not on the selected factor. 
   data_reconst_list <- lapply(MOFA2::get_weights(resMOFA), FUN = function(mat){
     MOFA2::get_factors(resMOFA)$group1 %*% t(mat)})

@@ -32,22 +32,27 @@ methods::setMethod(
                         link_datasets = 1,
                         link_response = 1,
                         sparsity = FALSE,
-                        cases_to_try = 5) {
+                        cases_to_try = 5,
+                        silent = TRUE, 
+                        cmd = FALSE,
+                        ...) {
     
     method <- switch(toupper(method),
-      "MIXOMICS" = "MixOmics",
-      "MOFA"  = "MOFA",
-      "MOFA2" = "MOFA",
-      "MOFA+" = "MOFA"
+                     "MIXOMICS" = "MixOmics",
+                     "MOFA"  = "MOFA",
+                     "MOFA2" = "MOFA",
+                     "MOFA+" = "MOFA"
     )
     
     if (any(!omicsToIntegrate %in% names(object))) {
       stop("There are omics to integrate that are not names from the object")
     }
     
-    if (RFLOMICS:::isTagName(object, contrasts_names)) 
-      contrasts_names <- RFLOMICS:::convertTagToContrast(object, contrasts_names)
-
+    if (isTagName(object, contrasts_names)) 
+      contrasts_names <- convertTagToContrast(object, contrasts_names)
+    
+    if (cmd) print("#     => Preparing for multi-omics analysis")
+    
     preparedObject <- prepareForIntegration(
       object = object,
       omicsToIntegrate = omicsToIntegrate,
@@ -56,54 +61,89 @@ methods::setMethod(
       contrasts_names = contrasts_names,
       type = type,
       group = group,
-      method = method
+      method = method,
+      cmd = cmd, 
+      silent = silent
     )
-
+    
     if (toupper(method) == "MOFA") {
       object@metadata[["MOFA"]] <- NULL
-
+      
+      if (cmd) print("#     => Running MOFA analysis")
+      
       MOFA_run <- run_MOFA_analysis(
         object = preparedObject,
         scale_views = scale_views,
         maxiter = maxiter,
-        num_factors = num_factors
+        num_factors = num_factors,
+        silent = silent
       )
-
+      
+      
       object@metadata[["MOFA"]][["MOFA_results"]] <- MOFA_run$MOFAObject.trained
       object@metadata[["MOFA"]][["MOFA_untrained"]] <- MOFA_run$MOFAObject.untrained
       object@metadata[["MOFA"]][["MOFA_selected_filter"]] <- type
       object@metadata[["MOFA"]][["MOFA_selected_contrasts"]] <- contrasts_names
     } else if (toupper(method) == "MIXOMICS") {
       object@metadata[["mixOmics"]] <- NULL
-
+      
+      if (cmd) print("#     => Running mixOmics analysis")
+      
       if (is.null(selectedResponse)) selectedResponse <- colnames(object@metadata$design@ExpDesign)
       
-      MixOmics_res <- lapply(selectedResponse,
-        FUN = function(response_var) {
-          res_mixOmics <- run_MixOmics_analysis(
-            object = preparedObject,
-            selectedResponse = response_var,
-            scale_views = scale_views,
-            ncomp = ncomp,
-            link_datasets = link_datasets,
-            link_response = link_response,
-            sparsity = sparsity,
-            cases_to_try = cases_to_try
+      if (silent) {
+        co <- capture.output({ 
+          MixOmics_res <- lapply(selectedResponse,
+                                 FUN = function(response_var) {
+                                   res_mixOmics <- suppressWarnings(run_MixOmics_analysis(
+                                     object = preparedObject,
+                                     selectedResponse = response_var,
+                                     scale_views = scale_views,
+                                     ncomp = ncomp,
+                                     link_datasets = link_datasets,
+                                     link_response = link_response,
+                                     sparsity = sparsity,
+                                     cases_to_try = cases_to_try
+                                   ))
+                                   
+                                   return(
+                                     list(
+                                       "MixOmics_tuning_results" = res_mixOmics$tuning_res,
+                                       "MixOmics_results"        = res_mixOmics$analysis_res
+                                     )
+                                   )
+                                 }
           )
-
-          return(
-            list(
-              "MixOmics_tuning_results" = res_mixOmics$tuning_res,
-              "MixOmics_results"        = res_mixOmics$analysis_res
-            )
-          )
-        }
-      )
+        })
+        
+      } else {
+        MixOmics_res <- lapply(selectedResponse,
+                               FUN = function(response_var) {
+                                 res_mixOmics <- run_MixOmics_analysis(
+                                   object = preparedObject,
+                                   selectedResponse = response_var,
+                                   scale_views = scale_views,
+                                   ncomp = ncomp,
+                                   link_datasets = link_datasets,
+                                   link_response = link_response,
+                                   sparsity = sparsity,
+                                   cases_to_try = cases_to_try
+                                 )
+                                 
+                                 return(
+                                   list(
+                                     "MixOmics_tuning_results" = res_mixOmics$tuning_res,
+                                     "MixOmics_results"        = res_mixOmics$analysis_res
+                                   )
+                                 )
+                               }
+        )
+      }
+      
       names(MixOmics_res) <- selectedResponse
-
       object@metadata[["mixOmics"]] <- MixOmics_res
     }
-
+    
     return(object)
   }
 )
@@ -131,21 +171,23 @@ methods::setMethod(
                         contrasts_names = NULL,
                         type = "union",
                         group = NULL,
-                        method = c("MOFA", "MixOmics")) {
+                        method = c("MOFA", "MixOmics"),
+                        cmd = FALSE, 
+                        silent = TRUE) {
     if (is.null(omicsToIntegrate)) omicsToIntegrate <- names(object)
-
+    
     # Checking for batch effects
     correct_batch <- FALSE
     ftypes <- getFactorTypes(object)
-
+    
     if (any(ftypes == "batch")) {
       correct_batch <- TRUE
       # colBatch <- names(ftypes)[ftypes == "batch"]
     }
-
+    
     object <- object[, , omicsToIntegrate]
     # omics_types <-  getOmicsTypes(object)
-
+    
     # On each selected omics, according to its type, apply transformation if demanded.
     # Filter DE entities
     # TODO : add a possibility of choice for keeping every entity (small tables)
@@ -158,34 +200,43 @@ methods::setMethod(
         correctBatch = correct_batch,
         contrasts_names = contrasts_names,
         type = type,
-        choice = choice
+        choice = choice,
+        cmd = cmd
       )
       object <- switch(omicsType,
-        "RNAseq" = {
-          list_args$transformation <- rnaSeq_transfo
-          do.call("rnaseqRBETransform", list_args)
-        },
-        "proteomics" = do.call("RBETransform", list_args),
-        "metabolomics" = do.call("RBETransform", list_args)
+                       "RNAseq" = {
+                         list_args$transformation <- rnaSeq_transfo
+                         do.call("rnaseqRBETransform", list_args)
+                       },
+                       "proteomics" = do.call("RBETransform", list_args),
+                       "metabolomics" = do.call("RBETransform", list_args)
       )
     }
-
+    
     if (method == "MOFA") {
-      MOFAObject <- MOFA2::create_mofa(object,
-        group = group,
-        extract_metadata = TRUE
-      )
+      if (silent) {
+        MOFAObject <- suppressMessages(
+          suppressWarnings(MOFA2::create_mofa(object,
+                                              group = group,
+                                              extract_metadata = TRUE)))
+      } else {
+        MOFAObject <- MOFA2::create_mofa(object,
+                                         group = group,
+                                         extract_metadata = TRUE)
+      }
+      
       return(MOFAObject)
+      
     } else if (method == "MixOmics") {
       # Common samples names:
       object <- object[, Reduce("intersect", colnames(object))]
-
+      
       MixOmicsObject <- list(
         blocks = lapply(object@ExperimentList, FUN = function(SE) t(SummarizedExperiment::assay(SE))),
         metadata = object@colData
       )
       MixOmicsObject$blocks <- lapply(MixOmicsObject$blocks, FUN = function(mat) mat[order(rownames(mat)), ])
-
+      
       return(MixOmicsObject)
     }
   }
@@ -213,29 +264,62 @@ methods::setMethod(
                         scale_views = FALSE,
                         maxiter = 1000,
                         num_factors = 10,
+                        silent = TRUE,
                         ...) {
     
     data_opts  <- MOFA2::get_default_data_options(object)
     model_opts <- MOFA2::get_default_model_options(object)
     train_opts <- MOFA2::get_default_training_options(object)
-
+    
     data_opts$scale_views  <- scale_views
     train_opts$maxiter     <- maxiter
     train_opts$verbose     <- FALSE
     model_opts$num_factors <- num_factors
-
-    MOFAObject.untrained <- MOFA2::prepare_mofa(
-      object           = object,
-      data_options     = data_opts,
-      model_options    = model_opts,
-      training_options = train_opts
-    )
-
-    MOFAObject.trained <- MOFA2::run_mofa(MOFAObject.untrained, use_basilisk = TRUE)
+    
+    if (silent) {
+      MOFAObject.untrained <- suppressMessages(suppressWarnings(
+        MOFA2::prepare_mofa(
+          object           = object,
+          data_options     = data_opts,
+          model_options    = model_opts,
+          training_options = train_opts
+        )))
+    } else {
+      MOFAObject.untrained <- MOFA2::prepare_mofa(
+        object           = object,
+        data_options     = data_opts,
+        model_options    = model_opts,
+        training_options = train_opts
+      )
+    }
+    
+    if (silent && require(reticulate)) {
+      
+      # sys     <- reticulate::import("sys")
+      # os      <- reticulate::import("os")
+      # builtin <- reticulate::import_builtins()
+      # 
+      # old_stdout = sys$stdout
+      # sys$stdout = builtin$open(os$devnull, 'w')
+      
+      pycapt <- reticulate::py_capture_output(
+        {
+          MOFAObject.trained <- suppressWarnings(suppressMessages( 
+            MOFA2::run_mofa(MOFAObject.untrained, use_basilisk = FALSE, save_data = TRUE)
+          ))
+        }
+      )
+      # sys$stdout = old_stdout
+    } else {
+      MOFAObject.trained <- MOFA2::run_mofa(MOFAObject.untrained, use_basilisk = FALSE, 
+                                            save_data = TRUE)
+    }
+    
     # peut poser probleme au niveau python et mofapy.
     # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R.
-
-    return(list("MOFAObject.untrained" = MOFAObject.untrained, "MOFAObject.trained" = MOFAObject.trained))
+    
+    return(list("MOFAObject.untrained" = MOFAObject.untrained, 
+                "MOFAObject.trained"   = MOFAObject.trained))
   }
 )
 
@@ -271,7 +355,7 @@ methods::setMethod(
                         ...) {
     list_res <- list()
     dis_anal <- FALSE # is this a discriminant analysis
-
+    
     # TODO : check this, c'est un peu etrange d'avoir eu a reordonner les lignes dans prepareForIntegration
     # du coup ca demande de le faire aussi pour Y
     # TODO : faudrait le faire directement dans preparedList ?
@@ -280,7 +364,7 @@ methods::setMethod(
       dplyr::arrange(rowNam) %>%
       tibble::column_to_rownames(var = "rowNam") %>%
       dplyr::select(tidyselect::all_of(selectedResponse))
-
+    
     # Is this a discriminant analysis?
     # TODO : is this used?
     if (ncol(Y) == 1 && is.factor(Y[, 1])) {
@@ -295,40 +379,40 @@ methods::setMethod(
           return(mat_return)
         }
       }))
-
+      
       Y <- cbind(Y %>% dplyr::select_if(is.numeric), YFactors)
       Y <- apply(Y, 2, as.numeric)
       rownames(Y) <- YrowNames
     }
-
+    
     # Design matrix
     Design_mat <- matrix(link_datasets,
-      nrow = length(object$blocks) + 1,
-      ncol = length(object$blocks) + 1
+                         nrow = length(object$blocks) + 1,
+                         ncol = length(object$blocks) + 1
     )
     Design_mat[, ncol(Design_mat)] <-
       Design_mat[nrow(Design_mat), ] <- link_response
     diag(Design_mat) <- 0
-
+    
     # What function to use for the analysis (can't be sparse if there is a continous response)
     functionName <- "pls"
     if (dis_anal) functionName <- paste0(functionName, "da")
     if (sparsity && !is.numeric(Y)) functionName <- paste0("s", functionName)
     if (length(object$blocks) > 1) functionName <- paste0("block.", functionName)
-
+    
     # Model Tuning (if required, for sparsity)
     if (sparsity && dis_anal && functionName != "block.spls") {
       # no tune.block.spls so far, there is one for spls
       # It is a bit weird to consider tuning with folds when there is very few samples per condition
       # Add a warning or something when it's the case?
       # Also consider adding a warning when the number of feature is still very high even after differential analysis
-
+      
       tune_function <- paste0("tune.", functionName)
-
+      
       test_keepX <- lapply(object$blocks, FUN = function(dat) {
         ceiling(seq(from = ceiling(0.1 * ncol(dat)), to = ncol(dat), length.out = cases_to_try))
       })
-
+      
       list_tuning_args <- list(
         X = object$blocks,
         Y = Y,
@@ -338,12 +422,12 @@ methods::setMethod(
         folds = min(floor(nrow(Y) / 2), 10) # TODO ???
       )
       if (length(object$blocks) > 1) list_tuning_args$design <- Design_mat
-
+      
       list_res$tuning_res <- do.call(getFromNamespace(tune_function, ns = "mixOmics"), list_tuning_args)
     }
-
+    
     # Model fitting
-
+    
     list_args <- list(
       X = object$blocks,
       Y = Y,
@@ -352,9 +436,9 @@ methods::setMethod(
     )
     if (length(object$blocks) > 1) list_args$design <- Design_mat
     if (sparsity && !functionName %in% c("block.spls", "block.pls")) list_args$keepX <- list_res$tuning_res$choice.keepX
-
+    
     list_res$analysis_res <- do.call(getFromNamespace(functionName, ns = "mixOmics"), list_args)
-
+    
     return(list_res)
   }
 )

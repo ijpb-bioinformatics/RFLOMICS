@@ -222,7 +222,9 @@ methods::setGeneric(
                   link_datasets = 1,
                   link_response = 1,
                   sparsity = FALSE,
-                  cases_to_try = 5, ... ){standardGeneric("integrationWrapper")}
+                  cases_to_try = 5, 
+                  silent = TRUE, 
+                  cmd = FALSE, ... ){standardGeneric("integrationWrapper")}
 )
 
 
