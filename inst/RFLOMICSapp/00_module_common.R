@@ -92,14 +92,14 @@ omics_data_analysis_summary <- function(input, output, session, rea.values){
     summaryProcess.df <- lapply(rea.values$datasetDiff, function(dataset){
       
       c(paste(dataset, "filtred", sep = "."), dim(session$userData$FlomicsMultiAssay[[dataset]]) - dim(session$userData$FlomicsMultiAssay[[paste(dataset, "filtred", sep = ".")]]))
-    }) %>% purrr::reduce(rbind) %>% data.table()
+    }) %>% purrr::reduce(rbind) %>% data.table::data.table()
     names(summaryProcess.df) <- c("dataset", "rm_entities", "rm_samples")
     
-    ggplot(summaryProcess.df %>% melt(id="dataset"), aes(x=variable, y=dataset)) + 
-      geom_tile(aes(fill=dataset),color="white", lwd =1.5, linetype=1) + 
-      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-            panel.background = element_blank(), axis.ticks = element_blank(), legend.position="none") + 
-      ylab("") + xlab("") + geom_text(aes(label=value)) 
+    ggplot2::ggplot(summaryProcess.df %>% reshape2::melt(id="dataset"), ggplot2::aes(x=variable, y=dataset)) + 
+      ggplot2::geom_tile(aes(fill=dataset),color="white", lwd =1.5, linetype=1) + 
+      ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(), 
+            panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), legend.position="none") + 
+      ggplot2::ylab("") + ggplot2::xlab("") + ggplot2::geom_text(ggplot2::aes(label=value)) 
     })
   
   
@@ -121,17 +121,17 @@ omics_data_analysis_summary <- function(input, output, session, rea.values){
         
       }) %>% purrr::reduce(rbind)
       
-    }) %>% purrr::reduce(rbind) %>% data.table()
+    }) %>% purrr::reduce(rbind) %>% data.table::data.table()
     
     names(summaryDiff.df) <- c("dataset", "contrast", "value")
     
     
-    ggplot(summaryDiff.df, aes(x=contrast, y=dataset)) + 
-      geom_tile(aes(fill=dataset),color="white", lwd =1.5, linetype=1) + 
-      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-            panel.background = element_blank(), axis.ticks = element_blank(), legend.position="none",
-            axis.text.x = element_text(angle = 90, hjust = 1)) + 
-      ylab("") + xlab("") + geom_text(aes(label=value)) + ggtitle("DE entities (up/down)")
+    ggplot2::ggplot(summaryDiff.df, ggplot2::aes(x=contrast, y=dataset)) + 
+      ggplot2::geom_tile(ggplot2::aes(fill=dataset),color="white", lwd =1.5, linetype=1) + 
+      ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(), 
+            panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), legend.position="none",
+            axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) + 
+      ggplot2::ylab("") + ggplot2::xlab("") + ggplot2::geom_text(aes(label=value)) + ggplot2::ggtitle("DE entities (up/down)")
   })
   
 }
