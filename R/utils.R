@@ -6,21 +6,25 @@ magrittr::`%>%`
 
 #' @title Read Experimental Design
 #'
-#' @param file experimental design file
+#' @param file path to experimental design file
 #' @return data.frame
 #' @export
 #' 
 read_exp_design <- function(file){
   
+  if (missing(file)) {
+    stop('Please provide a file path')
+  }
+  
   if(!file.exists(file))
   {
-    stop(paste0("ERROR : ", file, " don't exist !"))
+    stop(paste0("ERROR: ", file, " don't exist!"))
     return(NULL)
   }
   
   # read design and remove special characters
   # remove "_" from modality and factor names
-  data <- vroom::vroom(file, delim = "\t", show_col_types = FALSE)  %>%
+  data <- vroom::vroom(file, delim = "\t", show_col_types = FALSE) %>%
     dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), ~stringr::str_remove_all(.x, pattern = "[.,;:#@!?()§$€%&<>|=+-/]"))) %>%
     dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), ~stringr::str_remove_all(.x, pattern = "[\\]\\[\'\"\ ]"))) %>%
     dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), ~stringr::str_remove_all(.x, pattern = stringr::fixed("\\")))) %>% 
@@ -39,9 +43,9 @@ read_exp_design <- function(file){
   }
   
   # check if there is duplication in factor names
-  factor.dup <- as.vector(data[which(table(names(data[-1])) > 1),1])[[1]]
+  # factor.dup <- as.vector(data[which(table(names(data[-1])) > 1),1])[[1]]
+  factor.dup <- names(data[-1])[duplicated(names(data[-1]))]
   if (length(factor.dup) != 0) {
-    
     stop(paste0("ERROR: duplicated factor name: ", paste0(factor.dup, collapse = ",")))
   }
   
