@@ -184,12 +184,13 @@ getDEMatrix <- function(object) {
 #' @export
 #'
 opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "union") {
+  
   if (!class(object) %in% c("SummarizedExperiment", "MultiAssayExperiment")) stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
   if (class(object) == "MultiAssayExperiment" && is.null(SE.name)) stop("Please provide SE.name argument.")
 
   if (class(object) == "MultiAssayExperiment") object <- object[[SE.name]] 
   
-  if (is.null(contrasts)) contrasts <- getSelectedContrasts(object)[["tag"]]
+  if (is.null(contrasts) || length(contrasts) == 0) contrasts <- getSelectedContrasts(object)[["tag"]]
   if (isContrastName(object, contrasts)) contrasts <- convertContrastToTag(object, contrasts)
 
   if (!is.null(object@metadata$DiffExpAnal$Validcontrasts)) {
