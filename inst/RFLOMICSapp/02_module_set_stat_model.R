@@ -130,6 +130,14 @@ GLM_model <- function(input, output, session, rea.values){
       rea.values$analysis    <- FALSE
       rea.values$datasetDiff <- NULL
       # reset analysis
+      
+      lapply(rea.values$datasetList, function(dataset){
+        rea.values[[dataset]]$process   <- FALSE
+        rea.values[[dataset]]$diffAnal  <- FALSE
+        rea.values[[dataset]]$coExpAnal <- FALSE
+        rea.values[[dataset]]$diffAnnot <- FALSE
+        rea.values[[dataset]]$diffValid <- FALSE
+      })
 
       session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(object  = session$userData$FlomicsMultiAssay, 
                                                                    results = c("DiffExpAnal", "CoExpAnal", "DiffExpEnrichAnal", "CoExpEnrichAnal"))
