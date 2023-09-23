@@ -109,6 +109,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     if (rea.values[[dataset]]$diffAnal == FALSE) return()
     if (is.null(rea.values[[dataset]]$DiffValidContrast) || dim(rea.values[[dataset]]$DiffValidContrast)[1] == 0) return()
     
+    
     fluidRow(
       column(width = 9),
       column(width = 3, actionButton(session$ns("validContrast"),"Validate")))
@@ -436,7 +437,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   # merge results on upset plot
   output$ResultsMerge <- renderUI({
     
-    if (rea.values[[dataset]]$diffAnal == FALSE || is.null(local.rea.values$dataset.SE@metadata$DiffExpAnal[["mergeDEF"]])) return()
+    if (rea.values[[dataset]]$diffAnal == FALSE ||
+        is.null(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]])) return()
+    
     
     #local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
     DEF_mat <- as.data.frame(local.rea.values$dataset.SE@metadata$DiffExpAnal[["mergeDEF"]])
