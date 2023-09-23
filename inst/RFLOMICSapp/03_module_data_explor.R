@@ -43,9 +43,9 @@ QCNormalizationTabUI <- function(id){
 QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   
   #we must select contrast before
-  validate(
-    need(rea.values$analysis != FALSE, "Please run data processing")
-  )
+  # validate(
+  #   need(rea.values$analysis != FALSE, "Please run data processing")
+  # )
   
   
   local.rea.values <- reactiveValues(dataset.processed.SE = NULL, 
