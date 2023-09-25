@@ -198,7 +198,9 @@ MixOmics_setting <- function(input, output, session, rea.values){
       link_response = 1,
       sparsity = input$MO_sparsity,
       cases_to_try = input$MO_cases_to_try,
-      selectedResponse = input$MO_selectedResponse
+      selectedResponse = input$MO_selectedResponse,
+      cmd = TRUE, 
+      silent = TRUE
       
     )
     
@@ -207,11 +209,9 @@ MixOmics_setting <- function(input, output, session, rea.values){
     # ----------------------#
     
     # Run the analysis
-    print("#     =>Running MixOmics")
+    # print("#     =>Running MixOmics")
     
     session$userData$FlomicsMultiAssay <- do.call(getFromNamespace("integrationWrapper", ns = "RFLOMICS"), list_args_MO)
-    
-    print(names(session$userData$FlomicsMultiAssay@metadata[["mixOmics"]]))
     
     #---- progress bar ----#
     progress$inc(1, detail = paste("Finished ", 100,"%", sep = ""))

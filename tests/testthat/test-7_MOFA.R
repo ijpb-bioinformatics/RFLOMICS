@@ -1,6 +1,6 @@
 library(testthat)
 library(RFLOMICS)
-
+library(MOFA2)
 
 # ---- Construction of objects for the tests ----
 
@@ -39,7 +39,6 @@ MAE <- MAE |>
   RunDiffAnalysis(   SE.name = "RNAtest",   DiffAnalysisMethod = "edgeRglmfit") |>
   FilterDiffAnalysis(SE.name = "RNAtest",   Adj.pvalue.cutoff = 0.05, logFC.cutoff = 1.5)
 
-
 # ----- TESTS -----
  
 test_that("Working?", code = {
@@ -54,13 +53,30 @@ test_that("Working?", code = {
   
   MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest", "protetest"), contrasts_names = c("H1", "H2"), method = "mixOmics")
   
-  MAE@metadata$mixOmics
   
-  # TODO tests: with feature selection, without, with only one responsa variable, with several, etc. 
+  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest", "protetest"), contrasts_names = c("H1", "H2"), method = "mixOmics", 
+                            selectedResponse = c("temperature", "imbibition"))
+  
+  expect(identical(names(MAE@metadata$mixOmics), c("temperature", "imbibition"), attrib.as.set = FALSE), failure_message = "Taking only two responses for mixOmics does not work")
+  
+  # TODO tests: with feature selection, without, with only one response variable, with several, etc. 
   # TODO compare: with the same methods outside of RFLOMICS. (normalisation, data treatment, find the equivalent pipeline)
   
+  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest"))
+  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest"), silent = TRUE, cmd = TRUE)  
+  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest"), silent = FALSE, cmd = TRUE)  
+  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("protetest", "metatest"), silent = TRUE, cmd = TRUE)  
+  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("protetest", "metatest"), silent = FALSE, cmd = TRUE)  
   
+  MAE@metadata$MOFA$MOFA_results
   
+  MOFA2::plot_data_overview(MAE@metadata$MOFA$MOFA_results)
+  
+  resMOFA <- MAE@metadata$MOFA$MOFA_results
+  MOFA2::plot_factor_cor(resMOFA)
+  MOFA2::plot_variance_explained(resMOFA, plot_total = TRUE)[[2]]
+  MOFA2::views_names(resMOFA)
+  resMOFA@dimensions$K
   
 }) 
 

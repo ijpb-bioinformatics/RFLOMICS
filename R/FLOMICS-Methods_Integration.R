@@ -182,11 +182,9 @@ methods::setMethod(
     
     if (any(ftypes == "batch")) {
       correct_batch <- TRUE
-      # colBatch <- names(ftypes)[ftypes == "batch"]
     }
     
     object <- object[, , omicsToIntegrate]
-    # omics_types <-  getOmicsTypes(object)
     
     # On each selected omics, according to its type, apply transformation if demanded.
     # Filter DE entities
@@ -194,6 +192,7 @@ methods::setMethod(
     for (SEname in omicsToIntegrate) {
       SEobject <- object[[SEname]]
       omicsType <- getOmicsTypes(SEobject)
+      
       list_args <- list(
         object = object,
         SEname = SEname,
@@ -203,6 +202,7 @@ methods::setMethod(
         choice = choice,
         cmd = cmd
       )
+      
       object <- switch(omicsType,
                        "RNAseq" = {
                          list_args$transformation <- rnaSeq_transfo
@@ -213,7 +213,8 @@ methods::setMethod(
       )
     }
     
-    if (method == "MOFA") {
+
+    if (method == "MOFA") {    # Prepare mofa object
       if (silent) {
         MOFAObject <- suppressMessages(
           suppressWarnings(MOFA2::create_mofa(object,
@@ -227,15 +228,17 @@ methods::setMethod(
       
       return(MOFAObject)
       
-    } else if (method == "MixOmics") {
+    } else if (method == "MixOmics") { # prepare mixOmics bject
       # Common samples names:
       object <- object[, Reduce("intersect", colnames(object))]
       
       MixOmicsObject <- list(
-        blocks = lapply(object@ExperimentList, FUN = function(SE) t(SummarizedExperiment::assay(SE))),
+        blocks   = lapply(object@ExperimentList, 
+                          FUN = function(SE) t(SummarizedExperiment::assay(SE))),
         metadata = object@colData
       )
-      MixOmicsObject$blocks <- lapply(MixOmicsObject$blocks, FUN = function(mat) mat[order(rownames(mat)), ])
+      MixOmicsObject$blocks <- lapply(MixOmicsObject$blocks, 
+                                      FUN = function(mat) mat[order(rownames(mat)), ])
       
       return(MixOmicsObject)
     }
@@ -295,13 +298,6 @@ methods::setMethod(
     
     if (silent && require(reticulate)) {
       
-      # sys     <- reticulate::import("sys")
-      # os      <- reticulate::import("os")
-      # builtin <- reticulate::import_builtins()
-      # 
-      # old_stdout = sys$stdout
-      # sys$stdout = builtin$open(os$devnull, 'w')
-      
       pycapt <- reticulate::py_capture_output(
         {
           MOFAObject.trained <- suppressWarnings(suppressMessages( 
@@ -309,7 +305,6 @@ methods::setMethod(
           ))
         }
       )
-      # sys$stdout = old_stdout
     } else {
       MOFAObject.trained <- MOFA2::run_mofa(MOFAObject.untrained, use_basilisk = FALSE, 
                                             save_data = TRUE)
