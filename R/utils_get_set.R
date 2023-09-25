@@ -255,7 +255,7 @@ getOmicsTypes <- function(object) {
 #' @export
 #'
 getNormCoeff <- function(object) {
-  if (is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
 
   return(object@metadata$Normalization$coefNorm)
 }
