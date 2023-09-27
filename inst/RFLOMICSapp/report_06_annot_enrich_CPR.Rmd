@@ -10,9 +10,9 @@ knitr::opts_chunk$set(
 
 <br>
 
-* **Annotation of the lists of `r omics.dic[[omictype]][["variableName"]]` by `r ontology` ontology:**
+* **Annotation of the lists of `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]` by `r ontology` ontology:**
 
-Enrichment of type **Overrepresentation analysis (ORA)** was carried out for each list of `r omics.dic[[omictype]][["variableName"]]` 
+Enrichment of type **Overrepresentation analysis (ORA)** was carried out for each list of `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]` 
 thanks to the **clusterProfiler** R-package and its **enrich...** functions (@wu-a2021a).
 This function determines the overrepresented `r ontology` terms in the gene list when compared to a reference list. 
 
@@ -24,7 +24,7 @@ This function determines the overrepresented `r ontology` terms in the gene list
 kable_styling(kable(dataset.SE@metadata[[annot]][[ontology]]$summary, row.names=FALSE, caption=NULL, format="html"), font_size=12)
 ```
 
-**Results by list(s) of `r omics.dic[[omictype]][["variableName"]]`**
+**Results by list(s) of `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`**
 
 *Please click on the arrows to scroll down the results and click on the figure to zoom*
 

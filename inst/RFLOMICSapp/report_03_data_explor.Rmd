@@ -79,7 +79,7 @@ DT::datatable(filt.summary, options = list(colnames=FALSE, rownames = FALSE, pag
 
 ```{r Library_size_barplot, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE, eval=(dataset.raw.SE@metadata$omicType == "RNAseq")}
 
-Library_size_barplot.plot(dataset.raw.SE)
+Library_size_barplot.plot(dataset.raw.SE, raw = TRUE)
 
 Library_size_barplot.plot(dataset.SE)
 
@@ -92,15 +92,15 @@ Library_size_barplot.plot(dataset.SE)
 ### Feature counts (Boxplot):
 
 ```{r boxplot, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
-Data_Distribution_plot(dataset.raw.SE, plot = "boxplot")
-Data_Distribution_plot(dataset.SE, plot = "boxplot")
+Data_Distribution_plot(dataset.raw.SE, plot = "boxplot", raw = TRUE)
+Data_Distribution_plot(dataset.SE, plot = "boxplot", raw = FALSE)
 ```
 
 ### Feature counts (density)
 
 ```{r density-plot, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
-Data_Distribution_plot(dataset.raw.SE, plot = "density")
-Data_Distribution_plot(dataset.SE, plot = "density")
+Data_Distribution_plot(dataset.raw.SE, plot = "density", raw = TRUE)
+Data_Distribution_plot(dataset.SE, plot = "density", raw = FALSE)
 ```
 
 ### PCA
@@ -125,8 +125,8 @@ Quality control's graphs before and after the pre-processing:
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
 * Histogram of sample's library size
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
-* Distribution of `r omics.dic[[omictype]][["valueType"]]` by sample
-* Distribution of `r omics.dic[[omictype]][["valueType"]]` by sample
+* Distribution of `r RFLOMICS:::omicsDic(dataset.SE)[["valueType"]]` by sample
+* Distribution of `r RFLOMICS:::omicsDic(dataset.SE)[["valueType"]]` by sample
 * Principal component analysis results: 
     + coordinates of samples on the axes 1 and 2
     + coordinates of samples on the axes 1 and 3
@@ -135,11 +135,11 @@ Quality control's graphs before and after the pre-processing:
 ```{r export,echo = FALSE}
 
 write.table(dataset.SE@metadata$rowSums.zero,
-             file=paste0(explorDir,"Table_of_non_expressed_",omics.dic[[omictype]][["variableName"]],".txt"),
-             sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
+             file = paste0(explorDir,"Table_of_non_expressed_", RFLOMICS:::omicsDic(dataset.SE)[["variableName"]],".txt"),
+             sep ="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
 
 write.table(dataset.SE@metadata$FilteredFeatures,
-             file=paste0(explorDir,"Table_of_low_expressed_",omics.dic[[omictype]][["variableName"]],".txt"),
+             file = paste0(explorDir,"Table_of_low_expressed_", RFLOMICS:::omicsDic(dataset.SE)[["variableName"]],".txt"),
              sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
  
 ```

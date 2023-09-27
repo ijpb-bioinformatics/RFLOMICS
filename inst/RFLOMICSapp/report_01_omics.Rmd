@@ -59,22 +59,6 @@ knitr::asis_output(out)
 
 ```
 
-<!-- enrichement analysis on DE G/P/M lists -->
-
-```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=FALSE}
-
-out <- NULL
-annot <- "DiffExpEnrichAnal"
-
-
-out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich.Rmd"),
-                                quiet=TRUE))
-
-
-knitr::asis_output(out)
-
-```
-
 <!-- enrichement analysis on DE G/P/M lists with clusterprofiler -->
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=Diff.ann.eval_CPR}
@@ -108,18 +92,6 @@ knitr::asis_output(out)
 ```
 
 <!-- enrichement analysis on cluster -->
-
-```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=FALSE}
-
-
-annot <- "CoExpEnrichAnal"
-out <- NULL
-
-out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich.Rmd"), quiet=TRUE))
-
-knitr::asis_output(out)
-
-```
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE, eval=CoEx.ann.eval_CPR}
 

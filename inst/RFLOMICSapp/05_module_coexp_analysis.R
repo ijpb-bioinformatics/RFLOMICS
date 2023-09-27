@@ -196,7 +196,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     SE.data <- MAE.data[[dataset]]
     SE.filtered <- MAE.data[[paste0(dataset,".filtred")]]
     
-    print(paste(length(DEG_list()), omicsDic(SE.filtered)$variableName, sep =" "))
+    print(paste(length(DEG_list()), RFLOMICS:::omicsDic(SE.filtered)$variableName, sep =" "))
   })
   
   # update K value (min max)

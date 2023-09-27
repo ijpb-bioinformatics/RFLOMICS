@@ -47,6 +47,7 @@ diff.plots$Volcano.plot
 
 3- Heatmap of the euclidean distances with a link of Ward 
 
+TODO !
 
 4- PCA on DE 
 
@@ -87,24 +88,14 @@ reactable(signif(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],3)
             )
           )
 
-# DT::datatable(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]], 
-#                                                            options = list(dom = 'lfrtipB',
-#                                                                           rownames = FALSE,
-#                                                                           pageLength = 10,
-#                                                                           lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All")))) %>%
-#                                   formatStyle('logFC',
-#                                               backgroundColor = styleInterval(c(0, 0.01), c('royalblue', 'white', 'red2')),
-#                                               fontWeight = 'bold') %>% formatSignif(columns = 1:dim(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]])[2], digits = 3)
-
-
  write.table(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],
-             file=paste0(contrastDir,"Table_of_DE_",omics.dic[[omictype]][["variableName"]],"_pvalmax_",
+             file=paste0(contrastDir,"Table_of_DE_", RFLOMICS:::omicsDic(dataset.SE)[["variableName"]],"_pvalmax_",
                          dataset.SE@metadata[["DiffExpAnal"]][["Adj.pvalue.cutoff"]],"_FCmin_",
                          dataset.SE@metadata[["DiffExpAnal"]][["abs.logFC.cutoff"]],".txt"),
              sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
  
  write.table(dataset.SE@metadata[["DiffExpAnal"]][["DEF"]][[contrast]],
-             file=paste0(contrastDir,"Table_of_non_filtering_",omics.dic[[omictype]][["variableName"]],".txt"),
+             file=paste0(contrastDir,"Table_of_non_filtering_", RFLOMICS:::omicsDic(dataset.SE)[["variableName"]],".txt"),
              sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
 ```
 

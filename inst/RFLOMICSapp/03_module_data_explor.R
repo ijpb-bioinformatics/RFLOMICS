@@ -156,7 +156,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       box(title = length(names(SE.data)), 
           width = 6, background = "maroon", 
           # paste0("Initial number of ", omics.dic[[rea.values[[dataset]]$omicsType]][["variableName"]])
-          paste0("Initial number of ", omicsDic(SE.data)$variableName)
+          paste0("Initial number of ", RFLOMICS:::omicsDic(SE.data)$variableName)
       ),
       box( title = length(colnames(SE.data)),
            width = 6, background = "light-blue", "Initial number of samples"
@@ -175,7 +175,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     tagList(
       box(
         title = length(names(local.rea.values$dataset.processed.SE)), width = 6, background = "fuchsia", 
-        paste0("Number of filtered ", omicsDic(SE.data)$variableName)
+        paste0("Number of filtered ", RFLOMICS:::omicsDic(SE.data)$variableName)
       ),
       box(title = length(colnames(local.rea.values$dataset.processed.SE)),
           width = 6, background = "purple", "Number of filtered samples"

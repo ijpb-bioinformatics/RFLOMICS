@@ -16,8 +16,8 @@ Co-expression analysis strategy was adapted from @Lambert2020ta
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
 
 Co-expression analysis was carried out on the `r dataset.SE@metadata[["CoExpAnal"]]$merge.type`
-of the following list of `r omics.dic[[omictype]][["variableName"]]`  `r dataset.SE@metadata$CoExpAnal$gene.list.names`. 
-`r dataset.SE@metadata[["CoExpAnal"]]$tools` was used to cluster the `r omics.dic[[omictype]][["variableName"]]`. 
+of the following list of `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`  `r dataset.SE@metadata$CoExpAnal$gene.list.names`. 
+`r dataset.SE@metadata[["CoExpAnal"]]$tools` was used to cluster the `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`. 
 The gaussian mixture model was run on filtered (meanFilterCutoff was set to: `r dataset.SE@metadata[["CoExpAnal"]]$meanFilterCutoff`), 
 normalized (normalization method was `r dataset.SE@metadata[["CoExpAnal"]]$normFactors`) 
 and transformed (transformation method: `r dataset.SE@metadata[["CoExpAnal"]]$transformation`) count data.
@@ -64,11 +64,13 @@ plot.coseq.res$probapost_barplots
 
 ```{r,echo = FALSE, eval=isResults}
 #tab.clusters <- as.data.frame(ifelse(dataset.SE@metadata$CoExpAnal$coseqResults@allResults[[dataset.SE@metadata$CoExpAnal$cluster.nb]] > 0.5, 1,0))
-tab.clusters <- as.data.frame(dataset.SE@metadata$CoExpAnal$coseqResults@allResults[[dataset.SE@metadata$CoExpAnal$cluster.nb]])
-tab.clusters <-  tibble::rownames_to_column(tab.clusters,var="DEF")
+
+cosRes <- dataset.SE@metadata$CoExpAnal$coseqResults@allResults
+tab.clusters <- as.data.frame(cosRes[[names(cosRes) == names(dataset.SE@metadata$CoExpAnal$cluster.nb)]])
+tab.clusters <- tibble::rownames_to_column(tab.clusters, var = "DEF")
       
 write.table(tab.clusters,
-             file=paste0(coexpDir,"Table_of_DE_",omics.dic[[omictype]][["variableName"]],"_per_cluster",".txt"),
+             file=paste0(coexpDir,"Table_of_DE_", RFLOMICS:::omicsDic(dataset.SE)[["variableName"]],"_per_cluster",".txt"),
              sep="\t",quote=FALSE,col.names=TRUE,row.names=FALSE)
 
 ```

@@ -578,9 +578,9 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                        }),
                        fluidRow(
                          
-                         column(1, checkboxInput(inputId = ns(paste0(listname, "-genesLabels_cnet")),
+                         column(2, checkboxInput(inputId = ns(paste0(listname, "-genesLabels_cnet")),
                                                  label = "Genes Labels", value = FALSE)),
-                         column(1, checkboxInput(inputId = ns(paste0(listname, "-termsLabels_cnet")),
+                         column(2, checkboxInput(inputId = ns(paste0(listname, "-termsLabels_cnet")),
                                                  label = "Terms Labels", value = TRUE))
                          
                        )

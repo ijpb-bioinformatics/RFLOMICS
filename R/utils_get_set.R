@@ -481,7 +481,6 @@ convertContrastToTag <- function(object, contrasts) {
 #' @return list of two elements: variableName and valueType.
 #' @noRd
 #' @keywords internal
-#' @export
 
 omicsDic <- function(object, SE.name = NULL){
   
