@@ -39,7 +39,7 @@ methods::setMethod(
              contrasts <- NULL
              
              if (is.null(getValidContrasts(object))) contrasts <- getSelectedContrasts(object)$contrastName
-             else contrasts <- getValidContrasts(object)                 
+             else contrasts <- getValidContrasts(object)$contrastName                 
              
              if (!is.null(nameList)) {
                if (isTagName(object, nameList)) nameList <- convertTagToContrast(object, nameList)

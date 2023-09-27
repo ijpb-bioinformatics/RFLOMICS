@@ -1,19 +1,45 @@
 # ---- Get Factor types : ----
-#' @title Get design matrix used for a differential analysis
+#' @title Get factor types or names of particular factors given a type.
 #'
-#' @param object a MAE object (produced by Flomics)
-#' @return a dataframe
+#' @param object a MAE object (produced by Flomics). 
+#' @return a named vector (getFactorTypes) or a vector of factor names.
+#' @rdname Factortypes
 #' @export
 #' 
 getFactorTypes <- function(object) {
   if (is(object, "MultiAssayExperiment")) {
-    object@metadata$design@Factors.Type
+    MultiAssayExperiment::metadata(object)$design@Factors.Type
   } else {
     stop("object is not a MultiAssayExperiment.")
   }
 }
 
-# TODO add more getters for accessing bio, batch and meta directly.
+#' @export
+#' @rdname Factortypes
+bioFactors <- function(object){
+  
+  factVect <- getFactorTypes(object)
+  return(names(factVect)[factVect == "Bio"])
+  
+}
+
+#' @export
+#' @rdname Factortypes
+batchFactors <- function(object){
+  
+  factVect <- getFactorTypes(object)
+  return(names(factVect)[factVect == "batch"])
+  
+}
+
+#' @export
+#' @rdname Factortypes
+metaFactors <- function(object){
+  
+  factVect <- getFactorTypes(object)
+  return(names(factVect)[factVect == "Meta"])
+  
+}
 
 # ---- Get Design Matrix : ----
 #' @title Get design matrix used for a differential analysis
@@ -55,6 +81,7 @@ getModelFormula <- function(object) {
 #' @param modalities specific levels for the contrast selection
 #' @param returnTable return a dataTable with all contrasts information
 #' @return a character vector or a dataTable
+#' @rdname ContrastsSelection
 #' @export
 #'
 getPossibleContrasts <- function(object, typeContrast = c("simple", "averaged", "interaction"),
@@ -91,6 +118,7 @@ getPossibleContrasts <- function(object, typeContrast = c("simple", "averaged", 
 #'
 #' @param object a MAE object (produced by Flomics) or a SE (expect to find a diffAnalysis slot.)
 #' @return a dataTable
+#' @rdname ContrastsSelection
 #' @export
 #'
 getSelectedContrasts <- function(object) {
@@ -110,6 +138,7 @@ getSelectedContrasts <- function(object) {
 #' @param object a SE object or MAE object (produced by Flomics)
 #' @param contrasts a vector of contrasts names
 #' @return a Flomics SE or MAE
+#' @rdname ContrastsSelection
 #' @export
 #'
 setValidContrasts <- function(object,
@@ -118,7 +147,8 @@ setValidContrasts <- function(object,
 
   if (is.character(contrasts)) {
     if (is(object, "SummarizedExperiment")) {
-      object@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName <- contrasts
+      allTab <- getPossibleContrasts(object, returnTable = TRUE)
+      object@metadata$DiffExpAnal[["Validcontrasts"]] <- allTab[allTab$contrastName %in% contrasts,]
     } else {
       stop("object is not a SummarizedExperiment.")
     }
@@ -130,15 +160,16 @@ setValidContrasts <- function(object,
 #' @title Get Valid Contrasts
 #'
 #' @param object a SE object or MAE object (produced by Flomics)
-#' @return a list of vectors (if object is a MAE) or a vector of contrasts names (if object is a SE)
+#' @return a data frame or a list of data frames.
+#' @rdname ContrastsSelection
 #' @export
 #'
 getValidContrasts <- function(object) {
   if (is(object, "SummarizedExperiment")) {
-    return(object@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName)
+    return(object@metadata$DiffExpAnal[["Validcontrasts"]])
   } else if (is(object, "MultiAssayExperiment")) {
     list_res <- lapply(names(object), FUN = function(tableName) {
-      object[[tableName]]@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName
+      object[[tableName]]@metadata$DiffExpAnal[["Validcontrasts"]]
     })
     names(list_res) <- names(object)
     return(list_res)
@@ -197,7 +228,7 @@ opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "unio
   if (isContrastName(object, contrasts)) contrasts <- convertContrastToTag(object, contrasts)
 
   if (!is.null(object@metadata$DiffExpAnal$Validcontrasts)) {
-    validTags <- convertContrastToTag(object, getValidContrasts(object))
+    validTags <- convertContrastToTag(object, getValidContrasts(object)$contrastName)
   } else {
     validTags <- contrasts
   }
@@ -234,8 +265,8 @@ opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "unio
 #'
 getOmicsTypes <- function(object) {
   
-  if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
-    stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
+  # if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
+  #   stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
 
   if (is(object, "MultiAssayExperiment")) {
     sapply(names(object), FUN = function(x) {
@@ -450,18 +481,20 @@ convertContrastToTag <- function(object, contrasts) {
 #' @return list of two elements: variableName and valueType.
 #' @noRd
 #' @keywords internal
+#' @export
 
 omicsDic <- function(object, SE.name = NULL){
   
   if (!is(object, "SummarizedExperiment") && !is(object, "MultiAssayExperiment")) {
-    stop("Object must be a SummarizedExperiment or a MultiAssayExperiment")
+    stop("Object must be a SummarizedExperiment or a MultiAssayExperiment, not a ",
+         class(object))
   }
   
   if (is(object, "MultiAssayExperiment")) {
     if (missing(SE.name)) {
       stop("Please provide an Experiment name (SE.name).")
     }
-    
+
     object <- object[[SE.name]]
   }
   

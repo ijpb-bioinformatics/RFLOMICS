@@ -58,3 +58,14 @@ test_that("Omics dictionnary", {
   expect_error(RFLOMICS:::omicsDic(MAE))
 
 })
+
+# ---- factor types ----
+
+test_that("Factors types", {
+  
+  expect_error(getFactorTypes(MAE[["RNAtest"]]))
+  
+  expect_identical(bioFactors(MAE), c("temperature", "imbibition"))
+  expect_identical(batchFactors(MAE), c("Repeat"))
+  
+})

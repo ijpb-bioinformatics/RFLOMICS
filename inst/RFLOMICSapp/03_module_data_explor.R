@@ -42,12 +42,6 @@ QCNormalizationTabUI <- function(id){
 ### server
 QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   
-  #we must select contrast before
-  # validate(
-  #   need(rea.values$analysis != FALSE, "Please run data processing")
-  # )
-  
-  
   local.rea.values <- reactiveValues(dataset.processed.SE = NULL, 
                                      dataset.raw.SE = NULL,
                                      compCheck = TRUE,
@@ -68,17 +62,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       selected = sampleList)
   })
   
-  # ### check completeness ###
-  # completeCheckRes <- CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay,
-  #                                                sampleList = colnames(session$userData$FlomicsMultiAssay[[dataset]]))
-  # # stock message in MAE
-  # session$userData$FlomicsMultiAssay@metadata$completeCheck[["error"]]   <- completeCheckRes[["error"]]
-  # session$userData$FlomicsMultiAssay@metadata$completeCheck[["warning"]] <- completeCheckRes[["warning"]]
-  # # reactive values
-  # rea.values[[dataset]]$compCheck <- TRUE
-  # if(!is.null(completeCheckRes[["error"]])){ rea.values[[dataset]]$compCheck <- FALSE }
-  
-  
+  ### Completeness ###
   output$completenessUI <- renderUI({
     
     completeCheckRes <- CheckExpDesignCompleteness(session$userData$FlomicsMultiAssay, input$selectSamples)
@@ -113,7 +97,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
         ),
         column(4,
                numericInput(inputId = session$ns("FilterSeuil"),
-                            label="Cutoff :",
+                            label="Cutoff:",
                             value=5, min = 1, max=10, step = 1 )
         )
       ),
@@ -129,12 +113,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     
     # setting for meta or RNAseq
     paramProtMeta.list <- list(
-      # radioButtons(
-      #   inputId  =session$ns("dataImputation"),
-      #   label = "does the data need to be impute (no implemented yet) ?",
-      #   choices=c("yes"="yes","no"="no"),
-      #   selected="no"),
-      # hr(),
       
       radioButtons(
         inputId  = session$ns("dataTransform"),
@@ -152,7 +130,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       actionButton(session$ns("run"),"Run")
     )
     
-    switch (session$userData$FlomicsMultiAssay[[dataset]]@metadata$omicType,
+    switch(getOmicsTypes(session$userData$FlomicsMultiAssay[[dataset]]),
             "RNAseq"       = { paramRNAseq.list },
             "proteomics"   = { paramProtMeta.list },
             "metabolomics" = { paramProtMeta.list }
@@ -162,41 +140,45 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   #### PCA axis for plot
   # update/adapt PCA axis
   callModule(UpdateRadioButtons, "factors")
-  # select factors for color PCA plot
-  #callModule(RadioButtonsCondition, "factors", typeFact = c("Bio", "batch"))
   
   #### PCA for metadata axis for plot
   # update/adapt PCA axis
   callModule(UpdateRadioButtons, "meta")
-  # select factors for color PCA plot
-  #callModule(RadioButtonsCondition, "meta", typeFact = c("Meta"))
   
-  #### dataset filterin summary
+  #### dataset filtering summary
   output$filtSummary1UI <- renderUI({
+    
+    MAE.data <- session$userData$FlomicsMultiAssay
+    SE.data  <- MAE.data[[dataset]]
     
     tagList(
       
-      box(title = length(names(session$userData$FlomicsMultiAssay[[dataset]])), 
+      box(title = length(names(SE.data)), 
           width = 6, background = "maroon", 
-          paste0("Initial number of ", omics.dic[[rea.values[[dataset]]$omicsType]][["variableName"]])
+          # paste0("Initial number of ", omics.dic[[rea.values[[dataset]]$omicsType]][["variableName"]])
+          paste0("Initial number of ", omicsDic(SE.data)$variableName)
       ),
-      box( title = length(colnames(session$userData$FlomicsMultiAssay[[dataset]])),
+      box( title = length(colnames(SE.data)),
            width = 6, background = "light-blue", "Initial number of samples"
       )
     )
     
   })
+  
   output$filtSummary2UI <- renderUI({
     
     if(rea.values[[dataset]]$process == FALSE) return()
     
+    MAE.data <- session$userData$FlomicsMultiAssay
+    SE.data  <- MAE.data[[dataset]]
+    
     tagList(
       box(
         title = length(names(local.rea.values$dataset.processed.SE)), width = 6, background = "fuchsia", 
-        paste0("Number of filtred ", omics.dic[[rea.values[[dataset]]$omicsType]][["variableName"]])
+        paste0("Number of filtered ", omicsDic(SE.data)$variableName)
       ),
       box(title = length(colnames(local.rea.values$dataset.processed.SE)),
-          width = 6, background = "purple", "Number of filtred samples"
+          width = 6, background = "purple", "Number of filtered samples"
       )
     )
     
@@ -206,13 +188,14 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   #### Exploratory of Biological and Technical variability
   output$tabPanelUI <- renderUI({
     
-    if(rea.values$model == FALSE) return()
+    if (rea.values$model == FALSE) return()
     
-    factors.bio   <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("Bio")])
-    factors.batch <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("batch")])
-    factors.meta  <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("Meta")])
+    MAE.data <- session$userData$FlomicsMultiAssay
+    SE.data <- MAE.data[[dataset]]
     
-    #if(is.null(FlomicsMultiAssay)) return()
+    factors.bio   <- bioFactors(MAE.data)
+    factors.batch <- batchFactors(MAE.data)
+    factors.meta  <- metaFactors(MAE.data)
     
     tabPanel.default.list <- list(
       
@@ -237,7 +220,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
                         #RadioButtonsConditionUI(session$ns("factors"))
                         radioButtons(inputId = session$ns("PCA.factor.condition"),
                                      label = 'Levels:',
-                                     choices = c("groups",factors.bio, factors.batch),
+                                     choices = c("groups", factors.bio, factors.batch),
                                      selected = "groups")),
                  column(width = 6, UpdateRadioButtonsUI(session$ns("factors")))
                ),
@@ -246,14 +229,10 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
                # tags$br(),
                # column(width = 12, actionButton(session$ns("screenshotPCA_QC"),"Screenshot"))
       )
-      # ,
-      # tabPanel("Principal component analysis (2/2)",
-      #          plotOutput(session$ns("QCdesignPCA"))
-      #          )
     )
     
     tabPanel.list <- list()
-    switch(session$userData$FlomicsMultiAssay[[dataset]]@metadata$omicType,
+    switch(getOmicsTypes(SE.data),
            "RNAseq" = {
              tabPanel.list <- c(
                list(
@@ -273,7 +252,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
            }
     )
     
-    if(any(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("Meta")))
+    if (any(getFactorTypes(MAE.data) %in% c("Meta")))
       tabPanel.list <- c(tabPanel.list,
                          list(tabPanel("PCA for metadata",
                                        tags$br(),
@@ -281,7 +260,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
                                        hr(),
                                        fluidRow(
                                          column(width = 6, 
-                                                #RadioButtonsConditionUI(session$ns("meta"))
                                                 radioButtons(inputId = session$ns("PCA.meta.condition"),
                                                              label = 'Levels:',
                                                              choices = factors.meta,
@@ -303,6 +281,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   output$raw.LibSize <- renderPlot({
     Library_size_barplot.plot(session$userData$FlomicsMultiAssay[[dataset]], raw = TRUE)
   })
+  
   output$norm.LibSize <- renderPlot({
     
     if(rea.values[[dataset]]$process == FALSE) return()
@@ -333,7 +312,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     
     PC1.value <- as.numeric(input$`factors-Firstaxis`[1])
     PC2.value <- as.numeric(input$`factors-Secondaxis`[1])
-    #condGroup <- input$`factors-condColorSelect`[1]
     condGroup <- input$PCA.factor.condition
     
     RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[dataset]], PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup)
@@ -344,7 +322,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     
     PC1.value <- as.numeric(input$`factors-Firstaxis`[1])
     PC2.value <- as.numeric(input$`factors-Secondaxis`[1])
-    #condGroup <- input$`factors-condColorSelect`[1]
     condGroup <- input$PCA.factor.condition
     
     RFLOMICS::plotPCA(local.rea.values$dataset.processed.SE, PCA = "norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
@@ -356,7 +333,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     
     PC1.value <- as.numeric(input$`meta-Firstaxis`[1])
     PC2.value <- as.numeric(input$`meta-Secondaxis`[1])
-    #condGroup <- input$`meta-condColorSelect`[1]
     condGroup <- input$PCA.meta.condition
     
     RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[dataset]], PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup)
@@ -368,7 +344,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     
     PC1.value <- as.numeric(input$`meta-Firstaxis`[1])
     PC2.value <- as.numeric(input$`meta-Secondaxis`[1])
-    #condGroup <- input$`meta-condColorSelect`[1]
     condGroup <- input$PCA.meta.condition
     
     RFLOMICS::plotPCA(local.rea.values$dataset.processed.SE, PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
@@ -398,7 +373,11 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     
     # new selected param
     param.list <- list()
-    switch( rea.values[[dataset]]$omicsType,
+    
+    MAE.data <- session$userData$FlomicsMultiAssay
+    SE.data <- MAE.data[[dataset]]
+    
+    switch( getOmicsTypes(SE.data),
             "RNAseq" = {
               param.list <- list(Filter_Strategy = input$Filter_Strategy, CPM_Cutoff = input$FilterSeuil, NormMethod=input$selectNormMethod)
             },

@@ -48,12 +48,16 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     
     if(rea.values[[dataset]]$diffValid == FALSE) return()
     
+    MAE.data <- session$userData$FlomicsMultiAssay
+    SE.data <- MAE.data[[dataset]]
+    SE.filtered <- MAE.data[[paste0(dataset,".filtred")]]
+    
     ##-> retrieve DEG lists and DEG valid lists
-    ListNames.diff        <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]]$tag
-    names(ListNames.diff) <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]]$contrastName
+    ListNames.diff        <- getValidContrasts(SE.filtered)$tag
+    names(ListNames.diff) <- getValidContrasts(SE.filtered)$contrastName
     
     ##-> option
-    switch(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$omicType,
+    switch(getOmicsTypes(SE.filtered),
            
            "RNAseq" = {
              warning <- ""
@@ -124,7 +128,11 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
             
             column(12,
                    selectInput(session$ns("scale"),
-                               label    = popify(actionLink("infoScale",paste0("Scale by ", name , ": (help)")),"","By default for proteomics or metabolomics data,coseq is done onto Z-scores (data scaled by proteins or metabolites) to group them according to their expression profile rather than abundance",options=list(container="body")),
+                               label    = popify(actionLink("infoScale",paste0("Scale by ", name , ": (help)")),
+                                                 "",
+                                                 "By default for proteomics or metabolomics data,coseq is done onto Z-scores (data scaled by proteins or metabolites)
+                                                 to group them according to their expression profile rather than abundance",
+                                                 options=list(container="body")),
                                choices  = Scale ,
                                selected = Scale[1])
             )
@@ -151,7 +159,10 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
             column(12,
                    selectInput(session$ns("GaussianModel"),
                                
-                               label    = popify(actionLink("infoGaussianModel",paste0("Gaussian Model:", warning,"")),"","For proteomics or metabolomics data, coseq analysis may fail with default GaussianModel parameter. In this case, an error message will indicate to switch the other option: Gaussian_pk_Lk_Bk",options=list(container="body")),
+                               label    = popify(actionLink("infoGaussianModel", paste0("Gaussian Model:", warning,"")),"",
+                                                 "For proteomics or metabolomics data, coseq analysis may fail with default GaussianModel parameter. 
+                                                 In this case, an error message will indicate to switch the other option: Gaussian_pk_Lk_Bk",
+                                                 options=list(container="body")),
                                choices  = Gaussian,
                                selected = Gaussian[1]))
           ),
@@ -181,7 +192,11 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     
     if(rea.values[[dataset]]$diffValid == FALSE) return()
     
-    print(paste(length(DEG_list()), omics.dic[[session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$omicType]]$variableName, sep =" "))
+    MAE.data <- session$userData$FlomicsMultiAssay
+    SE.data <- MAE.data[[dataset]]
+    SE.filtered <- MAE.data[[paste0(dataset,".filtred")]]
+    
+    print(paste(length(DEG_list()), omicsDic(SE.filtered)$variableName, sep =" "))
   })
   
   # update K value (min max)
@@ -273,9 +288,15 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     if (rea.values[[dataset]]$coExpAnal == FALSE) return()
     
     # Extract results
+    MAE.data <- session$userData$FlomicsMultiAssay
     dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
     
-    factors.bio <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("Bio")])
+    # MAE.data <- session$userData$FlomicsMultiAssay
+    # SE.data <- MAE.data[[dataset]]
+    # SE.filtered <- MAE.data[[paste0(dataset,".filtred")]]
+    
+    # factors.bio <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("Bio")])
+    factors.bio <- bioFactors(MAE.data)
     
     plot.coseq.res <- dataset.SE@metadata$CoExpAnal[["plots"]]
     nb_cluster     <- dataset.SE@metadata$CoExpAnal[["cluster.nb"]]
