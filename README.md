@@ -2,7 +2,6 @@
 
 ## Presentation
 
-<p style="text-align: justify;">
 The acquisition of **multi-omics data** in the context of **complex
 experimental design** is a widely used practice to identify genes,
 proteins, metabolites and decipher the biological processes they are
@@ -18,7 +17,7 @@ with a shiny application** dedicated to the management and analysis of
 multiple omics-datasets in the statistical framework of **vertical
 integration** of observations (i.e. analysis of omics data across
 experiments on the same individuals) see the figure below.
-</p>
+
 
 RFLOMICS currently supports up to three types of omics: RNAseq,
 proteomics, and metabolomics.
