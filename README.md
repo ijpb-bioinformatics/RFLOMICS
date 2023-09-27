@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # RFLOMICS : R package and Shiny interface for Integrative analysis of omics data
 
 ## Presentation
