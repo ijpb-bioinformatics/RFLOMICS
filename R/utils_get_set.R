@@ -439,3 +439,46 @@ convertContrastToTag <- function(object, contrasts) {
     dplyr::select(tag) %>%
     unlist(use.names = FALSE)
 }
+
+
+# ---- INTERNAL - get variable name and type from omicstype ----
+
+#' @title Omics Dictionary
+#'
+#' @param object a MAE object or a SE object (produced by Flomics). Expect to find a omicsType somewhere.
+#' @param SE.name if object is a MAE, expect to find the experiment name from which the omics info has to be retrieved.
+#' @return list of two elements: variableName and valueType.
+#' @noRd
+#' @keywords internal
+
+omicsDic <- function(object, SE.name = NULL){
+  
+  if (!is(object, "SummarizedExperiment") && !is(object, "MultiAssayExperiment")) {
+    stop("Object must be a SummarizedExperiment or a MultiAssayExperiment")
+  }
+  
+  if (is(object, "MultiAssayExperiment")) {
+    if (missing(SE.name)) {
+      stop("Please provide an Experiment name (SE.name).")
+    }
+    
+    object <- object[[SE.name]]
+  }
+  
+  omicsType <- getOmicsTypes(object)
+  
+  valReturn <- switch(omicsType,
+                      "RNAseq"       =  list("variableName" = "genes",
+                                                "valueType" = "counts"),
+                      "proteomics"   =  list("variableName" = "proteins",
+                                                "valueType" = "XIC"),
+                      "metabolomics" =  list("variableName" = "metabolites",
+                                                "valueType" = "XIC")
+  )
+  
+  return(valReturn)
+  
+}
+
+
+  
