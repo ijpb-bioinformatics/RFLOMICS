@@ -7,8 +7,7 @@
 #' @param axis The number of PCA axis to keep
 #' @param PCA This argument indicates which PCA results to plot: raw ("raw") or normalised ("normalised")
 #' @param pngFile The name of the png file for saving the plot.
-#' @exportMethod mvQCdesign
-#'
+#' @noRd
 #' @rdname mvQCdesign
 
 methods::setMethod(f="mvQCdesign",
@@ -95,8 +94,8 @@ methods::setMethod(f="mvQCdesign",
 #' @param axis The number of PCA axis to keep
 #' @param PCA This argument indicates which type of PCA results to take: on raw ("raw") or normalized ("norm") data.
 #' @param pngFile The name of the png file for saving the plot.
-#' @exportMethod mvQCdata
 #' @rdname mvQCdata
+#' @noRd
 methods::setMethod(f="mvQCdata",
                    signature="MultiAssayExperiment",
                    definition <- function(object, data, PCA=c("raw","norm"),axis=3, pngFile=NULL){
@@ -144,9 +143,7 @@ methods::setMethod(f="mvQCdata",
 #' @param listNames vector of DGEs or cluster names (default : all enriched lists)
 #' @param from  "DiffExpAnal" or "CoExpAnal". default "DiffExpAnal"
 #' @return plot
-#' @export
-#' @exportMethod Enrichment.plot
-#' @importFrom dplyr desc
+#' @noRd
 Enrichment.plot <- function(object, Over_Under = "overrepresented", top = 50,
                             domain = NULL, listNames = NULL, from = c("DiffExpEnrichAnal", "CoExpEnrichAnal")) {
   Decision <- Pvalue_over <- Pvalue_under <- Pvalue <- NULL
@@ -216,8 +213,7 @@ Enrichment.plot <- function(object, Over_Under = "overrepresented", top = 50,
 #' @return An object of class \link{SummarizedExperiment}
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
-#' @exportMethod runAnnotationEnrichment
-#'
+#' @noRd
 methods::setMethod(
   f = "runAnnotationEnrichment",
   signature = "SummarizedExperiment",
