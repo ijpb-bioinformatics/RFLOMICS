@@ -247,7 +247,7 @@ plot_MO_1 <- function(Data_res){
     dat_comb <- dat_comb %>% dplyr::filter(Dataset != "Y")
   }
   
-  gg1 <- ggplot2::ggplot(dat_comb, aes(x = Dataset, y = `Cumulative Explained Variance`)) +
+  gg1 <- ggplot2::ggplot(dat_comb, ggplot2::aes(x = Dataset, y = `Cumulative Explained Variance`)) +
     ggplot2::geom_col(fill = "darkblue") + 
     ggplot2::theme_classic() +
     ggplot2::theme(
@@ -261,6 +261,8 @@ plot_MO_1 <- function(Data_res){
   return(gg1)
 }
 
+#' @keywords internal
+#' @noRd
 plot_MO_2 <- function(Data_res){
   dat_explained <- reshape2::melt(do.call("rbind", Data_res$prop_expl_var))
   colnames(dat_explained) <- c("Dataset", "Component", "% of explained variance")
@@ -314,6 +316,10 @@ MOFA_cor_network <- function(resMOFA,
                              posCol = "red",
                              negCol = "blue"
 ){
+  
+  if (!is(resMOFA, "MOFA")) {
+    stop("resMOFA has to be a MOFA results")
+  }
   
   # Correlation matrix is done on all ZW, not on the selected factor. 
   data_reconst_list <- lapply(MOFA2::get_weights(resMOFA), FUN = function(mat){
@@ -400,6 +406,194 @@ MOFA_cor_network <- function(resMOFA,
   }else{
     print("There is nothing to plot. Please try to lower the absolute weight, the correlation threshold or change the factor.")
   }
+}
+
+######################## INTEGRATION USING MOFA ########################
+
+#' @title Run MOFA Analysis
+#' @description Runs a MOFA analysis based on an untrained MOFA object and user arguments.
+#' @param object An untrained MOFA object
+#' @param scale_views boolean. MOFA option to scale the views so they have the same variance. Default is FALSE.
+#' @param maxiter integer. MOFA option, maximum number of iterations to be considered if there it does not converge. Default is 1000.
+#' @param num_factors integer. MOFA option, maximum number of factor to consider. Default is 10.
+#' @param ... Not in use.
+#' @return A list with an untrained MOFA object (containing all options for the run) and a trained MOFA object
+#' @keywords internal
+#' 
+runMOFAAnalysis <- function(object,
+                            scale_views = FALSE,
+                            maxiter = 1000,
+                            num_factors = 10,
+                            silent = TRUE,
+                            ...) {
+  
+  if (!is(object, "MOFA")) {
+    stop("object has to be a MOFA results")
+  }
+  
+  data_opts  <- MOFA2::get_default_data_options(object)
+  model_opts <- MOFA2::get_default_model_options(object)
+  train_opts <- MOFA2::get_default_training_options(object)
+  
+  data_opts$scale_views  <- scale_views
+  train_opts$maxiter     <- maxiter
+  train_opts$verbose     <- FALSE
+  model_opts$num_factors <- num_factors
+  
+  if (silent) {
+    MOFAObject.untrained <- suppressMessages(suppressWarnings(
+      MOFA2::prepare_mofa(
+        object           = object,
+        data_options     = data_opts,
+        model_options    = model_opts,
+        training_options = train_opts
+      )))
+  } else {
+    MOFAObject.untrained <- MOFA2::prepare_mofa(
+      object           = object,
+      data_options     = data_opts,
+      model_options    = model_opts,
+      training_options = train_opts
+    )
+  }
+  
+  if (silent && require(reticulate)) {
+    
+    pycapt <- reticulate::py_capture_output(
+      {
+        MOFAObject.trained <- suppressWarnings(suppressMessages( 
+          MOFA2::run_mofa(MOFAObject.untrained, use_basilisk = FALSE, save_data = TRUE)
+        ))
+      }
+    )
+  } else {
+    MOFAObject.trained <- MOFA2::run_mofa(MOFAObject.untrained, use_basilisk = FALSE, 
+                                          save_data = TRUE)
+  }
+  
+  # peut poser probleme au niveau python et mofapy.
+  # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R.
+  
+  return(list("MOFAObject.untrained" = MOFAObject.untrained, 
+              "MOFAObject.trained"   = MOFAObject.trained))
+}
+
+
+######################## INTEGRATION USING MixOMICS ########################
+
+#' @title Run MixOmics Analysis
+#' @description Run a mixOmics analysis. Given the specification of the user (type of response, if response there is, multi block or not)
+#'  the function will determine which mixOmics function to use. Please see mixOmics manual or website for more information.
+#' @param object list of blocks (matrices) with the same samples (rows)
+#' @param scale_views Boolean. Do the matrices have to be scaled? Is used inside the mixOmics function.
+#' @param selectedResponse Default is NULL (pls functions). The response, can be a matrix or a single factor (discriminant analysis is set in this case).
+#' @param ncomp Number of component to be computed.
+#' @param link_dataset Numeric between 0 and 1. Only used for multi block analysis. Indicates the correlation to be considered between the matrices.
+#'        It impacts the weights of the features, hence the feature selection. Please see mixOmics user's guide for better explaination.
+#' @param link_response Numeric between 0 and 1. Indicates the correlation to be considered between the matrices and the response matrix.
+#'        It impacts the weights of the features, hence the feature selection. Please see mixOmics user's guide for better explaination.
+#' @param sparsity Boolean. Indicates if there is a feature selection purpose. If TRUE, functions like spls(da), block.spls(da) will be used.
+#' @param cases_to_try If sparsity is TRUE, indicates the number of cases to try for the feature selection. The best outcome, as computed by tuning function, will be displayed.
+#' @return A mixOmics result.
+#' @keywords internal
+
+runMixOmicsAnalysis <- function(object,
+                                scale_views = FALSE,
+                                selectedResponse = NULL,
+                                ncomp = 2,
+                                link_datasets = 1,
+                                link_response = 1,
+                                sparsity = FALSE,
+                                cases_to_try = 5,
+                                ...) {
+  
+  list_res <- list()
+  dis_anal <- FALSE # is this a discriminant analysis
+  
+  # TODO : check this, c'est un peu etrange d'avoir eu a reordonner les lignes dans prepareForIntegration
+  # du coup ca demande de le faire aussi pour Y
+  # TODO : faudrait le faire directement dans preparedList ?
+  Y <- data.frame(object$metadata, stringsAsFactors = TRUE) %>%
+    tibble::rownames_to_column(var = "rowNam") %>%
+    dplyr::arrange(rowNam) %>%
+    tibble::column_to_rownames(var = "rowNam") %>%
+    dplyr::select(tidyselect::all_of(selectedResponse))
+  
+  # Is this a discriminant analysis?
+  # TODO : is this used?
+  if (ncol(Y) == 1 && is.factor(Y[, 1])) {
+    dis_anal <- TRUE
+    Y <- Y[, 1]
+  } else {
+    YrowNames <- rownames(Y)
+    YFactors <- do.call("cbind", lapply(1:ncol(Y), FUN = function(j) {
+      if (is.factor(Y[, j])) {
+        mat_return <- mixOmics::unmap(Y[, j])
+        colnames(mat_return) <- attr(mat_return, "levels")
+        return(mat_return)
+      }
+    }))
+    
+    Y <- cbind(Y %>% dplyr::select_if(is.numeric), YFactors)
+    Y <- apply(Y, 2, as.numeric)
+    rownames(Y) <- YrowNames
+  }
+  
+  # Design matrix
+  Design_mat <- matrix(link_datasets,
+                       nrow = length(object$blocks) + 1,
+                       ncol = length(object$blocks) + 1
+  )
+  Design_mat[, ncol(Design_mat)] <-
+    Design_mat[nrow(Design_mat), ] <- link_response
+  diag(Design_mat) <- 0
+  
+  # What function to use for the analysis (can't be sparse if there is a continous response)
+  functionName <- "pls"
+  if (dis_anal) functionName <- paste0(functionName, "da")
+  if (sparsity && !is.numeric(Y)) functionName <- paste0("s", functionName)
+  if (length(object$blocks) > 1) functionName <- paste0("block.", functionName)
+  
+  # Model Tuning (if required, for sparsity)
+  if (sparsity && dis_anal && functionName != "block.spls") {
+    # no tune.block.spls so far, there is one for spls
+    # It is a bit weird to consider tuning with folds when there is very few samples per condition
+    # Add a warning or something when it's the case?
+    # Also consider adding a warning when the number of feature is still very high even after differential analysis
+    
+    tune_function <- paste0("tune.", functionName)
+    
+    test_keepX <- lapply(object$blocks, FUN = function(dat) {
+      ceiling(seq(from = ceiling(0.1 * ncol(dat)), to = ncol(dat), length.out = cases_to_try))
+    })
+    
+    list_tuning_args <- list(
+      X = object$blocks,
+      Y = Y,
+      ncomp = ncomp,
+      scale = scale_views,
+      test.keepX = test_keepX,
+      folds = min(floor(nrow(Y) / 2), 10) # TODO ???
+    )
+    if (length(object$blocks) > 1) list_tuning_args$design <- Design_mat
+    
+    list_res$tuning_res <- do.call(getFromNamespace(tune_function, ns = "mixOmics"), list_tuning_args)
+  }
+  
+  # Model fitting
+  
+  list_args <- list(
+    X = object$blocks,
+    Y = Y,
+    ncomp = ncomp,
+    scale = scale_views
+  )
+  if (length(object$blocks) > 1) list_args$design <- Design_mat
+  if (sparsity && !functionName %in% c("block.spls", "block.pls")) list_args$keepX <- list_res$tuning_res$choice.keepX
+  
+  list_res$analysis_res <- do.call(getFromNamespace(functionName, ns = "mixOmics"), list_args)
+  
+  return(list_res)
 }
 
 

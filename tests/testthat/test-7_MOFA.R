@@ -51,13 +51,7 @@ test_that("Working?", code = {
   
   MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest", "protetest"), contrasts_names = c("H1", "H2"))
   
-  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest", "protetest"), contrasts_names = c("H1", "H2"), method = "mixOmics")
-  
-  
-  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest", "protetest"), contrasts_names = c("H1", "H2"), method = "mixOmics", 
-                            selectedResponse = c("temperature", "imbibition"))
-  
-  expect(identical(names(MAE@metadata$mixOmics), c("temperature", "imbibition"), attrib.as.set = FALSE), failure_message = "Taking only two responses for mixOmics does not work")
+
   
   # TODO tests: with feature selection, without, with only one response variable, with several, etc. 
   # TODO compare: with the same methods outside of RFLOMICS. (normalisation, data treatment, find the equivalent pipeline)

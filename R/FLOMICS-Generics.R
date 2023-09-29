@@ -240,29 +240,6 @@ methods::setGeneric(
                   method = c("MOFA", "MixOmics"), ... ){standardGeneric("prepareForIntegration")}
 )
 
-methods::setGeneric(
-  name = "run_MOFA_analysis",
-  def  = function(object,
-                  scale_views = FALSE,
-                  maxiter = 1000,
-                  num_factors = 10,
-                  ...){standardGeneric("run_MOFA_analysis")}
-  
-)
-
-methods::setGeneric(
-  name = "run_MixOmics_analysis",
-  def  = function(object,
-                  scale_views = FALSE,
-                  selectedResponse = NULL,
-                  ncomp = 2,
-                  link_datasets = 1,
-                  link_response = 1,
-                  sparsity = FALSE,
-                  cases_to_try = 5,
-                  ...){standardGeneric("run_MixOmics_analysis")}
-)
-
 # ---- RESET ----
 
 methods::setGeneric(

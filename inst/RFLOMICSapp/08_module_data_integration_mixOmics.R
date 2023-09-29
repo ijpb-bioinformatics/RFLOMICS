@@ -118,12 +118,14 @@ MixOmics_setting <- function(input, output, session, rea.values){
                  
                  fluidRow(
                    column(12,
-                          column(6, checkboxInput(inputId = session$ns("MO_scale_views"), label = "Scale Datasets", value = TRUE, width = NULL)),
-                          column(6, checkboxInput(inputId = session$ns("MO_sparsity"), label = "Sparse analysis", value = FALSE, width = NULL)),
-                          column(6, numericInput(inputId = session$ns("MO_ncomp"), label = "Components", value = 5, min = 1, max= 20)),
-                          column(6, numericInput(inputId = session$ns("MO_cases_to_try"), label = "Tuning cases", value = 5, min = 1, max= 100)),
-                          # column(6, numericInput(inputId = session$ns("link_datasets"), label = "Link between datasets", value = 1, min = 0, max= 1)),
-                          # column(6, numericInput(inputId = session$ns("link_response"), label = "Link to response", value = 1, min = 0, max= 1))
+                          column(6, checkboxInput(inputId = session$ns("MO_scale_views"), label = "Scale Datasets",
+                                                  value = TRUE, width = NULL)),
+                          column(6, checkboxInput(inputId = session$ns("MO_sparsity"), label = "Sparse analysis", 
+                                                  value = FALSE, width = NULL)),
+                          column(6, numericInput(inputId = session$ns("MO_ncomp"), label = "Components", 
+                                                 value = 5, min = 1, max = 20)),
+                          column(6, numericInput(inputId = session$ns("MO_cases_to_try"), label = "Tuning cases",
+                                                 value = 5, min = 1, max = 100))
                    ),
                    column(12,
                           checkboxGroupInput(
