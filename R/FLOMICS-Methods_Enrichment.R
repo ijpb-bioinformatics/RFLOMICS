@@ -1,6 +1,6 @@
 ######################## ANNOTATION USING CLUSTERPROFILER ########################
 
-#' @title runAnnotationEnrichment_CPR
+#' @title runAnnotationEnrichment
 #' @description This function performs overrepresentation analysis (ORA) using clusterprofiler functions. It can be used with custom annotation file (via enricher), GO (enrichGO) or KEGG (enrichKEGG) annotations.
 #' @param object An object of class \link{SummarizedExperiment} or \link{MultiAssayExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param SE.name name of the experiment to consider if object is a MultiAssayExperiment.
@@ -10,10 +10,12 @@
 #' @param dom.select: is it a custom annotation, GO or KEGG annotations
 #' @return A list of results from clusterprofiler.
 #' @export
-#' @exportMethod runAnnotationEnrichment_CPR
-#' @rdname runAnnotationEnrichment_CPR
+#' @importFrom dplyr filter select
+#' @importFrom clusterProfiler enrichKEGG enrichGO enricher
+#' @exportMethod runAnnotationEnrichment
+#' @rdname runAnnotationEnrichment
 methods::setMethod(
-  f = "runAnnotationEnrichment_CPR",
+  f = "runAnnotationEnrichment",
   signature = "SummarizedExperiment",
   definition = function(object,
                         nameList = NULL,
@@ -121,13 +123,13 @@ methods::setMethod(
             annotation2 <- annotation
 
             if (ont != "no-domain") {
-              annotation2 <- dplyr::filter(annotation, get(col_domain) == ont)
+              annotation2 <- filter(annotation, get(col_domain) == ont)
             }
 
             list_args$TERM2GENE <- list("term" = annotation2[[col_term]], "gene" = annotation2[[col_gene]])
 
             if (!is.null(annotation2[[col_name]])) {
-              tmp <- dplyr::select(annotation2, tidyselect::all_of(c(col_term, col_name))) %>% unique()
+              tmp <- select(annotation2, tidyselect::all_of(c(col_term, col_name))) %>% unique()
               list_args$TERM2NAME <- list("term" = tmp[[col_term]], "name" = tmp[[col_name]])
             }
           }
@@ -201,11 +203,11 @@ methods::setMethod(
   }
 )
 
-#' @rdname runAnnotationEnrichment_CPR
-#' @title runAnnotationEnrichment_CPR
-#' @exportMethod runAnnotationEnrichment_CPR
+#' @rdname runAnnotationEnrichment
+#' @title runAnnotationEnrichment
+#' @exportMethod runAnnotationEnrichment
 methods::setMethod(
-  f = "runAnnotationEnrichment_CPR",
+  f = "runAnnotationEnrichment",
   signature = "MultiAssayExperiment",
   definition = function(object,
                         SE.name,
@@ -220,7 +222,7 @@ methods::setMethod(
                         col_domain = NULL,
                         annot = NULL) {
     
-    object[[SE.name]] <- runAnnotationEnrichment_CPR(object = object[[SE.name]],
+    object[[SE.name]] <- runAnnotationEnrichment(object = object[[SE.name]],
                                                      nameList = nameList,
                                                      list_args = list_args,
                                                      from = from,
@@ -235,7 +237,7 @@ methods::setMethod(
     
   })
 
-#' @title plot.CPRKEGG_Results
+#' @title plotCPRKEGG
 #' @description TODO
 #' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param contrast the name of the contrast to consider. For Co expression analysis, it is expected to be one of "cluster.1", "cluster.2", etc.
@@ -251,9 +253,9 @@ methods::setMethod(
 #'
 #' @return A plot.
 #' @export
-#' @exportMethod plot.CPRKEGG_Results
+#' @exportMethod plotCPRKEGG
 methods::setMethod(
-  f = "plot.CPRKEGG_Results",
+  f = "plotCPRKEGG",
   signature = "SummarizedExperiment",
   definition = function(object,
                         contrast,
@@ -271,10 +273,9 @@ methods::setMethod(
       from <- "CoExpEnrichAnal"
     }
     
-    if(isTagName(object, contrast)) contrast <- convertTagToContrast(object, contrast)
+    if (isTagName(object, contrast)) contrast <- convertTagToContrast(object, contrast)
     
-    # dataPlot <- object@metadata[[from]][["KEGG"]]$enrichResult[[contrast]]$`no-domain`
-    if (is.null(pvalueCutoff)) pvalueCutoff <- object@metadata[[from]][["KEGG"]]$list_args$pvalueCutoff
+    if (is.null(pvalueCutoff)) pvalueCutoff <- metadata(object)[[from]][["KEGG"]]$list_args$pvalueCutoff
 
     log2FC_vect <- NULL
     # Get the log2FC if appropriate
@@ -301,7 +302,7 @@ methods::setMethod(
   }
 )
 
-#' @title plot.CPR_Results
+#' @title plotCPR
 #' @description TODO
 #' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param contrast the name of the contrast to consider. For Co expression analysis, it is expected to be one of "cluster.1", "cluster.2", etc.
@@ -317,9 +318,10 @@ methods::setMethod(
 #'
 #' @return A plot.
 #' @export
-#' @exportMethod plot.CPR_Results
+#' @importFrom enrichplot cnetplot heatplot dotplot
+#' @exportMethod plotCPR
 methods::setMethod(
-  f = "plot.CPR_Results",
+  f = "plotCPR",
   signature = "SummarizedExperiment",
   definition = function(object,
                         contrast,
@@ -355,7 +357,7 @@ methods::setMethod(
       }
 
       if (!Domain %in% names(dataPlot)) {
-        stop(paste0("Domain is expected to be one of ", paste(names(dataPlot), collapse = ",")))
+        stop("Domain is expected to be one of ", paste(names(dataPlot), collapse = ","))
       } else {
         dataPlot <- dataPlot[[Domain]]
       }
@@ -369,7 +371,7 @@ methods::setMethod(
       names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
     }
 
-    # Select cateogries to show
+    # Select categories to show
     dataTab <- dataPlot@result[dataPlot@result$p.adjust < pvalueCutoff, ]
     NbtoPlot <- min(nrow(dataTab), showCategory)
     Categories <- dataTab$Description[1:NbtoPlot]
@@ -380,19 +382,19 @@ methods::setMethod(
     returnplot <- NULL
     if (type == "cnetplot") {
       suppressMessages( # delete warnings for scale fill replacement
-        returnplot <- enrichplot::cnetplot(dataPlot, showCategory = Categories, color.params = list(foldChange = log2FC_vect), node_label = node_label, ...) +
-          ggplot2::guides(colour = ggplot2::guide_colourbar(title = "log2FC")) +
-          ggplot2::scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)
+        returnplot <- cnetplot(dataPlot, showCategory = Categories, color.params = list(foldChange = log2FC_vect), node_label = node_label, ...) +
+          guides(colour = guide_colourbar(title = "log2FC")) +
+          scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)
       )
     } else if (type == "heatplot") {
       suppressMessages( # delete warnings for scale fill replacement
-        returnplot <- enrichplot::heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, ...) +
-          ggplot2::labs(fill = "log2FC") +
-          ggplot2::scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-          ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10))
+        returnplot <- heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, ...) +
+          labs(fill = "log2FC") +
+          scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+          theme(axis.text.y = element_text(size = 10))
       )
     } else if (type == "dotplot") {
-      returnplot <- enrichplot::dotplot(dataPlot, showCategory = Categories, ...)
+      returnplot <- dotplot(dataPlot, showCategory = Categories, ...)
     }
 
     return(returnplot)

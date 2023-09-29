@@ -53,7 +53,7 @@ apply_transformation <- function(object) {
   }
 
   if (object@metadata[["transform"]][["transformed"]]) {
-    message("WARNING: data were already transformed before!")
+    warning("Data were already transformed before!")
   }
 
   transform_method <- object@metadata[["transform"]][["transform_method"]]
@@ -98,6 +98,7 @@ apply_transformation <- function(object) {
 #' @description apply the normalization to the assay. Usually, after the transformation,
 #' unless in the case of counts RNASeq data (TMM), where log2 is the second step.
 #' @keywords internal
+#' @importFrom SummarizedExperiment assay
 #' @noRd
 #'
 
@@ -106,32 +107,32 @@ apply_norm <- function(object) {
     stop("Expect normalization method.")
   }
 
-  if (object@metadata[["Normalization"]]$normalized) {
-    message("WARNING: data were already normalized before!")
+  if (isNorm(object)) {
+    warning("Data were already normalized before!")
   }
 
-  norm_method <- object@metadata[["Normalization"]]$methode
-  coefNorm <- object@metadata[["Normalization"]]$coefNorm
-  validNorm <- TRUE
+  norm_method <- getNorm(object)
+  coefNorm    <- getCoeffNorm(object)
+  validNorm   <- TRUE
 
-  assayTransform <- SummarizedExperiment::assay(object)
+  assayTransform <- assay(object)
 
   switch(norm_method,
     "median" = {
-      SummarizedExperiment::assay(object) <- sweep(assayTransform, 2, coefNorm, "-")
+      assay(object) <- sweep(assayTransform, 2, coefNorm, "-")
     },
     "totalSum" = {
-      SummarizedExperiment::assay(object) <- sweep(assayTransform, 2, coefNorm, "/")
+      assay(object) <- sweep(assayTransform, 2, coefNorm, "/")
     },
     "TMM" = {
-      scales_factors <- object@metadata[["Normalization"]]$coefNorm$norm.factors * object@metadata[["Normalization"]]$coefNorm$lib.size
-      SummarizedExperiment::assay(object) <- scale(assayTransform + 1, center = FALSE, scale = scales_factors)
+      scales_factors <- coefNorm$norm.factors * coefNorm$lib.size
+      assay(object) <- scale(assayTransform + 1, center = FALSE, scale = scales_factors)
     },
     "none" = {
-      SummarizedExperiment::assay(object) <- assayTransform
+      assay(object) <- assayTransform
     },
     { # default is none
-      SummarizedExperiment::assay(object) <- assayTransform
+      assay(object) <- assayTransform
       message("Could not recognize the normalization method. No normalization applied. Please check your parameters.")
       validNorm <- FALSE
     }
@@ -239,6 +240,10 @@ isNorm <- function(object) {
 
 getNorm <- function(object) {
   object@metadata[["Normalization"]][["methode"]]
+}
+
+getCoeffNorm <- function(object) {
+  object@metadata[["Normalization"]][["coefNorm"]]
 }
 
 getTrans <- function(object) {

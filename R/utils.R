@@ -1,7 +1,34 @@
+##### Global import ####
+# @import MultiAssayExperiment
+# @import SummarizedExperiment
+#' @importClassesFrom SummarizedExperiment SummarizedExperiment
+#' @importClassesFrom MultiAssayExperiment MultiAssayExperiment
+#' @importFrom htmltools span tagList p div a h4 h5 hr tags
+#' @importFrom shinyBS popify
+#' @importFrom shinydashboard box tabBox
+#' @importFrom shiny 
+#' actionButton actionLink
+#' column callModule checkboxInput checkboxGroupInput conditionalPanel
+#' fluidRow  fileInput
+#' icon 
+#' observeEvent numericInput modalDialog showModal NS
+#' radioButtons
+#' reactive reactiveValues renderTable renderDataTable renderUI  
+#' renderPlot runApp renderText
+#' selectInput selectizeInput sidebarPanel sliderInput updateSliderInput
+#' tabsetPanel textInput tabPanel
+#' validate need uiOutput verbatimTextOutput verticalLayout
+#' @importFrom shinyWidgets pickerInput materialSwitch
+#' @importFrom colourpicker colourInput
+## @import shiny
+
+#' @importFrom ggplot2 ggplot geom_col theme_classic aes
+#' theme element_text element_blank ylab xlab ggtitle
+#' scale_fill_gradientn geom_tile theme_bw guides scale_fill_gradient2
+#' guide_colourbar labs
+
 #' @importFrom magrittr %>%
 magrittr::`%>%`
-
-
 
 #' @title Read Experimental Design
 #'

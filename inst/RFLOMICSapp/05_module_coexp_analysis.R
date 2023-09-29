@@ -306,8 +306,8 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     
     # For each id, get its cluster
     tab.clusters <- as.data.frame(ifelse(coseq.res@allResults[[names(nb_cluster)]] > 0.5, 1,0))
-    tab.clusters <-  rownames_to_column(tab.clusters,var="DEF")
-    Cluster.tab <- pivot_longer(data=tab.clusters,cols=2:(dim(tab.clusters)[2]),names_to="C",values_to="does.belong")
+    tab.clusters <-  tibble::rownames_to_column(tab.clusters,var="DEF")
+    Cluster.tab <- tidyr::pivot_longer(data=tab.clusters,cols=2:(dim(tab.clusters)[2]),names_to="C",values_to="does.belong")
     
     # For each id, get its FC for all Contrasts
     tmp <- lapply(1:length(dataset.SE@metadata$DiffExpAnal$TopDEF),function(x){

@@ -151,10 +151,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
             lapply(names(ExpDesign.tbl), function(i) {
               
               column(width = round(12/length(names(ExpDesign.tbl))),
-                     # sample list :
-                     # orderInput(inputId = session$ns(paste0("selectFactors.", i)),
-                     #            label   = tags$span(style="color: black;",i) ,
-                     #            items   = levels(as.factor(ExpDesign.tbl[[i]])))
                      selectizeInput(inputId = session$ns(paste0("selectFactors.", i)),
                                     label   = tags$span(style="color: black;",i) ,
                                     choices = levels(as.factor(ExpDesign.tbl[[i]])),
@@ -169,7 +165,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     output$GetdFactorRef <- renderUI({
       
       # filter samples
-      #ExpDesign.tbl.flt <<- ExpDesign.tbl[input$selectSamples,]
       # filtering per conditions
       for(i in names(ExpDesign.tbl)) {
         
@@ -180,7 +175,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
         }
         
         if(length(input[[paste0("selectFactors.", i)]]) <= 1){
-          ExpDesign.tbl <- dplyr::select(ExpDesign.tbl, -all_of(i))
+          ExpDesign.tbl <- dplyr::select(ExpDesign.tbl, -tidyselect::all_of(i))
         }
       }
       

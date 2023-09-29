@@ -44,6 +44,7 @@ MAE <- MAE |>
 test_that("Working?", code = {
   
   MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest"))
+  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest"))
   
   expect(!is.null(MAE@metadata$MOFA$MOFA_results), failure_message = "MOFA didn't run as it should have run")
   

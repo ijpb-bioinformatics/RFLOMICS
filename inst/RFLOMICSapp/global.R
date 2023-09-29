@@ -21,10 +21,10 @@ library(DT)
 library(plotly)
 library(gridExtra)
 library(ggplot2)
-library(qgraph)
-library(colourpicker)  
+# library(qgraph)
+# library(colourpicker)  
 library(circlize)
-library(RColorBrewer)
+# library(RColorBrewer)
 library(grid)
 library(png)
 
@@ -36,17 +36,6 @@ library(coseq)
 # parallel
 library(parallel) # TODO change for biocparallel 
 
-# enrichment
-# library(clusterProfiler)
-# library(enrichplot)
-# library(org.At.tair.db)
-# library(AnnotationDbi)
-# library(pathview)
-
-# data integration
-# library(MOFA2) 
-# library(mixOmics)
-
 # #############
 # MODULES
 
@@ -56,7 +45,7 @@ source("02_module_set_stat_model.R")
 source("03_module_data_explor.R")
 source("04_module_diff_analysis.R")
 source("05_module_coexp_analysis.R")
-source("06_module_annot_enrichment_clusterProf.R")
+source("06_module_annot_enrichment.R")
 source("07_module_data_integration_MOFA.R")
 source("08_module_data_integration_mixOmics.R") 
 source("coverPage.R")

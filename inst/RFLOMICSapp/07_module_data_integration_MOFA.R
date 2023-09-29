@@ -11,7 +11,8 @@ MOFA_settingUI <- function(id){
   tagList(
     
     fluidRow(
-      box(title = span(tagList(icon('chart-line'), "   ",a("MOFA+", href="https://biofam.github.io/MOFA2/"), tags$small("(Scroll down for instructions)")  )),
+      box(title = span(tagList(icon('chart-line'), "   ", a("MOFA+", href = "https://biofam.github.io/MOFA2/"),
+                               tags$small("(Scroll down for instructions)")  )),
           solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
           div(      
             h4(tags$span("Parameters set up:", style = "color:orange")),
@@ -87,7 +88,7 @@ MOFA_setting <- function(input, output, session, rea.values){
           fluidRow(
             column(12,
                    
-                   radioButtons(inputId = session$ns("MOFA_filtMode"), label=NULL ,
+                   radioButtons(inputId = session$ns("MOFA_filtMode"), label = NULL ,
                                 choices = c("union","intersection"),
                                 selected = "union", inline = FALSE))),
           
@@ -107,11 +108,13 @@ MOFA_setting <- function(input, output, session, rea.values){
                                selected = "TRUE"))),
           fluidRow(
             column(12,
-                   numericInput(inputId = session$ns("MOFA_numfactor"), label="Num factors:", value=10, min = 5, max=15))),
+                   numericInput(inputId = session$ns("MOFA_numfactor"), label = "Num factors:", 
+                                value = 10, min = 5, max = 15))),
           
           fluidRow(
             column(12,
-                   numericInput(inputId = session$ns("MOFA_maxiter"), label="Max iteration:", value=1000, min = 1000, max=1000))),
+                   numericInput(inputId = session$ns("MOFA_maxiter"), label = "Max iteration:", 
+                                value = 1000, min = 1000, max = 1000))),
           
           fluidRow(
             column(4, actionButton(session$ns("runMOFA"),"Run"))) ##### ACTION BUTTON
@@ -141,26 +144,26 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     
     #---- progress bar ----#
-    progress$inc(1/10, detail = paste("Checks ", 10, "%", sep=""))
+    progress$inc(1/10, detail = paste("Checks ", 10, "%", sep = ""))
     #----------------------#
     
     # check nbr dataset to integrate
     # if less then 2 -> error message
-    if(length(input$MOFA_selectedData) < 2){
+    if (length(input$MOFA_selectedData) < 2) {
       showModal(modalDialog( title = "Error message", "MOFA needs at least 2 datasets!"))
     }
     validate({
-      need(length(input$MOFA_selectedData) >= 2, message="MOFA needs at least 2 datasets!")
+      need(length(input$MOFA_selectedData) >= 2, message = "MOFA needs at least 2 datasets!")
     })
     
     
     # check nbr of contrast 
     # if less than 1 -> error message
-    if(length(input$MOFA_selectedContrasts) == 0){
+    if (length(input$MOFA_selectedContrasts) == 0) {
       showModal(modalDialog( title = "Error message", "Select at least one contast!"))
     }
     validate({
-      need(length(input$MOFA_selectedContrasts) != 0, message="Select at least one contast!")
+      need(length(input$MOFA_selectedContrasts) != 0, message = "Select at least one contast!")
     })
     
     #---- progress bar ----#
@@ -223,14 +226,14 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     resMOFA <- session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_results"]]
     
-    plot_height <- function() { # does not work ?
-      local.rea.values$plotHeight <- length(input$WeightsPlot_Factors_select)*10
-      return(local.rea.values$plotHeight)
-    }
+    # plot_height <- function() { # does not work ?
+    #   local.rea.values$plotHeight <- length(input$WeightsPlot_Factors_select)*10
+    #   return(local.rea.values$plotHeight)
+    # }
     
     colorPal_choices <- c("Greens", "Purples", "Oranges", "Reds", "Greys", "Blues")
     
-    box(width=14, solidHeader = TRUE, status = "success",
+    box(width = 14, solidHeader = TRUE, status = "success",
         title = "MOFA results",
         
         tabsetPanel(
@@ -239,40 +242,23 @@ MOFA_setting <- function(input, output, session, rea.values){
           # ---- Tab panel Factors Overview ----
           tabPanel("Overview", 
                    column(12,
-                          renderPlot(MOFA2::plot_data_overview(resMOFA) + ggtitle("Data Overview"))),
-                   # column(6,
-                   #        h4("Warnings:"),
-                   #        renderText(expr ={
-                   #          # if("no warning captured"%in%local.rea.values$warnings){
-                   #          #   print(local.rea.values$warnings)
-                   #          # }else{
-                   #          # warnsms <- paste(local.rea.values$warnings, collapse = "\n")
-                   #          # for(warns in local.rea.values$warnings) print(warns)
-                   #          # HTML(paste(local.rea.values$warnings, collapse = '<br/>'))
-                   #          HTML(paste(local.rea.values$warnings, collapse = ''))
-                   #          # print(paste(local.rea.values$warnings, collapse = "\n"))
-                   #          # for(i in 1:length(local.rea.values$warnings)){
-                   #          #   cat(local.rea.values$warnings[i])
-                   #          # }
-                   #          # }
-                   #        })
-                   # )
+                          renderPlot(plot_data_overview(resMOFA) + ggtitle("Data Overview"))),
           ),
           ### 
           # ---- Tab panel Factors Correlation ----
           tabPanel("Factors Correlation", 
-                   renderPlot(MOFA2::plot_factor_cor(resMOFA))
+                   renderPlot(plot_factor_cor(resMOFA))
           ),
           ### 
           # ---- Tab panel Explained Variance ----
           tabPanel("Explained Variance", 
                    fluidRow(
                      column(6, renderPlot({
-                       g1 <- MOFA2::plot_variance_explained(resMOFA, plot_total = TRUE)[[2]]
-                       g1 + ggplot2::ggtitle("Total explained variance per omic data")
+                       g1 <- plot_variance_explained(resMOFA, plot_total = TRUE)[[2]]
+                       g1 + ggtitle("Total explained variance per omic data")
                      })),
-                     column(6, renderPlot(MOFA2::plot_variance_explained(resMOFA, x = "view", y = "factor") +
-                                            ggplot2::ggtitle("Explained variance by factors and omic data")))
+                     column(6, renderPlot(plot_variance_explained(resMOFA, x = "view", y = "factor") +
+                                            ggtitle("Explained variance by factors and omic data")))
                    )),
           ### 
           # ---- Tab panel Weights Plot ----
@@ -302,15 +288,15 @@ MOFA_setting <- function(input, output, session, rea.values){
                               ggplot_list <- lapply(min(input$WeightsPlot_Factors_select):max(input$WeightsPlot_Factors_select), FUN = function(i) {
                                 
                                 res_inter <- list()
-                                res_inter <- lapply(MOFA2::views_names(resMOFA), FUN = function(vname) {
+                                res_inter <- lapply(views_names(resMOFA), FUN = function(vname) {
                                   
-                                  res_inter[[length(res_inter) + 1]] <- MOFA2::plot_weights(resMOFA,
-                                                                                            view = vname,
-                                                                                            factors = i,
-                                                                                            nfeatures = input$nfeat_choice_WeightsPlot,
-                                                                                            scale = input$scale_choice_WeightsPlot) 
+                                  res_inter[[length(res_inter) + 1]] <- plot_weights(resMOFA,
+                                                                                     view = vname,
+                                                                                     factors = i,
+                                                                                     nfeatures = input$nfeat_choice_WeightsPlot,
+                                                                                     scale = input$scale_choice_WeightsPlot) 
                                   res_inter[[length(res_inter)]] <- res_inter[[length(res_inter)]] + 
-                                    ggplot2::ggtitle(paste0(vname, " - Factor ", i))
+                                    ggtitle(paste0(vname, " - Factor ", i))
                                   
                                   return(res_inter)
                                 })
@@ -342,8 +328,8 @@ MOFA_setting <- function(input, output, session, rea.values){
                    fluidRow(
                      column(11, 
                             DT::renderDataTable({
-                              resTable <- MOFA2::get_weights(resMOFA, views = "all", factors = min(input$Factors_select_MOFA):max(input$Factors_select_MOFA),
-                                                             abs = FALSE, scale = FALSE, as.data.frame = TRUE)
+                              resTable <- get_weights(resMOFA, views = "all", factors = min(input$Factors_select_MOFA):max(input$Factors_select_MOFA),
+                                                      abs = FALSE, scale = FALSE, as.data.frame = TRUE)
                               
                               resTable %>% DT::datatable(extensions = 'Buttons',
                                                          options = list(dom = 'lfrtipB',
@@ -399,19 +385,19 @@ MOFA_setting <- function(input, output, session, rea.values){
                               if (any(input$add_violin_MOFA, input$add_boxplot_MOFA)) dodge_par = TRUE
                               
                               
-                              MOFA2::plot_factor(resMOFA,
-                                                 factors = min(input$factors_choices_MOFA):max(input$factors_choices_MOFA), 
-                                                 color_by = color_by_par,
-                                                 group_by = group_by_par, 
-                                                 shape_by = shape_by_par,
-                                                 legend = TRUE,
-                                                 add_violin = input$add_violin_MOFA,
-                                                 violin_alpha = 0.25, 
-                                                 add_boxplot = input$add_boxplot_MOFA,
-                                                 boxplot_alpha = 0.25,
-                                                 dodge = dodge_par,
-                                                 scale = input$scale_scatter_MOFA,
-                                                 dot_size = 3) 
+                              plot_factor(resMOFA,
+                                          factors = min(input$factors_choices_MOFA):max(input$factors_choices_MOFA), 
+                                          color_by = color_by_par,
+                                          group_by = group_by_par, 
+                                          shape_by = shape_by_par,
+                                          legend = TRUE,
+                                          add_violin = input$add_violin_MOFA,
+                                          violin_alpha = 0.25, 
+                                          add_boxplot = input$add_boxplot_MOFA,
+                                          boxplot_alpha = 0.25,
+                                          dodge = dodge_par,
+                                          scale = input$scale_scatter_MOFA,
+                                          dot_size = 3) 
                             })
                      ))
           ),
@@ -420,7 +406,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                    
                    renderTable({
                      
-                     factors <- MOFA2::get_factors(resMOFA)
+                     factors <- get_factors(resMOFA)
                      
                      res_aov <- lapply(1:ncol(session$userData$FlomicsMultiAssay@metadata$design@ExpDesign), FUN = function(i){
                        aov1 <- aov(factors$group1  ~ session$userData$FlomicsMultiAssay@metadata$design@ExpDesign[,i])
@@ -483,15 +469,15 @@ MOFA_setting <- function(input, output, session, rea.values){
                               observeEvent(input$view_choice_heatmap_MOFA, {
                                 updateSliderInput(session, 
                                                   inputId = "nfeat_choice_heatmap_MOFA", 
-                                                  max = MOFA2::get_dimensions(resMOFA)$D[input$view_choice_heatmap_MOFA][[1]])
+                                                  max = get_dimensions(resMOFA)$D[input$view_choice_heatmap_MOFA][[1]])
                               })
                               
-                              res_heatmap <- MOFA2::plot_data_heatmap(resMOFA, 
-                                                                      factor = input$factor_choice_heatmap_MOFA, 
-                                                                      view = input$view_choice_heatmap_MOFA, 
-                                                                      features = input$nfeat_choice_heatmap_MOFA,
-                                                                      denoise = input$denoise_choice_heatmap_MOFA,
-                                                                      annotation_samples = annot_samples_values)
+                              res_heatmap <- plot_data_heatmap(resMOFA, 
+                                                               factor = input$factor_choice_heatmap_MOFA, 
+                                                               view = input$view_choice_heatmap_MOFA, 
+                                                               features = input$nfeat_choice_heatmap_MOFA,
+                                                               denoise = input$denoise_choice_heatmap_MOFA,
+                                                               annotation_samples = annot_samples_values)
                               grid::grid.draw(res_heatmap)
                             }))
                    ) # fluidrow heatmap
@@ -543,9 +529,9 @@ MOFA_setting <- function(input, output, session, rea.values){
                                                  returnName = FALSE,
                                                  closeOnClick = FALSE)),
                      ),
-                     column(2,  lapply(1:length(MOFA2::views_names(resMOFA)), function(i) {
-                       selectInput(inputId = session$ns(paste0("colors_", MOFA2::views_names(resMOFA)[i])),
-                                   label = MOFA2::views_names(resMOFA)[i],
+                     column(2,  lapply(1:length(views_names(resMOFA)), function(i) {
+                       selectInput(inputId = session$ns(paste0("colors_", views_names(resMOFA)[i])),
+                                   label = views_names(resMOFA)[i],
                                    choices = colorPal_choices,
                                    multiple = FALSE, 
                                    selected = colorPal_choices[i]
@@ -556,8 +542,8 @@ MOFA_setting <- function(input, output, session, rea.values){
                      column(12,
                             renderPlot({
                               
-                              colors_list <- lapply(MOFA2::views_names(resMOFA), FUN = function(nam) input[[paste0("colors_", nam)]])
-                              names(colors_list) <- MOFA2::views_names(resMOFA)
+                              colors_list <- lapply(views_names(resMOFA), FUN = function(nam) input[[paste0("colors_", nam)]])
+                              names(colors_list) <- views_names(resMOFA)
                               
                               MOFA_cor_network(resMOFA = resMOFA, 
                                                factor_choice = input$factor_choice_network,

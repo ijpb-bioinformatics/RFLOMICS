@@ -163,6 +163,8 @@ methods::setMethod(
 #' @return An untrained MOFA object or a list of dataset
 #' @export
 #' @exportMethod prepareForIntegration
+#' @importFrom MOFA2 create_mofa
+#' @importFrom SummarizedExperiment assay
 methods::setMethod(
   f = "prepareForIntegration",
   signature = "MultiAssayExperiment",
@@ -219,11 +221,11 @@ methods::setMethod(
     if (method == "MOFA") {    # Prepare mofa object
       if (silent) {
         MOFAObject <- suppressMessages(
-          suppressWarnings(MOFA2::create_mofa(object,
+          suppressWarnings(create_mofa(object,
                                               group = group,
                                               extract_metadata = TRUE)))
       } else {
-        MOFAObject <- MOFA2::create_mofa(object,
+        MOFAObject <- create_mofa(object,
                                          group = group,
                                          extract_metadata = TRUE)
       }
@@ -236,7 +238,7 @@ methods::setMethod(
       
       MixOmicsObject <- list(
         blocks   = lapply(object@ExperimentList, 
-                          FUN = function(SE) t(SummarizedExperiment::assay(SE))),
+                          FUN = function(SE) t(assay(SE))),
         metadata = object@colData
       )
       MixOmicsObject$blocks <- lapply(MixOmicsObject$blocks, 

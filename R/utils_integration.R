@@ -1,64 +1,25 @@
-#---- Filter DE entities from SE (returns vector) ----
-
-# TODO A voir pour remplacer par un getter peut-être
-# TODO Est-ce que cette fonction est toujorus utilisée ? Remplacée par opDEList logiquement.
-
-#' @title filter_DE_from_SE
-#'
-#' @param SEobject An object of class \link{SummarizedExperiment}
-#' @param contrasts_arg the name (or names) of the contrasts to consider.
-#' @param type type of union for the entities, either union or intersection.
-#' @return An object of class \link{SummarizedExperiment}
-#' @export
-#' @noRd
-#'
-
-filter_DE_from_SE <- function(SEobject, contrasts_arg = NULL, type = "union"){
-  
-  tabCorresp <- SEobject@metadata$DiffExpAnal$Validcontrasts %>% 
-    dplyr::select(contrastName, tag)
-  if (is.null(contrasts_arg))   contrasts_arg <- SEobject@metadata$DiffExpAnal$Validcontrasts$contrastName
-  
-  tabCorresp <- tabCorresp %>% dplyr::filter(contrastName %in% contrasts_arg)
-  contrasts_select <- tabCorresp$tag
-  
-  tab1 <- SEobject@metadata$DiffExpAnal$mergeDEF %>%
-    dplyr::select(tidyselect::any_of(c("DEF", contrasts_select)))
-  
-  if(type == "intersection"){
-    
-    DETab <- tab1 %>%
-      dplyr::mutate(SUMCOL = dplyr::select(., tidyselect::starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
-      dplyr::filter(SUMCOL==length(contrasts_select))
-    
-  }else{
-    
-    DETab <- tab1 %>%
-      dplyr::mutate(SUMCOL = dplyr::select(., tidyselect::starts_with("H")) %>% rowSums(na.rm = TRUE))  %>%
-      dplyr::filter(SUMCOL >= 1)
-  }
-  
-  SEobject <- SEobject[DETab$DEF,]
-  
-  return(SEobject)
-}
-
-
+### --- Global import ----
+#' @importFrom MOFA2 views_names get_factors plot_factor get_weights 
+#' plot_weights plot_variance_explained plot_factor_cor
+#' plot_data_overview plot_data_heatmap get_dimensions
+ 
 # ---- remove batch effects from omics : ----
 
-# TODO A MODIFIER ON DOIT POUVOIR PRENDRE EN COMPTE TOUS LES BATCH EFFECTS
 #' @title rbe_function
 #'
 #' @param object An object of class \link{MultiAssayExperiment}
 #' @param SEobject An object of class \link{SummarizedExperiment}
 #' @return An object of class \link{SummarizedExperiment}
+#' @importFrom limma removeBatchEffect
+#' @importFrom stats model.matrix as.formula
+#' @importFrom SummarizedExperiment assay
 #' @export
 #' @noRd
 #'
 rbe_function = function(object, SEobject, cmd = FALSE){
   
-  assayTransform <- SummarizedExperiment::assay(SEobject)
-  ftypes <- RFLOMICS::getFactorTypes(object)
+  assayTransform <- assay(SEobject)
+  ftypes <- getFactorTypes(object)
   colBatch <- names(ftypes)[ftypes == "batch"]
   
   if (cmd) {
@@ -67,25 +28,24 @@ rbe_function = function(object, SEobject, cmd = FALSE){
                  " in ", SEobject@metadata$omicType))
   }
   
-  newFormula <- gsub(pattern = paste(paste(colBatch, "[+]"),  collapse = "|"), "", RFLOMICS::getModelFormula(object))
+  newFormula <- gsub(pattern = paste(paste(colBatch, "[+]"),  collapse = "|"), "", getModelFormula(object))
   newFormula <- gsub(pattern = "~ [+] ", "~ ", newFormula) # use ?
   designToPreserve <- model.matrix(as.formula(newFormula), data = SEobject@metadata$Groups)
   
   if (length(colBatch) == 1) {
-    rbeRes <- limma::removeBatchEffect(assayTransform, batch = SEobject@metadata$Groups[,colBatch], design = designToPreserve)
+    rbeRes <- removeBatchEffect(assayTransform, batch = SEobject@metadata$Groups[,colBatch], design = designToPreserve)
   }else if (length(colBatch) >= 2) {
     
-    rbeRes <- limma::removeBatchEffect(assayTransform,
-                                       batch  = SEobject@metadata$Groups[,colBatch[1]],
-                                       batch2 = SEobject@metadata$Groups[,colBatch[2]],
-                                       design = designToPreserve)
+    rbeRes <- removeBatchEffect(assayTransform,
+                                batch  = SEobject@metadata$Groups[,colBatch[1]],
+                                batch2 = SEobject@metadata$Groups[,colBatch[2]],
+                                design = designToPreserve)
   }
   if (length(colBatch) > 2) print("sorry, only 2 batches effect for now!") 
-  # TODO : find a way to have more than 2 batches (for commandline only)
   
   SEobject@metadata[["correction_batch_method"]] <- "limma (removeBatchEffect)"
   
-  SummarizedExperiment::assay(SEobject) <- rbeRes
+  assay(SEobject) <- rbeRes
   
   return(SEobject)
 }
@@ -100,6 +60,11 @@ rbe_function = function(object, SEobject, cmd = FALSE){
 #' @param transformation the name of the transformation to be applied on counts. Default is limma voom. 
 #' No other option for now. 
 #' @return An object of class \link{MultiAssayExperiment}
+#' @importFrom stats model.matrix formula
+#' @importFrom SummarizedExperiment assay
+#' @importFrom dplyr filter
+#' @importFrom limma voom
+#' @importFrom edgeR DGEList
 #' @export
 #' @noRd
 #'
@@ -118,13 +83,13 @@ rnaseqRBETransform <- function(object,
   # TODO : in case of removeBatchEffect not working, what do we do?
   # TODO : if no DE (ex: intersection is 0 genes), what do we do?
   
-  if (class(object) != "MultiAssayExperiment") stop("object is not a MultiAssyExperiment")
+  if (!is(object, "MultiAssayExperiment")) stop("object is not a MultiAssyExperiment")
   
   rnaDat <- object[[SEname]] 
-  assayTransform <- SummarizedExperiment::assay(rnaDat)
+  assayTransform <- assay(rnaDat)
   
   if (!is.integer(assayTransform) && !identical(assayTransform, floor(assayTransform))) {
-    message(paste0("You indicated RNASeq data for ", SEname, "but it is not recognized as count data")) 
+    message("You indicated RNASeq data for ", SEname, "but it is not recognized as count data") 
     print(assayTransform[1:3, 1:3])
   }
   
@@ -132,18 +97,18 @@ rnaseqRBETransform <- function(object,
   coefNorm  <- getNormCoeff(rnaDat)
   designMat <- model.matrix(formula(getModelFormula(object)), data = DMat)
   
-  DGEObject <- edgeR::DGEList(
+  DGEObject <- DGEList(
     counts       = assayTransform,
     norm.factors = coefNorm$norm.factors,
     lib.size     = coefNorm$lib.size,
     samples      = DMat %>% 
-      dplyr::filter(row.names(DMat) %in% colnames(assayTransform))
+      filter(row.names(DMat) %in% colnames(assayTransform))
   )
   
-  limmaRes <- limma::voom(DGEObject,
-                          design = designMat[which(rownames(designMat) %in% colnames(assayTransform)),]) 
+  limmaRes <- voom(DGEObject,
+                   design = designMat[which(rownames(designMat) %in% colnames(assayTransform)),]) 
   
-  SummarizedExperiment::assay(rnaDat) <- limmaRes$E
+  assay(rnaDat) <- limmaRes$E
   
   if (correctBatch)    rnaDat <- rbe_function(object, rnaDat)
   
@@ -199,6 +164,7 @@ RBETransform <- function(object,
 #' @param selectedResponse a character string of the response variable to consider
 #' @param mode Can be NULL (default), "cumulative" or "comp". Defines the type of graph to return
 #' @return An object of class \link{MultiAssayExperiment}
+#' @importFrom ggpubr ggarrange
 #' @export
 #'
 
@@ -212,9 +178,9 @@ plot_MO_varExp <- function(object, selectedResponse, mode = NULL){
   gg_return <- NULL
   
   if (is.null(mode)) {
-    gg_return <- ggpubr::ggarrange(plot_MO_1(Data_res),
-                                   plot_MO_2(Data_res), 
-                                   ncol = 2)
+    gg_return <- ggarrange(plot_MO_1(Data_res),
+                           plot_MO_2(Data_res), 
+                           ncol = 2)
   }
   else if (tolower(mode) == "cumulative") {
     gg_return <- plot_MO_1(Data_res)
@@ -232,60 +198,64 @@ plot_MO_varExp <- function(object, selectedResponse, mode = NULL){
 #' @param selectedResponse a character string. 
 #' @return A ggplot2 graph
 #' @keywords internal
+#' @importFrom dplyr group_by summarise filter
+#' @importFrom reshape2 melt
 #' @noRd
 
 plot_MO_1 <- function(Data_res){
-  dat_explained <- reshape2::melt(do.call("rbind", Data_res$prop_expl_var))
+  dat_explained <- melt(do.call("rbind", Data_res$prop_expl_var))
   colnames(dat_explained) <- c("Dataset", "Component", "% of explained variance")
   dat_explained$`% of explained variance` <- dat_explained$`% of explained variance`*100
   
   dat_comb <- dat_explained %>% 
-    dplyr::group_by(Dataset) %>% 
-    dplyr::summarise("Cumulative Explained Variance" = sum(`% of explained variance`))
+    group_by(Dataset) %>% 
+    summarise("Cumulative Explained Variance" = sum(`% of explained variance`))
   
   if (is(Data_res, "block.splsda") || is(Data_res, "block.plsda")) {
-    dat_comb <- dat_comb %>% dplyr::filter(Dataset != "Y")
+    dat_comb <- dat_comb %>% filter(Dataset != "Y")
   }
   
-  gg1 <- ggplot2::ggplot(dat_comb, ggplot2::aes(x = Dataset, y = `Cumulative Explained Variance`)) +
-    ggplot2::geom_col(fill = "darkblue") + 
-    ggplot2::theme_classic() +
-    ggplot2::theme(
-      axis.text  = ggplot2::element_text(size = 12),
-      axis.line  = ggplot2::element_blank(),
-      axis.ticks = ggplot2::element_blank(),
-      strip.text = ggplot2::element_text(size = 12)) + 
-    ggplot2::ylab("") + 
-    ggplot2::ggtitle("Cumulative explained variance")  
+  gg1 <- ggplot(dat_comb, aes(x = Dataset, y = `Cumulative Explained Variance`)) +
+    geom_col(fill = "darkblue") + 
+    theme_classic() +
+    theme(
+      axis.text  = element_text(size = 12),
+      axis.line  = element_blank(),
+      axis.ticks = element_blank(),
+      strip.text = element_text(size = 12)) + 
+    ylab("") + 
+    ggtitle("Cumulative explained variance")  
   
   return(gg1)
 }
 
 #' @keywords internal
+#' @importFrom reshape2 melt
+#' @importFrom dplyr filter
 #' @noRd
 plot_MO_2 <- function(Data_res){
-  dat_explained <- reshape2::melt(do.call("rbind", Data_res$prop_expl_var))
+  dat_explained <- melt(do.call("rbind", Data_res$prop_expl_var))
   colnames(dat_explained) <- c("Dataset", "Component", "% of explained variance")
   dat_explained$`% of explained variance` <- dat_explained$`% of explained variance`*100
   
   if (is(Data_res, "block.splsda") || is(Data_res, "block.plsda")) {
-    dat_explained <- dat_explained %>% dplyr::filter(Dataset != "Y")
+    dat_explained <- dat_explained %>% filter(Dataset != "Y")
   }
   
   # Chunk of code to be cohesive with MOFA2::plot_explained_variance
-  gg2 <- ggplot2::ggplot(dat_explained, aes(x = Dataset, y = Component)) +
-    ggplot2::geom_tile(aes(fill = `% of explained variance`)) + 
-    ggplot2::theme_classic() +
-    ggplot2::theme(
-      axis.text  = ggplot2::element_text(size = 12),
-      axis.line  = ggplot2::element_blank(),
-      axis.ticks = ggplot2::element_blank(),
-      strip.text = ggplot2::element_text(size = 12),
-    ) + ggplot2::ylab("") +  
-    ggplot2::scale_fill_gradientn(colors = c("gray97","darkblue"), guide = "colorbar", 
-                                  limits = c(min(dat_explained$`% of explained variance`),
-                                             max(dat_explained$`% of explained variance`))) + 
-    ggplot2::ggtitle("Percentage of explained variance \n per component per block")
+  gg2 <- ggplot(dat_explained, aes(x = Dataset, y = Component)) +
+    geom_tile(aes(fill = `% of explained variance`)) + 
+    theme_classic() +
+    theme(
+      axis.text  = element_text(size = 12),
+      axis.line  = element_blank(),
+      axis.ticks = element_blank(),
+      strip.text = element_text(size = 12),
+    ) +  ylab("") +  
+    scale_fill_gradientn(colors = c("gray97","darkblue"), guide = "colorbar", 
+                         limits = c(min(dat_explained$`% of explained variance`),
+                                    max(dat_explained$`% of explained variance`))) + 
+    ggtitle("Percentage of explained variance \n per component per block")
   
   return(gg2)
 }
@@ -303,7 +273,14 @@ plot_MO_2 <- function(Data_res){
 #' @param omics_colors named list of colors palettes, one for each omics (can be NULL) 
 #' @param posCol colors of positive edges
 #' @param negCol colors of negative edges
-#' 
+#' @importFrom MOFA2 get_factors get_weights
+#' @importFrom stats cor
+#' @importFrom tibble rownames_to_column
+#' @importFrom dplyr mutate arrange desc group_by filter
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom reshape2 melt
+#' @importFrom qgraph qgraph
+#' @importFrom ggpubr ggarrange
 #' @return A ggplot2 graph
 #' @export
 #' 
@@ -322,26 +299,26 @@ MOFA_cor_network <- function(resMOFA,
   }
   
   # Correlation matrix is done on all ZW, not on the selected factor. 
-  data_reconst_list <- lapply(MOFA2::get_weights(resMOFA), FUN = function(mat){
-    MOFA2::get_factors(resMOFA)$group1 %*% t(mat)})
+  data_reconst_list <- lapply(get_weights(resMOFA), FUN = function(mat){
+    get_factors(resMOFA)$group1 %*% t(mat)})
   data_reconst <- do.call(cbind, data_reconst_list)
-  cor_mat <- stats::cor(data_reconst)
+  cor_mat <- cor(data_reconst)
   
   
-  features_metadata <- do.call(rbind, lapply(1:length(MOFA2::get_weights(resMOFA)), FUN = function(i){
-    mat_weights <- data.frame(MOFA2::get_weights(resMOFA, scale = TRUE)[[i]])
-    mat_weights$Table <- names(MOFA2::get_weights(resMOFA))[i]
+  features_metadata <- do.call(rbind, lapply(1:length(get_weights(resMOFA)), FUN = function(i){
+    mat_weights <- data.frame(get_weights(resMOFA, scale = TRUE)[[i]])
+    mat_weights$Table <- names(get_weights(resMOFA))[i]
     return(mat_weights)
   }))
   
   factor_selected <- paste0("Factor", factor_choice)
   
   feature_filtered <- features_metadata %>% 
-    tibble::rownames_to_column("EntityName") %>%
-    dplyr::mutate(F_selected = abs(get(factor_selected))) %>% 
-    dplyr::arrange(desc(abs(F_selected))) %>% 
-    dplyr::group_by(Table) %>% 
-    dplyr::filter(abs(F_selected) > abs_weight_network)
+    rownames_to_column("EntityName") %>%
+    mutate(F_selected = abs(get(factor_selected))) %>% 
+    arrange(desc(abs(F_selected))) %>% 
+    group_by(Table) %>% 
+    filter(abs(F_selected) > abs_weight_network)
   
   if (nrow(feature_filtered) > 0) {
     
@@ -351,12 +328,12 @@ MOFA_cor_network <- function(resMOFA,
     }
     
     omics_colors <- lapply(unique(feature_filtered$Table), FUN = function(omicTable){
-      RColorBrewer::brewer.pal(name = omics_colors[[omicTable]], n = 5)
+      brewer.pal(name = omics_colors[[omicTable]], n = 5)
     })
     names(omics_colors) <- unique(feature_filtered$Table)
     
-    feature_filtered <- feature_filtered %>% dplyr::group_by(Table) %>%
-      dplyr::mutate(Color = cut(F_selected, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)))
+    feature_filtered <- feature_filtered %>% group_by(Table) %>%
+      mutate(Color = cut(F_selected, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)))
     feature_filtered$Color2 <- sapply(1:nrow(feature_filtered), 
                                       FUN = function(i) omics_colors[[feature_filtered$Table[i]]][as.numeric(feature_filtered$Color[i])])
     
@@ -370,33 +347,33 @@ MOFA_cor_network <- function(resMOFA,
     cor_display <- cor_mat[rownames(cor_mat) %in% feature_filtered$EntityName, colnames(cor_mat) %in% feature_filtered$EntityName]
     
     if (any(abs(cor_display[upper.tri(cor_display)]) >= abs_min_cor_network)) {
-      qgraph_plot <- qgraph::qgraph(cor_display, minimum = abs_min_cor_network, 
-                                    cut = 0,
-                                    shape = "rectangle", labels = rownames(cor_display), vsize2 = 2, 
-                                    vsize = sapply(rownames(cor_display), nchar)*1.1,  layout = layout_arg,
-                                    esize = 2,
-                                    groups = gsub("[.]filtred", "", features_metadata$Table[match(rownames(cor_display), rownames(features_metadata))]),
-                                    posCol = posCol, negCol = negCol, 
-                                    details = FALSE,  legend = FALSE,
-                                    color = feature_filtered$Color2[match(rownames(cor_display), feature_filtered$EntityName)])
+      qgraph_plot <- qgraph(cor_display, minimum = abs_min_cor_network, 
+                            cut = 0,
+                            shape = "rectangle", labels = rownames(cor_display), vsize2 = 2, 
+                            vsize = sapply(rownames(cor_display), nchar)*1.1,  layout = layout_arg,
+                            esize = 2,
+                            groups = gsub("[.]filtred", "", features_metadata$Table[match(rownames(cor_display), rownames(features_metadata))]),
+                            posCol = posCol, negCol = negCol, 
+                            details = FALSE,  legend = FALSE,
+                            color = feature_filtered$Color2[match(rownames(cor_display), feature_filtered$EntityName)])
       qgraph_plot <- recordPlot()
       
       # Legend
       legend_matrix <- do.call("rbind", omics_colors)
       colnames(legend_matrix) <- c("(0,0.2]", "(0.2,0.4]", "(0.4,0.6]", "(0.6,0.8]", "(0.8, 1]")
       rownames(legend_matrix) <- gsub("[.]filtred", "", rownames(legend_matrix))
-      legend.reshape <- reshape2::melt(legend_matrix)
+      legend.reshape <- melt(legend_matrix)
       
-      gg.legend <-  ggplot2::ggplot(legend.reshape, ggplot2::aes(x = Var2, y = Var1)) + 
-        ggplot2::geom_tile(fill = legend.reshape$value) + ggplot2::xlab("") + ggplot2::ylab("") + 
-        ggplot2::theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = ggplot2::element_blank(), panel.border = ggplot2::element_blank(), 
-                                    axis.ticks.y = ggplot2::element_blank(),
-                                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1))
+      gg.legend <-  ggplot(legend.reshape, aes(x = Var2, y = Var1)) + 
+        geom_tile(fill = legend.reshape$value) + xlab("") + ylab("") + 
+        theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(), 
+                           axis.ticks.y = element_blank(),
+                           axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
       
-      gg.legend <- ggpubr::ggarrange(gg.legend, nrow = 3, ncol = 1) 
+      gg.legend <- ggarrange(gg.legend, nrow = 3, ncol = 1) 
       
       # Actual plotting
-      ggpubr::ggarrange(plotlist = list(qgraph_plot, gg.legend), nrow = 1, ncol = 2, widths = c(3, 1))
+      ggarrange(plotlist = list(qgraph_plot, gg.legend), nrow = 1, ncol = 2, widths = c(3, 1))
       
       
       
@@ -418,6 +395,8 @@ MOFA_cor_network <- function(resMOFA,
 #' @param num_factors integer. MOFA option, maximum number of factor to consider. Default is 10.
 #' @param ... Not in use.
 #' @return A list with an untrained MOFA object (containing all options for the run) and a trained MOFA object
+#' @importFrom MOFA2 get_default_data_options get_default_model_options get_default_training_options prepare_mofa run_mofa
+#' @importFrom reticulate py_capture_output
 #' @keywords internal
 #' 
 runMOFAAnalysis <- function(object,
@@ -431,9 +410,9 @@ runMOFAAnalysis <- function(object,
     stop("object has to be a MOFA results")
   }
   
-  data_opts  <- MOFA2::get_default_data_options(object)
-  model_opts <- MOFA2::get_default_model_options(object)
-  train_opts <- MOFA2::get_default_training_options(object)
+  data_opts  <- get_default_data_options(object)
+  model_opts <- get_default_model_options(object)
+  train_opts <- get_default_training_options(object)
   
   data_opts$scale_views  <- scale_views
   train_opts$maxiter     <- maxiter
@@ -442,14 +421,14 @@ runMOFAAnalysis <- function(object,
   
   if (silent) {
     MOFAObject.untrained <- suppressMessages(suppressWarnings(
-      MOFA2::prepare_mofa(
+      prepare_mofa(
         object           = object,
         data_options     = data_opts,
         model_options    = model_opts,
         training_options = train_opts
       )))
   } else {
-    MOFAObject.untrained <- MOFA2::prepare_mofa(
+    MOFAObject.untrained <- prepare_mofa(
       object           = object,
       data_options     = data_opts,
       model_options    = model_opts,
@@ -459,16 +438,16 @@ runMOFAAnalysis <- function(object,
   
   if (silent && require(reticulate)) {
     
-    pycapt <- reticulate::py_capture_output(
+    pycapt <- py_capture_output(
       {
         MOFAObject.trained <- suppressWarnings(suppressMessages( 
-          MOFA2::run_mofa(MOFAObject.untrained, use_basilisk = FALSE, save_data = TRUE)
+          run_mofa(MOFAObject.untrained, use_basilisk = FALSE, save_data = TRUE)
         ))
       }
     )
   } else {
-    MOFAObject.trained <- MOFA2::run_mofa(MOFAObject.untrained, use_basilisk = FALSE, 
-                                          save_data = TRUE)
+    MOFAObject.trained <- run_mofa(MOFAObject.untrained, use_basilisk = FALSE, 
+                                   save_data = TRUE)
   }
   
   # peut poser probleme au niveau python et mofapy.
@@ -489,13 +468,18 @@ runMOFAAnalysis <- function(object,
 #' @param selectedResponse Default is NULL (pls functions). The response, can be a matrix or a single factor (discriminant analysis is set in this case).
 #' @param ncomp Number of component to be computed.
 #' @param link_dataset Numeric between 0 and 1. Only used for multi block analysis. Indicates the correlation to be considered between the matrices.
-#'        It impacts the weights of the features, hence the feature selection. Please see mixOmics user's guide for better explaination.
+#'        It impacts the weights of the features, hence the feature selection. Please see mixOmics user's guide for better explanation.
 #' @param link_response Numeric between 0 and 1. Indicates the correlation to be considered between the matrices and the response matrix.
-#'        It impacts the weights of the features, hence the feature selection. Please see mixOmics user's guide for better explaination.
+#'        It impacts the weights of the features, hence the feature selection. Please see mixOmics user's guide for better explanation.
 #' @param sparsity Boolean. Indicates if there is a feature selection purpose. If TRUE, functions like spls(da), block.spls(da) will be used.
 #' @param cases_to_try If sparsity is TRUE, indicates the number of cases to try for the feature selection. The best outcome, as computed by tuning function, will be displayed.
-#' @return A mixOmics result.
-#' @keywords internal
+#' @return A mixOmics result. 
+#' @importFrom tibble rownames_to_column column_to_rownames
+#' @importFrom dplyr arrange select select_if
+#' @importFrom tidyselect all_of
+#' @importFrom mixOmics plsda splsda block.plsda block.splsda tune.block.splsda tune.splsda
+#' unmap
+#' @keywords internal 
 
 runMixOmicsAnalysis <- function(object,
                                 scale_views = FALSE,
@@ -514,10 +498,10 @@ runMixOmicsAnalysis <- function(object,
   # du coup ca demande de le faire aussi pour Y
   # TODO : faudrait le faire directement dans preparedList ?
   Y <- data.frame(object$metadata, stringsAsFactors = TRUE) %>%
-    tibble::rownames_to_column(var = "rowNam") %>%
-    dplyr::arrange(rowNam) %>%
-    tibble::column_to_rownames(var = "rowNam") %>%
-    dplyr::select(tidyselect::all_of(selectedResponse))
+    rownames_to_column(var = "rowNam") %>%
+    arrange(rowNam) %>%
+    column_to_rownames(var = "rowNam") %>%
+    select(all_of(selectedResponse))
   
   # Is this a discriminant analysis?
   # TODO : is this used?
@@ -528,13 +512,13 @@ runMixOmicsAnalysis <- function(object,
     YrowNames <- rownames(Y)
     YFactors <- do.call("cbind", lapply(1:ncol(Y), FUN = function(j) {
       if (is.factor(Y[, j])) {
-        mat_return <- mixOmics::unmap(Y[, j])
+        mat_return <- unmap(Y[, j])
         colnames(mat_return) <- attr(mat_return, "levels")
         return(mat_return)
       }
     }))
     
-    Y <- cbind(Y %>% dplyr::select_if(is.numeric), YFactors)
+    Y <- cbind(Y %>% select_if(is.numeric), YFactors)
     Y <- apply(Y, 2, as.numeric)
     rownames(Y) <- YrowNames
   }

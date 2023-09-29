@@ -1,19 +1,5 @@
-#' @import MultiAssayExperiment
-#' @import SummarizedExperiment
 # @importClassesFrom MultiAssayExperiment
 # @importClassesFrom SummarizedExperiment
-
-# ---- old stuff ----
-
-methods::setGeneric(
-  name = "mvQCdesign",
-  def  = function(object, ... ){standardGeneric("mvQCdesign")}
-)
-
-methods::setGeneric(
-  name = "mvQCdata",
-  def  = function(object, ... ){standardGeneric("mvQCdata")}
-)
 
 # ---- Transformation and normalization: ----
 
@@ -151,17 +137,6 @@ methods::setGeneric(
 
 methods::setGeneric(
   name = "runAnnotationEnrichment",
-  def  = function(object, ... ){standardGeneric("runAnnotationEnrichment")}
-)
-
-methods::setGeneric(
-  name = "Enrichment.plot",
-  def  = function(object, ... ){standardGeneric("Enrichment.plot")}
-)
-
-
-methods::setGeneric(
-  name = "runAnnotationEnrichment_CPR",
   def  = function(object,
                   nameList = NULL,
                   list_args = list(),
@@ -172,11 +147,11 @@ methods::setGeneric(
                   col_gene = "gene",
                   col_name = "name",
                   col_domain = NULL,
-                  annot = NULL, ... ){standardGeneric("runAnnotationEnrichment_CPR")}
+                  annot = NULL, ... ){standardGeneric("runAnnotationEnrichment")}
 )
 
 methods::setGeneric(
-  name = "plot.CPRKEGG_Results",
+  name = "plotCPRKEGG",
   def  = function(object,
                   contrast,
                   pathway_id = NULL,
@@ -184,11 +159,11 @@ methods::setGeneric(
                   gene_idtype = "kegg",
                   from = "DiffExpAnal",
                   pvalueCutoff = object@metadata$DiffExpEnrichAnal[["KEGG"]]$list_args$pvalueCutoff,
-                  ...){standardGeneric("plot.CPRKEGG_Results")}
+                  ...){standardGeneric("plotCPRKEGG")}
 )
 
 methods::setGeneric(
-  name = "plot.CPR_Results",
+  name = "plotCPR",
   def  = function(object,
                   contrast,
                   ont,
@@ -199,7 +174,7 @@ methods::setGeneric(
                   searchExpr = "",
                   node_label = "all",
                   pvalueCutoff = object@metadata$DiffExpEnrichAnal[[ont]]$list_args$pvalueCutoff,
-                  ...){standardGeneric("plot.CPR_Results")}
+                  ...){standardGeneric("plotCPR")}
 )
 
 # ---- INTEGRATION ----

@@ -1,4 +1,4 @@
-#' @title runrFLOMICS
+#' @title runRFLOMICS
 #' @description running this function will open the shiny application. 
 #' Run the shiny application
 #' @return shinyApp
