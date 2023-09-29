@@ -4,7 +4,7 @@ library(shinyFiles)
 
 rm(list = ls())
 
-#### ADDED 220805 - Increasing maximum possible size of loaded files (default is only 5MB)
+#### Increasing maximum possible size of loaded files (default is only 5MB)
 # https://stackoverflow.com/questions/18037737/how-to-change-maximum-upload-size-exceeded-restriction-in-shiny-and-save-user
 options(shiny.maxRequestSize = 100*1024^2) # 100 MB limit.
 
@@ -49,7 +49,6 @@ shinyServer(function(input, output, session) {
           tags$br(),
           uiOutput("runReport"),
           uiOutput("downloadResults")
-          #downloadButton(outputId = "report", label = "Generate report")
           )
     })
 
@@ -78,7 +77,6 @@ shinyServer(function(input, output, session) {
           tabItem(tabName = "coverPage",
                   coverPage
 
-                  # shinyDirButton(id = "dir0", label = "Input directory", title = "Upload"),
           ),
 
           #### Import data       ####
@@ -158,13 +156,6 @@ shinyServer(function(input, output, session) {
                          CoSeqAnalysisUI(paste0("RNAseq",i))
                          #verbatimTextOutput("Asuivre")
                 ),
-                #### enrichment analysis  ####
-                ######################################
-                # tabPanel("Annotation Enrichment",
-                #          tags$br(),
-                #          tags$br(),
-                #          AnnotationEnrichmentUI(paste0("RNAseq",i))
-                # ),
                 #### enrichment analysis  CPR ####
                 ######################################
                 tabPanel("Annotation Enrichment",
@@ -200,13 +191,6 @@ shinyServer(function(input, output, session) {
                          CoSeqAnalysisUI(paste0("proteomics",i))
                          #verbatimTextOutput("Asuivre")
                 ),
-                #### enrichment analysis  ####
-                ######################################
-                # tabPanel("Annotation Enrichment",
-                #          tags$br(),
-                #          tags$br(),
-                #          AnnotationEnrichmentUI(paste0("proteomics",i))
-                # ),
                 ### enrichment analysis CPR ####
                 #####################################
                 tabPanel("Annotation Enrichment",
