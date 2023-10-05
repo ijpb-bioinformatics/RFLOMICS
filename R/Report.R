@@ -11,7 +11,6 @@
 #' @param output_file Name of the html document.
 #' @importFrom rmarkdown render
 #' @importFrom kableExtra kable_styling
-#' @importFrom MultiAssayExperiment upsetSamples
 #' @export
 #'
 generateReport <- function(object,

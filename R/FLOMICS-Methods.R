@@ -652,7 +652,6 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 #' @return An object of class \link{SummarizedExperiment}
 #' @exportMethod RunPCA
 #' @importFrom FactoMineR PCA
-#' @importFrom SummarizedExperiment assay
 #' @rdname RunPCA
 #' 
 methods::setMethod(f          = "RunPCA",
@@ -696,7 +695,6 @@ methods::setMethod(f          = "RunPCA",
 #' @export
 #' @importFrom ggplot2 ggplot geom_bar xlab ylab element_text ggtitle
 #' @rdname Library_size_barplot.plot
-#' @importFrom SummarizedExperiment assay
 #' @noRd
 methods::setMethod(f          = "Library_size_barplot.plot",
                    signature  = "SummarizedExperiment",
@@ -1127,8 +1125,6 @@ methods::setMethod(f          = "FilterLowAbundance",
 #' @exportMethod RunNormalization
 #' @seealso TMM.Normalization
 #' @rdname RunNormalization
-#' @importFrom SummarizedExperiment assay
-#' @importMethodsFrom SummarizedExperiment assay<-
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 

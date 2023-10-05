@@ -56,8 +56,6 @@ MixOmics_settingUI <- function(id){
   )
 }
 
-
-#' @importFrom SummarizedExperiment colData 
 #' @importFrom mixOmics plotVar plotIndiv network circosPlot cimDiablo
 #' @importFrom DT renderDataTable datatable
 MixOmics_setting <- function(input, output, session, rea.values){

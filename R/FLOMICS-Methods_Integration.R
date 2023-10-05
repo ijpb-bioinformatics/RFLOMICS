@@ -164,7 +164,6 @@ methods::setMethod(
 #' @export
 #' @exportMethod prepareForIntegration
 #' @importFrom MOFA2 create_mofa
-#' @importFrom SummarizedExperiment assay
 methods::setMethod(
   f = "prepareForIntegration",
   signature = "MultiAssayExperiment",

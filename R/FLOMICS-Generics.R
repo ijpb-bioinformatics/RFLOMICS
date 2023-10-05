@@ -1,3 +1,6 @@
+#' @import MultiAssayExperiment
+#' @import SummarizedExperiment
+
 # ---- Transformation and normalization: ----
 
 methods::setGeneric(

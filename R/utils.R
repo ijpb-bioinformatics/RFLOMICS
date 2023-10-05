@@ -1,7 +1,5 @@
 ##### Global import ####
-#' @importClassesFrom SummarizedExperiment SummarizedExperiment
-#' @importClassesFrom MultiAssayExperiment MultiAssayExperiment
-#' @importMethodsFrom SummarizedExperiment assay<-
+
 #' @importFrom ggplot2 ggplot geom_col theme_classic aes
 #' theme element_text element_blank ylab xlab ggtitle
 #' scale_fill_gradientn geom_tile theme_bw guides scale_fill_gradient2

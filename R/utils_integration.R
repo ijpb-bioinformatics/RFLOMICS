@@ -12,7 +12,6 @@
 #' @return An object of class \link{SummarizedExperiment}
 #' @importFrom limma removeBatchEffect
 #' @importFrom stats model.matrix as.formula
-#' @importFrom SummarizedExperiment assay
 #' @export
 #' @noRd
 #'
@@ -61,7 +60,6 @@ rbe_function = function(object, SEobject, cmd = FALSE){
 #' No other option for now. 
 #' @return An object of class \link{MultiAssayExperiment}
 #' @importFrom stats model.matrix formula
-#' @importFrom SummarizedExperiment assay
 #' @importFrom dplyr filter
 #' @importFrom limma voom
 #' @importFrom edgeR DGEList

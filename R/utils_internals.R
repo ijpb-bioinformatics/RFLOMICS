@@ -33,7 +33,6 @@ see_pathview <- function(...) {
 #' @param object An object of class \link{SummarizedExperiment}
 #' @return boolean. if TRUE, NA/nan are detected in the SE::assay.
 #' @keywords internal
-#' @importFrom SummarizedExperiment assay
 #' @noRd
 #'
 check_NA <- function(object) {
@@ -49,7 +48,6 @@ check_NA <- function(object) {
 #'
 #' @param object An object of class \link{SummarizedExperiment}
 #' @keywords internal
-#' @importFrom SummarizedExperiment assay assay<-
 #' @noRd
 #'
 
@@ -104,7 +102,6 @@ apply_transformation <- function(object) {
 #' @description apply the normalization to the assay. Usually, after the transformation,
 #' unless in the case of counts RNASeq data (TMM), where log2 is the second step.
 #' @keywords internal
-#' @importFrom SummarizedExperiment assay
 #' @noRd
 #'
 
@@ -158,8 +155,6 @@ apply_norm <- function(object) {
 #' @description apply the normalization and the transformation stored into the metadata of the SE object.
 #'  Applies TMM and log2 transformation for RNAseq data.
 #' @keywords internal
-#' @importFrom SummarizedExperiment assay
-#' @importMethodsFrom SummarizedExperiment assay<-
 #' @noRd
 #'
 
