@@ -12,7 +12,7 @@ Authors@R:
 Description: What the package does (one paragraph).
 Depends: 
     R (>= 3.5.0)
-biocViews:
+biocViews: ShinyApps, DifferentialExpression
 License: gpl-3 
 Encoding: UTF-8
 LazyData: true
