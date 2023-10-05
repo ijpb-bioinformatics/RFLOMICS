@@ -35,8 +35,12 @@ CoSeqAnalysisUI <- function(id){
   )
 }
 
-# tags$a(href="www.rstudio.com", "Click here!")
-
+#' @importFrom tidyr pivot_longer 
+#' @importFrom tibble rownames_to_column
+#' @importFrom DT renderDataTable  datatable
+#' @importFrom dplyr filter
+#' @importFrom purrr reduce
+#' @importFrom UpSetR upset
 CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
   
   local.rea.values <- reactiveValues(dataset.SE = NULL)
@@ -241,7 +245,6 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     
     local.rea.values$dataset.SE@metadata$CoExpAnal   <- list()
     local.rea.values$dataset.SE@metadata$CoExpEnrichAnal  <- list()
-    #FlomicsMultiAssay <- resetFlomicsMultiAssay(object=FlomicsMultiAssay, results=c("CoExpAnal"))
     
     #---- progress bar ----#
     progress <- shiny::Progress$new()
@@ -265,7 +268,8 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     # If an error occured
     if(isFALSE(local.rea.values$dataset.SE@metadata$CoExpAnal[["results"]])){
       
-      showModal(modalDialog( title = "Error message", paste0("No results! ", as.character(local.rea.values$dataset.SE@metadata$CoExpAnal[["error"]]))))
+      showModal(modalDialog( title = "Error message", 
+                             paste0("No results! ", as.character(local.rea.values$dataset.SE@metadata$CoExpAnal[["error"]]))))
     }
     
     validate(
@@ -293,11 +297,6 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     MAE.data <- session$userData$FlomicsMultiAssay
     dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
     
-    # MAE.data <- session$userData$FlomicsMultiAssay
-    # SE.data <- MAE.data[[dataset]]
-    # SE.filtered <- MAE.data[[paste0(dataset,".filtred")]]
-    
-    # factors.bio <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("Bio")])
     factors.bio <- bioFactors(MAE.data)
     
     plot.coseq.res <- dataset.SE@metadata$CoExpAnal[["plots"]]
@@ -378,7 +377,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
     coseq.res  <- dataset.SE@metadata$CoExpAnal[["coseqResults"]]
     clustr_num <- paste0("Cluster_",input$selectCluster)
-    assays.data <- dplyr::filter(as.data.frame(coseq.res@assays@data[[1]]), get(clustr_num) > 0.8)# %>% dplyr::select(clustr_num)
+    assays.data <- dplyr::filter(as.data.frame(coseq.res@assays@data[[1]]), get(clustr_num) > 0.8)
 
     choices <- rownames(assays.data)
     names(choices) <- paste0(choices, " (",assays.data[,clustr_num], ")")

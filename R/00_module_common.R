@@ -59,7 +59,7 @@ RadioButtonsCondition <- function(input, output, session, typeFact){
       condition <- c("groups", condition)
     
     radioButtons(inputId = session$ns("condColorSelect"),
-                 label = 'Levels :',
+                 label = 'Levels:',
                  choices = condition,
                  selected = condition[1])
   })
@@ -81,7 +81,7 @@ omics_data_analysis_summaryUI <- function(id){
           column(4, plotOutput(ns("procSummary"))),
           column(8, plotOutput(ns("mofaPlot"))))),
     fluidRow(
-      box(title = "Differential analysiss", width = 12, status = "warning", plotOutput(ns("DiffSummary")))),
+      box(title = "Differential analysis", width = 12, status = "warning", plotOutput(ns("DiffSummary")))),
   )
 }
 

@@ -35,7 +35,8 @@ LoadOmicsDataUI <- function(id){
     ),
     fluidRow( uiOutput(outputId = ns("LoadDataUI"))),
     fluidRow( column(width = 2, actionButton(inputId = ns("loadData"),"load Data")),
-              column(width = 2, actionButton(inputId = ns("loadExData"),"load Example Data", icon = shiny::icon("file-import")))),
+              column(width = 2, actionButton(inputId = ns("loadExData"),"load Example Data", 
+                                             icon = shiny::icon("file-import")))),
     br(),
     
     fluidRow(
@@ -47,9 +48,14 @@ LoadOmicsDataUI <- function(id){
   
 }
 
+#' @importFrom stringr str_subset
 LoadOmicsData <- function(input, output, session, rea.values){
   
-  local.rea.values <- reactiveValues(plots = FALSE, ExpDesign = NULL, FactorList = NULL, dataPath = NULL, listInputs = NULL)
+  local.rea.values <- reactiveValues(plots = FALSE, 
+                                     ExpDesign = NULL, 
+                                     FactorList = NULL, 
+                                     dataPath = NULL, 
+                                     listInputs = NULL)
   
   observe({
     
@@ -212,15 +218,18 @@ LoadOmicsData <- function(input, output, session, rea.values){
         fluidRow(
           column(2,
                  # omic type
-                 selectInput(inputId = session$ns('omicType1'), label='Omic type', choices = c("None"="none", "RNAseq"="RNAseq", "Proteomics"="proteomics", "Metabolomics"="metabolomics"), selected = "none")
+                 selectInput(inputId = session$ns('omicType1'), label='Omic type',
+                             choices = c("None"="none", "RNAseq"="RNAseq", "Proteomics"="proteomics", "Metabolomics"="metabolomics"), selected = "none")
           ),
           column(6,
                  # matrix count/abundance input
-                 fileInput(inputId = session$ns("data1"), "Dataset matrix (tsv)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
+                 fileInput(inputId = session$ns("data1"), "Dataset matrix (tsv)",
+                           accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
           ),
           column(3,
                  # dataset Name
-                 textInput(inputId = session$ns("DataName1"), label="Dataset name", value="set1")
+                 textInput(inputId = session$ns("DataName1"), label="Dataset name",
+                           value="set1")
           )
         ),
         uiOutput(   outputId = session$ns("toAddData2")),
@@ -244,13 +253,16 @@ LoadOmicsData <- function(input, output, session, rea.values){
         fluidRow(
           column(2,
                  # omic type
-                 selectInput(inputId = session$ns(paste0('omicType', addDataNum)), label = 'Omic type', choices = c("None" = "none", "RNAseq" = "RNAseq", "Proteomics" = "proteomics", "Metabolomics" = "metabolomics"), selected = "none")),
+                 selectInput(inputId = session$ns(paste0('omicType', addDataNum)), 
+                             label = 'Omic type', choices = c("None" = "none", "RNAseq" = "RNAseq", "Proteomics" = "proteomics", "Metabolomics" = "metabolomics"), selected = "none")),
           column(6,
                  # matrix count/abundance input
-                 fileInput(inputId = session$ns(paste0("data", addDataNum)), "Dataset matrix (tsv)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
+                 fileInput(inputId = session$ns(paste0("data", addDataNum)), 
+                           "Dataset matrix (tsv)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
           column(3,
                  # dataset Name
-                 textInput(inputId = session$ns(paste0("DataName", addDataNum)), label = "Dataset name", value=paste0("set", as.character(addDataNum))))
+                 textInput(inputId = session$ns(paste0("DataName", addDataNum)), 
+                           label = "Dataset name", value=paste0("set", as.character(addDataNum))))
         ),
         
         uiOutput(session$ns(paste("toAddData", addDataNum + 1, sep = "")))
@@ -282,19 +294,22 @@ LoadOmicsData <- function(input, output, session, rea.values){
     rea.values$validate.status <- 0
     
     # RNASeq
-    data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")), 
+    data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"),
+                                                           "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")), 
                             error = function(e) e, warning = function(w) w)
     dataName <- "RNAseq.set1"
     inputs[[dataName]] <- list("omicType" = "RNAseq", "data" = data.mat.tt, "meta" = NULL) 
     
     # Metabolomic
-    data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
+    data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+                                                           "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
                             error = function(e) e, warning = function(w) w)
     dataName <- "metabolomics.set2"
     inputs[[dataName]] <- list("omicType" = "metabolomics", "data" = data.mat.tt, "meta" = NULL) 
     
     # proteomics
-    data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")), 
+    data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+                                                           "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")), 
                             error = function(e) e, warning = function(w) w)
     dataName <- "proteomics.set3"
     inputs[[dataName]] <- list("omicType" = "proteomics", "data" = data.mat.tt, "meta" = NULL) 
@@ -343,21 +358,25 @@ LoadOmicsData <- function(input, output, session, rea.values){
         
         # => check duplicat dataset name
         if(any(duplicated(dataName.vec)) == TRUE){
-          showModal(modalDialog( title = "Error message", "Dataset names must be unique: dataset ", (1:addDataNum)[duplicated(dataName.vec)] ))
+          showModal(modalDialog( title = "Error message", 
+                                 "Dataset names must be unique: dataset ", 
+                                 (1:addDataNum)[duplicated(dataName.vec)] ))
           rea.values$validate.status <- 1
         }
         
         #### omics dataset
         # => check omics data
         if(is.null(input[[paste0("data", k)]])){
-          showModal(modalDialog( title = "Error message", "omics dataset is required: dataset ", k ))
+          showModal(modalDialog( title = "Error message",
+                                 "omics dataset is required: dataset ", k ))
           rea.values$validate.status <- 1
         }
         validate({ need(expr = !is.null(input[[paste0("data", k)]]), message="error") })
         
         # => read data matrix
         dataFile <- input[[paste0("data", k)]]
-        data.mat.tt <- tryCatch( read_omics_data(file = dataFile$datapath), error=function(e) e, warning=function(w) w)
+        data.mat.tt <- tryCatch( read_omics_data(file = dataFile$datapath),
+                                 error=function(e) e, warning=function(w) w)
         
         if(!is.null(data.mat.tt$message)){
           
@@ -495,7 +514,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     rea.values$datasetList <- session$userData$FlomicsMultiAssay@metadata$omicList
     
     rea.values$loadData <- TRUE
-    #rea.values$model    <- TRUE
     
   }, ignoreInit = TRUE)
   
