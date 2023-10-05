@@ -4,6 +4,10 @@
 #' @param ... Possible arguments for pathview function.
 #' @return nothing. Plot on the currently opened device.
 #' @keywords internal
+#' @importFrom grid grid.raster
+#' @importFrom stringr str_split
+#' @importFrom pathview pathview
+#' @importFrom png readPNG
 #' @noRd
 #'
 # Code from: https://stackoverflow.com/questions/60141841/how-to-get-pathview-plot-displayed-directly-rather-than-saving-as-a-file-in-r
@@ -29,10 +33,11 @@ see_pathview <- function(...) {
 #' @param object An object of class \link{SummarizedExperiment}
 #' @return boolean. if TRUE, NA/nan are detected in the SE::assay.
 #' @keywords internal
+#' @importFrom SummarizedExperiment assay
 #' @noRd
 #'
 check_NA <- function(object) {
-  NA_detect <- ifelse(any(is.na(SummarizedExperiment::assay(object))), TRUE, FALSE)
+  NA_detect <- ifelse(any(is.na(assay(object))), TRUE, FALSE)
   return(NA_detect)
 }
 
@@ -44,41 +49,42 @@ check_NA <- function(object) {
 #'
 #' @param object An object of class \link{SummarizedExperiment}
 #' @keywords internal
+#' @importFrom SummarizedExperiment assay assay<-
 #' @noRd
 #'
 
 apply_transformation <- function(object) {
-  if (is.null(object@metadata[["transform"]][["transform_method"]])) {
+  if (is.null(getTrans(object))) {
     stop("Expect transformation method.")
   }
 
-  if (object@metadata[["transform"]][["transformed"]]) {
+  if (isTransformed(object)) {
     warning("Data were already transformed before!")
   }
 
-  transform_method <- object@metadata[["transform"]][["transform_method"]]
-  assayTransform <- SummarizedExperiment::assay(object, withDimnames = TRUE)
+  transform_method <- getTrans(object)
+  assayTransform <- assay(object, withDimnames = TRUE)
   validTransform <- TRUE
 
 
   switch(transform_method,
     "log1p" = {
-      SummarizedExperiment::assay(object) <- log1p(assayTransform)
+      assay(object) <- log1p(assayTransform)
     },
     "log2" = {
-      SummarizedExperiment::assay(object) <- log2(assayTransform + 1)
+      assay(object) <- log2(assayTransform + 1)
     },
     "log10" = {
-      SummarizedExperiment::assay(object) <- log10(assayTransform + 1)
+      assay(object) <- log10(assayTransform + 1)
     },
     "squareroot" = {
-      SummarizedExperiment::assay(object) <- sqrt(assayTransform)
+      assay(object) <- sqrt(assayTransform)
     },
     "none" = {
-      SummarizedExperiment::assay(object) <- assayTransform
+      assay(object) <- assayTransform
     },
     {
-      SummarizedExperiment::assay(object) <- assayTransform
+      assay(object) <- assayTransform
       message("Could not recognize the transformation method. No transformation applied. Please check your parameters.")
       validTransform <- FALSE
     } # default is none
@@ -103,8 +109,8 @@ apply_transformation <- function(object) {
 #'
 
 apply_norm <- function(object) {
-  if (is.null(object@metadata[["Normalization"]])) {
-    stop("Expect normalization method.")
+  if (is.null(getNorm(object))) {
+    stop("Expects normalization method.")
   }
 
   if (isNorm(object)) {
@@ -152,6 +158,8 @@ apply_norm <- function(object) {
 #' @description apply the normalization and the transformation stored into the metadata of the SE object.
 #'  Applies TMM and log2 transformation for RNAseq data.
 #' @keywords internal
+#' @importFrom SummarizedExperiment assay
+#' @importMethodsFrom SummarizedExperiment assay<-
 #' @noRd
 #'
 
@@ -163,11 +171,11 @@ checkTransNorm <- function(object, raw = FALSE) {
 
   # No transformation (except for RNAseq, which expect counts...)
   if (raw) {
-    if (object@metadata[["transform"]][["transformed"]]) message("WARNING: your data are not raw (transformed)")
-    if (object@metadata[["Normalization"]]$normalized) message("WARNING: your data are not raw (normalized)")
+    if (isTransformed(object)) warning("Your data are not raw (transformed)")
+    if (isNorm(object)) warning("Your data are not raw (normalized)")
 
     if (getOmicsTypes(object) == "RNAseq") {
-      SummarizedExperiment::assay(object) <- log2(SummarizedExperiment::assay(object) + 1)
+      assay(object) <- log2(assay(object) + 1)
     }
   } else {
     # if RNAseq
@@ -175,24 +183,24 @@ checkTransNorm <- function(object, raw = FALSE) {
       # Really depends if TMM is the normalization or not.
       # Make it easier: force TMM and log2.
 
-      if (object@metadata[["transform"]][["transformed"]]) stop("Expect untransformed RNAseq data at this point.")
+      if (isTransformed(object)) stop("Expect untransformed RNAseq data at this point.")
 
-      if (object@metadata[["Normalization"]][["normalized"]] && object@metadata[["Normalization"]][["methode"]] == "TMM") {
-        SummarizedExperiment::assay(object) <- log2(SummarizedExperiment::assay(object))
+      if (isNorm(object) && getNorm(object) == "TMM") {
+        assay(object) <- log2(assay(object))
       } # +1 in the apply_norm function
 
-      if (object@metadata[["Normalization"]][["normalized"]] && object@metadata[["Normalization"]][["methode"]] != "TMM") {
+      if (isNorm(object) && getNorm(object) != "TMM") {
         message("RNAseq counts expects TMM normalization. Data were already normalized with another method.
                 Skipping to the end without transforming or normalizing data.")
       }
 
-      if (!object@metadata[["Normalization"]][["normalized"]]) {
+      if (!isNorm(object)) {
         # Force "none" transformation.
-        if (object@metadata[["transform"]][["transform_method"]] != "none") {
+        if (getTrans(object) != "none") {
           message("RNAseq counts expects TMM normalization. Transformation is done after the normalization,
                   using 'none' as transform method. Data will be transformed using log2 after the normalization anyway")
 
-          object@metadata[["transform"]][["transform_method"]] <- "none"
+          object <- setTrans(object, methode = "none")
         }
 
         # Force TMM normalization
@@ -204,13 +212,13 @@ checkTransNorm <- function(object, raw = FALSE) {
         # Finally transforming the data.
         object <- apply_transformation(object) # none
         object <- apply_norm(object) # TMM
-        SummarizedExperiment::assay(object) <- log2(SummarizedExperiment::assay(object)) # +1 in the apply_norm function
+        assay(object) <- log2(assay(object)) # +1 in the apply_norm function
       }
     } else {
       # in case any other omics type (does not expect counts)
       # transform and norm
-      if (!object@metadata[["transform"]][["transformed"]]) object <- apply_transformation(object)
-      if (!object@metadata[["Normalization"]][["normalized"]]) object <- apply_norm(object)
+      if (!isTransformed(object)) object <- apply_transformation(object)
+      if (!isNorm(object)) object <- apply_norm(object)
     }
   }
 
@@ -222,30 +230,47 @@ checkTransNorm <- function(object, raw = FALSE) {
 
 ######## INTERNAL - isNorm, isTransform, getNorm, getTransform ###########
 
-#' @title isNorm, isTransform, getNorm, getTransform
+#' @title isNorm, isTransform, getNorm, getTransform, setNorm, setTrans
 #'
 #' @param object An object of class \link{SummarizedExperiment}
 #' @description get if an assay has been transformed or normalized.
 #' @keywords internal
+#' @importFrom S4Vectors metadata
+#' @importFrom S4Vectors metadata<-
 #' @noRd
 #'
 
 isTransformed <- function(object) {
-  object@metadata[["transform"]][["transformed"]]
+  metadata(object)[["transform"]][["transformed"]]
 }
 
 isNorm <- function(object) {
-  object@metadata[["Normalization"]][["normalized"]]
+  metadata(object)[["Normalization"]][["normalized"]]
 }
 
 getNorm <- function(object) {
-  object@metadata[["Normalization"]][["methode"]]
+  metadata(object)[["Normalization"]][["methode"]]
 }
 
 getCoeffNorm <- function(object) {
-  object@metadata[["Normalization"]][["coefNorm"]]
+  metadata(object)[["Normalization"]][["coefNorm"]]
 }
 
 getTrans <- function(object) {
-  object@metadata[["transform"]][["transform_method"]]
+  metadata(object)[["transform"]][["transform_method"]]
+}
+
+setTrans <- function(object, methode = "none") {
+  metadata(object)[["transform"]][["transform_method"]] <- methode
+  return(object)
+}
+
+setNorm <- function(object, methode = "none") {
+  metadata(object)[["Normalization"]][["methode"]] <- methode
+  return(object)
+}
+
+setCoeffNorm <- function(object, coeff = NULL) {
+  metadata(object)[["Normalization"]][["coefNorm"]] <- coeff
+  return(object)
 }

@@ -23,7 +23,6 @@ Suggests:
     testthat
 VignetteBuilder: knitr
 Imports: 
-    devtools,
     shiny,
     statmod,
     shinydashboard,
@@ -44,7 +43,6 @@ Imports:
     RColorBrewer,
     gridExtra,
     DT,
-    venn,
     clustermq,
     ggplot2,
     UpSetR,
@@ -54,8 +52,6 @@ Imports:
     ggpubr,
     qgraph,
     colourpicker,
-    plotly,
-    pheatmap,
     S4Vectors,
     MultiAssayExperiment,
     SummarizedExperiment,
@@ -71,5 +67,4 @@ Imports:
     pathview,
     enrichplot,
     AnnotationDbi,
-    org.At.tair.db,
     vroom

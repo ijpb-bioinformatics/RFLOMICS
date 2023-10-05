@@ -56,7 +56,7 @@ test_that("it's running from diffExpAnal - GO - RNASeq", {
   
   # Selecting only one contrast
   expect_no_error({
-   MAE <- runAnnotationEnrichment_CPR(MAE, nameList = "H1", SE.name = "RNAtest", dom.select = "GO",
+   MAE <- runAnnotationEnrichment(MAE, nameList = "H1", SE.name = "RNAtest", dom.select = "GO",
                                      list_args = list(OrgDb = "org.At.tair.db", 
                                                       keyType = "TAIR", 
                                                       pvalueCutoff = 0.05),
@@ -70,7 +70,7 @@ test_that("it's running from diffExpAnal - GO - RNASeq", {
   
   # All contrasts
   expect_no_error({
-    MAE <- runAnnotationEnrichment_CPR(MAE, SE.name = "RNAtest", dom.select = "GO",
+    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", dom.select = "GO",
                                      list_args = list(OrgDb = "org.At.tair.db", 
                                                       keyType = "TAIR", 
                                                       pvalueCutoff = 0.05),
@@ -91,7 +91,7 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
   
   df_custom <- vroom::vroom(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/GO_annotations/Arabidopsis_thaliana_Ensembl_55.txt"))
   
-  MAE <- runAnnotationEnrichment_CPR(MAE, SE.name = "RNAtest", dom.select = "custom",
+  MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", dom.select = "custom",
                                      list_args = list(pvalueCutoff = 0.05),
                                      col_term = "GO term accession", 
                                      col_gene = "Gene stable ID",
@@ -103,7 +103,7 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
   
   # Selecting only one contrast, custom file
   expect_no_error({
-    MAE <- runAnnotationEnrichment_CPR(MAE, nameList = "H1", SE.name = "RNAtest", dom.select = "custom",
+    MAE <- runAnnotationEnrichment(MAE, nameList = "H1", SE.name = "RNAtest", dom.select = "custom",
                                        list_args = list(pvalueCutoff = 0.05),
                                        col_term = "GO term accession", 
                                        col_gene = "Gene stable ID",
@@ -120,7 +120,7 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
   
   # All contrasts, GO database
   expect_no_error({
-    MAE <- runAnnotationEnrichment_CPR(MAE, SE.name = "RNAtest", dom.select = "GO",
+    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", dom.select = "GO",
                                        list_args = list(OrgDb = "org.At.tair.db", 
                                                         keyType = "TAIR", 
                                                         pvalueCutoff = 0.05),
@@ -143,7 +143,7 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
 test_that("it's running from CoExpAnal - GO - RNASeq", {
   
   expect_no_error({
-    MAE <- runAnnotationEnrichment_CPR(MAE, SE.name = "RNAtest", from = "CoExpAnal", dom.select = "GO",
+    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", from = "CoExpAnal", dom.select = "GO",
                                        list_args = list(OrgDb = "org.At.tair.db", 
                                                         keyType = "TAIR", 
                                                         pvalueCutoff = 0.05),
@@ -159,7 +159,7 @@ test_that("it's running from CoExpAnal - GO - RNASeq", {
 
   
   expect_no_error({
-    MAE <- runAnnotationEnrichment_CPR(MAE, SE.name = "RNAtest", nameList = c("cluster.1", "cluster.2") ,
+    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", nameList = c("cluster.1", "cluster.2") ,
                                        from = "CoExpAnal", dom.select = "GO",
                                        list_args = list(OrgDb = "org.At.tair.db", 
                                                         keyType = "TAIR", 

@@ -83,6 +83,7 @@ getModelFormula <- function(object) {
 #' @return a character vector or a dataTable
 #' @rdname ContrastsSelection
 #' @export
+#' @importFrom data.table rbindlist
 #'
 getPossibleContrasts <- function(object, typeContrast = c("simple", "averaged", "interaction"),
                                  modalities = NULL, returnTable = FALSE) {
@@ -91,7 +92,6 @@ getPossibleContrasts <- function(object, typeContrast = c("simple", "averaged", 
 
     allContrasts <- MAE@metadata$design@Contrasts.List
     allContrasts <- allContrasts[which(names(allContrasts) %in% typeContrast)]
-    # allContrasts$fill <- TRUE # do.call need this
     allContrastsdt <- data.table::rbindlist(allContrasts, fill = TRUE)
 
     if (!is.null(modalities)) {
@@ -213,6 +213,7 @@ getDEMatrix <- function(object) {
 #' Defines the operation to perform on the DE lists from the contrasts.
 #' @return vector of unique DE entities
 #' @export
+#' @importFrom tidyselect starts_with
 #'
 opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "union") {
   

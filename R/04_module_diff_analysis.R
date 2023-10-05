@@ -1,4 +1,6 @@
 
+#' @importFrom UpSetR upset
+#' @importFrom DT formatSignif datatable renderDataTable styleInterval formatStyle
 
 DiffExpAnalysisUI <- function(id){
   
@@ -75,7 +77,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                         ## list of contrasts to test
                         pickerInput(
                           inputId  = session$ns("contrastList"),
-                          label    = "Selected contrast :",
+                          label    = "Selected contrasts:",
                           choices  = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
                           multiple = TRUE, selected = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName),
                         

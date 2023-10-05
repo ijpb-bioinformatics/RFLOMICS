@@ -1,6 +1,5 @@
 library(testthat)
 library(RFLOMICS)
-library(MOFA2)
 
 # ---- Construction of objects for the tests ----
 

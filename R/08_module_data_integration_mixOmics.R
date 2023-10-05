@@ -56,6 +56,10 @@ MixOmics_settingUI <- function(id){
   )
 }
 
+
+#' @importFrom SummarizedExperiment colData 
+#' @importFrom mixOmics plotVar plotIndiv network circosPlot cimDiablo
+#' @importFrom DT renderDataTable datatable
 MixOmics_setting <- function(input, output, session, rea.values){
   
   local.rea.values <- reactiveValues(runMixOmics = FALSE) # init local reactive values
@@ -146,8 +150,6 @@ MixOmics_setting <- function(input, output, session, rea.values){
   ## observe the button run mixOmics
   observeEvent(input$runMixOmics, {
     
-    library(mixOmics)
-    
     #---- progress bar ----#
     progress <- shiny::Progress$new()
     progress$set(message = "Run MixOmics", value = 0)
@@ -230,9 +232,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
     if (!local.rea.values$runMixOmics) return()
     
     lapply(names(session$userData$FlomicsMultiAssay@metadata[["mixOmics"]]), function(listname) { 
-      
-      # MAE@metadata$mixOmics$Genotype$MixOmics_results
-      
+
       Data_res <- session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][[listname]]$MixOmics_results
       
       fluidRow(
@@ -325,14 +325,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
                                                                      comp = input[[paste0(listname, "Load_comp_choice")]],
                                                                      ndisplay = input[[paste0(listname, "Load_ndisplay")]])))
               ),   
-              # ---- Tab panel Tuning ----
-              #   tabPanel("Tuning",
-              #            # TODO 
-              #            column(12 , renderPlot(mixOmics::plot(local.rea.values$tuning_res)))
-              #   )), # plot.tune ne fait pas partie du package dans ma version ?!
               tabPanel("Networks",
-                       # TODO Prevoir bouton pour comp selectionnee
-                       # Comp fonctionne plus ?!
                        column(1, numericInput(inputId = session$ns(paste0(listname, "Network_cutoff")),
                                               label = "Cutoff:",
                                               min = 0,
@@ -362,7 +355,6 @@ MixOmics_setting <- function(input, output, session, rea.values){
               ),
               tabPanel("CimPlot",
                        if (is(Data_res, "block.splsda")) {
-                         print("=> Rendering cimPlot, be patient!")
                          fluidRow(
                            column(1,
                                   numericInput(inputId = session$ns(paste0(listname, "cimComp")),

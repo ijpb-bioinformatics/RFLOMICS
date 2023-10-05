@@ -99,7 +99,7 @@ GLM_model <- function(input, output, session, rea.values){
                    vect        <- as.vector(session$userData$FlomicsMultiAssay@metadata$design@Contrasts.List[[contrastType]]$contrast)
                    names(vect) <- as.vector(session$userData$FlomicsMultiAssay@metadata$design@Contrasts.List[[contrastType]]$contrastName)
 
-                   pickerInput(
+                   shinyWidgets::pickerInput(
                      inputId  = session$ns(paste0("ContrastType",contrastType)),
                      label    = tags$span(style="color: black;", paste0("Contrast type : ", contrastType)),
                      choices  = vect,
@@ -118,7 +118,7 @@ GLM_model <- function(input, output, session, rea.values){
       )
     })
 
-    # as soon as the "valid Contrasts" buttom has been clicked
+    # as soon as the "valid Contrasts" button has been clicked
     # => The selected contrasts are saved
     # => The load data item appear
     observeEvent(input$validContrasts, {

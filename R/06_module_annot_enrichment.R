@@ -67,6 +67,9 @@ AnnotationEnrichmentClusterProfUI <- function(id){
   )
 }
 
+#' @importFrom data.table fread
+#' @importFrom AnnotationDbi keytypes
+#' @importFrom DT renderDataTable datatable
 AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea.values){
   
   ns <- session$ns
@@ -253,12 +256,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
   
   # ---- run Annotation  ----
   observeEvent(input$runEnrich_CPR, {
-    
-    # library(clusterProfiler)
-    # library(pathview)
-    # library(enrichplot)
-    # library(org.At.tair.db)
-    # library(AnnotationDbi)
     
     #---- progress bar ----#
     progress <- shiny::Progress$new()

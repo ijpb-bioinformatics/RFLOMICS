@@ -85,13 +85,17 @@ omics_data_analysis_summaryUI <- function(id){
   )
 }
 
+#' @importFrom MOFA2 create_mofa_from_MultiAssayExperiment  plot_data_overview
+#' @importFrom purrr reduce
+#' @importFrom data.table data.table
 omics_data_analysis_summary <- function(input, output, session, rea.values){
 
   output$procSummary <- renderPlot({ 
     
     summaryProcess.df <- lapply(rea.values$datasetDiff, function(dataset){
       
-      c(paste(dataset, "filtred", sep = "."), dim(session$userData$FlomicsMultiAssay[[dataset]]) - dim(session$userData$FlomicsMultiAssay[[paste(dataset, "filtred", sep = ".")]]))
+      c(paste(dataset, "filtred", sep = "."), 
+        dim(session$userData$FlomicsMultiAssay[[dataset]]) - dim(session$userData$FlomicsMultiAssay[[paste(dataset, "filtred", sep = ".")]]))
     }) %>% purrr::reduce(rbind) %>% data.table::data.table()
     names(summaryProcess.df) <- c("dataset", "rm_entities", "rm_samples")
     

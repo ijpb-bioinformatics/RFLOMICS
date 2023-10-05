@@ -1,6 +1,3 @@
-# @importClassesFrom MultiAssayExperiment
-# @importClassesFrom SummarizedExperiment
-
 # ---- Transformation and normalization: ----
 
 methods::setGeneric(

@@ -651,6 +651,8 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
 #' @param raw boolean. Does the pca have to be ran on raw data or transformed and normalized data? Default is FALSE, pca is ran on transformed and normalized data.
 #' @return An object of class \link{SummarizedExperiment}
 #' @exportMethod RunPCA
+#' @importFrom FactoMineR PCA
+#' @importFrom SummarizedExperiment assay
 #' @rdname RunPCA
 #' 
 methods::setMethod(f          = "RunPCA",
@@ -694,6 +696,7 @@ methods::setMethod(f          = "RunPCA",
 #' @export
 #' @importFrom ggplot2 ggplot geom_bar xlab ylab element_text ggtitle
 #' @rdname Library_size_barplot.plot
+#' @importFrom SummarizedExperiment assay
 #' @noRd
 methods::setMethod(f          = "Library_size_barplot.plot",
                    signature  = "SummarizedExperiment",
@@ -765,6 +768,8 @@ methods::setMethod(f          = "Library_size_barplot.plot",
 #' @export
 #' @exportMethod Data_Distribution_plot
 #' @importFrom ggplot2 geom_density xlab
+#' @importFrom reshape2 melt
+#' @importFrom dplyr full_join arrange
 #' @rdname Data_Distribution_plot
 #' @noRd
 
@@ -861,6 +866,9 @@ methods::setMethod(
 #' @param PCs A vector giving the two axis that have to be drawn for the factorial map
 #' @param condition All combination of level's factor
 #' @return PCA plot (ggplot2 object)
+#' @importFrom dplyr mutate full_join select
+#' @importFrom FactoMineR coord.ellipse
+#' @importFrom ggplot2 geom_polygon
 #' @exportMethod plotPCA
 #' @rdname plotPCA
 #' 
@@ -882,17 +890,19 @@ methods::setMethod(f= "plotPCA",
                      var1 <- round(object@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digits=3)
                      var2 <- round(object@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digits=3)
                      
+                     omicsType <- getOmicsTypes(object)
+                     
                      switch (PCA,
-                             "raw"  = {title <- paste0("Raw ", object@metadata$omicType, " data")},
-                             "norm" = {title <- switch (object@metadata$omicType,
-                                                        "RNAseq" = { paste0("Filtred and normalized ", object@metadata$omicType, 
-                                                                            " data (", object@metadata$Normalization$methode, ")")  },
-                                                        "proteomics" = {paste0("Transformed and normalized ", object@metadata$omicType, 
-                                                                               " data (", object@metadata$transform$transform_method, 
-                                                                               " - norm: ", object@metadata$Normalization$methode, ")")},
-                                                        "metabolomics" = {paste0("Transformed and normalized ", object@metadata$omicType, 
-                                                                                 " data (", object@metadata$transform$transform_method, 
-                                                                                 " - norm: ", object@metadata$Normalization$methode, ")")}
+                             "raw"  = {title <- paste0("Raw ", omicsType, " data")},
+                             "norm" = {title <- switch (omicsType,
+                                                        "RNAseq" = { paste0("Filtred and normalized ", omicsType, 
+                                                                            " data (", getNorm(object), ")")  },
+                                                        "proteomics" = {paste0("Transformed and normalized ", omicsType, 
+                                                                               " data (", getTrans(object), 
+                                                                               " - norm: ", getNorm(object), ")")},
+                                                        "metabolomics" = {paste0("Transformed and normalized ", omicsType, 
+                                                                                 " data (", getTrans(object), 
+                                                                                 " - norm: ", getNorm(object), ")")}
                              )}
                      )
                      
@@ -915,14 +925,6 @@ methods::setMethod(f= "plotPCA",
                      p <- p + ggplot2::geom_polygon(data = bb$res, aes_string(x=PC1, y=PC2, fill = condition),
                                                     show.legend = FALSE,
                                                     alpha = 0.1)
-                     
-                     
-                     # if(condition != "groups"){
-                     #   p <- p + stat_ellipse(geom="polygon", aes_string(fill = condition),
-                     #                         alpha = 0.01,
-                     #                         show.legend = FALSE,
-                     #                         level = 0.95)
-                     # }
                      
                      print(p)
                      
@@ -1033,6 +1035,7 @@ methods::setMethod(f          = "TransformData",
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod FilterLowAbundance
+#' @importFrom edgeR DGEList filterByExpr cpm
 #' @seealso edgeR::filterByExpr#' 
 #' @rdname FilterLowAbundance
 
@@ -1124,6 +1127,8 @@ methods::setMethod(f          = "FilterLowAbundance",
 #' @exportMethod RunNormalization
 #' @seealso TMM.Normalization
 #' @rdname RunNormalization
+#' @importFrom SummarizedExperiment assay
+#' @importMethodsFrom SummarizedExperiment assay<-
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 
@@ -1131,14 +1136,14 @@ methods::setMethod(f          = "RunNormalization",
                    signature  = "SummarizedExperiment",
                    definition = function(object, NormMethod = NULL, modify_assay = FALSE){
                      
-                     if (object@metadata[["Normalization"]]$normalized) 
-                       message("WARNING: data were already normalized before!")
+                     if (isNorm(object)) 
+                       warning("Data were already normalized before!")
                      
-                     if (object@metadata[["transform"]][["transformed"]]) 
-                       message("WARNING: data were transformed before!")
+                     if (isTransformed(object)) 
+                       warning("Data were transformed before!")
                      
                      if (is.null(NormMethod)) {
-                       if ( getOmicsTypes(object) == "RNAseq" && object@metadata[["transform"]][["transform_method"]] == "none") {
+                       if (getOmicsTypes(object) == "RNAseq" && getTrans(object) == "none") {
                          message("Using TMM normalization for RNAseq (counts) data")
                          NormMethod <- "TMM"
                        } else {
@@ -1146,7 +1151,7 @@ methods::setMethod(f          = "RunNormalization",
                        }
                      }
                      
-                     if ( getOmicsTypes(object) == "RNAseq" && NormMethod != "TMM") {
+                     if (getOmicsTypes(object) == "RNAseq" && NormMethod != "TMM") {
                        message("Forcing TMM normalization for RNAseq (counts) data")
                        NormMethod <- "TMM"
                      }
@@ -1154,22 +1159,22 @@ methods::setMethod(f          = "RunNormalization",
                      object2 <- object
                      
                      # Run normalization on transformed data (except for RNAseq data, transformation is expected to be "none" anyway)
-                     if (!object@metadata[["transform"]][["transformed"]] && object@metadata[["transform"]][["transform_method"]] != "none")
+                     if (!isTransformed(object) && getTrans(object) != "none")
                        object2 <-  apply_transformation(object2)
                      
                      switch(NormMethod,
-                            "TMM"        = {coefNorm  <- TMM.Normalization(SummarizedExperiment::assay(object2), object2@metadata$Groups$groups) },
-                            "median"     = {coefNorm  <- apply(SummarizedExperiment::assay(object2), 2, FUN = function(sample_vect) {median(sample_vect)}) },
-                            "totalSum"   = {coefNorm  <- apply(SummarizedExperiment::assay(object2), 2, FUN = function(sample_vect) {sum(sample_vect^2)}) },
-                            "none"       = {coefNorm  <- rep(1, ncol(SummarizedExperiment::assay(object2))) },
+                            "TMM"        = {coefNorm  <- TMM.Normalization(assay(object2), object2@metadata$Groups$groups) },
+                            "median"     = {coefNorm  <- apply(assay(object2), 2, FUN = function(sample_vect) {median(sample_vect)}) },
+                            "totalSum"   = {coefNorm  <- apply(assay(object2), 2, FUN = function(sample_vect) {sum(sample_vect^2)}) },
+                            "none"       = {coefNorm  <- rep(1, ncol(assay(object2))) },
                             { message("Could not recognize the normalization method, applying 'none'. Please check your parameters.")
                               NormMethod <- "none"
-                              coefNorm  <-  rep(1, ncol(SummarizedExperiment::assay(object2)))
+                              coefNorm  <-  rep(1, ncol(assay(object2)))
                             }
                      )
                      
-                     object@metadata[["Normalization"]]$methode  <- NormMethod
-                     object@metadata[["Normalization"]]$coefNorm <- coefNorm
+                     object <- setNorm(object, NormMethod)
+                     object <- setCoeffNorm(object, coefNorm)
                      
                      if (modify_assay) object <-  apply_norm(object)
                      
@@ -1239,6 +1244,7 @@ methods::setMethod(f          = "RunNormalization",
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod RunDiffAnalysis
+#' @importFrom dplyr filter
 #' @rdname RunDiffAnalysis
 #' 
 methods::setMethod(f         = "RunDiffAnalysis",
@@ -1369,14 +1375,9 @@ methods::setMethod(f          = "RunDiffAnalysis",
                      return(object)
                    })
 
-
-# limma
-# Warning quand pas de F DE
-# Recuperer les messages d'erreurs de limma ou
-
 ## METHOD to filter differential analysis
 
-#' Title
+#' Filter differential analysis
 #'
 #' @param object A SummarizedExperiment object
 #' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
@@ -1387,6 +1388,9 @@ methods::setMethod(f          = "RunDiffAnalysis",
 #' where the differential analysis results have been actualized with the new parameters.
 #' @exportMethod FilterDiffAnalysis
 #' @rdname FilterDiffAnalysis
+#' @importFrom dplyr filter if_else mutate_at
+#' @importFrom data.table data.table
+#' @importFrom purrr reduce
 #'
 methods::setMethod(f          = "FilterDiffAnalysis",
                    signature  = "SummarizedExperiment",
@@ -1471,9 +1475,9 @@ methods::setMethod(f          = "FilterDiffAnalysis",
                                          Adj.pvalue.cutoff = NULL, logFC.cutoff = NULL){
                      
                      if(!SE.name %in% names(object))
-                       stop(paste0(SE.name, " isn't the name of an experiment in ", object))
+                       stop(SE.name, " isn't the name of an experiment in ", object)
                      
-                     if (is.null(Adj.pvalue.cutoff) && is.null(logFC.cutoff)){
+                     if (is.null(Adj.pvalue.cutoff) && is.null(logFC.cutoff)) {
                        
                        message("Parameter Adj.pvalue.cutoff and logFC.cutoff are both NULL. Not changing anything")
                        return(object)
@@ -1563,6 +1567,13 @@ methods::setMethod(f          = "DiffAnal.plot",
 #' @return plot
 #' @exportMethod heatmap.plot
 #' @export
+#' @importFrom dplyr arrange select
+#' @importFrom tidyselect any_of
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom grDevices colorRampPalette
+#' @importClassesFrom ComplexHeatmap HeatmapAnnotation Heatmap
+#' @importMethodsFrom ComplexHeatmap draw
+#' @importFrom grid gpar
 #' @rdname heatmap.plot
 #' 
 methods::setMethod(f          = "heatmap.plot",
@@ -1599,7 +1610,8 @@ methods::setMethod(f          = "heatmap.plot",
                      object2 <-  checkTransNorm(object, raw = FALSE)
                      m.def  <- SummarizedExperiment::assay(object2)
          
-                     m.def <- as.data.frame(m.def) %>% dplyr::select(tidyselect::any_of(object2@metadata$Groups$samples))
+                     m.def <- as.data.frame(m.def) %>%
+                       dplyr::select(tidyselect::any_of(object2@metadata$Groups$samples))
      
                      # filter by DE
                      m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
@@ -1646,7 +1658,8 @@ methods::setMethod(f          = "heatmap.plot",
                      column_split.value <- if (condition != "none") { df_annotation[, condition] }else{NULL}
                      
                      # Color annotations
-                     set.seed(10000) ; selectPal <- sample(rownames(RColorBrewer::brewer.pal.info),  size = ncol(df_annotation), replace = FALSE)
+                     set.seed(10000) 
+                     selectPal <- sample(rownames(RColorBrewer::brewer.pal.info),  size = ncol(df_annotation), replace = FALSE)
                      
                      color_list <- lapply(1:ncol(df_annotation), FUN = function(i){
                        annot_vect <- unique(df_annotation[,i])
@@ -1725,7 +1738,8 @@ methods::setMethod(f          = "heatmap.plot",
 #' @param DE variable name (gene/protein/metabolite name)
 #' @export
 #' @exportMethod boxplot.DE.plot
-#' @importFrom ggplot2 geom_density xlab
+#' @importFrom ggplot2 geom_density xlab theme_void ggtitle ggplot geom_boxplot guide_legend guides
+#' @importFrom dplyr full_join  arrange
 #' @noRd
 
 methods::setMethod(f          = "boxplot.DE.plot",
@@ -2057,6 +2071,8 @@ methods::setMethod(f          = "runCoExpression",
 #' @param observation 
 #' @export
 #' @exportMethod coseq.profile.plot
+#' @importFrom dplyr filter mutate rename full_join arrange group_by summarise
+#' @importFrom reshape2 melt 
 #' @noRd
 
 methods::setMethod(f="coseq.profile.plot",
@@ -2066,11 +2082,12 @@ methods::setMethod(f="coseq.profile.plot",
                      coseq.res  <- object@metadata$CoExpAnal[["coseqResults"]]
                      assays.data <- dplyr::filter(as.data.frame(coseq.res@assays@data[[1]]), get(paste0("Cluster_",numCluster)) > 0.8)
                      
-                     y_profiles.gg <- coseq.res@y_profiles[rownames(assays.data),] %>% data.frame() %>% dplyr::mutate(observations=rownames(.)) %>% 
-                       reshape2::melt(id="observations", value.name = "y_profiles") %>%  dplyr::rename(samples = variable) %>%
+                     y_profiles.gg <- coseq.res@y_profiles[rownames(assays.data),] %>% 
+                       data.frame() %>% 
+                       dplyr::mutate(observations=rownames(.)) %>% 
+                       reshape2::melt(id="observations", value.name = "y_profiles") %>%  
+                       dplyr::rename(samples = variable) %>%
                        dplyr::full_join(object@metadata$Groups , by = "samples")
-                     
-                     #y_profiles.gg$samples <- factor(y_profiles.gg$samples, levels = unique(conds$samples))
                      
                      y_profiles.gg <- dplyr::arrange(y_profiles.gg, get(condition))
                      y_profiles.gg$groups <- factor(y_profiles.gg$groups, levels = unique(y_profiles.gg$groups))

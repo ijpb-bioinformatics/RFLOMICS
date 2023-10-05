@@ -75,7 +75,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
   # load example metadata file
   observeEvent(input$loadEx_metadata, {
     local.rea.values$dataPath <- NULL
-    local.rea.values$dataPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt")
+    local.rea.values$dataPath <- paste0(system.file(package = "RFLOMICS"), 
+                                        "/ExamplesFiles/ecoseed/condition.txt")
     
   })
   
@@ -107,7 +108,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     print("# 1- Load data ...")
     
-    if (local.rea.values$dataPath == paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt")) {
+    if (local.rea.values$dataPath == paste0(system.file(package = "RFLOMICS"), 
+                                            "/ExamplesFiles/ecoseed/condition.txt")) {
       print("#    => Load example experiment design...")
     }else print("#    => Load experimental design...")
     
@@ -120,7 +122,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
       
       showModal(modalDialog( title = "Error message", design.tt$message)) 
     }
-    validate({ need(expr = is.null(design.tt$message), message=design.tt$message) })
+    validate({ need(expr = is.null(design.tt$message), message = design.tt$message) })
     
     ExpDesign.tbl <- design.tt
     
@@ -132,10 +134,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     output$ExpDesignTable <- renderUI({
       box(width = 12, background = "light-blue", solidHeader = TRUE, collapsible = TRUE, 
           collapsed = TRUE, title = "Overview of experimental design table", 
-          
-          # DT::renderDataTable( DT::datatable(data = ExpDesign.tbl.affich, filter = 'top',
-          #                                    options = list( pageLength = 5, autoWidth = TRUE, dom = 'tp' )))
-          #                                    #caption = 'Table 1: This is a simple caption for the table.'
           DT::renderDataTable( DT::datatable(data = ExpDesign.tbl,
                                              options = list( pageLength = 5, autoWidth = TRUE, dom = 'tp' )))
       )
@@ -152,7 +150,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
               
               column(width = round(12/length(names(ExpDesign.tbl))),
                      selectizeInput(inputId = session$ns(paste0("selectFactors.", i)),
-                                    label   = tags$span(style="color: black;",i) ,
+                                    label   = tags$span(style = "color: black;",i) ,
                                     choices = levels(as.factor(ExpDesign.tbl[[i]])),
                                     selected= levels(as.factor(ExpDesign.tbl[[i]])), multiple = TRUE,
                                     options = NULL))
@@ -220,10 +218,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
                  # matrix count/abundance input
                  fileInput(inputId = session$ns("data1"), "Dataset matrix (tsv)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
           ),
-          # column(4,
-          #        # metadata/QC bioinfo
-          #        fileInput(inputId = session$ns("metadataQC1"), "QC or metadata (Ex.)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
-          # ),
           column(3,
                  # dataset Name
                  textInput(inputId = session$ns("DataName1"), label="Dataset name", value="set1")
@@ -254,10 +248,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
           column(6,
                  # matrix count/abundance input
                  fileInput(inputId = session$ns(paste0("data", addDataNum)), "Dataset matrix (tsv)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
-          
-          # column(4,
-          #        # metadata/QC bioinfo
-          #        fileInput(inputId=session$ns(paste0("metadataQC", addDataNum)), "QC or metadata (tsv)", accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
           column(3,
                  # dataset Name
                  textInput(inputId = session$ns(paste0("DataName", addDataNum)), label = "Dataset name", value=paste0("set", as.character(addDataNum))))
@@ -379,18 +369,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
         data.mat <- data.mat.tt
         inputs[[dataName]][["omicType"]] <- omicType
         inputs[[dataName]][["data"]] <- data.mat
-        
-        #### read meta data file
-        # if(!is.null(input[[paste0("metadataQC", k)]])){
-        #   print("# ... metadata QC...")
-        #   qcFile <- input[[paste0("metadataQC", k)]]
-        #   QCmat  <- read_metaData(qcFile$datapath)
-        #   
-        #   validate({ need(!is.null(QCmat), message="") })
-        #   
-        #   inputs[[dataName]][["meta"]] <- QCmat
-        #   #inputs[[dataName]][["qcFile"]] <- input[[paste0("metadataQC", k)]]$datapath ####
-        # }
         inputs[[dataName]][["meta"]]     <- NULL
         
         validate({ need(rea.values$validate.status == 0, message = "error") })
@@ -442,11 +420,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     }
     validate({ need(input$projectName != "", message="project name is required") })
     
-    ### check Experimental Design
-    # if(is.null(input$Experimental.Design.file)){
-    #   showModal(modalDialog(title = "Error message", "Experimental Design is required"))
-    # }
-    # validate({ need(! is.null(input$Experimental.Design.file), message="Set a name") })
     if (is.null(local.rea.values$dataPath)) {
       showModal(modalDialog(title = "Error message", "Experimental Design is required"))
     }
@@ -485,7 +458,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     #### list of omic data laoded from interface
     rea.values$validate.status <- 0
    
-    FlomicsMultiAssay.try <- tryCatch( FlomicsMultiAssay.constructor(inputs      = local.rea.values$listInputs,
+    FlomicsMultiAssay.try <- tryCatch( FlomicsMultiAssay.constructor(inputs = local.rea.values$listInputs,
                                                                               ExpDesign   = ExpDesign.tbl,
                                                                               refList     = dF.List.ref,
                                                                               typeList    = dF.Type.dFac,

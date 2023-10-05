@@ -1,14 +1,17 @@
-library(shiny)
-library(shinydashboard)
-library(shinyFiles)
-
-rm(list = ls())
-
-#### Increasing maximum possible size of loaded files (default is only 5MB)
-# https://stackoverflow.com/questions/18037737/how-to-change-maximum-upload-size-exceeded-restriction-in-shiny-and-save-user
-options(shiny.maxRequestSize = 100*1024^2) # 100 MB limit.
-
-shinyServer(function(input, output, session) {
+#' @importFrom htmltools span tagList p div a h4 h5 hr tags br HTML
+#' @importFrom shinyBS popify
+#' @importFrom shinydashboard box tabBox updateTabItems menuItem menuItemOutput 
+#' tabItem renderMenu tabItems sidebarMenu menuSubItem
+#' @rawNamespace import(shiny, except = renderDataTable)
+#' @importFrom shinyWidgets pickerInput materialSwitch
+#' @importFrom colourpicker colourInput
+#' @importFrom magrittr "%>%"
+#' @importFrom rmarkdown render
+rflomicsServer <- function(input, output, session) {
+  
+  #### Increasing maximum possible size of loaded files (default is only 5MB)
+  # https://stackoverflow.com/questions/18037737/how-to-change-maximum-upload-size-exceeded-restriction-in-shiny-and-save-user
+  options(shiny.maxRequestSize = 100*1024^2) # 100 MB limit.
 
     # This is to get the desired menuItem selected initially.
     # selected=T seems not to work with a dynamic sidebarMenu.
@@ -75,7 +78,7 @@ shinyServer(function(input, output, session) {
           ###########################
 
           tabItem(tabName = "coverPage",
-                  coverPage
+                  coverPageUI()
 
           ),
 
@@ -113,7 +116,7 @@ shinyServer(function(input, output, session) {
           ########################
           tabItem(tabName = "withMixOmics",
                   # h5("in coming :)")
-                  uiOutput(outputId = "withMixOmics_UI") #### CHANGED 15/09/2022
+                  uiOutput(outputId = "withMixOmics_UI") 
           )
         )
 
@@ -457,7 +460,6 @@ shinyServer(function(input, output, session) {
 
       callModule(module = MOFA_setting, id = "mofaSetting", rea.values = rea.values)
 
-      ### ADDED 15/09/2022
       callModule(module = MixOmics_setting, id = "mixomicsSetting", rea.values = rea.values)
 
     })
@@ -549,5 +551,5 @@ shinyServer(function(input, output, session) {
     # })
     # # Update the query string
     # onBookmarked(updateQueryString)
- })
+ }
 

@@ -1,39 +1,25 @@
 ##### Global import ####
-# @import MultiAssayExperiment
-# @import SummarizedExperiment
 #' @importClassesFrom SummarizedExperiment SummarizedExperiment
 #' @importClassesFrom MultiAssayExperiment MultiAssayExperiment
-#' @importFrom htmltools span tagList p div a h4 h5 hr tags
-#' @importFrom shinyBS popify
-#' @importFrom shinydashboard box tabBox
-#' @importFrom shiny 
-#' actionButton actionLink
-#' column callModule checkboxInput checkboxGroupInput conditionalPanel
-#' fluidRow  fileInput
-#' icon 
-#' observeEvent numericInput modalDialog showModal NS
-#' radioButtons
-#' reactive reactiveValues renderTable renderDataTable renderUI  
-#' renderPlot runApp renderText
-#' selectInput selectizeInput sidebarPanel sliderInput updateSliderInput
-#' tabsetPanel textInput tabPanel
-#' validate need uiOutput verbatimTextOutput verticalLayout
-#' @importFrom shinyWidgets pickerInput materialSwitch
-#' @importFrom colourpicker colourInput
-## @import shiny
-
+#' @importMethodsFrom SummarizedExperiment assay<-
 #' @importFrom ggplot2 ggplot geom_col theme_classic aes
 #' theme element_text element_blank ylab xlab ggtitle
 #' scale_fill_gradientn geom_tile theme_bw guides scale_fill_gradient2
 #' guide_colourbar labs
 
-#' @importFrom magrittr %>%
+# @export
+#' @importFrom magrittr "%>%" 
 magrittr::`%>%`
 
 #' @title Read Experimental Design
 #'
 #' @param file path to experimental design file
 #' @return data.frame
+#' @importFrom dplyr  mutate across 
+#' @importFrom tidyselect where
+#' @importFrom stringr str_remove_all fixed
+#' @importFrom purrr reduce
+#' @importFrom vroom vroom
 #' @export
 #' 
 read_exp_design <- function(file){
@@ -44,7 +30,7 @@ read_exp_design <- function(file){
   
   if(!file.exists(file))
   {
-    stop(paste0("ERROR: ", file, " don't exist!"))
+    stop(file, " don't exist!")
     return(NULL)
   }
   
@@ -65,14 +51,14 @@ read_exp_design <- function(file){
   
   if (length(sample.dup) != 0) {
     
-    stop(paste0("ERROR: duplicated sample names: ", paste0(sample.dup, collapse = ",")))
+    stop("Duplicated sample names: ", paste0(sample.dup, collapse = ","))
   }
   
   # check if there is duplication in factor names
   # factor.dup <- as.vector(data[which(table(names(data[-1])) > 1),1])[[1]]
   factor.dup <- names(data[-1])[duplicated(names(data[-1]))]
   if (length(factor.dup) != 0) {
-    stop(paste0("ERROR: duplicated factor name: ", paste0(factor.dup, collapse = ",")))
+    stop("Duplicated factor name: ", paste0(factor.dup, collapse = ","))
   }
   
   # check if same name of moralities are used in diff factor
@@ -83,7 +69,7 @@ read_exp_design <- function(file){
   mod.dup <- mod.list[duplicated(mod.list)]
   if(length(mod.dup) != 0) {
     
-    stop(paste0("ERROR: modality used in more than one factor: ", paste0(mod.dup[1:10], collapse = ", ")))
+    stop("Modality used in more than one factor: ", paste0(mod.dup[1:10], collapse = ", "))
   }
   
   # warning if number of factors exceed n = 10
@@ -91,7 +77,7 @@ read_exp_design <- function(file){
   if (dim(data)[2]-1 >= n){
     
     data <- data[, 1:n]
-    message(paste0("WARNING: large number of columns! only the first ", n," will be displayed"))
+    warnin("Large number of columns! only the first ", n," will be displayed")
   }
   
   # check nbr of modality of the 5th fist columns
@@ -102,7 +88,7 @@ read_exp_design <- function(file){
   
   if(ratio != 1)
   {
-    message("WARNING: The select input contains a large number of options")
+    warning("The select input contains a large number of options")
   }
   
   data            <- data.frame(data) 
@@ -117,6 +103,8 @@ read_exp_design <- function(file){
 #'
 #' @param file omics data matrix
 #' @return data.frame
+#' @importFrom vroom vroom
+#' @importFrom stringr str_remove_all fixed
 #' @export
 #'
 
@@ -124,7 +112,7 @@ read_omics_data <- function(file){
   
   if(!file.exists(file))
   {
-    stop(paste0("ERROR: ", file, " don't exist!"))
+    stop(file, " don't exist!")
   }
   
   # read omics data and remove special characters
@@ -137,7 +125,7 @@ read_omics_data <- function(file){
   
   if (length(sample.dup) !=0){
     
-    stop(paste0("ERROR: duplicated sample names: ", paste0(sample.dup, collapse = ",")))
+    stop("Duplicated sample names: ", paste0(sample.dup, collapse = ","))
   }
   
   # check if there is duplication in factor names
@@ -145,7 +133,7 @@ read_omics_data <- function(file){
   
   if (length(entity.dup) !=0){
     
-    stop(paste0("ERROR: duplicated feature names: ", paste0(entity.dup, collapse = ",")))
+    stop("Duplicated feature names: ", paste0(entity.dup, collapse = ","))
   }
   
   data            <- data.frame(data) 
@@ -167,7 +155,9 @@ read_omics_data <- function(file){
 #' @md
 #' @export
 #' @noRd
-#'
+#' @importFrom tibble tibble
+#' @importFrom tidyr separate
+#' @importFrom dplyr mutate_all
 #'
 #'
 GetDesignFromNames <- function(samples_name){
@@ -215,9 +205,9 @@ GetModelFormulae <- function(FacBio=NULL, FacBatch=NULL, MAE = NULL){
   MAE <- MAE
   
   if (!is.null(MAE)) { 
-    facTypes <-  getFactorTypes(MAE)
-    FacBio   <- names(facTypes)[facTypes == "Bio"]
-    FacBatch <- names(facTypes)[facTypes == "batch"]
+    facTypes <- getFactorTypes(MAE)
+    FacBio   <- bioFactors(MAE) #names(facTypes)[facTypes == "Bio"]
+    FacBatch <- batchFactors(MAE) #names(facTypes)[facTypes == "batch"]
   }
   
   # Initialize
@@ -256,6 +246,7 @@ GetModelFormulae <- function(FacBio=NULL, FacBatch=NULL, MAE = NULL){
 #' @param groups vector or factor giving the experimental group/condition for each sample/library.
 #' @return a data.frame with a row for each sample and columns group, lib.size and norm.factors containing the group labels, library sizes and normalization factors. Other columns can be optionally added to give more detailed sample information.
 #' @export
+#' @importFrom edgeR DGEList calcNormFactors
 #' @noRd
 
 TMM.Normalization <- function(counts, groups){
@@ -275,7 +266,11 @@ TMM.Normalization <- function(counts, groups){
 #' @param nworkers integer. Number of core to use for the parallel operations. Only used when parallel is TRUE.
 #' @return A list of object of class \link{DGELRT}
 #' @export
-#' @importFrom stats model.matrix as.formula
+#' @importFrom stats model.matrix as.formula 
+#' @importFrom edgeR DGEList estimateGLMCommonDisp estimateGLMTrendedDisp estimateGLMTagwiseDisp glmFit glmLRT topTags
+#' @importFrom clustermq Q 
+#' @importFrom parallel mclapply
+#' @importFrom dplyr filter rename
 #' @noRd
 #'
 
@@ -412,6 +407,8 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
 #' @return A list
 #' @export
 #' @importFrom stats model.matrix as.formula
+#' @importFrom dplyr filter rename
+#' @importFrom limma lmFit contrasts.fit eBayes topTable
 #' @noRd
 #'
 
@@ -525,7 +522,8 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
 #' @return a color palette
 #' @export
 #' @importFrom grDevices colorRampPalette
-#' @importFrom RColorBrewer brewer.pal
+#' @importFrom RColorBrewer brewer.pal 
+#' @importFrom tidyr unite
 #' @noRd
 
 colorPlot <- function(design, ColData, condition="samples"){
@@ -548,9 +546,7 @@ colorPlot <- function(design, ColData, condition="samples"){
   
   colors    <- getPalette(len.cond)
   
-  #col <- colors[list.cond]
   col <- colors[levels(list.cond)]
-  #names(col) <- row.names(ColData)
   names(col) <- row.names(levels(list.cond))
   
   return(col)
@@ -562,6 +558,7 @@ colorPlot <- function(design, ColData, condition="samples"){
 #' @param abundances matrix or dataframe of feature/gene abundances/counts
 #' @export
 #' @importFrom ggplot2 geom_density xlab
+#' @importFrom reshape2 melt
 #' @noRd
 plotDistr <- function(abundances, dataType, transform_method){
   
@@ -602,8 +599,8 @@ plotDistr <- function(abundances, dataType, transform_method){
 #' @param data dataframe (ggplot2)
 #' @param hypothesis the contrast, useful for plot title
 #' @return plot
-#' @export
-#' @importFrom ggplot2 geom_histogram
+#' @export 
+#' @importFrom ggplot2 geom_histogram theme_bw labs ggplot
 #' @noRd
 pvalue.plot <- function(data, hypothesis=hypothesis){
   
@@ -617,8 +614,8 @@ pvalue.plot <- function(data, hypothesis=hypothesis){
   return(p)
 }
 
-
-utils::globalVariables(names(data))
+# TODO do we use this?
+# utils::globalVariables(names(data))
 
 #' MA.plot
 #'
@@ -628,23 +625,12 @@ utils::globalVariables(names(data))
 #' @param hypothesis the contrast, useful for plot title
 #' @return MA plot
 #' @export
-#' @importFrom ggplot2 aes geom_point scale_colour_manual ggsave
+#' @importFrom ggplot2 aes geom_point scale_colour_manual ggsave theme_linedraw
+#' @importFrom ggpubr ggmaplot
+#' @importFrom dplyr select rename
 #' @noRd
 MA.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypothesis){
-  
-  # Abundance <- logFC <- Adj.pvalue <- NULL
-  # p <- ggplot2::ggplot(data=data, aes(x = Abundance, y=logFC, col= (Adj.pvalue < Adj.pvalue.cutoff & abs(logFC) > log2(FC.cutoff) ))) +
-  #   geom_point(alpha=0.4, size = 0.8) +
-  #   scale_colour_manual(values=c("black","red")) +
-  #   labs(color=paste("Adj.pvalue <=",Adj.pvalue.cutoff,"\n", "|FC| >", FC.cutoff ,sep="")) +
-  #   geom_hline(yintercept = 0)
-  #
-  #
-  # if (! is.null(pngFile)){
-  #   ggsave(filename = pngFile, plot = p)
-  # }
-  #
-  # return(p)
+
   Abundance <- logFC <- Adj.pvalue <- NULL
   tmp <-dplyr::select(data,"Abundance","logFC","Adj.pvalue") %>% 
     dplyr::rename(., baseMeanLog2=Abundance, log2FoldChange=logFC, padj=Adj.pvalue)
@@ -677,6 +663,7 @@ MA.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypothesis
 #' @param hypothesis the contrast, useful for plot title
 #'
 #' @return a volcano plot, made with the \link{EnhancedVolcano} package.
+#' @importFrom EnhancedVolcano EnhancedVolcano
 #' @export
 #' @noRd
 #'
@@ -695,13 +682,13 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis){
   pvalCutoff <- (pval1 + pval2)/2
   
   
-  # Added 221123: if too low pvalues, unable to plot (error in if(d>0)...)
+  # If too low pvalues, unable to plot (error in if(d>0)...)
   # If drawconnectors is FALSE, it "works", with ylim being infinity, it doesn't look like anything. 
   # Modifiying the 0 pvalues to make sure it's working
   nz_pval <- data$pvalue[data$pvalue != 0][1] * 10^-1 # default replacement in EnhancedVolcanoPlot
-  if(nz_pval == 0){
+  if (nz_pval == 0){
     data$pvalue[data$pvalue == 0] <- data$pvalue[data$pvalue != 0][1] 
-    message("10^-1 * current lowest non-zero p-value is still 0, all 0 pvalues are set to the lowest non-zero pvalue.")
+    # message("10^-1 * current lowest non-zero p-value is still 0, all 0 pvalues are set to the lowest non-zero pvalue.")
   }
   
   Abundance <- logFC <- Adj.pvalue <- NULL
@@ -744,7 +731,8 @@ Volcano.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis){
 #'
 #' @return A printable/modifiable ggplot2 object.
 #' @export
-#' @importFrom ggplot2 aes_string labs element_rect geom_rect scale_x_continuous scale_y_continuous facet_grid
+#' @importFrom ggplot2 aes_string theme facet_grid labs element_rect geom_rect scale_x_continuous scale_y_continuous facet_grid
+#' @importFrom dplyr mutate if_else
 #' @noRd
 plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
   if (names(counts)[ncol(counts)] != "Count"){
@@ -821,6 +809,10 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
 #' @return a dataframe of contrasts
 #' @export
 #' @importFrom utils combn
+#' @importFrom data.table setDT setnames
+#' @importFrom tidyr unite
+#' @importFrom dplyr mutate
+#' @importFrom tidyselect all_of
 #' @noRd
 #' @author Christine Paysant-Le Roux
 define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
@@ -948,6 +940,8 @@ defineAllSimpleContrasts <- function(treatmentFactorsList){
 #' @return allAveragedContrasts_df : a data frame with all the averaged contrasts
 #' @export
 #' @noRd
+#' @importFrom dplyr add_tally group_by mutate select 
+#' @importFrom data.table data.table
 #' @author Christine Paysant-Le Roux
 define_averaged_contrasts <- function(allSimpleContrast_df){
   
@@ -982,6 +976,7 @@ define_averaged_contrasts <- function(allSimpleContrast_df){
 #'
 #' @return a dataframe with part of the interaction contrasts definition
 #' @export
+#' @importFrom data.table setDT
 #' @noRd
 #' @author Christine Paysant-Le Roux
 define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, row_i, row_j) {
@@ -1302,6 +1297,10 @@ try_rflomics <- function(expr) {
 #' @param replicates number of replication to run
 #' @return list plot of ICL, logLike and coseq object with min ICL
 #' @export
+#' @importFrom dplyr n group_by summarise mutate filter
+#' @importFrom coseq ICL
+#' @importFrom stringr str_replace
+#' @importFrom tibble tibble
 #' @noRd
 #'
 coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
@@ -1381,7 +1380,8 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
     # else if(dim(jobs.tab.sum2)[1] == 0){ jobs.tab.sum <- jobs.tab.sum1 }
     # else{ jobs.tab.sum <- rbind(jobs.tab.sum1, jobs.tab.sum2) }
     
-    jobs.tab.sum <- data.table::rbindlist(list(jobs.tab.sum1, jobs.tab.sum2), use.names = TRUE) %>% tibble::tibble()
+    jobs.tab.sum <- data.table::rbindlist(list(jobs.tab.sum1, jobs.tab.sum2), use.names = TRUE) %>% 
+      tibble::tibble()
     
   }
   else{
@@ -1397,6 +1397,7 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
 #' @title coseq.results.process
 #' @param coseqObjectList list of coseq object
 #' @return list plot of ICL, logLike and coseq object with min ICL
+#' @importFrom coseq ICL likelihood clusters
 #' @export
 #' @noRd
 #'
@@ -1433,7 +1434,8 @@ coseq.results.process <- function(coseqObjectList, K, conds){
   # coseq.res <- coseqObjectList[[which.min(ICL.vec)]]
   
   # logLike plot
-  logLike.vec <- lapply(1:length(coseqObjectList), function(x){ coseq::likelihood(coseqObjectList[[x]]) }) %>% unlist()
+  logLike.vec <- lapply(1:length(coseqObjectList), function(x){ coseq::likelihood(coseqObjectList[[x]]) }) %>%
+    unlist()
   
   logLike.tab <- data.frame(K = stringr::str_replace(names(logLike.vec), "K=", ""), logLike = logLike.vec) %>% 
     dplyr::mutate(K = as.numeric(K))
@@ -1488,6 +1490,8 @@ coseq.results.process <- function(coseqObjectList, K, conds){
 #' @param replicates number of replication to run
 #' @param param.list list of coseq parameters
 #' @return coseqResults
+#' @importFrom coseq coseq
+#' @importFrom clustermq Q_rows 
 #' @export
 #' @noRd
 #'
@@ -1623,6 +1627,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
 #' @param replicates number of replication to run
 #' @param param.list list of coseq parameters
 #' @return coseqResults
+#' @importFrom coseq coseq clusters
 #' @export
 #' @noRd
 #'
@@ -1713,6 +1718,8 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list, si
 #' @return boxplot profiles.
 #' @export
 #' @importFrom ggplot2 geom_boxplot facet_wrap theme element_blank
+#' @importFrom dplyr arrange
+#' @importFrom purrr reduce
 #' @noRd
 #'
 coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
@@ -1761,7 +1768,7 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
 #' @param a string: contrastName
 #'
 #' @return a string: contrastDir
-#'
+#' @importFrom stringr str_replace_all str_remove_all
 #' @export
 #' @noRd
 contrastName2contrastDir <- function(contrastName){
