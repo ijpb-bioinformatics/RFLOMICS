@@ -18,8 +18,8 @@ CoEx.ann.eval  <- FALSE
 Diff.ann.eval_CPR <- FALSE
 CoEx.ann.eval_CPR <- FALSE
 
-dataset.raw.SE <- rflomics.MAE@ExperimentList[[data]]
-dataset.SE     <- rflomics.MAE@ExperimentList[[paste0(data,".filtred")]]
+dataset.raw.SE <- rflomics.MAE@ExperimentList[[paste0(data,".raw")]]
+dataset.SE     <- rflomics.MAE@ExperimentList[[data]]
 
 if(!is.null(dataset.SE)){
   

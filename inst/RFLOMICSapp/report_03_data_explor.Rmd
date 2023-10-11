@@ -17,11 +17,11 @@ knitr::opts_chunk$set(
 
 ```{r check-design, echo=FALSE , message=FALSE, warning=FALSE, echo=FALSE, out.width = "75%"}
 
-dataset.raw.SE <- rflomics.MAE@ExperimentList[[data]]
-dataset.SE     <- rflomics.MAE@ExperimentList[[paste0(data,".filtred")]]
+dataset.raw.SE <- rflomics.MAE@ExperimentList[[paste0(data,".raw")]]
+dataset.SE     <- rflomics.MAE@ExperimentList[[data]]
 
 # 
-check <- CheckExpDesignCompleteness(rflomics.MAE, colnames(rflomics.MAE[[paste0(data,".filtred")]]))
+check <- CheckExpDesignCompleteness(rflomics.MAE, colnames(rflomics.MAE[[data]]))
 check$plot
            
 ```
@@ -49,22 +49,13 @@ Filtering and normalization strategies adapted from @Lambert2020ta
 
 `r if(dataset.raw.SE@metadata$omicType == "RNAseq") {"\\begin{comment}"}`
 
-* The data were transformed using `r rflomics.MAE@ExperimentList[[paste0(data,".filtred")]]@metadata$transform_method`.
+* The data were transformed using `r rflomics.MAE@ExperimentList[[data]]@metadata$transform_method`.
 
 `r if(dataset.raw.SE@metadata$omicType == "RNAseq") {"\\end{comment}"}`
 
 
 
 ```{r, echo=FALSE, message=TRUE, warning=TRUE, eval=FALSE}
-
-# filt.summary <-  data.frame("Status"=c("raw dataset",
-#                               "0 count",
-#                               "low count",
-#                               "filtered sataset"),
-#                             "Number of gene"=c(length(names(dataset.raw.SE)),
-#                               length(dataset.raw.SE@metadata$rowSums.zero),
-#                               length(dataset.SE@metadata$FilteredFeatures),
-#                               length(names(dataset.SE))))
 
 DT::datatable(filt.summary, options = list(colnames=FALSE, rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),class = 'cell-border stripe')
 
