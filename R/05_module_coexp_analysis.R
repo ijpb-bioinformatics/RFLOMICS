@@ -56,7 +56,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     
     MAE.data <- session$userData$FlomicsMultiAssay
     SE.data <- MAE.data[[dataset]]
-    SE.filtered <- MAE.data[[paste0(dataset,".filtred")]]
+    SE.filtered <- MAE.data[[dataset]]
     
     ##-> retrieve DEG lists and DEG valid lists
     ListNames.diff        <- getValidContrasts(SE.filtered)$tag
@@ -190,7 +190,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
   
   #get list of DGE to process
   DEG_list <- reactive({
-    getDEGlist_for_coseqAnalysis( matrix   = session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["mergeDEF"]],
+    getDEGlist_for_coseqAnalysis( matrix   = session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["mergeDEF"]],
                                   colnames = input$select, mergeType = input$unionInter)})
   
   # display nbr of selected genes
@@ -200,7 +200,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     
     MAE.data <- session$userData$FlomicsMultiAssay
     SE.data <- MAE.data[[dataset]]
-    SE.filtered <- MAE.data[[paste0(dataset,".filtred")]]
+    SE.filtered <- MAE.data[[dataset]]
     
     print(paste(length(DEG_list()), RFLOMICS:::omicsDic(SE.filtered)$variableName, sep =" "))
   })
@@ -232,7 +232,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$coExpAnal  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
     
-    local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
+    local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
     
     # check if no selected DGE list
     if(length(input$select) == 0){
@@ -263,7 +263,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                                                    cmd = TRUE, silent = TRUE)
     
     
-    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- local.rea.values$dataset.SE
+    session$userData$FlomicsMultiAssay[[dataset]] <- local.rea.values$dataset.SE
     
     # If an error occured
     if(isFALSE(local.rea.values$dataset.SE@metadata$CoExpAnal[["results"]])){
@@ -277,7 +277,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
            paste0("No results!", as.character(local.rea.values$dataset.SE@metadata$CoExpAnal[["error"]])))
     )
     
-    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- local.rea.values$dataset.SE
+    session$userData$FlomicsMultiAssay[[dataset]] <- local.rea.values$dataset.SE
     
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
@@ -295,7 +295,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     
     # Extract results
     MAE.data <- session$userData$FlomicsMultiAssay
-    dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
+    dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
     
     factors.bio <- bioFactors(MAE.data)
     
@@ -359,7 +359,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                            renderText("blabla"),
                            renderPlot({ 
                              
-                             tag <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$DiffExpAnal[["Validcontrasts"]]$tag
+                             tag <- session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["Validcontrasts"]]$tag
                              
                              
                              if(length(tag) > 1){
@@ -374,7 +374,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
   
   output$observationsUI  <- renderUI({
 
-    dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
+    dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
     coseq.res  <- dataset.SE@metadata$CoExpAnal[["coseqResults"]]
     clustr_num <- paste0("Cluster_",input$selectCluster)
     assays.data <- dplyr::filter(as.data.frame(coseq.res@assays@data[[1]]), get(clustr_num) > 0.8)
@@ -390,7 +390,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
   ## summary
   output$ERROR.UI <- renderUI({
     
-    dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
+    dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
     
     if(rea.values[[dataset]]$coExpAnal == FALSE || dim(local.rea.values$dataset.SE@metadata$CoExpAnal[["stats"]])[1] == 0) return()
     

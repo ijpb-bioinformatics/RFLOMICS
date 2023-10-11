@@ -89,7 +89,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     
     ## gene lists
     
-    data.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
+    data.SE <- session$userData$FlomicsMultiAssay[[dataset]]
     ListNames.diff <- getValidContrasts(data.SE)$contrastName
     omicsType <- getOmicsTypes(data.SE)
     
@@ -242,7 +242,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     
     if(rea.values[[dataset]]$coExpAnal == FALSE) return()
     
-    ListNames.coseq <- names(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata$CoExpAnal[["clusters"]])
+    ListNames.coseq <- names(session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpAnal[["clusters"]])
     
     pickerInput(
       inputId = ns("GeneList.coseq"), label = "Select Clusters:",
@@ -265,14 +265,14 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     #----------------------#
     
     # reset everything
-    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata[["DiffExpEnrichAnal"]][[input$dom.select]] <- NULL
-    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata[["CoExpEnrichAnal"]][[input$dom.select]]   <- NULL
+    session$userData$FlomicsMultiAssay[[dataset]]@metadata[["DiffExpEnrichAnal"]][[input$dom.select]] <- NULL
+    session$userData$FlomicsMultiAssay[[dataset]]@metadata[["CoExpEnrichAnal"]][[input$dom.select]]   <- NULL
     
     rea.values[[dataset]]$diffAnnot  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
     local.rea.values[[input$dom.select]] <- FALSE
     
-    local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]
+    local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
     
     # ---- Checks: ----
     
@@ -435,7 +435,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     
     local.rea.values[[input$dom.select]] <- TRUE
     
-    session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]] <- local.rea.values$dataset.SE
+    session$userData$FlomicsMultiAssay[[dataset]] <- local.rea.values$dataset.SE
     
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep = ""))
@@ -449,7 +449,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     
     if (rea.values[[dataset]]$diffAnnot == FALSE || local.rea.values[[input$dom.select]] == FALSE) return()
     
-    results <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata[["DiffExpEnrichAnal"]][[input$dom.select]]
+    results <- session$userData$FlomicsMultiAssay[[dataset]]@metadata[["DiffExpEnrichAnal"]][[input$dom.select]]
     
     if (is.null(results[["summary"]])) {
       
@@ -469,7 +469,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     
     if (rea.values[[dataset]]$coExpAnnot == FALSE || local.rea.values[[input$dom.select]] == FALSE) return()
     
-    results <- session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]]@metadata[["CoExpEnrichAnal"]][[input$dom.select]]
+    results <- session$userData$FlomicsMultiAssay[[dataset]]@metadata[["CoExpEnrichAnal"]][[input$dom.select]]
     
     if (is.null(results[["summary"]])) {
       
@@ -497,10 +497,10 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     if (rea.values[[dataset]]$diffAnnot == FALSE || is.null(local.rea.values$dataset.SE@metadata[["DiffExpEnrichAnal"]][[input$dom.select]][["summary"]])) return()
     
     # foreach genes list selected (contrast)
-    lapply(names( getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], ont = input$dom.select)), function(listname) {
+    lapply(names( getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], ont = input$dom.select)), function(listname) {
       
-      if (length(getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], ont = input$dom.select, contrast = listname)) != 0) {
-        if (sum(unlist(sumORA(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], ont = input$dom.select)[-1]), na.rm = TRUE) == 0) {
+      if (length(getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], ont = input$dom.select, contrast = listname)) != 0) {
+        if (sum(unlist(sumORA(session$userData$FlomicsMultiAssay[[dataset]], ont = input$dom.select)[-1]), na.rm = TRUE) == 0) {
           
           fluidRow(
             box(width = 12, title = paste0(listname, ": 0 enriched terms found"), status = "danger")
@@ -508,7 +508,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
         }
         else{
           
-          choices <- names(getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], 
+          choices <- names(getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], 
                                         contrast = listname,
                                         ont = input$dom.select))
           
@@ -519,7 +519,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                      verticalLayout(
                        renderPlot({
                          
-                         plotCPR(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
+                         plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
                                  contrast = listname, from = "DiffExpAnal",
                                  type = "dotplot", 
                                  ont = input$dom.select,
@@ -535,7 +535,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                      verticalLayout(
                        renderPlot({
                          
-                         plotCPR(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
+                         plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
                                  contrast = listname, from = "DiffExpAnal",
                                  type = "heatplot", 
                                  ont = input$dom.select, 
@@ -560,7 +560,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                            node_label_arg <- "category"
                          }
                          
-                         plotCPR(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
+                         plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
                                  contrast = listname, from = "DiffExpAnal",
                                  type = "cnetplot", 
                                  ont = input$dom.select, 
@@ -587,7 +587,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                        tags$br(),
                        DT::renderDataTable({
                          
-                         dataPlot <-  getEnrichRes(object = session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], 
+                         dataPlot <-  getEnrichRes(object = session$userData$FlomicsMultiAssay[[dataset]], 
                                                    contrast = listname,
                                                    ont = input$dom.select,
                                                    domain = input[[paste0(listname, "-domain")]])
@@ -604,7 +604,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
           
           # ---- Tab Panel : only for KEGG, pathview : ----
           if (input$dom.select == "KEGG") {
-            data <-   getEnrichRes(object = session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], 
+            data <-   getEnrichRes(object = session$userData$FlomicsMultiAssay[[dataset]], 
                                    contrast = listname, from = "DiffExpEnrichAnal",
                                    ont = "KEGG")[["no-domain"]]@result
             
@@ -644,7 +644,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                                    
                                                    renderPlot({
                                                      
-                                                     plotCPRKEGG(object = session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
+                                                     plotCPRKEGG(object = session$userData$FlomicsMultiAssay[[dataset]],
                                                                  contrast = listname,
                                                                  from = "DiffExpEnrichAnal",
                                                                  pathway_id = input[[paste0(listname, "-MAP.sel")]],
@@ -694,10 +694,10 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     if (rea.values[[dataset]]$diffAnnot == FALSE || is.null(local.rea.values$dataset.SE@metadata[["CoExpEnrichAnal"]][[input$dom.select]][["summary"]])) return()
     
     # foreach genes list selected (contrast)
-    lapply(names(  getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], from = "CoExpEnrichAnal", ont = input$dom.select)), function(listname) {
+    lapply(names(  getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], from = "CoExpEnrichAnal", ont = input$dom.select)), function(listname) {
       
-      if (length( getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], from = "CoExpEnrichAnal", ont = input$dom.select, contrast = listname)) != 0) {
-        if (sum(unlist( sumORA(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], from = "CoExpEnrichAnal", ont = input$dom.select)[-1]), na.rm = TRUE) == 0) {
+      if (length( getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], from = "CoExpEnrichAnal", ont = input$dom.select, contrast = listname)) != 0) {
+        if (sum(unlist( sumORA(session$userData$FlomicsMultiAssay[[dataset]], from = "CoExpEnrichAnal", ont = input$dom.select)[-1]), na.rm = TRUE) == 0) {
           
           fluidRow(
             box(width = 12, title = paste0(listname, ": 0 enriched terms found"), status = "danger")
@@ -705,7 +705,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
         }
         else{
           
-          cluster_choices <- names( getEnrichRes(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], 
+          cluster_choices <- names( getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], 
                                                  from = "CoExpEnrichAnal",
                                                  contrast = listname,
                                                  ont = input$dom.select))
@@ -718,7 +718,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                      verticalLayout(
                        renderPlot({
                          
-                         plotCPR(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
+                         plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
                                  contrast = listname, from = "CoExpEnrichAnal",
                                  type = "dotplot", 
                                  ont = input$dom.select,
@@ -734,7 +734,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                      verticalLayout(
                        renderPlot({
                          
-                         plotCPR(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
+                         plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
                                  contrast = listname, from = "CoExpEnrichAnal",
                                  type = "heatplot", 
                                  ont = input$dom.select, 
@@ -759,7 +759,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                            node_label_arg <- "category"
                          }
                          
-                         plotCPR(session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]],
+                         plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
                                  contrast = listname, from = "CoExpEnrichAnal",
                                  type = "cnetplot", 
                                  ont = input$dom.select, 
@@ -784,7 +784,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                        tags$br(),
                        DT::renderDataTable({
                          
-                         dataPlot <-  getEnrichRes(object = session$userData$FlomicsMultiAssay[[paste0(dataset,".filtred")]], 
+                         dataPlot <-  getEnrichRes(object = session$userData$FlomicsMultiAssay[[dataset]], 
                                                    from = "CoExpEnrichAnal",
                                                    contrast = listname,
                                                    ont = input$dom.select,
