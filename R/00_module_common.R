@@ -109,15 +109,15 @@ omics_data_analysis_summary <- function(input, output, session, rea.values){
   
   output$mofaPlot <- renderPlot({ 
 
-    MAE.filtred.Diff <- session$userData$FlomicsMultiAssay[,, paste(rea.values$datasetDiff, "filtred", sep = ".")]
-    MAE.MOFA <- MOFA2::create_mofa_from_MultiAssayExperiment(MAE.filtred.Diff)
+    MAE.filtered.Diff <- session$userData$FlomicsMultiAssay[,,rea.values$datasetDiff]
+    MAE.MOFA <- MOFA2::create_mofa_from_MultiAssayExperiment(MAE.filtered.Diff)
     MOFA2::plot_data_overview(MAE.MOFA)
   })
   
   output$DiffSummary <- renderPlot({ 
   
     
-    summaryDiff.df <- lapply( paste(rea.values$datasetDiff, "filtred", sep = "."), function(dataset){
+    summaryDiff.df <- lapply( rea.values$datasetDiff, function(dataset){
       lapply(names(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats), function(contrast){  
         
         c(dataset, contrast, paste0(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats[[contrast]][["gDEup"]], "/", 

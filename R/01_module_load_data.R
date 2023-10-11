@@ -319,6 +319,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
   })
   
+  # ---- Load Data button observe ---- 
   observeEvent(input$loadData, {
     
     local.rea.values$listInputs <- NULL
@@ -489,6 +490,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
       rea.values$validate.status <- 1
     }
     validate({ need(is.null(FlomicsMultiAssay.try$message), message="error") })
+    
+    names(FlomicsMultiAssay.try) <- paste(names(FlomicsMultiAssay.try), "raw", sep = ".")
     
     session$userData$FlomicsMultiAssay <- FlomicsMultiAssay.try
     

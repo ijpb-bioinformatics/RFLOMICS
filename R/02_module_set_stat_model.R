@@ -22,7 +22,6 @@ GLM_modelUI <- function(id){
 
 GLM_model <- function(input, output, session, rea.values){
 
-
     # reactive value for reinitialisation of UIoutput
     local.rea.values <- reactiveValues()
 
@@ -82,14 +81,15 @@ GLM_model <- function(input, output, session, rea.values){
 
 
     # => Get and Display all the contrasts
-    #  => The contrasts have to be choosen
+    #  => The contrasts have to be chosen
     output$SetContrasts <- renderUI({
 
+      # TODO delete
+      print(names(session$userData$FlomicsMultiAssay))
+      
       if (rea.values$model == FALSE) return()
 
       box(width=12, status = "warning", solidHeader = TRUE, title = "Select contrasts",
-
-          #tags$i("blabla..."),
           br(),
           br(),
 
@@ -106,11 +106,6 @@ GLM_model <- function(input, output, session, rea.values){
                      options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                      multiple = TRUE,
                      selected = NULL)
-
-                   # box(
-                   #   checkboxGroupInput(inputId = session$ns(paste0("ContrastType",contrastType)),
-                   #                      label   = paste0("Contrast type : ", contrastType), choices = vect)
-                   # )
                  })
           ),
           br(),
@@ -120,17 +115,15 @@ GLM_model <- function(input, output, session, rea.values){
 
     # as soon as the "valid Contrasts" button has been clicked
     # => The selected contrasts are saved
-    # => The load data item appear
+    # => The load data item appears
     observeEvent(input$validContrasts, {
-
-      #print(paste0("validContrasts ", input$validContrasts))
 
       print(paste0("#    => Choice of contrasts..."))
 
       rea.values$analysis    <- FALSE
       rea.values$datasetDiff <- NULL
+     
       # reset analysis
-      
       lapply(rea.values$datasetList, function(dataset){
         rea.values[[dataset]]$process   <- FALSE
         rea.values[[dataset]]$diffAnal  <- FALSE
@@ -142,15 +135,12 @@ GLM_model <- function(input, output, session, rea.values){
       session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(object  = session$userData$FlomicsMultiAssay, 
                                                                    results = c("DiffExpAnal", "CoExpAnal", "DiffExpEnrichAnal", "CoExpEnrichAnal"))
 
-      #rea.values$validate.status <- 0
-
       #get list of selected contrast data frames with expression, name and type
       contrastList <- list()
       contrastList <- lapply(names(session$userData$FlomicsMultiAssay@metadata$design@Contrasts.List), function(contrastType) {
 
           input[[paste0("ContrastType",contrastType)]]
       })
-      #names(contrastList) <- names(Design@Contrasts.List)
       contrast.sel.vec <- contrastList %>% unlist()
 
       # check if user has selected the contrasts to test
@@ -165,11 +155,8 @@ GLM_model <- function(input, output, session, rea.values){
         need(length(contrast.sel.vec) != 0, message="ok")
         })
 
-      #print(paste0("#    => ", contrast.sel.vec))
-
       # define all the coefficients of selected contrasts and return a contrast matrix with contrast sample name and associated coefficients
       session$userData$FlomicsMultiAssay <- getContrastMatrix(object = session$userData$FlomicsMultiAssay, contrastList = contrast.sel.vec)
-      #rea.values$FlomicsMultiAssay <- FlomicsMultiAssay
 
       rea.values$Contrasts.Sel <- session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel
       

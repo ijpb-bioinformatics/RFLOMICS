@@ -295,9 +295,7 @@ rflomicsServer <- function(input, output, session) {
     # display set up model Item
     # if no error message
     inputModel <- list()
-    # observeEvent(inputData[["loadData"]], {
     observeEvent(rea.values[["loadData"]], {
-      #subitems(NULL)
 
       #continue only if message is true or warning
       validate({
@@ -336,9 +334,8 @@ rflomicsServer <- function(input, output, session) {
       })
 
       menuItem(text = "Omics Analysis", tabName = "OmicsAnalysis", icon = icon('chart-area'),
-               #icon = icon('chart-line'),
            lapply(names(rea.values$datasetList), function(omics){
-
+             
              lapply(names(rea.values$datasetList[[omics]]), function(i){
                 menuSubItem(text = rea.values$datasetList[[omics]][[i]],
                             tabName = paste0(omics, "Analysis", i))
@@ -346,19 +343,6 @@ rflomicsServer <- function(input, output, session) {
            })
       )
     })
-
-    # observe({
-    #
-    #   updateTabItems(session, "tabs", selected = paste0(names(FlomicsMultiAssay@metadata$omicList)[1],
-    #                                                     "Analysis",
-    #                                                     names(FlomicsMultiAssay@metadata$omicList[[1]])[1]))
-    # })
-
-
-    # update Item menu
-    #subitems(names(FlomicsMultiAssay@metadata$omicList))
-    #updateTabItems(session, "sbm", selected = "SetUpModelMenu")
-
 
     #### Item for each data integration tools #####
     # display tool Item
@@ -396,7 +380,6 @@ rflomicsServer <- function(input, output, session) {
     # if no error message
     observe({
 
-      #if(rea.values$analysis == FALSE) return()
       ##########################################
       # Part3 : Data Exploratory
       ##########################################
@@ -439,12 +422,6 @@ rflomicsServer <- function(input, output, session) {
           ##########################################
           callModule(module  = CoSeqAnalysis, id = paste0(omics, i),
                      dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
-
-          ##########################################
-          # Part7 : Enrichment Analysis
-          ##########################################
-          # callModule(module  = AnnotationEnrichment, id = paste0(omics, i),
-          #            dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
 
           ##########################################
           # Part7 : Enrichment Analysis CPR
