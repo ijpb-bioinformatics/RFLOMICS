@@ -83,9 +83,6 @@ GLM_model <- function(input, output, session, rea.values){
     # => Get and Display all the contrasts
     #  => The contrasts have to be chosen
     output$SetContrasts <- renderUI({
-
-      # TODO delete
-      print(names(session$userData$FlomicsMultiAssay))
       
       if (rea.values$model == FALSE) return()
 
