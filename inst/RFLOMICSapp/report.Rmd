@@ -94,7 +94,6 @@ knitr::asis_output(out)
 
     for (data in  rflomics.MAE@metadata$omicList[[omictype]]){
       
-      # child <- paste0("report_",omictype, ".Rmd")
       child <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_01_omics.Rmd") 
       
       out <- c(out, knitr::knit_child(child, quiet=TRUE))  

@@ -18,8 +18,6 @@ DT::datatable(as.data.frame(rflomics.MAE@colData),
 
 ```{r factors, echo=FALSE, message=TRUE, warning=TRUE}
 
-# Bio.fact   <- rflomics.MAE@metadata$design@Factors.Type[rflomics.MAE@metadata$design@Factors.Type == "Bio"]
-# Batch.fact <- rflomics.MAE@metadata$design@Factors.Type[rflomics.MAE@metadata$design@Factors.Type == "batch"]
 fact.names <- names(rflomics.MAE@metadata$design@Factors.Type)
 fact.types <- rflomics.MAE@metadata$design@Factors.Type
 fact.ref <- vector()
@@ -48,8 +46,6 @@ DT::datatable(loaded.data, rownames = FALSE,
               options = list( pageLength = 6, scrollX = T, dom = 'tip'),
               class = 'cell-border stripe')
 
-# kable_styling(kable(loaded.data, row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
-
 ```
 
 * This upset graph gives the number of common and specifics samples in the analyzed dataset(s).
@@ -60,7 +56,7 @@ DT::datatable(loaded.data, rownames = FALSE,
 
 if(length(unlist(rflomics.MAE@metadata$omicList)) > 2){
   
-  upsetSamples(rflomics.MAE[unlist(rflomics.MAE@metadata$omicList),])
+  MultiAssayExperiment::upsetSamples(rflomics.MAE[unlist(rflomics.MAE@metadata$omicList),])
 }
 
 
@@ -82,8 +78,5 @@ if(length(unlist(rflomics.MAE@metadata$omicList)) > 2){
 DT::datatable(rflomics.MAE@metadata$design@Contrasts.Sel[,c(5,2:3)], rownames = FALSE,
               options = list( pageLength = 6, scrollX = F, dom = 'tip'),
               class = 'cell-border stripe')
-
-# kable_styling(kable(rflomics.MAE@metadata$design@Contrasts.Sel[,c(5,2:3)], 
-#                     row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
 ```
 

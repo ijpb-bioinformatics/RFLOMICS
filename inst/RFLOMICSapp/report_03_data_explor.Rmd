@@ -19,8 +19,7 @@ knitr::opts_chunk$set(
 
 dataset.raw.SE <- rflomics.MAE@ExperimentList[[paste0(data,".raw")]]
 dataset.SE     <- rflomics.MAE@ExperimentList[[data]]
-
-# 
+ 
 check <- CheckExpDesignCompleteness(rflomics.MAE, colnames(rflomics.MAE[[data]]))
 check$plot
            
@@ -116,7 +115,6 @@ Quality control's graphs before and after the pre-processing:
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
 * Histogram of sample's library size
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
-* Distribution of `r RFLOMICS:::omicsDic(dataset.SE)[["valueType"]]` by sample
 * Distribution of `r RFLOMICS:::omicsDic(dataset.SE)[["valueType"]]` by sample
 * Principal component analysis results: 
     + coordinates of samples on the axes 1 and 2

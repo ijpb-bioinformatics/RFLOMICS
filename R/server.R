@@ -467,6 +467,7 @@ rflomicsServer <- function(input, output, session) {
         # TEST
         # save FE object in .Rdata and load it during report execution
         projectName  <- session$userData$FlomicsMultiAssay@metadata$projectName
+        # rflomics.MAE <- session$userData$FlomicsMultiAssay[,,-grep(".raw", names(session$userData$FlomicsMultiAssay))]
         rflomics.MAE <- session$userData$FlomicsMultiAssay
         RData.name   <- paste0(projectName, ".MAE.RData")
         outDir <- file.path(tempdir(),paste0(format(Sys.time(),"%Y_%m_%d"),"_",projectName))
@@ -505,13 +506,10 @@ rflomicsServer <- function(input, output, session) {
       # For PDF output, change this to "report.pdf"
 
       filename = function(){
-        outDir <- paste0(format(Sys.time(),"%Y_%m_%d"),"_",session$userData$FlomicsMultiAssay@metadata$projectName)
+        outDir <- paste0(format(Sys.time(),"%Y_%m_%d"),"_", session$userData$FlomicsMultiAssay@metadata$projectName)
         paste0(outDir,".tar.gz")
       },
       content = function(file) {
-        # tar(tarfile = file,
-        #     files = paste0(tempdir(),"/",format(Sys.time(),"%Y_%m_%d"),"_",session$userData$FlomicsMultiAssay@metadata$projectName),
-        #     compression = c("gzip"),extra_flags=paste0("-C ",tempdir()))
 
         # linux
          system(paste0("tar -C",
