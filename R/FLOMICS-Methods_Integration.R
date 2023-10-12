@@ -233,7 +233,8 @@ methods::setMethod(
       
     } else if (method == "MixOmics") { # prepare mixOmics bject
       # Common samples names:
-      object <- object[, Reduce("intersect", colnames(object))]
+      # object <- object[, Reduce("intersect", colnames(object))]
+      object <- intersectColumns(object)
       
       MixOmicsObject <- list(
         blocks   = lapply(object@ExperimentList, 
