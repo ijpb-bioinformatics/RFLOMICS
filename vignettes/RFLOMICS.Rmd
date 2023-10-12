@@ -1,6 +1,8 @@
 ---
 title: "RFLOMICS"
-output: rmarkdown::html_vignette
+output: 
+  html_vignette:
+        number_sections: true
 
 vignette: >
   %\VignetteIndexEntry{RFLOMICS}
@@ -23,30 +25,27 @@ knitr::opts_chunk$set(
 )
 ```
 
-<br>
-<br>
-
-# 1. Run RFLOMICS
+# Run RFLOMICS
 
 ```{bash, eval=FALSE}
 library(RFLOMICS)
-RFLOMICS::runExample()
+RFLOMICS::runRFLOMICS()
 ```
 
-On the left side of interface, the different tab menu will appear as the analysis progresses to guide the user.
+On the left side of interface, the different tab menus will appear as the analysis progresses to guide the user.
 
-# 2. Load Data
+# Load Data
 
 We start by setting a project name (it is mandatory). Then we load the experimental design and the different omics datasets.
 
-## 2-1 Dataset example description:
+## Dataset example description:
 
 <p style='text-align: justify;'> The data used for this vignette have been provided by Pr. Loic Rajjou and Gwendal Cueff. They are included in the inst/ExampleFiles/ecoseed directory of the package. Briefly, A. thaliana's transcriptome, metabolome and proteome have been obtained in the context of the study of seed germination and vigor. 
 In particular, the authors were interested in deciphering key entities involved in response to environmental stresses (on the mother plant): influences of temperature (high, medium and low) and imbibition stage (Dry: DI, early imbibition: EI and late imbibition: LI). See(https://www.uibk.ac.at/botany/ecoseed/home/) </p>
 
 
 
-## 2-2 Load Experimental Design
+## Load Experimental Design
 
 The experimental design file contains information about the readiness status of each sample (see link : vignette input ).
 As soon as this file is loaded, we can define the type (Biological factor : Bio; batch factor : batch; metadata information : meta) and reference level of each design factor.
@@ -55,7 +54,7 @@ As soon as this file is loaded, we can define the type (Biological factor : Bio;
 
 * *It possible to exclude samples from design. These samples will be excluded from the analysis even if they are present in the omics dataset matrix.*
 
-## 2-3 Load Omics data
+## Load Omics data
 
 <p style='text-align: justify;'> For this tutorial we provide 3 datasets: RNAseq data (read counts), proteomics data (abundance of proteins), and metabolomics data (intensity of metabolites) (see link : vignette input). We must specify for each dataset its type of omics. We can give a suitable name to our dataset. By Default, they will be called respectively (set1, set2, set3).
 
@@ -63,7 +62,7 @@ As soon as the data are loaded the **RFlomics MultiAssayExperiment** object is c
 
 ![ ](Images/Capture_Load-Data.png){width=80%}
 
-## 2-4 Completeness check
+## Completeness check
 
 <p style='text-align: justify;'> The design must be complete and as possible balanced. A **Complete design (mandatory)** mean that all possible combinations of biological factor's level (called groups) are presents. A **Balanced design (recommended)** has an equal number of observations (replicates) for all groups.
 
@@ -73,7 +72,7 @@ This constraint is checked and represented as graph (each square represent 1 gro
 knitr::include_graphics(c("Images/completBalanced.png", "Images/completNonBalanced.png"))
 ```
 
-# 3. Set the statistical framework
+# Set the statistical framework
 
 <p style='text-align: justify;'> The interface provides models written from the simplest one to the most complete one. Only the second orders interaction terms between the biological factors will appear. Batch factor will never appear in interaction terms. In our case we choose the complete model.
 
@@ -85,14 +84,14 @@ This statistical framework will be applied on all loaded datasets. </p>
 
 ![ ](Images/Capture_Experimental-Design.png){width=80%}
 
-# 4. Omics data analysis
+# Omics data analysis
 
 Once the contrasts are chosen, 3 Item menus appear in the side bar menu that correspond to the 3 loaded omics types.
 
 For each dataset, different steps of data analysis are proposed as a tab panel. These analysis steps must be performed sequentially. It is possible to switch between datasets.
 However, you cannot perform a new task until the previous one is completed. A progress bar will be display indicating the progress status.
 
-## 4-1 Data Exploratory
+## Data Exploratory
 
 In this tab panel we access a data quality control screen and we perform the appropriate data filtering and processing according to the type of omics.
 
@@ -132,7 +131,7 @@ For RNAses data the QC graphs are:
 
 
 
-## 4-2 Differential expression analysis
+## Differential expression analysis
 
 In this tab panel, we can run the differential expression analysis. The analysis is run by contrast.  
 For RNAseq data, the **glmFit()** function from the **edgeR** package is used whereas for proteomic and metabolomic data, the **lmFit()** function from **limma** packages is used. The ability to run analysis on a cluster is offered by sliding the
@@ -161,7 +160,7 @@ to the co-expression analysis or to the annotation enrichment step.
  
 ![ ](Images/capture_diff_analysis.png){width=80%}
  
-## 4-3 Coexpression analysis
+## Coexpression analysis
 
 * In this tab panel, choice is given to merge (**union**) or intersect  (**intersection**) the lists of differentially expressed 
 genes/proteins/metabolites associated to contrasts.
@@ -188,13 +187,13 @@ The ability to run the clustering analysis on a cluster is offered by sliding th
 
 ![ ](Images/capture_coexpression.png){width=80%}
 
-## 4-4 Annotation and Enrichment analysis
+## Annotation and Enrichment analysis
 
 Then we select a lists of DGEs and clusters to annotate. By default the annotation will be done on all selected DGE lists and clusters.
 
 ![ ](Images/capture_annotation.png){width=80%}
 
-## 4-5 Annotation and Enrichment analysis using clusterProfilR
+## Annotation and Enrichment analysis using clusterProfilR
 
 <p style='text-align: justify;'> We select the lists of DE genes or clusters to annotate. All available lists are selected by default. 
 
@@ -220,15 +219,16 @@ Once everything is set and the analysis is conducted, several panels are display
 
 ![Results displayed when using a differential analysis list](Images/Image2_clusterprof2.png){width=80%}
 
-# 5. Integration
+# Integration
 
 <p style='text-align: justify;'> Once at least two lists of DE genes are validated in the differential analysis tabs, the Integration step will appear in the side bar menu. Three sub menus are available. </p>
 
-## 5-1 Dataset analysis summary 
+## Dataset analysis summary 
+
 <p style='text-align: justify;'> This panel summarizes the effects of the filtering steps on the selected datasets and the results of the differential analyses. The first row shows how many samples and entities are left in each table. The integration will be performed on these datasets. 
 The second row shows the number of DE entities for each selected contrast and for each table, with the distinction between up-regulated and down-regulated entities. </p>
 
-## 5-2 MOFA
+## MOFA
 
 <p style='text-align: justify;'> This integration analysis is performed using the **MOFA2** R-package. It is an unsupervised method that searches for latent factors to decompose the variance of the data, similarly to a PCA, but applied to a multi-dataset situation. The interpretation of the results is also very similar to those of a PCA: the most interesting factors are the one explaining more variance, whether it's on several dataset or just one table. It also gives weights to the features of each table, for each factor. This is interesting in case a factor can be **a posteriori** linked to a covariate (in our case, the temperature seems linked to the first factor, the features used to build this factor are to be considered very relevant in the analysis). </p>
 
@@ -258,10 +258,12 @@ Several figure are provided by the interface once the analysis is done: </p>
 * Heatmap: Can only be displayed for each dataset and each factor. Allow to represent the original data or the factor-weight combination (denoise set to TRUE) of the most important features (weight wise) used to built a factor. Metadata can be used to annotate the heatamp.
 * Network: not available yet! 
 
-## 5-3 MixOmics
+## MixOmics
 
-Work in progress!
+<p style='text-align: justify;'> This integration analysis is performed using the **MixOmics** R-package. It offers many possibilities of analyses. In RFLOMICS, we focused on the supervised analyses using the functions block.(s)plda from the package.</p>
 
-
+<p style='text-align: justify;'> 
+MixOmics does not work on unbalanced design. Only complete cases will be used for the analysis. 
+</p>
 
 
