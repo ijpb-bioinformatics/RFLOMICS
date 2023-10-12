@@ -2140,7 +2140,7 @@ methods::setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
                    
                    definition <- function(object, results, datasets = NULL){
                      
-                     # if dataset is null we take all datasets presente in MultiAssayExperiment object
+                     # if dataset is null we take all datasets present in MultiAssayExperiment object
                      if(is.null(datasets)){
                        datasets <- unlist(object@metadata$omicList)
                      }
