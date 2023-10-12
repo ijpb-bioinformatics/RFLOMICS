@@ -133,8 +133,8 @@ MixOmics_setting <- function(input, output, session, rea.values){
                           checkboxGroupInput(
                             inputId  = session$ns("MO_selectedResponse"),
                             label    = "Select response variables",
-                            choices  = c(colnames(colData(session$userData$FlomicsMultiAssay))),
-                            selected = colnames(colData(session$userData$FlomicsMultiAssay))[1]))
+                            choices  = c(bioFactors(session$userData$FlomicsMultiAssay)),
+                            selected = bioFactors(session$userData$FlomicsMultiAssay)[1]))
                  ),
                  fluidRow(
                    column(12, actionButton(session$ns("runMixOmics"), "Run Analysis"))
