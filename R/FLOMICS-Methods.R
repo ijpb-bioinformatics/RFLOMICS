@@ -1044,14 +1044,14 @@ methods::setMethod(f         = "FilterLowAbundance",
                      
                      objectFilt <- object
                      
-                     assayFilt  <- MultiAssayExperiment::assay(objectFilt)
+                     assayFilt  <- assay(objectFilt)
                      
                      ## nbr of genes with 0 count
                      genes_flt0  <- objectFilt[rowSums(assayFilt) <= 0, ]@NAMES
                      
                      ## remove 0 count
                      objectFilt  <- objectFilt[rowSums(assayFilt)  > 0, ]
-                     assayFilt   <- MultiAssayExperiment::assay(objectFilt)
+                     assayFilt   <- assay(objectFilt)
                      
                      ## filter cpm
                      NbReplicate  <- table(object@metadata$Groups$groups)
@@ -1081,6 +1081,7 @@ methods::setMethod(f         = "FilterLowAbundance",
                      return(object)
                      
                    })
+
 
 #' @rdname FilterLowAbundance
 #' @title FilterLowAbundance
