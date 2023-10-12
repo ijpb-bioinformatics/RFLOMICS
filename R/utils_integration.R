@@ -350,7 +350,7 @@ MOFA_cor_network <- function(resMOFA,
                             shape = "rectangle", labels = rownames(cor_display), vsize2 = 2, 
                             vsize = sapply(rownames(cor_display), nchar)*1.1,  layout = layout_arg,
                             esize = 2,
-                            groups = gsub("[.]filtred", "", features_metadata$Table[match(rownames(cor_display), rownames(features_metadata))]),
+                            groups = features_metadata$Table[match(rownames(cor_display), rownames(features_metadata))],
                             posCol = posCol, negCol = negCol, 
                             details = FALSE,  legend = FALSE,
                             color = feature_filtered$Color2[match(rownames(cor_display), feature_filtered$EntityName)])
@@ -359,7 +359,6 @@ MOFA_cor_network <- function(resMOFA,
       # Legend
       legend_matrix <- do.call("rbind", omics_colors)
       colnames(legend_matrix) <- c("(0,0.2]", "(0.2,0.4]", "(0.4,0.6]", "(0.6,0.8]", "(0.8, 1]")
-      rownames(legend_matrix) <- gsub("[.]filtred", "", rownames(legend_matrix))
       legend.reshape <- melt(legend_matrix)
       
       gg.legend <-  ggplot(legend.reshape, aes(x = Var2, y = Var1)) + 
