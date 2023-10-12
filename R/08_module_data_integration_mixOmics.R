@@ -187,7 +187,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
     
     list_args_MO <- list(
       object = session$userData$FlomicsMultiAssay,
-      omicsToIntegrate = paste0(input$MO_selectedData, ".filtred"),
+      omicsToIntegrate = input$MO_selectedData,
       rnaSeq_transfo = input$MO_RNAseqTransfo,
       choice = "DE", 
       contrasts_names = input$MO_selectedContrast,

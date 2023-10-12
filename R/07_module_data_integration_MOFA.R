@@ -170,7 +170,7 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     list_args_prepare_MOFA <- list(
       object = session$userData$FlomicsMultiAssay,
-      omicsToIntegrate = paste0(input$MOFA_selectedData, ".filtred"),
+      omicsToIntegrate = input$MOFA_selectedData,
       rnaSeq_transfo = input$MOFA_RNAseqTransfo,
       choice = "DE", 
       contrasts_names = input$MOFA_selectedContrasts,
