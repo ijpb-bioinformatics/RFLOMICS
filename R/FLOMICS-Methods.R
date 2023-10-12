@@ -2142,12 +2142,12 @@ methods::setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
                      
                      # if dataset is null we take all datasets presente in MultiAssayExperiment object
                      if(is.null(datasets)){
-                       datasets <- paste0(unlist(object@metadata$omicList), ".filtred")
+                       datasets <- unlist(object@metadata$omicList)
                      }
                      else{
                        # check if given dataset name include in datasets presente in MultiAssayExperiment object
-                       if(!datasets %in% paste0(unlist(object@metadata$omicList), ".filtred")){
-                         print("Warning: The given dataset name is not present in MultiAssayExperiment object")
+                       if(!datasets %in% unlist(object@metadata$omicList)){
+                         warning("The given dataset name is not present in MultiAssayExperiment object")
                          return(object)
                        }
                      }
