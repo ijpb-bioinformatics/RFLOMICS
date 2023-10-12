@@ -217,7 +217,7 @@ methods::setMethod(
     }
     
 
-    if (method == "MOFA") {    # Prepare mofa object
+    if (method == "MOFA") {    
       if (silent) {
         MOFAObject <- suppressMessages(
           suppressWarnings(create_mofa(object,
@@ -231,10 +231,14 @@ methods::setMethod(
       
       return(MOFAObject)
       
-    } else if (method == "MixOmics") { # prepare mixOmics bject
+    } else if (method == "MixOmics") { 
       # Common samples names:
-      # object <- object[, Reduce("intersect", colnames(object))]
+      nsamp <- nrow(colData(object))
       object <- intersectColumns(object)
+      
+      if(nsamp != nrow(colData(object))) {
+        warning("Removing ", nsamp - nrow(colData(object)), " samples not in every experiment.")
+      }
       
       MixOmicsObject <- list(
         blocks   = lapply(object@ExperimentList, 
