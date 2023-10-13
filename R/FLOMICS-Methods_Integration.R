@@ -49,6 +49,7 @@ methods::setMethod(
       stop("There are omics to integrate that are not names from the object")
     }
     
+    # TODO handle NULL case better than that
     if (isTagName(object, contrasts_names)) 
       contrasts_names <- convertTagToContrast(object, contrasts_names)
     
@@ -90,7 +91,7 @@ methods::setMethod(
       
       if (cmd) print("#     => Running mixOmics analysis")
       
-      if (is.null(selectedResponse)) selectedResponse <- colnames(object@metadata$design@ExpDesign)
+      if (is.null(selectedResponse)) selectedResponse <- bioFactors(object)
       
       if (silent) {
         co <- capture.output({ 
@@ -151,7 +152,8 @@ methods::setMethod(
 
 
 #' @title prepareForIntegration
-#' @description This function transforms a MultiAssayExperiment produced by rflomics into an untrained MOFA objects or a list to use for mixOmics. It checks for batch effect to correct them prior to the integration.
+#' @description This function transforms a MultiAssayExperiment produced by rflomics into an untrained MOFA objects or a list to use for mixOmics. 
+#' It checks for batch effect to correct them prior to the integration.
 #' It also transforms RNASeq counts data into continuous data. This is the first step into the integration.
 #' @param object An object of class \link{MultiAssayExperiment}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param omicsToIntegrate vector of characters strings, referring to the names of the filtered table in 'object@ExperimentList'.
@@ -192,6 +194,7 @@ methods::setMethod(
     # On each selected omics, according to its type, apply transformation if demanded.
     # Filter DE entities
     # TODO : add a possibility of choice for keeping every entity (small tables)
+    # TODO change for lapply
     for (SEname in omicsToIntegrate) {
       SEobject <- object[[SEname]]
       omicsType <- getOmicsTypes(SEobject)
@@ -216,7 +219,6 @@ methods::setMethod(
       )
     }
     
-
     if (method == "MOFA") {    
       if (silent) {
         MOFAObject <- suppressMessages(
@@ -232,21 +234,22 @@ methods::setMethod(
       return(MOFAObject)
       
     } else if (method == "MixOmics") { 
+      
       # Common samples names:
       nsamp <- nrow(colData(object))
       object <- intersectColumns(object)
       
-      if(nsamp != nrow(colData(object))) {
+      if (nsamp != nrow(colData(object))) {
         warning("Removing ", nsamp - nrow(colData(object)), " samples not in every experiment.")
       }
       
       MixOmicsObject <- list(
-        blocks   = lapply(object@ExperimentList, 
-                          FUN = function(SE) t(assay(SE))),
+        blocks   = lapply(object@ExperimentList, FUN = function(SE) t(assay(SE))),
         metadata = object@colData
       )
+      
       MixOmicsObject$blocks <- lapply(MixOmicsObject$blocks, 
-                                      FUN = function(mat) mat[order(rownames(mat)), ])
+                                      FUN = function(mat) mat[match(rownames(mat), rownames(MixOmicsObject$metadata)), ])
       
       return(MixOmicsObject)
     }

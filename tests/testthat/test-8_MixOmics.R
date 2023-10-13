@@ -42,7 +42,8 @@ MAE <- MAE |>
 
 test_that("Working?", code = {
   
-  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest"), method = "mixomics") # not working
+  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest"), method = "mixomics") 
+  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("metatest"), method = "mixomics")
   
   MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest"), method = "mixomics")
   

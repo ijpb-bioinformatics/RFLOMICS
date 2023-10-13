@@ -487,18 +487,25 @@ runMixOmicsAnalysis <- function(object,
                                 sparsity = FALSE,
                                 cases_to_try = 5,
                                 ...) {
-  
+
   list_res <- list()
   dis_anal <- FALSE # is this a discriminant analysis
+  
+  if (length(intersect(colnames(object$metadata), selectedResponse)) == 0) {
+    stop("Selected Responses are not columns from metadata")
+  }
   
   # TODO : check this, c'est un peu etrange d'avoir eu a reordonner les lignes dans prepareForIntegration
   # du coup ca demande de le faire aussi pour Y
   # TODO : faudrait le faire directement dans preparedList ?
-  Y <- data.frame(object$metadata, stringsAsFactors = TRUE) %>%
-    rownames_to_column(var = "rowNam") %>%
-    arrange(rowNam) %>%
-    column_to_rownames(var = "rowNam") %>%
-    select(all_of(selectedResponse))
+  # Y <- data.frame(object$metadata, stringsAsFactors = TRUE) %>%
+  #   rownames_to_column(var = "rowNam") %>%
+  #   arrange(rowNam) %>%
+  #   column_to_rownames(var = "rowNam") %>%
+  #   select(all_of(selectedResponse))
+  
+  Y <- data.frame(object$metadata, stringsAsFactors = TRUE) 
+  Y <- Y[, selectedResponse, drop = FALSE]
   
   # Is this a discriminant analysis?
   # TODO : is this used?
@@ -562,13 +569,17 @@ runMixOmicsAnalysis <- function(object,
   }
   
   # Model fitting
-  
   list_args <- list(
-    X = object$blocks,
     Y = Y,
     ncomp = ncomp,
     scale = scale_views
   )
+  
+  if (length(object$blocks) == 1) {
+    list_args$X <- object$blocks[[1]]
+  } else {
+    list_args$X <- object$blocks
+  }
   if (length(object$blocks) > 1) list_args$design <- Design_mat
   if (sparsity && !functionName %in% c("block.spls", "block.pls")) list_args$keepX <- list_res$tuning_res$choice.keepX
   
