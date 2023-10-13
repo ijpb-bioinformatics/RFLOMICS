@@ -1410,7 +1410,7 @@ methods::setMethod(f          = "FilterDiffAnalysis",
                      ## TopDEF: Top differential expressed features
                      DEF_filtred <- lapply(1:length(object@metadata$DiffExpAnal[["DEF"]]), function(x){
                        res <- object@metadata$DiffExpAnal[["DEF"]][[x]]
-                       keep <- (res$Adj.pvalue <= Adj.pvalue.cutoff) & (abs(res$logFC) > logFC.cutoff)
+                       keep <- (res$Adj.pvalue < Adj.pvalue.cutoff) & (abs(res$logFC) > logFC.cutoff)
                        res <- res[keep,]
                        return(res)
                      })
@@ -1418,25 +1418,7 @@ methods::setMethod(f          = "FilterDiffAnalysis",
                      object@metadata$DiffExpAnal[["TopDEF"]] <- DEF_filtred
                      
                      ## stats
-                     stats_list <- lapply(1:length(object@metadata$DiffExpAnal[["TopDEF"]]), function(x){
-                       gN = dim(object@metadata$DiffExpAnal[["DEF"]][[x]])[1]
-                       gDE =  dim(object@metadata$DiffExpAnal[["TopDEF"]][[x]])[1]
-                       pgDE =   round((gDE/gN)*100,0)
-                       gDEup =  dim(dplyr::filter(object@metadata$DiffExpAnal[["TopDEF"]][[x]],logFC > 0))[1]
-                       pgDEup =  round((gDEup/gDE)*100,0)
-                       gDEdown =  dim(dplyr::filter(object@metadata$DiffExpAnal[["TopDEF"]][[x]],logFC < 0))[1]
-                       pgDEdown =  round((gDEdown/gDE)*100,0)
-                       list(
-                         "gN" = gN,
-                         "gDE" =  gDE,
-                         "pgDE" =  pgDE,
-                         "gDEup" =  gDEup,
-                         "pgDEup" =  pgDEup,
-                         "gDEdown" =  gDEdown,
-                         "pgDEdown" =  pgDEdown)
-                     })
-                     names(stats_list) <- names(object@metadata$DiffExpAnal[["RawDEFres"]])
-                     object@metadata$DiffExpAnal[["stats"]] <- stats_list
+                     object@metadata$DiffExpAnal[["stats"]] <- sumDiffExp(object)
                      
                      
                      ## merge results in bin matrix

@@ -55,10 +55,10 @@ DEdown <- vector()
 for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
    contrastName <- tmpRes[["contrasts"]][i,]$contrastName
    #hyp <- tmpRes[["contrasts"]][i,]$tag
-   stats <- tmpRes[["stats"]][[contrastName]]
-   DE[i] <- stats$gDE
-   DEup[i] <- paste(stats$gDEup," (",stats$pgDEup," %)",sep="")
-   DEdown[i] <- paste(stats$gDEdown," (",stats$pgDEdown," %)",sep="")
+   stats <- tmpRes[["stats"]][contrastName,]
+   DE[i] <- stats[["All"]]
+   DEup[i] <- paste(stats[["Up"]]," (",round(stats[["Up"]]/stats[["All"]],2)*100," %)",sep="")
+   DEdown[i] <- paste(stats[["Down"]]," (",round(stats[["Down"]]/stats[["All"]],2)*100," %)",sep="")
 }
 
 ```

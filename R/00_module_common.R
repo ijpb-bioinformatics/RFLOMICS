@@ -94,10 +94,15 @@ omics_data_analysis_summary <- function(input, output, session, rea.values){
     
     summaryProcess.df <- lapply(rea.values$datasetDiff, function(dataset){
       
-      c(paste(dataset, "filtred", sep = "."), 
-        dim(session$userData$FlomicsMultiAssay[[dataset]]) - dim(session$userData$FlomicsMultiAssay[[paste(dataset, "filtred", sep = ".")]]))
-    }) %>% purrr::reduce(rbind) %>% data.table::data.table()
-    names(summaryProcess.df) <- c("dataset", "rm_entities", "rm_samples")
+    #   c(paste(dataset, "filtred", sep = "."), 
+    #     dim(session$userData$FlomicsMultiAssay[[dataset]]) - dim(session$userData$FlomicsMultiAssay[[paste(dataset, "filtred", sep = ".")]]))
+    # }) %>% purrr::reduce(rbind) %>% data.table::data.table()
+    # names(summaryProcess.df) <- c("dataset", "rm_entities", "rm_samples")
+    
+    c(dataset, 
+      dim(session$userData$FlomicsMultiAssay[[paste(dataset, "raw", sep = ".")]]) - dim(session$userData$FlomicsMultiAssay[[dataset]]))
+  }) %>% purrr::reduce(rbind) %>% data.table::data.table()
+  names(summaryProcess.df) <- c("dataset", "rm_entities", "rm_samples")
     
     ggplot2::ggplot(summaryProcess.df %>% reshape2::melt(id="dataset"), ggplot2::aes(x=variable, y=dataset)) + 
       ggplot2::geom_tile(aes(fill=dataset),color="white", lwd =1.5, linetype=1) + 
@@ -118,17 +123,25 @@ omics_data_analysis_summary <- function(input, output, session, rea.values){
   
     
     summaryDiff.df <- lapply( rea.values$datasetDiff, function(dataset){
-      lapply(names(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats), function(contrast){  
-        
-        c(dataset, contrast, paste0(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats[[contrast]][["gDEup"]], "/", 
-                                    session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats[[contrast]][["gDEdown"]]) )
-        
-      }) %>% purrr::reduce(rbind)
-      
+    #   lapply(names(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats), function(contrast){  
+    #     
+    #     c(dataset, contrast, paste0(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats[[contrast]][["gDEup"]], "/", 
+    #                                 session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats[[contrast]][["gDEdown"]]) )
+    #     
+    #   }) %>% purrr::reduce(rbind)
+    #   
+    # }) %>% purrr::reduce(rbind) %>% data.table::data.table()
+    
+    # names(summaryDiff.df) <- c("dataset", "contrast", "value")
+    
+    mat <- as.data.frame(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats)
+    mat$contrast <- row.names(mat)
+    tab <- mat %>% 
+      dplyr::mutate(.,dataset=dataset) %>%
+      tidyr::unite("value",Up:Down,remove=TRUE,sep="/") %>% 
+      dplyr::select(-"All")
+    return(tab)
     }) %>% purrr::reduce(rbind) %>% data.table::data.table()
-    
-    names(summaryDiff.df) <- c("dataset", "contrast", "value")
-    
     
     ggplot2::ggplot(summaryDiff.df, ggplot2::aes(x=contrast, y=dataset)) + 
       ggplot2::geom_tile(ggplot2::aes(fill=dataset),color="white", lwd =1.5, linetype=1) + 
