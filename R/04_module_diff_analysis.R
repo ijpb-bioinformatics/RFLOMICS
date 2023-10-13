@@ -280,7 +280,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
         vect     <- unlist(rea.values$Contrasts.Sel[i,])
         res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
-        stats    <- dataset.SE@metadata$DiffExpAnal[["stats"]][[vect["contrastName"]]]
+        stats    <- dataset.SE@metadata$DiffExpAnal[["stats"]][vect["contrastName"],]
         
         diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=vect["contrastName"])
         
@@ -289,7 +289,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
           fluidRow(
             column(10,
                    box(width=14, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "danger",
-                       title = tags$h5(paste0(vect["tag"], " : ", vect["contrastName"],"  [#DE: ", stats$gDE," ]")),
+                       title = tags$h5(paste0(vect["tag"], " : ", vect["contrastName"],"  [#DE: ", stats[["All"]]," ]")),
                        
                        tabsetPanel(
                          
@@ -309,7 +309,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
           fluidRow(
             column(10,
                    box(width=14, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success",
-                       title = tags$h5(paste0(vect["tag"], ": ", vect["contrastName"],"  [#DE: ", stats$gDE," (up: ", stats$pgDEup,"%, ", "down: ", stats$pgDEdown,"%)]")),
+                       title = tags$h5(paste0(vect["tag"], ": ", vect["contrastName"],"  [#DE: ", stats[["All"]]," ; Up: ", stats[["Up"]]," (",round(stats[["Up"]]/stats[["All"]],2)*100," %)"," ; ", "Down: ", stats[["Down"]]," (",round(stats[["Down"]]/stats[["All"]],2)*100,"%)")),
                        
                        tabsetPanel(
                          
