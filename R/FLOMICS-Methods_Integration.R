@@ -240,7 +240,7 @@ methods::setMethod(
       object <- intersectColumns(object)
       
       if (nsamp != nrow(colData(object))) {
-        warning("Removing ", nsamp - nrow(colData(object)), " samples not in every experiment.")
+        warning("Removing ", nsamp - nrow(colData(object)), " samples not present in every experiment.")
       }
       
       MixOmicsObject <- list(
