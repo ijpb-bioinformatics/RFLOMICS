@@ -267,7 +267,7 @@ Several figure are provided by the interface once the analysis is done:
  
 MixOmics does not work on unbalanced design. Only complete cases will be used for the analysis. 
  
-![MixOmics Settings](Images/MixOmics_settings.png){width=50%}
+![MixOmics Settings](Images/MixOmics_Settings.png){scale=80%}
 
 The user can chose the blocks they want to integrate. Even if the interface requires two validated differential analyses, using only one block will work. It will use either plsda or splsda functions from MixOmics. 
 
@@ -281,13 +281,16 @@ In RFLOMICS, we chose to only ask for a number of cases. This number of cases is
 Several figures are provided by the interface once the analysis is done, for each selected response variable:  
 
 * Overview: in this panel, a description of the datatables is presented, with the number of individuals and features available. If tuning has been set, the optimal number of features for each component and each dataset is available in this panel. 
-* Explained variance: for each component, display the origin of the explained variance and the cumulative explained variance for each table. 
+* Explained variance: for each component, displays the origin of the explained variance and the cumulative explained variance for each table. 
 * Individuals: from the mixOmics::plotIndiv() function, display for each table the coordinates of the individuals.
-* Features: from the mixOmics::plotVar() function, display for each table the coordinates of the features on the correalation circle.
-* Loadings: weight of each feature in the components. Allows to select the most important features for the selected response variable.
-* Networks: 
-* CircosPlot:
-* CimPlot: 
+* Features: from the mixOmics::plotVar() function, display for each table the coordinates of the features on the correlation circle. The interpretation is the same as a PCA correlation circle.
+* Loadings: weight of each feature in the components. Allows to select the most important features for the selected response variable. 
+* Networks: from the mixOmics::network() function, for a specified absolute correlation threshold, draw the correlation network for the selected features. It has the advantage of being a multi-omics correlation network.
+* CircosPlot: only available if sparse is activated. From the circosPlot function, another representation of network, all features are dislayed as a circos and only correlation over the absolute threshold are displayed. 
+* CimPlot: only available if sparse is activated. From the CimPlot function, heatmap of the original data for selected features, compenent per component. 
 
+![MixOmics Settings](Images/MixOmics_features_select.png){width=80%} 
+
+![MixOmics Settings](Images/MixOmics_loadings.png){width=80%}
 
 
