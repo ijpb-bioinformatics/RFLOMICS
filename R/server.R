@@ -76,7 +76,6 @@ rflomicsServer <- function(input, output, session) {
 
           #### Cover Page        ####
           ###########################
-
           tabItem(tabName = "coverPage",
                   coverPageUI()
 

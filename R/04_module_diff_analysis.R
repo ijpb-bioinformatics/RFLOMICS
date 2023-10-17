@@ -43,7 +43,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
         p("Differential expression analysis is conducted for each hypothesis. There are two options to set (the adjusted-pvalue cut-off and the |logFC| cut-off).
           The results will appear in blocks (one per hypothesis) with 3 outputs:"),
-        p("- the distribution of pvalue's: which has to be validated", a("(some help to identify the good shapes)", href="Pvalue_distrib.pdf"),""),
+        p("- the distribution of pvalue's: which has to be validated", a("(some help to identify the good shapes)", href="/www/Pvalue_distrib.pdf"),""),
         p("- the MA plot (DE genes in red will varie with the p-value cutoff)"),
         p("- the table of statistics per gene/protein/metabolite (Number of stats displayed will varie with the p-value cutoff)")
     )

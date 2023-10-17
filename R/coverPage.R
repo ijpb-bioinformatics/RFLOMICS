@@ -12,7 +12,7 @@ coverPageUI <- function(){
                         "dedicated to the management and analysis of multiple omics-datasets (RNAseq illumina, proteomic LC-MS/MS, … )
                     in the statistical framework of", tags$b("vertical integration")," of observations ",tags$i("(i.e. analysis of omics data
                     across experiments on the same indivuals)."),
-                    tags$hr(), tags$img(src = "RFLOMICSapp/www/Rflomics_features.png", width = "600px", height = "300px" )),
+                    tags$hr(), tags$img(src = "/www/Rflomics_features.png", width = "600px", height = "300px" )),
                     hr(),
                     p("For the moment, Rflomics can deal",
                       tags$b("with multi-factorial experiments"),"(up to 3 biological factors with a batch factor) and
@@ -42,8 +42,8 @@ coverPageUI <- function(){
                     hr(),
                     h3(tags$span("Vignettes", style = "color:orange")),
                     tags$ul(
-                      tags$li(tags$a(href="docs/articles/RFLOMICS-input-data.html","Input format")),
-                      tags$li(tags$a(href="docs/articles/RFLOMICS.html","Quick start"))),
+                      tags$li(tags$a(href = "/docs/articles/RFLOMICS-input-data.html", "Input format")),
+                      tags$li(tags$a(href = "/docs/articles/RFLOMICS.html", "Quick start"))),
                     hr(),
                     h3(tags$span("Contact and support", style = "color:orange")),
                     tags$a(href="mailto:ijpb-bioinfo-team@inrae.fr","ijpb-bioinfo-team")
