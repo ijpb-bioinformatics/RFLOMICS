@@ -42,7 +42,7 @@ runRFLOMICS <- function(...) {
     body
   ) 
   
-  addResourcePath(prefix = 'docs', system.file('RFLOMICSapp/docs/', package = 'RFLOMICS'))
+  # addResourcePath(prefix = 'docs', system.file('RFLOMICSapp/docs/', package = 'RFLOMICS')) # docs/ n'existe pas ?
   addResourcePath(prefix = 'www', system.file('RFLOMICSapp/www/', package = 'RFLOMICS'))
   shinyApp(ui = rflomicsUI, server = shinyServer(rflomicsServer), ...)
 }
