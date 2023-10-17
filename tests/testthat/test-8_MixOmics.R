@@ -36,7 +36,7 @@ MAE <- MAE |>
   RunDiffAnalysis(   SE.name = "metatest",  DiffAnalysisMethod = "limmalmFit")  |>
   RunDiffAnalysis(   SE.name = "protetest", DiffAnalysisMethod = "limmalmFit")  |>
   RunDiffAnalysis(   SE.name = "RNAtest",   DiffAnalysisMethod = "edgeRglmfit") |>
-  FilterDiffAnalysis(SE.name = "RNAtest",   Adj.pvalue.cutoff = 0.05, logFC.cutoff = 1.5)
+  FilterDiffAnalysis(SE.name = "RNAtest",   Adj.pvalue.cutoff = 0.05, logFC.cutoff = 2)
 
 # ----- TESTS -----
 
@@ -59,5 +59,12 @@ test_that("Working?", code = {
          failure_message = "Taking only two responses for mixOmics does not work")
   
 
+  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("metatest", "protetest"), 
+                            contrasts_names = c("H1", "H2"), method = "mixOmics", 
+                            selectedResponse = c("temperature", "imbibition"), sparsity = TRUE, 
+                            cmd = TRUE, ncomp = 2,
+                            cases_to_try = 10)
+  
+  mixOmics::plotDiablo(MAE@metadata$mixOmics$temperature$MixOmics_results)
   
 })
