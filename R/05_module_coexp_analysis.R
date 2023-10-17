@@ -299,7 +299,9 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     
     factors.bio <- bioFactors(MAE.data)
     
-    plot.coseq.res <- dataset.SE@metadata$CoExpAnal[["plots"]]
+    #plot.coseq.res <- dataset.SE@metadata$CoExpAnal[["plots"]]
+    plot.coseq.res <- CoExpressionPlots(dataset.SE)
+    
     nb_cluster     <- dataset.SE@metadata$CoExpAnal[["cluster.nb"]]
     coseq.res      <- dataset.SE@metadata$CoExpAnal[["coseqResults"]]
     cluster.comp   <- dataset.SE@metadata$CoExpAnal[["clusters"]]

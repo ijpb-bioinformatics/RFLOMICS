@@ -1392,6 +1392,7 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
 }
 
 
+
 #' @title coseq.results.process
 #' @param coseqObjectList list of coseq object
 #' @return list plot of ICL, logLike and coseq object with min ICL
@@ -1402,24 +1403,23 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
 coseq.results.process <- function(coseqObjectList, K, conds){
   
   # ICL plot
+  ICL.list <- list()
+  
   ICL.vec <- lapply(1:length(coseqObjectList), function(x){ coseq::ICL(coseqObjectList[[x]]) }) %>%
     unlist()
+  ICL.list[["ICL.vec"]] <- ICL.vec
   
   ICL.tab <- data.frame(K = stringr::str_replace(names(ICL.vec), "K=", ""), ICL = ICL.vec) %>%
     dplyr::mutate(K = as.numeric(K))
+  ICL.list[["ICL.tab"]] <- ICL.tab
   
   ICL.n <- ICL.tab  %>% 
     dplyr::group_by(.,K) %>% 
     dplyr::filter(!is.na(ICL)) %>%
     dplyr::summarise(median = median(ICL, na.rm = TRUE), n = dplyr::n()) %>%
     dplyr::mutate(K = as.numeric(K))
+  ICL.list[["ICL.n"]] <- ICL.n
   
-  ICL.p   <- ggplot2::ggplot(data = ICL.tab) + 
-    ggplot2::geom_boxplot(ggplot2::aes(x = as.factor(K), y = ICL, group = K)) +
-    ggplot2::geom_text(data = ICL.n, ggplot2::aes(x = 1:length(K), y = max(ICL.vec, na.rm = TRUE), 
-                                                  label = paste0("n=", n)), col = 'red', size = 4) +
-    ggplot2::ylim(min(ICL.vec, na.rm = TRUE), max(ICL.vec, na.rm = TRUE)) +
-    ggplot2::xlab("K")
   
   # min ICL
   K.ICL.median.min <- ICL.n[which.min(ICL.n$median),]$K
@@ -1427,60 +1427,75 @@ coseq.results.process <- function(coseqObjectList, K, conds){
   
   # coseq object with the min ICL
   index <- sapply(names(coseqObjectList), function(x){(TRUE %in% (coseq::ICL(coseqObjectList[[x]]) == K.ICL.min))})
-  
   coseq.res <- coseqObjectList[index][[1]]
   # coseq.res <- coseqObjectList[[which.min(ICL.vec)]]
   
   # logLike plot
-  logLike.vec <- lapply(1:length(coseqObjectList), function(x){ coseq::likelihood(coseqObjectList[[x]]) }) %>%
-    unlist()
+  logLike.list <- list()
+  
+  logLike.vec <- lapply(1:length(coseqObjectList), function(x){ coseq::likelihood(coseqObjectList[[x]]) }) %>% unlist()
+  logLike.list[["logLike.vec"]] <- logLike.vec
   
   logLike.tab <- data.frame(K = stringr::str_replace(names(logLike.vec), "K=", ""), logLike = logLike.vec) %>% 
     dplyr::mutate(K = as.numeric(K))
+  logLike.list[["logLike.tab"]] <- logLike.tab
   
-  logLike.n <- logLike.tab  %>% 
+  logLike.n <- logLike.tab %>% 
     dplyr::group_by(.,K) %>% 
     dplyr::filter(!is.na(logLike)) %>%
     dplyr::summarise(median = median(logLike), n = dplyr::n()) %>%
     dplyr::mutate(K = as.numeric(K))
-  
-  logLike.p   <- ggplot2::ggplot(data = logLike.tab) + 
-    ggplot2::geom_boxplot(ggplot2::aes(x = as.factor(K), y = logLike, group = K)) + 
-    ggplot2::xlab("K") +
-    ggplot2::geom_text(data = logLike.n, ggplot2::aes(x = 1:length(K), y = max(logLike.vec, na.rm = TRUE), 
-                                                      label = paste0("n=", n)), col = 'red', size = 4)
-  
-  
-  # process results
-  
-  # plot
-  plot.coseq.res <- coseq::plot(coseq.res, conds = conds, collapse_reps = "average",
-                                graphs = c("profiles", "boxplots", "probapost_boxplots",
-                                           "probapost_barplots", "probapost_histogram")) 
-  CoExpAnal <- list()
-  CoExpAnal[["plots"]] <- plot.coseq.res
-  CoExpAnal[["plots"]][["ICL"]]     <- ICL.p
-  CoExpAnal[["plots"]][["logLike"]] <- logLike.p
-  
-  CoExpAnal[["results"]]      <- TRUE
-  CoExpAnal[["coseqResults"]] <- coseq.res
+  logLike.list[["logLike.n"]] <- logLike.n
   
   # list of genes per cluster
   clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
     names(coseq::clusters(coseq.res)[coseq::clusters(coseq.res) == i])
   })
-  CoExpAnal[["clusters"]] <- clusters
-  names(CoExpAnal[["clusters"]]) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
+  names(clusters) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
   
   # nbr of cluster
   # Gestion des NA dans les ICLs
   ICLv <- na.omit(coseq.res@metadata$ICL)
   nb_cluster <- na.omit(coseq.res@metadata$nbCluster)[min(ICLv) == ICLv]
   
-  CoExpAnal[["cluster.nb"]] <- nb_cluster
+  #output
+  CoExpAnal <- list()
+  CoExpAnal[["results"]]      <- TRUE
+  CoExpAnal[["coseqResults"]] <- coseq.res
+  CoExpAnal[["clusters"]]     <- clusters
+  CoExpAnal[["cluster.nb"]]   <- nb_cluster
+  CoExpAnal[["plots"]]        <- list("ICL" = ICL.list, "logLike" = logLike.list)
+  
+  
+  #### Plots
+  
+  #### plot ICL
+  # ICL.p   <- ggplot2::ggplot(data = ICL.tab) + 
+  #   ggplot2::geom_boxplot(ggplot2::aes(x = as.factor(K), y = ICL, group = K)) +
+  #   ggplot2::geom_text(data = ICL.n, ggplot2::aes(x = 1:length(K), y = max(ICL.vec, na.rm = TRUE), 
+  #                                                 label = paste0("n=", n)), col = 'red', size = 4) +
+  #   ggplot2::ylim(min(ICL.vec, na.rm = TRUE), max(ICL.vec, na.rm = TRUE)) +
+  #   ggplot2::xlab("K")
+  
+  #### plot logLike
+  # logLike.p   <- ggplot2::ggplot(data = logLike.tab) + 
+  #   ggplot2::geom_boxplot(ggplot2::aes(x = as.factor(K), y = logLike, group = K)) + 
+  #   ggplot2::xlab("K") +
+  #   ggplot2::geom_text(data = logLike.n, ggplot2::aes(x = 1:length(K), y = max(logLike.vec, na.rm = TRUE), 
+  #                                                     label = paste0("n=", n)), col = 'red', size = 4)
+  
+  #### coseq plots
+  # plot.coseq.res <- coseq::plot(coseq.res, conds = conds, collapse_reps = "average",
+  #                               graphs = c("profiles", "boxplots", "probapost_boxplots",
+  #                                          "probapost_barplots", "probapost_histogram")) 
+  
+  # CoExpAnal[["plots"]] <- plot.coseq.res
+  # CoExpAnal[["plots"]][["ICL"]]     <- ICL.p
+  # CoExpAnal[["plots"]][["logLike"]] <- logLike.p
   
   return(CoExpAnal)
 }
+
 
 #' @title run Coseq for co-expression analysis on cluster
 #' @param counts matrix

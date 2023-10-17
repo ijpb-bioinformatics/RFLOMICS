@@ -16,11 +16,11 @@ Co-expression analysis strategy was adapted from @Lambert2020ta
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
 
 Co-expression analysis was carried out on the `r dataset.SE@metadata[["CoExpAnal"]]$merge.type`
-of the following list of `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`  `r dataset.SE@metadata$CoExpAnal$gene.list.names`. 
-`r dataset.SE@metadata[["CoExpAnal"]]$tools` was used to cluster the `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`. 
-The gaussian mixture model was run on filtered (meanFilterCutoff was set to: `r dataset.SE@metadata[["CoExpAnal"]]$meanFilterCutoff`), 
-normalized (normalization method was `r dataset.SE@metadata[["CoExpAnal"]]$normFactors`) 
-and transformed (transformation method: `r dataset.SE@metadata[["CoExpAnal"]]$transformation`) count data.
+of the following list of `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`  `r names(dataset.SE@metadata$CoExpAnal$gene.list.names)`. 
+`r dataset.SE@metadata[["CoExpAnal"]]$method` was used to cluster the `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`. 
+The gaussian mixture model was run on filtered (meanFilterCutoff was set to: `r dataset.SE@metadata[["CoExpAnal"]]$param$meanFilterCutoff`), 
+normalized (normalization method was `r dataset.SE@metadata[["CoExpAnal"]]$param$normFactors`) 
+and transformed (transformation method: `r dataset.SE@metadata[["CoExpAnal"]]$param$transformation`) count data.
 `r dataset.SE@metadata[["CoExpAnal"]]$replicates.nb` technical replicates were performed for each K in `r dataset.SE@metadata[["CoExpAnal"]]$K.range` (K=number of clusters). 
 The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
 was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
@@ -35,7 +35,7 @@ No clustering results.
 
 
 ```{r , echo=FALSE, eval=isResults}
-plot.coseq.res <- dataset.SE@metadata[["CoExpAnal"]]$plots
+plot.coseq.res <- CoExpressionPlots(dataset.SE)
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$ICL 
 ```

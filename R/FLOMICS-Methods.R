@@ -1887,8 +1887,9 @@ methods::setMethod(f="runCoExpression",
                      
                      CoExpAnal <- list()
                      
-                     CoExpAnal[["tools"]]            <- "Coseq"
+                     CoExpAnal[["method"]]           <- "coseq"
                      CoExpAnal[["gene.list.names"]]  <- nameList
+                     names(CoExpAnal[["gene.list.names"]])  <- dplyr::filter(object@metadata$DiffExpAnal$contrasts, tag %in% list.name)$contrastName
                      CoExpAnal[["merge.type"]]       <- merge
                      CoExpAnal[["replicates.nb"]]    <- replicates
                      CoExpAnal[["K.range"]]          <- K
@@ -2034,6 +2035,61 @@ methods::setMethod(f          = "runCoExpression",
                    })
 
 # Pour utiliser la fonction repeatable(), "seed"  pourrait être ajouté en paramètre.
+
+
+
+
+#' @title CoExpressionPlots
+#' 
+#' @param object An object of class \link{SummarizedExperiment}
+#' @return list plot of ICL, logLike and coseq object with min ICL
+#' @importFrom coseq plot
+#' @importFrom ggplot2 ggplot geom_boxplot geom_text
+#' @export
+#' @exportMethod CoExpressionPlots
+#' @noRd
+#' 
+coExpressionPlots <- methods::setMethod(f="CoExpressionPlots",
+                                        signature="SummarizedExperiment",
+                                        definition <- function(object){
+  
+  if(is.null(object@metadata$CoExpAnal) || length(object@metadata$CoExpAnal) == 0) stop("No co-expression results!")
+  CoExpAnal <- object@metadata$CoExpAnal
+  
+  coseq.res     <- CoExpAnal[["coseqResults"]]
+  ICL.list      <- CoExpAnal[["plots"]][["ICL"]] 
+  logLike.list  <- CoExpAnal[["plots"]][["logLike"]]
+  K             <- CoExpAnal[["K.range"]]
+  conds         <- object@metadata$Groups$groups
+  
+  #### Plots
+  ### plot ICL
+  ICL.p   <- ggplot2::ggplot(data = ICL.list[["ICL.tab"]]) +
+    ggplot2::geom_boxplot(ggplot2::aes(x = as.factor(K), y = ICL, group = K)) +
+    ggplot2::geom_text(data = ICL.list[["ICL.n"]], ggplot2::aes(x = 1:length(K), y = max(ICL.list[["ICL.vec"]], na.rm = TRUE),
+                                                                label = paste0("n=", n)), col = 'red', size = 4) +
+    ggplot2::ylim(min(ICL.list[["ICL.vec"]], na.rm = TRUE), max(ICL.list[["ICL.vec"]], na.rm = TRUE)) +
+    ggplot2::xlab("K")
+  
+  ### plot logLike
+  logLike.p   <- ggplot2::ggplot(data = logLike.list[["logLike.tab"]]) +
+    ggplot2::geom_boxplot(ggplot2::aes(x = as.factor(K), y = logLike, group = K)) +
+    ggplot2::xlab("K") +
+    ggplot2::geom_text(data = logLike.list[["logLike.n"]], ggplot2::aes(x = 1:length(K), y = max(logLike.list[["logLike.vec"]], na.rm = TRUE),
+                                                                        label = paste0("n=", n)), col = 'red', size = 4)
+  
+  ### coseq plots
+  plot.coseq.res <- coseq::plot(coseq.res, conds = conds, collapse_reps = "average",
+                                graphs = c("profiles", "boxplots", "probapost_boxplots",
+                                           "probapost_barplots", "probapost_histogram"))
+  
+  # CoExpAnal[["plots"]] <- plot.coseq.res
+  # CoExpAnal[["plots"]][["ICL"]]     <- ICL.p
+  # CoExpAnal[["plots"]][["logLike"]] <- logLike.p
+  
+  return(c(plot.coseq.res, list("ICL" = ICL.p, "logLike" = logLike.p)))
+})
+
 
 #' @title coseq.profile.plot
 #'
