@@ -69,11 +69,12 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         
         fluidRow(column(12,
                         ## list of contrasts to test
-                        pickerInput(
+                          pickerInput(
                           inputId  = session$ns("contrastList"),
                           label    = "Selected contrasts:",
-                          choices  = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
-                          multiple = TRUE, selected = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName),
+                          choices  = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName),
+                          #multiple = TRUE, selected = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName),
+                    
                         
                         # method for Diff analysis
                         selectInput(inputId  = session$ns("AnaDiffMethod"), label = "Method:",
