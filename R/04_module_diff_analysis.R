@@ -69,12 +69,12 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         
         fluidRow(column(12,
                         ## list of contrasts to test
-                          pickerInput(
+                        pickerInput(
                           inputId  = session$ns("contrastList"),
                           label    = "Selected contrasts:",
                           choices  = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName),
-                          #multiple = TRUE, selected = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName),
-                    
+                        #multiple = TRUE, selected = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName),
+                        
                         
                         # method for Diff analysis
                         selectInput(inputId  = session$ns("AnaDiffMethod"), label = "Method:",
@@ -272,8 +272,11 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["TopDEF"]])) return()
     
     # list of bio factors
-    factors.bio   <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("Bio")])
-    factors.batch <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("batch")])
+    # factors.bio   <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("Bio")])
+    # factors.batch <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("batch")])
+    factors.bio <- bioFactors(session$userData$FlomicsMultiAssay)
+    factors.batch <- batchFactors(session$userData$FlomicsMultiAssay)
+    factors.meta <- metaFactors(session$userData$FlomicsMultiAssay)
     
     list(
       lapply(1:length(rea.values$Contrasts.Sel$contrast), function(i) {
@@ -342,14 +345,41 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                          ### Heatmap ###
                          tabPanel("Heatmap",
                                   renderPlot({
-                                    heatmapPlot(object=dataset.SE, hypothesis=vect["contrastName"], condition=input[[paste0(vect["contrastName"],"-heat.condColorSelect")]])
+                                    annot_arg <- c(input[[paste0(vect["contrastName"], "-annotBio")]],
+                                                   input[[paste0(vect["contrastName"], "-annotBatch")]])
+                                    if (length(factors.meta) > 0) {
+                                      annot_arg <- c(annot_arg, input[[paste0(vect["contrastName"], "-annotMeta")]])
+                                    }
+                                    
+                                    heatmapPlot(object     = dataset.SE, 
+                                                hypothesis = vect["contrastName"], 
+                                                condition  = input[[paste0(vect["contrastName"],"-heat.condColorSelect")]],
+                                                annot_to_show =  annot_arg)
                                   }),
-                                  renderText("Clustering method=ward.D2, center=TRUE, scale=FALSE"),
+                                  renderText("Clustering method = ward.D2, center = TRUE, scale = FALSE"),
                                   ## select cluster to plot
-                                  radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-heat.condColorSelect")),
-                                               label = 'Levels :',
-                                               choices = c("none", names(session$userData$FlomicsMultiAssay@colData)),
-                                               selected = "none", inline = TRUE)
+                                  column(6, radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-heat.condColorSelect")),
+                                               label = 'Levels:',
+                                               choices = c("none", factors.bio),
+                                               selected = "none", inline = TRUE)),
+                                  
+                                  ## select annotations to show
+                             
+                             
+                                  column(6 ,checkboxGroupInput(inputId = session$ns(paste0(vect["contrastName"], "-annotBio")),
+                                                     label = "Biological factors", inline = TRUE,
+                                                     choices = factors.bio,
+                                                     selected = factors.bio)),
+                                  column(6, checkboxGroupInput(inputId = session$ns(paste0(vect["contrastName"], "-annotBatch")),
+                                                               label = "Batch factors",  inline = TRUE,
+                                                               choices = factors.batch,
+                                                               selected = NULL)),
+                                  if (length(factors.meta) > 0) {
+                                    column(6,checkboxGroupInput(inputId = session$ns(paste0(vect["contrastName"], "-annotMeta")),
+                                                       label = "Metadata factors", inline = TRUE,
+                                                       choices = factors.meta,
+                                                       selected = NULL))
+                                  }
                          ),
                          
                          ### PCA ###
@@ -367,7 +397,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                              PC2.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Secondaxis")]][1])
                                              condGroup <- input[[paste0(vect["contrastName"],"-pca.DE.condColorSelect")]][1]
                                              
-                                              RFLOMICS::plotPCA(newDataset.SE,  PCA = "norm", PCs = c(PC1.value, PC2.value), condition = condGroup)
+                                             RFLOMICS::plotPCA(newDataset.SE,  PCA = "norm", PCs = c(PC1.value, PC2.value), condition = condGroup)
                                            })
                                     )
                                   ),
@@ -403,7 +433,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                                         label = 'Levels:',
                                                         choices = c("groups",factors.bio),
                                                         selected = factors.bio[1])
-                                           ),
+                                    ),
                                     column(width = 9,
                                            renderPlot({
                                              boxplot.DE.plot(object=dataset.SE, DE=input[[paste0(vect["contrastName"], "-DE")]], 

@@ -1622,16 +1622,16 @@ methods::setMethod(f          = "heatmapPlot",
                        }
                      }
                      
+                     # Split management
+                     column_split.value <- if (condition != "none") { df_annotation[, condition] } else { NULL }
+                     
                      # Select the right columns
                      if (!is.null(annot_to_show)) {
                        df_annotation <- df_annotation %>% dplyr::select(tidyselect::any_of(annot_to_show))
                      }
                      
-                     # Split management
-                     column_split.value <- if (condition != "none") { df_annotation[, condition] }else{NULL}
-                     
                      # Color annotations
-                     set.seed(10000) 
+                     set.seed(10000) # seed for chosing palette. Ensure running twice the function get the same annotations colors.
                      selectPal <- sample(rownames(RColorBrewer::brewer.pal.info),  size = ncol(df_annotation), replace = FALSE)
                      
                      color_list <- lapply(1:ncol(df_annotation), FUN = function(i){

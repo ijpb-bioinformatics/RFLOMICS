@@ -125,7 +125,15 @@ methods::setGeneric(
 
 methods::setGeneric(
   name = "heatmapPlot",
-  def  = function(object, ... ){standardGeneric("heatmapPlot")}
+  def  = function(object, 
+                  hypothesis, 
+                  condition="none", 
+                  title = "", 
+                  annot_to_show = NULL, 
+                  subset_list = NULL, 
+                  draw_args = list(), 
+                  heatmap_args = list(),
+                  ...){standardGeneric("heatmapPlot")}
 )
 
 methods::setGeneric(
