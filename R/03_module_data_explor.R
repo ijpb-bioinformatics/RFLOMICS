@@ -42,8 +42,6 @@ QCNormalizationTabUI <- function(id){
 ### server
 QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   
-  print(names(session$userData$FlomicsMultiAssay))
-  
   local.rea.values <- reactiveValues(dataset.processed.SE = NULL, 
                                      dataset.raw.SE = NULL,
                                      compCheck = TRUE,
