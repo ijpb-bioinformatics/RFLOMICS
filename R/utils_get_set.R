@@ -18,8 +18,8 @@ getFactorTypes <- function(object) {
 #' @rdname Factortypes
 bioFactors <- function(object){
   
-  factVect <- getFactorTypes(object)
-  return(names(factVect)[factVect == "Bio"])
+  factVect <- toupper(getFactorTypes(object))
+  return(names(factVect)[factVect == "BIO"])
   
 }
 
@@ -27,8 +27,8 @@ bioFactors <- function(object){
 #' @rdname Factortypes
 batchFactors <- function(object){
   
-  factVect <- getFactorTypes(object)
-  return(names(factVect)[factVect == "batch"])
+  factVect <- toupper(getFactorTypes(object))
+  return(names(factVect)[factVect == "BATCH"])
   
 }
 
@@ -36,8 +36,8 @@ batchFactors <- function(object){
 #' @rdname Factortypes
 metaFactors <- function(object){
   
-  factVect <- getFactorTypes(object)
-  return(names(factVect)[factVect == "Meta"])
+  factVect <- toupper(getFactorTypes(object))
+  return(names(factVect)[factVect == "META"])
   
 }
 
