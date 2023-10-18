@@ -1532,7 +1532,7 @@ methods::setMethod(f          = "DiffAnal.plot",
                    })
 
 
-#' @title heatmap.plot
+#' @title heatmapPlot
 #' @description
 #' This is an interface method which draw a heatmap from the results of a differential analysis
 #' performed on omic datasets stored in an object of class \link{SummarizedExperiment}
@@ -1544,7 +1544,7 @@ methods::setMethod(f          = "DiffAnal.plot",
 #' @param subset_list named list of vectors of modalities to subset and print on the heatmap. 
 #' @param draw_args,heatmap_args  named lists. Any additional parameter passed to ComplexHeatmap::Heatmap or ComplexHeatmap::draw
 #' @return plot
-#' @exportMethod heatmap.plot
+#' @exportMethod heatmapPlot
 #' @export
 #' @importFrom dplyr arrange select
 #' @importFrom tidyselect any_of
@@ -1553,9 +1553,9 @@ methods::setMethod(f          = "DiffAnal.plot",
 #' @importClassesFrom ComplexHeatmap HeatmapAnnotation Heatmap
 #' @importMethodsFrom ComplexHeatmap draw
 #' @importFrom grid gpar
-#' @rdname heatmap.plot
+#' @rdname heatmapPlot
 #' 
-methods::setMethod(f          = "heatmap.plot",
+methods::setMethod(f          = "heatmapPlot",
                    signature  = "SummarizedExperiment",
                    definition = function(object, 
                                          hypothesis, 
@@ -1686,18 +1686,18 @@ methods::setMethod(f          = "heatmap.plot",
                    })
 
 
-#' @rdname heatmap.plot
-#' @title heatmap.plot
+#' @rdname heatmapPlot
+#' @title heatmapPlot
 #' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
-#' @exportMethod heatmap.plot
-methods::setMethod(f          = "heatmap.plot",
+#' @exportMethod heatmapPlot
+methods::setMethod(f          = "heatmapPlot",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, hypothesis, condition="none", title = "", annot_to_show = NULL, subset_list = NULL, draw_args = list(), heatmap_args = list()){
                      
                      
                      if (isTagName(object, hypothesis)) hypothesis <- convertTagToContrast(object, hypothesis)
                      
-                     return(heatmap.plot(object        = object[[SE.name]],
+                     return(heatmapPlot(object        = object[[SE.name]],
                                          hypothesis    = hypothesis,
                                          condition     = condition,
                                          title         = title,

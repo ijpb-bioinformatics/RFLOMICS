@@ -342,7 +342,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                          ### Heatmap ###
                          tabPanel("Heatmap",
                                   renderPlot({
-                                    heatmap.plot(object=dataset.SE, hypothesis=vect["contrastName"], condition=input[[paste0(vect["contrastName"],"-heat.condColorSelect")]])
+                                    heatmapPlot(object=dataset.SE, hypothesis=vect["contrastName"], condition=input[[paste0(vect["contrastName"],"-heat.condColorSelect")]])
                                   }),
                                   renderText("Clustering method=ward.D2, center=TRUE, scale=FALSE"),
                                   ## select cluster to plot
