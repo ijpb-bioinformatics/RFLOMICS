@@ -330,7 +330,8 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                showModal(modalDialog( title = "KEGG keytype must be one of kegg, ncbi-geneid, ncbi-proteinid or uniprot"))
              }
              validate({ 
-               need(input$keytype.kegg %in% c("kegg", "ncbi-geneid", "ncib-proteinid", "uniprot"), message = "KEGG keytype must be one of kegg, ncbi-geneid, ncbi-proteinid or uniprot") 
+               need(input$keytype.kegg %in% c("kegg", "ncbi-geneid", "ncib-proteinid", "uniprot"), 
+                    message = "KEGG keytype must be one of kegg, ncbi-geneid, ncbi-proteinid or uniprot") 
              })
              
              ## code organism KEGG_org
@@ -356,25 +357,27 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
              }
              # Check some custom elements and annotation file
              if (input$col_geneName == "" || input$col_termID == "") {
-               showModal(modalDialog( title = "Error message", "Please choose columns names for the gene names/ID and the ontology terms ID!"))
+               showModal(modalDialog( title = "Error message", 
+                                      "Please choose columns names for the gene names/ID and the ontology terms ID!"))
              }
              validate({ 
-               need(input$col_geneName != "" && input$col_termID != "", message = "Please choose columns names for the gene names/ID and the ontology terms ID!")
+               need(input$col_geneName != "" && input$col_termID != "", 
+                    message = "Please choose columns names for the gene names/ID and the ontology terms ID!")
              })
              # Check if geneName correspond to variable list
              
              #======
              annotation <- data.table::fread(file = input$annotationFileCPR$datapath, sep = "\t", header = TRUE)
-             list.char.rm <- c(".", " ", "")
+             listCharRm <- c(".", " ", "")
              annotation2 <- list()
              
              # if column with domain exist
              if (input$col_domain != "") {
                
                # remove column with domain == c(".", " ", "")
-               domain.rm <- intersect(annotation[[input$col_domain]], list.char.rm)
-               if (length(domain.rm) != 0) {
-                 annotation <- dplyr::filter(annotation, !get(input$col_domain) %in% list.char.rm)
+               domainRm <- intersect(annotation[[input$col_domain]], listCharRm)
+               if (length(domainRm) != 0) {
+                 annotation <- dplyr::filter(annotation, !get(input$col_domain) %in% listCharRm)
                }
                
                annotation2[["domain"]] <- annotation[[input$col_domain]]
@@ -454,12 +457,12 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     if (is.null(results[["summary"]])) {
       
       fluidRow(
-        box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = "Summary from differential expression analysis",
+        box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "warning", title = "Summary - Enrichment from differential expression analysis",
             "There is no results for enrichment analysis! Check geneID"))
     }
     else{
       fluidRow(
-        box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "primary", title = "Summary from differential expression analysis",
+        box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "primary", title = "Summary - Enrichment from differential expression analysis",
             DT::renderDataTable({ DT::datatable(results[["summary"]], rownames = FALSE, options = list(pageLength = 6, dom = 'tip')) })))
     }
   })
@@ -637,8 +640,17 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                                                            data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
                                                      
                                                      # TODO clicking on the url reload the app. Why?! Leave target = blank for now.
-                                                     a(href = link_to_map, "Link to interactive map online", target = "_blank")
-                                                     
+                                                     # a(href = link_to_map, "Link to interactive map online", target = "_blank")
+                                                     DT::renderDataTable({ 
+                                                       DT::datatable(
+                                                         data = data.frame(" " = link_to_map), 
+                                                         rownames = FALSE, 
+                                                         colnames = "Link to interactive map online",
+                                                         filter = 'none',
+                                                         extensions = c("Buttons"), 
+                                                         options = list(dom = "t",
+                                                                        buttons = 'copy'))
+                                                     })
                                                    })),
                                             column(12,
                                                    

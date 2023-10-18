@@ -13,6 +13,9 @@
 # Code from: https://stackoverflow.com/questions/60141841/how-to-get-pathview-plot-displayed-directly-rather-than-saving-as-a-file-in-r
 # It deletes every file created by pathview
 see_pathview <- function(...) {
+  if (!exists("bods")) {
+    data(bods, package = "pathview")
+  }
   msg <- capture.output(pathview::pathview(...), type = "message")
   msg <- grep("image file", msg, value = TRUE)
   filename <- sapply(strsplit(msg, " "), function(x) x[length(x)])
