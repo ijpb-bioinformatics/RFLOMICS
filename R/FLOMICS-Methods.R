@@ -1578,16 +1578,14 @@ methods::setMethod(f          = "heatmapPlot",
                      
                      
                      if (dim(resTable)[1] > 2000) {
-                       message("differentially expressed variables exceeding 2000 variables")
+                       message("differentially expressed variables exceeding 2000 variables, only the first 2000 will be displayed")
                        resTable <- resTable[1:2000,]
                        title = ifelse(title == "", paste0(title, "plot only 2000 TOP DE variables"),
                                       paste0(title, "\nplot only 2000 TOP DE variables"))
                      }
                      
-                     # m.def <- assays(object)[[1]][,object@metadata$Groups$samples]
-                     
-                     object2 <-  checkTransNorm(object, raw = FALSE)
-                     m.def  <- SummarizedExperiment::assay(object2)
+                     object2 <- checkTransNorm(object, raw = FALSE)
+                     m.def  <- assay(object2)
          
                      m.def <- as.data.frame(m.def) %>%
                        dplyr::select(tidyselect::any_of(object2@metadata$Groups$samples))
@@ -1598,9 +1596,7 @@ methods::setMethod(f          = "heatmapPlot",
                      # normalize count
                      
                      # Center
-                     # m.def.filter.center <- scale(m.def.filter,center=TRUE,scale=FALSE)
-                     m.def.filter.center <- t(scale(t(m.def.filter), center = TRUE, scale = FALSE)) # Modified 221123 : centered by genes and not by samples
-                     
+                     m.def.filter.center <- t(scale(t(m.def.filter), center = TRUE, scale = FALSE))
                      
                      # Annotations datatable
                      df_annotation <- object@metadata$Groups %>% dplyr::select(!samples & !groups)  
@@ -1609,7 +1605,7 @@ methods::setMethod(f          = "heatmapPlot",
                      # Subset the dataset to print only interesting modalities
                      if (!is.null(subset_list)) {
                        if (is.null(names(subset_list))) {
-                         message("In plot.heatmap, subset_list argument needs a named list. Not subsetting")
+                         message("In heatmapPlot, subset_list argument needs a named list. Not subsetting")
                        }else{ 
                          samplesToKeep <- Reduce("intersect", lapply(
                            1:length(subset_list),
@@ -1618,8 +1614,6 @@ methods::setMethod(f          = "heatmapPlot",
                              rownames(df_annotation[which(df_annotation[[col_nam]] %in% subset_list[[i]]),])
                            }
                          ))
-                         
-                         # print(samplesToKeep)
                          
                          df_annotation <- df_annotation[which(rownames(df_annotation) %in% samplesToKeep),]
                          m.def.filter.center <- m.def.filter.center[, which(colnames(m.def.filter.center) %in% samplesToKeep)]

@@ -8,7 +8,7 @@
 #' 
 getFactorTypes <- function(object) {
   if (is(object, "MultiAssayExperiment")) {
-    MultiAssayExperiment::metadata(object)$design@Factors.Type
+    metadata(object)$design@Factors.Type
   } else {
     stop("object is not a MultiAssayExperiment.")
   }
@@ -49,13 +49,15 @@ metaFactors <- function(object){
 #' @export
 #'
 getDesignMat <- function(object) {
-  # TODO check if it exists...
   if (is(object, "MultiAssayExperiment")) {
-    object@metadata$design@ExpDesign
+   return(object@metadata$design@ExpDesign)
+  } else if (is(object, "SummarizedExperiment")) {
+    return(object@metadata$Groups)
   } else {
-    stop("object is not a MultiAssayExperiment.")
+    stop("object is not a MultiAssayExperiment nor a SummarizedExperiment.")
   }
 }
+
 
 # ---- Get Model Formula : ----
 #' @title Get model formula from a Flomics multiassayexperiment.
