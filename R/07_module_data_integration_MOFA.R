@@ -45,11 +45,9 @@ MOFA_settingUI <- function(id){
   )
 }
 
-# tags$a(href="www.rstudio.com", "Click here!")
-
 MOFA_setting <- function(input, output, session, rea.values){
   
-  local.rea.values <- reactiveValues(runMOFA = FALSE) # init local reactive values
+  local.rea.values <- reactiveValues(runMOFA = FALSE) 
   
   # list of parameters  
   output$MOFA_ParamUI <- renderUI({
@@ -81,9 +79,6 @@ MOFA_setting <- function(input, output, session, rea.values){
                      inputId  = session$ns("MOFA_selectedContrasts"),
                      label    = "Select contrasts",
                      choices  = listOfContrast
-                     # options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-                     # multiple = TRUE,
-                     # selected = listOfContrast
                      ))),
           
           # select mode of feature filtering
@@ -119,7 +114,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                                 value = 1000, min = 1000, max = 1000))),
           
           fluidRow(
-            column(4, actionButton(session$ns("runMOFA"),"Run"))) ##### ACTION BUTTON
+            column(4, actionButton(session$ns("runMOFA"),"Run")))
       ))
   })
   
@@ -192,11 +187,7 @@ MOFA_setting <- function(input, output, session, rea.values){
     #----------------------#
     
     session$userData$FlomicsMultiAssay <- do.call(getFromNamespace("integrationWrapper", ns = "RFLOMICS"), list_args_prepare_MOFA)
-    
-    # untrainedMOFA <- listResMOFA$MOFAObject.untrained
-    # resMOFA <- listResMOFA$MOFAObject.trained
-    
-    
+
     #### TODO Try to catch MOFA2 warnings and put them on the interface. DOES NOT WORK. 
     # test <- run_MOFA_analysis(session$userData$FlomicsMultiAssay@metadata[["MOFA_untrained"]],
     #                           scale_views = FALSE,

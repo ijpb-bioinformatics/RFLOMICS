@@ -60,7 +60,7 @@ MixOmics_settingUI <- function(id){
 #' @importFrom DT renderDataTable datatable
 MixOmics_setting <- function(input, output, session, rea.values){
   
-  local.rea.values <- reactiveValues(runMixOmics = FALSE) # init local reactive values
+  local.rea.values <- reactiveValues(runMixOmics = FALSE) 
   
   ## list of parameters  
   output$MixOmics_ParamUI <- renderUI({
@@ -93,9 +93,6 @@ MixOmics_setting <- function(input, output, session, rea.values){
                             inputId  = session$ns("MO_selectedContrast"),
                             label    = "Select contrasts",
                             choices  = listOfContrast
-                            # options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-                            # multiple = TRUE,
-                            # selected = listOfContrast
                             ))),
                  
                  # select mode of feature filtering
@@ -210,7 +207,6 @@ MixOmics_setting <- function(input, output, session, rea.values){
     # ----------------------#
     
     # Run the analysis
-    # print("#     =>Running MixOmics")
     
     session$userData$FlomicsMultiAssay <- do.call(getFromNamespace("integrationWrapper", ns = "RFLOMICS"), list_args_MO)
     
