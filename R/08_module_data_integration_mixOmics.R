@@ -65,8 +65,6 @@ MixOmics_setting <- function(input, output, session, rea.values){
   ## list of parameters  
   output$MixOmics_ParamUI <- renderUI({
     
-    # Parameters to put
-    
     listOfContrast <- getSelectedContrasts(session$userData$FlomicsMultiAssay)$contrastName
     
     # set param in interface
@@ -191,7 +189,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
       omicsToIntegrate = input$MO_selectedData,
       rnaSeq_transfo = input$MO_RNAseqTransfo,
       choice = "DE", 
-      contrasts_names = listOfContrast,
+      contrasts_names = input$MO_selectedContrast,
       type = input$MO_filtMode,
       group = NULL,
       method = "MixOmics",

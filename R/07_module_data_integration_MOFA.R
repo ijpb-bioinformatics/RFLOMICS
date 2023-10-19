@@ -159,11 +159,11 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     # check nbr of contrast 
     # if less than 1 -> error message
-    if (length(listOfContrast) == 0) {
+    if (length(input$MOFA_selectedContrasts) == 0) {
       showModal(modalDialog( title = "Error message", "Select at least one contast!"))
     }
     validate({
-      need(length(listOfContrast) != 0, message = "Select at least one contast!")
+      need(length(input$MOFA_selectedContrasts) != 0, message = "Select at least one contast!")
     })
     
     #---- progress bar ----#
@@ -175,7 +175,7 @@ MOFA_setting <- function(input, output, session, rea.values){
       omicsToIntegrate = input$MOFA_selectedData,
       rnaSeq_transfo = input$MOFA_RNAseqTransfo,
       choice = "DE", 
-      contrasts_names = listOfContrast,
+      contrasts_names = input$MOFA_selectedContrasts,
       type = input$MOFA_filtMode,
       group = NULL, 
       method = "MOFA",
