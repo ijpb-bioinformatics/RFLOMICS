@@ -67,7 +67,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
     
     # Parameters to put
     
-    listOfContrast <- session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName
+    listOfContrast <- getSelectedContrasts(session$userData$FlomicsMultiAssay)$contrastName
     
     # set param in interface
     tagList(
@@ -94,10 +94,11 @@ MixOmics_setting <- function(input, output, session, rea.values){
                           pickerInput(
                             inputId  = session$ns("MO_selectedContrast"),
                             label    = "Select contrasts",
-                            choices  = listOfContrast,
-                            options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-                            multiple = TRUE,
-                            selected = listOfContrast))),
+                            choices  = listOfContrast
+                            # options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+                            # multiple = TRUE,
+                            # selected = listOfContrast
+                            ))),
                  
                  # select mode of feature filtering
                  fluidRow(
@@ -190,7 +191,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
       omicsToIntegrate = input$MO_selectedData,
       rnaSeq_transfo = input$MO_RNAseqTransfo,
       choice = "DE", 
-      contrasts_names = input$MO_selectedContrast,
+      contrasts_names = listOfContrast,
       type = input$MO_filtMode,
       group = NULL,
       method = "MixOmics",

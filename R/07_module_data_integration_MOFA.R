@@ -54,7 +54,8 @@ MOFA_setting <- function(input, output, session, rea.values){
   # list of parameters  
   output$MOFA_ParamUI <- renderUI({
     
-    listOfContrast <- session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName
+    listOfContrast <- getSelectedContrasts(session$userData$FlomicsMultiAssay)$contrastName
+    
     # set param in interface
     tagList(
       
@@ -67,7 +68,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                    
                    pickerInput(
                      inputId  = session$ns("MOFA_selectedData"),
-                     label    = "Select dataset:",
+                     label    = "Select dataset",
                      choices  = rea.values$datasetDiff,
                      options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                      multiple = TRUE,
@@ -78,11 +79,12 @@ MOFA_setting <- function(input, output, session, rea.values){
                    
                    pickerInput(
                      inputId  = session$ns("MOFA_selectedContrasts"),
-                     label    = "Select contrast:",
-                     choices  = listOfContrast,
-                     options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-                     multiple = TRUE,
-                     selected = listOfContrast))),
+                     label    = "Select contrasts",
+                     choices  = listOfContrast
+                     # options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+                     # multiple = TRUE,
+                     # selected = listOfContrast
+                     ))),
           
           # select mode of feature filtering
           fluidRow(
@@ -96,14 +98,14 @@ MOFA_setting <- function(input, output, session, rea.values){
           fluidRow(
             column(12,
                    selectInput(session$ns("MOFA_RNAseqTransfo"),
-                               label    = "RNAseq transfo :",
+                               label    = "RNAseq transfo",
                                choices  = c("limma (voom)"),
                                selected = "limma (voom)"))),
           
           fluidRow(
             column(12,
                    selectInput(session$ns("MOFA_scaleViews"),
-                               label    = "Scale views:",
+                               label    = "Scale views",
                                choices  = c("FALSE", "TRUE"),
                                selected = "TRUE"))),
           fluidRow(
@@ -157,11 +159,11 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     # check nbr of contrast 
     # if less than 1 -> error message
-    if (length(input$MOFA_selectedContrasts) == 0) {
+    if (length(listOfContrast) == 0) {
       showModal(modalDialog( title = "Error message", "Select at least one contast!"))
     }
     validate({
-      need(length(input$MOFA_selectedContrasts) != 0, message = "Select at least one contast!")
+      need(length(listOfContrast) != 0, message = "Select at least one contast!")
     })
     
     #---- progress bar ----#
@@ -173,7 +175,7 @@ MOFA_setting <- function(input, output, session, rea.values){
       omicsToIntegrate = input$MOFA_selectedData,
       rnaSeq_transfo = input$MOFA_RNAseqTransfo,
       choice = "DE", 
-      contrasts_names = input$MOFA_selectedContrasts,
+      contrasts_names = listOfContrast,
       type = input$MOFA_filtMode,
       group = NULL, 
       method = "MOFA",
