@@ -518,42 +518,42 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
           tabPanel.list <- list(
             # ---- Tab Panel : dotPlot : ----
             tabPanel("DotPlot",
-                     
-                     verticalLayout(
-                       renderPlot({
+                       renderUI({
+                         outdot <- tryCatch(plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
+                                                    contrast = listname, from = "DiffExpAnal",
+                                                    type = "dotplot", 
+                                                    ont = input$dom.select, 
+                                                    Domain = input[[paste0(listname, "-domain")]],
+                                                    showCategory = input[[paste0(listname, "-top.over")]],
+                                                    searchExpr = input[[paste0(listname, "-grep")]]),
+                                            error = function(e) e,
+                                            warnings = function(w) w)
                          
-                         plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
-                                 contrast = listname, from = "DiffExpAnal",
-                                 type = "dotplot", 
-                                 ont = input$dom.select,
-                                 Domain = input[[paste0(listname, "-domain")]],
-                                 showCategory = input[[paste0(listname, "-top.over")]],
-                                 searchExpr = input[[paste0(listname, "-grep")]])
-                         
-                       })
-                     )
+                         if (is(outdot, "gg")) renderPlot(outdot)
+                         else renderText({outdot$message})
+                       }),
             ),
             # ---- Tab Panel : heatplot : ----
             tabPanel("Heatplot",
-                     verticalLayout(
-                       renderPlot({
+                       renderUI({
+                         outheat <- tryCatch(plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
+                                                     contrast = listname, from = "DiffExpAnal",
+                                                     type = "heatplot", 
+                                                     ont = input$dom.select, 
+                                                     Domain = input[[paste0(listname, "-domain")]],
+                                                     showCategory = input[[paste0(listname, "-top.over")]],
+                                                     searchExpr = input[[paste0(listname, "-grep")]]),
+                                             error = function(e) e,
+                                             warnings = function(w) w)
                          
-                         plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
-                                 contrast = listname, from = "DiffExpAnal",
-                                 type = "heatplot", 
-                                 ont = input$dom.select, 
-                                 Domain = input[[paste0(listname, "-domain")]],
-                                 showCategory = input[[paste0(listname, "-top.over")]],
-                                 searchExpr = input[[paste0(listname, "-grep")]])
-                       }),
-                     )
-                     
-            ) ,
+                         if (is(outheat, "gg")) renderPlot(outheat)
+                         else renderText({outheat$message})
+                       })
+            ),
             # ---- Tab Panel : cnetplot : ----
             tabPanel("Cnetplot",
                      verticalLayout(
-                       renderPlot({
-                         
+                       renderUI({
                          node_label_arg <- "none"
                          if (input[[paste0(listname, "-genesLabels_cnet")]] && input[[paste0(listname, "-termsLabels_cnet")]]) {
                            node_label_arg <- "all"
@@ -563,14 +563,20 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                            node_label_arg <- "category"
                          }
                          
-                         plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
-                                 contrast = listname, from = "DiffExpAnal",
-                                 type = "cnetplot", 
-                                 ont = input$dom.select, 
-                                 Domain = input[[paste0(listname, "-domain")]],
-                                 showCategory = input[[paste0(listname, "-top.over")]],
-                                 searchExpr = input[[paste0(listname, "-grep")]],
-                                 node_label = node_label_arg)
+                         outcnet <- tryCatch(plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
+                                                     contrast = listname, from = "DiffExpAnal",
+                                                     type = "cnetplot", 
+                                                     ont = input$dom.select, 
+                                                     Domain = input[[paste0(listname, "-domain")]],
+                                                     showCategory = input[[paste0(listname, "-top.over")]],
+                                                     searchExpr = input[[paste0(listname, "-grep")]],
+                                                     node_label = node_label_arg),
+                                             error = function(e) e,
+                                             warnings = function(w) w)
+                         
+                         if (is(outcnet, "gg")) renderPlot(outcnet)
+                         else renderText({outcnet$message})
+                         
                        }),
                        fluidRow(
                          
@@ -725,43 +731,44 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
           tabPanel.list <- list(
             #tabsetPanel(
             # ---- Tab Panel : dotPlot : ----
+            # ---- Tab Panel : dotPlot : ----
             tabPanel("DotPlot",
-                     
-                     verticalLayout(
-                       renderPlot({
-                         
-                         plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
-                                 contrast = listname, from = "CoExpEnrichAnal",
-                                 type = "dotplot", 
-                                 ont = input$dom.select,
-                                 Domain = input[[paste0(listname, "-domain")]],
-                                 showCategory = input[[paste0(listname, "-top.over")]],
-                                 searchExpr = input[[paste0(listname, "-grep")]])
-                         
-                       })
-                     )
+                     renderUI({
+                       outdot <- tryCatch(plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
+                                                  contrast = listname, from = "CoExpEnrichAnal",
+                                                  type = "dotplot", 
+                                                  ont = input$dom.select, 
+                                                  Domain = input[[paste0(listname, "-domain")]],
+                                                  showCategory = input[[paste0(listname, "-top.over")]],
+                                                  searchExpr = input[[paste0(listname, "-grep")]]),
+                                          error = function(e) e,
+                                          warnings = function(w) w)
+                       
+                       if (is(outdot, "gg")) renderPlot(outdot)
+                       else renderText({outdot$message})
+                     }),
             ),
             # ---- Tab Panel : heatplot : ----
             tabPanel("Heatplot",
-                     verticalLayout(
-                       renderPlot({
-                         
-                         plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
-                                 contrast = listname, from = "CoExpEnrichAnal",
-                                 type = "heatplot", 
-                                 ont = input$dom.select, 
-                                 Domain = input[[paste0(listname, "-domain")]],
-                                 showCategory = input[[paste0(listname, "-top.over")]],
-                                 searchExpr = input[[paste0(listname, "-grep")]])
-                       }),
-                     )
-                     
-            ) ,
+                     renderUI({
+                       outheat <- tryCatch(plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
+                                                   contrast = listname, from = "CoExpEnrichAnal",
+                                                   type = "heatplot", 
+                                                   ont = input$dom.select, 
+                                                   Domain = input[[paste0(listname, "-domain")]],
+                                                   showCategory = input[[paste0(listname, "-top.over")]],
+                                                   searchExpr = input[[paste0(listname, "-grep")]]),
+                                           error = function(e) e,
+                                           warnings = function(w) w)
+                       
+                       if (is(outheat, "gg")) renderPlot(outheat)
+                       else renderText({outheat$message})
+                     })
+            ),
             # ---- Tab Panel : cnetplot : ----
             tabPanel("Cnetplot",
                      verticalLayout(
-                       renderPlot({
-                         
+                       renderUI({
                          node_label_arg <- "none"
                          if (input[[paste0(listname, "-genesLabels_cnet")]] && input[[paste0(listname, "-termsLabels_cnet")]]) {
                            node_label_arg <- "all"
@@ -771,20 +778,28 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                            node_label_arg <- "category"
                          }
                          
-                         plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
-                                 contrast = listname, from = "CoExpEnrichAnal",
-                                 type = "cnetplot", 
-                                 ont = input$dom.select, 
-                                 Domain = input[[paste0(listname, "-domain")]],
-                                 showCategory = input[[paste0(listname, "-top.over")]],
-                                 searchExpr = input[[paste0(listname, "-grep")]],
-                                 node_label = node_label_arg)
+                         outcnet <- tryCatch(plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
+                                                     contrast = listname, from = "CoExpEnrichAnal",
+                                                     type = "cnetplot", 
+                                                     ont = input$dom.select, 
+                                                     Domain = input[[paste0(listname, "-domain")]],
+                                                     showCategory = input[[paste0(listname, "-top.over")]],
+                                                     searchExpr = input[[paste0(listname, "-grep")]],
+                                                     node_label = node_label_arg),
+                                             error = function(e) e,
+                                             warnings = function(w) w)
+                         
+                         if (is(outcnet, "gg")) renderPlot(outcnet)
+                         else renderText({outcnet$message})
+                         
                        }),
                        fluidRow(
-                         column(3,
-                                checkboxInput(inputId = ns(paste0(listname, "-genesLabels_cnet")), label = "Genes Labels", value = FALSE),
-                                checkboxInput(inputId = ns(paste0(listname, "-termsLabels_cnet")), label = "Terms Labels", value = TRUE)
-                         )
+                         
+                         column(2, checkboxInput(inputId = ns(paste0(listname, "-genesLabels_cnet")),
+                                                 label = "Genes Labels", value = FALSE)),
+                         column(2, checkboxInput(inputId = ns(paste0(listname, "-termsLabels_cnet")),
+                                                 label = "Terms Labels", value = TRUE))
+                         
                        )
                      )
             ),

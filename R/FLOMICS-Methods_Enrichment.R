@@ -339,6 +339,9 @@ methods::setMethod(
     # if from coexp, then no log2FC
 
     # dataPlot the enrichment results for correct ontology and contrast.
+    
+    # if (isTagName(contrast)) contrast <- convertTagToContrast(object, contrast)
+    
     if (from == "DiffExpAnal") {
       dataPlot <- object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult[[contrast]]
     } else {
@@ -373,12 +376,15 @@ methods::setMethod(
 
     # Select categories to show
     dataTab <- dataPlot@result[dataPlot@result$p.adjust < pvalueCutoff, ]
-    NbtoPlot <- min(nrow(dataTab), showCategory)
-    Categories <- dataTab$Description[1:NbtoPlot]
+    Categories <- dataTab$Description
     if (searchExpr != "") Categories <- Categories[grep(toupper(searchExpr), toupper(Categories))]
-
-
+    NbtoPlot <- min(length(Categories), showCategory)
+    if (NbtoPlot == 0) stop("There is no terms to show")
+    
+    Categories <- Categories[1:NbtoPlot]
+    
     # Create the plot
+    type <- tolower(type)
     returnplot <- NULL
     if (type == "cnetplot") {
       suppressMessages( # delete warnings for scale fill replacement
