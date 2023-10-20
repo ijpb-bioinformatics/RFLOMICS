@@ -177,5 +177,64 @@ test_that("it's running from CoExpAnal - GO - RNASeq", {
 
 
 
+plotCPR(MAE[["RNAtest"]], 
+        contrast = "(temperatureElevated - temperatureLow) in imbibitionDS",
+        ont = "GO",  
+        Domain = "BP", 
+        type = "cnetplot", searchExpr = "bou")
+
+.doNotPlot(plotCPR(MAE[["RNAtest"]], 
+                   contrast = "(temperatureElevated - temperatureLow) in imbibitionDS",
+                   ont = "GO",  
+                   Domain = "BP", 
+                   type = "cnetplot", searchExpr = "bou"))
+
+plotCPR(MAE[["RNAtest"]], 
+        contrast = "(temperatureElevated - temperatureLow) in imbibitionDS",
+        ont = "GO",  
+        Domain = "BP", 
+        type = "cnetplot", searchExpr = "bou")
 
 
+outheat <- tryCatch(plotCPR(MAE[["RNAtest"]], 
+                            contrast = "(temperatureElevated - temperatureLow) in imbibitionDS",
+                            ont = "GO",  
+                            Domain = "BP", 
+                            type = "heatplot"),
+                    error = function(e) e,
+                    warnings = function(w) w)
+
+outheat
+class(outheat)
+
+outdot <- tryCatch(plotCPR(MAE[["RNAtest"]], 
+                            contrast = "(temperatureElevated - temperatureLow) in imbibitionDS",
+                            ont = "GO",  
+                            Domain = "BP", 
+                            type = "dotplot"),
+                    error = function(e) e,
+                    warnings = function(w) w)
+
+outdot
+class(outdot)
+
+is(outdot, "gg")
+
+outcnet <- tryCatch(plotCPR(MAE[["RNAtest"]], 
+                 contrast = "(temperatureElevated - temperatureLow) in imbibitionDS",
+                 ont = "GO",  
+                 Domain = "BP", 
+                 type = "cnetplot"),
+         error = function(e) e,
+         warnings = function(w) w)
+
+outcnet
+
+outcnete <- tryCatch(plotCPR(MAE[["RNAtest"]], 
+                            contrast = "(temperatureElevated - temperatureLow) in imbibitionDS",
+                            ont = "GO",  
+                            Domain = "BP", searchExpr = "ERR" ,
+                            type = "cnetplot"),
+                    error = function(e) e,
+                    warnings = function(w) w)
+outcnete

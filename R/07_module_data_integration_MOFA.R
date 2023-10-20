@@ -45,16 +45,15 @@ MOFA_settingUI <- function(id){
   )
 }
 
-# tags$a(href="www.rstudio.com", "Click here!")
-
 MOFA_setting <- function(input, output, session, rea.values){
   
-  local.rea.values <- reactiveValues(runMOFA = FALSE) # init local reactive values
+  local.rea.values <- reactiveValues(runMOFA = FALSE) 
   
   # list of parameters  
   output$MOFA_ParamUI <- renderUI({
     
-    listOfContrast <- session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName
+    listOfContrast <- getSelectedContrasts(session$userData$FlomicsMultiAssay)$contrastName
+    
     # set param in interface
     tagList(
       
@@ -67,7 +66,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                    
                    pickerInput(
                      inputId  = session$ns("MOFA_selectedData"),
-                     label    = "Select dataset:",
+                     label    = "Select dataset",
                      choices  = rea.values$datasetDiff,
                      options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                      multiple = TRUE,
@@ -78,11 +77,9 @@ MOFA_setting <- function(input, output, session, rea.values){
                    
                    pickerInput(
                      inputId  = session$ns("MOFA_selectedContrasts"),
-                     label    = "Select contrast:",
-                     choices  = listOfContrast,
-                     options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-                     multiple = TRUE,
-                     selected = listOfContrast))),
+                     label    = "Select contrasts",
+                     choices  = listOfContrast
+                     ))),
           
           # select mode of feature filtering
           fluidRow(
@@ -96,14 +93,14 @@ MOFA_setting <- function(input, output, session, rea.values){
           fluidRow(
             column(12,
                    selectInput(session$ns("MOFA_RNAseqTransfo"),
-                               label    = "RNAseq transfo :",
+                               label    = "RNAseq transfo",
                                choices  = c("limma (voom)"),
                                selected = "limma (voom)"))),
           
           fluidRow(
             column(12,
                    selectInput(session$ns("MOFA_scaleViews"),
-                               label    = "Scale views:",
+                               label    = "Scale views",
                                choices  = c("FALSE", "TRUE"),
                                selected = "TRUE"))),
           fluidRow(
@@ -117,7 +114,7 @@ MOFA_setting <- function(input, output, session, rea.values){
                                 value = 1000, min = 1000, max = 1000))),
           
           fluidRow(
-            column(4, actionButton(session$ns("runMOFA"),"Run"))) ##### ACTION BUTTON
+            column(4, actionButton(session$ns("runMOFA"),"Run")))
       ))
   })
   
@@ -190,11 +187,7 @@ MOFA_setting <- function(input, output, session, rea.values){
     #----------------------#
     
     session$userData$FlomicsMultiAssay <- do.call(getFromNamespace("integrationWrapper", ns = "RFLOMICS"), list_args_prepare_MOFA)
-    
-    # untrainedMOFA <- listResMOFA$MOFAObject.untrained
-    # resMOFA <- listResMOFA$MOFAObject.trained
-    
-    
+
     #### TODO Try to catch MOFA2 warnings and put them on the interface. DOES NOT WORK. 
     # test <- run_MOFA_analysis(session$userData$FlomicsMultiAssay@metadata[["MOFA_untrained"]],
     #                           scale_views = FALSE,

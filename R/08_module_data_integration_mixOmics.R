@@ -60,14 +60,12 @@ MixOmics_settingUI <- function(id){
 #' @importFrom DT renderDataTable datatable
 MixOmics_setting <- function(input, output, session, rea.values){
   
-  local.rea.values <- reactiveValues(runMixOmics = FALSE) # init local reactive values
+  local.rea.values <- reactiveValues(runMixOmics = FALSE) 
   
   ## list of parameters  
   output$MixOmics_ParamUI <- renderUI({
     
-    # Parameters to put
-    
-    listOfContrast <- session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName
+    listOfContrast <- getSelectedContrasts(session$userData$FlomicsMultiAssay)$contrastName
     
     # set param in interface
     tagList(
@@ -94,10 +92,8 @@ MixOmics_setting <- function(input, output, session, rea.values){
                           pickerInput(
                             inputId  = session$ns("MO_selectedContrast"),
                             label    = "Select contrasts",
-                            choices  = listOfContrast,
-                            options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
-                            multiple = TRUE,
-                            selected = listOfContrast))),
+                            choices  = listOfContrast
+                          ))),
                  
                  # select mode of feature filtering
                  fluidRow(
@@ -211,7 +207,6 @@ MixOmics_setting <- function(input, output, session, rea.values){
     # ----------------------#
     
     # Run the analysis
-    # print("#     =>Running MixOmics")
     
     session$userData$FlomicsMultiAssay <- do.call(getFromNamespace("integrationWrapper", ns = "RFLOMICS"), list_args_MO)
     
@@ -230,7 +225,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
     if (!local.rea.values$runMixOmics) return()
     
     lapply(names(session$userData$FlomicsMultiAssay@metadata[["mixOmics"]]), function(listname) { 
-
+      
       Data_res <- session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][[listname]]$MixOmics_results
       
       fluidRow(
@@ -259,8 +254,8 @@ MixOmics_setting <- function(input, output, session, rea.values){
               tabPanel("Explained Variance",
                        column(12, renderPlot({
                          
-                          plot_MO_varExp(session$userData$FlomicsMultiAssay, 
-                                                  selectedResponse = listname)
+                         plot_MO_varExp(session$userData$FlomicsMultiAssay, 
+                                        selectedResponse = listname)
                        })),
                        
               ),
@@ -329,26 +324,58 @@ MixOmics_setting <- function(input, output, session, rea.values){
                                               min = 0,
                                               max =  1,
                                               value = 0.9, step = 0.05)),
-                       column(11 , renderPlot(mixOmics::network(mat = Data_res, 
-                                                                # comp = 1:2, 
-                                                                blocks = 1:length(input$MO_selectedData),
-                                                                cutoff = input[[paste0(listname, "Network_cutoff")]], 
-                                                                shape.node = rep("rectangle", length(input$MO_selectedData)))))
+                       column(11 , 
+                              renderUI({
+                                outN <- .doNotPlot(mixOmics::network(mat = Data_res, 
+                                                                     blocks = 1:length(input$MO_selectedData),
+                                                                     cutoff = input[[paste0(listname, "Network_cutoff")]], 
+                                                                     shape.node = rep("rectangle", length(input$MO_selectedData)))) 
+                                
+                                if (is(outN, "simpleError")){
+                                  renderText({outN$message})
+                                } else {
+                                  renderPlot(
+                                    .doNotSpeak(
+                                      mixOmics::network(mat = Data_res, 
+                                                        blocks = 1:length(input$MO_selectedData),
+                                                        cutoff = input[[paste0(listname, "Network_cutoff")]], 
+                                                        shape.node = rep("rectangle", length(input$MO_selectedData)))
+                                    ))
+                                }
+                                
+                              })
+                              
+                       )
               ), 
               # ---- Tab  Panel CircosPlot & cimPlot ----
               tabPanel("CircosPlot",
-                       if (is(Data_res, "block.splsda")) {
+                       if (is(Data_res, "block.splsda") || is(Data_res, "block.plsda")) {
                          fluidRow(
                            column(1, numericInput(inputId = session$ns(paste0(listname, "Circos_cutoff")),
                                                   label = "Cutoff:",
                                                   min = 0,
                                                   max =  1,
                                                   value = 0.9, step = 0.05)),
-                           column(11, renderPlot(mixOmics::circosPlot(Data_res,
-                                                                      cutoff = input[[paste0(listname, "Circos_cutoff")]])))
-                         )
-                       }else{
-                         renderText({print("This plot is only available for sparse multi-block discriminant analysis results.")})
+                           column(11, 
+                                  
+                                  renderUI({
+                                    out <- .doNotPlot(mixOmics::circosPlot(Data_res, cutoff = input[[paste0(listname, "Circos_cutoff")]]))
+                                    
+                                    if (is(out, "simpleWarning")) {
+                                      renderText({out$message})
+                                    } else {
+                                      renderPlot(
+                                        .doNotSpeak(
+                                          mixOmics::circosPlot(Data_res, cutoff = input[[paste0(listname, "Circos_cutoff")]])
+                                        )
+                                      )
+                                    }
+                                    
+                                  })
+                                  
+                           )) # column # fluidrow
+                       } else {
+                         renderText({print("This plot is only available for multi-block discriminant analysis results.")})
                        }
               ),
               tabPanel("CimPlot",
