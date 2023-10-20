@@ -58,41 +58,41 @@ apply_transformation <- function(object) {
   if (is.null(getTrans(object))) {
     stop("Expect transformation method.")
   }
-
+  
   if (isTransformed(object)) {
     warning("Data were already transformed before!")
   }
-
+  
   transform_method <- getTrans(object)
   assayTransform <- assay(object, withDimnames = TRUE)
   validTransform <- TRUE
-
-
+  
+  
   switch(transform_method,
-    "log1p" = {
-      assay(object) <- log1p(assayTransform)
-    },
-    "log2" = {
-      assay(object) <- log2(assayTransform + 1)
-    },
-    "log10" = {
-      assay(object) <- log10(assayTransform + 1)
-    },
-    "squareroot" = {
-      assay(object) <- sqrt(assayTransform)
-    },
-    "none" = {
-      assay(object) <- assayTransform
-    },
-    {
-      assay(object) <- assayTransform
-      message("Could not recognize the transformation method. No transformation applied. Please check your parameters.")
-      validTransform <- FALSE
-    } # default is none
+         "log1p" = {
+           assay(object) <- log1p(assayTransform)
+         },
+         "log2" = {
+           assay(object) <- log2(assayTransform + 1)
+         },
+         "log10" = {
+           assay(object) <- log10(assayTransform + 1)
+         },
+         "squareroot" = {
+           assay(object) <- sqrt(assayTransform)
+         },
+         "none" = {
+           assay(object) <- assayTransform
+         },
+         {
+           assay(object) <- assayTransform
+           message("Could not recognize the transformation method. No transformation applied. Please check your parameters.")
+           validTransform <- FALSE
+         } # default is none
   )
-
+  
   if (transform_method != "none" && validTransform) object@metadata[["transform"]][["transformed"]] <- TRUE
-
+  
   return(object)
 }
 
@@ -112,40 +112,40 @@ apply_norm <- function(object) {
   if (is.null(getNorm(object))) {
     stop("Expects normalization method.")
   }
-
+  
   if (isNorm(object)) {
     warning("Data were already normalized before!")
   }
-
+  
   norm_method <- getNorm(object)
   coefNorm    <- getCoeffNorm(object)
   validNorm   <- TRUE
-
+  
   assayTransform <- assay(object)
-
+  
   switch(norm_method,
-    "median" = {
-      assay(object) <- sweep(assayTransform, 2, coefNorm, "-")
-    },
-    "totalSum" = {
-      assay(object) <- sweep(assayTransform, 2, coefNorm, "/")
-    },
-    "TMM" = {
-      scales_factors <- coefNorm$norm.factors * coefNorm$lib.size
-      assay(object) <- scale(assayTransform + 1, center = FALSE, scale = scales_factors)
-    },
-    "none" = {
-      assay(object) <- assayTransform
-    },
-    { # default is none
-      assay(object) <- assayTransform
-      message("Could not recognize the normalization method. No normalization applied. Please check your parameters.")
-      validNorm <- FALSE
-    }
+         "median" = {
+           assay(object) <- sweep(assayTransform, 2, coefNorm, "-")
+         },
+         "totalSum" = {
+           assay(object) <- sweep(assayTransform, 2, coefNorm, "/")
+         },
+         "TMM" = {
+           scales_factors <- coefNorm$norm.factors * coefNorm$lib.size
+           assay(object) <- scale(assayTransform + 1, center = FALSE, scale = scales_factors)
+         },
+         "none" = {
+           assay(object) <- assayTransform
+         },
+         { # default is none
+           assay(object) <- assayTransform
+           message("Could not recognize the normalization method. No normalization applied. Please check your parameters.")
+           validNorm <- FALSE
+         }
   )
-
+  
   if (norm_method != "none" && validNorm) object@metadata[["Normalization"]][["normalized"]] <- TRUE
-
+  
   return(object)
 }
 
@@ -163,15 +163,15 @@ apply_norm <- function(object) {
 
 checkTransNorm <- function(object, raw = FALSE) {
   if (class(object) != "SummarizedExperiment") stop("Object is not a SummarizedExperiment")
-
+  
   # check things
   if (check_NA(object)) stop("NA detected in the assay.")
-
+  
   # No transformation (except for RNAseq, which expect counts...)
   if (raw) {
     if (isTransformed(object)) warning("Your data are not raw (transformed)")
     if (isNorm(object)) warning("Your data are not raw (normalized)")
-
+    
     if (getOmicsTypes(object) == "RNAseq") {
       assay(object) <- log2(assay(object) + 1)
     }
@@ -180,33 +180,33 @@ checkTransNorm <- function(object, raw = FALSE) {
     if (getOmicsTypes(object) == "RNAseq") {
       # Really depends if TMM is the normalization or not.
       # Make it easier: force TMM and log2.
-
+      
       if (isTransformed(object)) stop("Expect untransformed RNAseq data at this point.")
-
+      
       if (isNorm(object) && getNorm(object) == "TMM") {
         assay(object) <- log2(assay(object))
       } # +1 in the apply_norm function
-
+      
       if (isNorm(object) && getNorm(object) != "TMM") {
         message("RNAseq counts expects TMM normalization. Data were already normalized with another method.
                 Skipping to the end without transforming or normalizing data.")
       }
-
+      
       if (!isNorm(object)) {
         # Force "none" transformation.
         if (getTrans(object) != "none") {
           message("RNAseq counts expects TMM normalization. Transformation is done after the normalization,
                   using 'none' as transform method. Data will be transformed using log2 after the normalization anyway")
-
+          
           object <- setTrans(object, methode = "none")
         }
-
+        
         # Force TMM normalization
         if (object@metadata[["Normalization"]][["methode"]] != "TMM") {
           message("For RNAseq data (counts), only TMM applies for now. Forcing TMM normalization.")
           object <- RunNormalization(object, NormMethod = "TMM")
         }
-
+        
         # Finally transforming the data.
         object <- apply_transformation(object) # none
         object <- apply_norm(object) # TMM
@@ -219,10 +219,10 @@ checkTransNorm <- function(object, raw = FALSE) {
       if (!isNorm(object)) object <- apply_norm(object)
     }
   }
-
+  
   # check things
   if (check_NA(object)) stop("NA detected in the assay.")
-
+  
   return(object)
 }
 
@@ -271,4 +271,53 @@ setNorm <- function(object, methode = "none") {
 setCoeffNorm <- function(object, coeff = NULL) {
   metadata(object)[["Normalization"]][["coefNorm"]] <- coeff
   return(object)
+}
+
+
+# ---- DO NOT PLOT function ----
+
+#' @title doNotPlot
+#' @description
+#' Used mainly for the interface to check some conditions before actually plotting said graph.
+#' 
+#' @param expr An expression, usually producing a plot but not necessarily.
+#' @keywords internal
+#' @noRd
+#' @importFrom utils capture.output
+#' 
+.doNotPlot <- function(expr){
+  pdf(file = NULL)
+  out <- tryCatch({
+    capture.output(
+        suppressMessages(
+          eval(expr))
+      )
+  },
+  error = function(e) e,
+  warning = function(w) w
+  )
+  dev.off()
+  return(out)
+}
+
+
+#' @title doNotSpeak
+#' @description
+#' Used mainly for the interface to silence some functions.
+#' 
+#' @param expr An expression, usually producing a warning.
+#' @keywords internal
+#' @noRd
+#' 
+.doNotSpeak <- function(expr){
+  out <- tryCatch({
+    capture.output(
+      suppressWarnings(
+        suppressMessages(eval(expr))
+      ))
+  },
+  error = function(e) e,
+  warning = function(w) w
+  )
+  return(out)
 }
