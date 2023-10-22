@@ -101,6 +101,88 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 ###### METHOD to check the completness of the ExpDesign
 
 
+
+#' @title CheckExpDesign
+#' @description This method checks some experimental design characteristics.
+#'  A complete design and at least one biological and one batch factors are required for using RFLOMICS workflow.
+#' @param An object of class \link{MultiAssayExperiment-class}
+#' @return a named list of two objects
+#' \itemize{
+#'  \item{"plot:"}{ plot of count data.frame.}
+#'  }
+#'  
+#' @exportMethod CheckExpDesign
+#' @noRd
+
+methods::setMethod(f         = "CheckExpDesign",
+                   signature = "MultiAssayExperiment",
+                   definition <- function(object){
+                     
+                     Design <- object@metadata$design
+                     
+                     # check presence of bio factors
+                     if (!table(Design@Factors.Type)["Bio"] %in% 1:3){ stop("no bio factor! or nbr of bio factors exceed 3!") }
+                     if ( table(Design@Factors.Type)["batch"] == 0){ stop("ERROR: no replicate!") }
+                     
+                     ####################
+                     
+                     BioFact <- names(Design@Factors.Type)[Design@Factors.Type == "Bio"]
+                     coldata <- MultiAssayExperiment::colData(object)
+                     coldata[["samples"]] <- rownames(coldata)
+                     coldata <- tibble::as_tibble(coldata)
+                     coldata <- MultiAssayExperiment::sampleMap(object) %>% tibble::as_tibble() %>% 
+                       dplyr::left_join(coldata, by = c("primary" = "samples"))
+                     
+                     all_combin_cond <- lapply(BioFact, function(x){ 
+                       df <- unique(Design@List.Factors[[x]]) %>% as.data.frame()
+                       names(df) <- x
+                       return(df) 
+                       }) %>% purrr::reduce(merge)
+                     
+                     counts <- coldata %>% dplyr::select(assay, all_of(BioFact)) %>% unique() %>% 
+                       dplyr::group_by_at(BioFact) %>% dplyr::count(name = "Count") %>% 
+                       dplyr::right_join(all_combin_cond, by = BioFact) %>% 
+                       dplyr::mutate_at(.vars = "Count", .funs = function(x) dplyr::if_else(is.na(x), 0, x))
+                       
+                     ####################                 
+                     
+                     counts <- counts %>% dplyr::mutate(status = dplyr::if_else(Count == length(object) , "all_data", dplyr::if_else(Count == 0 , "no_data", "some_data")))
+                     
+                     #list of factor names
+                     factors <- names(counts)[1:(dim(counts)[2]-2)]
+                     
+                     col.panel <- c("all_data", "some_data", "no_data")
+                     names(col.panel) <- c("#00BA38", "orange", "red")
+                     
+                     col.panel.u <- col.panel[col.panel %in% unique(counts$status)]
+                     
+                     switch (length(factors),
+                             "1" = { p <- ggplot2::ggplot(counts ,ggplot2::aes_string(x = factors[1], y = 1)) + 
+                                          ggplot2::theme(axis.text.y = ggplot2::element_blank()) + ggplot2::ylab("") },
+                             "2" = { p <- ggplot2::ggplot(counts ,ggplot2::aes_string(x = factors[1], y = factors[2])) },
+                             "3" = {
+                               #get factor with min conditions -> to select for "facet_grid"
+                               factors.l <- lapply(factors, function(x){ length(unique(counts[[x]])) }) %>% unlist()
+                               names(factors.l) <- factors
+                               factor.min <- names(factors.l[factors.l == min(factors.l)][1])
+                               
+                               factors <- factors[factors != factor.min]
+                               
+                               #add column to rename facet_grid
+                               counts <- counts %>% dplyr::mutate(grid = paste0(factor.min, "=",get(factor.min)))
+                               
+                               p <- ggplot2::ggplot(counts ,ggplot2::aes_string(x = factors[1], y = factors[2])) +
+                                 ggplot2::facet_grid(grid~.) })
+                     
+                     p <- p + ggplot2::geom_tile(ggplot2::aes(fill = status), color = "white", size = 1, width = 1, height = 1)  + ggplot2::geom_text(ggplot2::aes(label = Count)) +
+                       ggplot2::scale_fill_manual(values = names(col.panel.u), breaks = col.panel.u) +
+                       ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
+                                      axis.ticks = ggplot2::element_blank(), axis.text.x=ggplot2::element_text(angle=90, hjust=1))
+                     return(p)
+                     
+                   })
+
+
 #' @title CheckExpDesignCompleteness
 #' @description This method checks some experimental design characteristics.
 #'  A complete design and at least one biological and one batch factors are required for using RFLOMICS workflow.
@@ -124,43 +206,36 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 
 methods::setMethod(f         = "CheckExpDesignCompleteness",
                    signature = "MultiAssayExperiment",
-                   definition <- function(object, sampleList=NULL){
+                   definition <- function(object, datasetList=NULL, sampleList=NULL){
+                     
+                     # test object type
+                     # test if object exist
                      
                      Design <- object@metadata$design
                      
-                     # output list
-                     output <- list()
-                     output[["error"]] <- NULL
-                     output[["warning"]] <- NULL
+                     if(is.null(datasetList)){ datasetList <- names(object) }
                      
-                     
+
                      # check presence of bio factors
-                     if (! table(Design@Factors.Type)["Bio"] %in% 1:3){
-                       
-                       output[["error"]] <- "ERROR: no bio factor! or nbr of bio factors exceed 3!"
-                       
-                     }
-                     if (table(Design@Factors.Type)["batch"] == 0){
-                       
-                       output[["error"]] <- "ERROR: no replicate!"
-                     }
+                     if (!table(Design@Factors.Type)["Bio"] %in% 1:3){ stop("no bio factor! or nbr of bio factors exceed 3!") }
+                     if ( table(Design@Factors.Type)["batch"] == 0){ stop("ERROR: no replicate!") }
                      
                      
-                     # count occurence of bio conditions
-                     if(is.null(sampleList)){
-                       # tmp <- sampleMap(object) %>% data.frame()
-                       # sampleList <- lapply(unique(tmp$assay), function(dataset){filter(tmp, assay == dataset)$primary }) %>%
-                       #   purrr::reduce(dplyr::union)
-                       
-                       #sampleList <- sampleMap(object)$primary
-                       sampleList.tmp <- dplyr::group_by(data.frame(MultiAssayExperiment::sampleMap(object)), primary) %>% 
-                         dplyr::count() %>% 
-                         dplyr::ungroup() %>% 
-                         dplyr::mutate(max = max(n)) %>% 
-                         dplyr::filter(n == max)
-                       sampleList <- sampleList.tmp$primary
-                     }
                      
+                     # # count occurence of bio conditions
+                     # if(is.null(sampleList)){
+                     #   # tmp <- sampleMap(object) %>% data.frame()
+                     #   # sampleList <- lapply(unique(tmp$assay), function(dataset){filter(tmp, assay == dataset)$primary }) %>%
+                     #   #   purrr::reduce(dplyr::union)
+                     #   
+                     #   #sampleList <- sampleMap(object)$primary
+                     #   sampleList.tmp <- dplyr::group_by(data.frame(MultiAssayExperiment::sampleMap(object)), primary) %>% 
+                     #     dplyr::count() %>% 
+                     #     dplyr::ungroup() %>% 
+                     #     dplyr::mutate(max = max(n)) %>% 
+                     #     dplyr::filter(n == max)
+                     #   sampleList <- sampleList.tmp$primary
+                     # }
                      
                      # Only works with bio and batch factors for the rest of the function
                      namFact <- names(Design@Factors.Type)[Design@Factors.Type %in% c("Bio", "batch")]
@@ -171,48 +246,76 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                      })
                      names(dF.List) <- names(expDesign_mod)
                      
-                     ExpDesign <- dplyr::filter(expDesign_mod, rownames(expDesign_mod) %in% sampleList)
+                     # output list
+                     output <- list()
+                     output[["summary"]] <- data.frame()
                      
-                     bio.fact <- names(dF.List[Design@Factors.Type == "Bio"])
-                     tmp <- ExpDesign %>% dplyr::mutate(samples=row.names(.))
+                     for(dataset in datasetList){
+                       
+                       if(is.null(object[[dataset]])) stop(paste(dataset, "not exist."))
+                       
+                       if(is.null(sampleList)){
+                         
+                         sampleList_bis <- colnames(object[[dataset]])
+                       }
+                       else if(length(intersect(sampleList, colnames(object[[dataset]]))) == 0){
+                         
+                         stop(paste("sampleList values not exist in", dataset))
+                       }
+                       else{ sampleList_bis <- sampleList }
+                       
+                       ExpDesign <- dplyr::filter(expDesign_mod, rownames(expDesign_mod) %in% sampleList_bis)
+                       
+                       bio.fact <- names(Design@Factors.Type[Design@Factors.Type == "Bio"])
+                       #bio.fact <- names(dF.List[Design@Factors.Type == "Bio"])
+                       tmp <- ExpDesign %>% dplyr::mutate(samples=row.names(.))
+                       
+                       group_count <- as.data.frame(dF.List) %>%
+                         table() %>%
+                         as.data.frame() %>%
+                         dplyr::full_join(tmp, by=names(dF.List)) %>%
+                         dplyr::mutate_at(.vars = "samples", .funs = function(x) dplyr::if_else(is.na(x), 0, 1)) %>%
+                         dplyr::group_by_at((bio.fact)) %>%
+                         dplyr::summarise(Count=sum(samples), .groups = "keep")
+
+                       # remplacer le code ci-dessus par celui en bas                       
+                       # group_count <- ExpDesign %>% 
+                       #   dplyr::group_by_at((bio.fact)) %>% dplyr::count(name = "Count")
+
+                       # check presence of relicat / batch
+                       # check if design is complete
+                       # check if design is balanced
+                       # check nbr of replicats
+                       if(min(group_count$Count) == 0){
+                         
+                         output[["summary"]] <- rbind(output[["summary"]], c(dataset, "error", "The experimental design is not complete."))
+                         output[["error"]]   <- TRUE
+                       }
+                       else if(min(group_count$Count) == 1){
+                         
+                         output[["summary"]] <- rbind(output[["summary"]], c(dataset, "error", "You need at least 2 biological replicates."))
+                         output[["error"]]   <- TRUE
+                       }
+                       else if(length(unique(group_count$Count)) != 1){
+                         
+                         output[["summary"]] <- rbind(output[["summary"]], c(dataset, "warning", "The experimental design is complete but not balanced."))
+                       }
+                       else{
+                         output[["summary"]] <- rbind(output[["summary"]], c(dataset, "pass", "The experimental design is complete and balanced."))
+                       }
+                       
+                       ### plot
+                       output[[dataset]][["counts"]] <- group_count
+                     }
+                     names(output[["summary"]]) <- c('dataset', "status", "message")
                      
-                     group_count <- as.data.frame(dF.List) %>% 
-                       table() %>% 
-                       as.data.frame() %>% 
-                       dplyr::full_join(tmp, by=names(dF.List)) %>% 
-                       dplyr::mutate_at(.vars = "samples", .funs = function(x) dplyr::if_else(is.na(x), 0, 1)) %>%
-                       dplyr::group_by_at((bio.fact)) %>% 
-                       dplyr::summarise(Count=sum(samples), .groups = "keep")
-                     
-                     # check presence of relicat / batch
-                     # check if design is complete
-                     # check if design is balanced
-                     # check nbr of replicats
-                     if(min(group_count$Count) == 0){
-                       message <- "ERROR: The experimental design is not complete."
-                       output[["error"]] <- message
-                     }
-                     else if(min(group_count$Count) == 1){
-                       message <- "ERROR: You need at least 2 biological replicates."
-                       output[["error"]] <- message
-                     }
-                     else if(length(unique(group_count$Count)) != 1){
-                       message <- "WARNING: The experimental design is complete but not balanced."
-                       output[["warning"]] <- message
-                     }
-                     else{
-                       message <- "The experimental design is complete and balanced."
+                     if(length(datasetList) == 1){
+                       output[["plot"]]   <- plotExperimentalDesign(counts = output[[datasetList[1]]][["counts"]], 
+                                                                    message= output[["summary"]][1,3])
                      }
                      
-                     ### plot
-                     output[["plot"]] <-  plotExperimentalDesign(group_count, message=message)
-                     output[["counts"]] <- group_count
                      return(output)
                    })
-
-# print output
-# warining -> warning
-# false -> stop
 
 
 
@@ -1889,7 +1992,7 @@ methods::setMethod(f="runCoExpression",
                      
                      CoExpAnal[["method"]]           <- "coseq"
                      CoExpAnal[["gene.list.names"]]  <- nameList
-                     names(CoExpAnal[["gene.list.names"]])  <- dplyr::filter(object@metadata$DiffExpAnal$contrasts, tag %in% list.name)$contrastName
+                     names(CoExpAnal[["gene.list.names"]])  <- dplyr::filter(object@metadata$DiffExpAnal$contrasts, tag %in% nameList)$contrastName
                      CoExpAnal[["merge.type"]]       <- merge
                      CoExpAnal[["replicates.nb"]]    <- replicates
                      CoExpAnal[["K.range"]]          <- K

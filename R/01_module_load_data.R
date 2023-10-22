@@ -40,8 +40,11 @@ LoadOmicsDataUI <- function(id){
     br(),
     
     fluidRow(
-      uiOutput(ns("CompletenessUI")),
       uiOutput(ns("summaryMAE"))
+    ),
+    fluidRow(
+      uiOutput(ns("dataConditionUI")),
+      uiOutput(ns("CompletenessUI"))
     )
     
   )
@@ -505,13 +508,13 @@ LoadOmicsData <- function(input, output, session, rea.values){
     # plot : ok
     local.rea.values$plots <- TRUE
     
-    if (!is.null(local.rea.values$completeCheckRes[["error"]])){
-      showModal(modalDialog(title = "Error message", local.rea.values$completeCheckRes[["error"]]))
+    if (isTRUE(local.rea.values$completeCheckRes[["error"]])){
+      showModal(modalDialog(title = "Error message", "One of loaded datasets have no complete design..."))
       rea.values$validate.status <- 1
     }
-    
+
     # continue only if message is true or warning
-    validate({ need(is.null(local.rea.values$completeCheckRes[["error"]]), message = local.rea.values$completeCheckRes[["error"]]) })
+    validate({ need(!isTRUE(local.rea.values$completeCheckRes[["error"]]), message = "One of loaded datasets have no complete design...") })
     
     # 
     rea.values$datasetList <- session$userData$FlomicsMultiAssay@metadata$omicList
@@ -524,26 +527,23 @@ LoadOmicsData <- function(input, output, session, rea.values){
   # (3) check data
   ##########################################
   
-  # completeness check
-  output$CompletenessUI <- renderUI({
+  # dataset per condition check
+  output$dataConditionUI <- renderUI({
     
     if (local.rea.values$plots == FALSE) return()
     
     print(paste0("#    => Completeness plot..."))
     
-    box( width = 6,  status = "warning", title = "Completeness check", solidHeader = TRUE,
+    box( width = 6,  status = "warning", title = "Number of Datasets per Condition", solidHeader = TRUE,
          
          # plot of count per condition
          renderPlot(
-           isolate({ local.rea.values$completeCheckRes[["plot"]] })
-         ),
-         hr(),
-         tags$div(
-           HTML("<em>You <b>must</b> have a <b>complete design</b> (i.e. all possible combinations of factor's levels).
-                     <b>Balanced design</b> (presence of the same number of replicates for all
-                     possible combinations) is not required  but advised.
-                     You <b>must</b> also have at least one biological factor and 2 replicates</em>")
+           # isolate({ 
+             #local.rea.values$completeCheckRes[["plot"]] 
+             CheckExpDesign(session$userData$FlomicsMultiAssay)
+             # })
          )
+         
     )
   })
   
@@ -554,10 +554,39 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     print(paste0("#    => overview plot..."))
     
-    box(width = 6, status = "warning", title = "Dataset(s) overview", solidHeader = TRUE,
+    box(width = 12, status = "warning", title = "Dataset(s) overview", solidHeader = TRUE,
         renderPlot( isolate({  Datasets_overview_plot(session$userData$FlomicsMultiAssay) })),
     )
     #}
+  })
+  
+
+  # completeness check
+  output$CompletenessUI <- renderUI({
+    
+    if (local.rea.values$plots == FALSE) return()
+    
+    print(paste0("#    => Completeness plot..."))
+    
+    box( width = 6,  status = "warning", title = "Completeness check", solidHeader = TRUE,
+         
+         # hr(),
+         tags$div(
+           HTML("<em>You <b>must</b> have a <b>complete design</b> (i.e. all possible combinations of factor's levels).
+                     <b>Balanced design</b> (presence of the same number of replicates for all
+                     possible combinations) is not required  but advised.
+                     You <b>must</b> also have at least one biological factor and 2 replicates</em>")
+         ),
+         hr(),
+         # plot of count per condition
+         # renderPrint(
+         #    isolate({ 
+         #      local.rea.values$completeCheckRes[["summary"]]
+         #    })
+         # )
+         DT::renderDataTable( DT::datatable(data = local.rea.values$completeCheckRes[["summary"]],
+                                            options = list( pageLength = 5, autoWidth = TRUE, dom = 'tp' )))
+    )
   })
   
   return(input)

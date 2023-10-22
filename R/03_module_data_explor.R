@@ -64,16 +64,18 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   #---- Completeness----
   output$completenessUI <- renderUI({
     
-    completeCheckRes <- CheckExpDesignCompleteness(session$userData$FlomicsMultiAssay, input$selectSamples)
+    completeCheckRes <- CheckExpDesignCompleteness(session$userData$FlomicsMultiAssay, paste0(dataset, ".raw"), input$selectSamples)
     local.rea.values$message   <- completeCheckRes[["error"]]
     
-    if(!is.null(completeCheckRes[["error"]])){
+    if(isTRUE(completeCheckRes[["error"]])){
       
-      showModal(modalDialog(title = "Error message", completeCheckRes[["error"]]))
+      local.rea.values$message   <- completeCheckRes[["summary"]][1,3]
+      showModal(modalDialog(title = "Error message", completeCheckRes[["summary"]][1,3]))
     }
+    
     list(
       # plot of count per condition
-      renderPlot( completeCheckRes[["plot"]])
+      renderPlot(completeCheckRes[["plot"]])
     )
   })
   

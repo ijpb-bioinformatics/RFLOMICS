@@ -60,6 +60,11 @@ methods::setGeneric(
 # ---- Design ----
 
 methods::setGeneric(
+  name = "CheckExpDesign",
+  def  = function(object, sampleList=NULL, ... ){standardGeneric("CheckExpDesign")}
+)
+
+methods::setGeneric(
   name = "CheckExpDesignCompleteness",
   def  = function(object, sampleList=NULL, ... ){standardGeneric("CheckExpDesignCompleteness")}
 )
