@@ -24,6 +24,7 @@ Suggests:
     BiocStyle
 VignetteBuilder: knitr
 Imports:
+    vroom,
     AnnotationDbi,
     BiocParallel,
     clustermq,
@@ -73,6 +74,5 @@ Imports:
     tibble,
     tidyselect,
     UpSetR,
-    utils,
-    vroom
+    utils
     
