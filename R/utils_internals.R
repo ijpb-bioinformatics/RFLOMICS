@@ -118,8 +118,8 @@ apply_norm <- function(object) {
   }
   
   norm_method <- getNorm(object)
-  coefNorm    <- getCoeffNorm(object)
-  validNorm   <- TRUE
+  coefNorm <- getCoeffNorm(object)
+  validNorm <- TRUE
   
   assayTransform <- assay(object)
   
@@ -162,7 +162,7 @@ apply_norm <- function(object) {
 #'
 
 checkTransNorm <- function(object, raw = FALSE) {
-  if (class(object) != "SummarizedExperiment") stop("Object is not a SummarizedExperiment")
+  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
   
   # check things
   if (check_NA(object)) stop("NA detected in the assay.")
@@ -177,47 +177,47 @@ checkTransNorm <- function(object, raw = FALSE) {
     }
   } else {
     # if RNAseq
-    if (getOmicsTypes(object) == "RNAseq") {
-      # Really depends if TMM is the normalization or not.
-      # Make it easier: force TMM and log2.
-      
-      if (isTransformed(object)) stop("Expect untransformed RNAseq data at this point.")
-      
-      if (isNorm(object) && getNorm(object) == "TMM") {
-        assay(object) <- log2(assay(object))
-      } # +1 in the apply_norm function
-      
-      if (isNorm(object) && getNorm(object) != "TMM") {
-        message("RNAseq counts expects TMM normalization. Data were already normalized with another method.
-                Skipping to the end without transforming or normalizing data.")
-      }
-      
-      if (!isNorm(object)) {
-        # Force "none" transformation.
-        if (getTrans(object) != "none") {
-          message("RNAseq counts expects TMM normalization. Transformation is done after the normalization,
+    switch(getOmicsTypes(object),
+           "RNAseq" = {
+             # Really depends if TMM is the normalization or not.
+             # Make it easier: force TMM and log2.
+             if (isTransformed(object)) stop("Expect untransformed RNAseq data at this point.")
+             
+             if (isNorm(object)) {
+               switch(getNorm(object), 
+                      "TMM" = {assay(object) <- log2(assay(object))}, # +1 in the apply_norm function
+                      {message("RNAseq counts expects TMM normalization. Data were already normalized with another method.
+                Skipping to the end without transforming or normalizing data.")}
+               )
+             } else {
+               # Force "none" transformation.
+               if (getTrans(object) != "none") {
+                 message("RNAseq counts expects TMM normalization. Transformation is done after the normalization,
                   using 'none' as transform method. Data will be transformed using log2 after the normalization anyway")
-          
-          object <- setTrans(object, methode = "none")
-        }
-        
-        # Force TMM normalization
-        if (object@metadata[["Normalization"]][["methode"]] != "TMM") {
-          message("For RNAseq data (counts), only TMM applies for now. Forcing TMM normalization.")
-          object <- RunNormalization(object, NormMethod = "TMM")
-        }
-        
-        # Finally transforming the data.
-        object <- apply_transformation(object) # none
-        object <- apply_norm(object) # TMM
-        assay(object) <- log2(assay(object)) # +1 in the apply_norm function
-      }
-    } else {
-      # in case any other omics type (does not expect counts)
-      # transform and norm
-      if (!isTransformed(object)) object <- apply_transformation(object)
-      if (!isNorm(object)) object <- apply_norm(object)
-    }
+                 
+                 object <- setTrans(object, methode = "none")
+               }
+               
+               # Force TMM normalization
+               if (object@metadata[["Normalization"]][["methode"]] != "TMM") {
+                 message("For RNAseq data (counts), only TMM applies for now. Forcing TMM normalization.")
+                 object <- RunNormalization(object, NormMethod = "TMM")
+               }
+             }
+             
+             # Finally transforming the data.
+             object <- apply_transformation(object) # none
+             object <- apply_norm(object) # TMM
+             assay(object) <- log2(assay(object)) # +1 in the apply_norm function
+             
+           }, # end switch rnaseq
+           { # default
+             # in case any other omics type (does not expect counts)
+             # transform and norm
+             if (!isTransformed(object)) object <- apply_transformation(object)
+             if (!isNorm(object)) object <- apply_norm(object)
+           }
+    )
   }
   
   # check things
@@ -279,22 +279,24 @@ setCoeffNorm <- function(object, coeff = NULL) {
 #' @title doNotPlot
 #' @description
 #' Used mainly for the interface to check some conditions before actually plotting said graph.
-#' 
+#'
 #' @param expr An expression, usually producing a plot but not necessarily.
 #' @keywords internal
 #' @noRd
 #' @importFrom utils capture.output
-#' 
-.doNotPlot <- function(expr){
+#'
+.doNotPlot <- function(expr) {
   pdf(file = NULL)
-  out <- tryCatch({
-    capture.output(
+  out <- tryCatch(
+    {
+      capture.output(
         suppressMessages(
-          eval(expr))
+          eval(expr)
+        )
       )
-  },
-  error = function(e) e,
-  warning = function(w) w
+    },
+    error = function(e) e,
+    warning = function(w) w
   )
   dev.off()
   return(out)
@@ -304,20 +306,22 @@ setCoeffNorm <- function(object, coeff = NULL) {
 #' @title doNotSpeak
 #' @description
 #' Used mainly for the interface to silence some functions.
-#' 
+#'
 #' @param expr An expression, usually producing a warning.
 #' @keywords internal
 #' @noRd
-#' 
-.doNotSpeak <- function(expr){
-  out <- tryCatch({
-    capture.output(
-      suppressWarnings(
-        suppressMessages(eval(expr))
-      ))
-  },
-  error = function(e) e,
-  warning = function(w) w
+#'
+.doNotSpeak <- function(expr) {
+  out <- tryCatch(
+    {
+      capture.output(
+        suppressWarnings(
+          suppressMessages(eval(expr))
+        )
+      )
+    },
+    error = function(e) e,
+    warning = function(w) w
   )
   return(out)
 }
