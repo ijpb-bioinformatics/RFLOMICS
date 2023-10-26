@@ -215,7 +215,7 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     if (local.rea.values$runMOFA == FALSE) return()
     
-    resMOFA <- session$userData$FlomicsMultiAssay@metadata[["MOFA"]][["MOFA_results"]]
+    resMOFA <- getMOFA(session$userData$FlomicsMultiAssay)
     
     # plot_height <- function() { # does not work ?
     #   local.rea.values$plotHeight <- length(input$WeightsPlot_Factors_select)*10

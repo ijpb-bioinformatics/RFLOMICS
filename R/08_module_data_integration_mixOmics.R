@@ -224,9 +224,9 @@ MixOmics_setting <- function(input, output, session, rea.values){
     
     if (!local.rea.values$runMixOmics) return()
     
-    lapply(names(session$userData$FlomicsMultiAssay@metadata[["mixOmics"]]), function(listname) { 
+    lapply(names(getMixOmics(session$userData$FlomicsMultiAssay)), function(listname) { 
       
-      Data_res <- session$userData$FlomicsMultiAssay@metadata[["mixOmics"]][[listname]]$MixOmics_results
+      Data_res <- getMixOmics(session$userData$FlomicsMultiAssay, response = listname)
       
       fluidRow(
         
