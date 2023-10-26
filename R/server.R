@@ -19,6 +19,7 @@ rflomicsServer <- function(input, output, session) {
       updateTabItems(session = session, inputId = "tabs", selected = "coverPage")
     })
 
+    #############################################
     # reactive value for reinitialisation of UIoutput
     rea.values <- reactiveValues(
       loadData = FALSE,
@@ -33,9 +34,7 @@ rflomicsServer <- function(input, output, session) {
       datasetDiff  = NULL
     )
 
-    # Use reactive values for dynamic Items
-    #subitems <- reactiveVal(value = NULL)
-
+    #############################################
     # dynamic sidebar menu #
     output$mysidebar <- renderUI({
 
@@ -54,7 +53,59 @@ rflomicsServer <- function(input, output, session) {
           uiOutput("downloadResults")
           )
     })
+    
+    
+    #### Item for each omics #####
+    # display omics Item
+    output$omics <- renderMenu({
+      
+      validate({
+        need(rea.values$analysis == TRUE, message="")
+      })
+      
+      menuItem(text = "Omics Analysis", tabName = "OmicsAnalysis", icon = icon('chart-area'),
+               lapply(names(rea.values$datasetList), function(omics){
+                 
+                 lapply(names(rea.values$datasetList[[omics]]), function(i){
+                   menuSubItem(text = rea.values$datasetList[[omics]][[i]],
+                               tabName = paste0(omics, "Analysis", i))
+                 })
+               })
+      )
+    })
+    
+    #### Item for each data integration tools #####
+    # display tool Item
+    output$Integration <- renderMenu({
+      
+      validate({
+        need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >= 2, message = "")
+      })
+      
+      menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'), startExpanded = FALSE,selected = FALSE,
+               menuSubItem(text = "Dataset analysis summary", tabName = "omicsSum" ),
+               menuSubItem(text = "with MOFA", tabName = "withMOFA" ),
+               menuSubItem(text = "with MixOmics", tabName = "withMixOmics")
+      )
+    })
+    
+    #### Item for report #####
+    output$runReport <- renderUI({
+      if(rea.values$analysis == FALSE) return()
+      
+      downloadButton(outputId = "report", label = "Generate report")
+    })
+    
+    #### Item to download Results #####
+    output$downloadResults <- renderUI({
+      if(rea.values$report == FALSE) return()
+      
+      downloadButton(outputId = "download", label = "Download results")
+    })
+    
+    
 
+    #############################################
     # dynamic content #
     output$mycontent <- renderUI({
 
@@ -124,6 +175,7 @@ rflomicsServer <- function(input, output, session) {
     })
 
     observe({
+      
       lapply(names(rea.values$datasetList), function(omics){
 
         lapply(names(rea.values$datasetList[[omics]]), function(i){
@@ -246,7 +298,6 @@ rflomicsServer <- function(input, output, session) {
     output$omicsSum_UI <- renderUI({
 
       omics_data_analysis_summaryUI("omics")
-
     })
 
 
@@ -314,64 +365,15 @@ rflomicsServer <- function(input, output, session) {
 
     # set GLM model
     # and select list of contrast to test
-    observe({
+    {
       inputModel <- callModule(GLM_model, "model", rea.values)
-    })
+    }
 
 
 
     ##########################################
     # Part3 : ANALYSE
     ##########################################
-
-    #### Item for each omics #####
-    # display omics Item
-    output$omics <- renderMenu({
-
-      validate({
-        need(rea.values$analysis == TRUE, message="")
-      })
-
-      menuItem(text = "Omics Analysis", tabName = "OmicsAnalysis", icon = icon('chart-area'),
-           lapply(names(rea.values$datasetList), function(omics){
-             
-             lapply(names(rea.values$datasetList[[omics]]), function(i){
-                menuSubItem(text = rea.values$datasetList[[omics]][[i]],
-                            tabName = paste0(omics, "Analysis", i))
-              })
-           })
-      )
-    })
-
-    #### Item for each data integration tools #####
-    # display tool Item
-    output$Integration <- renderMenu({
-
-      validate({
-        need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >= 2, message = "")
-      })
-
-      menuItem(text = "Data Integration", tabName = "OmicsIntegration", icon = icon('network-wired'), startExpanded = FALSE,selected = FALSE,
-           menuSubItem(text = "Dataset analysis summary", tabName = "omicsSum" ),
-           menuSubItem(text = "with MOFA", tabName = "withMOFA" ),
-           menuSubItem(text = "with MixOmics", tabName = "withMixOmics")
-      )
-    })
-
-    #### Item for report #####
-    output$runReport <- renderUI({
-      if(rea.values$analysis == FALSE) return()
-
-      downloadButton(outputId = "report", label = "Generate report")
-    })
-
-    #### Item to download Results #####
-    output$downloadResults <- renderUI({
-      if(rea.values$report == FALSE) return()
-
-      downloadButton(outputId = "download", label = "Download results")
-    })
-
 
 
     # for each omics data type

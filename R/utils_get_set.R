@@ -280,6 +280,29 @@ getOmicsTypes <- function(object) {
   }
 }
 
+
+# ---- Get omics experiments and their types (vector) ----
+
+#' @title Get dataset names
+#'
+#' @param object a MAE object (produced by RFlomics) or a Summarized Experiment object.
+#' @return a named vector with each omics name and its type.
+#' @export
+#'
+getDatasetNames <- function(object) {
+  
+  # if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
+  #   stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
+  
+  if (is(object, "MultiAssayExperiment")) {
+    sapply(names(object), FUN = function(x) {
+      object[[x]]@metadata$omicType
+    })
+  } else {
+    object@metadata$omicType
+  }
+}
+
 # ---- Get normalization coefficients ----
 
 #' @title Get normalization coefficients

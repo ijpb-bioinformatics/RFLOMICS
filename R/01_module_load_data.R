@@ -54,10 +54,10 @@ LoadOmicsDataUI <- function(id){
 #' @importFrom stringr str_subset
 LoadOmicsData <- function(input, output, session, rea.values){
   
-  local.rea.values <- reactiveValues(plots = FALSE, 
-                                     ExpDesign = NULL, 
+  local.rea.values <- reactiveValues(plots      = FALSE, 
+                                     ExpDesign  = NULL, 
                                      FactorList = NULL, 
-                                     dataPath = NULL, 
+                                     dataPath   = NULL, # chemin  
                                      listInputs = NULL)
   
   observe({
@@ -66,7 +66,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     rea.values$model    <- FALSE
     rea.values$analysis <- FALSE
     
-    rea.values$contrastMat  <- NULL
+    # rea.values$contrastMat  <- NULL
     session$userData$FlomicsMultiAssay <- NULL
     
     rea.values$validate.status <- 0
@@ -399,9 +399,9 @@ LoadOmicsData <- function(input, output, session, rea.values){
     }
     
     local.rea.values$listInputs <- inputs
-    
+
   })
-  
+
   # ---- observe Event load Data ----
   # as soon as the "load" buttom has been clicked
   # => create ExpDesign object
@@ -410,7 +410,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
   observeEvent(local.rea.values$listInputs, {
 
     ### load Design
-    
+
     # reset objects and UI
     rea.values$loadData <- FALSE
     rea.values$model    <- FALSE
@@ -419,7 +419,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     rea.values$datasetList   <- NULL
     rea.values$datasetDiff   <- NULL
     rea.values$Contrasts.Sel <- NULL
-    
+
     session$userData$FlomicsMultiAssay <- NULL
     #session$userData$Design   <- NULL
     
@@ -431,18 +431,18 @@ LoadOmicsData <- function(input, output, session, rea.values){
       showModal(modalDialog(title = "Error message", "Please load data"))
     }
     validate({ need(!is.null(local.rea.values$listInputs), message = "Please load data") })
-    
+
     if (length(local.rea.values$listInputs) == 0) {
       showModal(modalDialog(title = "Error message", "Please load data"))
     }
     validate({ need(length(local.rea.values$listInputs) > 0, message = "Please load data") })
-  
+
     ### check project name
     if (input$projectName == "") {
       showModal(modalDialog(title = "Error message", "project name is required"))
     }
     validate({ need(input$projectName != "", message="project name is required") })
-    
+
     if (is.null(local.rea.values$dataPath)) {
       showModal(modalDialog(title = "Error message", "Experimental Design is required"))
     }
@@ -477,7 +477,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
                       (length(stringr::str_subset(dF.Type.dFac, "batch")) %in% 1:2), message="") })
     
     #### load omics data
-    inputs <- list()
+    #inputs <- list()
     #### list of omic data laoded from interface
     rea.values$validate.status <- 0
    
@@ -518,7 +518,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     # 
     rea.values$datasetList <- session$userData$FlomicsMultiAssay@metadata$omicList
-    
+
     rea.values$loadData <- TRUE
     
   }, ignoreInit = TRUE)
