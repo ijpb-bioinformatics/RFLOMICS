@@ -43,9 +43,13 @@ MAE <- MAE |>
 test_that("Working?", code = {
   
   MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest"), method = "mixomics") 
-  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("metatest"), method = "mixomics")
+  expect({!is.null( getMixOmics(MAE, response = "temperature"))}, failure_message = "There is no temperature results here")
   
+  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("metatest"), method = "mixomics")
+  expect({!is.null( getMixOmics(MAE, response = "temperature"))}, failure_message = "There is no temperature results here")
+
   MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest"), method = "mixomics")
+  expect({!is.null( getMixOmics(MAE, response = "temperature"))}, failure_message = "There is no temperature results here")
   
   MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest", "protetest"), 
                             contrasts_names = c("H1", "H2"), method = "mixOmics")
@@ -54,6 +58,12 @@ test_that("Working?", code = {
   MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest", "protetest"), 
                             contrasts_names = c("H1", "H2"), method = "mixOmics", 
                             selectedResponse = c("temperature", "imbibition"))
+  
+  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest", "protetest"), 
+                            contrasts_names = c("H1", "H2"), method = "mixOmics", 
+                            selectedResponse = c("temperature"))
+  
+  expect({is.null( getMixOmics(MAE, response = "imbibition"))}, failure_message = "There is imbibition results here")
   
   expect(identical(names(MAE@metadata$mixOmics), c("temperature", "imbibition"), attrib.as.set = FALSE), 
          failure_message = "Taking only two responses for mixOmics does not work")
