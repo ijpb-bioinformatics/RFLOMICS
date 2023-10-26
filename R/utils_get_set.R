@@ -50,7 +50,7 @@ metaFactors <- function(object){
 #'
 getDesignMat <- function(object) {
   if (is(object, "MultiAssayExperiment")) {
-   return(object@metadata$design@ExpDesign)
+    return(object@metadata$design@ExpDesign)
   } else if (is(object, "SummarizedExperiment")) {
     return(object@metadata$Groups)
   } else {
@@ -91,20 +91,20 @@ getPossibleContrasts <- function(object, typeContrast = c("simple", "averaged", 
                                  modalities = NULL, returnTable = FALSE) {
   if (is(object, "MultiAssayExperiment")) {
     if (is.null(typeContrast)) typeContrast <- c("simple", "averaged", "interaction")
-
+    
     allContrasts <- MAE@metadata$design@Contrasts.List
     allContrasts <- allContrasts[which(names(allContrasts) %in% typeContrast)]
     allContrastsdt <- data.table::rbindlist(allContrasts, fill = TRUE)
-
+    
     if (!is.null(modalities)) {
       allVarMod <- lapply(getDesignMat(MAE), FUN = function(vect) levels(factor(vect))[levels(factor(vect)) %in% modalities])
       allVarMod <- Filter(length, allVarMod)
-
+      
       allVarMod <- paste0(rep(names(allVarMod), times = sapply(allVarMod, length)), unlist(allVarMod))
-
+      
       allContrastsdt <- allContrastsdt[grep(paste(allVarMod, collapse = "|"), allContrastsdt$contrastName), ]
     }
-
+    
     if (returnTable) {
       return(allContrastsdt)
     } else {
@@ -146,7 +146,7 @@ getSelectedContrasts <- function(object) {
 setValidContrasts <- function(object,
                               contrasts) {
   # TODO : check if there are DE entities for each contrasts before really validating them.
-
+  
   if (is.character(contrasts)) {
     if (is(object, "SummarizedExperiment")) {
       allTab <- getPossibleContrasts(object, returnTable = TRUE)
@@ -155,7 +155,7 @@ setValidContrasts <- function(object,
       stop("object is not a SummarizedExperiment.")
     }
   }
-
+  
   return(object)
 }
 
@@ -224,36 +224,36 @@ opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "unio
   
   if (is(object, "MultiAssayExperiment") && is.null(SE.name)) 
     stop("Please provide SE.name argument.")
-
+  
   if (is(object, "MultiAssayExperiment")) object <- object[[SE.name]] 
   
   if (is.null(contrasts) || length(contrasts) == 0) contrasts <- getSelectedContrasts(object)[["tag"]]
   if (isContrastName(object, contrasts)) contrasts <- convertContrastToTag(object, contrasts)
-
+  
   if (!is.null(object@metadata$DiffExpAnal$Validcontrasts)) {
     validTags <- convertContrastToTag(object, getValidContrasts(object)$contrastName)
   } else {
     validTags <- contrasts
   }
-
+  
   tagsConcerned <- intersect(contrasts, validTags)
   if (length(tagsConcerned) == 0) stop("It seems there is no contrasts to select DE entities from.")
-
+  
   df_DE <- getDEMatrix(object) %>%
     dplyr::select(c("DEF", tidyselect::any_of(tagsConcerned)))
-
+  
   if (operation == "intersection") {
     DETab <- df_DE %>%
       dplyr::mutate(SUMCOL = dplyr::select(., tidyselect::starts_with("H")) %>%
-        rowSums(na.rm = TRUE)) %>%
+                      rowSums(na.rm = TRUE)) %>%
       dplyr::filter(SUMCOL == length(validTags))
   } else {
     DETab <- df_DE %>%
       dplyr::mutate(SUMCOL = dplyr::select(., tidyselect::starts_with("H")) %>%
-        rowSums(na.rm = TRUE)) %>%
+                      rowSums(na.rm = TRUE)) %>%
       dplyr::filter(SUMCOL >= 1)
   }
-
+  
   return(DETab$DEF)
 }
 
@@ -270,7 +270,7 @@ getOmicsTypes <- function(object) {
   
   # if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
   #   stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
-
+  
   if (is(object, "MultiAssayExperiment")) {
     sapply(names(object), FUN = function(x) {
       object[[x]]@metadata$omicType
@@ -290,8 +290,57 @@ getOmicsTypes <- function(object) {
 #'
 getNormCoeff <- function(object) {
   if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
-
+  
   return(object@metadata$Normalization$coefNorm)
+}
+
+
+# ----  Get a particular multi-omics result ----
+#
+#' @title Get a particular multi-omics result
+#'
+#' @param object a MAE object (produced by Flomics).
+#' @param response a character giving the response variable to access specifically. 
+#' @param onlyResults default return only the MixOmics or MOFA2 results. If you want to access all information of the integration, 
+#' set onlyResuts to FALSE. In MixOmics case, works only when response is specified.
+#' @return in getMixOmics, if response is NULL, then all the mixOmics results are returned. 
+#' Otherwise, it gives the particular mixOmics result. 
+#' @rdname Multi-omics-access
+#' @export
+
+getMixOmics <- function(object,
+                        response = NULL,
+                        onlyResults = TRUE){
+  
+  toreturn <- metadata(object)[["mixOmics"]]
+  
+  if (is.null(toreturn)) {
+    message("It seems there is no mixOmics result in this object.")
+  }
+  
+  if (!is.null(response)) {
+    toreturn <- toreturn[[response]]
+    if (onlyResults) toreturn <- toreturn$MixOmics_results
+    return(toreturn)
+  }else{
+    return(toreturn)
+  }
+  
+}
+
+#' @rdname Multi-omics-access
+#' @export
+getMOFA <- function(object, onlyResults = TRUE){
+  
+  toreturn <- metadata(object)[["MOFA"]]
+  
+  if (is.null(toreturn)) {
+    message("It seems there is no MOFA result in this object.")
+  }
+  
+  if (onlyResults) toreturn <- toreturn[["MOFA_results"]]
+  
+  return(toreturn)
 }
 
 # ---- INTERNAL - Get a particular enrichment result ----
@@ -313,10 +362,10 @@ getEnrichRes <- function(object,
   
   if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
     stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
-
+  
   if (toupper(from) %in% c("DIFFEXPANAL", "DIFFEXPENRICHANAL")) from <- "DiffExpEnrichAnal"
   if (toupper(from) %in% c("COEXPANAL", "COEXPENRICHANAL"))     from <- "CoExpEnrichAnal"
-
+  
   classObj <- NULL
   if (is(object, "SummarizedExperiment")) classObj <- "SE"
   if (is(object, "MultiAssayExperiment")) classObj <- "MAE"
@@ -370,14 +419,14 @@ getEnrichSum <- function(object,
                          dom = "GO") {
   if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
     stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
-
+  
   if (is(object, "SummarizedExperiment")) {
     return(object@metadata[[from]][[dom]][["summary"]])
   } else if (is(object, "MultiAssayExperiment")) {
     if (is.null(experiment)) {
       stop("Please indicate from which data you want to extract the enrichment results.")
     }
-
+    
     return(object[[experiment]]@metadata[[from]][[dom]][["summary"]])
   }
 }
@@ -386,4 +435,4 @@ getEnrichSum <- function(object,
 
 
 
-  
+
