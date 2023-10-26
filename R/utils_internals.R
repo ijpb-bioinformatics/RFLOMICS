@@ -327,6 +327,58 @@ setCoeffNorm <- function(object, coeff = NULL) {
 }
 
 
+# ----- INTERNAL - Check if character vectors are contrasts Names : -----
+
+#' @title Check if character vectors are contrasts Names
+#'
+#' @param object a MAE object or a SE object (produced by Flomics). If it's a summarizedExperiment, expect to find
+#'  a slot of differential analysis.
+#' @param contrastName vector of characters.
+#' @return boolean. TRUE if all of contrastName are indeed contrasts Names.
+#' @noRd
+#' @keywords internal
+isContrastName <- function(object, contrastName) {
+  df_contrasts <- getSelectedContrasts(object)
+  
+  search_match <- sapply(contrastName, FUN = function(cn) {
+    grep(cn, df_contrasts$contrastName, fixed = TRUE)
+  })
+  search_success <- sapply(search_match, identical, integer(0)) # if TRUE, not a success at all.
+  
+  if (!any(search_success)) {
+    # Congratulations, it's a contrast name!
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+# ----- INTERNAL - Check if character vectors are tags Names : -----
+
+#' @title Check if character vectors are tags Names
+#'
+#' @param object a MAE object or a SE object (produced by Flomics). If it's a summarizedExperiment, expect to find
+#'  a slot of differential analysis.
+#' @param tagName vector of characters.
+#' @return boolean. TRUE if all of tagName are indeed tags Names.
+#' @noRd
+#' @keywords internal
+isTagName <- function(object, tagName) {
+  df_contrasts <- getSelectedContrasts(object)
+  
+  search_match <- sapply(tagName, FUN = function(cn) {
+    grep(cn, df_contrasts$tag, fixed = TRUE)
+  })
+  search_success <- sapply(search_match, identical, integer(0)) # if TRUE, not a success at all.
+  
+  if (!any(search_success)) {
+    # Congratulations, it's a tag name!
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
 # ---- INTERNAL - convert tag to contrastName ----
 
 #' @title Convert tags names to contrast Names
