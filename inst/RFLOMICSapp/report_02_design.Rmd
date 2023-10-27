@@ -34,36 +34,14 @@ DT::datatable(df , rownames = FALSE ,options = list( pageLength = 6, scrollX = F
 ```
 
 
-* Analyzed dataset(s):
+* Analyzed dataset(s) overview:
 
 ```{r Sample table, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}
 
-loaded.data <- data.frame(datasets = sapply(names(rflomics.MAE@metadata$omicList), 
-                              function(x){ paste0(rflomics.MAE@metadata$omicList[[x]], collapse = ", ") }), 
-                          omics = names(rflomics.MAE@metadata$omicList)) %>% data.table::as.data.table()
-
-DT::datatable(loaded.data, rownames = FALSE,
-              options = list( pageLength = 6, scrollX = T, dom = 'tip'),
-              class = 'cell-border stripe')
+ Datasets_overview_plot(rflomics.MAE)
 
 ```
 
-* This upset graph gives the number of common and specifics samples in the analyzed dataset(s).
-
-
-```{r upsetSamples, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}
-
-
-if(length(unlist(rflomics.MAE@metadata$omicList)) > 2){
-  
-  MultiAssayExperiment::upsetSamples(rflomics.MAE[unlist(rflomics.MAE@metadata$omicList),])
-}
-
-
-#check <- CheckExpDesignCompleteness(rflomics.MAE)
-
-#check$plot
-```
 
 * Statistical model
 

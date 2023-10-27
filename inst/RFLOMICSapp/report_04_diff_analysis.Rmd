@@ -20,10 +20,12 @@ Differential expression analysis was carried out for each selected contrast than
 
 Differential expression analysis strategy was adapted from @Lambert2020ta
 
-In a first time, parameters of the generalized linear model were estimated thanks to severals functions of the edgeR package 
-(1: estimateGLMCommonDisp(), 2: estimateGLMTrendedDisp(), 3: estimateGLMTagwiseDisp() and 4: glmFit()).
-In a second time, likelihood ratio test (LRT) were performed for each contrast thanks to the glmLRT() function of the
-edgeR r-package. 
+The edgeR R-package (@robinson2010a) was used to performed the analysis. 
+First, the parameters of the generalized linear model were estimate thanks to the 
+estimateGLMCommonDisp, estimateGLMTrendedDisp, estimateGLMTagwiseDisp and glmFit functions.
+Then, the likelihood ratio test(s) (LRT) were performed for each contrast thanks to the glmLRT 
+function.
+
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
 
 `r if(dataset.raw.SE@metadata$omicType != "proteomics") {"\\begin{comment}"}`
@@ -40,7 +42,9 @@ In a second time, contrasts.fit() was used and empirical bayes statistics were o
 `r if(dataset.raw.SE@metadata$omicType != "metabolomics") {"\\end{comment}"}`
 
 
-P-values of differential expressed `r RFLOMICS:::omicsDic(dataset.raw.SE)[["variableName"]]` were adjusted according to the `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.method` procedure with a cutoff set to `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff`.
+P-values of differential expressed `r RFLOMICS:::omicsDic(dataset.raw.SE)[["variableName"]]` were adjusted according 
+to the `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.method` procedure with a cutoff set to `r dataset.SE@metadata[["DiffExpAnal"]]$Adj.pvalue.cutoff`.
+LogFC cut-off was set to `r dataset.SE@metadata[["DiffExpAnal"]]$abs.logFC.cutoff`
 
 
 * **Summary of differential expression analysis**
@@ -53,24 +57,23 @@ DEup <- vector()
 DEdown <- vector()
 
 for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
-   contrastName <- tmpRes[["contrasts"]][i,]$contrastName
-   #hyp <- tmpRes[["contrasts"]][i,]$tag
-   stats <- tmpRes[["stats"]][contrastName,]
-   DE[i] <- stats[["All"]]
-   DEup[i] <- paste(stats[["Up"]]," (",round(stats[["Up"]]/stats[["All"]],2)*100," %)",sep="")
-   DEdown[i] <- paste(stats[["Down"]]," (",round(stats[["Down"]]/stats[["All"]],2)*100," %)",sep="")
+  contrastName <- tmpRes[["contrasts"]][i,]$contrastName
+  #hyp <- tmpRes[["contrasts"]][i,]$tag
+  stats <- tmpRes[["stats"]][contrastName,]
+  DE[i] <- stats[["All"]]
+  DEup[i] <- paste(stats[["Up"]]," (",round(stats[["Up"]]/stats[["All"]],2)*100," %)",sep="")
+  DEdown[i] <- paste(stats[["Down"]]," (",round(stats[["Down"]]/stats[["All"]],2)*100," %)",sep="")
 }
 
 ```
 
 
 ```{r , echo=FALSE, results="asis", eval=Diff.eval}
-kableExtra::kable_styling(knitr::kable(bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("DE.Tot"=DE,"DE.Up"=DEup,"DE.Down"=DEdown)), row.names=FALSE, caption=NULL, format="html"), font_size=12)
+kableExtra::kable_styling(knitr::kable(dplyr::bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("DE.Tot"=DE,"DE.Up"=DEup,"DE.Down"=DEdown)), row.names=FALSE, caption=NULL, format="html"), font_size=12)
 ```
 
 
-This **upset** graph gives the number of common and specific differential expressed `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]` per contrasts.
-
+This **UpSetR** @Conway2017a plot gives the number of common and specific differential expressed `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]` per contrasts.
 
 ```{r Upset_plot,echo=FALSE, message=FALSE, warning=FALSE, fig.show = "hold", out.width = "80%", echo=FALSE, eval=Diff.eval}
 
@@ -85,7 +88,7 @@ write.table(DEF_mat, file=paste0(anaDiffDir,"/","Matrice_of_DE_", RFLOMICS:::omi
 
 ```
 
-* **Results by contrast(s):** 
+* **Results by contrast(s):**
 
 *Please click on the arrows to scroll down the results and click on the figure to zoom*
 

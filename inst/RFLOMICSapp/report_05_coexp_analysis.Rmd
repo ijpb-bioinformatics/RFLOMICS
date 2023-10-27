@@ -18,10 +18,13 @@ Co-expression analysis strategy was adapted from @Lambert2020ta
 Co-expression analysis was carried out on the `r dataset.SE@metadata[["CoExpAnal"]]$merge.type`
 of the following list of `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`  `r names(dataset.SE@metadata$CoExpAnal$gene.list.names)`. 
 `r dataset.SE@metadata[["CoExpAnal"]]$method` was used to cluster the `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`. 
+
 The gaussian mixture model was run on filtered (meanFilterCutoff was set to: `r dataset.SE@metadata[["CoExpAnal"]]$param$meanFilterCutoff`), 
 normalized (normalization method was `r dataset.SE@metadata[["CoExpAnal"]]$param$normFactors`) 
 and transformed (transformation method: `r dataset.SE@metadata[["CoExpAnal"]]$param$transformation`) count data.
+
 `r dataset.SE@metadata[["CoExpAnal"]]$replicates.nb` technical replicates were performed for each K in `r dataset.SE@metadata[["CoExpAnal"]]$K.range` (K=number of clusters). 
+
 The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
 was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
 
@@ -33,40 +36,42 @@ No clustering results.
 
 ### ICL 
 
+**Integrated Completed Likelihood (ICL) plotted versus number of clusters**
 
-```{r , echo=FALSE, eval=isResults}
+```{r coseq-icl, echo=FALSE, eval=isResults}
 plot.coseq.res <- CoExpressionPlots(dataset.SE)
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$ICL 
 ```
 
-### boxplots
-
-```{r , echo=FALSE, eval=isResults}
-par(mar = c(4, 4, .5, .1))
-plot.coseq.res$boxplots
-```
 
 ### probapost_boxplots 
 
-```{r , echo=FALSE, eval=isResults}
+**number of observations with a maximum conditional probability greater than threshold (0.8) per cluster**
+
+```{r coseq-probapost, echo=FALSE, eval=isResults}
 par(mar = c(4, 4, .5, .1))
-plot.coseq.res$probapost_boxplots 
+plot.coseq.res$probapost_barplots 
 ```
 
-### probapost_barplots
+### boxplots
 
-```{r , echo=FALSE, eval=isResults}
+```{r coseq-boxplots, echo=FALSE, eval=isResults}
 par(mar = c(4, 4, .5, .1))
-plot.coseq.res$probapost_barplots
+plot.coseq.res$boxplots + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
 ```
+
+```{r ,echo=FALSE, eval=isResults}
+
+```
+
+
 
 
 ```{r,echo = FALSE, eval=isResults}
-#tab.clusters <- as.data.frame(ifelse(dataset.SE@metadata$CoExpAnal$coseqResults@allResults[[dataset.SE@metadata$CoExpAnal$cluster.nb]] > 0.5, 1,0))
 
 cosRes <- dataset.SE@metadata$CoExpAnal$coseqResults@allResults
-tab.clusters <- as.data.frame(cosRes[[names(cosRes) == names(dataset.SE@metadata$CoExpAnal$cluster.nb)]])
+tab.clusters <- as.data.frame(cosRes[[which(names(cosRes) == names(dataset.SE@metadata$CoExpAnal$cluster.nb))]])
 tab.clusters <- tibble::rownames_to_column(tab.clusters, var = "DEF")
       
 write.table(tab.clusters,

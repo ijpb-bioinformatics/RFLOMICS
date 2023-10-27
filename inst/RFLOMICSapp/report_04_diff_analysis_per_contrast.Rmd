@@ -6,9 +6,8 @@
 ```{r , echo=FALSE , message=FALSE, warning=FALSE}
 
 # Create a directory to store the results by contrast
-tmp <- dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]]
 
-contrastDir <- paste0(anaDiffDir,"/", tmp$tag[which(tmp$contrastName == contrast)], "_" , contrastName2contrastDir(contrast),"/")
+contrastDir <- paste0(anaDiffDir,"/", RFLOMICS:::convertContrastToTag(dataset.SE,contrast), "_" , contrastName2contrastDir(contrast),"/")
                       
 dir.create(path=contrastDir)
 
@@ -28,30 +27,33 @@ diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=contrast)
 
 1- Pvalues distribution
 
-```{r pvDistrib-plot, echo=FALSE,out.width = "30%", warning=FALSE}
+```{r pvDistrib-plot, echo=FALSE,out.width = "40%", warning=FALSE}
 diff.plots$Pvalue.hist
 ```
 
 2- MA plot
 
-```{r MA-plot, echo=FALSE,out.width = "30%", warning=FALSE}
+```{r MA-plot, echo=FALSE,out.width = "40%", warning=FALSE}
 diff.plots$MA.plot
 ```
 
 3- VolcanoPlot
 
-```{r Volcano-plot, echo=FALSE,out.width = "30%", warning=FALSE}
+```{r Volcano-plot, echo=FALSE,out.width = "40%", warning=FALSE}
 diff.plots$Volcano.plot
 ```
 
 
 3- Heatmap of the euclidean distances with a link of Ward 
 
-TODO !
+```{r heatmap-plot, echo=FALSE,out.width = "40%", warning=FALSE}
+heatmapPlot(object = dataset.SE,hypothesis = contrast)
+```
+
 
 4- PCA on DE 
 
-```{r PCAonDE, echo=FALSE,out.width = "30%",fig.show = "hold", eval = evalPCA}
+```{r PCAonDE, echo=FALSE,out.width = "40%",fig.show = "hold", eval = evalPCA}
 
 resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[contrast]]
 newDataset.SE <- dataset.SE[rownames(dataset.SE) %in% row.names(resTable)]
@@ -70,12 +72,12 @@ RFLOMICS::plotPCA(newDataset.SE,
 
 ```{r table, echo = FALSE, out.width = "70%" , eval = evalExport}
 
-reactable(signif(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],3),
+reactable::reactable(signif(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],3),
           showSortable = TRUE,
           bordered = TRUE,
           defaultPageSize = 6, searchable = TRUE, paginationType = "simple",
           columns = list(
-            logFC = colDef(
+            logFC = reactable::colDef(
                 style = function(value) {
                     color <- if (value >= 0) {
                       "#008000"
