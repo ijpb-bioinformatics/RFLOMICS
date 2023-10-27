@@ -433,14 +433,13 @@ rflomicsServer <- function(input, output, session) {
         })
       })
 
-
-      callModule(module = omics_data_analysis_summary, id = "omics", rea.values = rea.values)
-
-      callModule(module = MOFA_setting, id = "mofaSetting", rea.values = rea.values)
-
-      callModule(module = MixOmics_setting, id = "mixomicsSetting", rea.values = rea.values)
-
     })
+    
+    callModule(module = omics_data_analysis_summary, id = "omics", rea.values = rea.values)
+    
+    callModule(module = MOFA_setting, id = "mofaSetting", rea.values = rea.values)
+    
+    callModule(module = MixOmics_setting, id = "mixomicsSetting", rea.values = rea.values)
 
 
 
