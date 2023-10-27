@@ -137,13 +137,13 @@ methods::setMethod(f         = "CheckExpDesign",
                        df <- unique(Design@List.Factors[[x]]) %>% as.data.frame()
                        names(df) <- x
                        return(df) 
-                       }) %>% purrr::reduce(merge)
+                     }) %>% purrr::reduce(merge)
                      
                      counts <- coldata %>% dplyr::select(assay, all_of(BioFact)) %>% unique() %>% 
                        dplyr::group_by_at(BioFact) %>% dplyr::count(name = "Count") %>% 
                        dplyr::right_join(all_combin_cond, by = BioFact) %>% 
                        dplyr::mutate_at(.vars = "Count", .funs = function(x) dplyr::if_else(is.na(x), 0, x))
-                       
+                     
                      ####################                 
                      
                      counts <- counts %>% dplyr::mutate(status = dplyr::if_else(Count == length(object) , "all_data", dplyr::if_else(Count == 0 , "no_data", "some_data")))
@@ -158,7 +158,7 @@ methods::setMethod(f         = "CheckExpDesign",
                      
                      switch (length(factors),
                              "1" = { p <- ggplot2::ggplot(counts ,ggplot2::aes_string(x = factors[1], y = 1)) + 
-                                          ggplot2::theme(axis.text.y = ggplot2::element_blank()) + ggplot2::ylab("") },
+                               ggplot2::theme(axis.text.y = ggplot2::element_blank()) + ggplot2::ylab("") },
                              "2" = { p <- ggplot2::ggplot(counts ,ggplot2::aes_string(x = factors[1], y = factors[2])) },
                              "3" = {
                                #get factor with min conditions -> to select for "facet_grid"
@@ -215,7 +215,7 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                      
                      if(is.null(datasetList)){ datasetList <- names(object) }
                      
-
+                     
                      # check presence of bio factors
                      if (!table(Design@Factors.Type)["Bio"] %in% 1:3){ stop("no bio factor! or nbr of bio factors exceed 3!") }
                      if ( table(Design@Factors.Type)["batch"] == 0){ stop("ERROR: no replicate!") }
@@ -277,11 +277,11 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                          dplyr::mutate_at(.vars = "samples", .funs = function(x) dplyr::if_else(is.na(x), 0, 1)) %>%
                          dplyr::group_by_at((bio.fact)) %>%
                          dplyr::summarise(Count=sum(samples), .groups = "keep")
-
+                       
                        # remplacer le code ci-dessus par celui en bas                       
                        # group_count <- ExpDesign %>% 
                        #   dplyr::group_by_at((bio.fact)) %>% dplyr::count(name = "Count")
-
+                       
                        # check presence of relicat / batch
                        # check if design is complete
                        # check if design is balanced
@@ -328,10 +328,17 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
 
 methods::setMethod(f         = "Datasets_overview_plot",
                    signature = "MultiAssayExperiment",
-                   definition <- function(object){
+                   definition <- function(object, dataset.list=NULL, real.size=FALSE){
                      
-                     if (class(object) != "MultiAssayExperiment") stop("ERROR: object is not MultiAssayExperiment class.")
-                     if (length(object@ExperimentList) == 0) stop("ERROR: object@ExperimentList is NULL")
+                     if(length(object@ExperimentList) == 0) stop("ERROR: object@ExperimentList is NULL")
+                     if(!is.null(dataset.list)){
+                       if(length(intersect(dataset.list, names(object))) == 0){
+                         stop(paste0(paste0(dataset.list, collapse = ","), " is not part of dataset names"))
+                       }
+                       else{
+                         object <- object[,, dataset.list]
+                       }
+                     }
                      
                      nb_entities <- lapply(object@ExperimentList, function(SE){ dim(SE)[1] }) %>% unlist()
                      
@@ -339,16 +346,39 @@ methods::setMethod(f         = "Datasets_overview_plot",
                        dplyr::full_join(data.frame(MultiAssayExperiment::sampleMap(object)), by="assay") %>%
                        dplyr::mutate(y.axis = paste0(assay, "\n", "n=", nb_entities)) %>% dplyr::arrange(primary)
                      
-                     p <- ggplot2::ggplot(data, ggplot2::aes(x=primary, y=y.axis)) +
-                       ggplot2::geom_tile(aes(fill = y.axis), colour = "grey50") +
-                       ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-                                      panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), legend.position="none",
-                                      axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
-                       ggplot2::xlab(paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")")) +
-                       ggplot2::ylab("")
+                     nb_entities_ord <- dplyr::select(data, y.axis, nb_entities) %>% unique() %>% dplyr::arrange(desc(nb_entities))
+                     nb_entities_ord$nb_entities <- log(nb_entities_ord$nb_entities)
+                     tmp.vec <- c(0)
+                     breaks  <- vector()
+                     for(i in 1:length(nb_entities_ord$nb_entities)){ 
+                       tmp.vec[i+1] <- tmp.vec[i] + nb_entities_ord$nb_entities[i]
+                       breaks[i] <- tmp.vec[i] + nb_entities_ord$nb_entities[i]/2 
+                     } 
                      
-                     print(p)
-                     
+                     switch (real.size,
+                       `TRUE`  = {
+                         p <- ggplot2::ggplot(data, ggplot2::aes(x=primary, y=log(nb_entities))) +
+                           ggplot2::geom_col(ggplot2::aes(fill = y.axis)) + 
+                           ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(), 
+                                          panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), 
+                                          axis.text.x = ggplot2::element_text(angle = 90, hjust = 1), legend.position="none",
+                                          axis.text.y = ggplot2::element_text(hjust = 0)) +  
+                           ggplot2::labs(x=paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")"), y="", fill="dataset") +
+                           ggplot2::scale_y_continuous(breaks = (breaks), labels = nb_entities_ord$y.axis)
+                         
+                       },
+                       `FALSE` = {
+                         p <- ggplot2::ggplot(data, ggplot2::aes(x=primary, y=y.axis)) +
+                           ggplot2::geom_tile(ggplot2::aes(fill = y.axis), colour = "grey50") +
+                           ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
+                                          panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), legend.position="none",
+                                          axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
+                           ggplot2::xlab(paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")")) +
+                           ggplot2::ylab("")
+                         
+                       }
+                     )
+                     return(p)
                    })
 
 
@@ -881,62 +911,62 @@ methods::setMethod(
     
     object2 <- checkTransNorm(object, raw = raw)
     pseudo <- SummarizedExperiment::assay(object2)
-
+    
     omicsType <- getOmicsTypes(object2)
     
     x_lab <- paste0(omicsType, " data")
     if (omicsType == "RNAseq") {
       x_lab <- paste0("log2(", omicsType, " data)")
     }
-
+    
     # Raw data
     if (raw) {
       title <- paste0(omicsType, " raw data")
     } else {
       # Already normalized or transformed Data
       title <- paste0(omicsType, " data")
-
+      
       if (isTransformed(object2)) {
         title <- paste0("Transformed (", getTrans(object2), ") ", title)
       }
-
+      
       if (isNorm(object2)) {
         title <- paste0(title, " - normalization: ", getNorm(object2))
       }
-
+      
       if (omicsType == "RNAseq") {
         x_lab <- paste0("log2(", omicsType, " data)")
       }
     }
-
+    
     pseudo.gg <- pseudo %>% reshape2::melt()
     colnames(pseudo.gg) <- c("features", "samples", "value")
-
+    
     pseudo.gg <- pseudo.gg %>%
       dplyr::full_join(object@metadata$Groups, by = "samples") %>%
       dplyr::arrange(groups)
-
+    
     pseudo.gg$samples <- factor(pseudo.gg$samples, levels = unique(pseudo.gg$samples))
-
+    
     switch(plot,
-      "density" = {
-        p <- ggplot2::ggplot(pseudo.gg) +
-          ggplot2::geom_density(ggplot2::aes(x = value, group = samples, color = groups), trim = FALSE) +
-          ggplot2::xlab(x_lab) +
-          ggplot2::theme(legend.position = "none") +
-          ggplot2::ggtitle(title)
-      },
-      "boxplot" = {
-        p <- ggplot2::ggplot(pseudo.gg, ggplot2::aes(x = samples, y = value, label = features)) +
-          ggplot2::geom_boxplot(ggplot2::aes(fill = groups), outlier.size = 0.3) +
-          ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1), legend.position = "none") +
-          ggplot2::xlab("") +
-          ggplot2::ylab(x_lab) +
-          ggplot2::ggtitle(title) #+
-        # geom_point(alpha = 1/100,size=0)
-      }
+           "density" = {
+             p <- ggplot2::ggplot(pseudo.gg) +
+               ggplot2::geom_density(ggplot2::aes(x = value, group = samples, color = groups), trim = FALSE) +
+               ggplot2::xlab(x_lab) +
+               ggplot2::theme(legend.position = "none") +
+               ggplot2::ggtitle(title)
+           },
+           "boxplot" = {
+             p <- ggplot2::ggplot(pseudo.gg, ggplot2::aes(x = samples, y = value, label = features)) +
+               ggplot2::geom_boxplot(ggplot2::aes(fill = groups), outlier.size = 0.3) +
+               ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1), legend.position = "none") +
+               ggplot2::xlab("") +
+               ggplot2::ylab(x_lab) +
+               ggplot2::ggtitle(title) #+
+             # geom_point(alpha = 1/100,size=0)
+           }
     )
-
+    
     print(p)
   }
 )
@@ -1689,10 +1719,10 @@ methods::setMethod(f          = "heatmapPlot",
                      
                      object2 <- checkTransNorm(object, raw = FALSE)
                      m.def  <- assay(object2)
-         
+                     
                      m.def <- as.data.frame(m.def) %>%
                        dplyr::select(tidyselect::any_of(object2@metadata$Groups$samples))
-     
+                     
                      # filter by DE
                      m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
                      
@@ -1795,13 +1825,13 @@ methods::setMethod(f          = "heatmapPlot",
                      if (isTagName(object, hypothesis)) hypothesis <- convertTagToContrast(object, hypothesis)
                      
                      return(heatmapPlot(object        = object[[SE.name]],
-                                         hypothesis    = hypothesis,
-                                         condition     = condition,
-                                         title         = title,
-                                         annot_to_show = annot_to_show,
-                                         subset_list   = subset_list,
-                                         draw_args     = draw_args,
-                                         heatmap_args  = heatmap_args))
+                                        hypothesis    = hypothesis,
+                                        condition     = condition,
+                                        title         = title,
+                                        annot_to_show = annot_to_show,
+                                        subset_list   = subset_list,
+                                        draw_args     = draw_args,
+                                        heatmap_args  = heatmap_args))
                      
                    })
 
@@ -1830,7 +1860,7 @@ methods::setMethod(f          = "boxplot.DE.plot",
                        
                        return(p)
                      }
-
+                     
                      object <- checkTransNorm(object, raw = raw)
                      
                      # check presence of variable in SE
@@ -1980,13 +2010,13 @@ methods::setMethod(f="runCoExpression",
                                           meanFilterCutoff = NULL,
                                           silent = TRUE, cmd = FALSE){
                      
-                    if (is.null(object@metadata$DiffExpAnal[["mergeDEF"]]))
-                      stop("Please run a differential analysis. runCoExpression uses these results.")
+                     if (is.null(object@metadata$DiffExpAnal[["mergeDEF"]]))
+                       stop("Please run a differential analysis. runCoExpression uses these results.")
                      
-                    if (is.null(nameList) && !is.null(getValidContrasts(object)[["tag"]])) 
-                      nameList <- getValidContrasts(object)[["tag"]]
-                    else if (is.null(nameList) && is.null(getValidContrasts(object)[["tag"]])) 
-                      nameList <- colnames(object@metadata$DiffExpAnal[["mergeDEF"]])[-1]
+                     if (is.null(nameList) && !is.null(getValidContrasts(object)[["tag"]])) 
+                       nameList <- getValidContrasts(object)[["tag"]]
+                     else if (is.null(nameList) && is.null(getValidContrasts(object)[["tag"]])) 
+                       nameList <- colnames(object@metadata$DiffExpAnal[["mergeDEF"]])[-1]
                      
                      CoExpAnal <- list()
                      
@@ -2002,53 +2032,53 @@ methods::setMethod(f="runCoExpression",
                      #                 union = dplyr::if_else(rowSums(dplyr::select(., tidyselect::contains(nameList))) != 0 , "YES", "NO")) %>% 
                      #   dplyr::filter(union != "NO", get(merge) == "YES") 
                      # geneList <- geneList$DEF
-
+                     
                      geneList <- opDEList(object = object, contrasts = nameList, operation = merge)
                      
                      # set default parameters based on data type
                      param.list <- list("model" = model)
                      
                      switch(object@metadata$omicType,
-                             
-                             "RNAseq" = {
-                               counts <- SummarizedExperiment::assay(object)[geneList,]
-                               
-                               param.list[["transformation"]]   <- ifelse(is.null(transformation), "arcsin", transformation)
-                               param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "TMM", normFactors)
-                               param.list[["meanFilterCutoff"]] <- ifelse(is.null(meanFilterCutoff), 50, meanFilterCutoff)
-                               param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Ck", GaussianModel)
-                               
-                              },
-                             "proteomics" = {
-                               object <- checkTransNorm(object)
-                               counts <- SummarizedExperiment::assay(object)[geneList,]
-                               
-                               # Print the selected GaussianModel
-                               if (cmd) print(paste("Use ", GaussianModel, sep = ""))
-                               if (cmd) print("Scale each protein (center = TRUE, scale = TRUE)")
-                               CoExpAnal[["transformation.prot"]] <- "scaleProt"
-                               counts[] <- t(apply(counts,1,function(x){scale(x, center = TRUE, scale = TRUE) }))
-                               
-                               # param
-                               param.list[["transformation"]]   <- ifelse(is.null(transformation), "none", transformation)
-                               param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "none", normFactors)
-                               param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Bk", GaussianModel)
-                              },
-                             "metabolomics" = {
-                               object <- checkTransNorm(object)
-                               counts <- SummarizedExperiment::assay(object)[geneList,]
-                               
-                               # Print the selected GaussianModel
-                               if (cmd) print(paste("Use ", GaussianModel, sep= ""))
-                               if (cmd) print("Scale each metabolite (center = TRUE,scale = TRUE)")
-                               CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
-                               counts[] <- t(apply(counts,1,function(x){ scale(x, center = TRUE, scale = TRUE) }))
-                               
-                               # param
-                               param.list[["transformation"]]   <- ifelse(is.null(transformation), "none", transformation)
-                               param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "none", normFactors)
-                               param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Bk", GaussianModel)
-                             }
+                            
+                            "RNAseq" = {
+                              counts <- SummarizedExperiment::assay(object)[geneList,]
+                              
+                              param.list[["transformation"]]   <- ifelse(is.null(transformation), "arcsin", transformation)
+                              param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "TMM", normFactors)
+                              param.list[["meanFilterCutoff"]] <- ifelse(is.null(meanFilterCutoff), 50, meanFilterCutoff)
+                              param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Ck", GaussianModel)
+                              
+                            },
+                            "proteomics" = {
+                              object <- checkTransNorm(object)
+                              counts <- SummarizedExperiment::assay(object)[geneList,]
+                              
+                              # Print the selected GaussianModel
+                              if (cmd) print(paste("Use ", GaussianModel, sep = ""))
+                              if (cmd) print("Scale each protein (center = TRUE, scale = TRUE)")
+                              CoExpAnal[["transformation.prot"]] <- "scaleProt"
+                              counts[] <- t(apply(counts,1,function(x){scale(x, center = TRUE, scale = TRUE) }))
+                              
+                              # param
+                              param.list[["transformation"]]   <- ifelse(is.null(transformation), "none", transformation)
+                              param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "none", normFactors)
+                              param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Bk", GaussianModel)
+                            },
+                            "metabolomics" = {
+                              object <- checkTransNorm(object)
+                              counts <- SummarizedExperiment::assay(object)[geneList,]
+                              
+                              # Print the selected GaussianModel
+                              if (cmd) print(paste("Use ", GaussianModel, sep= ""))
+                              if (cmd) print("Scale each metabolite (center = TRUE,scale = TRUE)")
+                              CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
+                              counts[] <- t(apply(counts,1,function(x){ scale(x, center = TRUE, scale = TRUE) }))
+                              
+                              # param
+                              param.list[["transformation"]]   <- ifelse(is.null(transformation), "none", transformation)
+                              param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "none", normFactors)
+                              param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Bk", GaussianModel)
+                            }
                      )
                      
                      CoExpAnal[["param"]] <- param.list
@@ -2067,27 +2097,27 @@ methods::setMethod(f="runCoExpression",
                      coseq.res.list <- list()
                      
                      coseq.res.list <- switch(as.character(clustermq),
-                                               `FALSE` = {
-                                                 try_rflomics(
-                                                   runCoseq_local(counts, 
-                                                                  conds = object@metadata$Groups$groups,
-                                                                  K = K, 
-                                                                  replicates = replicates, 
-                                                                  param.list = param.list,
-                                                                  silent = silent,
-                                                                  cmd = cmd))
-                                               },
-                                               `TRUE` = {
-                                                 try_rflomics(
-                                                   runCoseq_clustermq(counts, 
-                                                                      conds = object@metadata$Groups$groups, 
-                                                                      K = K, 
-                                                                      replicates = replicates, 
-                                                                      param.list = param.list,
-                                                                      silent = silent, 
-                                                                      cmd = cmd))
-                                                 
-                                               })
+                                              `FALSE` = {
+                                                try_rflomics(
+                                                  runCoseq_local(counts, 
+                                                                 conds = object@metadata$Groups$groups,
+                                                                 K = K, 
+                                                                 replicates = replicates, 
+                                                                 param.list = param.list,
+                                                                 silent = silent,
+                                                                 cmd = cmd))
+                                              },
+                                              `TRUE` = {
+                                                try_rflomics(
+                                                  runCoseq_clustermq(counts, 
+                                                                     conds = object@metadata$Groups$groups, 
+                                                                     K = K, 
+                                                                     replicates = replicates, 
+                                                                     param.list = param.list,
+                                                                     silent = silent, 
+                                                                     cmd = cmd))
+                                                
+                                              })
                      
                      # If coseq could run (no problem with SSH connexion in case of clustermq=TRUE)
                      
@@ -2155,43 +2185,43 @@ methods::setMethod(f          = "runCoExpression",
 coExpressionPlots <- methods::setMethod(f="CoExpressionPlots",
                                         signature="SummarizedExperiment",
                                         definition <- function(object){
-  
-  if(is.null(object@metadata$CoExpAnal) || length(object@metadata$CoExpAnal) == 0) stop("No co-expression results!")
-  CoExpAnal <- object@metadata$CoExpAnal
-  
-  coseq.res     <- CoExpAnal[["coseqResults"]]
-  ICL.list      <- CoExpAnal[["plots"]][["ICL"]] 
-  logLike.list  <- CoExpAnal[["plots"]][["logLike"]]
-  K             <- CoExpAnal[["K.range"]]
-  conds         <- object@metadata$Groups$groups
-  
-  #### Plots
-  ### plot ICL
-  ICL.p   <- ggplot2::ggplot(data = ICL.list[["ICL.tab"]]) +
-    ggplot2::geom_boxplot(ggplot2::aes(x = as.factor(K), y = ICL, group = K)) +
-    ggplot2::geom_text(data = ICL.list[["ICL.n"]], ggplot2::aes(x = 1:length(K), y = max(ICL.list[["ICL.vec"]], na.rm = TRUE),
-                                                                label = paste0("n=", n)), col = 'red', size = 4) +
-    ggplot2::ylim(min(ICL.list[["ICL.vec"]], na.rm = TRUE), max(ICL.list[["ICL.vec"]], na.rm = TRUE)) +
-    ggplot2::xlab("K")
-  
-  ### plot logLike
-  logLike.p   <- ggplot2::ggplot(data = logLike.list[["logLike.tab"]]) +
-    ggplot2::geom_boxplot(ggplot2::aes(x = as.factor(K), y = logLike, group = K)) +
-    ggplot2::xlab("K") +
-    ggplot2::geom_text(data = logLike.list[["logLike.n"]], ggplot2::aes(x = 1:length(K), y = max(logLike.list[["logLike.vec"]], na.rm = TRUE),
-                                                                        label = paste0("n=", n)), col = 'red', size = 4)
-  
-  ### coseq plots
-  plot.coseq.res <- coseq::plot(coseq.res, conds = conds, collapse_reps = "average",
-                                graphs = c("profiles", "boxplots", "probapost_boxplots",
-                                           "probapost_barplots", "probapost_histogram"))
-  
-  # CoExpAnal[["plots"]] <- plot.coseq.res
-  # CoExpAnal[["plots"]][["ICL"]]     <- ICL.p
-  # CoExpAnal[["plots"]][["logLike"]] <- logLike.p
-  
-  return(c(plot.coseq.res, list("ICL" = ICL.p, "logLike" = logLike.p)))
-})
+                                          
+                                          if(is.null(object@metadata$CoExpAnal) || length(object@metadata$CoExpAnal) == 0) stop("No co-expression results!")
+                                          CoExpAnal <- object@metadata$CoExpAnal
+                                          
+                                          coseq.res     <- CoExpAnal[["coseqResults"]]
+                                          ICL.list      <- CoExpAnal[["plots"]][["ICL"]] 
+                                          logLike.list  <- CoExpAnal[["plots"]][["logLike"]]
+                                          K             <- CoExpAnal[["K.range"]]
+                                          conds         <- object@metadata$Groups$groups
+                                          
+                                          #### Plots
+                                          ### plot ICL
+                                          ICL.p   <- ggplot2::ggplot(data = ICL.list[["ICL.tab"]]) +
+                                            ggplot2::geom_boxplot(ggplot2::aes(x = as.factor(K), y = ICL, group = K)) +
+                                            ggplot2::geom_text(data = ICL.list[["ICL.n"]], ggplot2::aes(x = 1:length(K), y = max(ICL.list[["ICL.vec"]], na.rm = TRUE),
+                                                                                                        label = paste0("n=", n)), col = 'red', size = 4) +
+                                            ggplot2::ylim(min(ICL.list[["ICL.vec"]], na.rm = TRUE), max(ICL.list[["ICL.vec"]], na.rm = TRUE)) +
+                                            ggplot2::xlab("K")
+                                          
+                                          ### plot logLike
+                                          logLike.p   <- ggplot2::ggplot(data = logLike.list[["logLike.tab"]]) +
+                                            ggplot2::geom_boxplot(ggplot2::aes(x = as.factor(K), y = logLike, group = K)) +
+                                            ggplot2::xlab("K") +
+                                            ggplot2::geom_text(data = logLike.list[["logLike.n"]], ggplot2::aes(x = 1:length(K), y = max(logLike.list[["logLike.vec"]], na.rm = TRUE),
+                                                                                                                label = paste0("n=", n)), col = 'red', size = 4)
+                                          
+                                          ### coseq plots
+                                          plot.coseq.res <- coseq::plot(coseq.res, conds = conds, collapse_reps = "average",
+                                                                        graphs = c("profiles", "boxplots", "probapost_boxplots",
+                                                                                   "probapost_barplots", "probapost_histogram"))
+                                          
+                                          # CoExpAnal[["plots"]] <- plot.coseq.res
+                                          # CoExpAnal[["plots"]][["ICL"]]     <- ICL.p
+                                          # CoExpAnal[["plots"]][["logLike"]] <- logLike.p
+                                          
+                                          return(c(plot.coseq.res, list("ICL" = ICL.p, "logLike" = logLike.p)))
+                                        })
 
 
 #' @title coseq.profile.plot

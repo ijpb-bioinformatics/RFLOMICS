@@ -1,16 +1,16 @@
 ############# module 
 
 UpdateRadioButtonsUI <- function(id){
-
+  
   #name space for id
   ns <- NS(id)
-
+  
   tagList(
     radioButtons(inputId  = ns("Firstaxis"),
                  label    = "Choice of PCs :",
                  choices  = list("PC1" = 1, "PC2" = 2, "PC3" = 3),
                  selected = 1, inline = TRUE),
-
+    
     # select PCA axis 2 for plot
     radioButtons(inputId  = ns("Secondaxis"),
                  label    = "",
@@ -21,9 +21,9 @@ UpdateRadioButtonsUI <- function(id){
 
 
 UpdateRadioButtons <- function(input, output, session){
-
+  
   observeEvent(input$Firstaxis, {
-
+    
     x <- input$Firstaxis
     # Can also set the label and select items
     choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
@@ -31,24 +31,24 @@ UpdateRadioButtons <- function(input, output, session){
                        choices = choices[-as.numeric(x)],
                        inline  = TRUE)
   })
-
+  
 }
 
 
 
 RadioButtonsConditionUI <- function(id){
-
+  
   #name space for id
   ns <- NS(id)
-
+  
   tagList(
-
+    
     uiOutput(ns('condColor')),
   )
 }
 
 RadioButtonsCondition <- function(input, output, session, typeFact){
-
+  
   # select factors for color PCA plot
   output$condColor <- renderUI({
     
@@ -74,81 +74,54 @@ omics_data_analysis_summaryUI <- function(id){
   ns <- NS(id)
   
   tagList(
-    fluidRow(
-      box(title = "Summary of dataset analysis", width = 12, status = "warning", solidHeader = TRUE)),
-    fluidRow(
-      box(title = "Dataset processing", width = 12, status = "warning", 
-          column(4, plotOutput(ns("procSummary"))),
-          column(8, plotOutput(ns("mofaPlot"))))),
-    fluidRow(
-      box(title = "Differential analysis", width = 12, status = "warning", plotOutput(ns("DiffSummary")))),
-  )
+    column(width = 12, 
+      fluidRow( uiOutput(ns("mofaPlot"))),
+      fluidRow( uiOutput(ns("DiffSummary")))
+    ))
 }
 
 #' @importFrom MOFA2 create_mofa_from_MultiAssayExperiment  plot_data_overview
 #' @importFrom purrr reduce
 #' @importFrom data.table data.table
 omics_data_analysis_summary <- function(input, output, session, rea.values){
-
-  output$procSummary <- renderPlot({ 
-    
-    summaryProcess.df <- lapply(rea.values$datasetDiff, function(dataset){
-      
-    #   c(paste(dataset, "filtred", sep = "."), 
-    #     dim(session$userData$FlomicsMultiAssay[[dataset]]) - dim(session$userData$FlomicsMultiAssay[[paste(dataset, "filtred", sep = ".")]]))
-    # }) %>% purrr::reduce(rbind) %>% data.table::data.table()
-    # names(summaryProcess.df) <- c("dataset", "rm_entities", "rm_samples")
-    
-    c(dataset, 
-      dim(session$userData$FlomicsMultiAssay[[paste(dataset, "raw", sep = ".")]]) - dim(session$userData$FlomicsMultiAssay[[dataset]]))
-  }) %>% purrr::reduce(rbind) %>% data.table::data.table()
-  names(summaryProcess.df) <- c("dataset", "rm_entities", "rm_samples")
-    
-    ggplot2::ggplot(summaryProcess.df %>% reshape2::melt(id="dataset"), ggplot2::aes(x=variable, y=dataset)) + 
-      ggplot2::geom_tile(aes(fill=dataset),color="white", lwd =1.5, linetype=1) + 
-      ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(), 
-            panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), legend.position="none") + 
-      ggplot2::ylab("") + ggplot2::xlab("") + ggplot2::geom_text(ggplot2::aes(label=value)) 
-    })
   
-  
-  output$mofaPlot <- renderPlot({ 
-
-    MAE.filtered.Diff <- session$userData$FlomicsMultiAssay[,,rea.values$datasetDiff]
-    MAE.MOFA <- MOFA2::create_mofa_from_MultiAssayExperiment(MAE.filtered.Diff)
-    MOFA2::plot_data_overview(MAE.MOFA)
+  # over view of dataset dimensions after processing
+  output$mofaPlot <- renderUI({
+    box(title = "Dataset overview after data processing", width = 12, status = "warning", 
+        
+        renderPlot({
+          Datasets_overview_plot(session$userData$FlomicsMultiAssay, dataset.list = rea.values$datasetDiff, real.size = TRUE) 
+        })
+    )
   })
   
-  output$DiffSummary <- renderPlot({ 
-  
+  # summary of diff analysis on all dataset
+  output$DiffSummary <- renderUI({
+    
+    if(is.null(rea.values$datasetDiff)) return()
     
     summaryDiff.df <- lapply( rea.values$datasetDiff, function(dataset){
-    #   lapply(names(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats), function(contrast){  
-    #     
-    #     c(dataset, contrast, paste0(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats[[contrast]][["gDEup"]], "/", 
-    #                                 session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats[[contrast]][["gDEdown"]]) )
-    #     
-    #   }) %>% purrr::reduce(rbind)
-    #   
-    # }) %>% purrr::reduce(rbind) %>% data.table::data.table()
+      as.data.frame(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats) %>% 
+        dplyr::mutate(dataset = dataset, hypothesis = rownames(.))
+      
+    }) %>% purrr::reduce(rbind) %>% reshape2::melt(id=c("dataset", "hypothesis", "All"), value.name = "Up_Down") %>%
+      dplyr::mutate(percent=Up_Down/All*100)
     
-    # names(summaryDiff.df) <- c("dataset", "contrast", "value")
-    
-    mat <- as.data.frame(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal$stats)
-    mat$contrast <- row.names(mat)
-    tab <- mat %>% 
-      dplyr::mutate(.,dataset=dataset) %>%
-      tidyr::unite("value",Up:Down,remove=TRUE,sep="/") %>% 
-      dplyr::select(-"All")
-    return(tab)
-    }) %>% purrr::reduce(rbind) %>% data.table::data.table()
-    
-    ggplot2::ggplot(summaryDiff.df, ggplot2::aes(x=contrast, y=dataset)) + 
-      ggplot2::geom_tile(ggplot2::aes(fill=dataset),color="white", lwd =1.5, linetype=1) + 
-      ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(), 
-            panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), legend.position="none",
-            axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) + 
-      ggplot2::ylab("") + ggplot2::xlab("") + ggplot2::geom_text(aes(label=value)) + ggplot2::ggtitle("DE entities (up/down)")
+    box(title = "Summary of Differential expression analysis", width = 12, status = "warning", 
+        # renderPlot({ 
+        #   ggplot2::ggplot(data = summaryDiff.df) + ggplot2::geom_col(ggplot2::aes(y=hypothesis, x=percent, label=Up_Down, fill=variable)) + 
+        #     ggplot2::facet_grid(dataset~.) %>% dplyr::mutate(percent=Up_Down/All*100)
+        # })
+        
+        renderPlot({
+          ggplot2::ggplot(data = summaryDiff.df, ggplot2::aes(y=hypothesis, x=percent, fill=variable)) + 
+            ggplot2::geom_col() +
+            ggplot2::geom_text(ggplot2::aes(label=Up_Down), position = ggplot2::position_stack(vjust = 0.5)) +
+            ggplot2::facet_grid(dataset~.) +
+            ggplot2::scale_x_continuous(breaks = seq(0,100, 25), labels = paste0(seq(0,100, 25), "%")) + 
+            ggplot2::labs(fill=NULL, x="")
+        })
+    )
   })
   
 }
