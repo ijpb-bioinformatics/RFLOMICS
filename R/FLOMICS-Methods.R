@@ -355,27 +355,25 @@ methods::setMethod(f         = "Datasets_overview_plot",
                        breaks[i] <- tmp.vec[i] + nb_entities_ord$nb_entities[i]/2 
                      } 
                      
-                     switch (real.size,
-                       `TRUE`  = {
+                     switch (as.character(real.size),
+                       "TRUE"  = {
                          p <- ggplot2::ggplot(data, ggplot2::aes(x=primary, y=log(nb_entities))) +
                            ggplot2::geom_col(ggplot2::aes(fill = y.axis)) + 
                            ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(), 
                                           panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), 
                                           axis.text.x = ggplot2::element_text(angle = 90, hjust = 1), legend.position="none",
                                           axis.text.y = ggplot2::element_text(hjust = 0)) +  
-                           ggplot2::labs(x=paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")"), y="", fill="dataset") +
+                           ggplot2::labs(x=paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")"), y="") +
                            ggplot2::scale_y_continuous(breaks = (breaks), labels = nb_entities_ord$y.axis)
                          
                        },
-                       `FALSE` = {
+                       "FALSE" = {
                          p <- ggplot2::ggplot(data, ggplot2::aes(x=primary, y=y.axis)) +
                            ggplot2::geom_tile(ggplot2::aes(fill = y.axis), colour = "grey50") +
                            ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
                                           panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), legend.position="none",
                                           axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
-                           ggplot2::xlab(paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")")) +
-                           ggplot2::ylab("")
-                         
+                           ggplot2::labs(x=paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")"), y="")
                        }
                      )
                      return(p)
