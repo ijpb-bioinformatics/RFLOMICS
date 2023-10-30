@@ -20,9 +20,11 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
 MAE <- MAE |>
   RFLOMICS::getExpressionContrast(model.formula = formulae[[1]]) 
-MAE <- MAE  |> RFLOMICS::getContrastMatrix(contrastList = c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
-                                                            "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3",
-                                                            "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" )) 
+# MAE <- MAE  |> RFLOMICS::getContrastMatrix(contrastList = c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
+#                                                             "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3",
+#                                                             "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" )) 
+MAE <- MAE  |> RFLOMICS::getContrastMatrix(contrastList = c("((temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) + (temperatureElevated_imbibitionLI - temperatureLow_imbibitionLI))/3",
+                                                            "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3"  ))
 contrastsDF <- RFLOMICS::getSelectedContrasts(MAE)
 
 MAE2 <- MAE
@@ -36,26 +38,63 @@ MAE <- MAE |>
   RunDiffAnalysis(   SE.name = "metatest",  DiffAnalysisMethod = "limmalmFit")  |>
   RunDiffAnalysis(   SE.name = "protetest", DiffAnalysisMethod = "limmalmFit")  |>
   RunDiffAnalysis(   SE.name = "RNAtest",   DiffAnalysisMethod = "edgeRglmfit") |>
-  FilterDiffAnalysis(SE.name = "RNAtest",   Adj.pvalue.cutoff = 0.05, logFC.cutoff = 1.5)
+  FilterDiffAnalysis(SE.name = "RNAtest",   Adj.pvalue.cutoff = 0.05, logFC.cutoff = 1.5) 
 
 # ----- TESTS -----
  
 test_that("Working?", code = {
   
   MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest"))
-  MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest"))
+  # MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest"))
   
   getMOFA(MAE)
   
   
   expect(!is.null(MAE@metadata$MOFA$MOFA_results), failure_message = "MOFA didn't run as it should have run")
-  
   expect_error(integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest", "proteotest"), contrasts_names = c("H1", "H2")))
   
   MAE <- integrationWrapper(MAE, omicsToIntegrate = c("RNAtest", "metatest", "protetest"), contrasts_names = c("H1", "H2"))
-  
 
+# 
+#   MAE2 <- MAE |>
+#     FilterDiffAnalysis(SE.name = "protetest",   Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0)
   
+  # MAE2 <- MAE
+  # MAE2 <- integrationWrapper(MAE2, omicsToIntegrate = c("metatest", "protetest"), contrasts_names = c("H1", "H2"), type = "intersection")
+  
+  MAE2 <- integrationWrapper(MAE2, omicsToIntegrate = c("metatest", "protetest"), contrasts_names = c("H1", "H2"), type = "intersection")
+  getPossibleContrasts(MAE[["RNAtest"]], returnTable = TRUE)
+  getValidContrasts(MAE[["RNAtest"]])
+  MAE[["metatest"]] <- setValidContrasts(MAE[["metatest"]], c("H1", "H2"))
+  MAE[["protetest"]] <- setValidContrasts(MAE[["protetest"]], c("H1", "H2"))
+  
+  getValidContrasts(MAE[["protetest"]])
+
+  RFLOMICS:::convertTagToContrast(MAE, c("H1", "H2"))
+  RFLOMICS:::convertContrastToTag(MAE, c("(temperatureElevated - temperatureLow) in mean", "(imbibitionEI - imbibitionDS) in mean" ))
+  
+  
+  allrownames <- lapply( c("metatest", "protetest"), FUN = function(nam){
+    try_rflomics(opDEList(MAE, SE.name = nam, contrasts = c("H1", "H2"), operation = 'intersection'))
+  })
+  names(allrownames) <- c("metatest", "protetest")
+  allrownames
+  
+  allrownames <- lapply( c("metatest", "protetest"), FUN = function(nam){
+    tryCatch(opDEList(MAE, SE.name = nam, contrasts = c("H1", "H2"), operation = 'intersection'), 
+             error = function(e) e, 
+             warning = function(w) w)
+  })
+  names(allrownames) <- c("metatest", "protetest")
+  any(sapply(allrownames, class) != "character")
+  
+  if (any(sapply(allrownames, class) != "character")) {
+    probOmics <- names(allrownames)[sapply(allrownames, class) != "character"]
+    stop("It seems there  is a problem with : ", sapply(probOmics, FUN = function(namesError) paste("\n", probOmics, " -- error message:\n", allrownames[[probOmics]])))
+  }
+  
+  MAE@metadata$MOFA$MOFA_results
+
   # TODO tests: with feature selection, without, with only one response variable, with several, etc. 
   # TODO compare: with the same methods outside of RFLOMICS. (normalisation, data treatment, find the equivalent pipeline)
   
@@ -77,4 +116,10 @@ test_that("Working?", code = {
   
 }) 
 
+load("/home/ahulot/Téléchargements/2023_10_26_tt/tt.MAE.RData")
+getValidContrasts(rflomics.MAE)
+
+opDEList(rflomics.MAE, SE.name = "proteomics.set3", operation = "intersection")
+opDEList(rflomics.MAE, SE.name = "proteomics.set3", contrasts = c("H1", "H2"), operation = "intersection")
+# opDEList(rflomics.MAE, SE.name = "proteomics.set3", contrasts = c("H1", "H2"), operation = "union")
 

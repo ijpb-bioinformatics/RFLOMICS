@@ -153,24 +153,28 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     
     # check nbr of contrast 
+    MOFAselContrasts <- getValidContrasts(session$userData$FlomicsMultiAssay)
+    MOFAselContrasts <- Reduce(f = function(x, y) union(x, y), 
+                             lapply(MOFAselContrasts, FUN = function(res) res$tag))
+    
     # if less than 1 -> error message
-    if (length(input$MOFA_selectedContrasts) == 0) {
+    if (length(MOFAselContrasts) == 0) {
       showModal(modalDialog( title = "Error message", "Select at least one contast!"))
     }
     validate({
-      need(length(input$MOFA_selectedContrasts) != 0, message = "Select at least one contast!")
+      need(length(MOFAselContrasts) != 0, message = "Select at least one contast!")
     })
     
     #---- progress bar ----#
     progress$inc(1/10, detail = paste("Preparing object ", 20, "%", sep = ""))
     #----------------------#
-    
+
     list_args_prepare_MOFA <- list(
       object = session$userData$FlomicsMultiAssay,
       omicsToIntegrate = input$MOFA_selectedData,
       rnaSeq_transfo = input$MOFA_RNAseqTransfo,
       choice = "DE", 
-      contrasts_names = input$MOFA_selectedContrasts,
+      contrasts_names = MOFAselContrasts,
       type = input$MOFA_filtMode,
       group = NULL, 
       method = "MOFA",
@@ -178,7 +182,7 @@ MOFA_setting <- function(input, output, session, rea.values){
       maxiter = input$MOFA_maxiter,
       num_factors = input$MOFA_numfactor,
       cmd = TRUE, 
-      silent = TRUE
+      silent = FALSE
     )
     
     

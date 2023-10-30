@@ -45,6 +45,7 @@ methods::setMethod(
                      "MOFA+" = "MOFA"
     )
     
+    # TODO should do the intersection, not stopping everything !!
     if (any(!omicsToIntegrate %in% names(object))) {
       stop("There are omics to integrate that are not names from the object")
     }
@@ -181,6 +182,24 @@ methods::setMethod(
                         silent = TRUE) {
     if (is.null(omicsToIntegrate)) omicsToIntegrate <- names(object)
     
+    # # Checking if intersection is a possible type of selection
+    # if (type == "intersection") {
+    #   allrownames <- lapply(omicsToIntegrate, FUN = function(nam){
+    #     tryCatch(opDEList(object, SE.name = nam, contrasts = contrasts_names, operation = type),
+    #              error = function(e) e, 
+    #              warning = function(w) w)
+    #   })
+    #   names(allrownames) <- omicsToIntegrate
+    #   
+    #   if (any(sapply(allrownames, class) != "character")) {
+    #     probOmics <- names(allrownames)[sapply(allrownames, class) != "character"]
+    #     stop("It seems there  is a problem with: ", 
+    #          sapply(probOmics, FUN = function(namesError){
+    #            paste("\n", namesError, " -- error message:\n", allrownames[[namesError]])}))
+    #   }
+    #   
+    # } # does this chunk of code work?!
+    
     # Checking for batch effects
     correct_batch <- FALSE
     ftypes <- getFactorTypes(object)
@@ -223,12 +242,12 @@ methods::setMethod(
       if (silent) {
         MOFAObject <- suppressMessages(
           suppressWarnings(create_mofa(object,
-                                              group = group,
-                                              extract_metadata = TRUE)))
+                                       group = group,
+                                       extract_metadata = TRUE)))
       } else {
         MOFAObject <- create_mofa(object,
-                                         group = group,
-                                         extract_metadata = TRUE)
+                                  group = group,
+                                  extract_metadata = TRUE)
       }
       
       return(MOFAObject)

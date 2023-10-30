@@ -179,6 +179,10 @@ MixOmics_setting <- function(input, output, session, rea.values){
     progress$inc(1/10, detail = paste("Preparing object ", 20, "%", sep = ""))
     #----------------------#
     
+    MOselContrasts <- getValidContrasts(session$userData$FlomicsMultiAssay)
+    MOselContrasts <- Reduce(f = function(x, y) union(x, y), 
+                               lapply(MOselContrasts, FUN = function(res) res$tag))
+    
     # Prepare for MixOmics run  
     
     list_args_MO <- list(
@@ -186,7 +190,7 @@ MixOmics_setting <- function(input, output, session, rea.values){
       omicsToIntegrate = input$MO_selectedData,
       rnaSeq_transfo = input$MO_RNAseqTransfo,
       choice = "DE", 
-      contrasts_names = input$MO_selectedContrast,
+      contrasts_names = MOselContrasts,
       type = input$MO_filtMode,
       group = NULL,
       method = "MixOmics",

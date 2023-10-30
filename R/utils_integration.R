@@ -148,7 +148,7 @@ RBETransform <- function(object,
   
   if (correctBatch)    omicsDat <- rbe_function(object, omicsDat)
   if (choice == "DE")  omicsDat <- omicsDat[opDEList(omicsDat, contrasts = contrasts_names, operation = type),]
-  
+
   object[[SEname]] <- omicsDat
   
   return(object)

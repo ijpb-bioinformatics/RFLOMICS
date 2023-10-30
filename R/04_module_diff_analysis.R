@@ -204,7 +204,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     if(isFALSE(dataset.SE@metadata$DiffExpAnal[["results"]])){
       showModal(modalDialog( title = "Error message",
                              if(! is.null(dataset.SE@metadata$DiffExpAnal[["ErrorStats"]])){
-                               renderDataTable(dataset.SE@metadata$DiffExpAnal[["ErrorStats"]],rownames = FALSE)
+                               DT::renderDataTable(dataset.SE@metadata$DiffExpAnal[["ErrorStats"]],rownames = FALSE)
                              }
                              else{
                                as.character(dataset.SE@metadata$DiffExpAnal[["Error"]])
@@ -216,7 +216,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       
       showModal(modalDialog( title = "Error message",
                              if(! is.null(dataset.SE@metadata$DiffExpAnal[["ErrorTab"]])){
-                               renderDataTable(dataset.SE@metadata$DiffExpAnal[["ErrorTab"]],rownames = FALSE)
+                               DT::renderDataTable(dataset.SE@metadata$DiffExpAnal[["ErrorTab"]],rownames = FALSE)
                              }
                              else{
                                as.character(dataset.SE@metadata$DiffExpAnal[["error"]])
@@ -243,8 +243,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$coExpAnal  <- FALSE
     rea.values[[dataset]]$diffAnnot  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
-    
-    
     
     dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]] 
     dataset.SE@metadata$DiffExpEnrichAnal <- NULL

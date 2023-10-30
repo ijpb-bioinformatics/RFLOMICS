@@ -1269,7 +1269,6 @@ getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1]
 #' @keywords internal
 #' @noRd
 
-
 try_rflomics <- function(expr) {
   warn <- err <- NULL
   value <- withCallingHandlers(
@@ -1280,12 +1279,12 @@ try_rflomics <- function(expr) {
     warning = function(w){ warn <- w
     invokeRestart("muffleWarning")}
   )
-  
-  return(list(value = value, 
-              warning = warn, 
+
+  return(list(value = value,
+              warning = warn,
               error = err)
   )
-  
+
 }
 
 

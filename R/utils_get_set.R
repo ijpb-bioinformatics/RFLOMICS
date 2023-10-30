@@ -3,7 +3,7 @@
 #'
 #' @param object a MAE object (produced by Flomics). 
 #' @return a named vector (getFactorTypes) or a vector of factor names.
-#' @rdname Factortypes
+#' @rdname getFactorTypes
 #' @export
 #' 
 getFactorTypes <- function(object) {
@@ -15,7 +15,7 @@ getFactorTypes <- function(object) {
 }
 
 #' @export
-#' @rdname Factortypes
+#' @rdname getFactorTypes
 bioFactors <- function(object){
   
   factVect <- toupper(getFactorTypes(object))
@@ -24,7 +24,7 @@ bioFactors <- function(object){
 }
 
 #' @export
-#' @rdname Factortypes
+#' @rdname getFactorTypes
 batchFactors <- function(object){
   
   factVect <- toupper(getFactorTypes(object))
@@ -33,7 +33,7 @@ batchFactors <- function(object){
 }
 
 #' @export
-#' @rdname Factortypes
+#' @rdname getFactorTypes
 metaFactors <- function(object){
   
   factVect <- toupper(getFactorTypes(object))
@@ -78,7 +78,7 @@ getModelFormula <- function(object) {
 # ---- Get possible contrasts : ----
 #' @title Get selected contrasts for the differential analysis
 #'
-#' @param object a MAE object (produced by Flomics)
+#' @param object a MAE object (produced by Flomics) or a summarized experiment produced by Flomics after a differential analysis.
 #' @param typeContrast the type of contrast from which the possible contrasts are extracted. Default is all contrasts types.
 #' @param modalities specific levels for the contrast selection
 #' @param returnTable return a dataTable with all contrasts information
@@ -110,6 +110,16 @@ getPossibleContrasts <- function(object, typeContrast = c("simple", "averaged", 
     } else {
       return(allContrastsdt$contrast)
     }
+  } else if (is(object, "SummarizedExperiment")) {
+    # expects to find a diff analysis slot
+    allContrasts <- metadata(object)$DiffExpAnal$contrasts
+    
+    if (returnTable) {
+      return(allContrasts)
+    } else {
+      return(allContrasts$contrast)
+    }
+    
   } else {
     stop("object is not a MultiAssayExperiment or a SummarizedExperiment.")
   }
@@ -145,6 +155,9 @@ getSelectedContrasts <- function(object) {
 #'
 setValidContrasts <- function(object,
                               contrasts) {
+  
+  if (isTagName(object, contrasts)) contrasts <- convertTagToContrast(object, contrasts)
+  
   # TODO : check if there are DE entities for each contrasts before really validating them.
   
   if (is.character(contrasts)) {
@@ -189,17 +202,34 @@ getValidContrasts <- function(object) {
 #' @param object a SE object (produced by Flomics)
 #' @return a matrix of results from the differential analyses.
 #' @export
+#' @rdname getDE
 #'
 getDEMatrix <- function(object) {
   if (is(object, "SummarizedExperiment")) {
     if (!is.null(object@metadata$DiffExpAnal$mergeDEF)) {
-      return(object@metadata$DiffExpAnal$mergeDEF)
+      object@metadata$DiffExpAnal$mergeDEF
     } else {
       stop("There is no DE matrix in this object.")
     }
   } else {
     stop("object is not a SummarizedExperiment.")
   }
+}
+
+#' @param contrast character name (can be a vector of name) for the contrast to select.
+#' @export
+#' @importFrom tidyselect any_of
+#' @importFrom dplyr select
+#' @rdname getDE
+getDE <- function(object, contrast) {
+  
+  if (isContrastName(object, contrast)) contrast <- convertContrastToTag(object, contrast)
+  
+  DEmat <- getDEMatrix(object)
+  DEmat <- DEmat %>% dplyr::select(tidyselect::any_of(c("DEF", contrast)))
+  DEmat <- DEmat[rowSums(DEmat[,-1]) >= 1,]
+  return(DEmat)
+  
 }
 
 # ---- Get union or intersection from list of contrasts ----
@@ -214,6 +244,7 @@ getDEMatrix <- function(object) {
 #' @param operation character. Either union or intersection.
 #' Defines the operation to perform on the DE lists from the contrasts.
 #' @return vector of unique DE entities
+#' @rdname getDE
 #' @export
 #' @importFrom tidyselect starts_with
 #'
@@ -247,6 +278,7 @@ opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "unio
       dplyr::mutate(SUMCOL = dplyr::select(., tidyselect::starts_with("H")) %>%
                       rowSums(na.rm = TRUE)) %>%
       dplyr::filter(SUMCOL == length(validTags))
+ 
   } else {
     DETab <- df_DE %>%
       dplyr::mutate(SUMCOL = dplyr::select(., tidyselect::starts_with("H")) %>%
@@ -254,7 +286,7 @@ opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "unio
       dplyr::filter(SUMCOL >= 1)
   }
   
-  return(DETab$DEF)
+  return(unique(DETab$DEF))
 }
 
 
