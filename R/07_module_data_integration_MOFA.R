@@ -52,8 +52,16 @@ MOFA_setting <- function(input, output, session, rea.values){
   # list of parameters  
   output$MOFA_ParamUI <- renderUI({
     
-    listOfContrast <- getSelectedContrasts(session$userData$FlomicsMultiAssay)$contrastName
+    # Reinitialize if needed when validating another datatable in differential analysis. 
+    observeEvent(rea.values$datasetDiff, {
+      local.rea.values$runMOFA   <- FALSE
+      if (!is.null(getMOFA(session$userData$FlomicsMultiAssay))) {
+        session$userData$FlomicsMultiAssay <- setMOFA(session$userData$FlomicsMultiAssay, NULL)
+      } 
+    })
     
+    listOfContrast <- getSelectedContrasts(session$userData$FlomicsMultiAssay)$contrastName
+
     # set param in interface
     tagList(
       
@@ -120,9 +128,6 @@ MOFA_setting <- function(input, output, session, rea.values){
   
   observeEvent(input$runMOFA, {
     
-    # TODO put everything into one metadata list slot
-    # TODO reinitialize everything when the person runs mofa.
-    
     #---- progress bar ----#
     progress <- shiny::Progress$new()
     progress$set(message = "Run MOFA2", value = 0)
@@ -133,10 +138,7 @@ MOFA_setting <- function(input, output, session, rea.values){
     print("# 7- MOFA Analysis")
     
     local.rea.values$runMOFA   <- FALSE
-    
-    # untrainedMOFA <- NULL 
-    # resMOFA <- NULL
-    
+    session$userData$FlomicsMultiAssay <- setMOFA(session$userData$FlomicsMultiAssay, NULL)
     
     #---- progress bar ----#
     progress$inc(1/10, detail = paste("Checks ", 10, "%", sep = ""))
@@ -150,7 +152,6 @@ MOFA_setting <- function(input, output, session, rea.values){
     validate({
       need(length(input$MOFA_selectedData) >= 2, message = "MOFA needs at least 2 datasets!")
     })
-    
     
     # check nbr of contrast 
     MOFAselContrasts <- getValidContrasts(session$userData$FlomicsMultiAssay)
@@ -182,7 +183,7 @@ MOFA_setting <- function(input, output, session, rea.values){
       maxiter = input$MOFA_maxiter,
       num_factors = input$MOFA_numfactor,
       cmd = TRUE, 
-      silent = FALSE
+      silent = TRUE
     )
     
     
@@ -192,20 +193,6 @@ MOFA_setting <- function(input, output, session, rea.values){
     
     session$userData$FlomicsMultiAssay <- do.call(getFromNamespace("integrationWrapper", ns = "RFLOMICS"), list_args_prepare_MOFA)
 
-    #### TODO Try to catch MOFA2 warnings and put them on the interface. DOES NOT WORK. 
-    # test <- run_MOFA_analysis(session$userData$FlomicsMultiAssay@metadata[["MOFA_untrained"]],
-    #                           scale_views = FALSE,
-    #                           MOFA_maxiter = 1000,
-    #                           num_factors = 5)
-    # local.rea.values <- list()
-    # local.rea.values$warnings <- NULL
-    # if(!is.null(names(warnings()))){
-    #   local.rea.values$warnings <- names(warnings())
-    # }else{local.rea.values$warnings <- "no warnings captured"}
-    # output <- list()
-    # output$warnings <- renderText({local.rea.values$warnings})
-    #### End of catchning warnings.
-    
     local.rea.values$runMOFA   <- TRUE
     
     #---- progress bar ----#
@@ -220,11 +207,6 @@ MOFA_setting <- function(input, output, session, rea.values){
     if (local.rea.values$runMOFA == FALSE) return()
     
     resMOFA <- getMOFA(session$userData$FlomicsMultiAssay)
-    
-    # plot_height <- function() { # does not work ?
-    #   local.rea.values$plotHeight <- length(input$WeightsPlot_Factors_select)*10
-    #   return(local.rea.values$plotHeight)
-    # }
     
     colorPal_choices <- c("Greens", "Purples", "Oranges", "Reds", "Greys", "Blues")
     

@@ -65,6 +65,14 @@ MixOmics_setting <- function(input, output, session, rea.values){
   ## list of parameters  
   output$MixOmics_ParamUI <- renderUI({
     
+    # Reinitialize if needed when validating another datatable in differential analysis. 
+    observeEvent(rea.values$datasetDiff, {
+      local.rea.values$runMixOmics   <- FALSE
+      if (!is.null(getMixOmics(session$userData$FlomicsMultiAssay))) {
+        session$userData$FlomicsMultiAssay <- setMixOmics(session$userData$FlomicsMultiAssay, NULL)
+      } 
+    })
+    
     listOfContrast <- getSelectedContrasts(session$userData$FlomicsMultiAssay)$contrastName
     
     # set param in interface

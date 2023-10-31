@@ -370,7 +370,7 @@ getMixOmics <- function(object,
   toreturn <- metadata(object)[["mixOmics"]]
   
   if (is.null(toreturn)) {
-    message("It seems there is no mixOmics result in this object.")
+    return(toreturn)
   }
   
   if (!is.null(response)) {
@@ -389,14 +389,29 @@ getMOFA <- function(object, onlyResults = TRUE){
   
   toreturn <- metadata(object)[["MOFA"]]
   
-  if (is.null(toreturn)) {
-    message("It seems there is no MOFA result in this object.")
-  }
-  
-  if (onlyResults) toreturn <- toreturn[["MOFA_results"]]
+  if (onlyResults && !is.null(toreturn)) toreturn <- toreturn[["MOFA_results"]]
   
   return(toreturn)
 }
+
+#' @rdname Multi-omics-access
+#' @export
+setMOFA <- function(object, results = NULL){
+  
+  metadata(object)[["MOFA"]] <- results
+
+  return(object)
+}
+
+#' @rdname Multi-omics-access
+#' @export
+setMixOmics <- function(object, results = NULL){
+  
+  metadata(object)[["mixOmics"]] <- results
+  
+  return(object)
+}
+
 
 # ---- INTERNAL - Get a particular enrichment result ----
 #
