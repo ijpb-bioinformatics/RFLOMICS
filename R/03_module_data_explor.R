@@ -65,14 +65,13 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   #---- Completeness----
   output$completenessUI <- renderUI({
     
+    local.rea.values$message <- NULL
     completeCheckRes <- CheckExpDesignCompleteness(session$userData$FlomicsMultiAssay, paste0(dataset, ".raw"), input$selectSamples)
-    local.rea.values$message   <- completeCheckRes[["error"]]
-    
-    # if(isTRUE(completeCheckRes[["error"]])){
-    #   
-    #   local.rea.values$message   <- completeCheckRes[["summary"]][1,3]
-    #   showModal(modalDialog(title = "Error message ???", completeCheckRes[["summary"]][1,3]))
-    # }
+
+    if(isTRUE(completeCheckRes[["error"]])){
+
+      local.rea.values$message   <- completeCheckRes[["summary"]][1,3]
+    }
     
     list(
       # plot of count per condition
@@ -405,6 +404,8 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     }
     
     session$userData$FlomicsMultiAssay <- eval(parse(text = paste0('c( session$userData$FlomicsMultiAssay ,', SE.name, ' = processed.SE )')))
+    
+    toto <<- session$userData$FlomicsMultiAssay
     
     rea.values[[dataset]]$process   <- TRUE
     
