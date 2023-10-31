@@ -298,7 +298,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     # RNASeq
     data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"),
-                                                           "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")), 
+                                                           "/ExamplesFiles/ecoseed/transcriptome_ecoseed_gene.txt")), 
                             error = function(e) e, warning = function(w) w)
     dataName <- "RNAseq.set1"
     inputs[[dataName]] <- list("omicType" = "RNAseq", "data" = data.mat.tt, "meta" = NULL) 

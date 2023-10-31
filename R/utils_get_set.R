@@ -502,6 +502,27 @@ getEnrichSum <- function(object,
 }
 
 
+# ---- INTERNAL - Get a pvalue threshold used in enrichment analysis ----
+# TODO equivalent to sumORA (external)
+#
+#' @title Get a pvalue threshold used in enrichment analysis
+#'
+#' @param object a SE object
+#' @return pvalue
+#' @noRd
+#' @keywords internal
+
+getEnrichPvalue <- function(object,
+                            from = "DiffExpEnrichAnal",
+                            dom = "GO") {
+  
+  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  if (!from %in% c("DiffExpEnrichAnal", "CoExpEnrichAnal")) stop(paste0(from, " don't existe"))
+  if (!dom  %in% c("GO", "KEGG", "custom")) stop(paste0(from, " not valide value. Choose from c(GO, KEGG, custom)"))
+  if (is.null(object@metadata[[from]][[dom]]$list_args$pvalueCutoff)) stop("P-value not found")
+    
+  return(object@metadata[[from]][[dom]]$list_args$pvalueCutoff)
+}
 
 
 
