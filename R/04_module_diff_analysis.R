@@ -153,6 +153,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$coExpAnnot <- FALSE
     rea.values[[dataset]]$DiffValidContrast <- NULL
     
+    session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpEnrichAnal <- NULL
+    session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpEnrichAnal   <- NULL
+    
     session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["Validcontrasts"]] <- NULL
     
     dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
@@ -163,8 +166,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     
     
     dataset.SE@metadata$CoExpAnal   <- list()
-    dataset.SE@metadata$DiffExpEnrichAnal  <- list()
-    dataset.SE@metadata$CoExpEnrichAnal  <- list()
     
     #---- progress bar ----#
     progress <- shiny::Progress$new()
@@ -244,10 +245,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$diffAnnot  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
     
-    dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]] 
-    dataset.SE@metadata$DiffExpEnrichAnal <- NULL
-    dataset.SE@metadata$CoExpEnrichAnal   <- NULL
+    session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpEnrichAnal <- NULL
+    session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpEnrichAnal   <- NULL
     
+    dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]] 
     # filter DEG according pvalue adj cut-off
     
     session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal <-
