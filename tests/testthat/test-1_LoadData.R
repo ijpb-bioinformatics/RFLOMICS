@@ -65,3 +65,20 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(
   ExpDesign = RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt")),
   refList = c("Repeat" = "rep1", "temperature" = "Low", "imbibition" = "DS"),
   typeList = c("Repeat" = "batch", "temperature" = "Bio", "imbibition" = "Bio"))
+
+
+# TODO add test when several names are the same
+MAE <- RFLOMICS::FlomicsMultiAssay.constructor(
+  list("RNAtest"     = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
+                            "omicType" = "RNAseq"),
+       "metatest" = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")),
+                         "omicType" = "metabolomics"),
+       "protetest" = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")),
+                          "omicType" = "proteomics"),
+       "protetest" = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")),
+                          "omicType" = "proteomics")
+  ),
+  projectName = "Tests",
+  ExpDesign = RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt")),
+  refList = c("Repeat" = "rep1", "temperature" = "Low", "imbibition" = "DS"),
+  typeList = c("Repeat" = "batch", "temperature" = "Bio", "imbibition" = "Bio"))
