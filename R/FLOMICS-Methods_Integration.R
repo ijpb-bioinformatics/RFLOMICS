@@ -200,6 +200,8 @@ methods::setMethod(
     #   
     # } # does this chunk of code work?!
     
+    object <- object[, , omicsToIntegrate]
+    
     # Checking for batch effects
     correct_batch <- FALSE
     ftypes <- getFactorTypes(object)
@@ -207,8 +209,6 @@ methods::setMethod(
     if (any(ftypes == "batch")) {
       correct_batch <- TRUE
     }
-    
-    object <- object[, , omicsToIntegrate]
     
     # On each selected omics, according to its type, apply transformation if demanded.
     # Filter DE entities
@@ -237,6 +237,37 @@ methods::setMethod(
                        "metabolomics" = do.call("RBETransform", list_args)
       )
     }
+    
+    # Check for duplicated features names across tables
+    # MOFA add the entire view name if it's the case, MixOmics do not care. 
+    # For visualization purpose and coherence, add .index at the end of duplicated variables.
+    commonVarNames <- sum(duplicated(unlist(rownames(object))))
+    if (commonVarNames > 0) {
+      if (cmd) cat("#   => Duplicated features names across tables, changing names for integration\n")
+
+      dupTab <- data.frame("dataTable" = rep(names(object), time = sapply(object@ExperimentList, nrow)),
+                           "rownames" = unlist(rownames(object)), 
+                           "dup" = duplicated(unlist(rownames(object))) + 
+                             duplicated(unlist(rownames(object)), fromLast = TRUE))
+      dupTab <- dupTab[dupTab$dup == 1,]
+      omicstochange <- unique(dupTab$dataTable)
+      
+      res <- lapply(1:length(object), FUN = function(i){
+        SE.object <- object[[names(object)[i]]]
+        if (names(object)[i] %in% omicstochange) {
+          rownames(SE.object) <- paste(rownames(SE.object), i, sep = ".")
+        }
+        return(SE.object)
+      })
+      names(res) <- names(object)
+      
+      object <- MultiAssayExperiment(experiments = res, 
+                                     colData = colData(object), 
+                                     sampleMap = sampleMap(object), 
+                                     metadata = metadata(object))
+      
+    }
+    
     
     if (method == "MOFA") {    
       if (silent) {
