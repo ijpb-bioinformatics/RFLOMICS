@@ -651,10 +651,15 @@ methods::setMethod(f          = "getContrastMatrix",
 #' @name FlomicsMultiAssay.constructor
 #' @rdname FlomicsMultiAssay.constructor
 #' @export
-#' @noRd
 #'
-
 FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refList , typeList){
+  
+  if (sum(duplicated(names(inputs))) > 0) {
+    warning("Some names of input are duplicated. Adding suffix.")
+    
+    names(inputs)[duplicated(names(inputs))] <- paste0(names(inputs)[duplicated(names(inputs))], 1:sum(duplicated(names(inputs))))
+    
+  }
   
   # consctuct ExpDesign object
   for (i in names(ExpDesign)){
