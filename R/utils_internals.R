@@ -55,7 +55,7 @@ check_NA <- function(object) {
 #'
 
 apply_transformation <- function(object) {
-  if (is.null(getTrans(object))) {
+  if (is.null(getTransSetting(object)$method)) {
     stop("Expect transformation method.")
   }
   
@@ -63,7 +63,7 @@ apply_transformation <- function(object) {
     warning("Data were already transformed before!")
   }
   
-  transform_method <- getTrans(object)
+  transform_method <- getTransSetting(object)$method
   assayTransform <- assay(object, withDimnames = TRUE)
   validTransform <- TRUE
   
@@ -91,7 +91,7 @@ apply_transformation <- function(object) {
          } # default is none
   )
   
-  if (transform_method != "none" && validTransform) object@metadata[["transform"]][["transformed"]] <- TRUE
+  if (transform_method != "none" && validTransform) object@metadata[["DataProcessing"]][["Transformation"]][["transformed"]] <- TRUE
   
   return(object)
 }
@@ -109,7 +109,7 @@ apply_transformation <- function(object) {
 #'
 
 apply_norm <- function(object) {
-  if (is.null(getNorm(object))) {
+  if (is.null(getNormSetting(object)$method)) {
     stop("Expects normalization method.")
   }
   
@@ -117,7 +117,7 @@ apply_norm <- function(object) {
     warning("Data were already normalized before!")
   }
   
-  norm_method <- getNorm(object)
+  norm_method <- getNormSetting(object)$method
   coefNorm <- getCoeffNorm(object)
   validNorm <- TRUE
   
@@ -144,7 +144,7 @@ apply_norm <- function(object) {
          }
   )
   
-  if (norm_method != "none" && validNorm) object@metadata[["Normalization"]][["normalized"]] <- TRUE
+  if (norm_method != "none" && validNorm) object@metadata[["DataProcessing"]][["Normalization"]][["normalized"]] <- TRUE
   
   return(object)
 }
@@ -184,14 +184,14 @@ checkTransNorm <- function(object, raw = FALSE) {
              if (isTransformed(object)) stop("Expect untransformed RNAseq data at this point.")
              
              if (isNorm(object)) {
-               switch(getNorm(object), 
+               switch(getNormSetting(object)$method, 
                       "TMM" = {assay(object) <- log2(assay(object))}, # +1 in the apply_norm function
                       {message("RNAseq counts expects TMM normalization. Data were already normalized with another method.
                 Skipping to the end without transforming or normalizing data.")}
                )
              } else {
                # Force "none" transformation.
-               if (getTrans(object) != "none") {
+               if (getTransSetting(object)$method != "none") {
                  message("RNAseq counts expects TMM normalization. Transformation is done after the normalization,
                   using 'none' as transform method. Data will be transformed using log2 after the normalization anyway")
                  
@@ -199,7 +199,7 @@ checkTransNorm <- function(object, raw = FALSE) {
                }
                
                # Force TMM normalization
-               if (object@metadata[["Normalization"]][["methode"]] != "TMM") {
+               if (getNormSetting(object)$method != "TMM") {
                  message("For RNAseq data (counts), only TMM applies for now. Forcing TMM normalization.")
                  object <- RunNormalization(object, NormMethod = "TMM")
                }
@@ -239,37 +239,37 @@ checkTransNorm <- function(object, raw = FALSE) {
 #'
 
 isTransformed <- function(object) {
-  metadata(object)[["transform"]][["transformed"]]
+  metadata(object)[["DataProcessing"]][["Transformation"]][["transformed"]]
 }
 
 isNorm <- function(object) {
-  metadata(object)[["Normalization"]][["normalized"]]
+  metadata(object)[["DataProcessing"]][["Normalization"]][["normalized"]]
 }
 
-getNorm <- function(object) {
-  metadata(object)[["Normalization"]][["methode"]]
-}
+# getNorm <- function(object) {
+#   metadata(object)[["Normalization"]][["methode"]]
+# }
 
 getCoeffNorm <- function(object) {
-  metadata(object)[["Normalization"]][["coefNorm"]]
+  metadata(object)[["DataProcessing"]][["Normalization"]][["results"]][["coefNorm"]]
 }
 
-getTrans <- function(object) {
-  metadata(object)[["transform"]][["transform_method"]]
-}
+# getTrans <- function(object) {
+#   metadata(object)[["transform"]][["transform_method"]]
+# }
 
 setTrans <- function(object, methode = "none") {
-  metadata(object)[["transform"]][["transform_method"]] <- methode
+  metadata(object)[["DataProcessing"]][["Transformation"]][["setting"]][["methode"]] <- methode
   return(object)
 }
 
 setNorm <- function(object, methode = "none") {
-  metadata(object)[["Normalization"]][["methode"]] <- methode
+  metadata(object)[["DataProcessing"]][["Normalization"]][["setting"]][["methode"]] <- methode
   return(object)
 }
 
 setCoeffNorm <- function(object, coeff = NULL) {
-  metadata(object)[["Normalization"]][["coefNorm"]] <- coeff
+  metadata(object)[["DataProcessing"]][["Normalization"]][["results"]][["coefNorm"]] <- coeff
   return(object)
 }
 
