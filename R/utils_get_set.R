@@ -409,6 +409,26 @@ getTransSetting <- function(object) {
 }
 
 
+# ---- Get diff setting ----
+
+#' @title Get differential analysis setting parametres
+#'
+#' @param object a SE object (produced by Flomics).
+#' @return List of differential analysis setting parametres.
+#' @export
+#'
+getDiffSetting <- function(object) {
+  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  
+  # return(object@metadata$DiffExpAnal$setting)
+  
+  return(list(method            = object@metadata$DiffExpAnal$method,
+              Adj.pvalue.method = object@metadata$DiffExpAnal$Adj.pvalue.method,
+              Adj.pvalue.cutoff = object@metadata$DiffExpAnal$Adj.pvalue.cutoff,
+              abs.logFC.cutoff  = object@metadata$DiffExpAnal$abs.logFC.cutoff))
+}
+
+
 # ----  Get a particular multi-omics result ----
 #
 #' @title Get a particular multi-omics result

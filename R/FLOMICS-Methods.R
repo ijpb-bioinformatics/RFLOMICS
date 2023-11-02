@@ -1416,6 +1416,13 @@ methods::setMethod(f         = "RunDiffAnalysis",
                      object@metadata$DiffExpAnal[["Adj.pvalue.method"]]  <- Adj.pvalue.method
                      #object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
                      
+                     # remplacera à terme les lignes ci-dessus
+                     object@metadata$DiffExpAnal[["setting"]][["method"]] <- DiffAnalysisMethod
+                     object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.method"]] <- Adj.pvalue.method
+                     object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.cutoff"]] <- Adj.pvalue.cutoff
+                     object@metadata$DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- logFC.cutoff
+                       
+                     
                      # transform and norm if needed
                      if (DiffAnalysisMethod == "limmalmFit") {
                        
@@ -1560,6 +1567,10 @@ methods::setMethod(f          = "FilterDiffAnalysis",
                      
                      object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
                      object@metadata$DiffExpAnal[["abs.logFC.cutoff"]]  <- logFC.cutoff
+                     
+                     # remplacera à terme les lignes ci-dessus
+                     object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.cutoff"]] <- Adj.pvalue.cutoff
+                     object@metadata$DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- abs.logFC.cutoff
                      
                      ## TopDEF: Top differential expressed features
                      DEF_filtred <- lapply(1:length(object@metadata$DiffExpAnal[["DEF"]]), function(x){

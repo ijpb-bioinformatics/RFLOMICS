@@ -395,8 +395,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     # add new SE with processed data
     session$userData$FlomicsMultiAssay <- eval(parse(text = paste0('c( session$userData$FlomicsMultiAssay ,', dataset, ' = processed.SE )')))
     
-    toto <<- session$userData$FlomicsMultiAssay
-    
     rea.values[[dataset]]$process   <- TRUE
     
   }, ignoreInit = TRUE)
