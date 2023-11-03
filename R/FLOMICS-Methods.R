@@ -1570,7 +1570,7 @@ methods::setMethod(f          = "FilterDiffAnalysis",
                      
                      # remplacera à terme les lignes ci-dessus
                      object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.cutoff"]] <- Adj.pvalue.cutoff
-                     object@metadata$DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- abs.logFC.cutoff
+                     object@metadata$DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- logFC.cutoff
                      
                      ## TopDEF: Top differential expressed features
                      DEF_filtred <- lapply(1:length(object@metadata$DiffExpAnal[["DEF"]]), function(x){
@@ -2039,7 +2039,7 @@ methods::setMethod(f="runCoExpression",
                    definition <- function(object, K=2:20, replicates=5, nameList = NULL, merge="union",
                                           model = "Normal", GaussianModel = NULL, 
                                           transformation = NULL, normFactors = NULL, clustermq=FALSE,
-                                          meanFilterCutoff = NULL,
+                                          meanFilterCutoff = NULL, scale = NULL,
                                           silent = TRUE, cmd = FALSE){
                      
                      if (is.null(object@metadata$DiffExpAnal[["mergeDEF"]]))
@@ -2052,12 +2052,13 @@ methods::setMethod(f="runCoExpression",
                      
                      CoExpAnal <- list()
                      
-                     CoExpAnal[["method"]]           <- "coseq"
-                     CoExpAnal[["gene.list.names"]]  <- nameList
-                     names(CoExpAnal[["gene.list.names"]])  <- dplyr::filter(object@metadata$DiffExpAnal$contrasts, tag %in% nameList)$contrastName
-                     CoExpAnal[["merge.type"]]       <- merge
-                     CoExpAnal[["replicates.nb"]]    <- replicates
-                     CoExpAnal[["K.range"]]          <- K
+                     CoExpAnal[["setting"]][["method"]]           <- "coseq"
+                     CoExpAnal[["setting"]][["gene.list.names"]]  <- nameList
+                     names(CoExpAnal[["setting"]][["gene.list.names"]])  <- dplyr::filter(object@metadata$DiffExpAnal$contrasts, tag %in% nameList)$contrastName
+                     CoExpAnal[["setting"]][["merge.type"]]       <- merge
+                     CoExpAnal[["setting"]][["replicates.nb"]]    <- replicates
+                     CoExpAnal[["setting"]][["K.range"]]          <- K
+                     CoExpAnal[["setting"]][["scale"]]            <- scale
                      
                      # geneList <- dplyr::select(object@metadata$DiffExpAnal[["mergeDEF"]], DEF, tidyselect::all_of(nameList)) %>% 
                      #   dplyr::mutate(intersection = dplyr::if_else(rowSums(dplyr::select(., tidyselect::contains(nameList))) == length(nameList), "YES", "NO"), 
@@ -2113,7 +2114,7 @@ methods::setMethod(f="runCoExpression",
                             }
                      )
                      
-                     CoExpAnal[["param"]] <- param.list
+                     CoExpAnal[["setting"]] <- c(CoExpAnal[["setting"]], param.list)
                      
                      # run coseq : on local machine or remote cluster
                      
@@ -2173,7 +2174,7 @@ methods::setMethod(f="runCoExpression",
 methods::setMethod(f          = "runCoExpression",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, K=2:20, replicates=5, nameList, merge="union",
-                                         model = "Normal", GaussianModel = NULL, 
+                                         model = "Normal", GaussianModel = NULL, scale = NULL,
                                          transformation = NULL, normFactors = NULL, clustermq=FALSE,
                                          meanFilterCutoff = NULL, silent = TRUE, cmd = FALSE){
                      
@@ -2192,6 +2193,7 @@ methods::setMethod(f          = "runCoExpression",
                                                            normFactors = normFactors,
                                                            clustermq = clustermq,
                                                            meanFilterCutoff = meanFilterCutoff,
+                                                           scale = scale,
                                                            silent = silent,
                                                            cmd = cmd)
                      

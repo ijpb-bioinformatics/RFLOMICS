@@ -15,15 +15,15 @@ isResults <- dataset.SE@metadata$CoExpAnal[["results"]]
 Co-expression analysis strategy was adapted from @Lambert2020ta
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
 
-Co-expression analysis was carried out on the `r dataset.SE@metadata[["CoExpAnal"]]$merge.type`
-of the following list of `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`  `r names(dataset.SE@metadata$CoExpAnal$gene.list.names)`. 
-`r dataset.SE@metadata[["CoExpAnal"]]$method` was used to cluster the `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`. 
+Co-expression analysis was carried out on the `r getCoexpSetting(dataset.SE)$merge.type`
+of the following list of `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`  `r names(getCoexpSetting(dataset.SE)$gene.list.names)`. 
+`r getCoexpSetting(dataset.SE)$method` was used to cluster the `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`. 
 
-The gaussian mixture model was run on filtered (meanFilterCutoff was set to: `r dataset.SE@metadata[["CoExpAnal"]]$param$meanFilterCutoff`), 
-normalized (normalization method was `r dataset.SE@metadata[["CoExpAnal"]]$param$normFactors`) 
-and transformed (transformation method: `r dataset.SE@metadata[["CoExpAnal"]]$param$transformation`) count data.
+The gaussian mixture model was run on filtered (meanFilterCutoff was set to: `r getCoexpSetting(dataset.SE)$meanFilterCutoff`), 
+normalized (normalization method was `r getCoexpSetting(dataset.SE)$normFactors`) 
+and transformed (transformation method: `r getCoexpSetting(dataset.SE)$transformation`) count data.
 
-`r dataset.SE@metadata[["CoExpAnal"]]$replicates.nb` technical replicates were performed for each K in `r dataset.SE@metadata[["CoExpAnal"]]$K.range` (K=number of clusters). 
+`r getCoexpSetting(dataset.SE)$replicates.nb` technical replicates were performed for each K in `r getCoexpSetting(dataset.SE)$K.range` (K=number of clusters). 
 
 The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
 was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.

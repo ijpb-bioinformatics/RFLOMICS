@@ -243,15 +243,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     
     session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpEnrichAnal <- NULL
     session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpEnrichAnal   <- NULL
+    session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpAnal         <- NULL
     
-    dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]] 
-    # filter DEG according pvalue adj cut-off
-    
-    session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal <-
-      dataset.SE@metadata$DiffExpAnal
-    
-    session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["Validcontrasts"]] <-
-      rea.values[[dataset]]$DiffValidContrast
+    session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["Validcontrasts"]] <- rea.values[[dataset]]$DiffValidContrast
     
     rea.values[[dataset]]$diffValid <- TRUE
     rea.values$datasetDiff <- unique(c(rea.values$datasetDiff , dataset))

@@ -1404,9 +1404,15 @@ coseq.results.process <- function(coseqObjectList, K, conds){
   # ICL plot
   ICL.list <- list()
   
-  ICL.vec <- lapply(1:length(coseqObjectList), function(x){ coseq::ICL(coseqObjectList[[x]]) }) %>%
-    unlist()
+  ICL.vec <- lapply(1:length(coseqObjectList), function(x){ coseq::ICL(coseqObjectList[[x]]) }) %>% unlist()
   ICL.list[["ICL.vec"]] <- ICL.vec
+  
+  ICL.min.per.cluster <- lapply(1:length(coseqObjectList), function(x){ 
+    ICL.vec <- coseq::ICL(coseqObjectList[[x]])
+    ICL.vec[which(ICL.vec == min(ICL.vec))] 
+    }) %>% unlist()
+  
+  titi <<- coseqObjectList
   
   ICL.tab <- data.frame(K = stringr::str_replace(names(ICL.vec), "K=", ""), ICL = ICL.vec) %>%
     dplyr::mutate(K = as.numeric(K))
@@ -1418,15 +1424,23 @@ coseq.results.process <- function(coseqObjectList, K, conds){
     dplyr::summarise(median = median(ICL, na.rm = TRUE), n = dplyr::n()) %>%
     dplyr::mutate(K = as.numeric(K))
   ICL.list[["ICL.n"]] <- ICL.n
-  
-  
+
   # min ICL
   K.ICL.median.min <- ICL.n[which.min(ICL.n$median),]$K
-  K.ICL.min <- min(ICL.vec[names(ICL.vec) == paste0("K=", K.ICL.median.min)], na.rm = TRUE)
+  index  <- which(names(ICL.min.per.cluster) == paste0("K=", K.ICL.median.min))
+  index2 <- which(ICL.min.per.cluster[index] == min(ICL.min.per.cluster[index]))
   
   # coseq object with the min ICL
-  index <- sapply(names(coseqObjectList), function(x){(TRUE %in% (coseq::ICL(coseqObjectList[[x]]) == K.ICL.min))})
-  coseq.res <- coseqObjectList[index][[1]]
+  coseq.res <- coseqObjectList[index][index2][[1]]
+  
+  # K.ICL.min <- min(ICL.vec[names(ICL.vec) == paste0("K=", K.ICL.median.min)], na.rm = TRUE)
+  # 
+  # 
+  # index <- sapply(names(coseqObjectList), function(x){
+  #   
+  #   any(coseq::ICL(coseqObjectList[[x]]) == K.ICL.min)
+  #   })
+  # coseq.res <- coseqObjectList[index][[1]]
   # coseq.res <- coseqObjectList[[which.min(ICL.vec)]]
   
   # logLike plot
@@ -1464,7 +1478,6 @@ coseq.results.process <- function(coseqObjectList, K, conds){
   CoExpAnal[["clusters"]]     <- clusters
   CoExpAnal[["cluster.nb"]]   <- nb_cluster
   CoExpAnal[["plots"]]        <- list("ICL" = ICL.list, "logLike" = logLike.list)
-  
   
   #### Plots
   

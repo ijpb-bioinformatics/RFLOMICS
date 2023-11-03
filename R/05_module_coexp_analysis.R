@@ -43,7 +43,7 @@ CoSeqAnalysisUI <- function(id){
 #' @importFrom UpSetR upset
 CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
   
-  local.rea.values <- reactiveValues(dataset.SE = NULL)
+  local.rea.values <- reactiveValues(features.list = NULL)
   
   # co-expression parameters
   output$CoExpParamUI <- renderUI({
@@ -198,11 +198,8 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     
     if(rea.values[[dataset]]$diffValid == FALSE) return()
     
-    MAE.data <- session$userData$FlomicsMultiAssay
-    SE.data <- MAE.data[[dataset]]
-    SE.filtered <- MAE.data[[dataset]]
-    
-    print(paste(length(DEG_list()), RFLOMICS:::omicsDic(SE.filtered)$variableName, sep =" "))
+    dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
+    print(paste(length(DEG_list()), RFLOMICS:::omicsDic(dataset.SE)$variableName, sep =" "))
   })
   
   # update K value (min max)
@@ -227,13 +224,6 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
   # coseq
   observeEvent(input$runCoSeq, {
     
-    print(paste0("# 9- CoExpression analysis... ", dataset ))
-    
-    rea.values[[dataset]]$coExpAnal  <- FALSE
-    rea.values[[dataset]]$coExpAnnot <- FALSE
-    
-    local.rea.values$dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
-    
     # check if no selected DGE list
     if(length(input$select) == 0){
       
@@ -243,8 +233,41 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
       need(length(input$select) != 0, message="Please select at least 1 DEG list")
     })
     
-    local.rea.values$dataset.SE@metadata$CoExpAnal   <- list()
-    local.rea.values$dataset.SE@metadata$CoExpEnrichAnal  <- list()
+    # check the number of features
+    if(length(DEG_list()) < 100){
+      
+      showModal(modalDialog(title = "Error message", 
+                            paste0("Need at least 100 ", RFLOMICS:::omicsDic(session$userData$FlomicsMultiAssay[[dataset]])$variableName, ".")))
+    }
+    validate({
+      need(length(DEG_list()) >= 100, 
+           message=paste0("Need 100 at least ", RFLOMICS:::omicsDic(session$userData$FlomicsMultiAssay[[dataset]])$variableName, "."))
+    })
+    
+    
+    # dble execution
+    param.list <- list(method.        = "coseq",
+                       model          = input$model,
+                       gene.list.names= input$select,
+                       merge.type     = input$unionInter,
+                       K.range        = input$K.values[1]:input$K.values[2],
+                       replicates.nb  = input$iter,
+                       transformation = input$transfo,
+                       normFactors    = input$norm,
+                       GaussianModel  = input$GaussianModel, 
+                       clustermq      = input$clustermqCoseq,
+                       scale          = input$scale)
+    param.list <<- param.list
+    
+    if(check_run_coseq_execution(session$userData$FlomicsMultiAssay[[dataset]], param.list) == FALSE) return()
+
+    # initialize reactive value
+    rea.values[[dataset]]$coExpAnal  <- FALSE
+    rea.values[[dataset]]$coExpAnnot <- FALSE
+    
+    # initialize MAE object
+    session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpAnal       <- NULL
+    session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpEnrichAnal <- NULL
     
     #---- progress bar ----#
     progress <- shiny::Progress$new()
@@ -253,35 +276,42 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     progress$inc(1/2, detail = "In progress")
     #----------------------#
     
+    print(paste0("# 9- CoExpression analysis... ", dataset ))
     
+    dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
     # run coseq
-    local.rea.values$dataset.SE <- runCoExpression(object = local.rea.values$dataset.SE, 
-                                                   merge = input$unionInter, nameList = input$select,
-                                                   K = input$K.values[1]:input$K.values[2], replicates = input$iter,
-                                                   model  = input$model, transformation = input$transfo, normFactors = input$norm,
-                                                   GaussianModel = input$GaussianModel, clustermq = input$clustermqCoseq, 
-                                                   cmd = TRUE, silent = TRUE)
-    
-    
-    session$userData$FlomicsMultiAssay[[dataset]] <- local.rea.values$dataset.SE
+    dataset.SE <- runCoExpression(object = dataset.SE, 
+                                  merge = input$unionInter, 
+                                  nameList = input$select,
+                                  K = input$K.values[1]:input$K.values[2], 
+                                  replicates = input$iter,
+                                  model  = input$model, 
+                                  transformation = input$transfo, 
+                                  scale = input$scale,
+                                  normFactors = input$norm,
+                                  GaussianModel = input$GaussianModel, 
+                                  clustermq = input$clustermqCoseq, 
+                                  cmd = TRUE, silent = TRUE)
+
+    session$userData$FlomicsMultiAssay[[dataset]] <- dataset.SE
     
     # If an error occured
-    if(isFALSE(local.rea.values$dataset.SE@metadata$CoExpAnal[["results"]])){
+    if(isFALSE(dataset.SE@metadata$CoExpAnal[["results"]])){
       
       showModal(modalDialog( title = "Error message", 
-                             paste0("No results! ", as.character(local.rea.values$dataset.SE@metadata$CoExpAnal[["error"]]))))
+                             paste0("No results! ", as.character(dataset.SE@metadata$CoExpAnal[["error"]]))))
     }
     
     validate(
-      need(!isFALSE(local.rea.values$dataset.SE@metadata$CoExpAnal[["results"]]), 
-           paste0("No results!", as.character(local.rea.values$dataset.SE@metadata$CoExpAnal[["error"]])))
+      need(!isFALSE(dataset.SE@metadata$CoExpAnal[["results"]]), 
+           paste0("No results!", as.character(dataset.SE@metadata$CoExpAnal[["error"]])))
     )
-    
-    session$userData$FlomicsMultiAssay[[dataset]] <- local.rea.values$dataset.SE
     
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
     #----------------------#
+    
+    toto <<- session$userData$FlomicsMultiAssay
     
     rea.values[[dataset]]$coExpAnal  <- TRUE
     
@@ -394,7 +424,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     
     dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
     
-    if(rea.values[[dataset]]$coExpAnal == FALSE || dim(local.rea.values$dataset.SE@metadata$CoExpAnal[["stats"]])[1] == 0) return()
+    if(rea.values[[dataset]]$coExpAnal == FALSE || dim(dataset.SE@metadata$CoExpAnal[["stats"]])[1] == 0) return()
     
     box(title = "Failed cases", width = 14, status = "warning", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE,
         
@@ -404,6 +434,23 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
   })
 }
 
+############## functions ###############
 
-
-
+# ----- check run diff execution ------
+check_run_coseq_execution <- function(object.SE, param.list = NULL){
+  
+  # filtering setting
+  if(is.null(object.SE@metadata[["CoExpAnal"]]) || object.SE@metadata[["CoExpAnal"]]$results != TRUE) return(TRUE)
+  
+  if(isFALSE(dplyr::setequal(param.list$gene.list.names, getCoexpSetting(object.SE)$gene.list.names))) return(TRUE)
+  if(param.list$model          != getCoexpSetting(object.SE)$model)                       return(TRUE)
+  if(param.list$merge.type     != getCoexpSetting(object.SE)$merge.type)                  return(TRUE)
+  if(isFALSE(dplyr::setequal(param.list$K.range, getCoexpSetting(object.SE)$K.range)))    return(TRUE)
+  if(param.list$replicates.nb  != getCoexpSetting(object.SE)$replicates.nb)               return(TRUE)
+  if(param.list$transformation != getCoexpSetting(object.SE)$transformation)              return(TRUE)
+  if(param.list$normFactors    != getCoexpSetting(object.SE)$normFactors)                 return(TRUE)
+  if(param.list$GaussianModel  != getCoexpSetting(object.SE)$GaussianModel)               return(TRUE)
+  if(param.list$scale          != getCoexpSetting(object.SE)$scale)                       return(TRUE)
+  
+  return(FALSE)
+}

@@ -429,6 +429,21 @@ getDiffSetting <- function(object) {
 }
 
 
+# ---- Get coseq setting ----
+
+#' @title Get co-expression analysis setting parametres
+#'
+#' @param object a SE object (produced by Flomics).
+#' @return List of co-expression analysis setting parametres.
+#' @export
+#'
+getCoexpSetting <- function(object) {
+  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  
+  return(object@metadata$CoExpAnal$setting)
+}
+
+
 # ----  Get a particular multi-omics result ----
 #
 #' @title Get a particular multi-omics result
