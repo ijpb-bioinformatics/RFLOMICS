@@ -446,7 +446,7 @@ omicsDic <- function(object, SE.name = NULL){
   omicsType <- getOmicsTypes(object)
   
   valReturn <- switch(omicsType,
-                      "RNAseq"       =  list("variableName" = "genes",
+                      "RNAseq"       =  list("variableName" = "transcripts",
                                              "valueType" = "counts"),
                       "proteomics"   =  list("variableName" = "proteins",
                                              "valueType" = "XIC"),

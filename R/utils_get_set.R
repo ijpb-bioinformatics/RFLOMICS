@@ -300,15 +300,14 @@ opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "unio
 #'
 getOmicsTypes <- function(object) {
   
-  # if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
-  #   stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
+  if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment"))
+    stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
   
   if (is(object, "MultiAssayExperiment")) {
-    sapply(names(object), FUN = function(x) {
-      object[[x]]@metadata$omicType
-    })
+    return(names(object@metadata$omicList))
+    
   } else {
-    object@metadata$omicType
+    return(object@metadata$omicType)
   }
 }
 
@@ -323,16 +322,12 @@ getOmicsTypes <- function(object) {
 #'
 getDatasetNames <- function(object) {
   
-  # if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
-  #   stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
+  if (!is(object, "MultiAssayExperiment")) stop("Object is not a MultiAssayExperiment")
   
-  if (is(object, "MultiAssayExperiment")) {
-    sapply(names(object), FUN = function(x) {
-      object[[x]]@metadata$omicType
-    })
-  } else {
-    object@metadata$omicType
-  }
+  datasetNames <- unlist(object@metadata$omicList)
+  names(datasetNames) <- NULL
+  
+  return(datasetNames)
 }
 
 
