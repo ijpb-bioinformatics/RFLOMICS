@@ -1412,9 +1412,9 @@ methods::setMethod(f         = "RunDiffAnalysis",
                      
                      object@metadata$DiffExpAnal <- list()
                      object@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
-                     object@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
-                     object@metadata$DiffExpAnal[["Adj.pvalue.method"]]  <- Adj.pvalue.method
-                     #object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
+                     # object@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
+                     # object@metadata$DiffExpAnal[["Adj.pvalue.method"]]  <- Adj.pvalue.method
+                     # #object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
                      
                      # remplacera à terme les lignes ci-dessus
                      object@metadata$DiffExpAnal[["setting"]][["method"]] <- DiffAnalysisMethod
