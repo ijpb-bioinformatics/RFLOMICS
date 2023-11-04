@@ -38,24 +38,23 @@ check$plot
 Filtering and normalization strategies were adapted from DiCoExpress @Lambert2020ta
 
 * By default, *unexpressed genes* were filtered-out (`r length(dataset.raw.SE@metadata$rowSums.zero)` genes).
-* Then, *genes* with a cpm lower to `r dataset.SE@metadata$FilteringOptions$CPM_Cutoff` in at least "`r dataset.SE@metadata$FilteringOptions$Filter_Strategy`" were filtered out ( `r length(dataset.SE@metadata$FilteredFeatures)` genes).
-* The `r dataset.SE@metadata$Normalization$methode` normalization method was applied. 
+* Then, *genes* with a `r getFilterSetting(dataset.SE)$method` lower to `r getFilterSetting(dataset.SE)$cpmCutoff` in at least "`r getFilterSetting(dataset.SE)$filterStrategy`" were filtered out ( `r length(getFilteredFeatures(dataset.SE))` transcripts).
 
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
 
-`r if(dataset.SE@metadata$Normalization$methode == "none") {"\\begin{comment}"}`
+`r if(getNormSetting(dataset.SE)$method == "none") {"\\begin{comment}"}`
 
-* The `r dataset.SE@metadata$Normalization$methode` normalization method was applied. 
+* The `r getNormSetting(dataset.SE)$method` normalization method was applied. 
 
-`r if(dataset.SE@metadata$Normalization$normalized == "none") {"\\end{comment}"}`
+`r if(getNormSetting(dataset.SE)$method == "none") {"\\end{comment}"}`
 
 <!-- proteomics or metabolomics data cas -->
 
-`r if(dataset.SE@metadata$transform$transform_method == "none") {"\\begin{comment}"}`
+`r if(getTransSetting(dataset.SE)$method == "none") {"\\begin{comment}"}`
 
-* The data were transformed using `r dataset.raw.SE@metadata$transform_method`.
+* The data were transformed using `r getTransSetting(dataset.SE)$method`.
 
-`r if(dataset.SE@metadata$transform$transform_method == "none") {"\\end{comment}"}`
+`r if(getTransSetting(dataset.SE)$method == "none") {"\\end{comment}"}`
 
 
 

@@ -129,7 +129,7 @@ methods::setMethod(
             list_args$TERM2GENE <- list("term" = annotation2[[col_term]], "gene" = annotation2[[col_gene]])
 
             if (!is.null(annotation2[[col_name]])) {
-              tmp <- select(annotation2, tidyselect::all_of(c(col_term, col_name))) %>% unique()
+              tmp <- dplyr::select(annotation2, tidyselect::all_of(c(col_term, col_name))) %>% unique()
               list_args$TERM2NAME <- list("term" = tmp[[col_term]], "name" = tmp[[col_name]])
             }
           }
@@ -190,9 +190,10 @@ methods::setMethod(
       }
     }
 
-    EnrichAnal[["list_args"]] <- list_args[names(list_args) %in% c("universe", "keytype", "pvalueCutoff", "qvalueCutoff", "OrgDb")]
+    EnrichAnal[["list_args"]] <- list_args[names(list_args) %in% c("universe", "keyType", "pvalueCutoff", "qvalueCutoff", "OrgDb", "organism")]
+    EnrichAnal[["list_args"]] <- c(EnrichAnal[["list_args"]], list("Domain"=Domain))
     EnrichAnal[["enrichResult"]] <- results_list
-
+    
     if (from == "DiffExpAnal") {
       object@metadata[["DiffExpEnrichAnal"]][[dom.select]] <- EnrichAnal
     } else if (from == "CoExpAnal") {

@@ -42,12 +42,8 @@ QCNormalizationTabUI <- function(id){
 ### server
 QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   
-  local.rea.values <- reactiveValues(dataset.processed.SE = NULL, 
-                                     dataset.raw.SE = NULL,
-                                     compCheck = TRUE,
-                                     message = NULL)
-  
-  
+  local.rea.values <- reactiveValues(message = NULL)
+
   #---- sample list----
   output$selectSamplesUI <- renderUI({
     
@@ -147,8 +143,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   #---- dataset filtering summary----
   output$filtSummary1UI <- renderUI({
     
-    MAE.data <- session$userData$FlomicsMultiAssay
-    SE.data  <- MAE.data[[paste0(dataset, ".raw")]]
+    SE.data  <- session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]]
     
     tagList(
       
@@ -168,15 +163,14 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     
     if (rea.values[[dataset]]$process == FALSE) return()
     
-    MAE.data <- session$userData$FlomicsMultiAssay
-    SE.data  <- MAE.data[[dataset]]
+    SE.data  <- session$userData$FlomicsMultiAssay[[dataset]]
     
     tagList(
       box(
-        title = length(names(local.rea.values$dataset.processed.SE)), width = 6, background = "fuchsia", 
+        title = length(names(SE.data)), width = 6, background = "fuchsia", 
         paste0("Number of filtered ", omicsDic(SE.data)$variableName)
       ),
-      box(title = length(colnames(local.rea.values$dataset.processed.SE)),
+      box(title = length(colnames(SE.data)),
           width = 6, background = "purple", "Number of filtered samples"
       )
     )
@@ -318,7 +312,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     PC2.value <- as.numeric(input$`factors-Secondaxis`[1])
     condGroup <- input$PCA.factor.condition
     
-    RFLOMICS::plotPCA(local.rea.values$dataset.processed.SE, PCA = "norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
+    RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[dataset]], PCA = "norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
     
   })
   
@@ -340,38 +334,22 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     PC2.value <- as.numeric(input$`meta-Secondaxis`[1])
     condGroup <- input$PCA.meta.condition
     
-    RFLOMICS::plotPCA(local.rea.values$dataset.processed.SE, PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
+    RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[dataset]], PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
   })
   
   #---- run preprocessing - Normalization/transformation, filtering...----
   observeEvent(input$run, {
     
+    # check completeness for curent dataset
     if(!is.null(local.rea.values$message)){
       showModal(modalDialog(title = "Error message", local.rea.values$message))
     }
     validate({ need(is.null(local.rea.values$message), message=local.rea.values$message) })
     
-    rea.values[[dataset]]$compCheck <- TRUE
     
-    # re-initialize reactive values
-    rea.values[[dataset]]$process   <- FALSE
-    rea.values[[dataset]]$diffAnal  <- FALSE
-    rea.values[[dataset]]$coExpAnal <- FALSE
-    rea.values[[dataset]]$diffAnnot <- FALSE
-    rea.values[[dataset]]$diffValid <- FALSE
-    
-    # re-initialize MAE object
-    if (dataset %in% rea.values$datasetDiff){
-      rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
-    }
-    
-    # new selected param
+    # get parameters 
     param.list <- list()
-    
-    MAE.data <- session$userData$FlomicsMultiAssay
-    SE.data <- MAE.data[[paste0(dataset, ".raw")]]
-    
-    switch( getOmicsTypes(SE.data),
+    switch( getOmicsTypes(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]]),
             "RNAseq" = {
               param.list <- list(Filter_Strategy = input$Filter_Strategy, 
                                  CPM_Cutoff = input$FilterSeuil, 
@@ -387,25 +365,35 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
             }
     )
     
+    if(check_run_process_execution(session$userData$FlomicsMultiAssay, dataset = dataset, param.list = param.list) == FALSE &&
+       rea.values[[dataset]]$process == TRUE) return()
+    
+    # re-initialize reactive values
+    rea.values[[dataset]]$process   <- FALSE
+    rea.values[[dataset]]$diffAnal  <- FALSE
+    rea.values[[dataset]]$coExpAnal <- FALSE
+    rea.values[[dataset]]$diffAnnot <- FALSE
+    rea.values[[dataset]]$diffValid <- FALSE
+    
+    # re-initialize list of diff analized dataset
+    if (dataset %in% rea.values$datasetDiff){
+      rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
+    }
+    
+    
     print(paste0("# 3  => Data processing: ", dataset))
     processed.SE <- process_data(SE = session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], 
                                  dataset = dataset, 
                                  samples = input$selectSamples, 
                                  param.list = param.list)
     
-    local.rea.values$dataset.processed.SE <- processed.SE
-    
-    ## add new SE with processed data
-    SE.name <- dataset
-    
     # remove SE processed if exist
-    if (SE.name %in% names(session$userData$FlomicsMultiAssay)){
-      session$userData$FlomicsMultiAssay <- session$userData$FlomicsMultiAssay[,, -which(names(session$userData$FlomicsMultiAssay) == SE.name)]
+    if (dataset %in% names(session$userData$FlomicsMultiAssay)){
+      session$userData$FlomicsMultiAssay <- session$userData$FlomicsMultiAssay[,, -which(names(session$userData$FlomicsMultiAssay) == dataset)]
     }
     
-    session$userData$FlomicsMultiAssay <- eval(parse(text = paste0('c( session$userData$FlomicsMultiAssay ,', SE.name, ' = processed.SE )')))
-    
-    toto <<- session$userData$FlomicsMultiAssay
+    # add new SE with processed data
+    session$userData$FlomicsMultiAssay <- eval(parse(text = paste0('c( session$userData$FlomicsMultiAssay ,', dataset, ' = processed.SE )')))
     
     rea.values[[dataset]]$process   <- TRUE
     
@@ -417,21 +405,20 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
 
 ############## functions ###############
-###
+# ------ process data -----
 process_data <- function(SE, dataset, samples , param.list = list(Filter_Strategy = "NbConditions", 
                                                                   CPM_Cutoff = 1, NormMethod = "TMM", 
                                                                   transform_method = "none")){
   
   print("#    => select samples")
   SE.new <- SE[, SE$primary %in% samples]
-  
   SE.new@metadata$Groups <- dplyr::filter(SE@metadata$Groups, samples %in% SE.new$primary)
   
   switch(SE.new@metadata$omicType,
          "RNAseq" = {
            #### Filter low abundance ####
            print("#    => Low counts Filtering...")
-           SE.processed <- FilterLowAbundance(SE.new, param.list[["Filter_Strategy"]], param.list[["CPM_Cutoff"]])
+           SE.processed <- FilterLowAbundance(object = SE.new, filterStrategy = param.list[["Filter_Strategy"]], cpmCutoff = param.list[["CPM_Cutoff"]])
            
            #### Run Normalisation ####
            print("#    => Counts normalization...")
@@ -439,22 +426,22 @@ process_data <- function(SE, dataset, samples , param.list = list(Filter_Strateg
          },
          "proteomics" = {
            print("#    => transformation data...")
-           SE.processed <- TransformData(SE.new, transform_method = param.list[["transform_method"]])
+           SE.processed <- TransformData(SE.new, transformMethod = param.list[["transform_method"]])
            
            if(param.list[["NormMethod"]] != "none"){
              print("#    => Run normalization...")
              SE.processed <- RunNormalization(SE.processed, NormMethod = param.list[["NormMethod"]])
-           }else{SE.processed@metadata[["Normalization"]]$methode <- "none" }
+           }else{SE.processed@metadata[["DataProcessing"]][["Normalization"]][["setting"]]$methode <- "none" }
            
          },
          "metabolomics" = {
            print("#    => transformation data...")
-           SE.processed <- TransformData(SE.new, transform_method = param.list[["transform_method"]])
+           SE.processed <- TransformData(SE.new, transformMethod = param.list[["transform_method"]])
            
            if(param.list[["NormMethod"]] != "none"){
              print("#    => Run normalization...")
              SE.processed <- RunNormalization(SE.processed, NormMethod = param.list[["NormMethod"]])
-           }else{SE.processed@metadata[["Normalization"]]$methode <- "none" }
+           }else{SE.processed@metadata[["DataProcessing"]][["Normalization"]][["setting"]]$methode <- "none" }
          }
   )
   
@@ -465,4 +452,33 @@ process_data <- function(SE, dataset, samples , param.list = list(Filter_Strateg
   return(SE.processed)
 }
 
+# ----- check run norm execution ------
+check_run_process_execution <- function(object.MAE, dataset, param.list = NULL){
+
+  if(!dataset %in% names(object.MAE))  return(TRUE)
+
+  SE <- object.MAE[[dataset]]
+  switch( getOmicsTypes(object.MAE[[dataset]]),
+          "RNAseq" = {
+            # filtering setting
+            if(param.list$Filter_Strategy != getFilterSetting(SE)$filterStrategy) return(TRUE)
+            if(param.list$CPM_Cutoff      != getFilterSetting(SE)$cpmCutoff)      return(TRUE)
+            
+            # normalisation setting
+            if(param.list$NormMethod      != getNormSetting(SE)$method) return(TRUE)
+          },
+          "proteomics" = {
+
+            if(param.list$transform_method != getTransSetting(SE)$method) return(TRUE)
+            if(param.list$NormMethod       != getNormSetting(SE)$method) return(TRUE)
+          },
+          "metabolomics" = {
+
+            if(param.list$transform_method != getTransSetting(SE)$method) return(TRUE)
+            if(param.list$NormMethod       != getNormSetting(SE)$method) return(TRUE)
+          }
+  )
+
+  return(FALSE)
+}
 

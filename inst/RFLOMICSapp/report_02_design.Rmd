@@ -38,7 +38,7 @@ DT::datatable(df , rownames = FALSE ,options = list( pageLength = 6, scrollX = F
 
 ```{r Sample table, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}
 
- Datasets_overview_plot(rflomics.MAE)
+ Datasets_overview_plot(object = rflomics.MAE, dataset.list = paste0(getDatasetNames(rflomics.MAE), ".raw"))
 
 ```
 

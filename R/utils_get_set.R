@@ -300,15 +300,14 @@ opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "unio
 #'
 getOmicsTypes <- function(object) {
   
-  # if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
-  #   stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
+  if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment"))
+    stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
   
   if (is(object, "MultiAssayExperiment")) {
-    sapply(names(object), FUN = function(x) {
-      object[[x]]@metadata$omicType
-    })
+    return(names(object@metadata$omicList))
+    
   } else {
-    object@metadata$omicType
+    return(object@metadata$omicType)
   }
 }
 
@@ -323,16 +322,41 @@ getOmicsTypes <- function(object) {
 #'
 getDatasetNames <- function(object) {
   
-  # if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
-  #   stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
+  if (!is(object, "MultiAssayExperiment")) stop("Object is not a MultiAssayExperiment")
   
-  if (is(object, "MultiAssayExperiment")) {
-    sapply(names(object), FUN = function(x) {
-      object[[x]]@metadata$omicType
-    })
-  } else {
-    object@metadata$omicType
-  }
+  datasetNames <- unlist(object@metadata$omicList)
+  names(datasetNames) <- NULL
+  
+  return(datasetNames)
+}
+
+
+# ---- Get filtering parameters ----
+
+#' @title Get filtering setting
+#'
+#' @param object a SE object (produced by Flomics).
+#' @return List of filtering setting
+#' @export
+#'
+getFilterSetting <- function(object) {
+  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  
+  return(object@metadata$DataProcessing$Filtering$setting)
+}
+
+# ---- Get filtred features ----
+
+#' @title Get filtering setting
+#'
+#' @param object a SE object (produced by Flomics).
+#' @return List of filtered features
+#' @export
+#'
+getFilteredFeatures <- function(object) {
+  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  
+  return(object@metadata$DataProcessing$Filtering$results$filteredFeatures)
 }
 
 # ---- Get normalization coefficients ----
@@ -346,7 +370,72 @@ getDatasetNames <- function(object) {
 getNormCoeff <- function(object) {
   if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
   
+  #return(object@metadata$DataProcessing$Normalization$results$coefNorm)
   return(object@metadata$Normalization$coefNorm)
+}
+
+
+# ---- Get normalization parameters ----
+
+#' @title Get normalization parameters
+#'
+#' @param object a SE object (produced by Flomics).
+#' @return List of normalization parameters.
+#' @export
+#'
+getNormSetting <- function(object) {
+  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  
+  return(object@metadata$DataProcessing$Normalization$setting)
+}
+
+# ---- Get transformation parameters ----
+
+#' @title Get transformation parameters
+#'
+#' @param object a SE object (produced by Flomics).
+#' @return List of transformation parameters.
+#' @export
+#'
+getTransSetting <- function(object) {
+  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  
+  return(object@metadata$DataProcessing$Transformation$setting)
+}
+
+
+# ---- Get diff setting ----
+
+#' @title Get differential analysis setting parametres
+#'
+#' @param object a SE object (produced by Flomics).
+#' @return List of differential analysis setting parametres.
+#' @export
+#'
+getDiffSetting <- function(object) {
+  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  
+  # return(object@metadata$DiffExpAnal$setting)
+  
+  return(list(method            = object@metadata$DiffExpAnal$method,
+              Adj.pvalue.method = object@metadata$DiffExpAnal$Adj.pvalue.method,
+              Adj.pvalue.cutoff = object@metadata$DiffExpAnal$Adj.pvalue.cutoff,
+              abs.logFC.cutoff  = object@metadata$DiffExpAnal$abs.logFC.cutoff))
+}
+
+
+# ---- Get coseq setting ----
+
+#' @title Get co-expression analysis setting parametres
+#'
+#' @param object a SE object (produced by Flomics).
+#' @return List of co-expression analysis setting parametres.
+#' @export
+#'
+getCoexpSetting <- function(object) {
+  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  
+  return(object@metadata$CoExpAnal$setting)
 }
 
 

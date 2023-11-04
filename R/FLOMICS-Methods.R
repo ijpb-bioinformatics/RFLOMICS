@@ -732,9 +732,10 @@ FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refLi
                                                      colData  = QCmat,
                                                      metadata = list(omicType      = omicType, 
                                                                      Groups        = Groups, 
-                                                                     rowSums.zero  = genes_flt0,
-                                                                     Normalization = list(methode = "none", coefNorm = NULL, normalized = FALSE),
-                                                                     transform     = list(transform_method = "none", transformed = FALSE)
+                                                                     DataProcessing = list(rowSumsZero = genes_flt0,
+                                                                                           Filtering = NULL, 
+                                                                                           Normalization =  list(setting = list(method = "none"), results = NULL,  normalized = FALSE), 
+                                                                                           Transformation = list(setting = list(method = "none"), results = NULL,  transformed = FALSE))
                                                      ))
     
     #SummarizedExperimentList[[dataName]] <- SE[, SE$primary %in% row.names(ExpDesign)]
@@ -855,7 +856,7 @@ methods::setMethod(f          = "Library_size_barplot.plot",
                        if (!isNorm(object)) pseudo <- SummarizedExperiment::assay(apply_norm(object)) 
                        
                        pseudo <- pseudo %>% colSums(., na.rm = TRUE)
-                       title <- paste0("Filtered and normalized (", getNorm(object), ") data")
+                       title <- paste0("Filtered and normalized (", getNormSetting(object)$method, ") data")
                      }
                      
                      libSizeNorm <-  dplyr::full_join(object@metadata$Groups, data.frame("value" = pseudo , "samples" = names(pseudo)), by = "samples") %>%
@@ -930,11 +931,11 @@ methods::setMethod(
       title <- paste0(omicsType, " data")
       
       if (isTransformed(object2)) {
-        title <- paste0("Transformed (", getTrans(object2), ") ", title)
+        title <- paste0("Transformed (", getTransSetting(object2)$method, ") ", title)
       }
       
       if (isNorm(object2)) {
-        title <- paste0(title, " - normalization: ", getNorm(object2))
+        title <- paste0(title, " - normalization: ", getNormSetting(object2)$method)
       }
       
       if (omicsType == "RNAseq") {
@@ -1030,13 +1031,13 @@ methods::setMethod(f= "plotPCA",
                              "raw"  = {title <- paste0("Raw ", omicsType, " data")},
                              "norm" = {title <- switch (omicsType,
                                                         "RNAseq" = { paste0("Filtred and normalized ", omicsType, 
-                                                                            " data (", getNorm(object), ")")  },
+                                                                            " data (", getNormSetting(object)$method, ")")  },
                                                         "proteomics" = {paste0("Transformed and normalized ", omicsType, 
-                                                                               " data (", getTrans(object), 
-                                                                               " - norm: ", getNorm(object), ")")},
+                                                                               " data (", getTransSetting(object)$method, 
+                                                                               " - norm: ", getNormSetting(object)$method, ")")},
                                                         "metabolomics" = {paste0("Transformed and normalized ", omicsType, 
-                                                                                 " data (", getTrans(object), 
-                                                                                 " - norm: ", getNorm(object), ")")}
+                                                                                 " data (", getTransSetting(object)$method, 
+                                                                                 " - norm: ", getNormSetting(object)$method, ")")}
                              )}
                      )
                      
@@ -1083,7 +1084,7 @@ methods::setMethod(f          = "plotPCA",
 #' @title TransformData
 #'
 #' @param object An object of class \link{SummarizedExperiment}
-#' @param transform_method The transformation to store in the metadata or to store and apply if modify_assay is TRUE.
+#' @param transformMethod The transformation to store in the metadata or to store and apply if modify_assay is TRUE.
 #' @param modify_assay Boolean. Do the transformation need to be applied on the data? The raw data will be replaced by the transformed ones.
 #'
 #' @return An object of class \link{SummarizedExperiment}
@@ -1093,25 +1094,26 @@ methods::setMethod(f          = "plotPCA",
 #' 
 methods::setMethod(f          = "TransformData",
                    signature  = "SummarizedExperiment",
-                   definition = function(object, transform_method = NULL, modify_assay = FALSE){
+                   definition = function(object, transformMethod = NULL, modify_assay = FALSE){
                      
-                     if (is.null(transform_method)) {
+                     if (is.null(transformMethod)) {
                        if (!modify_assay &&  getOmicsTypes(object) == "RNAseq") {
                          message("No transform method indicated, no assay modification asked, RNAseq detected -> transformation_method set to \"none\"")
-                         transform_method <- "none"
+                         transformMethod <- "none"
                        } else {
                          message("No transform method indicated, using log2 transformation")
-                         transform_method <- "log2"
+                         transformMethod <- "log2"
                        }
                      }
                      
-                     if ( getOmicsTypes(object) == "RNAseq" && transform_method != "none") {
+                     if ( getOmicsTypes(object) == "RNAseq" && transformMethod != "none") {
                        message("Transformation other than 'none' are not allowed for RNAseq for now. Forcing none transformation. 
                                Data will be transformed using log2 after the normalization is ran.")
-                       transform_method <- "none"
+                       transformMethod <- "none"
                      }
                      
-                     object@metadata[["transform"]][["transform_method"]] <- transform_method  
+                     object@metadata[["DataProcessing"]][["Transformation"]][["setting"]][["method"]] <- transformMethod
+                     #object@metadata[["transform"]][["transform_method"]] <- transformMethod  
                      
                      if (modify_assay) {
                        object <-  apply_transformation(object)
@@ -1127,10 +1129,10 @@ methods::setMethod(f          = "TransformData",
 #' @exportMethod TransformData
 methods::setMethod(f          = "TransformData",
                    signature  = "MultiAssayExperiment",
-                   definition = function(object, SE.name, transform_method = NULL, modify_assay = FALSE){
+                   definition = function(object, SE.name, transformMethod = NULL, modify_assay = FALSE){
                      
                      object[[SE.name]] <-  TransformData(object[[SE.name]], 
-                                                         transform_method = transform_method, 
+                                                         transformMethod = transformMethod, 
                                                          modify_assay = modify_assay)
                      
                      return(object)
@@ -1150,7 +1152,7 @@ methods::setMethod(f          = "TransformData",
 #' by applying filtering criterion described in reference.
 #' By default, gene/transcript with 0 count are removed from the data. The function then
 #' computes the count per million or read (CPM) for each gene in each sample and gives by
-#' genes the number of sample(s) which are over the CPM_cutoff (NbOfsample_over_cpm).
+#' genes the number of sample(s) which are over the cpmCutoff (NbOfsample_over_cpm).
 #' Then Two filtering strategies are proposed:
 #' \itemize{
 #' \item{NbConditions: }{keep gene if the NbOfsample_over_cpm >= NbConditions}
@@ -1158,8 +1160,9 @@ methods::setMethod(f          = "TransformData",
 #' \item{filterByExpr:} {the default filtering method implemented in the edgeR filterByExpr() function.}
 #' }
 #' @param object An object of class \link{SummarizedExperiment}
-#' @param Filter_Strategy The filtering strategy ("NbConditions" or "NbReplicates")
-#' @param CPM_Cutoff The CPM cutoff.
+#' @param filterMethod The filtering model ("CPM")
+#' @param filterStrategy The filtering strategy ("NbConditions" or "NbReplicates")
+#' @param cpmCutoff The CPM cutoff.
 #' @return An object of class \link{SummarizedExperiment}
 #' @details
 #' Filtered dataset is stored in the ExperimentList slot of the \link{SummarizedExperiment} object
@@ -1176,10 +1179,9 @@ methods::setMethod(f          = "TransformData",
 
 methods::setMethod(f         = "FilterLowAbundance",
                    signature = "SummarizedExperiment",
-                   definition <- function(object, Filter_Strategy = "NbConditions", CPM_Cutoff = 5){
-                     
+                   definition <- function(object, filterMethod= "CPM", filterStrategy = "NbConditions", cpmCutoff = 5){
+
                      objectFilt <- object
-                     
                      assayFilt  <- assay(objectFilt)
                      
                      ## nbr of genes with 0 count
@@ -1193,9 +1195,9 @@ methods::setMethod(f         = "FilterLowAbundance",
                      NbReplicate  <- table(object@metadata$Groups$groups)
                      NbConditions <- length(unique(object@metadata$Groups$groups))
                      
-                     switch(Filter_Strategy,
-                            "NbConditions" = { keep <- rowSums(edgeR::cpm(assayFilt) >= CPM_Cutoff) >=  NbConditions },
-                            "NbReplicates" = { keep <- rowSums(edgeR::cpm(assayFilt) >= CPM_Cutoff) >=  min(NbReplicate) },
+                     switch(filterStrategy,
+                            "NbConditions" = { keep <- rowSums(edgeR::cpm(assayFilt) >= cpmCutoff) >=  NbConditions },
+                            "NbReplicates" = { keep <- rowSums(edgeR::cpm(assayFilt) >= cpmCutoff) >=  min(NbReplicate) },
                             "filterByExpr" = { dge  <- edgeR::DGEList(counts = assayFilt, genes = rownames(assayFilt))
                             #keep <- filterByExpr(dge, GLM_Model)
                             keep <- edgeR::filterByExpr(dge)
@@ -1205,17 +1207,25 @@ methods::setMethod(f         = "FilterLowAbundance",
                      ## nbr of genes filtered
                      genes_flt1  <- objectFilt[!keep]@NAMES
                      
-                     objectFilt@metadata[["FilteredFeatures"]] <-  c(genes_flt0, genes_flt1)
+                     #objectFilt@metadata[["FilteredFeatures"]] <-  c(genes_flt0, genes_flt1)
                      
                      object <- objectFilt[keep]
+                     # object@metadata$FilteredOptions <- list()
+                     # object@metadata$FilteringOptions[["filterStrategy"]] <- filterStrategy
+                     # object@metadata$FilteringOptions[["cpmCutoff"]] <- cpmCutoff
                      
-                     object@metadata$FilteredOptions <- list()
+                     Filtering <- list()
+                     Filtering[["setting"]][["method"]]           <- filterMethod
+                     Filtering[["setting"]][["filterStrategy"]]   <- filterStrategy
+                     Filtering[["setting"]][["cpmCutoff"]]        <- cpmCutoff
+                     Filtering[["results"]][["filteredFeatures"]] <- c(genes_flt0, genes_flt1)
+                     #Filtering[["results"]][["filteredSamples"]] 
                      
-                     object@metadata$FilteringOptions[["Filter_Strategy"]] <- Filter_Strategy
-                     object@metadata$FilteringOptions[["CPM_Cutoff"]] <- CPM_Cutoff
+                     if(is.null(object@metadata$DataProcessing)) object@metadata$DataProcessing <- list()
+                     object@metadata$DataProcessing$Filtering <- Filtering
                      
                      return(object)
-                     
+
                    })
 
 
@@ -1225,12 +1235,12 @@ methods::setMethod(f         = "FilterLowAbundance",
 #' @exportMethod FilterLowAbundance
 methods::setMethod(f          = "FilterLowAbundance",
                    signature  = "MultiAssayExperiment",
-                   definition = function(object, SE.name, Filter_Strategy = "NbConditions", CPM_Cutoff = 5){
+                   definition = function(object, SE.name, filterStrategy = "NbConditions", cpmCutoff = 5){
                      
                      if ( getOmicsTypes(object[[SE.name]]) == "RNAseq") {
                        object[[SE.name]] <-  FilterLowAbundance(object          = object[[SE.name]], 
-                                                                Filter_Strategy = Filter_Strategy, 
-                                                                CPM_Cutoff      = CPM_Cutoff)
+                                                                filterStrategy = filterStrategy, 
+                                                                cpmCutoff      = cpmCutoff)
                        return(object)
                      }else{
                        message("Can't apply this method to omics types other than RNAseq.")
@@ -1276,7 +1286,7 @@ methods::setMethod(f          = "RunNormalization",
                        warning("Data were transformed before!")
                      
                      if (is.null(NormMethod)) {
-                       if (getOmicsTypes(object) == "RNAseq" && getTrans(object) == "none") {
+                       if (getOmicsTypes(object) == "RNAseq" && getTransSetting(object)$method == "none") {
                          message("Using TMM normalization for RNAseq (counts) data")
                          NormMethod <- "TMM"
                        } else {
@@ -1292,7 +1302,7 @@ methods::setMethod(f          = "RunNormalization",
                      object2 <- object
                      
                      # Run normalization on transformed data (except for RNAseq data, transformation is expected to be "none" anyway)
-                     if (!isTransformed(object) && getTrans(object) != "none")
+                     if (!isTransformed(object) && getTransSetting(object)$method != "none")
                        object2 <-  apply_transformation(object2)
                      
                      switch(NormMethod,
@@ -1306,11 +1316,19 @@ methods::setMethod(f          = "RunNormalization",
                             }
                      )
                      
-                     object <- setNorm(object, NormMethod)
-                     object <- setCoeffNorm(object, coefNorm)
+                     # object <- setNorm(object, NormMethod)
+                     # object <- setCoeffNorm(object, coefNorm)
+                     
+                     Normalization <- list()
+                     Normalization[["setting"]][["method"]]   <- NormMethod
+                     Normalization[["results"]][["coefNorm"]] <- coefNorm
+                     Normalization[["normalized"]]            <- FALSE
+
+                     if(is.null(object@metadata$DataProcessing)) object@metadata$DataProcessing <- list()
+                     object@metadata$DataProcessing[["Normalization"]] <- Normalization
                      
                      if (modify_assay) object <-  apply_norm(object)
-                     
+
                      return(object)
                    })
 
@@ -1394,9 +1412,16 @@ methods::setMethod(f         = "RunDiffAnalysis",
                      
                      object@metadata$DiffExpAnal <- list()
                      object@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
-                     object@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
-                     object@metadata$DiffExpAnal[["Adj.pvalue.method"]]  <- Adj.pvalue.method
-                     #object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
+                     # object@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
+                     # object@metadata$DiffExpAnal[["Adj.pvalue.method"]]  <- Adj.pvalue.method
+                     # #object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
+                     
+                     # remplacera à terme les lignes ci-dessus
+                     object@metadata$DiffExpAnal[["setting"]][["method"]] <- DiffAnalysisMethod
+                     object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.method"]] <- Adj.pvalue.method
+                     object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.cutoff"]] <- Adj.pvalue.cutoff
+                     object@metadata$DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- logFC.cutoff
+                       
                      
                      # transform and norm if needed
                      if (DiffAnalysisMethod == "limmalmFit") {
@@ -1542,6 +1567,10 @@ methods::setMethod(f          = "FilterDiffAnalysis",
                      
                      object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
                      object@metadata$DiffExpAnal[["abs.logFC.cutoff"]]  <- logFC.cutoff
+                     
+                     # remplacera à terme les lignes ci-dessus
+                     object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.cutoff"]] <- Adj.pvalue.cutoff
+                     object@metadata$DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- logFC.cutoff
                      
                      ## TopDEF: Top differential expressed features
                      DEF_filtred <- lapply(1:length(object@metadata$DiffExpAnal[["DEF"]]), function(x){
@@ -1896,11 +1925,11 @@ methods::setMethod(f          = "boxplot.DE.plot",
                          pseudo <- SummarizedExperiment::assay(object.DE)
                          x_lab  <- paste0(DE, " data")
                          
-                         if (isTransformed(object.DE) && getTrans(object.DE) != "none") {
-                           title  <- paste0("Transformed (", getTrans(object.DE), ") ", title)
+                         if (isTransformed(object.DE) && getTransSetting(object.DE)$method != "none") {
+                           title  <- paste0("Transformed (", getTransSetting(object.DE)$method, ") ", title)
                          }
-                         if (isNorm(object.DE) && getNorm(object.DE) != "none") {
-                           title <- paste0(title, " - normalization: ", getNorm(object.DE))
+                         if (isNorm(object.DE) && getNormSetting(object.DE)$method != "none") {
+                           title <- paste0(title, " - normalization: ", getNormSetting(object.DE)$method)
                          }  
                        } else {
                          
@@ -2010,7 +2039,7 @@ methods::setMethod(f="runCoExpression",
                    definition <- function(object, K=2:20, replicates=5, nameList = NULL, merge="union",
                                           model = "Normal", GaussianModel = NULL, 
                                           transformation = NULL, normFactors = NULL, clustermq=FALSE,
-                                          meanFilterCutoff = NULL,
+                                          meanFilterCutoff = NULL, scale = NULL,
                                           silent = TRUE, cmd = FALSE){
                      
                      if (is.null(object@metadata$DiffExpAnal[["mergeDEF"]]))
@@ -2023,12 +2052,13 @@ methods::setMethod(f="runCoExpression",
                      
                      CoExpAnal <- list()
                      
-                     CoExpAnal[["method"]]           <- "coseq"
-                     CoExpAnal[["gene.list.names"]]  <- nameList
-                     names(CoExpAnal[["gene.list.names"]])  <- dplyr::filter(object@metadata$DiffExpAnal$contrasts, tag %in% nameList)$contrastName
-                     CoExpAnal[["merge.type"]]       <- merge
-                     CoExpAnal[["replicates.nb"]]    <- replicates
-                     CoExpAnal[["K.range"]]          <- K
+                     CoExpAnal[["setting"]][["method"]]           <- "coseq"
+                     CoExpAnal[["setting"]][["gene.list.names"]]  <- nameList
+                     names(CoExpAnal[["setting"]][["gene.list.names"]])  <- dplyr::filter(object@metadata$DiffExpAnal$contrasts, tag %in% nameList)$contrastName
+                     CoExpAnal[["setting"]][["merge.type"]]       <- merge
+                     CoExpAnal[["setting"]][["replicates.nb"]]    <- replicates
+                     CoExpAnal[["setting"]][["K.range"]]          <- K
+                     CoExpAnal[["setting"]][["scale"]]            <- scale
                      
                      # geneList <- dplyr::select(object@metadata$DiffExpAnal[["mergeDEF"]], DEF, tidyselect::all_of(nameList)) %>% 
                      #   dplyr::mutate(intersection = dplyr::if_else(rowSums(dplyr::select(., tidyselect::contains(nameList))) == length(nameList), "YES", "NO"), 
@@ -2084,7 +2114,7 @@ methods::setMethod(f="runCoExpression",
                             }
                      )
                      
-                     CoExpAnal[["param"]] <- param.list
+                     CoExpAnal[["setting"]] <- c(CoExpAnal[["setting"]], param.list)
                      
                      # run coseq : on local machine or remote cluster
                      
@@ -2144,7 +2174,7 @@ methods::setMethod(f="runCoExpression",
 methods::setMethod(f          = "runCoExpression",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, K=2:20, replicates=5, nameList, merge="union",
-                                         model = "Normal", GaussianModel = NULL, 
+                                         model = "Normal", GaussianModel = NULL, scale = NULL,
                                          transformation = NULL, normFactors = NULL, clustermq=FALSE,
                                          meanFilterCutoff = NULL, silent = TRUE, cmd = FALSE){
                      
@@ -2163,6 +2193,7 @@ methods::setMethod(f          = "runCoExpression",
                                                            normFactors = normFactors,
                                                            clustermq = clustermq,
                                                            meanFilterCutoff = meanFilterCutoff,
+                                                           scale = scale,
                                                            silent = silent,
                                                            cmd = cmd)
                      

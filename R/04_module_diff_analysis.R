@@ -28,7 +28,7 @@ DiffExpAnalysisUI <- function(id){
 
 DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   
-  local.rea.values <- reactiveValues(dataset.SE = NULL, Adj.pvalue.cutoff = 0.05, abs.logFC.cutoff = 0, update = FALSE)
+  local.rea.values <- reactiveValues(Adj.pvalue.cutoff = 0.05, abs.logFC.cutoff = 0)
   
   # list of tools for diff analysis
   MethodList <- c("glmfit (edgeR)"="edgeRglmfit", "lmFit (limma)"="limmalmFit")
@@ -137,14 +137,13 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   #######################
   observeEvent(input$runAnaDiff, {
     
-    # check list of genes
-    if(length(input$contrastList) == 0){
-      
-      showModal(modalDialog( title = "Error message", "Please select at least 1 hypothesis"))
-    }
-    validate({
-      need(length(input$contrastList) != 0, message="Please select at least 1 hypothesis")
-    })
+    param.list <- list(method             = input$AnaDiffMethod,
+                       clustermq          = input$clustermq,
+                       Adj.pvalue.method  = "BH",
+                       Adj.pvalue.cutoff  = input$Adj.pvalue.cutoff, 
+                       abs.logFC.cutoff   = input$abs.logFC.cutoff)
+    
+    if(check_run_diff_execution(session$userData$FlomicsMultiAssay[[dataset]], param.list) == FALSE) return()
     
     rea.values[[dataset]]$diffAnal   <- FALSE
     rea.values[[dataset]]$diffValid  <- FALSE
@@ -154,18 +153,14 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$DiffValidContrast <- NULL
     
     session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpEnrichAnal <- NULL
+    session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpAnal         <- NULL
     session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpEnrichAnal   <- NULL
     
     session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["Validcontrasts"]] <- NULL
     
-    dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
-    
     if (dataset %in% rea.values$datasetDiff){
       rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
     }
-    
-    
-    dataset.SE@metadata$CoExpAnal   <- list()
     
     #---- progress bar ----#
     progress <- shiny::Progress$new()
@@ -173,6 +168,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     on.exit(progress$close())
     progress$inc(1/10, detail = "in progress...")
     #----------------------#
+    
+    dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
     
     if(is.null(dataset.SE@metadata$DiffExpAnal)){
       
@@ -226,7 +223,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     }
     
     session$userData$FlomicsMultiAssay[[dataset]] <- dataset.SE
-    local.rea.values$dataset.SE <- dataset.SE
     
     rea.values[[dataset]]$diffAnal <- TRUE
     
@@ -247,15 +243,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     
     session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpEnrichAnal <- NULL
     session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpEnrichAnal   <- NULL
+    session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpAnal         <- NULL
     
-    dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]] 
-    # filter DEG according pvalue adj cut-off
-    
-    session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal <-
-      dataset.SE@metadata$DiffExpAnal
-    
-    session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["Validcontrasts"]] <-
-      rea.values[[dataset]]$DiffValidContrast
+    session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["Validcontrasts"]] <- rea.values[[dataset]]$DiffValidContrast
     
     rea.values[[dataset]]$diffValid <- TRUE
     rea.values$datasetDiff <- unique(c(rea.values$datasetDiff , dataset))
@@ -358,26 +348,26 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                   renderText("Clustering method = ward.D2, center = TRUE, scale = FALSE"),
                                   ## select cluster to plot
                                   column(6, radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-heat.condColorSelect")),
-                                               label = 'Levels:',
-                                               choices = c("none", factors.bio),
-                                               selected = "none", inline = TRUE)),
+                                                         label = 'Levels:',
+                                                         choices = c("none", factors.bio),
+                                                         selected = "none", inline = TRUE)),
                                   
                                   ## select annotations to show
-                             
-                             
+                                  
+                                  
                                   column(6 ,checkboxGroupInput(inputId = session$ns(paste0(vect["contrastName"], "-annotBio")),
-                                                     label = "Biological factors", inline = TRUE,
-                                                     choices = factors.bio,
-                                                     selected = factors.bio)),
+                                                               label = "Biological factors", inline = TRUE,
+                                                               choices = factors.bio,
+                                                               selected = factors.bio)),
                                   column(6, checkboxGroupInput(inputId = session$ns(paste0(vect["contrastName"], "-annotBatch")),
                                                                label = "Batch factors",  inline = TRUE,
                                                                choices = factors.batch,
                                                                selected = NULL)),
                                   if (length(factors.meta) > 0) {
                                     column(6,checkboxGroupInput(inputId = session$ns(paste0(vect["contrastName"], "-annotMeta")),
-                                                       label = "Metadata factors", inline = TRUE,
-                                                       choices = factors.meta,
-                                                       selected = NULL))
+                                                                label = "Metadata factors", inline = TRUE,
+                                                                choices = factors.meta,
+                                                                selected = NULL))
                                   }
                          ),
                          
@@ -455,10 +445,12 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   # merge results on upset plot
   output$ResultsMerge <- renderUI({
     
-    if (rea.values[[dataset]]$diffAnal == FALSE ||
-        is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["mergeDEF"]])) return()
+    dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
     
-    DEF_mat <- as.data.frame(local.rea.values$dataset.SE@metadata$DiffExpAnal[["mergeDEF"]])
+    if (rea.values[[dataset]]$diffAnal == FALSE ||
+        is.null(dataset.SE@metadata$DiffExpAnal[["mergeDEF"]])) return()
+    
+    DEF_mat <- as.data.frame(dataset.SE@metadata$DiffExpAnal[["mergeDEF"]])
     
     index <- sapply(names(DEF_mat)[-1], function(x){(input[[paste0("checkbox_",x)]])}) %>% unlist()
     
@@ -478,5 +470,20 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   return(input)
 }
 
+############## functions ###############
+
+# ----- check run diff execution ------
+check_run_diff_execution <- function(object.SE, param.list = NULL){
+  
+  # filtering setting
+  if(is.null(object.SE@metadata[["DiffExpAnal"]]) || object.SE@metadata[["DiffExpAnal"]]$results != TRUE) return(TRUE)
+  
+  if(param.list$method             != getDiffSetting(object.SE)$method)            return(TRUE)
+  if(param.list$Adj.pvalue.method  != getDiffSetting(object.SE)$Adj.pvalue.method) return(TRUE)
+  if(param.list$Adj.pvalue.cutoff  != getDiffSetting(object.SE)$Adj.pvalue.cutoff) return(TRUE)
+  if(param.list$abs.logFC.cutoff   != getDiffSetting(object.SE)$abs.logFC.cutoff)  return(TRUE)
+  
+  return(FALSE)
+}
 
 
