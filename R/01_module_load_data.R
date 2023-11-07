@@ -127,7 +127,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
                           error = function(e) e, warning = function(w) w)
     
     
-    if(!is.null(design.tt$message)){
+    if (!is.null(design.tt$message)) {
       
       showModal(modalDialog( title = "Error message", design.tt$message)) 
     }
@@ -298,7 +298,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     # RNASeq
     data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"),
-                                                           "/ExamplesFiles/ecoseed/transcriptome_ecoseed_gene.txt")), 
+                                                           "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")), 
                             error = function(e) e, warning = function(w) w)
     dataName <- "RNAseq.set1"
     inputs[[dataName]] <- list("omicType" = "RNAseq", "data" = data.mat.tt, "meta" = NULL) 
