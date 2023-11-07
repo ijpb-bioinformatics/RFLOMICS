@@ -35,17 +35,17 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
   
   # check ExpDesign dimension
   if(dim(ExpDesign)[1] == 0 || dim(ExpDesign)[2] == 0){
-    stop("Error: ExpDesign matrix is empty!")
+    stop("ExpDesign matrix is empty!")
   }
   
   # check refList length
   if(length(refList) != length(names(ExpDesign))){
-    stop("Error: refList length is different from the dimension of ExpDesign matrix!")
+    stop("refList length is different from the dimension of ExpDesign matrix!")
   }
   
   # check typeList length
   if(length(typeList) != length(names(ExpDesign))){
-    stop("Error: typeList length is different from the dimension of ExpDesign matrix!")
+    stop("typeList length is different from the dimension of ExpDesign matrix!")
   }
   
   # Create the List.Factors list with the choosen level of reference for each factor
@@ -121,12 +121,12 @@ methods::setMethod(f         = "CheckExpDesign",
                      Design <- object@metadata$design
                      
                      # check presence of bio factors
-                     if (!table(Design@Factors.Type)["Bio"] %in% 1:3){ stop("no bio factor! or nbr of bio factors exceed 3!") }
-                     if ( table(Design@Factors.Type)["batch"] == 0){ stop("ERROR: no replicate!") }
+                     if (!table(Design@Factors.Type)["Bio"] %in% 1:3){ stop("No bio factor! or nbr of bio factors exceed 3!") }
+                     if ( table(Design@Factors.Type)["batch"] == 0){ stop("No replicates found!") }
                      
                      ####################
                      
-                     BioFact <- names(Design@Factors.Type)[Design@Factors.Type == "Bio"]
+                     BioFact <- bioFactors(object)
                      coldata <- MultiAssayExperiment::colData(object)
                      coldata[["samples"]] <- rownames(coldata)
                      coldata <- tibble::as_tibble(coldata)
@@ -218,7 +218,7 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                      
                      # check presence of bio factors
                      if (!table(Design@Factors.Type)["Bio"] %in% 1:3){ stop("no bio factor! or nbr of bio factors exceed 3!") }
-                     if ( table(Design@Factors.Type)["batch"] == 0){ stop("ERROR: no replicate!") }
+                     if ( table(Design@Factors.Type)["batch"] == 0){ stop("No replicate!") }
                      
                      
                      
@@ -238,7 +238,7 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                      # }
                      
                      # Only works with bio and batch factors for the rest of the function
-                     namFact <- names(Design@Factors.Type)[Design@Factors.Type %in% c("Bio", "batch")]
+                     namFact <- c(bioFactors(object), batchFactors(object))
                      expDesign_mod <- Design@ExpDesign %>% dplyr::select(tidyselect::any_of(namFact))
                      
                      dF.List <- lapply(1:ncol(expDesign_mod), function(i){
@@ -260,7 +260,7 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                        }
                        else if(length(intersect(sampleList, colnames(object[[dataset]]))) == 0){
                          
-                         stop(paste("sampleList values not exist in", dataset))
+                         stop(paste("sampleList values not exist in ", dataset))
                        }
                        else{ sampleList_bis <- sampleList }
                        
@@ -330,7 +330,7 @@ methods::setMethod(f         = "Datasets_overview_plot",
                    signature = "MultiAssayExperiment",
                    definition <- function(object, dataset.list=NULL, real.size=FALSE){
                      
-                     if(length(object@ExperimentList) == 0) stop("ERROR: object@ExperimentList is NULL")
+                     if(length(object@ExperimentList) == 0) stop("object@ExperimentList is NULL")
                      if(!is.null(dataset.list)){
                        if(length(intersect(dataset.list, names(object))) == 0){
                          stop(paste0(paste0(dataset.list, collapse = ","), " is not part of dataset names"))
