@@ -21,12 +21,12 @@ sumDiffExp <- function(object, SE.name = NULL) {
   n_entities <- nrow(SummarizedExperiment::assay(object))
   n_samples <- ncol(SummarizedExperiment::assay(object))
 
-  cat(
-    "Parameters:\n|adjusted-pvalue cutoff: ", pcut,
-    "\n|logFC cutoff: ", lcut,
-    "\n|number of features: ", n_entities,
-    "\n|number of samples: ", n_samples, "\n"
-  )
+  # cat(
+  #   "Parameters:\n|adjusted-pvalue cutoff: ", pcut,
+  #   "\n|logFC cutoff: ", lcut,
+  #   "\n|number of features: ", n_entities,
+  #   "\n|number of samples: ", n_samples, "\n"
+  # )
 
   df_sim <- lapply(object@metadata$DiffExpAnal$DEF, FUN = function(tab) {
     tab <- tab %>%
