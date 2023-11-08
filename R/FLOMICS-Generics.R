@@ -11,7 +11,7 @@ methods::setGeneric(
 methods::setGeneric(
   name = "TransformData",
   def  = function(object, 
-                  transform_method = NULL, 
+                  transformMethod = NULL, 
                   modify_assay = FALSE, ...){standardGeneric("TransformData")}
 )
 

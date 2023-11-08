@@ -1097,7 +1097,7 @@ methods::setMethod(f          = "TransformData",
                    definition = function(object, transformMethod = NULL, modify_assay = FALSE){
                      
                      if (is.null(transformMethod)) {
-                       if (!modify_assay &&  getOmicsTypes(object) == "RNAseq") {
+                       if (!modify_assay && getOmicsTypes(object) == "RNAseq") {
                          message("No transform method indicated, no assay modification asked, RNAseq detected -> transformation_method set to \"none\"")
                          transformMethod <- "none"
                        } else {
@@ -1113,7 +1113,6 @@ methods::setMethod(f          = "TransformData",
                      }
                      
                      object@metadata[["DataProcessing"]][["Transformation"]][["setting"]][["method"]] <- transformMethod
-                     #object@metadata[["transform"]][["transform_method"]] <- transformMethod  
                      
                      if (modify_assay) {
                        object <-  apply_transformation(object)
