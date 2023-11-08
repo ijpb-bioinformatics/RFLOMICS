@@ -75,7 +75,7 @@ read_exp_design <- function(file){
   if (dim(data)[2]-1 >= n){
     
     data <- data[, 1:n]
-    warnin("Large number of columns! only the first ", n," will be displayed")
+    warning("Large number of columns! only the first ", n," will be displayed")
   }
   
   # check nbr of modality of the 5th fist columns
