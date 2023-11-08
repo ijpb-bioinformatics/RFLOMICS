@@ -1666,8 +1666,8 @@ methods::setMethod(f="DiffAnal.plot",
                      res      <- object@metadata$DiffExpAnal[["RawDEFres"]][[hypothesis]]
                      resTable <- object@metadata$DiffExpAnal[["DEF"]][[hypothesis]]
                      
-                     logFC.cutoff      <- object@metadata$DiffExpAnal[["abs.logFC.cutoff"]]
-                     Adj.pvalue.cutoff <- object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]
+                     logFC.cutoff      <- getDiffSetting(object)[["abs.logFC.cutoff"]]
+                     Adj.pvalue.cutoff <- getDiffSetting(object)[["Adj.pvalue.cutoff"]]
                      
                      if ("MA.plot" %in% typeofplots) plots[["MA.plot"]]        <-  MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
                      if ("volcano" %in% typeofplots) plots[["Volcano.plot"]]   <-  Volcano.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
