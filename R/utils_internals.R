@@ -195,7 +195,7 @@ checkTransNorm <- function(object, raw = FALSE) {
                  message("RNAseq counts expects TMM normalization. Transformation is done after the normalization,
                   using 'none' as transform method. Data will be transformed using log2 after the normalization anyway")
                  
-                 object <- setTrans(object, methode = "none")
+                 object <- setTrans(object, method = "none")
                }
                
                # Force TMM normalization

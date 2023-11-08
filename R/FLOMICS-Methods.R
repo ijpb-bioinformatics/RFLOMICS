@@ -1420,7 +1420,6 @@ methods::setMethod(f         = "RunDiffAnalysis",
                      object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.method"]] <- Adj.pvalue.method
                      object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.cutoff"]] <- Adj.pvalue.cutoff
                      object@metadata$DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- logFC.cutoff
-                       
                      
                      # transform and norm if needed
                      if (DiffAnalysisMethod == "limmalmFit") {
@@ -1439,9 +1438,9 @@ methods::setMethod(f         = "RunDiffAnalysis",
                      ListRes <- switch(DiffAnalysisMethod,
                                        "edgeRglmfit" = try_rflomics(edgeR.AnaDiff(count_matrix  = SummarizedExperiment::assay(object),
                                                                                   model_matrix    = model_matrix[colnames(object),],
-                                                                                  group           = object@metadata$Normalization$coefNorm$group,
-                                                                                  lib.size        = object@metadata$Normalization$coefNorm$lib.size,
-                                                                                  norm.factors    = object@metadata$Normalization$coefNorm$norm.factors,
+                                                                                  group           = getCoeffNorm(object)$group,
+                                                                                  lib.size        = getCoeffNorm(object)$lib.size,
+                                                                                  norm.factors    = getCoeffNorm(object)$norm.factors,
                                                                                   Contrasts.Sel   = object@metadata$DiffExpAnal[["contrasts"]],
                                                                                   Contrasts.Coeff = design@Contrasts.Coeff,
                                                                                   FDR             = 1,
@@ -1463,7 +1462,6 @@ methods::setMethod(f         = "RunDiffAnalysis",
                          object@metadata$DiffExpAnal[["results"]] <- TRUE
                          object@metadata$DiffExpAnal[["RawDEFres"]] <- ListRes$value[["RawDEFres"]]
                          object@metadata$DiffExpAnal[["DEF"]] <- ListRes$value[["TopDEF"]]
-                         # if(DiffAnalysisMethod == "limmalmFit") object@metadata$DiffExpAnal[["dataCall"]] <- SummarizedExperiment::assay(object2) # TODO delete
                        }else{
                          object@metadata$DiffExpAnal[["results"]]    <- FALSE
                          object@metadata$DiffExpAnal[["ErrorStats"]] <- ListRes$value[["ErrorTab"]]
@@ -1552,20 +1550,19 @@ methods::setMethod(f          = "RunDiffAnalysis",
 methods::setMethod(f          = "FilterDiffAnalysis",
                    signature  = "SummarizedExperiment",
                    definition <- function(object, Adj.pvalue.cutoff = NULL, logFC.cutoff = NULL){
-                     
+
                      if(is.null(object@metadata$DiffExpAnal[["RawDEFres"]])){
                        stop("can't filter the DiffExpAnal object because it doesn't exist")
                      }
                      
                      if (is.null(Adj.pvalue.cutoff)) 
-                       Adj.pvalue.cutoff <- object@metadata$DiffExpAnal$Adj.pvalue.cutoff
+                       Adj.pvalue.cutoff <- getDiffSetting(object)$Adj.pvalue.cutoff
                      
                      if (is.null(logFC.cutoff))
-                       logFC.cutoff <- object@metadata$DiffExpAnal$abs.logFC.cutoff
+                       logFC.cutoff <- getDiffSetting(object)$abs.logFC.cutoff
                      
-                     
-                     object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
-                     object@metadata$DiffExpAnal[["abs.logFC.cutoff"]]  <- logFC.cutoff
+                     # object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
+                     # object@metadata$DiffExpAnal[["abs.logFC.cutoff"]]  <- logFC.cutoff
                      
                      # remplacera à terme les lignes ci-dessus
                      object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.cutoff"]] <- Adj.pvalue.cutoff
@@ -1583,7 +1580,6 @@ methods::setMethod(f          = "FilterDiffAnalysis",
                      
                      ## stats
                      object@metadata$DiffExpAnal[["stats"]] <- sumDiffExp(object)
-                     
                      
                      ## merge results in bin matrix
                      DEF_list <- list()
@@ -1628,10 +1624,10 @@ methods::setMethod(f          = "FilterDiffAnalysis",
                      }else{
                        
                        if (is.null(Adj.pvalue.cutoff)) 
-                         Adj.pvalue.cutoff <- object[[SE.name]]@metadata$DiffExpAnal$Adj.pvalue.cutoff
+                         Adj.pvalue.cutoff <- getDiffSetting(object[[SE.name]])$Adj.pvalue.cutoff
                        
                        if (is.null(logFC.cutoff))
-                         logFC.cutoff <- object[[SE.name]]@metadata$DiffExpAnal$abs.logFC.cutoff
+                         logFC.cutoff <- getDiffSetting(object[[SE.name]])$abs.logFC.cutoff
                        
                        object[[SE.name]] <-  FilterDiffAnalysis(object = object[[SE.name]],
                                                                 Adj.pvalue.cutoff = Adj.pvalue.cutoff,

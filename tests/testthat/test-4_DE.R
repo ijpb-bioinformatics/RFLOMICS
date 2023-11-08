@@ -1,4 +1,5 @@
 library(testthat)
+library(RFLOMICS)
 
 #### Checks results of differential expression from edgeR and limma.
 #### Using edger, limma and RFLOMICS functions to ensure everything is fine.
@@ -69,7 +70,7 @@ test_that("Diff Analysis on metabolomics returns the same result within and outs
   ### RFLOMICS
   
   MAE <- MAE |>
-    RFLOMICS::TransformData(SE.name = "metatest", transform_method = "log2")  |>
+    RFLOMICS::TransformData(SE.name = "metatest", transformMethod = "log2")  |>
     RFLOMICS::RunNormalization(SE.name = "metatest", NormMethod = "totalSum") |>
     RFLOMICS::RunDiffAnalysis(SE.name = "metatest")                           
   
@@ -163,6 +164,7 @@ test_that("Differential analysis on RNAseq (counts) returns the same result with
 
   ########################-
   ### RFLOMICS
+  MAE[["RNAtest"]]@metadata$DiffExpAnal <- NULL
   
   MAE <- MAE |>
     RFLOMICS::FilterLowAbundance(SE.name = "RNAtest")                         |>
@@ -205,7 +207,7 @@ test_that("Differential analysis on RNAseq (counts) returns the same result with
   resMean   <- ListResRNA$`((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3`
   resInt    <- ListResRNA$`((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))`
   
-  expect_equal(MAESimple, resSimple)
+  expect_equal(MAESimple, resSimple[match(rownames(MAESimple), rownames(resSimple)),])
   expect_equal(MAEMean, resMean)
   expect_equal(MAEInt, resInt)
   

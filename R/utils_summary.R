@@ -15,11 +15,11 @@ sumDiffExp <- function(object, SE.name = NULL) {
       object <- object[[SE.name]]
     }
   }
-
-  pcut <- object@metadata$DiffExpAnal$Adj.pvalue.cutoff
-  lcut <- object@metadata$DiffExpAnal$abs.logFC.cutoff
-  n_entities <- nrow(SummarizedExperiment::assay(object))
-  n_samples <- ncol(SummarizedExperiment::assay(object))
+  
+  pcut <- getDiffSetting(object)$Adj.pvalue.cutoff
+  lcut <- getDiffSetting(object)$abs.logFC.cutoff
+  # n_entities <- nrow(assay(object))
+  # n_samples <- ncol(assay(object))
 
   # cat(
   #   "Parameters:\n|adjusted-pvalue cutoff: ", pcut,
