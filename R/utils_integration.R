@@ -92,7 +92,7 @@ rnaseqRBETransform <- function(object,
   }
   
   DMat      <- getDesignMat(object)
-  coefNorm  <- getNormCoeff(rnaDat)
+  coefNorm  <- getCoeffNorm(rnaDat)
   designMat <- model.matrix(formula(getModelFormula(object)), data = DMat)
   
   DGEObject <- DGEList(
