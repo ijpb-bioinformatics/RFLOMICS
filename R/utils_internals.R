@@ -250,21 +250,17 @@ isNorm <- function(object) {
 #   metadata(object)[["Normalization"]][["methode"]]
 # }
 
-getCoeffNorm <- function(object) {
-  metadata(object)[["DataProcessing"]][["Normalization"]][["results"]][["coefNorm"]]
-}
-
 # getTrans <- function(object) {
 #   metadata(object)[["transform"]][["transform_method"]]
 # }
 
-setTrans <- function(object, methode = "none") {
-  metadata(object)[["DataProcessing"]][["Transformation"]][["setting"]][["methode"]] <- methode
+setTrans <- function(object, method = "none") {
+  metadata(object)[["DataProcessing"]][["Transformation"]][["setting"]][["method"]] <- method
   return(object)
 }
 
-setNorm <- function(object, methode = "none") {
-  metadata(object)[["DataProcessing"]][["Normalization"]][["setting"]][["methode"]] <- methode
+setNorm <- function(object, method = "none") {
+  metadata(object)[["DataProcessing"]][["Normalization"]][["setting"]][["method"]] <- method
   return(object)
 }
 

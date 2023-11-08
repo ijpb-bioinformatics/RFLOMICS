@@ -367,11 +367,8 @@ getFilteredFeatures <- function(object) {
 #' @return Normalisation coefficient. If TMM was applied, a list with library size and coefficients.
 #' @export
 #'
-getNormCoeff <- function(object) {
-  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
-  
-  #return(object@metadata$DataProcessing$Normalization$results$coefNorm)
-  return(object@metadata$Normalization$coefNorm)
+getCoeffNorm <- function(object) {
+  metadata(object)[["DataProcessing"]][["Normalization"]][["results"]][["coefNorm"]]
 }
 
 
