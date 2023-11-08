@@ -26,7 +26,7 @@ contrastsDF <- RFLOMICS::getSelectedContrasts(MAE)
 MAE2 <- MAE
 
 MAE <- MAE |>
-  TransformData(     SE.name = "metatest",  transform_method = "log2")          |>
+  TransformData(     SE.name = "metatest",  transformMethod = "log2")          |>
   RunNormalization(  SE.name = "metatest",  NormMethod = "totalSum")            |>
   RunNormalization(  SE.name = "RNAtest",   NormMethod = "TMM")                 |>
   RunNormalization(  SE.name = "protetest", NormMethod = "median")              |>
