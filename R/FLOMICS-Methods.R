@@ -782,7 +782,8 @@ methods::setMethod(
            "boxplot" = {
              p <- ggplot2::ggplot(pseudo.gg, ggplot2::aes(x = samples, y = value, label = features)) +
                ggplot2::geom_boxplot(ggplot2::aes(fill = groups), outlier.size = 0.3) +
-               ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1), legend.position = "none") +
+               ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1), legend.position = "none",
+                              plot.margin=ggplot2::margin(0.5,0.5,0.5,1,"cm")) +
                ggplot2::xlab("") +
                ggplot2::ylab(x_lab) +
                ggplot2::ggtitle(title) #+
@@ -864,7 +865,7 @@ methods::setMethod(f= "plotPCA",
                      
                      p <- ggplot2::ggplot(score, ggplot2::aes_string(x=PC1, y=PC2, color=condition))  +
                        ggplot2::geom_point(size=2) +
-                       ggplot2::geom_text(ggplot2::aes(label=samples), size=2, vjust = 0) +
+                       ggplot2::geom_text(ggplot2::aes(label=samples), size=2, vjust="inward",hjust="inward") +
                        ggplot2::xlab(paste(PC1, " (",var1,"%)", sep="")) +
                        ggplot2::ylab(paste(PC2, " (",var2,"%)", sep="")) +
                        ggplot2::geom_hline(yintercept=0, linetype="dashed", color = "red") +
