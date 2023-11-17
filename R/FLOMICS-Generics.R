@@ -98,8 +98,9 @@ methods::setGeneric(
                   GaussianModel = NULL,
                   transformation = NULL, 
                   normFactors = NULL, 
-                  clustermq = FALSE,
+                  clustermq_arg = FALSE,
                   meanFilterCutoff = NULL, 
+                  scale = NULL,
                   silent = TRUE,
                   cmd = FALSE,  ... ){standardGeneric("runCoExpression")}
 )

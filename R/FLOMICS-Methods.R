@@ -1433,6 +1433,7 @@ methods::setMethod(f         = "RunDiffAnalysis",
                      
                      # move in ExpDesign Constructor
                      model_matrix <- model.matrix(as.formula(paste(design@Model.formula, collapse = " ")), data = as.data.frame(design@List.Factors))
+                     # model_matrix <- model.matrix(as.formula(paste(design@Model.formula, collapse = " ")), data = as.data.frame(design@ExpDesign))
                      rownames(model_matrix) <- rownames(design@ExpDesign)
                      
                      ListRes <- switch(DiffAnalysisMethod,
@@ -2021,6 +2022,7 @@ methods::setMethod(f          = "boxplot.DE.plot",
 #' @param normFactors The type of estimator to be used to normalize for differences in library size.
 #' By default, it is the "TMM" one.
 #' @param merge \code{"union"} or \code{"intersection"}
+#' @param clustermq_arg boolean. Does the computation need to be executed on a distant server?
 #' @param silent if TRUE, coseq run silently (without any console print or message)
 #' @param cmd if TRUE, print steps of the analysis. Used inside the coseq module in the shiny interface.
 #' @references
@@ -2029,14 +2031,23 @@ methods::setMethod(f          = "boxplot.DE.plot",
 #' @seealso \code{\link{coseq::coseq}}
 #' @rdname runCoExpression
 #' 
-methods::setMethod(f="runCoExpression",
-                   signature="SummarizedExperiment",
-                   definition <- function(object, K=2:20, replicates=5, nameList = NULL, merge="union",
-                                          model = "Normal", GaussianModel = NULL, 
-                                          transformation = NULL, normFactors = NULL, clustermq=FALSE,
-                                          meanFilterCutoff = NULL, scale = NULL,
-                                          silent = TRUE, cmd = FALSE){
-                     
+methods::setMethod(f = "runCoExpression",
+                   signature = "SummarizedExperiment",
+                   definition = function(object,
+                                          K=2:20, 
+                                          replicates=5, 
+                                          nameList = NULL, 
+                                          merge="union",
+                                          model = "Normal",
+                                          GaussianModel = NULL, 
+                                          transformation = NULL, 
+                                          normFactors = NULL, 
+                                          clustermq_arg = FALSE,
+                                          meanFilterCutoff = NULL, 
+                                          scale = NULL,
+                                          silent = TRUE, 
+                                          cmd = FALSE){
+                    
                      if (is.null(object@metadata$DiffExpAnal[["mergeDEF"]]))
                        stop("Please run a differential analysis. runCoExpression uses these results.")
                      
@@ -2054,12 +2065,6 @@ methods::setMethod(f="runCoExpression",
                      CoExpAnal[["setting"]][["replicates.nb"]]    <- replicates
                      CoExpAnal[["setting"]][["K.range"]]          <- K
                      CoExpAnal[["setting"]][["scale"]]            <- scale
-                     
-                     # geneList <- dplyr::select(object@metadata$DiffExpAnal[["mergeDEF"]], DEF, tidyselect::all_of(nameList)) %>% 
-                     #   dplyr::mutate(intersection = dplyr::if_else(rowSums(dplyr::select(., tidyselect::contains(nameList))) == length(nameList), "YES", "NO"), 
-                     #                 union = dplyr::if_else(rowSums(dplyr::select(., tidyselect::contains(nameList))) != 0 , "YES", "NO")) %>% 
-                     #   dplyr::filter(union != "NO", get(merge) == "YES") 
-                     # geneList <- geneList$DEF
                      
                      geneList <- opDEList(object = object, contrasts = nameList, operation = merge)
                      
@@ -2124,7 +2129,7 @@ methods::setMethod(f="runCoExpression",
                      
                      coseq.res.list <- list()
                      
-                     coseq.res.list <- switch(as.character(clustermq),
+                     coseq.res.list <- switch(as.character(clustermq_arg),
                                               `FALSE` = {
                                                 try_rflomics(
                                                   runCoseq_local(counts, 
@@ -2138,7 +2143,7 @@ methods::setMethod(f="runCoExpression",
                                               `TRUE` = {
                                                 try_rflomics(
                                                   runCoseq_clustermq(counts, 
-                                                                     conds = object@metadata$Groups$groups, 
+                                                                     conds = object@metadata$Groups$groups,
                                                                      K = K, 
                                                                      replicates = replicates, 
                                                                      param.list = param.list,
@@ -2169,9 +2174,9 @@ methods::setMethod(f="runCoExpression",
 methods::setMethod(f          = "runCoExpression",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, K=2:20, replicates=5, nameList, merge="union",
-                                         model = "Normal", GaussianModel = NULL, scale = NULL,
-                                         transformation = NULL, normFactors = NULL, clustermq=FALSE,
-                                         meanFilterCutoff = NULL, silent = TRUE, cmd = FALSE){
+                                         model = "Normal", GaussianModel = NULL, 
+                                         transformation = NULL, normFactors = NULL, clustermq_arg = FALSE,
+                                         meanFilterCutoff = NULL, scale = NULL, silent = TRUE, cmd = FALSE){
                      
                      
                      if (!SE.name %in% names(object)) 
@@ -2186,7 +2191,7 @@ methods::setMethod(f          = "runCoExpression",
                                                            GaussianModel = GaussianModel,
                                                            transformation = transformation,
                                                            normFactors = normFactors,
-                                                           clustermq = clustermq,
+                                                           clustermq_arg = clustermq_arg,
                                                            meanFilterCutoff = meanFilterCutoff,
                                                            scale = scale,
                                                            silent = silent,
