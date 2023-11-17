@@ -58,7 +58,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
                                      ExpDesign  = NULL, 
                                      FactorList = NULL, 
                                      dataPath   = NULL, # chemin  
-                                     listInputs = NULL)
+                                     omicsData  = NULL, omicsNames = NULL, omicsTypes = NULL)
   
   observe({
     
@@ -86,7 +86,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     local.rea.values$dataPath <- NULL
     local.rea.values$dataPath <- paste0(system.file(package = "RFLOMICS"), 
                                         "/ExamplesFiles/ecoseed/condition.txt")
-    
   })
   
   # ---- Load experimental design ----
@@ -117,15 +116,13 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     print("# 1- Load data ...")
     
-    if (local.rea.values$dataPath == paste0(system.file(package = "RFLOMICS"), 
-                                            "/ExamplesFiles/ecoseed/condition.txt")) {
+    if (local.rea.values$dataPath == paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt")) {
       print("#    => Load example experiment design...")
     }else print("#    => Load experimental design...")
     
     # read and check design file
     design.tt <- tryCatch(expr =  read_exp_design(file = local.rea.values$dataPath),
                           error = function(e) e, warning = function(w) w)
-    
     
     if (!is.null(design.tt$message)) {
       
@@ -277,7 +274,9 @@ LoadOmicsData <- function(input, output, session, rea.values){
   
   observeEvent(input$loadExData, {
     
-    local.rea.values$listInputs <- NULL
+    local.rea.values$omicsData  <- NULL
+    local.rea.values$omicsNames <- NULL
+    local.rea.values$omicsTypes <- NULL
     
     rea.values$loadData <- FALSE
     rea.values$model    <- FALSE
@@ -300,32 +299,37 @@ LoadOmicsData <- function(input, output, session, rea.values){
     data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"),
                                                            "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")), 
                             error = function(e) e, warning = function(w) w)
-    dataName <- "RNAseq.set1"
-    inputs[[dataName]] <- list("omicType" = "RNAseq", "data" = data.mat.tt, "meta" = NULL) 
+    
+    local.rea.values$omicsData  <- list("RNAseq.set1" = data.mat.tt)
+    local.rea.values$omicsNames <- c("RNAseq.set1")
+    local.rea.values$omicsTypes <- c("RNAseq")
     
     # Metabolomic
     data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
                                                            "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
                             error = function(e) e, warning = function(w) w)
-    dataName <- "metabolomics.set2"
-    inputs[[dataName]] <- list("omicType" = "metabolomics", "data" = data.mat.tt, "meta" = NULL) 
+    
+    local.rea.values$omicsData  <- c(local.rea.values$omicsData , list("metabolomics.set2" = data.mat.tt))
+    local.rea.values$omicsNames <- c(local.rea.values$omicsNames, "metabolomics.set2")
+    local.rea.values$omicsTypes <- c(local.rea.values$omicsTypes, "metabolomics")
     
     # proteomics
     data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
                                                            "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")), 
                             error = function(e) e, warning = function(w) w)
-    dataName <- "proteomics.set3"
-    inputs[[dataName]] <- list("omicType" = "proteomics", "data" = data.mat.tt, "meta" = NULL) 
     
-    local.rea.values$listInputs <- inputs
-    
+    local.rea.values$omicsData  <- c(local.rea.values$omicsData , list("proteomics.set3" = data.mat.tt))
+    local.rea.values$omicsNames <- c(local.rea.values$omicsNames, "proteomics.set3")
+    local.rea.values$omicsTypes <- c(local.rea.values$omicsTypes, "proteomics")
     
   })
   
   # ---- Load Data button observe ---- 
   observeEvent(input$loadData, {
     
-    local.rea.values$listInputs <- NULL
+    local.rea.values$omicsData  <- NULL
+    local.rea.values$omicsNames <- NULL
+    local.rea.values$omicsTypes <- NULL
     
     rea.values$loadData <- FALSE
     rea.values$model    <- FALSE
@@ -339,6 +343,11 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     print("#    => Load omics data...")
     inputs <- list()
+    
+    omicsData  <- list()
+    omicsNames <- vector()
+    omicsTypes <- vector()
+    
     #### list of omic data laoded from interface
     rea.values$validate.status <- 0
     dataName.vec <- c()
@@ -390,15 +399,18 @@ LoadOmicsData <- function(input, output, session, rea.values){
         validate({ need(expr = is.null(data.mat.tt$message), message=data.mat.tt$message) })
         
         data.mat <- data.mat.tt
-        inputs[[dataName]][["omicType"]] <- omicType
-        inputs[[dataName]][["data"]] <- data.mat
-        inputs[[dataName]][["meta"]]     <- NULL
+        
+        omicsData[[dataName]]  <- data.mat
+        omicsNames <- c(omicsNames, dataName)
+        omicsTypes <- c(omicsTypes, omicType)
         
         validate({ need(rea.values$validate.status == 0, message = "error") })
       }
     }
     
-    local.rea.values$listInputs <- inputs
+    local.rea.values$omicsData  <- omicsData
+    local.rea.values$omicsNames <- omicsNames
+    local.rea.values$omicsTypes <- omicsTypes
 
   })
 
@@ -407,8 +419,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
   # => create ExpDesign object
   # => create flomicsMultiAssay object
   # => upsetR
-  observeEvent(local.rea.values$listInputs, {
-
+  observeEvent(local.rea.values$omicsData, {
+    
     ### load Design
 
     # reset objects and UI
@@ -426,16 +438,16 @@ LoadOmicsData <- function(input, output, session, rea.values){
     local.rea.values$plots <- FALSE
     # #updateTabItems(session, "tabs", selected = "importData")
     
-    ### check listInputs # no reason to check for null?
-    if (is.null(local.rea.values$listInputs)) {
+    ### check omicsData # no reason to check for null?
+    if (is.null(local.rea.values$omicsData)) {
       showModal(modalDialog(title = "Error message", "Please load data"))
     }
-    validate({ need(!is.null(local.rea.values$listInputs), message = "Please load data") })
+    validate({ need(!is.null(local.rea.values$omicsData), message = "Please load data") })
 
-    if (length(local.rea.values$listInputs) == 0) {
+    if (length(local.rea.values$omicsData) == 0) {
       showModal(modalDialog(title = "Error message", "Please load data"))
     }
-    validate({ need(length(local.rea.values$listInputs) > 0, message = "Please load data") })
+    validate({ need(length(local.rea.values$omicsData) > 0, message = "Please load data") })
 
     ### check project name
     if (input$projectName == "") {
@@ -481,12 +493,16 @@ LoadOmicsData <- function(input, output, session, rea.values){
     #### list of omic data laoded from interface
     rea.values$validate.status <- 0
    
-    FlomicsMultiAssay.try <- tryCatch( FlomicsMultiAssay.constructor(inputs = local.rea.values$listInputs,
-                                                                              ExpDesign   = ExpDesign.tbl,
-                                                                              refList     = dF.List.ref,
-                                                                              typeList    = dF.Type.dFac,
-                                                                              projectName = input$projectName),
-                                      error = function(e) e, warning = function(w) w)
+    FlomicsMultiAssay.try <- tryCatch( 
+                FlomicsMultiAssay.constructor(projectName = input$projectName, 
+                                              omicsData   = local.rea.values$omicsData,
+                                              omicsNames  = local.rea.values$omicsNames,
+                                              omicsTypes  = local.rea.values$omicsTypes,
+                                              ExpDesign   = ExpDesign.tbl,
+                                              factorRef   = data.frame(factorName = names(dF.List.ref),
+                                                                       factorRef   = dF.List.ref,
+                                                                       factorType  = dF.Type.dFac)),
+      error = function(e) e, warning = function(w) w)
     
     if(!is.null(FlomicsMultiAssay.try$message)) {
       showModal(modalDialog( title = "Error message", FlomicsMultiAssay.try$message))

@@ -652,123 +652,147 @@ methods::setMethod(f          = "getContrastMatrix",
 #' @rdname FlomicsMultiAssay.constructor
 #' @export
 #'
-FlomicsMultiAssay.constructor <- function(inputs, projectName, ExpDesign , refList , typeList){
+FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omicsNames=NULL, omicsTypes=NULL, ExpDesign=NULL, factorRef=NULL){
   
-  if (sum(duplicated(names(inputs))) > 0) {
-    warning("Some names of input are duplicated. Adding suffix.")
+  #check arg
+  ##projectName
+  if(is.null(projectName)) stop()
+  projectName <- stringr::str_replace_all(string = projectName, pattern = "[*# -/]", replacement = "")
+  
+  ## omicsNames
+  if(is.null(omicsNames)) stop("")
+  nb_omicsData <- length(omicsNames)
+  omicsNames <- stringr::str_replace_all(string = omicsNames, pattern = "[*.# -/]", replacement = "")
+  if (isTRUE(any(duplicated(omicsNames)))) stop("")
+  
+  ## omicsData
+  if(!is.list(omicsData) || length(omicsData) == 0) stop("")
+  if(nb_omicsData != length(omicsData)) stop("")
+  names(omicsData) <- omicsNames
+  
+  ## omicsTypes
+  if(is.null(omicsTypes)) stop("")
+  if(nb_omicsData != length(omicsTypes)) stop("")
+  if(isTRUE(any(!unique(omicsTypes) %in% c("RNAseq","metabolomics","proteomics")))) stop("")
+  names(omicsTypes) <- omicsNames
+  
+  ## ExpDesign
+  if (is.null(ExpDesign)) stop("")
+  if (nrow(ExpDesign) == 0 || ncol(ExpDesign) == 0) stop("")
+  designRownames <- stringr::str_replace_all(string = rownames(ExpDesign), pattern = "[*# -/]", replacement = "")
+  if (isTRUE(any(duplicated(designRownames)))) stop("")
+  rownames(ExpDesign) <- designRownames
+  
+  ## factorRef
+  if (is.null(factorRef)) stop("")
+  if (is.null(factorRef$factorName)) stop("")
+  if (any(!factorRef$factorName %in% colnames(ExpDesign))) stop("")
+  
+  if (is.null(factorRef$factorType)) stop("")
+  if (any(!unique(factorRef$factorType) %in% c("batch", "Bio", "Meta"))) stop("")
+  
+  ## set ref and levels to ExpDesign
+  for (i in 1:nrow(factorRef)){
     
-    names(inputs)[duplicated(names(inputs))] <- paste0(names(inputs)[duplicated(names(inputs))], 1:sum(duplicated(names(inputs))))
+    # set ref 
+    if (!is.null(factorRef$factorRef)){
     
+      if(!factorRef[i,]$factorRef %in% ExpDesign[[factorRef[i,]$factorName]]) stop(paste0("The factor ref : ", factorRef[i,]$factorRef, " don't exist"))
+      ref <- factorRef[i,]$factorRef
+    }
+    else{
+      ref <- sort(ExpDesign[[factorRef[i,]$factorName]])[1]
+    }
+    ExpDesign <- ExpDesign[order(row.names(ExpDesign)), ]
+    ExpDesign[[factorRef[i,]$factorName]] <- relevel(as.factor(ExpDesign[[factorRef[i,]$factorName]]), ref=ref)
+    
+    # set level
+    if (!is.null(factorRef$factorLevels)){
+      
+      levels <- stringr::str_split(factorRef[i,]$factorLevels, ",") |> unlist() %>% stringr::str_remove(" ")
+      if(any(!levels %in% ExpDesign[[factorRef[i,]$factorName]])) stop(paste0("The factor levels : ", factorRef[i,]$factorLevels, " don't exist"))
+      
+      ExpDesign[[factorRef[i,]$factorName]] <- factor(ExpDesign[[factorRef[i,]$factorName]], levels = levels)
+    }
   }
   
-  # consctuct ExpDesign object
-  for (i in names(ExpDesign)){
-    ExpDesign      <- dplyr::arrange(ExpDesign, get(i))
-  }
+  ## consctuct ExpDesign object
+  refList  <- factorRef$factorRef;  names(refList)  <- factorRef$factorName
+  typeList <- factorRef$factorType; names(typeList) <- factorRef$factorName
+  Design   <-  ExpDesign.constructor(ExpDesign = ExpDesign, refList = refList, typeList = typeList)
   
-  Design <-  ExpDesign.constructor(ExpDesign = ExpDesign, refList = refList, typeList = typeList)
-  
-  
-  ## creat SE object of each dataset
+  ## create SE object of each dataset
   SummarizedExperimentList <- list()
   listmap  <- list()
   omicList <- list()
   k <- 0
-  for (dataName in names(inputs)){
+  
+  for(data in omicsNames){
     
     k <- k+1
     
-    ## construct SummarizedExperiment for each data
-    abundance <- inputs[[dataName]][["data"]]
+    abundance <- omicsData[[data]]
+    omicType = omicsTypes[data]
     
     # check overlap between design and data
-    sample.intersect <- intersect(colnames(abundance), row.names(ExpDesign))
-    if(length(sample.intersect) == 0){
-      stop("samples in omics data should match the names in experimental design")
-    }
+    sample.intersect <- intersect(row.names(ExpDesign), colnames(abundance))
+    if(length(sample.intersect) == 0) stop("samples in omics data should match the names in experimental design")
     
-    ##### Comment : 01/03/2023 : 
-    # TODO : uncomment !!!! 
-    # if(length(sample.intersect) < length(row.names(ExpDesign))){
-    #   
-    #   message("more than half of samples don't match to experimental design")
-    # }
-    
-    # select abundance from design table
+    # select abundance from design table and reorder
     abundance <- dplyr::select(abundance, tidyselect::all_of(sample.intersect))
     
-    ###### remove row with sum == 0
+    # remove row with sum == 0
     matrix <- as.matrix(abundance)
-    ## nbr of genes with 0 count
+    # nbr of genes with 0 count
     genes_flt0  <- rownames(matrix[rowSums(matrix) <= 0, ])
-    ## remove 0 count
+    # remove 0 count
     matrix.filt  <- matrix[rowSums(matrix)  > 0, ]
     
-    ##### create groups for SE
+    # create SE object
+    factorBio <- dplyr::filter(factorRef, factorType == "Bio")$factorName
+    colData   <- dplyr::mutate(ExpDesign, samples=row.names(ExpDesign)) |>
+      dplyr::filter(samples %in% sample.intersect) |> 
+      tidyr::unite("groups", all_of(factorBio), sep = "_", remove = FALSE)
     
-    # groups <- Design@Groups %>%
-    #   dplyr::mutate(samples = rownames(.)) %>%
-    #   tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
+    colData$samples <- factor(colData$samples, levels = unique(colData$samples))
+    colData$groups  <- factor(colData$groups,  levels = unique(colData$groups))
     
-    ###### create SE object
     
-    # => creat colData
-    if(!is.null(inputs[[dataName]][["meta"]])){
-      QCmat <- inputs[[dataName]][["meta"]]
-    }
-    else{
-      
-      #sample.intersect <- intersect(colnames(matrix.filt), row.names(ExpDesign))
-      
-      QCmat <- data.frame(primary = sample.intersect,
-                          colname = sample.intersect,
-                          stringsAsFactors = FALSE)
-    }
     
-    omicType <- inputs[[dataName]][["omicType"]]
-    Groups  <- dplyr::filter(Design@Groups, samples %in% colnames(as.matrix(matrix.filt)))
+    metadata <- list(omicType = omicsTypes[data], Groups = colData, 
+                    DataProcessing = list(rowSumsZero = genes_flt0,
+                                          Filtering = NULL, 
+                                          Normalization =  list(setting = list(method = "none"), results = NULL,  normalized = FALSE), 
+                                          Transformation = list(setting = list(method = "none"), results = NULL,  transformed = FALSE)))
     
     SE <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance = as.matrix(matrix.filt)),
-                                                     colData  = QCmat,
-                                                     metadata = list(omicType      = omicType, 
-                                                                     Groups        = Groups, 
-                                                                     DataProcessing = list(rowSumsZero = genes_flt0,
-                                                                                           Filtering = NULL, 
-                                                                                           Normalization =  list(setting = list(method = "none"), results = NULL,  normalized = FALSE), 
-                                                                                           Transformation = list(setting = list(method = "none"), results = NULL,  transformed = FALSE))
-                                                     ))
-    
-    #SummarizedExperimentList[[dataName]] <- SE[, SE$primary %in% row.names(ExpDesign)]
+                                                     colData  = colData,
+                                                     metadata = metadata)
     
     #### run PCA for raw count
-    SummarizedExperimentList[[dataName]] <-  RunPCA(SE, raw = TRUE)
+    SummarizedExperimentList[[data]] <- RunPCA(SE, raw = TRUE)
     
     # metadata for sampleMap for MultiAssayExperiment
-    listmap[[dataName]] <- data.frame(primary = as.vector(SummarizedExperimentList[[dataName]]@colData$primary),
-                                      colname = as.vector(SummarizedExperimentList[[dataName]]@colData$colname),
-                                      stringsAsFactors = FALSE)
+    listmap[[data]] <- data.frame(primary = as.vector(SummarizedExperimentList[[data]]@colData$samples),
+                                  colname = as.vector(SummarizedExperimentList[[data]]@colData$samples),
+                                  stringsAsFactors = FALSE)
     
     # 
-    omicType <- inputs[[dataName]][["omicType"]]
-    
     colnames <- c(names(omicList[[omicType]]), k)
-    omicList[[omicType]] <- c(omicList[[omicType]] ,dataName)
+    omicList[[omicType]] <- c(omicList[[omicType]] ,data)
     names(omicList[[omicType]]) <- colnames
     
   }
   
   prepFlomicsMultiAssay <- MultiAssayExperiment::prepMultiAssay( ExperimentList = SummarizedExperimentList,
                                                                  sampleMap      = MultiAssayExperiment::listToMap(listmap),
-                                                                 colData        = Design@ExpDesign, outFile = stdout())
+                                                                 colData        = ExpDesign, outFile = stdout())
   
   
   FlomicsMultiAssay <- MultiAssayExperiment::MultiAssayExperiment(experiments = prepFlomicsMultiAssay$experiments,
                                                                   colData     = prepFlomicsMultiAssay$colData,
                                                                   sampleMap   = prepFlomicsMultiAssay$sampleMap,
-                                                                  metadata    = list(colDataStruc = c(n_dFac = dim(prepFlomicsMultiAssay$colData)[2], n_qcFac = 0),
-                                                                                     omicList = omicList, projectName = projectName, design = Design)) 
-  
-  
+                                                                  metadata    = list(omicList = omicList, projectName = projectName, design = Design)) 
   return(FlomicsMultiAssay)
 }
 

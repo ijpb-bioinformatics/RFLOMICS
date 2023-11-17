@@ -8,18 +8,18 @@ library(RFLOMICS)
 
 
 # ---- Construction MAE RFLOMICS ready for differential analysis : ----
-MAE <- RFLOMICS::FlomicsMultiAssay.constructor(
-  list("RNAtest"     = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-                            "omicType" = "RNAseq"),
-       "metatest" = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
-                         "omicType" = "metabolomics"),
-       "protetest" = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")), 
-                          "omicType" = "proteomics")
-  ),
-  projectName = "Tests", 
-  ExpDesign = RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt")),
-  refList = c("Repeat" = "rep1", "temperature" = "Low", "imbibition" = "DS"),
-  typeList = c("Repeat" = "batch", "temperature" = "Bio", "imbibition" = "Bio"))
+MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests", 
+                                               omicsData = list(RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
+                                                                RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
+                                                                RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))),
+                                               omicsNames = c("RNAtest", "metatest", "protetest"),
+                                               omicsTypes = c("RNAseq","metabolomics","proteomics"),
+                                               ExpDesign  = RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt")),
+                                               factorRef  = data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
+                                                                       factorRef   = c("rep1",   "Low",          "DS"),
+                                                                       factorType  = c("batch",  "Bio",          "Bio"),
+                                                                       factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI")))
+
 
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
 MAE <- MAE |>
@@ -46,9 +46,9 @@ protMat <- protMat[match(orderNames, colnames(protMat))]
 rnaMat  <- rnaMat[match(orderNames, colnames(rnaMat))]
 metMat  <- metMat[match(orderNames, colnames(metMat))]
 
-# identical(orderNames, colnames(protMat), attrib.as.set = FALSE)
-# identical(orderNames, colnames(rnaMat), attrib.as.set = FALSE)
-# identical(orderNames, colnames(metMat), attrib.as.set = FALSE)
+identical(orderNames, colnames(protMat), attrib.as.set = FALSE)
+identical(orderNames, colnames(rnaMat), attrib.as.set = FALSE)
+identical(orderNames, colnames(metMat), attrib.as.set = FALSE)
 
 # Contrasts
 design <- model.matrix(~Repeat + temperature + imbibition + temperature:imbibition, data = condMat)

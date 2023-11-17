@@ -4,18 +4,24 @@ library(RFLOMICS)
 # ---- Construction of objects for the tests ----
 
 ## ---- Construction MAE RFLOMICS ready for coseq analysis : ----
-MAE <- RFLOMICS::FlomicsMultiAssay.constructor(
-  list("RNAtest"     = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-                            "omicType" = "RNAseq"),
-       "metatest" = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
-                         "omicType" = "metabolomics"),
-       "protetest" = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")), 
-                          "omicType" = "proteomics")
-  ),
-  projectName = "Tests", 
-  ExpDesign = RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt")),
-  refList = c("Repeat" = "rep1", "temperature" = "Low", "imbibition" = "DS"),
-  typeList = c("Repeat" = "batch", "temperature" = "Bio", "imbibition" = "Bio"))
+ExpDesign <- RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
+factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
+                        factorRef   = c("rep1",   "Low",          "DS"),
+                        factorType  = c("batch",  "Bio",          "Bio"),
+                        factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
+
+omicsData <- list(
+  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
+  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
+  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
+
+MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests", 
+                                               omicsData   = omicsData,
+                                               omicsNames  = c("RNAtest", "metatest", "protetest"),
+                                               omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+                                               ExpDesign   = ExpDesign,
+                                               factorRef   = factorRef)
+
 
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
 MAE <- MAE |>

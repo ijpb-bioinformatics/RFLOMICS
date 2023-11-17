@@ -380,10 +380,8 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
     }
     
-    
     print(paste0("# 3  => Data processing: ", dataset))
-    processed.SE <- process_data(SE = session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], 
-                                 dataset = dataset, 
+    processed.SE <- process_data(SE = session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]],
                                  samples = input$selectSamples, 
                                  param.list = param.list)
     
@@ -406,13 +404,13 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
 ############## functions ###############
 # ------ process data -----
-process_data <- function(SE, dataset, samples , param.list = list(Filter_Strategy = "NbConditions", 
+process_data <- function(SE, samples,  param.list = list(Filter_Strategy = "NbConditions", 
                                                                   CPM_Cutoff = 1, NormMethod = "TMM", 
                                                                   transform_method = "none")){
   
   print("#    => select samples")
-  SE.new <- SE[, SE$primary %in% samples]
-  SE.new@metadata$Groups <- dplyr::filter(SE@metadata$Groups, samples %in% SE.new$primary)
+  SE.new <- SE[, SE$samples %in% samples]
+  SE.new@metadata$Groups <- dplyr::filter(SE@metadata$Groups, samples %in% SE.new$samples)
   
   switch(SE.new@metadata$omicType,
          "RNAseq" = {
@@ -447,6 +445,7 @@ process_data <- function(SE, dataset, samples , param.list = list(Filter_Strateg
   
   #### Run PCA for filtred & normalized data ####
   print("#    => Compute PCA ")
+  
   SE.processed <- RunPCA(SE.processed)  
   
   return(SE.processed)
