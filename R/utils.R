@@ -283,6 +283,10 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
   if(clustermq && parallel) parallel <- FALSE 
   if(!parallel) nworkers <- 1
   
+  # model_matrix <- model_matrix[match(colnames(count_matrix), rownames(model_matrix)),]
+  # if (!identical(colnames(count_matrix), rownames(model_matrix), attrib.as.set = FALSE)) 
+  #   stop("MisMatch in samples names orders.")
+  
   # Construct the DGE obect
   dge <- edgeR::DGEList(counts       = count_matrix,
                         group        = group,
