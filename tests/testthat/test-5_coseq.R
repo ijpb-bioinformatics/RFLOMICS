@@ -159,7 +159,7 @@ test_that("Coseq on RNAseq equivalence", {
                          GaussianModel = param.list$GaussianModel, 
                          transformation = param.list$transformation, 
                          normFactors = param.list$normFactors, 
-                         meanFilterCutoff = param.list$meanFilterCutoff)
+                         meanFilterCutoff = param.list$meanFilterCutoff, silent = FALSE)
   
   clustersMAE <- coseq::clusters(MAE[["RNAtest"]]@metadata$CoExpAnal$coseqResults)
   resultsMAE  <- MAE[["RNAtest"]]@metadata$CoExpAnal$coseqResults

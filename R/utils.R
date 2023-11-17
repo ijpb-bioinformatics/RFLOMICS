@@ -1411,12 +1411,18 @@ coseq.results.process <- function(coseqObjectList, K, conds){
   ICL.vec <- lapply(1:length(coseqObjectList), function(x){ coseq::ICL(coseqObjectList[[x]]) }) %>% unlist()
   ICL.list[["ICL.vec"]] <- ICL.vec
   
-  ICL.min.per.cluster <- lapply(1:length(coseqObjectList), function(x){ 
-    ICL.vec <- coseq::ICL(coseqObjectList[[x]])
-    ICL.vec[which(ICL.vec == min(ICL.vec))] 
-    }) %>% unlist()
+  ICL.min.per.cluster <- lapply(1:length(coseqObjectList), function(x){
+    ICL.vec.min <- coseq::ICL(coseqObjectList[[x]])
+    ICL.vec.min[which(ICL.vec.min == min(ICL.vec.min))]
+    })  %>% unlist()
   
-  titi <<- coseqObjectList
+  # TODO tests 231117
+  # ICL.min.per.cluster <- lapply(K, function(x){
+  #   # x = 2
+  #   ICL.vec.min <- ICL.vec[names(ICL.vec)==paste0("K=", x)]
+  #   # ICL.vec.min[]
+  #   which(ICL.vec.min == min(ICL.vec.min))
+  #   })  %>% unlist()
   
   ICL.tab <- data.frame(K = stringr::str_replace(names(ICL.vec), "K=", ""), ICL = ICL.vec) %>%
     dplyr::mutate(K = as.numeric(K))
@@ -1435,7 +1441,8 @@ coseq.results.process <- function(coseqObjectList, K, conds){
   index2 <- which(ICL.min.per.cluster[index] == min(ICL.min.per.cluster[index]))
   
   # coseq object with the min ICL
-  coseq.res <- coseqObjectList[index][index2][[1]]
+    coseq.res <- coseqObjectList[index][index2][[1]]
+  # coseq.res <- coseqObjectList[[index2]]@allResults[[index]]
   
   # K.ICL.min <- min(ICL.vec[names(ICL.vec) == paste0("K=", K.ICL.median.min)], na.rm = TRUE)
   # 
