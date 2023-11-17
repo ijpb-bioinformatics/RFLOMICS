@@ -2042,7 +2042,7 @@ methods::setMethod(f = "runCoExpression",
                                           GaussianModel = NULL, 
                                           transformation = NULL, 
                                           normFactors = NULL, 
-                                          clustermq_arg = FALSE,
+                                         clustermq = FALSE,
                                           meanFilterCutoff = NULL, 
                                           scale = NULL,
                                           silent = TRUE, 
@@ -2129,7 +2129,7 @@ methods::setMethod(f = "runCoExpression",
                      
                      coseq.res.list <- list()
                      
-                     coseq.res.list <- switch(as.character(clustermq_arg),
+                     coseq.res.list <- switch(as.character(clustermq),
                                               `FALSE` = {
                                                 try_rflomics(
                                                   runCoseq_local(counts, 
@@ -2175,7 +2175,7 @@ methods::setMethod(f          = "runCoExpression",
                    signature  = "MultiAssayExperiment",
                    definition = function(object, SE.name, K=2:20, replicates=5, nameList, merge="union",
                                          model = "Normal", GaussianModel = NULL, 
-                                         transformation = NULL, normFactors = NULL, clustermq_arg = FALSE,
+                                         transformation = NULL, normFactors = NULL, clustermq = FALSE,
                                          meanFilterCutoff = NULL, scale = NULL, silent = TRUE, cmd = FALSE){
                      
                      
@@ -2191,7 +2191,7 @@ methods::setMethod(f          = "runCoExpression",
                                                            GaussianModel = GaussianModel,
                                                            transformation = transformation,
                                                            normFactors = normFactors,
-                                                           clustermq_arg = clustermq_arg,
+                                                           clustermq = clustermq,
                                                            meanFilterCutoff = meanFilterCutoff,
                                                            scale = scale,
                                                            silent = silent,

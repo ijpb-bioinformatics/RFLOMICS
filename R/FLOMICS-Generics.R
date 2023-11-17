@@ -98,7 +98,7 @@ methods::setGeneric(
                   GaussianModel = NULL,
                   transformation = NULL, 
                   normFactors = NULL, 
-                  clustermq_arg = FALSE,
+                  clustermq = FALSE,
                   meanFilterCutoff = NULL, 
                   scale = NULL,
                   silent = TRUE,
