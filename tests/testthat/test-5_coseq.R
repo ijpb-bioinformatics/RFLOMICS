@@ -28,7 +28,7 @@ contrastsDF <- RFLOMICS::getSelectedContrasts(MAE)
 MAE2 <- MAE
 
 MAE <- MAE |>
-  TransformData(     SE.name = "metatest",  transform_method = "log2")          |>
+  TransformData(     SE.name = "metatest",  transformMethod = "log2")          |>
   RunNormalization(  SE.name = "metatest",  NormMethod = "totalSum")            |>
   RunNormalization(  SE.name = "RNAtest",   NormMethod = "TMM")                 |>
   RunNormalization(  SE.name = "protetest", NormMethod = "median")              |>
@@ -87,7 +87,7 @@ test_that("Everything works as expected", {
 
 test_that("Two runs, same results - seed is working - RNAseq", {
   
-  res1 <- runCoExpression(object = MAE, SE.name = "RNAtest", K = 2:10, replicates = 5, merge = "union", 
+  res1 <- runCoExpression (object = MAE, SE.name = "RNAtest", K = 2:10, replicates = 5, merge = "union", 
                                model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin", 
                                normFactors = "TMM", nameList = c("H1"))
   
