@@ -377,18 +377,10 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     }
     
     print(paste0("# 3  => Data processing: ", dataset))
-    processed.SE <- runDataProcessing(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], samples = input$selectSamples,  
-                                     lowCountFiltering=list(strategy=param.list[["Filter_Strategy"]], CPM_Cutoff=param.list[["CPM_Cutoff"]]), 
-                                     normalisation=list(method=param.list[["NormMethod"]]), transformation=list(method=param.list[["transform_method"]]))
-    
-    
-    # remove SE processed if exist
-    if (dataset %in% names(session$userData$FlomicsMultiAssay)){
-      session$userData$FlomicsMultiAssay <- session$userData$FlomicsMultiAssay[,, -which(names(session$userData$FlomicsMultiAssay) == dataset)]
-    }
-    
-    # add new SE with processed data
-    session$userData$FlomicsMultiAssay <- eval(parse(text = paste0('c( session$userData$FlomicsMultiAssay ,', dataset, ' = processed.SE )')))
+    session$userData$FlomicsMultiAssay <- 
+      runDataProcessing(object = session$userData$FlomicsMultiAssay, SE.name = dataset, samples = input$selectSamples,  
+                        lowCountFiltering_strategy=param.list[["Filter_Strategy"]], lowCountFiltering_CPM_Cutoff=param.list[["CPM_Cutoff"]], 
+                        normalisation_method=param.list[["NormMethod"]], transformation_method=param.list[["transform_method"]])
     
     rea.values[[dataset]]$process <- TRUE
     

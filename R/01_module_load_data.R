@@ -510,8 +510,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     }
     validate({ need(is.null(FlomicsMultiAssay.try$message), message="error") })
     
-    names(FlomicsMultiAssay.try) <- paste(names(FlomicsMultiAssay.try), "raw", sep = ".")
-    
     session$userData$FlomicsMultiAssay <- FlomicsMultiAssay.try
     
     # => completeness

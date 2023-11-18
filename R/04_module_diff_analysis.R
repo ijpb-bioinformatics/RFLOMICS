@@ -181,7 +181,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       # run diff analysis with selected method
       dataset.SE <- RunDiffAnalysis(object             = dataset.SE,
                                     design             = session$userData$FlomicsMultiAssay@metadata$design,
-                                    contrastList       = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName,
                                     Adj.pvalue.method  = "BH",
                                     DiffAnalysisMethod = input$AnaDiffMethod,
                                     clustermq          = input$clustermq,

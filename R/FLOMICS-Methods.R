@@ -793,6 +793,9 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
                                                                   colData     = prepFlomicsMultiAssay$colData,
                                                                   sampleMap   = prepFlomicsMultiAssay$sampleMap,
                                                                   metadata    = list(omicList = omicList, projectName = projectName, design = Design)) 
+
+  # tag as raw data (le temps de trouver une solution pour ne pas faire co-exister les raw et les process)
+  names(FlomicsMultiAssay) <- paste(names(FlomicsMultiAssay), "raw", sep = ".")
   return(FlomicsMultiAssay)
 }
 
@@ -1204,6 +1207,10 @@ methods::setMethod(f         = "FilterLowAbundance",
                    signature = "SummarizedExperiment",
                    definition <- function(object, filterMethod= "CPM", filterStrategy = "NbConditions", cpmCutoff = 5){
                      
+                     if(isFALSE(filterStrategy %in% c("NbReplicates","NbConditions"))) 
+                       stop("filterStrategy argument must be one of this tow options : NbReplicates or NbConditions")
+                     
+                     
                      objectFilt <- object
                      assayFilt  <- assay(objectFilt)
                      
@@ -1387,9 +1394,10 @@ methods::setMethod(f          = "RunNormalization",
 #' }
 #' @param object An object of class \link{SummarizedExperiment}
 #' @param samples samples to keep.
-#' @param lowCountFiltering list of parameters of filtering.
-#' @param normalisation list of parameters of normalization.
-#' @param transformation list of parameters of transformation.
+#' @param lowCountFiltering_strategy strategy of RNAseq low count filtering. Mandatory for RNAseq data. Default value : "NbReplicates".
+#' @param lowCountFiltering_CPM_Cutoff CPM cutoff for RNAseq low count filtering. Mandatory for RNAseq data. Default value : 1.
+#' @param normalisation_method method of normalisation. Mandatory for RNAseq data. Default value : RNAseq = TMM.
+#' @param transformation_method method of transformation.
 #' @return An object of class \link{SummarizedExperiment}
 #' @exportMethod runDataProcessing
 #' @seealso runSampleFiltering
@@ -1400,16 +1408,21 @@ methods::setMethod(f          = "RunNormalization",
 
 methods::setMethod(f          = "runDataProcessing",
                    signature  = "SummarizedExperiment",
-                   definition = function(object, samples=NULL, lowCountFiltering=NULL, normalisation=NULL, transformation=NULL)
+                   definition = function(object, samples=NULL, lowCountFiltering_strategy = "NbReplicates", lowCountFiltering_CPM_Cutoff = 1, 
+                                         normalisation_method = "none", transformation_method = "none")
                    {
                      
                      # check args
-                     if(is.null(samples)) stop("")
-                     if(is.null(normalisation) || !is.list(normalisation) || length(normalisation) == 0) stop("")
-                     
+                     if(is.null(samples)) samples <- colnames(object)
                      
                      # keep selected samples
                      object <- runSampleFiltering(object, samples)
+                     
+                     # spported values:
+                     lowCountFiltering_strategy.sup     <- c("NbReplicates","NbConditions")
+                     transformation_method.sup          <- c("log1p", "squareroot", "log2", "log10", "none")
+                     normalisation_method.abundance.sup <- c("median", "totalSum", "none")
+                     normalisation_method.count.sup     <- c("TMM")
                      
                      # apply data processing
                      switch(object@metadata$omicType,
@@ -1417,25 +1430,35 @@ methods::setMethod(f          = "runDataProcessing",
                               
                               # Filter low abundance
                               print("#    => Low counts Filtering...")
-                              if(is.null(lowCountFiltering) || !is.list(lowCountFiltering) || length(lowCountFiltering)== 0) stop("")
-                              if(is.null(lowCountFiltering[["strategy"]]) || is.null(lowCountFiltering[["CPM_Cutoff"]])) stop("")
-                              SE.processed <- FilterLowAbundance(object = object, filterStrategy = lowCountFiltering[["strategy"]], cpmCutoff = lowCountFiltering[["CPM_Cutoff"]])
+                              if(is.null(lowCountFiltering_strategy)   || !lowCountFiltering_strategy %in% lowCountFiltering_strategy.sup) 
+                                stop("the low count filtering strategy : ", lowCountFiltering_strategy, " isn't supported by rflomics package. Supported values : ",  paste(lowCountFiltering_strategy.sup, collapse = ", "))
+                              
+                              if(is.null(lowCountFiltering_CPM_Cutoff) || !is.numeric(lowCountFiltering_CPM_Cutoff)) 
+                                stop(lowCountFiltering_CPM_Cutoff, " must be a integer value > 1")
+                              
+                              SE.processed <- FilterLowAbundance(object = object, filterStrategy = lowCountFiltering_strategy, cpmCutoff = lowCountFiltering_CPM_Cutoff)
                               
                               # Run Normalisation 
                               print("#    => Counts normalization...")
-                              if(is.null(normalisation[["method"]])) stop("")
-                              SE.processed <- RunNormalization(SE.processed, NormMethod = normalisation[["method"]])
+                              if(is.null(normalisation_method) || normalisation_method != "TMM"){
+                                normalisation_method <- "TMM"
+                                warning("only ", normalisation_method.count.sup, " method is supported for ", object@metadata$omicType, " normalisation.")
+                              }
+
+                              SE.processed <- RunNormalization(SE.processed, NormMethod = normalisation_method)
                             },
                             {
                               print("#    => transformation data...")
-                              if(is.null(transformation)    || !is.list(transformation) || length(transformation)== 0) stop("")
-                              if(is.null(transformation[["method"]])) stop("")
-                              SE.processed <- TransformData(object, transformMethod = transformation[["method"]])
+                              if(is.null(transformation_method)) transformation_method <- "none"
+                              if(!transformation_method %in% transformation_method.sup) 
+                                stop("the transformation method ", transformation_method," is not support in rflomics package.Supported values : ", paste(transformation_method.sup, collapse = ", "))
+                              SE.processed <- TransformData(object, transformMethod = transformation_method)
                               
                               print("#    => Run normalization...")
-                              if(is.null(normalisation[["method"]])) stop("")
-                              SE.processed <- RunNormalization(SE.processed, NormMethod = normalisation[["method"]])
-                              
+                              if(is.null(normalisation_method)) normalisation_method <- "none"
+                              if(!normalisation_method %in% normalisation_method.abundance.sup) 
+                                stop("the normalisation method ", normalisation_method," is not support in rflomics package. Supported values : ", paste(normalisation_method.abundance.sup, collapse = ", "))
+                              SE.processed <- RunNormalization(SE.processed, NormMethod = normalisation_method)
                             }
                      )
                      
@@ -1443,14 +1466,53 @@ methods::setMethod(f          = "runDataProcessing",
                      print("#    => Compute PCA ")
                      SE.processed <- RunPCA(SE.processed)  
                      
+                     SE.processed@metadata$DataProcessing[["done"]] <- TRUE
+                     
                      return(SE.processed)
                    })
 
 
+#' @rdname runDataProcessing
+#' @title runDataProcessing
+#' @param SE.name the name of the data the normalization have to be applied to. 
+#' @exportMethod runDataProcessing
+methods::setMethod(f          = "runDataProcessing",
+                   signature  = "MultiAssayExperiment",
+                   definition = function(object, SE.name, samples=NULL, lowCountFiltering_strategy = "NbReplicates", lowCountFiltering_CPM_Cutoff = 1, 
+                                         normalisation_method = "none", transformation_method = "none"){
+                     
+                     # if paste0(SE.name, ".raw") exist
+                     if (!paste0(SE.name, ".raw") %in% names(object)){
+                       
+                       if (!SE.name %in% names(object)) stop("no ", SE.name, " SE object.")
+                       stop("raw SE must be tagged by .raw")
+                     }
+                       
+                     # if paste0(SE.name, ".raw") exist
+                     if(is.null(object[[paste0(SE.name, ".raw")]])) stop("raw SE must be tagged by .raw")
+                     
+                     SE.raw       <- object[[paste0(SE.name, ".raw")]]
+                     SE.processed <- runDataProcessing(object = SE.raw,
+                                                       samples = samples, 
+                                                       lowCountFiltering_strategy = lowCountFiltering_strategy, 
+                                                       lowCountFiltering_CPM_Cutoff = lowCountFiltering_CPM_Cutoff,
+                                                       normalisation_method = normalisation_method, 
+                                                       transformation_method = transformation_method)
+                     
+                     
+                     # remove SE processed if exist
+                     if (SE.name %in% names(object)) object <- object[,, -which(names(object) == SE.name)]
+
+                     # add new SE with processed data
+                     object <- eval(parse(text = paste0('c( object ,', SE.name, ' = SE.processed )')))
+
+                     return(object)
+                   })
+
 # ------ filtering per sample -----
 
 #' @title runSampleFiltering
-#' @description This function applied a processing (filtering, normalization and/or transformation, PCA) on an omic data sets stored in an object of
+#' @description This function applied sample filtering on an omic data sets stored in an object of
 #' class \link{SummarizedExperiment}.
 #' \itemize{
 #' \item{For RNAseq data:}{}
@@ -1537,21 +1599,33 @@ methods::setMethod(f          = "runSampleFiltering",
 #' 
 methods::setMethod(f         = "RunDiffAnalysis",
                    signature = "SummarizedExperiment",
-                   definition <- function(object, design, Adj.pvalue.method="BH",
-                                          contrastList, DiffAnalysisMethod, 
+                   definition <- function(object, design, Adj.pvalue.method="BH", contrastList = NULL, DiffAnalysisMethod = NULL, 
                                           Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, parallel = FALSE, nworkers = 1,
                                           cmd = FALSE){
                      
-                     contrastName <- NULL
+                     # check args
+                     if(is.null(object@metadata$DataProcessing[["done"]])) stop("you need to run data processing before run diff analysis")
+                     if(is.null(design@Contrasts.Sel$contrastName)) 
+                       stop("Argument contrastList is missing and no selected contrasts have been found. You need to calculate contrasts before run diff analysis")
+                     # sera remplacer par un calcul du contrast sur SE
                      
-                     # TODO if contrastList missing, takes contrasts.Sel
+                     if(is.null(design)) stop("Argument design is missing and does not exist in the object.")
+                     if(is.null(contrastList)) contrastList <- design@Contrasts.Sel$contrastName
+                     if(any(!contrastList %in% design@Contrasts.Sel$contrastName))
+                       stop("contrast list must cover with : ", paste(design@Contrasts.Sel$contrastName, collapse = ", "))
+                     
+                     if(is.null(DiffAnalysisMethod) || isFALSE(DiffAnalysisMethod %in% c("edgeRglmfit", "limmalmFit"))) {
+                       switch (object@metadata$omicType,
+                               "RNAseq" = { DiffAnalysisMethod <- "edgeRglmfit"},
+                               { DiffAnalysisMethod <- "limmalmFit" }
+                       )
+                       warning("DiffAnalyseMethod was missing. Detected omic type is ", object@metadata$omicType ," using ", DiffAnalysisMethod, " for differential analysis.")
+                     }
+                     
                      Contrasts.Sel <- dplyr::filter(design@Contrasts.Sel, contrastName %in% contrastList)
                      
                      object@metadata$DiffExpAnal <- list()
                      object@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
-                     # object@metadata$DiffExpAnal[["method"]]    <- DiffAnalysisMethod
-                     # object@metadata$DiffExpAnal[["Adj.pvalue.method"]]  <- Adj.pvalue.method
-                     # #object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
                      
                      # remplacera à terme les lignes ci-dessus
                      object@metadata$DiffExpAnal[["setting"]][["method"]] <- DiffAnalysisMethod
@@ -1623,39 +1697,14 @@ methods::setMethod(f         = "RunDiffAnalysis",
 #' @exportMethod RunDiffAnalysis
 methods::setMethod(f          = "RunDiffAnalysis",
                    signature  = "MultiAssayExperiment",
-                   definition = function(object, SE.name, design = NULL, Adj.pvalue.method="BH",
+                   definition = function(object, SE.name, Adj.pvalue.method="BH",
                                          contrastList = NULL, DiffAnalysisMethod = NULL,
                                          Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, 
                                          parallel = FALSE, nworkers = 1, cmd = FALSE){
                      
-                     # Check for design existence inside MAE object
-                     if (is.null(design)) {
-                       if (!is.null(object@metadata$design))  design <- object@metadata$design
-                       else stop("Argument design is missing and does not exist in the object.")
-                     }
-                     
-                     # Check for contrastList existence inside MAE object
-                     if (is.null(contrastList)) {
-                       if (!is.null(object@metadata$design@Contrasts.Sel)) contrastList <- object@metadata$design@Contrasts.Sel$contrastName
-                       else stop("Argument contrastList is missing and no selected contrasts have been found.")
-                     }
-                     
-                     # Type of DiffAnalysis automatically decided if argument is null
-                     if (is.null(DiffAnalysisMethod)) {
-                       
-                       switch( getOmicsTypes(object[[SE.name]]),
-                               "RNAseq" = {DiffAnalysisMethod = "edgeRglmfit"
-                               message("DiffAnalyseMethod was missing. Detected omic type is RNASeq, using edgeRglmFit for differential analysis.")},
-                               "proteomics" = {DiffAnalysisMethod = "limmalmFit"
-                               message("DiffAnalyseMethod was missing. Detected omic type is proteomics, using limmalmFit for differential analysis.")},
-                               "metabolomics" = {DiffAnalysisMethod = "limmalmFit"
-                               message("DiffAnalyseMethod was missing. Detected omic type is metabolomics, using limmalmFit for differential analysis.")}
-                       )
-                       
-                     }
-                     
+                     # all verifications are done in this method
                      object[[SE.name]] <-  RunDiffAnalysis(object = object[[SE.name]],
-                                                           design = design, 
+                                                           design = object@metadata$design,
                                                            Adj.pvalue.method = Adj.pvalue.method,
                                                            contrastList = contrastList,
                                                            DiffAnalysisMethod = DiffAnalysisMethod,
@@ -1699,9 +1748,6 @@ methods::setMethod(f          = "FilterDiffAnalysis",
                      
                      if (is.null(logFC.cutoff))
                        logFC.cutoff <- getDiffSetting(object)$abs.logFC.cutoff
-                     
-                     # object@metadata$DiffExpAnal[["Adj.pvalue.cutoff"]]  <- Adj.pvalue.cutoff
-                     # object@metadata$DiffExpAnal[["abs.logFC.cutoff"]]  <- logFC.cutoff
                      
                      # remplacera à terme les lignes ci-dessus
                      object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.cutoff"]] <- Adj.pvalue.cutoff
