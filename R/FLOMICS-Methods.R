@@ -356,25 +356,25 @@ methods::setMethod(f         = "Datasets_overview_plot",
                      } 
                      
                      switch (as.character(real.size),
-                       "TRUE"  = {
-                         p <- ggplot2::ggplot(data, ggplot2::aes(x=primary, y=log(nb_entities))) +
-                           ggplot2::geom_col(ggplot2::aes(fill = y.axis)) + 
-                           ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(), 
-                                          panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), 
-                                          axis.text.x = ggplot2::element_text(angle = 90, hjust = 1), legend.position="none",
-                                          axis.text.y = ggplot2::element_text(hjust = 0)) +  
-                           ggplot2::labs(x=paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")"), y="") +
-                           ggplot2::scale_y_continuous(breaks = (breaks), labels = nb_entities_ord$y.axis)
-                         
-                       },
-                       "FALSE" = {
-                         p <- ggplot2::ggplot(data, ggplot2::aes(x=primary, y=y.axis)) +
-                           ggplot2::geom_tile(ggplot2::aes(fill = y.axis), colour = "grey50") +
-                           ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-                                          panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), legend.position="none",
-                                          axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
-                           ggplot2::labs(x=paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")"), y="")
-                       }
+                             "TRUE"  = {
+                               p <- ggplot2::ggplot(data, ggplot2::aes(x=primary, y=log(nb_entities))) +
+                                 ggplot2::geom_col(ggplot2::aes(fill = y.axis)) + 
+                                 ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(), 
+                                                panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), 
+                                                axis.text.x = ggplot2::element_text(angle = 90, hjust = 1), legend.position="none",
+                                                axis.text.y = ggplot2::element_text(hjust = 0)) +  
+                                 ggplot2::labs(x=paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")"), y="") +
+                                 ggplot2::scale_y_continuous(breaks = (breaks), labels = nb_entities_ord$y.axis)
+                               
+                             },
+                             "FALSE" = {
+                               p <- ggplot2::ggplot(data, ggplot2::aes(x=primary, y=y.axis)) +
+                                 ggplot2::geom_tile(ggplot2::aes(fill = y.axis), colour = "grey50") +
+                                 ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
+                                                panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), legend.position="none",
+                                                axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
+                                 ggplot2::labs(x=paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")"), y="")
+                             }
                      )
                      return(p)
                    })
@@ -696,7 +696,7 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
     
     # set ref 
     if (!is.null(factorRef$factorRef)){
-    
+      
       if(!factorRef[i,]$factorRef %in% ExpDesign[[factorRef[i,]$factorName]]) stop(paste0("The factor ref : ", factorRef[i,]$factorRef, " don't exist"))
       ref <- factorRef[i,]$factorRef
     }
@@ -760,10 +760,10 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
     
     
     metadata <- list(omicType = omicsTypes[data], Groups = colData, 
-                    DataProcessing = list(rowSumsZero = genes_flt0,
-                                          Filtering = NULL, 
-                                          Normalization =  list(setting = list(method = "none"), results = NULL,  normalized = FALSE), 
-                                          Transformation = list(setting = list(method = "none"), results = NULL,  transformed = FALSE)))
+                     DataProcessing = list(rowSumsZero = genes_flt0,
+                                           Filtering = NULL, 
+                                           Normalization =  list(setting = list(method = "none"), results = NULL,  normalized = FALSE), 
+                                           Transformation = list(setting = list(method = "none"), results = NULL,  transformed = FALSE)))
     
     SE <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance = as.matrix(matrix.filt)),
                                                      colData  = colData,
@@ -1203,7 +1203,7 @@ methods::setMethod(f          = "TransformData",
 methods::setMethod(f         = "FilterLowAbundance",
                    signature = "SummarizedExperiment",
                    definition <- function(object, filterMethod= "CPM", filterStrategy = "NbConditions", cpmCutoff = 5){
-
+                     
                      objectFilt <- object
                      assayFilt  <- assay(objectFilt)
                      
@@ -1248,7 +1248,7 @@ methods::setMethod(f         = "FilterLowAbundance",
                      object@metadata$DataProcessing$Filtering <- Filtering
                      
                      return(object)
-
+                     
                    })
 
 
@@ -1346,12 +1346,12 @@ methods::setMethod(f          = "RunNormalization",
                      Normalization[["setting"]][["method"]]   <- NormMethod
                      Normalization[["results"]][["coefNorm"]] <- coefNorm
                      Normalization[["normalized"]]            <- FALSE
-
+                     
                      if(is.null(object@metadata$DataProcessing)) object@metadata$DataProcessing <- list()
                      object@metadata$DataProcessing[["Normalization"]] <- Normalization
                      
                      if (modify_assay) object <-  apply_norm(object)
-
+                     
                      return(object)
                    })
 
@@ -1371,6 +1371,120 @@ methods::setMethod(f          = "RunNormalization",
                      
                    })
 
+
+
+# ------ process data -----
+
+# Function non generique pour les autres data
+
+#' @title runDataProcessing
+#' @description This function applied a processing (filtering, normalization and/or transformation, PCA) on an omic data sets stored in an object of
+#' class \link{SummarizedExperiment}.
+#' \itemize{
+#' \item{For RNAseq data:}{}
+#' \item{For Proteomic data:}{}
+#' \item{For Metabolomic data:}{}
+#' }
+#' @param object An object of class \link{SummarizedExperiment}
+#' @param samples samples to keep.
+#' @param lowCountFiltering list of parameters of filtering.
+#' @param normalisation list of parameters of normalization.
+#' @param transformation list of parameters of transformation.
+#' @return An object of class \link{SummarizedExperiment}
+#' @exportMethod runDataProcessing
+#' @seealso runSampleFiltering
+#' @seealso FilterLowAbundance
+#' @seealso RunNormalization
+#' @seealso TransformData
+#' @rdname runDataProcessing
+
+methods::setMethod(f          = "runDataProcessing",
+                   signature  = "SummarizedExperiment",
+                   definition = function(object, samples=NULL, lowCountFiltering=NULL, normalisation=NULL, transformation=NULL)
+                   {
+                     
+                     # check args
+                     if(is.null(samples)) stop("")
+                     if(is.null(normalisation) || !is.list(normalisation) || length(normalisation) == 0) stop("")
+                     
+                     
+                     # keep selected samples
+                     object <- runSampleFiltering(object, samples)
+                     
+                     # apply data processing
+                     switch(object@metadata$omicType,
+                            "RNAseq" = {
+                              
+                              # Filter low abundance
+                              print("#    => Low counts Filtering...")
+                              if(is.null(lowCountFiltering) || !is.list(lowCountFiltering) || length(lowCountFiltering)== 0) stop("")
+                              if(is.null(lowCountFiltering[["strategy"]]) || is.null(lowCountFiltering[["CPM_Cutoff"]])) stop("")
+                              SE.processed <- FilterLowAbundance(object = object, filterStrategy = lowCountFiltering[["strategy"]], cpmCutoff = lowCountFiltering[["CPM_Cutoff"]])
+                              
+                              # Run Normalisation 
+                              print("#    => Counts normalization...")
+                              if(is.null(normalisation[["method"]])) stop("")
+                              SE.processed <- RunNormalization(SE.processed, NormMethod = normalisation[["method"]])
+                            },
+                            {
+                              print("#    => transformation data...")
+                              if(is.null(transformation)    || !is.list(transformation) || length(transformation)== 0) stop("")
+                              if(is.null(transformation[["method"]])) stop("")
+                              SE.processed <- TransformData(object, transformMethod = transformation[["method"]])
+                              
+                              print("#    => Run normalization...")
+                              if(is.null(normalisation[["method"]])) stop("")
+                              SE.processed <- RunNormalization(SE.processed, NormMethod = normalisation[["method"]])
+                              
+                            }
+                     )
+                     
+                     #### Run PCA for filtred & normalized data ####
+                     print("#    => Compute PCA ")
+                     SE.processed <- RunPCA(SE.processed)  
+                     
+                     return(SE.processed)
+                   })
+
+
+# ------ filtering per sample -----
+
+#' @title runSampleFiltering
+#' @description This function applied a processing (filtering, normalization and/or transformation, PCA) on an omic data sets stored in an object of
+#' class \link{SummarizedExperiment}.
+#' \itemize{
+#' \item{For RNAseq data:}{}
+#' \item{For Proteomic data:}{}
+#' \item{For Metabolomic data:}{}
+#' }
+#' @param object An object of class \link{SummarizedExperiment}
+#' @param samples samples to keep.
+#' @return An object of class \link{SummarizedExperiment}
+#' @exportMethod runSampleFiltering
+#' @rdname runSampleFiltering
+
+methods::setMethod(f          = "runSampleFiltering",
+                   signature  = "SummarizedExperiment",
+                   definition = function(object, samples=NULL) {
+                     
+                     # check if samples exist else keep all samples
+                     if(is.null(samples)) {
+                       samples <- colnames(object)
+                     }
+                     
+                     # check if samples overlap with
+                     if(length(intersect(samples, colnames(object))) == 0) stop("")
+                       
+                     # keep selected samples
+                     print("#    => select samples")
+                     # keep only samples in data matrix, and colData
+                     SE.new <- object[, object$samples %in% samples]
+                     
+                     # à retirer dès que je remplace Groups par colData
+                     SE.new@metadata$Groups <- dplyr::filter(SE.new@metadata$Groups, samples %in% SE.new$samples)
+                     
+                     return(SE.new)
+                   })
 
 ################################### DIFF-ANALYSIS #############################
 
@@ -1575,7 +1689,7 @@ methods::setMethod(f          = "RunDiffAnalysis",
 methods::setMethod(f          = "FilterDiffAnalysis",
                    signature  = "SummarizedExperiment",
                    definition <- function(object, Adj.pvalue.cutoff = NULL, logFC.cutoff = NULL){
-
+                     
                      if(is.null(object@metadata$DiffExpAnal[["RawDEFres"]])){
                        stop("can't filter the DiffExpAnal object because it doesn't exist")
                      }
@@ -2058,20 +2172,20 @@ methods::setMethod(f          = "boxplot.DE.plot",
 methods::setMethod(f = "runCoExpression",
                    signature = "SummarizedExperiment",
                    definition = function(object,
-                                          K=2:20, 
-                                          replicates=5, 
-                                          nameList = NULL, 
-                                          merge="union",
-                                          model = "Normal",
-                                          GaussianModel = NULL, 
-                                          transformation = NULL, 
-                                          normFactors = NULL, 
+                                         K=2:20, 
+                                         replicates=5, 
+                                         nameList = NULL, 
+                                         merge="union",
+                                         model = "Normal",
+                                         GaussianModel = NULL, 
+                                         transformation = NULL, 
+                                         normFactors = NULL, 
                                          clustermq = FALSE,
-                                          meanFilterCutoff = NULL, 
-                                          scale = NULL,
-                                          silent = TRUE, 
-                                          cmd = FALSE){
-                    
+                                         meanFilterCutoff = NULL, 
+                                         scale = NULL,
+                                         silent = TRUE, 
+                                         cmd = FALSE){
+                     
                      if (is.null(object@metadata$DiffExpAnal[["mergeDEF"]]))
                        stop("Please run a differential analysis. runCoExpression uses these results.")
                      

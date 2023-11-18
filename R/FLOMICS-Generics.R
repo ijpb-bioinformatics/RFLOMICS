@@ -45,6 +45,19 @@ methods::setGeneric(
                   logFC.cutoff = NULL, ... ){standardGeneric("FilterDiffAnalysis")}
 )
 
+
+
+methods::setGeneric(
+  name = "runDataProcessing",
+  def  = function(object, ... ){standardGeneric("runDataProcessing")}
+)
+
+
+methods::setGeneric(
+  name = "runSampleFiltering",
+  def  = function(object, ... ){standardGeneric("runSampleFiltering")}
+)
+
 # ---- PCA ----
 
 methods::setGeneric(

@@ -355,12 +355,8 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
                                  CPM_Cutoff = input$FilterSeuil, 
                                  NormMethod=input$selectNormMethod)
             },
-            "proteomics" = {
+            {
               param.list <- list(transform_method = input$dataTransform,
-                                 NormMethod=input$selectProtMetNormMethod)
-            },
-            "metabolomics" = {
-              param.list <- list(transform_method = input$dataTransform, 
                                  NormMethod=input$selectProtMetNormMethod)
             }
     )
@@ -381,9 +377,10 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     }
     
     print(paste0("# 3  => Data processing: ", dataset))
-    processed.SE <- process_data(SE = session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]],
-                                 samples = input$selectSamples, 
-                                 param.list = param.list)
+    processed.SE <- runDataProcessing(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], samples = input$selectSamples,  
+                                     lowCountFiltering=list(strategy=param.list[["Filter_Strategy"]], CPM_Cutoff=param.list[["CPM_Cutoff"]]), 
+                                     normalisation=list(method=param.list[["NormMethod"]]), transformation=list(method=param.list[["transform_method"]]))
+    
     
     # remove SE processed if exist
     if (dataset %in% names(session$userData$FlomicsMultiAssay)){
@@ -393,7 +390,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     # add new SE with processed data
     session$userData$FlomicsMultiAssay <- eval(parse(text = paste0('c( session$userData$FlomicsMultiAssay ,', dataset, ' = processed.SE )')))
     
-    rea.values[[dataset]]$process   <- TRUE
+    rea.values[[dataset]]$process <- TRUE
     
   }, ignoreInit = TRUE)
   
@@ -403,53 +400,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
 
 ############## functions ###############
-# ------ process data -----
-process_data <- function(SE, samples,  param.list = list(Filter_Strategy = "NbConditions", 
-                                                                  CPM_Cutoff = 1, NormMethod = "TMM", 
-                                                                  transform_method = "none")){
-  
-  print("#    => select samples")
-  SE.new <- SE[, SE$samples %in% samples]
-  SE.new@metadata$Groups <- dplyr::filter(SE@metadata$Groups, samples %in% SE.new$samples)
-  
-  switch(SE.new@metadata$omicType,
-         "RNAseq" = {
-           #### Filter low abundance ####
-           print("#    => Low counts Filtering...")
-           SE.processed <- FilterLowAbundance(object = SE.new, filterStrategy = param.list[["Filter_Strategy"]], cpmCutoff = param.list[["CPM_Cutoff"]])
-           
-           #### Run Normalisation ####
-           print("#    => Counts normalization...")
-           SE.processed <- RunNormalization(SE.processed, NormMethod = param.list[["NormMethod"]])
-         },
-         "proteomics" = {
-           print("#    => transformation data...")
-           SE.processed <- TransformData(SE.new, transformMethod = param.list[["transform_method"]])
-           
-           if(param.list[["NormMethod"]] != "none"){
-             print("#    => Run normalization...")
-             SE.processed <- RunNormalization(SE.processed, NormMethod = param.list[["NormMethod"]])
-           }else{SE.processed@metadata[["DataProcessing"]][["Normalization"]][["setting"]]$methode <- "none" }
-           
-         },
-         "metabolomics" = {
-           print("#    => transformation data...")
-           SE.processed <- TransformData(SE.new, transformMethod = param.list[["transform_method"]])
-           
-           if(param.list[["NormMethod"]] != "none"){
-             print("#    => Run normalization...")
-             SE.processed <- RunNormalization(SE.processed, NormMethod = param.list[["NormMethod"]])
-           }else{SE.processed@metadata[["DataProcessing"]][["Normalization"]][["setting"]]$methode <- "none" }
-         }
-  )
-  
-  #### Run PCA for filtred & normalized data ####
-  print("#    => Compute PCA ")
-  
-  SE.processed <- RunPCA(SE.processed)  
-  
-  return(SE.processed)
-}
 
 # ----- check run norm execution ------
 check_run_process_execution <- function(object.MAE, dataset, param.list = NULL){
