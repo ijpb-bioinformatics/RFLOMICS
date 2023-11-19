@@ -597,7 +597,7 @@ pvalue.plot <- function(data, hypothesis=hypothesis){
 #' @importFrom dplyr select rename
 #' @noRd
 MA.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypothesis){
-
+  
   Abundance <- logFC <- Adj.pvalue <- NULL
   tmp <-dplyr::select(data,"Abundance","logFC","Adj.pvalue") %>% 
     dplyr::rename(., baseMeanLog2=Abundance, log2FoldChange=logFC, padj=Adj.pvalue)
@@ -1101,6 +1101,118 @@ defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteraction
   return(allInteractionsContrasts_df)
 }
 
+#' get contrast expression
+#'
+#' @param ExpDesign data.frame with only bio factors
+#' @param model.formula formula
+#' @return a list of dataframe with all contrasts per type
+#' @export
+#' @noRd
+getExpressionContrastF <- function(ExpDesign, model.formula){
+  
+  # model formula
+  if (is(model.formula, "formula")) model.formula <- paste(as.character(model.formula), collapse = " ")
+  modelFormula <- formula(model.formula) 
+  
+  factorBio <- names(ExpDesign)
+  
+  # bio factor list in formulat
+  labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
+  
+  FactorBioInDesign <- intersect(factorBio, labelsIntoDesign)
+  
+  treatmentFactorsList <- lapply(FactorBioInDesign, function(x){(paste(x, levels(ExpDesign[[x]]), sep=""))})
+  names(treatmentFactorsList) <- FactorBioInDesign
+  
+  interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
+  
+  listOfContrastsDF <- list()
+  # define all simple contrasts pairwise comparisons
+  
+  allSimpleContrast_df <- defineAllSimpleContrasts(treatmentFactorsList)
+  # if 1 factor or more than 1 + interaction
+  if(length(treatmentFactorsList) == 1 || !isFALSE(interactionPresent)){
+    
+    listOfContrastsDF[["simple"]] <- allSimpleContrast_df
+  }
+  
+  # define all simples contrast means
+  # exists("allSimpleContrast_df", inherits = FALSE)
+  if(length(treatmentFactorsList) != 1){
+    allAveragedContrasts_df <- define_averaged_contrasts (allSimpleContrast_df)
+    listOfContrastsDF[["averaged"]] <- allAveragedContrasts_df
+  }
+  
+  # define all interaction contrasts
+  if(length(treatmentFactorsList) != 1){
+    if(interactionPresent){
+      labelsIntoDesign            <- attr(terms.formula(modelFormula),"term.labels")
+      labelOrder                  <- attr(terms.formula(modelFormula), "order")
+      twoWayInteractionInDesign   <- labelsIntoDesign[which(labelOrder == 2)]
+      groupInteractionToKeep      <- gsub(":", " vs ", twoWayInteractionInDesign)
+      allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList, groupInteractionToKeep)
+      
+      listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
+    }
+    #allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList)
+    #listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
+  }
+  # choose the contrasts and rbind data frames of contrasts
+  #selectedContrasts <- returnSelectedContrasts(listOfContrastsDF)
+  
+  return(listOfContrastsDF)
+  
+}
+
+
+#' get contrast matrix
+#'
+#' @param ExpDesign data.frame with only bio factors
+#' @param factorBio vector of factors type
+#' @param contrastList list of contrast expression
+#' @param model.formula formula
+#' @return a list of dataframe with all contrast vectors
+#' @export
+#' @noRd
+getContrastMatrixF <- function(ExpDesign, factorBio, contrastList, Model.formula){
+  
+  modelFormula <- formula(paste(Model.formula, collapse = " ")) 
+  
+  # bio factor list in formula
+  labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
+  FactorBioInDesign <- intersect(factorBio, labelsIntoDesign)
+  
+  treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(ExpDesign[[x]]), sep="")})
+  names(treatmentFactorsList) <- FactorBioInDesign
+  
+  treatmentCondenv <- new.env()
+  
+  interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
+  isThreeOrderInteraction <- any(attr(terms.formula(modelFormula),"order") == 3)
+  
+  # get model matrix
+  modelMatrix <- stats::model.matrix(modelFormula, data = ExpDesign)
+  colnames(modelMatrix)[colnames(modelMatrix) == "(Intercept)"] <- "Intercept"
+  # assign treatment conditions(group) to boolean vectors according to the design model matrix
+  #treatmentCondenv <- new.env()
+  assignVectorToGroups(treatmentFactorsList    = treatmentFactorsList,
+                       modelMatrix             = modelMatrix,
+                       interactionPresent      = interactionPresent,
+                       isThreeOrderInteraction = isThreeOrderInteraction,
+                       treatmentCondenv        = treatmentCondenv)
+  # get the coefficient vector associated with each selected contrast
+  # contrast <- allSimpleContrast_df$contrast[1]
+  colnamesGLMdesign <- colnames(modelMatrix)
+  
+  coefficientsMatrix <- sapply(contrastList, function(x)  returnContrastCoefficients(x, colnamesGLMdesign, treatmentCondenv = treatmentCondenv))
+  
+  colnames(coefficientsMatrix) <- contrastList
+  
+  rownames(coefficientsMatrix) <- colnamesGLMdesign
+  contrastMatrix <- as.data.frame(t(coefficientsMatrix))
+  
+  return(contrastMatrix)
+}
 
 ################## function for getContrastMatrix ExpDesign method  ########################
 
@@ -1248,12 +1360,12 @@ try_rflomics <- function(expr) {
     warning = function(w){ warn <- w
     invokeRestart("muffleWarning")}
   )
-
+  
   return(list(value = value,
               warning = warn,
               error = err)
   )
-
+  
 }
 
 
@@ -1379,7 +1491,7 @@ coseq.results.process <- function(coseqObjectList, K, conds){
   ICL.min.per.cluster <- lapply(1:length(coseqObjectList), function(x){
     ICL.vec.min <- coseq::ICL(coseqObjectList[[x]])
     ICL.vec.min[which(ICL.vec.min == min(ICL.vec.min))]
-    })  %>% unlist()
+  })  %>% unlist()
   
   # TODO tests 231117
   # ICL.min.per.cluster <- lapply(K, function(x){
@@ -1399,14 +1511,14 @@ coseq.results.process <- function(coseqObjectList, K, conds){
     dplyr::summarise(median = median(ICL, na.rm = TRUE), n = dplyr::n()) %>%
     dplyr::mutate(K = as.numeric(K))
   ICL.list[["ICL.n"]] <- ICL.n
-
+  
   # min ICL
   K.ICL.median.min <- ICL.n[which.min(ICL.n$median),]$K
   index  <- which(names(ICL.min.per.cluster) == paste0("K=", K.ICL.median.min))
   index2 <- which(ICL.min.per.cluster[index] == min(ICL.min.per.cluster[index]))
   
   # coseq object with the min ICL
-    coseq.res <- coseqObjectList[index][index2][[1]]
+  coseq.res <- coseqObjectList[index][index2][[1]]
   # coseq.res <- coseqObjectList[[index2]]@allResults[[index]]
   
   # K.ICL.min <- min(ICL.vec[names(ICL.vec) == paste0("K=", K.ICL.median.min)], na.rm = TRUE)
@@ -1497,7 +1609,7 @@ coseq.results.process <- function(coseqObjectList, K, conds){
 #' @noRd
 #'
 runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list, silent = TRUE, cmd = FALSE){
-
+  
   # iter <-  rep(K, each = replicates)
   # seed_arg = rep(1:replicates, max(K) - 1)  
   
@@ -1560,7 +1672,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
   coseq.res.list <- clustermq::Q_rows(fun = fx,
                                       df = df_args, 
                                       export = param.list, n_jobs = nbr_iter, pkgs = "coseq")
-
+  
   names(coseq.res.list) <- c(1:nbr_iter)
   
   CoExpAnal <- list()

@@ -423,64 +423,17 @@ methods::setMethod(f          = "getExpressionContrast",
                    definition <- function(object, model.formula){
                      
                      Design <- object@metadata$design
+                     Factors.Type <- Design@Factors.Type
+                     factorBio <- names(Factors.Type[Factors.Type == "Bio"])
+                     ExpDesign <- object@colData
                      
-                     # model formula
                      if (is(model.formula, "formula")) model.formula <- paste(as.character(model.formula), collapse = " ")
-                     modelFormula <- formula(model.formula) 
-                     # modelFormula <- formula(paste(model.formula, collapse = " "))
-                     # modelFormula <- model.formula
-                     
-                     #Design@Model.formula <- formula(model.formula)
-                     Design@Model.formula <- model.formula
-                     
-                     # bio factor list in formulat
-                     labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
-                     
-                     FactorBioInDesign <- intersect(names(Design@Factors.Type[Design@Factors.Type == "Bio"]), labelsIntoDesign)
-                     
-                     #BioFactors <- Design@List.Factors[FactorBioInDesign]
-                     
-                     treatmentFactorsList <- lapply(FactorBioInDesign, function(x){(paste(x, levels(Design@List.Factors[[x]]), sep=""))})
-                     names(treatmentFactorsList) <- FactorBioInDesign
-                     
-                     interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
-                     
-                     listOfContrastsDF <- list()
-                     # define all simple contrasts pairwise comparisons
-                     
-                     allSimpleContrast_df <- defineAllSimpleContrasts(treatmentFactorsList)
-                     # if 1 factor or more than 1 + interaction
-                     if(length(treatmentFactorsList) == 1 || !isFALSE(interactionPresent)){
-                       
-                       listOfContrastsDF[["simple"]] <- allSimpleContrast_df
-                     }
-                     
-                     # define all simples contrast means
-                     # exists("allSimpleContrast_df", inherits = FALSE)
-                     if(length(treatmentFactorsList) != 1){
-                       allAveragedContrasts_df <- define_averaged_contrasts (allSimpleContrast_df)
-                       listOfContrastsDF[["averaged"]] <- allAveragedContrasts_df
-                     }
-                     
-                     # define all interaction contrasts
-                     if(length(treatmentFactorsList) != 1){
-                       if(interactionPresent){
-                         labelsIntoDesign            <- attr(terms.formula(modelFormula),"term.labels")
-                         labelOrder                  <- attr(terms.formula(modelFormula), "order")
-                         twoWayInteractionInDesign   <- labelsIntoDesign[which(labelOrder == 2)]
-                         groupInteractionToKeep      <- gsub(":", " vs ", twoWayInteractionInDesign)
-                         allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList, groupInteractionToKeep)
-                         
-                         listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
-                       }
-                       #allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList)
-                       #listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
-                     }
-                     # choose the contrasts and rbind data frames of contrasts
-                     #selectedContrasts <- returnSelectedContrasts(listOfContrastsDF)
                      
                      # replace interactive selection of contrasts by return all contrasts -> shiny
-                     Design@Contrasts.List  <- listOfContrastsDF
+                     
+                     Design@Model.formula <- model.formula
+                     Design@Contrasts.List  <-  getExpressionContrastF(ExpDesign[factorBio], model.formula=model.formula)
+                     
                      Design@Contrasts.Coeff <- data.frame()
                      Design@Contrasts.Sel   <- data.frame()
                      
@@ -507,74 +460,38 @@ methods::setMethod(f          = "getExpressionContrast",
 #' @author Christine Paysant-Le Roux
 methods::setMethod(f          = "getContrastMatrix",
                    signature  = "MultiAssayExperiment",
-                   definition <- function(object, contrastList){
+                   definition <- function(object, contrastList=NULL){
                      
                      Design <- object@metadata$design
-                     
-                     contrast <- contrastName <- type <- groupComparison <- NULL
-                     
-                     contrast.sel.list <- list()
-                     contrast.sel.list <- lapply(names(Design@Contrasts.List), function(contrastType) {
+                     Contrasts.List <- Design@Contrasts.List
+                     Model.formula <- Design@Model.formula
+                     Factors.Type <- Design@Factors.Type
+                     factorBio <- names(Factors.Type[Factors.Type == "Bio"])
+                     ExpDesign <- object@colData
+
+                     if(is.null(contrastList)) {
                        
-                       tmp <- Design@Contrasts.List[[contrastType]] %>% dplyr::filter(contrast %in% contrastList) %>%
+                       if(is.null(object@metadata$design@Contrasts.List)) stop("")
+                       
+                       contrastList <- vector()
+                       if(!is.null(object@metadata$design@Contrasts.List$simple)) contrastList <- c(contrastList, object@metadata$design@Contrasts.List$simple$contrast)
+                       if(!is.null(object@metadata$design@Contrasts.List$averaged)) contrastList <- c(contrastList, object@metadata$design@Contrasts.List$averaged$contrast)
+                       if(!is.null(object@metadata$design@Contrasts.List$interaction)) contrastList <- c(contrastList, object@metadata$design@Contrasts.List$interaction$contrast)
+                       
+                       }
+                     
+                     Contrasts.Sel <- lapply(names(Contrasts.List), function(contrastType) {
+                       
+                       Contrasts.List[[contrastType]] %>% dplyr::filter(contrast %in% contrastList) %>%
                          dplyr::select(contrast, contrastName, type, groupComparison)
-                       return(tmp)
-                     })
-                     Design@Contrasts.Sel <- contrast.sel.list %>% purrr::reduce(rbind) %>% dplyr::mutate(tag = paste("H", 1:dim(.)[1], sep=""))
+                       
+                     }) %>% purrr::reduce(rbind) %>% dplyr::mutate(tag = paste("H", 1:dim(.)[1], sep=""))
                      
-                     
-                     sampleData <-  Design@ExpDesign
-                     selectedContrasts <- Design@Contrasts.Sel$contrast
-                     
-                     # modelFormula <- formula(Design@Model.formula) # deprecated?
-                     modelFormula <- formula(paste(Design@Model.formula, collapse = " ")) 
-                     
-                     # bio factor list in formula
-                     labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
-                     FactorBioInDesign <- intersect(names(Design@Factors.Type[Design@Factors.Type == "Bio"]), labelsIntoDesign)
-                     
-                     #BioFactors <- Design@List.Factors[FactorBioInDesign]
-                     
-                     treatmentFactorsList <- lapply(FactorBioInDesign, function(x){paste(x, unique(Design@List.Factors[[x]]), sep="")})
-                     names(treatmentFactorsList) <- FactorBioInDesign
-                     
-                     treatmentCondenv <- new.env()
-                     
-                     interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
-                     isThreeOrderInteraction <- any(attr(terms.formula(modelFormula),"order") == 3)
-                     
-                     # get model matrix
-                     modelMatrix <- stats::model.matrix(modelFormula, data = Design@List.Factors %>% as.data.frame())
-                     colnames(modelMatrix)[colnames(modelMatrix) == "(Intercept)"] <- "Intercept"
-                     # assign treatment conditions(group) to boolean vectors according to the design model matrix
-                     #treatmentCondenv <- new.env()
-                     assignVectorToGroups(treatmentFactorsList    = treatmentFactorsList,
-                                          modelMatrix             = modelMatrix,
-                                          interactionPresent      = interactionPresent,
-                                          isThreeOrderInteraction = isThreeOrderInteraction,
-                                          treatmentCondenv        = treatmentCondenv)
-                     # get the coefficient vector associated with each selected contrast
-                     # contrast <- allSimpleContrast_df$contrast[1]
-                     colnamesGLMdesign <- colnames(modelMatrix)
-                     
-                     #coefficientsMatrix <- sapply(selectedContrasts$contrast, function(x) returnContrastCoefficients(x, colnamesGLMdesign, treatmentCondenv = treatmentCondenv))
-                     coefficientsMatrix <- sapply(selectedContrasts, function(x)  returnContrastCoefficients(x, colnamesGLMdesign, treatmentCondenv = treatmentCondenv))
-                     
-                     #coefficientsMatrix <- MASS::as.fractions(coefficientsMatrix)
-                     colnames(coefficientsMatrix) <- selectedContrasts
-                     
-                     rownames(coefficientsMatrix) <- colnamesGLMdesign
-                     contrastMatrix <- as.data.frame(t(coefficientsMatrix))
-                     #contrastMatrix <- as_tibble(t(coefficientsMatrix)) %>%
-                     #dplyr::mutate(contrast = selectedContrasts, .before = "Intercept") %>%
-                     #dplyr::mutate(type = selectedContrasts$type, .after = "contrast")
-                     #contrastMatrix <- MASS::as.fractions(contrastMatrix)
-                     #contrastMatrix
-                     # contrastList <- as.list(as.data.frame(coefficientsMatrix))
-                     
-                     Design@Contrasts.Coeff <- contrastMatrix
+                     Design@Contrasts.Sel   <- Contrasts.Sel
+                     Design@Contrasts.Coeff <- getContrastMatrixF(ExpDesign, factorBio, contrastList, Model.formula)
                      
                      object@metadata$design <- Design
+                     
                      return(object)
                    })
 
@@ -1412,9 +1329,6 @@ methods::setMethod(f          = "runDataProcessing",
                                          normalisation_method = "none", transformation_method = "none")
                    {
                      
-                     # check args
-                     if(is.null(samples)) samples <- colnames(object)
-                     
                      # keep selected samples
                      object <- runSampleFiltering(object, samples)
                      
@@ -1478,8 +1392,8 @@ methods::setMethod(f          = "runDataProcessing",
 #' @exportMethod runDataProcessing
 methods::setMethod(f          = "runDataProcessing",
                    signature  = "MultiAssayExperiment",
-                   definition = function(object, SE.name, samples=NULL, lowCountFiltering_strategy = "NbReplicates", lowCountFiltering_CPM_Cutoff = 1, 
-                                         normalisation_method = "none", transformation_method = "none"){
+                   definition = function(object, samples=NULL, lowCountFiltering_strategy = "NbReplicates", lowCountFiltering_CPM_Cutoff = 1, 
+                                         normalisation_method = "none", transformation_method = "none", SE.name){
                      
                      # if paste0(SE.name, ".raw") exist
                      if (!paste0(SE.name, ".raw") %in% names(object)){
@@ -1529,14 +1443,21 @@ methods::setMethod(f          = "runSampleFiltering",
                    signature  = "SummarizedExperiment",
                    definition = function(object, samples=NULL) {
                      
-                     # check if samples exist else keep all samples
-                     if(is.null(samples)) {
-                       samples <- colnames(object)
-                     }
+                     # if no samples to filter
+                     if(is.null(samples)) return(object) 
                      
                      # check if samples overlap with
-                     if(length(intersect(samples, colnames(object))) == 0) stop("")
-                       
+                     samples <- intersect(colnames(object), samples)
+                     
+                     # if no iverlap with data colnames
+                     if(length(intersect(samples, colnames(object))) == 0) {
+                       warning("No overlap between samples and colnames of data")
+                       return(object)
+                       }
+                     
+                     # if 100% ovelap!
+                     if(length(samples) == length(colnames(object))) return(object)
+                     
                      # keep selected samples
                      print("#    => select samples")
                      # keep only samples in data matrix, and colData
@@ -1544,6 +1465,8 @@ methods::setMethod(f          = "runSampleFiltering",
                      
                      # à retirer dès que je remplace Groups par colData
                      SE.new@metadata$Groups <- dplyr::filter(SE.new@metadata$Groups, samples %in% SE.new$samples)
+                     
+                     SE.new@metadata$DataProcessing$filteredSamples <- setdiff(colnames(object), samples)
                      
                      return(SE.new)
                    })
