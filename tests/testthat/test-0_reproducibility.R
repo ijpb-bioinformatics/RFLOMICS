@@ -58,6 +58,9 @@ MAE <- MAE |> RFLOMICS::runCoExpression(SE.name = "RNAtest",   nameList = "(temp
 MAE <- MAE |> RFLOMICS::runAnnotationEnrichment(nameList = "H1", SE.name = "RNAtest", dom.select = "GO", Domain = c("BP", "MF", "CC"), list_args = list(OrgDb = "org.At.tair.db", keyType = "TAIR", pvalueCutoff = 0.05))
               # RFLOMICS::runAnnotationEnrichment(nameList = "H1", SE.name = "RNAtest", dom.select = "KEGG", list_args = list(..., pvalueCutoff = 0.05))
 
+## runReport
+# runReport(object=MAE, dir=..., export=TRUE)
+
 # ---------------- TESTS ---------------
 
 # comparaison avec un autre objet

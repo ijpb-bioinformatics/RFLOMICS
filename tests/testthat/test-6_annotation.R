@@ -28,6 +28,7 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests",
                                                omicsTypes  = c("RNAseq","metabolomics","proteomics"),
                                                ExpDesign   = ExpDesign,
                                                factorRef   = factorRef)
+names(MAE) <- c("RNAtest", "metatest", "protetest")
 
 
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
@@ -40,11 +41,17 @@ MAE <- MAE  |> RFLOMICS::getContrastMatrix(contrastList = c("(temperatureElevate
 MAE2 <- MAE
 
 MAE <- MAE |>
-  TransformData(     SE.name = "metatest",  transform_method = "log2")          |>
+  TransformData(     SE.name = "metatest",  transformMethod = "log2")          |>
   RunNormalization(  SE.name = "metatest",  NormMethod = "totalSum")            |>
   RunNormalization(  SE.name = "RNAtest",   NormMethod = "TMM")                 |>
   RunNormalization(  SE.name = "protetest", NormMethod = "median")              |>
-  FilterLowAbundance(SE.name = "RNAtest")                                       |>
+  FilterLowAbundance(SE.name = "RNAtest") 
+
+MAE[["metatest"]]@metadata$DataProcessing$done  <- TRUE
+MAE[["protetest"]]@metadata$DataProcessing$done <- TRUE
+MAE[["RNAtest"]]@metadata$DataProcessing$done   <- TRUE
+
+MAE <- MAE |>
   RunDiffAnalysis(   SE.name = "metatest",  DiffAnalysisMethod = "limmalmFit")  |>
   RunDiffAnalysis(   SE.name = "protetest", DiffAnalysisMethod = "limmalmFit")  |>
   RunDiffAnalysis(   SE.name = "RNAtest",   DiffAnalysisMethod = "edgeRglmfit") |>

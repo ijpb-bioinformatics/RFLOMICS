@@ -565,12 +565,12 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
   #check arg
   ##projectName
   if(is.null(projectName)) stop("projectName is mandatory.")
-  projectName <- stringr::str_replace_all(string = projectName, pattern = "[*# -/]", replacement = "")
+  projectName <- stringr::str_replace_all(string = projectName, pattern = "[# /-]", replacement = "")
   
   ## omicsNames
   if(is.null(omicsNames)) stop("list of omicsNames is mandatory.")
   nb_omicsData <- length(omicsNames)
-  omicsNames <- stringr::str_replace_all(string = omicsNames, pattern = "[*.# -/]", replacement = "")
+  omicsNames <- stringr::str_replace_all(string = omicsNames, pattern = "[# /-]", replacement = "")
   if (isTRUE(any(duplicated(omicsNames)))) stop("presence of duplicates in the omicsNames")
   
   ## omicsData

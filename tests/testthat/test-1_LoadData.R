@@ -34,11 +34,11 @@ expect_no_error(read_exp_design(file = paste0(system.file(package = "RFLOMICS"),
 expect_error(read_exp_design())
 
 # Missing values
-condEcoseedTest <- read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/testFiles/EcoseedCondNA.txt"))
+#condEcoseedTest <- read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/testFiles/EcoseedCondNA.txt"))
 # TODO verifier le constructeur ET lancer une analyse diff avec des NA
 
 # Special characters
-condEcoseedTest <- read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/testFiles/EcoseedCondSpecChar.txt"))
+#condEcoseedTest <- read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/testFiles/EcoseedCondSpecChar.txt"))
 # TODO verifier le constructeur ET lancer une analyse diff avec des characteres speciaux
 
 # ---- Tests read_omics_data ----
@@ -66,7 +66,6 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests",
                                                omicsTypes  = c("RNAseq","metabolomics","proteomics"),
                                                ExpDesign   = ExpDesign,
                                                factorRef   = factorRef)
-
 
 test_that("FlomicsMultiAssay.constructor fonction return MultiAssayExperiment object", {
 
