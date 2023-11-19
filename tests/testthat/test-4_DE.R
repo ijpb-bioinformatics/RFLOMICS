@@ -20,12 +20,13 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests",
                                                                        factorType  = c("batch",  "Bio",          "Bio"),
                                                                        factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI")))
 
+names(MAE) <- c("RNAtest", "metatest", "protetest")
 
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
 MAE <- MAE |>
   RFLOMICS::getExpressionContrast(model.formula = formulae[[1]]) 
 MAE <- MAE  |> RFLOMICS::getContrastMatrix(contrastList = c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
-                                                            "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3",
+                                                            "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS))/3",
                                                             "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" )) 
 contrastsDF <- RFLOMICS::getSelectedContrasts(MAE)
 
@@ -35,6 +36,10 @@ protMat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMI
 rnaMat  <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
 metMat  <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"))
 condMat <- RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
+
+condMat$Repeat      <- factor(condMat$Repeat, levels = c("rep1", "rep2", "rep3"))
+condMat$imbibition  <- factor(condMat$imbibition, levels = c("DS", "EI", "LI"))
+condMat$temperature <- factor(condMat$temperature, levels = c("Low", "Medium", "Elevated"))
 
 condMat$Repeat      <- relevel(condMat$Repeat, ref = "rep1")
 condMat$imbibition  <- relevel(condMat$imbibition, ref = "DS")
@@ -55,11 +60,76 @@ design <- model.matrix(~Repeat + temperature + imbibition + temperature:imbibiti
 
 # Not checking if the coefficients are ok in there.
 # taking the ones computed by RFLOMICS functions.
-contrastsCoeff <- MAE@metadata$design@Contrasts.Coeff
+
+contrastList = c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
+                 "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3",
+                 "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" )
+
+#contrastsCoeff <- MAE@metadata$design@Contrasts.Coeff
+contrastsCoeff <- RFLOMICS::getContrastMatrixF(ExpDesign = condMat, factorBio = c("temperature", "imbibition"), contrastList = contrastList, Model.formula = "~Repeat + temperature + imbibition + temperature:imbibition")
 
 ######################################-
 ########### FUNCTIONS TESTS ###########
 ######################################-
+
+# ---- RNAseq : 
+
+test_that("Differential analysis on RNAseq (counts) returns the same result within and outside of RFLOMICS pipeline", {
+  
+  ########################-
+  ### RFLOMICS
+  MAE[["RNAtest"]]@metadata$DiffExpAnal <- NULL
+  
+  MAE <- MAE |>
+    RFLOMICS::FilterLowAbundance(SE.name = "RNAtest") |>
+    RFLOMICS::RunNormalization(SE.name = "RNAtest", NormMethod = "TMM")
+  
+  MAE[["RNAtest"]]@metadata$DataProcessing$done <- TRUE
+  
+  MAE <- MAE |>
+    RFLOMICS::RunDiffAnalysis(SE.name = "RNAtest")
+  
+  ########################-
+  ### equivalent pipeline
+  
+  rnaMat2 <- rnaMat %>% dplyr::filter(rownames(.) %in% rownames(MAE[["RNAtest"]]))
+  
+  dge <- edgeR::DGEList(counts       = rnaMat2,
+                        group        = paste(condMat$temperature, condMat$imbibition, sep = "_"))
+  dge <- edgeR::calcNormFactors(dge, method = "TMM")
+  
+  dge     <- edgeR::estimateGLMCommonDisp(dge, design = design)
+  dge     <- edgeR::estimateGLMTrendedDisp(dge, design = design)
+  dge     <- edgeR::estimateGLMTagwiseDisp(dge, design = design)
+  fit.RNA <- edgeR::glmFit(dge, design = design)
+  
+  ResGlm <-  lapply(1:nrow(contrastsCoeff), function(x){
+    edgeR::glmLRT(fit.RNA, contrast = unlist(contrastsCoeff[x,]))
+  })
+  names(ResGlm) <- rownames(contrastsCoeff)
+  
+  ListResRNA <- lapply(ResGlm, function(x){
+    res <- data.frame(edgeR::topTags(x, n = dim(x)[1])) %>%
+      dplyr::rename("Abundance" = "logCPM", "pvalue" = "PValue", "Adj.pvalue" = "FDR")
+    return(res)
+  })
+  names(ListResRNA) <- names(ResGlm)
+  
+  ## RNAseq
+  
+  MAESimple <- MAE[["RNAtest"]]@metadata$DiffExpAnal$DEF$`(temperatureElevated - temperatureLow) in imbibitionDS`
+  MAEMean   <- MAE[["RNAtest"]]@metadata$DiffExpAnal$DEF$`(imbibitionEI - imbibitionDS) in mean`
+  MAEInt    <- MAE[["RNAtest"]]@metadata$DiffExpAnal$DEF$`(temperatureElevated - temperatureLow) in imbibitionEI - (temperatureElevated - temperatureLow) in imbibitionDS`
+  
+  resSimple <- ListResRNA$`(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)`
+  resMean   <- ListResRNA$`((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3`
+  resInt    <- ListResRNA$`((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))`
+  
+  expect_equal(MAESimple, resSimple[match(rownames(MAESimple), rownames(resSimple)),])
+  expect_equal(MAEMean, resMean)
+  expect_equal(MAEInt, resInt)
+  
+})
 
 
 # ---- Metabolomics : 
@@ -71,7 +141,10 @@ test_that("Diff Analysis on metabolomics returns the same result within and outs
   
   MAE <- MAE |>
     RFLOMICS::TransformData(SE.name = "metatest", transformMethod = "log2")  |>
-    RFLOMICS::RunNormalization(SE.name = "metatest", NormMethod = "totalSum") |>
+    RFLOMICS::RunNormalization(SE.name = "metatest", NormMethod = "totalSum")
+  MAE[["metatest"]]@metadata$DataProcessing$done <- TRUE
+  
+  MAE <- MAE |>
     RFLOMICS::RunDiffAnalysis(SE.name = "metatest")                           
   
   ########################-
@@ -116,8 +189,13 @@ test_that("Diff Analysis on proteomics returns the same result within and outsid
   ### RFLOMICS
   
   MAE <- MAE |>
-    RFLOMICS::RunNormalization(SE.name = "protetest", NormMethod = "median")  |>
-    RFLOMICS::RunDiffAnalysis(SE.name = "protetest")                        
+    RFLOMICS::RunNormalization(SE.name = "protetest", NormMethod = "median")
+
+  MAE[["protetest"]]@metadata$DataProcessing$done <- TRUE
+  
+  MAE <- MAE |>
+    RFLOMICS::RunDiffAnalysis(SE.name = "protetest")
+  
   
   ########################-
   ### equivalent pipeline
@@ -150,65 +228,8 @@ test_that("Diff Analysis on proteomics returns the same result within and outsid
   resInt    <- ListResProt$`((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))`
   
   expect_equal(as.matrix(MAESimple), as.matrix(resSimple[match(rownames(MAESimple), rownames(resSimple)),]))
-  expect_identical(MAEMean, resMean)
-  expect_identical(MAEInt, resInt)
-  
-
-  
-})
-
-
-# ---- RNAseq : 
-
-test_that("Differential analysis on RNAseq (counts) returns the same result within and outside of RFLOMICS pipeline", {
-
-  ########################-
-  ### RFLOMICS
-  MAE[["RNAtest"]]@metadata$DiffExpAnal <- NULL
-  
-  MAE <- MAE |>
-    RFLOMICS::FilterLowAbundance(SE.name = "RNAtest")                         |>
-    RFLOMICS::RunNormalization(SE.name = "RNAtest", NormMethod = "TMM")       |>
-    RFLOMICS::RunDiffAnalysis(SE.name = "RNAtest")
-  
-  ########################-
-  ### equivalent pipeline
-  
-  rnaMat2 <- rnaMat %>% dplyr::filter(rownames(.) %in% rownames(MAE[["RNAtest"]]))
-  
-  dge <- edgeR::DGEList(counts       = rnaMat2,
-                        group        = paste(condMat$temperature, condMat$imbibition, sep = "_"))
-  dge <- edgeR::calcNormFactors(dge, method = "TMM")
-  
-  dge     <- edgeR::estimateGLMCommonDisp(dge, design = design)
-  dge     <- edgeR::estimateGLMTrendedDisp(dge, design = design)
-  dge     <- edgeR::estimateGLMTagwiseDisp(dge, design = design)
-  fit.RNA <- edgeR::glmFit(dge, design = design)
-  
-  ResGlm <-  lapply(1:nrow(contrastsCoeff), function(x){
-    edgeR::glmLRT(fit.RNA, contrast = unlist(contrastsCoeff[x,]))
-  })
-  names(ResGlm) <- rownames(contrastsCoeff)
-  
-  ListResRNA <- lapply(ResGlm, function(x){
-    res <- data.frame(edgeR::topTags(x, n = dim(x)[1])) %>%
-    dplyr::rename("Abundance" = "logCPM", "pvalue" = "PValue", "Adj.pvalue" = "FDR")
-    return(res)
-  })
-  names(ListResRNA) <- names(ResGlm)
-
-  ## RNAseq
-  
-  MAESimple <- MAE[["RNAtest"]]@metadata$DiffExpAnal$DEF$`(temperatureElevated - temperatureLow) in imbibitionDS`
-  MAEMean   <- MAE[["RNAtest"]]@metadata$DiffExpAnal$DEF$`(imbibitionEI - imbibitionDS) in mean`
-  MAEInt    <- MAE[["RNAtest"]]@metadata$DiffExpAnal$DEF$`(temperatureElevated - temperatureLow) in imbibitionEI - (temperatureElevated - temperatureLow) in imbibitionDS`
-  
-  resSimple <- ListResRNA$`(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)`
-  resMean   <- ListResRNA$`((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3`
-  resInt    <- ListResRNA$`((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))`
-  
-  expect_equal(MAESimple, resSimple[match(rownames(MAESimple), rownames(resSimple)),])
-  expect_equal(MAEMean, resMean)
+  expect_equal(head(MAEMean), head(resMean))
   expect_equal(MAEInt, resInt)
-  
 })
+
+

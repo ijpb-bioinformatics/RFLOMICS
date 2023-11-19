@@ -22,6 +22,7 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests",
                                                ExpDesign   = ExpDesign,
                                                factorRef   = factorRef)
 
+names(MAE) <- c("RNAtest", "metatest", "protetest")
 
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
 MAE <- MAE |>
