@@ -523,47 +523,38 @@ methods::setMethod(f          = "getContrastMatrix",
 #' @title FlomicsMultiAssay.constructor Constructor for the class \link{MultiAssayExperiment-class}
 #' @description This function initializes an object of class \link{MultiAssayExperiment-class}
 #' from a list of omics data and an object of class \link{ExpDesign-class}.
-#' @param inputs A named list of omic dataset. Names must refer to the name of the omic dataset.
-#' An omics dataset must be itself a list of three objects:
-#' \itemize{
-#' \item{data:}{matrix of omic data}
-#' \item{meta:}{an optional quality check data}
-#' \item{omicType:}{Type of omic data type "None", "RNAseq", "proteomics" or "metabolomics".}
-#' }
-#' @param Design An object of class \link{ExpDesign-class}
 #' @param projectName Project name
+#' @param omicsData list of omics dataset.
+#' @param omicsNames vector of dataset names
+#' @param omicsTypes vector of dataset types
 #' @param ExpDesign a data.frame. Row names give the name of each sample which has been to be construct
-#' by combining factor's modality separated by a "_" (EX: WT_treated_rep1). Column names give the name of
-#' an experimental factor which is a vector of character storing the factor modality for each sample.
-#' @param refList A list of string giving the reference modality for each factor.
-#' @param typeList A vector of string indicating the type of each experimental factor. Two types of effect
-#' are required ("Bio" or "batch")
+#' @param factorRef data.frame describing experimental factors.
+#' \itemize{
+#' \item{factorName:}{factor names}
+#' \item{factorRef:}{factor references}
+#' \item{factorType:}{factor type : "Bio", "batch", "Meta"}
+#' \item{factorLevels:}{levels of each factor with "," separation.}
+#' }
 #' @return An object of class \link{MultiAssayExperiment-class}
 #' @examples
-#' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""),header = TRUE,row.names = 1, sep = "\t")
-#'
-#' # Define the type of each factor
-#' Design.Factors.Type <- c("Bio","Bio","batch")
-#'
-#' # Define the reference modality for each factor
-#' Design.Factors.Ref <- c("WT","control","rep1")
-#'
-#' # Initialize an object of class ExpDesign
-#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.Factors.Ref,
-#'  typeList = Design.Factors.Type)
-#' Design.Factors.Name <- names(Design.File)
-#' Design.formulae <- GetModelFormulae(Factors.Name = Design.Factors.Name,Factors.Type=Design.Factors.Type)
-#' Design.formulae[[1]]
-#' Design.obj <- getExpressionContrast(object = Design.obj, model.formula = names(Design.formulae[1]))
-#' Design.contrastList <- lapply(Design.obj@Contrasts.List, function(x) {
-#' return(x[1:2]$contrast)
-#' })
-#' Design.obj <- getContrastMatrix(object = Design.obj, contrastList = unlist(Design.contrastList))
-#'
-#'  # Create a list of datasets
-#' ListofData <- list("RNAseq1"=list("dataFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_gene_counts.txt",sep=""),
-#' "qcFile"=paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/rnaseq_bioinfo_QC.txt",sep=""), "omicType"="RNAseq"))
-#' FlomicsMultiAssay.constructor(inputs = ListofData, Design=Design.obj)
+#' 
+#' factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
+#' factorRef   = c("rep1",   "Low",          "DS"),
+#' factorType  = c("batch",  "Bio",          "Bio"),
+#' factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
+#' 
+#' omicsData <- list(
+#'   RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
+#'   RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")),
+#'   RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
+#' 
+#' MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests",
+#'                                                omicsData   = omicsData,
+#'                                                omicsNames  = c("RNAtest", "metatest", "protetest"),
+#'                                                omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+#'                                                ExpDesign   = ExpDesign,
+#'                                                factorRef   = factorRef)
+#' 
 #'
 #' @name FlomicsMultiAssay.constructor
 #' @rdname FlomicsMultiAssay.constructor
@@ -573,40 +564,40 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
   
   #check arg
   ##projectName
-  if(is.null(projectName)) stop()
+  if(is.null(projectName)) stop("projectName is mandatory.")
   projectName <- stringr::str_replace_all(string = projectName, pattern = "[*# -/]", replacement = "")
   
   ## omicsNames
-  if(is.null(omicsNames)) stop("")
+  if(is.null(omicsNames)) stop("list of omicsNames is mandatory.")
   nb_omicsData <- length(omicsNames)
   omicsNames <- stringr::str_replace_all(string = omicsNames, pattern = "[*.# -/]", replacement = "")
-  if (isTRUE(any(duplicated(omicsNames)))) stop("")
+  if (isTRUE(any(duplicated(omicsNames)))) stop("presence of duplicates in the omicsNames")
   
   ## omicsData
-  if(!is.list(omicsData) || length(omicsData) == 0) stop("")
-  if(nb_omicsData != length(omicsData)) stop("")
+  if(!is.list(omicsData) || length(omicsData) == 0) stop("the omicsData list is mandatory.")
+  if(nb_omicsData != length(omicsData)) stop("the number of omicsData matrix must match the number of omicsNames.")
   names(omicsData) <- omicsNames
   
   ## omicsTypes
-  if(is.null(omicsTypes)) stop("")
-  if(nb_omicsData != length(omicsTypes)) stop("")
-  if(isTRUE(any(!unique(omicsTypes) %in% c("RNAseq","metabolomics","proteomics")))) stop("")
+  if(is.null(omicsTypes)) stop("the list of omicsTypes is mandatory.")
+  if(nb_omicsData != length(omicsTypes)) stop("the number of omicsData matrix must match the number of omicsTypes")
+  if(isTRUE(any(!unique(omicsTypes) %in% c("RNAseq","metabolomics","proteomics")))) stop("omicsTypes must be part of RNAseq, metabolomics, or proteomics.")
   names(omicsTypes) <- omicsNames
   
   ## ExpDesign
-  if (is.null(ExpDesign)) stop("")
-  if (nrow(ExpDesign) == 0 || ncol(ExpDesign) == 0) stop("")
+  if (is.null(ExpDesign)) stop("the ExpDesign is mandatory.")
+  if (nrow(ExpDesign) == 0 || ncol(ExpDesign) == 0) stop("the ExpDesign is mandatory.")
   designRownames <- stringr::str_replace_all(string = rownames(ExpDesign), pattern = "[*# -/]", replacement = "")
-  if (isTRUE(any(duplicated(designRownames)))) stop("")
+  if (isTRUE(any(duplicated(designRownames)))) stop("presence of duplicates in the ExpDesign colnames")
   rownames(ExpDesign) <- designRownames
   
   ## factorRef
-  if (is.null(factorRef)) stop("")
-  if (is.null(factorRef$factorName)) stop("")
-  if (any(!factorRef$factorName %in% colnames(ExpDesign))) stop("")
+  if (is.null(factorRef)) stop("data.frame factorRef is mandatory.")
+  if (is.null(factorRef$factorName)) stop("factorRef$factorName is mandatory")
+  if (any(!factorRef$factorName %in% colnames(ExpDesign))) stop("factorRef$factorName don't match ExpDesign colnames")
   
-  if (is.null(factorRef$factorType)) stop("")
-  if (any(!unique(factorRef$factorType) %in% c("batch", "Bio", "Meta"))) stop("")
+  if (is.null(factorRef$factorType)) stop("factorRef$factorType is mandatory.")
+  if (any(!unique(factorRef$factorType) %in% c("batch", "Bio", "Meta"))) stop("factorRef$factorType must be part of batch, Bio or Meta")
   
   ## set ref and levels to ExpDesign
   for (i in 1:nrow(factorRef)){
