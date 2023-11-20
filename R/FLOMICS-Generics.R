@@ -85,10 +85,14 @@ methods::setGeneric(
   def  = function(object, ... ){standardGeneric("getExpressionContrast")}
 )
 
-
 methods::setGeneric(
   name = "getContrastMatrix",
   def  = function(object, model.formula, ... ){standardGeneric("getContrastMatrix")}
+)
+
+methods::setGeneric(
+  name = "getContrastMatrix.SE",
+  def  = function(object, modelFormula, ... ){standardGeneric("getContrastMatrix.SE")}
 )
 
 methods::setGeneric(

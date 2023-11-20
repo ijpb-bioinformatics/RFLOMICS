@@ -3,7 +3,7 @@ library(RFLOMICS)
 
 # ---- Construction of objects for the tests ----
 
-## ---- Construction MAE RFLOMICS ready for coseq analysis : ----
+# ---- Construction MAE RFLOMICS ready for differential analysis : ----
 ExpDesign <- RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
 factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
                         factorRef   = c("rep1",   "Low",          "DS"),
@@ -24,30 +24,24 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests",
 names(MAE) <- c("RNAtest", "metatest", "protetest")
 
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
-MAE <- MAE |>
-  RFLOMICS::getExpressionContrast(model.formula = formulae[[1]]) 
-MAE <- MAE  |> RFLOMICS::getContrastMatrix(contrastList = c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
-                                                            "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3",
-                                                            "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" )) 
-contrastsDF <- RFLOMICS::getSelectedContrasts(MAE)
+
+contrastList <- RFLOMICS::getExpressionContrast(object = MAE, model.formula = formulae[[1]]) |> purrr::reduce(rbind) |>
+  dplyr::filter(contrast %in% c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
+                                "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS))/3",
+                                "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" ))
+
 
 MAE2 <- MAE
 
 MAE <- MAE |>
-  TransformData(     SE.name = "metatest",  transformMethod = "log2")          |>
+  TransformData(     SE.name = "metatest",  transformMethod = "log2")           |>
   RunNormalization(  SE.name = "metatest",  NormMethod = "totalSum")            |>
   RunNormalization(  SE.name = "RNAtest",   NormMethod = "TMM")                 |>
   RunNormalization(  SE.name = "protetest", NormMethod = "median")              |>
-  FilterLowAbundance(SE.name = "RNAtest")
-
-MAE[["metatest"]]@metadata$DataProcessing$done <- TRUE
-MAE[["protetest"]]@metadata$DataProcessing$done <- TRUE
-MAE[["RNAtest"]]@metadata$DataProcessing$done <- TRUE
-
-MAE <- MAE |>
-  RunDiffAnalysis(   SE.name = "metatest",  DiffAnalysisMethod = "limmalmFit")  |>
-  RunDiffAnalysis(   SE.name = "protetest", DiffAnalysisMethod = "limmalmFit")  |>
-  RunDiffAnalysis(   SE.name = "RNAtest",   DiffAnalysisMethod = "edgeRglmfit") |>
+  FilterLowAbundance(SE.name = "RNAtest")                                       |>
+  RunDiffAnalysis(   SE.name = "metatest",  DiffAnalysisMethod = "limmalmFit", contrastList = contrastList, modelFormula = formulae[[1]])  |>
+  RunDiffAnalysis(   SE.name = "protetest", DiffAnalysisMethod = "limmalmFit", contrastList = contrastList, modelFormula = formulae[[1]])  |>
+  RunDiffAnalysis(   SE.name = "RNAtest",   DiffAnalysisMethod = "edgeRglmfit", contrastList = contrastList, modelFormula = formulae[[1]]) |>
   FilterDiffAnalysis(SE.name = "RNAtest",   Adj.pvalue.cutoff = 0.05, logFC.cutoff = 1.5)
 
 ## ---- Construction of data tables differential analysis : ----
@@ -72,7 +66,7 @@ design <- model.matrix(~Repeat + temperature + imbibition + temperature:imbibiti
 
 # Not checking if the coefficients are ok in there.
 # taking the ones computed by RFLOMICS functions.
-contrastsCoeff <- MAE@metadata$design@Contrasts.Coeff
+# contrastsCoeff <- MAE@metadata$design@Contrasts.Coeff
 
 ## ---- Data Transformation ----
 rnaMat2 <- rnaMat %>% dplyr::filter(rownames(.) %in% rownames(MAE[["RNAtest"]]))

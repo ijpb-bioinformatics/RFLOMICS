@@ -72,7 +72,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                         pickerInput(
                           inputId  = session$ns("contrastList"),
                           label    = "Selected contrasts:",
-                          choices  = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName),
+                          choices  = rea.values$Contrasts.Sel$contrastName),
                         #multiple = TRUE, selected = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName),
                         
                         
@@ -181,12 +181,15 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       # run diff analysis with selected method
       dataset.SE <- RunDiffAnalysis(object             = dataset.SE,
                                     design             = session$userData$FlomicsMultiAssay@metadata$design,
+                                    modelFormula       = session$userData$FlomicsMultiAssay@metadata$design@Model.formula,
+                                    contrastList       = rea.values$Contrasts.Sel,
                                     Adj.pvalue.method  = "BH",
                                     DiffAnalysisMethod = input$AnaDiffMethod,
                                     clustermq          = input$clustermq,
                                     Adj.pvalue.cutoff  = input$Adj.pvalue.cutoff, 
                                     logFC.cutoff       = input$abs.logFC.cutoff,
                                     cmd                = TRUE)
+      dataset.SE <<- dataset.SE
     }
     else{
       
@@ -270,7 +273,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       lapply(1:length(rea.values$Contrasts.Sel$contrast), function(i) {
         
         dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
-        vect     <- unlist(rea.values$Contrasts.Sel[i,])
+        vect     <- unlist(dataset.SE@metadata$design$Contrasts.Sel[i,])
         res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
         stats    <- dataset.SE@metadata$DiffExpAnal[["stats"]][vect["contrastName"],]
         
@@ -455,7 +458,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     
     H_selected <- names(DEF_mat)[-1][index]
     
-    rea.values[[dataset]]$DiffValidContrast <- dplyr::filter(rea.values$Contrasts.Sel, tag %in% H_selected)
+    rea.values[[dataset]]$DiffValidContrast <- dplyr::filter(dataset.SE@metadata$design$Contrasts.Sel, tag %in% H_selected)
     
     if (length(H_selected) > 1 && dim(DEF_mat)[1] != 0){
       

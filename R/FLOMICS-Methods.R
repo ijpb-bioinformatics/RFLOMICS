@@ -416,7 +416,7 @@ methods::setMethod(f         = "Datasets_overview_plot",
 #' # Obtained the Expression of Contrasts
 #' Design.obj <- getExpressionContrast(object = Design.obj, model.formula = names(Design.formulae[1]))
 #'
-#' @author Christine Paysant-Le Roux
+#' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
 #' @noRd
 methods::setMethod(f          = "getExpressionContrast",
                    signature  = "MultiAssayExperiment",
@@ -432,14 +432,12 @@ methods::setMethod(f          = "getExpressionContrast",
                      # replace interactive selection of contrasts by return all contrasts -> shiny
                      
                      Design@Model.formula <- model.formula
-                     Design@Contrasts.List  <-  getExpressionContrastF(ExpDesign[factorBio], model.formula=model.formula)
+                     #Design@Contrasts.List  <-  getExpressionContrastF(ExpDesign[factorBio], model.formula=model.formula)
+                     Contrasts.List  <-  getExpressionContrastF(ExpDesign[factorBio], model.formula=model.formula)
                      
-                     Design@Contrasts.Coeff <- data.frame()
-                     Design@Contrasts.Sel   <- data.frame()
+                     #object@metadata$design <- Design
                      
-                     object@metadata$design <- Design
-                     
-                     return(object)
+                     return(Contrasts.List)
                    })
 
 
@@ -457,7 +455,7 @@ methods::setMethod(f          = "getExpressionContrast",
 #' @exportMethod getContrastMatrix
 #' @importFrom stats formula terms.formula
 #' @noRd
-#' @author Christine Paysant-Le Roux
+#' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
 methods::setMethod(f          = "getContrastMatrix",
                    signature  = "MultiAssayExperiment",
                    definition <- function(object, contrastList=NULL){
@@ -491,6 +489,31 @@ methods::setMethod(f          = "getContrastMatrix",
                      Design@Contrasts.Coeff <- getContrastMatrixF(ExpDesign, factorBio, contrastList, Model.formula)
                      
                      object@metadata$design <- Design
+                     
+                     return(Contrasts.Coeff)
+                   })
+
+#' @title getContrastMatrix.SE
+#' @description Defines contrast matrix or contrast list with contrast name and contrast coefficients
+#' @param object An object of class \link{MultiAssayExperiment-class}
+#' @param contrastList a data.frame of contrast
+#' @param modelFormula a model formula
+#' @return An object of class \link{SummarizedExperiment-class}
+#' @seealso getExpressionContrast
+#' @exportMethod getContrastMatrix.SE
+#' @importFrom stats formula terms.formula
+#' @noRd
+#' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
+methods::setMethod(f          = "getContrastMatrix.SE",
+                   signature  = "SummarizedExperiment",
+                   definition <- function(object, modelFormula = NULL, contrastList=NULL){
+
+                     if(is.null(modelFormula)) stop("Model.formula arg is mandatory.")
+                     if(is.null(contrastList)) stop("contrastList arg is mandatory.")
+                     
+                     factorBio <- names(object@metadata$design$factorType)[object@metadata$design$factorType == "Bio"]
+
+                     object@metadata$design$Contrasts.Coeff <- getContrastMatrixF(ExpDesign = object@colData, factorBio = factorBio, contrastList = contrastList$contrast, modelFormula)
                      
                      return(object)
                    })
@@ -627,7 +650,7 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
   ## consctuct ExpDesign object
   refList  <- factorRef$factorRef;  names(refList)  <- factorRef$factorName
   typeList <- factorRef$factorType; names(typeList) <- factorRef$factorName
-  Design   <-  ExpDesign.constructor(ExpDesign = ExpDesign, refList = refList, typeList = typeList)
+  Design   <- ExpDesign.constructor(ExpDesign = ExpDesign, refList = refList, typeList = typeList)
   
   ## create SE object of each dataset
   SummarizedExperimentList <- list()
@@ -666,8 +689,9 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
     colData$groups  <- factor(colData$groups,  levels = unique(colData$groups))
     
     
-    
+
     metadata <- list(omicType = omicsTypes[data], Groups = colData, 
+                     design = list(factorType = typeList[intersect(names(typeList), names(colData))]), 
                      DataProcessing = list(rowSumsZero = genes_flt0,
                                            Filtering = NULL, 
                                            Normalization =  list(setting = list(method = "none"), results = NULL,  normalized = FALSE), 
@@ -1500,7 +1524,7 @@ methods::setMethod(f          = "runSampleFiltering",
 #' @param design an object of class \link{ExpDesign-class}
 #' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
 #' to run. Either "edgeRglmfit" or "limmalmFit".
-#' @param contrastList The list of contrast to test
+#' @param contrastList data.frame of contrast from getExpressionContrastF()
 #' @param Adj.pvalue.method The method choosen to adjust pvalue. Takes the same values as the ones of adj.p.adjust method.
 #' @param Adj.pvalue.cutoff The adjusted pvalue cut-off
 #' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
@@ -1515,18 +1539,10 @@ methods::setMethod(f         = "RunDiffAnalysis",
                    signature = "SummarizedExperiment",
                    definition <- function(object, design, Adj.pvalue.method="BH", contrastList = NULL, DiffAnalysisMethod = NULL, 
                                           Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, parallel = FALSE, nworkers = 1,
-                                          cmd = FALSE){
+                                          cmd = FALSE, modelFormula=NULL){
                      
                      # check args
-                     if(is.null(object@metadata$DataProcessing[["done"]])) stop("you need to run data processing before run diff analysis")
-                     if(is.null(design@Contrasts.Sel$contrastName)) 
-                       stop("Argument contrastList is missing and no selected contrasts have been found. You need to calculate contrasts before run diff analysis")
-                     # sera remplacer par un calcul du contrast sur SE
-                     
-                     if(is.null(design)) stop("Argument design is missing and does not exist in the object.")
-                     if(is.null(contrastList)) contrastList <- design@Contrasts.Sel$contrastName
-                     if(any(!contrastList %in% design@Contrasts.Sel$contrastName))
-                       stop("contrast list must cover with : ", paste(design@Contrasts.Sel$contrastName, collapse = ", "))
+                     if(is.null(contrastList) || nrow(contrastList) == 0) stop("contrastList arg is mandatory.")
                      
                      if(is.null(DiffAnalysisMethod) || isFALSE(DiffAnalysisMethod %in% c("edgeRglmfit", "limmalmFit"))) {
                        switch (object@metadata$omicType,
@@ -1536,13 +1552,19 @@ methods::setMethod(f         = "RunDiffAnalysis",
                        warning("DiffAnalyseMethod was missing. Detected omic type is ", object@metadata$omicType ," using ", DiffAnalysisMethod, " for differential analysis.")
                      }
                      
-                     Contrasts.Sel <- dplyr::filter(design@Contrasts.Sel, contrastName %in% contrastList)
+                     ## check completness
                      
+                     ## getcontrast
+                     object@metadata$design$Contrasts.Sel <- dplyr::mutate(contrastList, tag=paste0("H", 1:nrow(contrastList)))
+                     object <- getContrastMatrix.SE(object, modelFormula = modelFormula, contrastList = contrastList)
+                     
+                     #Contrasts.Sel <- dplyr::filter(design@Contrasts.Sel, contrastName %in% contrastList)
+
                      object@metadata$DiffExpAnal <- list()
-                     object@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
+                     object@metadata$DiffExpAnal[["contrasts"]] <- object@metadata$design$Contrasts.Sel
                      
                      # remplacera à terme les lignes ci-dessus
-                     object@metadata$DiffExpAnal[["setting"]][["method"]] <- DiffAnalysisMethod
+                     object@metadata$DiffExpAnal[["setting"]][["method"]]            <- DiffAnalysisMethod
                      object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.method"]] <- Adj.pvalue.method
                      object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.cutoff"]] <- Adj.pvalue.cutoff
                      object@metadata$DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- logFC.cutoff
@@ -1554,13 +1576,12 @@ methods::setMethod(f         = "RunDiffAnalysis",
                        
                        if (!isTransformed(object2)) object2 <-  apply_transformation(object2)
                        if (!isNorm(object2))        object2 <-  apply_norm(object2)
-                       
                      }
                      
                      # move in ExpDesign Constructor
-                     model_matrix <- model.matrix(as.formula(paste(design@Model.formula, collapse = " ")), data = as.data.frame(design@List.Factors))
+                     model_matrix <- model.matrix(as.formula(paste(modelFormula, collapse = " ")), data = object@colData)
                      # model_matrix <- model.matrix(as.formula(paste(design@Model.formula, collapse = " ")), data = as.data.frame(design@ExpDesign))
-                     rownames(model_matrix) <- rownames(design@ExpDesign)
+                     # rownames(model_matrix) <- rownames(design@ExpDesign)
                      
                      ListRes <- switch(DiffAnalysisMethod,
                                        "edgeRglmfit" = try_rflomics(edgeR.AnaDiff(count_matrix  = SummarizedExperiment::assay(object),
@@ -1568,8 +1589,8 @@ methods::setMethod(f         = "RunDiffAnalysis",
                                                                                   group           = getCoeffNorm(object)$group,
                                                                                   lib.size        = getCoeffNorm(object)$lib.size,
                                                                                   norm.factors    = getCoeffNorm(object)$norm.factors,
-                                                                                  Contrasts.Sel   = object@metadata$DiffExpAnal[["contrasts"]],
-                                                                                  Contrasts.Coeff = design@Contrasts.Coeff,
+                                                                                  Contrasts.Sel   = object@metadata$design$Contrasts.Sel,
+                                                                                  Contrasts.Coeff = object@metadata$design$Contrasts.Coeff,
                                                                                   FDR             = 1,
                                                                                   clustermq       = clustermq,
                                                                                   parallel        = parallel,
@@ -1577,8 +1598,8 @@ methods::setMethod(f         = "RunDiffAnalysis",
                                                                                   cmd             = cmd)),
                                        "limmalmFit" = try_rflomics(limma.AnaDiff(count_matrix    = SummarizedExperiment::assay(object2),
                                                                                  model_matrix      = model_matrix[colnames(object2),],
-                                                                                 Contrasts.Sel     = object2@metadata$DiffExpAnal[["contrasts"]],
-                                                                                 Contrasts.Coeff   = design@Contrasts.Coeff,
+                                                                                 Contrasts.Sel     = object@metadata$design$Contrasts.Sel,
+                                                                                 Contrasts.Coeff   = object@metadata$design$Contrasts.Coeff,
                                                                                  Adj.pvalue.cutoff = 1,
                                                                                  Adj.pvalue.method = Adj.pvalue.method,
                                                                                  clustermq         = clustermq,
@@ -1614,12 +1635,13 @@ methods::setMethod(f          = "RunDiffAnalysis",
                    definition = function(object, SE.name, Adj.pvalue.method="BH",
                                          contrastList = NULL, DiffAnalysisMethod = NULL,
                                          Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, 
-                                         parallel = FALSE, nworkers = 1, cmd = FALSE){
+                                         parallel = FALSE, nworkers = 1, cmd = FALSE, modelFormula=NULL){
                      
                      # all verifications are done in this method
                      object[[SE.name]] <-  RunDiffAnalysis(object = object[[SE.name]],
                                                            design = object@metadata$design,
                                                            Adj.pvalue.method = Adj.pvalue.method,
+                                                           modelFormula = modelFormula,
                                                            contrastList = contrastList,
                                                            DiffAnalysisMethod = DiffAnalysisMethod,
                                                            Adj.pvalue.cutoff = Adj.pvalue.cutoff,

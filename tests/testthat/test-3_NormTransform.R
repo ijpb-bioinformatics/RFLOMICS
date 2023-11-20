@@ -22,7 +22,7 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests",
                                                omicsTypes  = c("RNAseq","metabolomics","proteomics"),
                                                ExpDesign   = ExpDesign,
                                                factorRef   = factorRef)
-
+names(MAE) <- c("RNAtest", "metatest", "protetest")
 
 protMat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
 rnaMat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))

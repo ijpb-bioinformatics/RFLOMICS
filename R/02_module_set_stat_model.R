@@ -23,11 +23,7 @@ GLM_modelUI <- function(id){
 GLM_model <- function(input, output, session, rea.values){
 
     # reactive value for reinitialisation of UIoutput
-    local.rea.values <- reactiveValues()
-
-    observe({
-      local.rea.values$contrast <- FALSE
-    })
+    local.rea.values <- reactiveValues(contrast = NULL)
 
     # Construct the form to select the model
     output$SetModelFormula <- renderUI({
@@ -70,11 +66,13 @@ GLM_model <- function(input, output, session, rea.values){
       print(paste0("#    => Choice of model: ", input$model.formulae))
 
       # => Set the model formulae
-      session$userData$FlomicsMultiAssay@metadata$design@Model.formula <- input$model.formulae
+      session$userData$FlomicsMultiAssay <- setModelFormula(session$userData$FlomicsMultiAssay, input$model.formulae)
+      #session$userData$FlomicsMultiAssay@metadata$design@Model.formula <- input$model.formulae
 
       # => get list of expression contrast (hypothesis)
-      session$userData$FlomicsMultiAssay <- getExpressionContrast(object = session$userData$FlomicsMultiAssay, model.formula = input$model.formulae)
-
+      # session$userData$FlomicsMultiAssay <- getExpressionContrast(object = session$userData$FlomicsMultiAssay, model.formula = input$model.formulae)
+      local.rea.values$contrast <- getExpressionContrast(session$userData$FlomicsMultiAssay, model.formula = input$model.formulae)
+      
       rea.values$model <- TRUE
 
     }, ignoreInit = TRUE)
@@ -91,10 +89,11 @@ GLM_model <- function(input, output, session, rea.values){
           br(),
 
           column(width = 12,
-                 lapply(names(session$userData$FlomicsMultiAssay@metadata$design@Contrasts.List), function(contrastType) {
+                 lapply(names(local.rea.values$contrast), function(contrastType) {
 
-                   vect        <- as.vector(session$userData$FlomicsMultiAssay@metadata$design@Contrasts.List[[contrastType]]$contrast)
-                   names(vect) <- as.vector(session$userData$FlomicsMultiAssay@metadata$design@Contrasts.List[[contrastType]]$contrastName)
+                   # remplacer par un getter
+                   vect        <- as.vector(local.rea.values$contrast[[contrastType]]$contrast)
+                   names(vect) <- as.vector(local.rea.values$contrast[[contrastType]]$contrastName)
 
                    shinyWidgets::pickerInput(
                      inputId  = session$ns(paste0("ContrastType",contrastType)),
@@ -135,15 +134,16 @@ GLM_model <- function(input, output, session, rea.values){
                                                                    results = c("DiffExpAnal", "CoExpAnal", "DiffExpEnrichAnal", "CoExpEnrichAnal"))
 
       #get list of selected contrast data frames with expression, name and type
-      contrastList <- list()
-      contrastList <- lapply(names(session$userData$FlomicsMultiAssay@metadata$design@Contrasts.List), function(contrastType) {
+      
+      contrast.sel.vec <- lapply(names(local.rea.values$contrast), function(contrastType) {
 
-          input[[paste0("ContrastType",contrastType)]]
-      })
-      contrast.sel.vec <- contrastList %>% unlist()
+        dplyr::filter(local.rea.values$contrast[[contrastType]], contrast %in% input[[paste0("ContrastType",contrastType)]])
+
+      }) %>% purrr::reduce(rbind)
+      
 
       # check if user has selected the contrasts to test
-      if(length(contrast.sel.vec) == 0){
+      if(nrow(contrast.sel.vec) == 0){
 
         showModal(modalDialog(title = "Error message", "Please select the hypotheses to test."))
         #rea.values$validate.status <- 1
@@ -151,13 +151,14 @@ GLM_model <- function(input, output, session, rea.values){
 
       ## continue only if message is true
       validate({
-        need(length(contrast.sel.vec) != 0, message="ok")
+        need(nrow(contrast.sel.vec) != 0, message="ok")
         })
 
-      # define all the coefficients of selected contrasts and return a contrast matrix with contrast sample name and associated coefficients
-      session$userData$FlomicsMultiAssay <- getContrastMatrix(object = session$userData$FlomicsMultiAssay, contrastList = contrast.sel.vec)
+      # # define all the coefficients of selected contrasts and return a contrast matrix with contrast sample name and associated coefficients
+      # session$userData$FlomicsMultiAssay <- getContrastMatrix(object = session$userData$FlomicsMultiAssay, contrastList = contrast.sel.vec)
 
-      rea.values$Contrasts.Sel <- session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel
+      rea.values$Contrasts.Sel <- contrast.sel.vec
+      print(contrast.sel.vec)
       
       rea.values$analysis <- TRUE
 

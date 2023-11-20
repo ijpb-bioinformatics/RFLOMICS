@@ -75,6 +75,32 @@ getModelFormula <- function(object) {
   }
 }
 
+# ---- Set Model Formula : ----
+#' @title Set model formula from a Flomics multiassayexperiment.
+#'
+#' @param object a MAE or SE object (produced by Flomics)
+#' @param a formula
+#' @return a object SE
+#' @export
+#'
+setModelFormula <- function(object, modelFormula=NULL) {
+  # TODO check if it exists...
+  if (is(object, "MultiAssayExperiment")) {
+    object@metadata$design@Model.formula <- modelFormula
+    # set modelFormula foreach SE
+    for(se in names(object)){
+      object[[se]]@metadata$design$Model.formula <- modelFormula
+    }
+  } 
+  else if(is(object, "SummarizedExperiment")){
+    object@metadata$design$Model.formula <- modelFormula
+  }
+  else {
+    stop("object is not a MultiAssayExperiment.")
+  }
+  return(object)
+}
+
 # ---- Get possible contrasts : ----
 #' @title Get selected contrasts for the differential analysis
 #'

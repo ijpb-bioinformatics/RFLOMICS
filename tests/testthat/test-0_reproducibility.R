@@ -24,35 +24,32 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests",
                                                 ExpDesign   = ExpDesign,
                                                 factorRef   = factorRef)
 
-
 ## choice of model formulae
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE)
 
-MAE <- RFLOMICS::getExpressionContrast(object = MAE, model.formula = formulae[[1]])
+Contrasts.List <- RFLOMICS::getExpressionContrast(MAE, model.formula = formulae[[1]])
 
 ## choice of hypothesis
-selcetedContrasts <- c(MAE@metadata$design@Contrasts.List$simple$contrast[1:3],
-                       MAE@metadata$design@Contrasts.List$averaged$contrast[1:3],
-                       MAE@metadata$design@Contrasts.List$interaction$contrast[1:3])
+selcetedContrasts <- rbind(Contrasts.List$simple[1:3,],
+                           Contrasts.List$averaged[1:3,],
+                           Contrasts.List$interaction[1:3,])
 
-MAE <- RFLOMICS::getContrastMatrix(object = MAE, contrastList = selcetedContrasts)
-contrastsDF <- RFLOMICS::getSelectedContrasts(MAE)
-
-
-## Process data RNAseq
-MAE <- MAE |> RFLOMICS::runDataProcessing(SE.name = "RNAtest"  , samples=colnames(MAE[["RNAtest.raw"]])[-1], lowCountFiltering_strategy="NbReplicates", lowCountFiltering_CPM_Cutoff=1, normalisation_method="TMM") |>
+## data processing
+sampleToKeep <- colnames(MAE[["RNAtest.raw"]])[-1]
+MAE <- MAE |> RFLOMICS::runDataProcessing(SE.name = "RNAtest"  , samples=sampleToKeep, lowCountFiltering_strategy="NbReplicates", lowCountFiltering_CPM_Cutoff=1, normalisation_method="TMM") |>
               RFLOMICS::runDataProcessing(SE.name = "protetest", samples=NULL, normalisation_method="none", transformation_method="none") |>
               RFLOMICS::runDataProcessing(SE.name = "metatest" , samples=NULL, normalisation_method=NULL, transformation_method="log2")   
 
+
 ## diff analysis
-MAE <- MAE |> RFLOMICS::RunDiffAnalysis(SE.name = "RNAtest",   Adj.pvalue.method="BH", DiffAnalysisMethod = "edgeRglmfit", Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0) |>
-              RFLOMICS::RunDiffAnalysis(SE.name = "protetest", Adj.pvalue.method="BH", DiffAnalysisMethod = "limmalmFit",  Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0) |>
-              RFLOMICS::RunDiffAnalysis(SE.name = "metatest",  Adj.pvalue.method="BH", DiffAnalysisMethod = "limmalmFit",  Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0)
+MAE <- MAE |> RFLOMICS::RunDiffAnalysis(SE.name = "RNAtest",   modelFormula = formulae[[1]], contrastList = selcetedContrasts, Adj.pvalue.method="BH", DiffAnalysisMethod = "edgeRglmfit", Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0) |>
+              RFLOMICS::RunDiffAnalysis(SE.name = "protetest", modelFormula = formulae[[1]], contrastList = selcetedContrasts, Adj.pvalue.method="BH", DiffAnalysisMethod = "limmalmFit",  Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0) |>
+              RFLOMICS::RunDiffAnalysis(SE.name = "metatest",  modelFormula = formulae[[1]], contrastList = selcetedContrasts, Adj.pvalue.method="BH", DiffAnalysisMethod = "limmalmFit",  Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0)
 
 ## co expression
-MAE <- MAE |> RFLOMICS::runCoExpression(SE.name = "RNAtest",   nameList = "(temperatureMedium - temperatureLow) in imbibitionDS", K = 2:10, replicates = 5, merge = "union", model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin", normFactors = "TMM") |>
-              RFLOMICS::runCoExpression(SE.name = "protetest", nameList = "(temperatureMedium - temperatureLow) in imbibitionDS", K = 2:10, replicates = 5, merge = "union", model = "normal") |>
-              RFLOMICS::runCoExpression(SE.name = "metatest",  nameList = "(temperatureMedium - temperatureLow) in imbibitionDS", K = 2:10, replicates = 5, merge = "union", model = "normal")
+MAE <- MAE |> RFLOMICS::runCoExpression(SE.name = "RNAtest",   nameList = "H1" , K = 2:10, replicates = 5, merge = "union", model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin", normFactors = "TMM") |>
+              RFLOMICS::runCoExpression(SE.name = "protetest", nameList = "H1" , K = 2:10, replicates = 5, merge = "union", model = "normal") |>
+              RFLOMICS::runCoExpression(SE.name = "metatest",  nameList = "H1" , K = 2:10, replicates = 5, merge = "union", model = "normal")
 
 ## Enrichment
 MAE <- MAE |> RFLOMICS::runAnnotationEnrichment(nameList = "H1", SE.name = "RNAtest", dom.select = "GO", Domain = c("BP", "MF", "CC"), list_args = list(OrgDb = "org.At.tair.db", keyType = "TAIR", pvalueCutoff = 0.05))
@@ -124,7 +121,9 @@ test_that("contrast", {
   
   row.names(Contrasts.Coeff) <- Contrasts.names
   
-  expect_equal(MAE@metadata$design@Contrasts.Coeff, Contrasts.Coeff)
+  expect_equal(MAE[["RNAtest"]]@metadata$design$Contrasts.Coeff, Contrasts.Coeff)
+  expect_equal(MAE[["protetest"]]@metadata$design$Contrasts.Coeff, Contrasts.Coeff)
+  expect_equal(MAE[["metatest"]]@metadata$design$Contrasts.Coeff, Contrasts.Coeff)
   
 })
 
@@ -211,11 +210,18 @@ test_that("diff analysis", {
   expect_equal(MAE[["metatest"]]@metadata$DiffExpAnal$stats, stats.met)
 })
 
-test_that("diff analysis", {
+test_that("coseq analysis", {
   
   expect_equal(MAE[["RNAtest"]]@metadata$CoExpAnal$cluster.nb[[1]],   4)
   expect_equal(MAE[["protetest"]]@metadata$CoExpAnal$cluster.nb[[1]], 3)
   expect_equal(MAE[["metatest"]]@metadata$CoExpAnal$cluster.nb[[1]],  6)
+})
+
+test_that("Enrichment analysis", {
+  
+  expect_true(MAE[["RNAtest"]]@metadata$DiffExpEnrichAnal$GO$summary["BP"] == 1)
+  expect_true(MAE[["RNAtest"]]@metadata$DiffExpEnrichAnal$GO$summary["MF"] == 6)
+  expect_true(MAE[["RNAtest"]]@metadata$DiffExpEnrichAnal$GO$summary["CC"] == 11)
 })
 
 

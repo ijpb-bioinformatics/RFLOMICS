@@ -1133,14 +1133,14 @@ getExpressionContrastF <- function(ExpDesign, model.formula){
   # if 1 factor or more than 1 + interaction
   if(length(treatmentFactorsList) == 1 || !isFALSE(interactionPresent)){
     
-    listOfContrastsDF[["simple"]] <- allSimpleContrast_df
+    listOfContrastsDF[["simple"]] <- dplyr::select(allSimpleContrast_df, contrast, contrastName, groupComparison, type)
   }
   
   # define all simples contrast means
   # exists("allSimpleContrast_df", inherits = FALSE)
   if(length(treatmentFactorsList) != 1){
     allAveragedContrasts_df <- define_averaged_contrasts (allSimpleContrast_df)
-    listOfContrastsDF[["averaged"]] <- allAveragedContrasts_df
+    listOfContrastsDF[["averaged"]] <-  dplyr::select(allAveragedContrasts_df, contrast, contrastName, groupComparison, type)
   }
   
   # define all interaction contrasts
@@ -1152,7 +1152,7 @@ getExpressionContrastF <- function(ExpDesign, model.formula){
       groupInteractionToKeep      <- gsub(":", " vs ", twoWayInteractionInDesign)
       allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList, groupInteractionToKeep)
       
-      listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
+      listOfContrastsDF[["interaction"]] <- dplyr::select(allInteractionsContrasts_df, contrast, contrastName, groupComparison, type)
     }
     #allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList)
     #listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
@@ -1170,13 +1170,13 @@ getExpressionContrastF <- function(ExpDesign, model.formula){
 #' @param ExpDesign data.frame with only bio factors
 #' @param factorBio vector of factors type
 #' @param contrastList list of contrast expression
-#' @param model.formula formula
+#' @param modelFormula formula
 #' @return a list of dataframe with all contrast vectors
 #' @export
 #' @noRd
-getContrastMatrixF <- function(ExpDesign, factorBio, contrastList, Model.formula){
+getContrastMatrixF <- function(ExpDesign, factorBio, contrastList, modelFormula){
   
-  modelFormula <- formula(paste(Model.formula, collapse = " ")) 
+  modelFormula <- formula(paste(modelFormula, collapse = " ")) 
   
   # bio factor list in formula
   labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")

@@ -28,12 +28,12 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests",
 names(MAE) <- c("RNAtest", "metatest", "protetest")
 
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
-MAE <- MAE |>
-  RFLOMICS::getExpressionContrast(model.formula = formulae[[1]]) 
-MAE <- MAE  |> RFLOMICS::getContrastMatrix(contrastList = c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
-                                                            "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS))/3",
-                                                            "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" )) 
-contrastsDF <- RFLOMICS::getSelectedContrasts(MAE)
+
+contrastList <- RFLOMICS::getExpressionContrast(object = MAE, model.formula = formulae[[1]]) |> purrr::reduce(rbind) |>
+  dplyr::filter(contrast %in% c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
+                               "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS))/3",
+                               "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" ))
+
 
 # ---- Construction of data tables differential analysis : ----
 
@@ -66,12 +66,11 @@ design <- model.matrix(~Repeat + temperature + imbibition + temperature:imbibiti
 # Not checking if the coefficients are ok in there.
 # taking the ones computed by RFLOMICS functions.
 
-contrastList = c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
-                 "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3",
-                 "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" )
+contrastsCoeff <- RFLOMICS::getContrastMatrixF(ExpDesign = condMat, factorBio = c("temperature", "imbibition"), modelFormula = "~Repeat + temperature + imbibition + temperature:imbibition",
+                                               contrastList = c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)", 
+                                                                "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3",
+                                                                "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))"))
 
-#contrastsCoeff <- MAE@metadata$design@Contrasts.Coeff
-contrastsCoeff <- RFLOMICS::getContrastMatrixF(ExpDesign = condMat, factorBio = c("temperature", "imbibition"), contrastList = contrastList, Model.formula = "~Repeat + temperature + imbibition + temperature:imbibition")
 
 ######################################-
 ########### FUNCTIONS TESTS ###########
@@ -86,13 +85,9 @@ test_that("Differential analysis on RNAseq (counts) returns the same result with
   MAE[["RNAtest"]]@metadata$DiffExpAnal <- NULL
   
   MAE <- MAE |>
-    RFLOMICS::FilterLowAbundance(SE.name = "RNAtest") |>
-    RFLOMICS::RunNormalization(SE.name = "RNAtest", NormMethod = "TMM")
-  
-  MAE[["RNAtest"]]@metadata$DataProcessing$done <- TRUE
-  
-  MAE <- MAE |>
-    RFLOMICS::RunDiffAnalysis(SE.name = "RNAtest")
+    RFLOMICS::FilterLowAbundance(SE.name = "RNAtest")                           |>
+    RFLOMICS::RunNormalization(SE.name = "RNAtest", NormMethod = "TMM")         |>
+    RFLOMICS::RunDiffAnalysis(SE.name = "RNAtest", contrastList = contrastList, modelFormula = formulae[[1]])
   
   ########################-
   ### equivalent pipeline
@@ -145,12 +140,9 @@ test_that("Diff Analysis on metabolomics returns the same result within and outs
   ### RFLOMICS
   
   MAE <- MAE |>
-    RFLOMICS::TransformData(SE.name = "metatest", transformMethod = "log2")  |>
-    RFLOMICS::RunNormalization(SE.name = "metatest", NormMethod = "totalSum")
-  MAE[["metatest"]]@metadata$DataProcessing$done <- TRUE
-  
-  MAE <- MAE |>
-    RFLOMICS::RunDiffAnalysis(SE.name = "metatest")                           
+    RFLOMICS::TransformData(SE.name = "metatest", transformMethod = "log2")     |>
+    RFLOMICS::RunNormalization(SE.name = "metatest", NormMethod = "totalSum")   |>
+    RFLOMICS::RunDiffAnalysis(SE.name = "metatest", contrastList = contrastList, modelFormula = formulae[[1]])                       
   
   ########################-
   ### equivalent pipeline
@@ -194,12 +186,8 @@ test_that("Diff Analysis on proteomics returns the same result within and outsid
   ### RFLOMICS
   
   MAE <- MAE |>
-    RFLOMICS::RunNormalization(SE.name = "protetest", NormMethod = "median")
-
-  MAE[["protetest"]]@metadata$DataProcessing$done <- TRUE
-  
-  MAE <- MAE |>
-    RFLOMICS::RunDiffAnalysis(SE.name = "protetest")
+    RFLOMICS::RunNormalization(SE.name = "protetest", NormMethod = "median")    |>
+    RFLOMICS::RunDiffAnalysis(SE.name = "protetest", contrastList = contrastList, modelFormula = formulae[[1]])
   
   
   ########################-

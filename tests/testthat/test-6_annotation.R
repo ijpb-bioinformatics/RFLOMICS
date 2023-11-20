@@ -3,14 +3,14 @@ library(RFLOMICS)
 
 # ---- Construction of objects for the tests ----
 
-RNAdat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
-corresp <- read.table(file = paste0(system.file(package = "RFLOMICS"),"/ExamplesFiles/ecoseed/transcript_genes.txt"), sep = "\t", header = TRUE)
+# RNAdat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
+# corresp <- read.table(file = paste0(system.file(package = "RFLOMICS"),"/ExamplesFiles/ecoseed/transcript_genes.txt"), sep = "\t", header = TRUE)
+# 
+# # Use gene id to ease use of clusterprofiler
+# RNAdat <- RNAdat[corresp$ensembl_transcript_id,]
+# rownames(RNAdat) <- corresp$ensembl_gene_id[match(corresp$ensembl_transcript_id, rownames(RNAdat))]
 
-# Use gene id to ease use of clusterprofiler
-RNAdat <- RNAdat[corresp$ensembl_transcript_id,]
-rownames(RNAdat) <- corresp$ensembl_gene_id[match(corresp$ensembl_transcript_id, rownames(RNAdat))]
-
-## ---- Construction MAE RFLOMICS ready for CPR analysis : ----
+# ---- Construction MAE RFLOMICS ready for differential analysis : ----
 ExpDesign <- RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
 factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
                         factorRef   = c("rep1",   "Low",          "DS"),
@@ -30,31 +30,25 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests",
                                                factorRef   = factorRef)
 names(MAE) <- c("RNAtest", "metatest", "protetest")
 
-
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
-MAE <- MAE |>
-  RFLOMICS::getExpressionContrast(model.formula = formulae[[1]]) 
-MAE <- MAE  |> RFLOMICS::getContrastMatrix(contrastList = c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
-                                                            "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3",
-                                                            "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" )) 
+
+contrastList <- RFLOMICS::getExpressionContrast(object = MAE, model.formula = formulae[[1]]) |> purrr::reduce(rbind) |>
+  dplyr::filter(contrast %in% c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
+                                "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS))/3",
+                                "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" ))
+
 
 MAE2 <- MAE
 
 MAE <- MAE |>
-  TransformData(     SE.name = "metatest",  transformMethod = "log2")          |>
+  TransformData(     SE.name = "metatest",  transformMethod = "log2")           |>
   RunNormalization(  SE.name = "metatest",  NormMethod = "totalSum")            |>
   RunNormalization(  SE.name = "RNAtest",   NormMethod = "TMM")                 |>
   RunNormalization(  SE.name = "protetest", NormMethod = "median")              |>
-  FilterLowAbundance(SE.name = "RNAtest") 
-
-MAE[["metatest"]]@metadata$DataProcessing$done  <- TRUE
-MAE[["protetest"]]@metadata$DataProcessing$done <- TRUE
-MAE[["RNAtest"]]@metadata$DataProcessing$done   <- TRUE
-
-MAE <- MAE |>
-  RunDiffAnalysis(   SE.name = "metatest",  DiffAnalysisMethod = "limmalmFit")  |>
-  RunDiffAnalysis(   SE.name = "protetest", DiffAnalysisMethod = "limmalmFit")  |>
-  RunDiffAnalysis(   SE.name = "RNAtest",   DiffAnalysisMethod = "edgeRglmfit") |>
+  FilterLowAbundance(SE.name = "RNAtest")                                       |>
+  RunDiffAnalysis(   SE.name = "metatest",  DiffAnalysisMethod = "limmalmFit", contrastList = contrastList, modelFormula = formulae[[1]])  |>
+  RunDiffAnalysis(   SE.name = "protetest", DiffAnalysisMethod = "limmalmFit", contrastList = contrastList, modelFormula = formulae[[1]])  |>
+  RunDiffAnalysis(   SE.name = "RNAtest",   DiffAnalysisMethod = "edgeRglmfit", contrastList = contrastList, modelFormula = formulae[[1]]) |>
   FilterDiffAnalysis(SE.name = "RNAtest",   Adj.pvalue.cutoff = 0.05, logFC.cutoff = 1.5) |>
   runCoExpression(   SE.name = "RNAtest",   K = 2:12, replicates = 2)   |>
   runCoExpression(   SE.name = "protetest", K = 2:12, replicates = 2)   |>
