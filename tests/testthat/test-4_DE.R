@@ -50,8 +50,8 @@ condMat$Repeat      <- relevel(condMat$Repeat, ref = "rep1")
 condMat$imbibition  <- relevel(condMat$imbibition, ref = "DS")
 condMat$temperature <- relevel(condMat$temperature, ref = "Low")
 
-orderNames <- rownames(condMat)
-
+orderNames <- rownames(colData(MAE))
+condMat <- condMat[match(orderNames, rownames(condMat)),]
 protMat <- protMat[match(orderNames, colnames(protMat))]
 rnaMat  <- rnaMat[match(orderNames, colnames(rnaMat))]
 metMat  <- metMat[match(orderNames, colnames(metMat))]
@@ -87,7 +87,9 @@ test_that("Differential analysis on RNAseq (counts) returns the same result with
   MAE <- MAE |>
     RFLOMICS::FilterLowAbundance(SE.name = "RNAtest")                           |>
     RFLOMICS::RunNormalization(SE.name = "RNAtest", NormMethod = "TMM")         |>
-    RFLOMICS::RunDiffAnalysis(SE.name = "RNAtest", contrastList = contrastList, modelFormula = formulae[[1]])
+    RFLOMICS::RunDiffAnalysis(SE.name = "RNAtest", contrastList = contrastList, 
+                              modelFormula = formulae[[1]],
+                              DiffAnalysisMethod = "edgeRglmfit")
   
   ########################-
   ### equivalent pipeline
@@ -142,7 +144,9 @@ test_that("Diff Analysis on metabolomics returns the same result within and outs
   MAE <- MAE |>
     RFLOMICS::TransformData(SE.name = "metatest", transformMethod = "log2")     |>
     RFLOMICS::RunNormalization(SE.name = "metatest", NormMethod = "totalSum")   |>
-    RFLOMICS::RunDiffAnalysis(SE.name = "metatest", contrastList = contrastList, modelFormula = formulae[[1]])                       
+    RFLOMICS::RunDiffAnalysis(SE.name = "metatest", contrastList = contrastList, 
+                              modelFormula = formulae[[1]],
+                              DiffAnalysisMethod = "limmalmFit")                       
   
   ########################-
   ### equivalent pipeline
@@ -187,7 +191,9 @@ test_that("Diff Analysis on proteomics returns the same result within and outsid
   
   MAE <- MAE |>
     RFLOMICS::RunNormalization(SE.name = "protetest", NormMethod = "median")    |>
-    RFLOMICS::RunDiffAnalysis(SE.name = "protetest", contrastList = contrastList, modelFormula = formulae[[1]])
+    RFLOMICS::RunDiffAnalysis(SE.name = "protetest", contrastList = contrastList, 
+                              modelFormula = formulae[[1]],
+                              DiffAnalysisMethod = "limmalmFit")
   
   
   ########################-
