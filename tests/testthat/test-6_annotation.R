@@ -32,7 +32,7 @@ names(MAE) <- c("RNAtest", "metatest", "protetest")
 
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
 
-contrastList <- RFLOMICS::getExpressionContrast(object = MAE, model.formula = formulae[[1]]) |> purrr::reduce(rbind) |>
+contrastList <- RFLOMICS::getExpressionContrast(object = MAE, modelFormula = formulae[[1]]) |> purrr::reduce(rbind) |>
   dplyr::filter(contrast %in% c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
                                 "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS))/3",
                                 "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" ))
