@@ -1,33 +1,27 @@
 library(testthat)
 library(RFLOMICS)
 
-# ---- Construction MAE RFLOMICS ready for differential analysis : ----
-ExpDesign <- RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
-factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
-                        factorRef   = c("rep1",   "Low",          "DS"),
-                        factorType  = c("batch",  "Bio",          "Bio"),
-                        factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
-
-omicsData <- list(
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
-
-MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests", 
-                                               omicsData   = omicsData,
-                                               omicsNames  = c("RNAtest", "metatest", "protetest"),
-                                               omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-                                               ExpDesign   = ExpDesign,
-                                               factorRef   = factorRef)
-names(MAE) <- c("RNAtest", "metatest", "protetest")
+## ---- Construction MAE RFLOMICS ready for integration analysis : ----
+MAE <- RFLOMICS::FlomicsMultiAssay.constructor(
+  list("RNAtest"     = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
+                            "omicType" = "RNAseq"),
+       "metatest" = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
+                         "omicType" = "metabolomics"),
+       "protetest" = list("data" = RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")), 
+                          "omicType" = "proteomics")
+  ),
+  projectName = "Tests", 
+  ExpDesign = RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt")),
+  refList = c("Repeat" = "rep1", "temperature" = "Low", "imbibition" = "DS"),
+  typeList = c("Repeat" = "batch", "temperature" = "Bio", "imbibition" = "Bio"))
 
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
-
-contrastList <- RFLOMICS::getExpressionContrast(object = MAE, model.formula = formulae[[1]]) |> purrr::reduce(rbind) |>
-  dplyr::filter(contrast %in% c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
-                                "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS))/3",
-                                "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" ))
-
+MAE <- MAE |>
+  RFLOMICS::getExpressionContrast(modelFormula = formulae[[1]]) 
+MAE <- MAE  |> RFLOMICS::getContrastMatrix(contrastList = c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
+                                                            "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3",
+                                                            "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" )) 
+contrastsDF <- RFLOMICS::getSelectedContrasts(MAE)
 
 MAE2 <- MAE
 
@@ -37,9 +31,9 @@ MAE <- MAE |>
   RunNormalization(  SE.name = "RNAtest",   NormMethod = "TMM")                 |>
   RunNormalization(  SE.name = "protetest", NormMethod = "median")              |>
   FilterLowAbundance(SE.name = "RNAtest")                                       |>
-  RunDiffAnalysis(   SE.name = "metatest",  DiffAnalysisMethod = "limmalmFit", contrastList = contrastList, modelFormula = formulae[[1]])  |>
-  RunDiffAnalysis(   SE.name = "protetest", DiffAnalysisMethod = "limmalmFit", contrastList = contrastList, modelFormula = formulae[[1]])  |>
-  RunDiffAnalysis(   SE.name = "RNAtest",   DiffAnalysisMethod = "edgeRglmfit", contrastList = contrastList, modelFormula = formulae[[1]]) |>
+  RunDiffAnalysis(   SE.name = "metatest",  DiffAnalysisMethod = "limmalmFit")  |>
+  RunDiffAnalysis(   SE.name = "protetest", DiffAnalysisMethod = "limmalmFit")  |>
+  RunDiffAnalysis(   SE.name = "RNAtest",   DiffAnalysisMethod = "edgeRglmfit") |>
   FilterDiffAnalysis(SE.name = "RNAtest",   Adj.pvalue.cutoff = 0.05, logFC.cutoff = 1.5) |>
   integrationWrapper(omicsToIntegrate = c("protetest", "metatest"), silent = TRUE, cmd = FALSE) |>
   integrationWrapper(omicsToIntegrate = c("RNAtest", "metatest"),   silent = TRUE, cmd = FALSE, method = "mixOmics")

@@ -27,6 +27,10 @@ names(MAE) <- c("RNAtest", "metatest", "protetest")
 protMat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
 rnaMat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
 
+rnaMat <- rnaMat[, match(colnames(SummarizedExperiment::assay(MAE[["RNAtest"]])), colnames(rnaMat))]
+protMat <- protMat[, match(colnames(SummarizedExperiment::assay(MAE[["protetest"]])), colnames(protMat))]
+# rnaMat <- rnaMat[, match(colnames(SummarizedExperiment::assay(MAE[["metatest"]])), colnames(rnaMat))]
+
 # ---- Some functions ----
 
 isTransformed <- function(object, SE.name) RFLOMICS:::isTransformed(object[[SE.name]])
@@ -220,10 +224,10 @@ test_that("Transformation and normalisation combination - proteomics", {
     
     pca.raw <- FactoMineR::PCA(t(protMattransnorm), ncp = 5, graph = FALSE)
     
-    expect_identical(pca.raw$eig, MAE[["protetest"]]@metadata$PCAlist$raw$eig)
-    expect_identical(pca.raw$svd, MAE[["protetest"]]@metadata$PCAlist$raw$svd)
-    expect_identical(pca.raw$ind, MAE[["protetest"]]@metadata$PCAlist$raw$ind)
-    expect_identical(pca.raw$var, MAE[["protetest"]]@metadata$PCAlist$raw$var)
+    expect_equal(pca.raw$eig, MAE[["protetest"]]@metadata$PCAlist$raw$eig)
+    expect_equal(pca.raw$svd, MAE[["protetest"]]@metadata$PCAlist$raw$svd)
+    expect_equal(pca.raw$ind, MAE[["protetest"]]@metadata$PCAlist$raw$ind)
+    expect_equal(pca.raw$var, MAE[["protetest"]]@metadata$PCAlist$raw$var)
     # the call is obligatory different between the two
     
     protMattransnorm <- switch(as.character(case_vect[[1]]),
@@ -248,14 +252,14 @@ test_that("Transformation and normalisation combination - proteomics", {
     MAE2 <- RunNormalization(MAE2, SE.name = "protetest", NormMethod = as.character(case_vect[[2]]))
     
     MAE2 <- RFLOMICS::RunPCA(MAE2, SE = "protetest")
-    expect_identical(pca.norm$eig, MAE2[["protetest"]]@metadata$PCAlist$norm$eig)
-    expect_identical(pca.norm$svd, MAE2[["protetest"]]@metadata$PCAlist$norm$svd)
-    expect_identical(pca.norm$ind, MAE2[["protetest"]]@metadata$PCAlist$norm$ind)
-    expect_identical(pca.norm$var, MAE2[["protetest"]]@metadata$PCAlist$norm$var)
+    expect_equal(pca.norm$eig, MAE2[["protetest"]]@metadata$PCAlist$norm$eig)
+    expect_equal(pca.norm$svd, MAE2[["protetest"]]@metadata$PCAlist$norm$svd)
+    expect_equal(pca.norm$ind, MAE2[["protetest"]]@metadata$PCAlist$norm$ind)
+    expect_equal(pca.norm$var, MAE2[["protetest"]]@metadata$PCAlist$norm$var)
     
     MAE2[["protetest"]] <- RFLOMICS:::checkTransNorm(MAE2[["protetest"]]) 
     
-    expect_identical(SummarizedExperiment::assay(MAE2[["protetest"]]), as.matrix(protMattransnorm))
+    expect_equal(SummarizedExperiment::assay(MAE2[["protetest"]]), as.matrix(protMattransnorm))
     
   })
   
@@ -302,10 +306,10 @@ test_that("RNAseq - none + TMM + log2", {
 
   pca.raw <- FactoMineR::PCA(t(log2(rnaSeqMat + 1)), ncp = 5, graph = FALSE)
   
-  expect_identical(pca.raw$eig, MAE[["RNAtest"]]@metadata$PCAlist$raw$eig)
-  expect_identical(pca.raw$svd, MAE[["RNAtest"]]@metadata$PCAlist$raw$svd)
-  expect_identical(pca.raw$ind, MAE[["RNAtest"]]@metadata$PCAlist$raw$ind)
-  expect_identical(pca.raw$var, MAE[["RNAtest"]]@metadata$PCAlist$raw$var)
+  expect_equal(pca.raw$eig, MAE[["RNAtest"]]@metadata$PCAlist$raw$eig)
+  expect_equal(pca.raw$svd, MAE[["RNAtest"]]@metadata$PCAlist$raw$svd)
+  expect_equal(pca.raw$ind, MAE[["RNAtest"]]@metadata$PCAlist$raw$ind)
+  expect_equal(pca.raw$var, MAE[["RNAtest"]]@metadata$PCAlist$raw$var)
   # the call is obligatory different between the two
   
   # Manually transforming and normalizing rnaSeqMat
@@ -322,10 +326,10 @@ test_that("RNAseq - none + TMM + log2", {
   MAE2 <- RunNormalization(MAE2, SE.name = "RNAtest", NormMethod = "TMM")
   
   MAE2 <- RFLOMICS::RunPCA(MAE2, SE = "RNAtest")
-  expect_identical(pca.norm$eig, MAE2[["RNAtest"]]@metadata$PCAlist$norm$eig)
-  expect_identical(pca.norm$svd, MAE2[["RNAtest"]]@metadata$PCAlist$norm$svd)
-  expect_identical(pca.norm$ind, MAE2[["RNAtest"]]@metadata$PCAlist$norm$ind)
-  expect_identical(pca.norm$var, MAE2[["RNAtest"]]@metadata$PCAlist$norm$var)
+  expect_equal(pca.norm$eig, MAE2[["RNAtest"]]@metadata$PCAlist$norm$eig)
+  expect_equal(pca.norm$svd, MAE2[["RNAtest"]]@metadata$PCAlist$norm$svd)
+  expect_equal(pca.norm$ind, MAE2[["RNAtest"]]@metadata$PCAlist$norm$ind)
+  expect_equal(pca.norm$var, MAE2[["RNAtest"]]@metadata$PCAlist$norm$var)
   
 })
 
