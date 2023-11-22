@@ -98,14 +98,14 @@ getModelFormula <- function(object) {
 setModelFormula <- function(object, modelFormula=NULL) {
   # TODO check if it exists...
   if (is(object, "MultiAssayExperiment")) {
-    object@metadata$design@Model.formula <- modelFormula
+    object@metadata$design@Model.formula <- paste(modelFormula, collapse = " ")
     # set modelFormula foreach SE
     for(se in names(object)){
-      object[[se]]@metadata$design$Model.formula <- modelFormula
+      object[[se]]@metadata$design$Model.formula <- paste(modelFormula, collapse = " ")
     }
   } 
   else if(is(object, "SummarizedExperiment")){
-    object@metadata$design$Model.formula <- modelFormula
+    object@metadata$design$Model.formula <- paste(modelFormula, collapse = " ")
   }
   else {
     stop("object is not a MultiAssayExperiment.")

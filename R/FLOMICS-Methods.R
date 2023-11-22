@@ -348,14 +348,15 @@ methods::setMethod(f         = "Datasets_overview_plot",
 #' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
 methods::setMethod(f          = "getContrastMatrix",
                    signature  = "MultiAssayExperiment",
-                   definition <- function(object, SE.name, contrastList=NULL){
+                   definition <- function(object, SE.name, modelFormula = NULL, contrastList=NULL){
                      
                      if (is.null(object[[SE.name]])) stop("no Experiment named ", SE.name, " in MAE object")
+                     if (is.null(modelFormula)) stop("Model.formula arg is mandatory.")
                      if (is.null(contrastList)) stop("contrastList is mandatory.")
                      if (any(!c("contrast", "contrastName", "groupComparison", "type") %in% names(contrastList))) 
                        stop("contrastList data.frame must contain at least these colomn : contrast, contrastName, groupComparison, type")
                      
-                     modelFormula <- getModelFormula(object)
+                     object <- setModelFormula(object, modelFormula)
                     
                      object[[SE.name]] <- getContrastMatrix(object = object[[SE.name]], contrastList = contrastList, modelFormula = modelFormula)
                      
@@ -378,15 +379,17 @@ methods::setMethod(f          = "getContrastMatrix",
 #' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
 methods::setMethod(f          = "getContrastMatrix",
                    signature  = "SummarizedExperiment",
-                   definition <- function(object, contrastList=NULL, modelFormula = NULL){
+                   definition <- function(object, modelFormula = NULL, contrastList=NULL){
 
+                     
                      if(is.null(modelFormula)) stop("Model.formula arg is mandatory.")
                      if(is.null(contrastList)) stop("contrastList arg is mandatory.")
                      
                      ExpDesign <- object@colData
                      
                      factorBio <- bioFactors(object)
-
+                      
+                     object <- setModelFormula(object, modelFormula)
                      object@metadata$design$Contrasts.Coeff <- getContrastMatrixF(ExpDesign = ExpDesign, factorBio = factorBio, contrastList = contrastList$contrast, modelFormula)
                      object@metadata$design$Contrasts.Sel   <- contrastList
                      

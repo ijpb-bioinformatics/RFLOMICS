@@ -24,8 +24,7 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests",
                                                 ExpDesign   = ExpDesign,
                                                 factorRef   = factorRef)
 ## check completness 
-CheckExpDesign(MAE)
-CheckExpDesignCompleteness(MAE[[1]])$messages
+p <- CheckExpDesign(MAE)
 
 ## choice of model formulae
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE)
@@ -48,7 +47,6 @@ sampleToKeep <- colnames(MAE[["RNAtest.raw"]])[-1]
 MAE <- MAE |> RFLOMICS::runDataProcessing(SE.name = "RNAtest"  , samples=sampleToKeep, lowCountFiltering_strategy="NbReplicates", lowCountFiltering_CPM_Cutoff=1, normalisation_method="TMM") |>
               RFLOMICS::runDataProcessing(SE.name = "protetest", samples=NULL, normalisation_method="none", transformation_method="none") |>
               RFLOMICS::runDataProcessing(SE.name = "metatest" , samples=NULL, normalisation_method=NULL, transformation_method="log2")
-CheckExpDesignCompleteness(MAE[["RNAtest"]])$messages
 
 ## diff analysis
 MAE <- MAE |> RFLOMICS::RunDiffAnalysis(SE.name = "RNAtest",   modelFormula = formulae[[1]], contrastList = selcetedContrasts, Adj.pvalue.method="BH", DiffAnalysisMethod = "edgeRglmfit", Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0) |>
@@ -133,6 +131,9 @@ test_that("contrast", {
   expect_equal(MAE[["RNAtest"]]@metadata$design$Contrasts.Coeff, Contrasts.Coeff)
   expect_equal(MAE[["protetest"]]@metadata$design$Contrasts.Coeff, Contrasts.Coeff)
   expect_equal(MAE[["metatest"]]@metadata$design$Contrasts.Coeff, Contrasts.Coeff)
+  
+  expect_equal(CheckExpDesignCompleteness(MAE[["RNAtest"]])$messages, "The experimental design is complete but not balanced.")
+  
   
 })
 

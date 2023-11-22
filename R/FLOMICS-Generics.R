@@ -82,7 +82,7 @@ methods::setGeneric(
 
 methods::setGeneric(
   name = "getContrastMatrix",
-  def  = function(object, contrastList, ... ){standardGeneric("getContrastMatrix")}
+  def  = function(object, modelFormula, contrastList, ... ){standardGeneric("getContrastMatrix")}
 )
 
 methods::setGeneric(
