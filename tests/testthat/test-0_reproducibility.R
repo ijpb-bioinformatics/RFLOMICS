@@ -23,23 +23,32 @@ MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests",
                                                 omicsTypes  = c("RNAseq","metabolomics","proteomics"),
                                                 ExpDesign   = ExpDesign,
                                                 factorRef   = factorRef)
+## check completness 
+CheckExpDesign(MAE)
+CheckExpDesignCompleteness(MAE[[1]])$messages
 
 ## choice of model formulae
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE)
 
-Contrasts.List <- RFLOMICS::getExpressionContrast(MAE, model.formula = formulae[[1]])
+## list of all hypothesis grouped by contarst type (run on MAE or SE)
+Contrasts.List <- RFLOMICS::getExpressionContrast(MAE, modelFormula = formulae[[1]])
+
+# utilisation en dehors de MAE ou SE
+#Contrasts.List <- RFLOMICS::getExpressionContrastF(MAE@colData, bioFactors=c("temperature", "imbibition"), model.formula = formulae[[1]])
 
 ## choice of hypothesis
 selcetedContrasts <- rbind(Contrasts.List$simple[1:3,],
                            Contrasts.List$averaged[1:3,],
                            Contrasts.List$interaction[1:3,])
 
+
+
 ## data processing
 sampleToKeep <- colnames(MAE[["RNAtest.raw"]])[-1]
 MAE <- MAE |> RFLOMICS::runDataProcessing(SE.name = "RNAtest"  , samples=sampleToKeep, lowCountFiltering_strategy="NbReplicates", lowCountFiltering_CPM_Cutoff=1, normalisation_method="TMM") |>
               RFLOMICS::runDataProcessing(SE.name = "protetest", samples=NULL, normalisation_method="none", transformation_method="none") |>
-              RFLOMICS::runDataProcessing(SE.name = "metatest" , samples=NULL, normalisation_method=NULL, transformation_method="log2")   
-
+              RFLOMICS::runDataProcessing(SE.name = "metatest" , samples=NULL, normalisation_method=NULL, transformation_method="log2")
+CheckExpDesignCompleteness(MAE[["RNAtest"]])$messages
 
 ## diff analysis
 MAE <- MAE |> RFLOMICS::RunDiffAnalysis(SE.name = "RNAtest",   modelFormula = formulae[[1]], contrastList = selcetedContrasts, Adj.pvalue.method="BH", DiffAnalysisMethod = "edgeRglmfit", Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0) |>

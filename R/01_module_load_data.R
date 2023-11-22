@@ -517,18 +517,18 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     print(paste0("#    => Design Completeness Check..."))
     
-    local.rea.values$completeCheckRes <-  CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
+    #local.rea.values$completeCheckRes <-  CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
     
     # plot : ok
     local.rea.values$plots <- TRUE
     
-    if (isTRUE(local.rea.values$completeCheckRes[["error"]])){
-      showModal(modalDialog(title = "Error message", "One of loaded datasets have no complete design..."))
-      rea.values$validate.status <- 1
-    }
+    # if (isTRUE(local.rea.values$completeCheckRes[["error"]])){
+    #   showModal(modalDialog(title = "Error message", "One of loaded datasets have no complete design..."))
+    #   rea.values$validate.status <- 1
+    # }
 
-    # continue only if message is true or warning
-    validate({ need(!isTRUE(local.rea.values$completeCheckRes[["error"]]), message = "One of loaded datasets have no complete design...") })
+    # # continue only if message is true or warning
+    # validate({ need(!isTRUE(local.rea.values$completeCheckRes[["error"]]), message = "One of loaded datasets have no complete design...") })
     
     # 
     rea.values$datasetList <- session$userData$FlomicsMultiAssay@metadata$omicList
@@ -575,34 +575,34 @@ LoadOmicsData <- function(input, output, session, rea.values){
   })
   
 
-  # completeness check
-  output$CompletenessUI <- renderUI({
-    
-    if (local.rea.values$plots == FALSE) return()
-    
-    print(paste0("#    => Completeness plot..."))
-    
-    box( width = 6,  status = "warning", title = "Completeness check", solidHeader = TRUE,
-         
-         # hr(),
-         tags$div(
-           HTML("<em>You <b>must</b> have a <b>complete design</b> (i.e. all possible combinations of factor's levels).
-                     <b>Balanced design</b> (presence of the same number of replicates for all
-                     possible combinations) is not required  but advised.
-                     You <b>must</b> also have at least one biological factor and 2 replicates</em>")
-         ),
-         hr(),
-         # plot of count per condition
-         # renderPrint(
-         #    isolate({ 
-         #      local.rea.values$completeCheckRes[["summary"]]
-         #    })
-         # )
-         DT::renderDataTable( DT::datatable(data = local.rea.values$completeCheckRes[["summary"]],
-                                            options = list( pageLength = 5, autoWidth = TRUE, dom = 'tp' )))
-    )
-  })
-  
+  # # completeness check
+  # output$CompletenessUI <- renderUI({
+  #   
+  #   if (local.rea.values$plots == FALSE) return()
+  #   
+  #   print(paste0("#    => Completeness plot..."))
+  #   
+  #   box( width = 6,  status = "warning", title = "Completeness check", solidHeader = TRUE,
+  #        
+  #        # hr(),
+  #        tags$div(
+  #          HTML("<em>You <b>must</b> have a <b>complete design</b> (i.e. all possible combinations of factor's levels).
+  #                    <b>Balanced design</b> (presence of the same number of replicates for all
+  #                    possible combinations) is not required  but advised.
+  #                    You <b>must</b> also have at least one biological factor and 2 replicates</em>")
+  #        ),
+  #        hr(),
+  #        # plot of count per condition
+  #        # renderPrint(
+  #        #    isolate({ 
+  #        #      local.rea.values$completeCheckRes[["summary"]]
+  #        #    })
+  #        # )
+  #        DT::renderDataTable( DT::datatable(data = local.rea.values$completeCheckRes[["summary"]],
+  #                                           options = list( pageLength = 5, autoWidth = TRUE, dom = 'tp' )))
+  #   )
+  # })
+  # 
   return(input)
 }
 

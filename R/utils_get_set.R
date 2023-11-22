@@ -1,3 +1,5 @@
+# getModelFormula !!!! GetModelFormulae
+
 # ---- Get Factor types : ----
 #' @title Get factor types or names of particular factors given a type.
 #'
@@ -7,15 +9,21 @@
 #' @export
 #' 
 getFactorTypes <- function(object) {
+  
   if (is(object, "MultiAssayExperiment")) {
     metadata(object)$design@Factors.Type
-  } else {
-    stop("object is not a MultiAssayExperiment.")
+  } 
+  else if(is(object, "SummarizedExperiment")){
+    metadata(object)$design$factorType
   }
+  else {
+    stop("object is not a MultiAssayExperiment or SummarizedExperiment.")
+  }
+  
 }
 
 #' @export
-#' @rdname getFactorTypes
+#' @rdname bioFactors
 bioFactors <- function(object){
   
   factVect <- toupper(getFactorTypes(object))
@@ -24,7 +32,7 @@ bioFactors <- function(object){
 }
 
 #' @export
-#' @rdname getFactorTypes
+#' @rdname batchFactors
 batchFactors <- function(object){
   
   factVect <- toupper(getFactorTypes(object))
@@ -33,7 +41,7 @@ batchFactors <- function(object){
 }
 
 #' @export
-#' @rdname getFactorTypes
+#' @rdname metaFactors
 metaFactors <- function(object){
   
   factVect <- toupper(getFactorTypes(object))
@@ -70,7 +78,11 @@ getModelFormula <- function(object) {
   # TODO check if it exists...
   if (is(object, "MultiAssayExperiment")) {
     object@metadata$design@Model.formula
-  } else {
+  } 
+  else if(is(object, "SummarizedExperiment")){
+    object@metadata$design$Model.formula
+  }
+  else {
     stop("object is not a MultiAssayExperiment.")
   }
 }

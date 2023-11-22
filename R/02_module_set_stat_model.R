@@ -71,7 +71,7 @@ GLM_model <- function(input, output, session, rea.values){
 
       # => get list of expression contrast (hypothesis)
       # session$userData$FlomicsMultiAssay <- getExpressionContrast(object = session$userData$FlomicsMultiAssay, model.formula = input$model.formulae)
-      local.rea.values$contrast <- getExpressionContrast(session$userData$FlomicsMultiAssay, model.formula = input$model.formulae)
+      local.rea.values$contrast <- getExpressionContrast(session$userData$FlomicsMultiAssay, modelFormula = input$model.formulae)
       
       rea.values$model <- TRUE
 

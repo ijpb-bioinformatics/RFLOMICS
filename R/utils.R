@@ -1101,25 +1101,72 @@ defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteraction
   return(allInteractionsContrasts_df)
 }
 
+
+
+#' @title getExpressionContrast
+#' @description This function allows, from a model formulae, to give the expression contrast data frames.
+#' Three types of contrasts are expressed:
+#' \itemize{
+#' \item{pairwise comparison}
+#' \item{averaged expression}
+#' \item{interaction expression}
+#' }
+#' @param An object of class [\code{\link{SummarizedExperiment-class}}] or class [\code{\link{MultiAssayExperiment-class}}]
+#' @param modelFormula a model formula (characters or formula)
+#' @return list of 1 or 3 data.frames of contrast expression
+#' @export getExpressionContrast
+#'
+#' @examples
+#' 
+#' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
+#' @noRd
+#' 
+getExpressionContrast <- function(object, modelFormula=NULL){
+  
+  # check
+  #if (!is.null(getModelFormula(object))) warning("model.formula exist in object... getModelFormula(object)")
+  if (is.null(modelFormula)) stop("Model.formula arg is mandatory.")
+  if (is(modelFormula, "formula")) modelFormula <- paste(as.character(modelFormula), collapse = " ")
+  
+  # args for getExpressionContrastF()
+  factorBio <- bioFactors(object)
+  ExpDesign <- object@colData
+  
+  object <- setModelFormula(object, modelFormula)
+  
+  Contrasts.List  <-  getExpressionContrastF(ExpDesign, factorBio, modelFormula=modelFormula)
+  
+  return(Contrasts.List)
+}
+
+
 #' get contrast expression
 #'
 #' @param ExpDesign data.frame with only bio factors
-#' @param model.formula formula
+#' @param factorBio vector of bio factors
+#' @param modelFormula formula
 #' @return a list of dataframe with all contrasts per type
 #' @export
 #' @noRd
-getExpressionContrastF <- function(ExpDesign, model.formula){
+getExpressionContrastF <- function(ExpDesign, factorBio=NULL, modelFormula=NULL){
+  
+  # ExpDesign
+  if(is.null(ExpDesign) || nrow(ExpDesign) == 0) stop("ExpDesign arg is mandatory.")
   
   # model formula
-  if (is(model.formula, "formula")) model.formula <- paste(as.character(model.formula), collapse = " ")
-  modelFormula <- formula(model.formula) 
+  if (is.null(modelFormula)) stop("modelFormula arg is mandatory.")
+  if (is(modelFormula, "formula")) modelFormula <- paste(as.character(modelFormula), collapse = " ")
+  modelFormula <- formula(modelFormula) 
   
-  factorBio <- names(ExpDesign)
-  
+  # factorBio
+  if (is.null(factorBio)) stop("factorBio arg is mandatory.")
+  if (length(intersect(factorBio, names(ExpDesign))) == 0) stop("factorBio and names(ExpDesign) don't cover!")
+    
   # bio factor list in formulat
   labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
   
-  FactorBioInDesign <- intersect(factorBio, labelsIntoDesign)
+  FactorBioInDesign <- intersect(labelsIntoDesign, factorBio)
+  if (length(FactorBioInDesign) == 0) stop("factorBio and attr of modelFormula don't cover!")
   
   treatmentFactorsList <- lapply(FactorBioInDesign, function(x){(paste(x, levels(ExpDesign[[x]]), sep=""))})
   names(treatmentFactorsList) <- FactorBioInDesign
@@ -1168,13 +1215,13 @@ getExpressionContrastF <- function(ExpDesign, model.formula){
 #' get contrast matrix
 #'
 #' @param ExpDesign data.frame with only bio factors
-#' @param factorBio vector of factors type
+#' @param factorBio vector of bio factors
 #' @param contrastList list of contrast expression
 #' @param modelFormula formula
 #' @return a list of dataframe with all contrast vectors
 #' @export
 #' @noRd
-getContrastMatrixF <- function(ExpDesign, factorBio, contrastList, modelFormula){
+getContrastMatrixF <- function(ExpDesign, factorBio, modelFormula, contrastList){
   
   modelFormula <- formula(paste(modelFormula, collapse = " ")) 
   

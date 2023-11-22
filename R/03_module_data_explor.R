@@ -62,11 +62,11 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   output$completenessUI <- renderUI({
     
     local.rea.values$message <- NULL
-    completeCheckRes <- CheckExpDesignCompleteness(session$userData$FlomicsMultiAssay, paste0(dataset, ".raw"), input$selectSamples)
+    completeCheckRes <- CheckExpDesignCompleteness(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], input$selectSamples)
 
     if(isTRUE(completeCheckRes[["error"]])){
 
-      local.rea.values$message   <- completeCheckRes[["summary"]][1,3]
+      local.rea.values$message <- completeCheckRes[["messages"]]
     }
     
     list(

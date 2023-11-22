@@ -47,11 +47,7 @@
           List.Factors="list",
           Factors.Type="vector",
           Groups="data.frame",
-          Model.formula="vector",
-          #Model.matrix="vector",
-          Contrasts.List="list",
-          Contrasts.Sel="data.frame",
-          Contrasts.Coeff="data.frame")
+          Model.formula="vector")
   )
 
 

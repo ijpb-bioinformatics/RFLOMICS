@@ -84,10 +84,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
                List.Factors    = dF.List,
                Factors.Type    = typeList,
                Groups          = groups,
-               Model.formula   = vector(),
-               Contrasts.List  = list(),
-               Contrasts.Sel   = data.frame(),
-               Contrasts.Coeff = data.frame())
+               Model.formula   = vector())
   
   return(Design)
 }
@@ -106,7 +103,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 #' @description This method checks some experimental design characteristics.
 #'  A complete design and at least one biological and one batch factors are required for using RFLOMICS workflow.
 #' @param An object of class \link{MultiAssayExperiment-class}
-#' @return a named list of two objects
+#' @return a gg plot object
 #' \itemize{
 #'  \item{"plot:"}{ plot of count data.frame.}
 #'  }
@@ -118,24 +115,22 @@ methods::setMethod(f         = "CheckExpDesign",
                    signature = "MultiAssayExperiment",
                    definition <- function(object){
                      
-                     Design <- object@metadata$design
-                     
                      # check presence of bio factors
-                     if (!table(Design@Factors.Type)["Bio"] %in% 1:3){ stop("No bio factor! or nbr of bio factors exceed 3!") }
-                     if ( table(Design@Factors.Type)["batch"] == 0){ stop("No replicates found!") }
+                     if (!length(bioFactors(object)) %in% 1:3){ stop("No bio factor! or nbr of bio factors exceed 3!") }
+                     if (!length(batchFactors(object)) %in% 1:2){ stop("No replicates found!") }
                      
                      ####################
                      
                      BioFact <- bioFactors(object)
-                     coldata <- MultiAssayExperiment::colData(object)
-                     coldata[["samples"]] <- rownames(coldata)
-                     coldata <- tibble::as_tibble(coldata)
-                     coldata <- MultiAssayExperiment::sampleMap(object) %>% tibble::as_tibble() %>% 
+                     coldata <- MultiAssayExperiment::colData(object) %>% as.data.frame() %>%
+                       dplyr::mutate(samples=rownames(.))
+                     #coldata <- tibble::as_tibble(coldata)
+                     coldata <- MultiAssayExperiment::sampleMap(object) %>% as.data.frame() %>% 
                        dplyr::left_join(coldata, by = c("primary" = "samples"))
                      
                      all_combin_cond <- lapply(BioFact, function(x){ 
-                       df <- unique(Design@List.Factors[[x]]) %>% as.data.frame()
-                       names(df) <- x
+                       df <- unique(coldata[x])
+                       rownames(df) <- 1:nrow(df)
                        return(df) 
                      }) %>% purrr::reduce(merge)
                      
@@ -186,7 +181,7 @@ methods::setMethod(f         = "CheckExpDesign",
 #' @title CheckExpDesignCompleteness
 #' @description This method checks some experimental design characteristics.
 #'  A complete design and at least one biological and one batch factors are required for using RFLOMICS workflow.
-#' @param An object of class \link{MultiAssayExperiment-class}
+#' @param An object of class \link{SummarizedExperiment-class}
 #' @param sampleList list of samples to check.
 #' @return a named list of two objects
 #' \itemize{
@@ -205,114 +200,71 @@ methods::setMethod(f         = "CheckExpDesign",
 #' @noRd
 
 methods::setMethod(f         = "CheckExpDesignCompleteness",
-                   signature = "MultiAssayExperiment",
-                   definition <- function(object, datasetList=NULL, sampleList=NULL){
+                   signature = "SummarizedExperiment",
+                   definition <- function(object, sampleList=NULL){
                      
-                     # test object type
-                     # test if object exist
-                     
-                     Design <- object@metadata$design
-                     
-                     if(is.null(datasetList)){ datasetList <- names(object) }
-                     
+                     object <- runSampleFiltering(object, samples = sampleList)
                      
                      # check presence of bio factors
-                     if (!table(Design@Factors.Type)["Bio"] %in% 1:3){ stop("no bio factor! or nbr of bio factors exceed 3!") }
-                     if ( table(Design@Factors.Type)["batch"] == 0){ stop("No replicate!") }
-                     
-                     
-                     
-                     # # count occurence of bio conditions
-                     # if(is.null(sampleList)){
-                     #   # tmp <- sampleMap(object) %>% data.frame()
-                     #   # sampleList <- lapply(unique(tmp$assay), function(dataset){filter(tmp, assay == dataset)$primary }) %>%
-                     #   #   purrr::reduce(dplyr::union)
-                     #   
-                     #   #sampleList <- sampleMap(object)$primary
-                     #   sampleList.tmp <- dplyr::group_by(data.frame(MultiAssayExperiment::sampleMap(object)), primary) %>% 
-                     #     dplyr::count() %>% 
-                     #     dplyr::ungroup() %>% 
-                     #     dplyr::mutate(max = max(n)) %>% 
-                     #     dplyr::filter(n == max)
-                     #   sampleList <- sampleList.tmp$primary
-                     # }
+                     # check presence of bio factors
+                     if (!length(bioFactors(object)) %in% 1:3){ stop("No bio factor! or nbr of bio factors exceed 3!") }
+                     if (!length(batchFactors(object)) %in% 1:2){ stop("No replicates found!") }
                      
                      # Only works with bio and batch factors for the rest of the function
                      namFact <- c(bioFactors(object), batchFactors(object))
-                     expDesign_mod <- Design@ExpDesign %>% dplyr::select(tidyselect::any_of(namFact))
+                     expDesign_mod <- object@colData[namFact]
                      
-                     dF.List <- lapply(1:ncol(expDesign_mod), function(i){
-                       factor(expDesign_mod[[i]], levels = unique(expDesign_mod[[i]]))
-                     })
-                     names(dF.List) <- names(expDesign_mod)
+                     # dF.List <- lapply(1:ncol(expDesign_mod), function(i){
+                     #   factor(expDesign_mod[[i]], levels = unique(expDesign_mod[[i]]))
+                     # })
+                     # names(dF.List) <- names(expDesign_mod)
                      
-                     # output list
+                     
+                     ExpDesign <- as.data.frame(object@colData)
+                     
+                     bio.fact <- bioFactors(object)
+                     
+                     # group_count <- as.data.frame(dF.List) %>%
+                     #   table() %>% as.data.frame() %>%
+                     #   dplyr::full_join(ExpDesign, by=names(dF.List)) %>%
+                     #   dplyr::mutate_at(.vars = "samples", .funs = function(x) dplyr::if_else(is.na(x), 0, 1)) %>%
+                     #   dplyr::group_by_at((bio.fact)) %>%
+                     #   dplyr::summarise(Count=sum(samples), .groups = "keep")
+                     
+                     #remplacer le code ci-dessus par celui en bas
+                     group_count <- ExpDesign %>%
+                       dplyr::group_by_at((bio.fact)) %>% dplyr::count(name = "Count")
+                     
                      output <- list()
-                     output[["summary"]] <- data.frame()
+                     output[["counts"]] <- group_count
+                     output[["plot"]]   <- plotExperimentalDesign(counts = output[["counts"]], message= output[["messages"]])
                      
-                     for(dataset in datasetList){
+                     # check presence of relicat / batch
+                     # check if design is complete
+                     # check if design is balanced
+                     # check nbr of replicats
+                     if(min(group_count$Count) == 0){
                        
-                       if(is.null(object[[dataset]])) stop(paste(dataset, "not exist."))
-                       
-                       if(is.null(sampleList)){
-                         
-                         sampleList_bis <- colnames(object[[dataset]])
-                       }
-                       else if(length(intersect(sampleList, colnames(object[[dataset]]))) == 0){
-                         
-                         stop(paste("sampleList values not exist in ", dataset))
-                       }
-                       else{ sampleList_bis <- sampleList }
-                       
-                       ExpDesign <- dplyr::filter(expDesign_mod, rownames(expDesign_mod) %in% sampleList_bis)
-                       
-                       bio.fact <- names(Design@Factors.Type[Design@Factors.Type == "Bio"])
-                       #bio.fact <- names(dF.List[Design@Factors.Type == "Bio"])
-                       tmp <- ExpDesign %>% dplyr::mutate(samples=row.names(.))
-                       
-                       group_count <- as.data.frame(dF.List) %>%
-                         table() %>%
-                         as.data.frame() %>%
-                         dplyr::full_join(tmp, by=names(dF.List)) %>%
-                         dplyr::mutate_at(.vars = "samples", .funs = function(x) dplyr::if_else(is.na(x), 0, 1)) %>%
-                         dplyr::group_by_at((bio.fact)) %>%
-                         dplyr::summarise(Count=sum(samples), .groups = "keep")
-                       
-                       # remplacer le code ci-dessus par celui en bas                       
-                       # group_count <- ExpDesign %>% 
-                       #   dplyr::group_by_at((bio.fact)) %>% dplyr::count(name = "Count")
-                       
-                       # check presence of relicat / batch
-                       # check if design is complete
-                       # check if design is balanced
-                       # check nbr of replicats
-                       if(min(group_count$Count) == 0){
-                         
-                         output[["summary"]] <- rbind(output[["summary"]], c(dataset, "error", "The experimental design is not complete."))
-                         output[["error"]]   <- TRUE
-                       }
-                       else if(min(group_count$Count) == 1){
-                         
-                         output[["summary"]] <- rbind(output[["summary"]], c(dataset, "error", "You need at least 2 biological replicates."))
-                         output[["error"]]   <- TRUE
-                       }
-                       else if(length(unique(group_count$Count)) != 1){
-                         
-                         output[["summary"]] <- rbind(output[["summary"]], c(dataset, "warning", "The experimental design is complete but not balanced."))
-                       }
-                       else{
-                         output[["summary"]] <- rbind(output[["summary"]], c(dataset, "pass", "The experimental design is complete and balanced."))
-                       }
-                       
-                       ### plot
-                       output[[dataset]][["counts"]] <- group_count
+                       output[["messages"]] <- paste0("Error", "The experimental design is not complete.")
+                       output[["error"]]   <- TRUE
                      }
-                     names(output[["summary"]]) <- c('dataset', "status", "message")
+                     else if(min(group_count$Count) == 1){
+                       
+                       output[["messages"]] <-  paste0("error", "You need at least 2 biological replicates.")
+                       output[["error"]]   <- TRUE
+                     }
+                     else if(length(unique(group_count$Count)) != 1){
+                       
+                       output[["messages"]] <- paste0("The experimental design is complete but not balanced.")
+                       output[["error"]]   <- FALSE
+                     }
+                     else{
+                       output[["messages"]] <- paste0("The experimental design is complete and balanced.")
+                       output[["error"]]   <- FALSE
+                     }
                      
-                     if(length(datasetList) == 1){
-                       output[["plot"]]   <- plotExperimentalDesign(counts = output[[datasetList[1]]][["counts"]], 
-                                                                    message= output[["summary"]][1,3])
-                     }
+                     ### plot
+                     
                      
                      return(output)
                    })
@@ -379,68 +331,6 @@ methods::setMethod(f         = "Datasets_overview_plot",
                      return(p)
                    })
 
-
-###### METHOD which generate the contrasts expression
-
-
-#' @title getExpressionContrast
-#' @description This function allows, from a model formulae, to give the expression contrast data frames.
-#' Three types of contrasts are expressed:
-#' \itemize{
-#' \item{simple}
-#' \item{pairwise comparison}
-#' \item{averaged expression}
-#' }
-#' @param model.formula a model formula (characters or formula)
-#' @return An object of class [\code{\link{MultiAssayExperiment-class}}]
-#' @exportMethod getExpressionContrast
-#'
-#' @examples
-#' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""), header = TRUE,row.names = 1, sep = "\t")
-#'
-#' # Define the type of each factor
-#' Design.Factors.Type <- c("Bio","Bio","batch")
-#'
-#' # Define the reference modality for each factor
-#' Design.Factors.Ref <- c("WT","control","rep1")
-#'
-#' # Initialize an object of class ExpDesign
-#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File, projectName = "Design.Name", refList = Design.Factors.Ref,
-#' typeList = Design.Factors.Type)
-#' Design.Factors.Name <- names(Design.File)
-#'
-#' # Set the model formula
-#' Design.formulae <- GetModelFormulae(Factors.Name = Design.Factors.Name,Factors.Type=Design.Factors.Type)
-#' Design.formulae[[1]]
-#'
-#' # Obtained the Expression of Contrasts
-#' Design.obj <- getExpressionContrast(object = Design.obj, model.formula = names(Design.formulae[1]))
-#'
-#' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
-#' @noRd
-methods::setMethod(f          = "getExpressionContrast",
-                   signature  = "MultiAssayExperiment",
-                   definition <- function(object, model.formula){
-                     
-                     Design <- object@metadata$design
-                     Factors.Type <- Design@Factors.Type
-                     factorBio <- names(Factors.Type[Factors.Type == "Bio"])
-                     ExpDesign <- object@colData
-                     
-                     if (is(model.formula, "formula")) model.formula <- paste(as.character(model.formula), collapse = " ")
-                     
-                     # replace interactive selection of contrasts by return all contrasts -> shiny
-                     
-                     Design@Model.formula <- model.formula
-                     #Design@Contrasts.List  <-  getExpressionContrastF(ExpDesign[factorBio], model.formula=model.formula)
-                     Contrasts.List  <-  getExpressionContrastF(ExpDesign[factorBio], model.formula=model.formula)
-                     
-                     #object@metadata$design <- Design
-                     
-                     return(Contrasts.List)
-                   })
-
-
 ###### METHOD to obtain the Matrix of contrast with their names and coefficients
 
 #
@@ -449,7 +339,7 @@ methods::setMethod(f          = "getExpressionContrast",
 #' @title getContrastMatrix
 #' @description Defines contrast matrix or contrast list with contrast name and contrast coefficients
 #' @param object An object of class \link{MultiAssayExperiment-class}
-#' @param contrastList A vector of character of contrast
+#' @param contrastList A data.frame of contrast
 #' @return An object of class \link{MultiAssayExperiment-class}
 #' @seealso getExpressionContrast
 #' @exportMethod getContrastMatrix
@@ -458,62 +348,47 @@ methods::setMethod(f          = "getExpressionContrast",
 #' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
 methods::setMethod(f          = "getContrastMatrix",
                    signature  = "MultiAssayExperiment",
-                   definition <- function(object, contrastList=NULL){
+                   definition <- function(object, SE.name, contrastList=NULL){
                      
-                     Design <- object@metadata$design
-                     Contrasts.List <- Design@Contrasts.List
-                     Model.formula <- Design@Model.formula
-                     Factors.Type <- Design@Factors.Type
-                     factorBio <- names(Factors.Type[Factors.Type == "Bio"])
-                     ExpDesign <- object@colData
-
-                     if(is.null(contrastList)) {
-                       
-                       if(is.null(object@metadata$design@Contrasts.List)) stop("")
-                       
-                       contrastList <- vector()
-                       if(!is.null(object@metadata$design@Contrasts.List$simple)) contrastList <- c(contrastList, object@metadata$design@Contrasts.List$simple$contrast)
-                       if(!is.null(object@metadata$design@Contrasts.List$averaged)) contrastList <- c(contrastList, object@metadata$design@Contrasts.List$averaged$contrast)
-                       if(!is.null(object@metadata$design@Contrasts.List$interaction)) contrastList <- c(contrastList, object@metadata$design@Contrasts.List$interaction$contrast)
-                       
-                       }
+                     if (is.null(object[[SE.name]])) stop("no Experiment named ", SE.name, " in MAE object")
+                     if (is.null(contrastList)) stop("contrastList is mandatory.")
+                     if (any(!c("contrast", "contrastName", "groupComparison", "type") %in% names(contrastList))) 
+                       stop("contrastList data.frame must contain at least these colomn : contrast, contrastName, groupComparison, type")
                      
-                     Contrasts.Sel <- lapply(names(Contrasts.List), function(contrastType) {
-                       
-                       Contrasts.List[[contrastType]] %>% dplyr::filter(contrast %in% contrastList) %>%
-                         dplyr::select(contrast, contrastName, type, groupComparison)
-                       
-                     }) %>% purrr::reduce(rbind) %>% dplyr::mutate(tag = paste("H", 1:dim(.)[1], sep=""))
+                     modelFormula <- getModelFormula(object)
+                    
+                     object[[SE.name]] <- getContrastMatrix(object = object[[SE.name]], contrastList = contrastList, modelFormula = modelFormula)
                      
-                     Design@Contrasts.Sel   <- Contrasts.Sel
-                     Design@Contrasts.Coeff <- getContrastMatrixF(ExpDesign, factorBio, contrastList, Model.formula)
-                     
+                     Design@Contrasts.Sel   <- contrastList
                      object@metadata$design <- Design
                      
-                     return(Contrasts.Coeff)
+                     return(object)
                    })
 
-#' @title getContrastMatrix.SE
+#' @title getContrastMatrix
 #' @description Defines contrast matrix or contrast list with contrast name and contrast coefficients
 #' @param object An object of class \link{MultiAssayExperiment-class}
 #' @param contrastList a data.frame of contrast
 #' @param modelFormula a model formula
 #' @return An object of class \link{SummarizedExperiment-class}
 #' @seealso getExpressionContrast
-#' @exportMethod getContrastMatrix.SE
+#' @exportMethod getContrastMatrix
 #' @importFrom stats formula terms.formula
 #' @noRd
 #' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
-methods::setMethod(f          = "getContrastMatrix.SE",
+methods::setMethod(f          = "getContrastMatrix",
                    signature  = "SummarizedExperiment",
-                   definition <- function(object, modelFormula = NULL, contrastList=NULL){
+                   definition <- function(object, contrastList=NULL, modelFormula = NULL){
 
                      if(is.null(modelFormula)) stop("Model.formula arg is mandatory.")
                      if(is.null(contrastList)) stop("contrastList arg is mandatory.")
                      
-                     factorBio <- names(object@metadata$design$factorType)[object@metadata$design$factorType == "Bio"]
+                     ExpDesign <- object@colData
+                     
+                     factorBio <- bioFactors(object)
 
-                     object@metadata$design$Contrasts.Coeff <- getContrastMatrixF(ExpDesign = object@colData, factorBio = factorBio, contrastList = contrastList$contrast, modelFormula)
+                     object@metadata$design$Contrasts.Coeff <- getContrastMatrixF(ExpDesign = ExpDesign, factorBio = factorBio, contrastList = contrastList$contrast, modelFormula)
+                     object@metadata$design$Contrasts.Sel   <- contrastList
                      
                      return(object)
                    })
@@ -1553,10 +1428,12 @@ methods::setMethod(f         = "RunDiffAnalysis",
                      }
                      
                      ## check completness
+                     Completeness <- CheckExpDesignCompleteness(object)
+                     if(isTRUE(Completeness[["error"]])) stop(Completeness[["messages"]])
                      
                      ## getcontrast
+                     object <- getContrastMatrix(object, modelFormula = modelFormula, contrastList = contrastList)
                      object@metadata$design$Contrasts.Sel <- dplyr::mutate(contrastList, tag=paste0("H", 1:nrow(contrastList)))
-                     object <- getContrastMatrix.SE(object, modelFormula = modelFormula, contrastList = contrastList)
                      
                      #Contrasts.Sel <- dplyr::filter(design@Contrasts.Sel, contrastName %in% contrastList)
 
@@ -1618,6 +1495,9 @@ methods::setMethod(f         = "RunDiffAnalysis",
                        object@metadata$DiffExpAnal[["results"]]    <- FALSE
                        object@metadata$DiffExpAnal[["Error"]]      <- ListRes$error
                        object@metadata$DiffExpAnal[["ErrorStats"]] <- NULL
+                       
+                       
+                       #return(object)
                      }
                      
                      ## filtering
