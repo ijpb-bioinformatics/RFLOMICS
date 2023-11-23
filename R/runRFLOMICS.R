@@ -25,23 +25,6 @@ runRFLOMICS <- function(...) {
 
   # shiny::runApp(appDir, display.mode = "normal")
   
-  sidebar <- dashboardSidebar(
-    
-    uiOutput("mysidebar")
-  )
-  
-  body <- dashboardBody({
-    
-    uiOutput("mycontent")
-    
-  })
-  
-  rflomicsUI <- dashboardPage(
-    dashboardHeader(title = "RFLOMICS"),
-    sidebar,
-    body
-  ) 
-  
   # addResourcePath(prefix = 'docs', system.file('RFLOMICSapp/docs/', package = 'RFLOMICS')) # docs/ n'existe pas ?
   addResourcePath(prefix = 'www', system.file('RFLOMICSapp/www/', package = 'RFLOMICS'))
   shinyApp(ui = rflomicsUI, server = shinyServer(rflomicsServer), ...)
