@@ -1074,7 +1074,6 @@ defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteraction
 #' @param modelFormula a model formula (characters or formula)
 #' @return list of 1 or 3 data.frames of contrast expression
 #' @export getExpressionContrast
-#' 
 #' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
 #' @noRd
 #' 
