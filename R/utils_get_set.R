@@ -23,7 +23,7 @@ getFactorTypes <- function(object) {
 }
 
 #' @export
-#' @rdname bioFactors
+#' @rdname getFactorTypes
 bioFactors <- function(object){
   
   factVect <- toupper(getFactorTypes(object))
@@ -32,7 +32,7 @@ bioFactors <- function(object){
 }
 
 #' @export
-#' @rdname batchFactors
+#' @rdname getFactorTypes
 batchFactors <- function(object){
   
   factVect <- toupper(getFactorTypes(object))
@@ -41,7 +41,7 @@ batchFactors <- function(object){
 }
 
 #' @export
-#' @rdname metaFactors
+#' @rdname getFactorTypes
 metaFactors <- function(object){
   
   factVect <- toupper(getFactorTypes(object))
