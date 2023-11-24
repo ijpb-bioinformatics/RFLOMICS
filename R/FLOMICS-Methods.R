@@ -204,22 +204,22 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                    definition <- function(object, sampleList=NULL){
                      
                      object <- runSampleFiltering(object, samples = sampleList)
+                     output <- list()
                      
                      # check presence of bio factors
                      # check presence of bio factors
-                     if (!length(bioFactors(object)) %in% 1:3){ stop("No bio factor! or nbr of bio factors exceed 3!") }
-                     if (!length(batchFactors(object)) %in% 1:2){ stop("No replicates found!") }
+                     if (!length(bioFactors(object)) %in% 1:3){ 
+                       output[["messages"]] <-  "Error : You need at least 1 biological factor with at least 2 modalities."
+                       output[["error"]]    <- TRUE
+                       return(output)
+                     }
+                     if (!length(batchFactors(object)) %in% 1:2){ 
+                       output[["messages"]] <-  "Error : You need at least 1 batch factor with at least 2 replicats."
+                       output[["error"]]    <- TRUE 
+                       return(output)
+                     }
                      
                      # Only works with bio and batch factors for the rest of the function
-                     namFact <- c(bioFactors(object), batchFactors(object))
-                     expDesign_mod <- object@colData[namFact]
-                     
-                     # dF.List <- lapply(1:ncol(expDesign_mod), function(i){
-                     #   factor(expDesign_mod[[i]], levels = unique(expDesign_mod[[i]]))
-                     # })
-                     # names(dF.List) <- names(expDesign_mod)
-                     
-                     
                      ExpDesign <- as.data.frame(object@colData)
                      
                      bio.fact <- bioFactors(object)
@@ -232,10 +232,9 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                      #   dplyr::summarise(Count=sum(samples), .groups = "keep")
                      
                      #remplacer le code ci-dessus par celui en bas
-                     group_count <- ExpDesign %>%
-                       dplyr::group_by_at((bio.fact)) %>% dplyr::count(name = "Count")
+                     group_count <- ExpDesign %>% dplyr::group_by_at((bio.fact)) %>% dplyr::count(name = "Count")
                      
-                     output <- list()
+                     
                      output[["counts"]] <- group_count
                      output[["plot"]]   <- plotExperimentalDesign(counts = output[["counts"]], message= output[["messages"]])
                      
@@ -245,21 +244,21 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                      # check nbr of replicats
                      if(min(group_count$Count) == 0){
                        
-                       output[["messages"]] <- paste0("Error", "The experimental design is not complete.")
+                       output[["messages"]] <- "Error : The experimental design is not complete."
                        output[["error"]]   <- TRUE
                      }
                      else if(min(group_count$Count) == 1){
                        
-                       output[["messages"]] <-  paste0("error", "You need at least 2 biological replicates.")
+                       output[["messages"]] <-  "Error : You need at least 2 biological replicates."
                        output[["error"]]   <- TRUE
                      }
                      else if(length(unique(group_count$Count)) != 1){
                        
-                       output[["messages"]] <- paste0("The experimental design is complete but not balanced.")
+                       output[["messages"]] <- "The experimental design is complete but not balanced."
                        output[["error"]]   <- FALSE
                      }
                      else{
-                       output[["messages"]] <- paste0("The experimental design is complete and balanced.")
+                       output[["messages"]] <- "The experimental design is complete and balanced."
                        output[["error"]]   <- FALSE
                      }
                      
@@ -359,9 +358,6 @@ methods::setMethod(f          = "getContrastMatrix",
                      object <- setModelFormula(object, modelFormula)
                     
                      object[[SE.name]] <- getContrastMatrix(object = object[[SE.name]], contrastList = contrastList, modelFormula = modelFormula)
-                     
-                     Design@Contrasts.Sel   <- contrastList
-                     object@metadata$design <- Design
                      
                      return(object)
                    })
@@ -558,15 +554,21 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
     matrix.filt  <- matrix[rowSums(matrix)  > 0, ]
     
     # create SE object
-    factorBio <- dplyr::filter(factorRef, factorType == "Bio")$factorName
+    factorBio   <- dplyr::filter(factorRef, factorType == "Bio")$factorName
+    factorBatch <- dplyr::filter(factorRef, factorType == "batch")$factorName
+    
     colData   <- dplyr::mutate(ExpDesign, samples=row.names(ExpDesign)) |>
-      dplyr::filter(samples %in% sample.intersect) |> 
-      tidyr::unite("groups", all_of(factorBio), sep = "_", remove = FALSE)
+                 dplyr::filter(samples %in% sample.intersect) |> 
+                 tidyr::unite("groups", all_of(factorBio), sep = "_", remove = FALSE)
+    
+    for (factor in c(factorBio, factorBatch)){
+      
+      F.levels <- levels(colData[[factor]])
+      colData[[factor]] <- factor(colData[[factor]], levels = intersect(F.levels, unique(colData[[factor]])))
+    }
     
     colData$samples <- factor(colData$samples, levels = unique(colData$samples))
     colData$groups  <- factor(colData$groups,  levels = unique(colData$groups))
-    
-    
 
     metadata <- list(omicType = omicsTypes[data], Groups = colData, 
                      design = list(factorType = typeList[intersect(names(typeList), names(colData))]), 
@@ -848,16 +850,16 @@ methods::setMethod(f= "plotPCA",
                    signature = "SummarizedExperiment",
                    definition <- function(object, PCA, PCs=c(1,2), condition="groups"){
                      
+                     ExpDesign <- as.data.frame(object@colData)
+                     
                      #
                      PC1 <- paste("Dim.",PCs[1], sep="")
                      PC2 <- paste("Dim.",PCs[2], sep="")
                      
-                     if(PC1 == PC2){
-                       stop("PC1 and PC2 must be different")
-                     }
+                     if(PC1 == PC2) PC2 <- PC1+1
                      
                      score     <- object@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
-                       dplyr::mutate(samples=row.names(.)) %>% dplyr::full_join(., object@metadata$Groups, by="samples")
+                       dplyr::mutate(samples=row.names(.)) %>% dplyr::full_join(., ExpDesign, by="samples")
                      
                      var1 <- round(object@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digits=3)
                      var2 <- round(object@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digits=3)
@@ -894,7 +896,7 @@ methods::setMethod(f= "plotPCA",
                      # ellipse corr
                      aa <- dplyr::select(score, tidyselect::all_of(condition), PC1, PC2)
                      bb <- FactoMineR::coord.ellipse(aa, bary = TRUE)
-                     p <- p + ggplot2::geom_polygon(data = bb$res, aes_string(x=PC1, y=PC2, fill = condition),
+                     p <- p + ggplot2::geom_polygon(data = bb$res, ggplot2::aes_string(x=PC1, y=PC2, fill = condition),
                                                     show.legend = FALSE,
                                                     alpha = 0.1)
                      
@@ -1223,7 +1225,10 @@ methods::setMethod(f          = "runDataProcessing",
                    {
                      
                      # keep selected samples
+                     print("#    => select samples...")
                      object <- runSampleFiltering(object, samples)
+                     
+                     if(nrow(object@colData) == 0) stop("no samples in object!")
                      
                      # spported values:
                      lowCountFiltering_strategy.sup     <- c("NbReplicates","NbConditions")
@@ -1352,9 +1357,29 @@ methods::setMethod(f          = "runSampleFiltering",
                      if(length(samples) == length(colnames(object))) return(object)
                      
                      # keep selected samples
-                     print("#    => select samples")
                      # keep only samples in data matrix, and colData
                      SE.new <- object[, object$samples %in% samples]
+                     
+                     # if we remove all samples :
+                     if(nrow(SE.new@colData) == 0) SE.new@colData <- SE.new@colData[c("samples", "groups")]
+                     
+                     for (factor in c(bioFactors(object), batchFactors(object))){
+                       
+                       # if only one category remains after the filter, it's will be removed
+                       if(length(unique(SE.new@colData[[factor]])) <= 1 ) {
+                         SE.new@colData[[factor]] <- NULL
+                         factor.types <- getFactorTypes(SE.new)
+                         SE.new@metadata$design$factorType <- factor.types[which(names(factor.types) != factor)]
+                         # replace with setFactorTypes
+                       }
+                       else{
+                         F.levels <- levels(SE.new@colData[[factor]])
+                         SE.new@colData[[factor]] <- factor(SE.new@colData[[factor]], levels = intersect(F.levels, unique(SE.new@colData[[factor]])))
+                       }
+                     }
+                         
+                     SE.new$samples <- factor(SE.new$samples, levels = unique(SE.new$samples))
+                     SE.new$groups  <- factor(SE.new$groups,  levels = unique(SE.new$groups))
                      
                      # à retirer dès que je remplace Groups par colData
                      SE.new@metadata$Groups <- dplyr::filter(SE.new@metadata$Groups, samples %in% SE.new$samples)
@@ -1435,6 +1460,9 @@ methods::setMethod(f         = "RunDiffAnalysis",
                      if(isTRUE(Completeness[["error"]])) stop(Completeness[["messages"]])
                      
                      ## getcontrast
+                     contrastList <- RFLOMICS::getExpressionContrast(object, modelFormula = modelFormula) %>% purrr::reduce(rbind) %>% 
+                       dplyr::filter(contrast %in% contrastList$contrast)
+                     
                      object <- getContrastMatrix(object, modelFormula = modelFormula, contrastList = contrastList)
                      object@metadata$design$Contrasts.Sel <- dplyr::mutate(contrastList, tag=paste0("H", 1:nrow(contrastList)))
                      

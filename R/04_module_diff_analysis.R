@@ -262,17 +262,16 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     if (rea.values[[dataset]]$diffAnal == FALSE ||
         is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["TopDEF"]])) return()
     
+    dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
+    
     # list of bio factors
-    # factors.bio   <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("Bio")])
-    # factors.batch <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type %in% c("batch")])
-    factors.bio <- bioFactors(session$userData$FlomicsMultiAssay)
-    factors.batch <- batchFactors(session$userData$FlomicsMultiAssay)
-    factors.meta <- metaFactors(session$userData$FlomicsMultiAssay)
+    factors.bio   <- bioFactors(dataset.SE)
+    factors.batch <- batchFactors(dataset.SE)
+    factors.meta  <- metaFactors(dataset.SE)
     
     list(
-      lapply(1:length(rea.values$Contrasts.Sel$contrast), function(i) {
+      lapply(1:nrow(getSelectedContrasts(dataset.SE)), function(i) {
         
-        dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
         vect     <- unlist(dataset.SE@metadata$design$Contrasts.Sel[i,])
         res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
         stats    <- dataset.SE@metadata$DiffExpAnal[["stats"]][vect["contrastName"],]

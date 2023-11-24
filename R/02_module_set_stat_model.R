@@ -34,9 +34,8 @@ GLM_model <- function(input, output, session, rea.values){
         need(rea.values$loadData != FALSE, "Please load data")
       )
       
-      FacBio <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type == "Bio"])
-      FacBatch <- names(session$userData$FlomicsMultiAssay@metadata$design@Factors.Type[session$userData$FlomicsMultiAssay@metadata$design@Factors.Type == "batch"])
-      
+      FacBio   <- bioFactors(session$userData$FlomicsMultiAssay)
+      FacBatch <- batchFactors(session$userData$FlomicsMultiAssay)
 
       box(status = "warning", width = 12, solidHeader = TRUE, title = "Select a model formulae",
 
@@ -158,7 +157,6 @@ GLM_model <- function(input, output, session, rea.values){
       # session$userData$FlomicsMultiAssay <- getContrastMatrix(object = session$userData$FlomicsMultiAssay, contrastList = contrast.sel.vec)
 
       rea.values$Contrasts.Sel <- contrast.sel.vec
-      print(contrast.sel.vec)
       
       rea.values$analysis <- TRUE
 

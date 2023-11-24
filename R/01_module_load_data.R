@@ -170,16 +170,16 @@ LoadOmicsData <- function(input, output, session, rea.values){
       
       # filter samples
       # filtering per conditions
-      for(i in names(ExpDesign.tbl)) {
+      for(factor in names(ExpDesign.tbl)) {
         
         # if select 1 modality or 0 for a Factor we exclude this factor
-        if(length(input[[paste0("selectFactors.", i)]]) > 0){
-          ExpDesign.tbl <- dplyr::filter(ExpDesign.tbl, get(i) %in% input[[paste0("selectFactors.", i)]])
-          ExpDesign.tbl[[i]] <- factor(ExpDesign.tbl[[i]], levels = input[[paste0("selectFactors.", i)]])
+        if(length(input[[paste0("selectFactors.", factor)]]) > 0){
+          ExpDesign.tbl <- dplyr::filter(ExpDesign.tbl, get(factor) %in% input[[paste0("selectFactors.", factor)]])
+          ExpDesign.tbl[[factor]] <- factor(ExpDesign.tbl[[factor]], levels = unique(ExpDesign.tbl[[factor]]))
         }
         
-        if(length(input[[paste0("selectFactors.", i)]]) <= 1){
-          ExpDesign.tbl <- dplyr::select(ExpDesign.tbl, -tidyselect::all_of(i))
+        if(length(input[[paste0("selectFactors.", factor)]]) <= 1){
+          ExpDesign.tbl <- dplyr::select(ExpDesign.tbl, -tidyselect::all_of(factor))
         }
       }
       
@@ -486,7 +486,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
       showModal(modalDialog(title = "Error message", "at least 1 batch factor (max = 2)"))}
     
     validate({ need((length(stringr::str_subset(dF.Type.dFac, "Bio"  )) %in% 1:3) &
-                      (length(stringr::str_subset(dF.Type.dFac, "batch")) %in% 1:2), message="") })
+                    (length(stringr::str_subset(dF.Type.dFac, "batch")) %in% 1:2), message="") })
     
     #### load omics data
     #inputs <- list()

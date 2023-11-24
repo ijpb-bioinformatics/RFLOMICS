@@ -173,9 +173,10 @@ getPossibleContrasts <- function(object, typeContrast = c("simple", "averaged", 
 #'
 getSelectedContrasts <- function(object) {
   # TODO check if it exists...
-  if (is(object, "MultiAssayExperiment")) {
-    object@metadata$design@Contrasts.Sel
-  } else if (is(object, "SummarizedExperiment")) {
+  # if (is(object, "MultiAssayExperiment")) {
+  #   object@metadata$design@Contrasts.Sel
+  # } else 
+    if (is(object, "SummarizedExperiment")) {
     object@metadata$DiffExpAnal$contrasts
   } else {
     stop("object is not a MultiAssayExperiment or a SummarizedExperiment.")

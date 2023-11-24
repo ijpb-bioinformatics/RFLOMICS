@@ -68,11 +68,9 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
       local.rea.values$message <- completeCheckRes[["messages"]]
     }
+    # plot of count per condition
+    if(!is.null(completeCheckRes[["plot"]])) {list(renderPlot(completeCheckRes[["plot"]]))}
     
-    list(
-      # plot of count per condition
-      renderPlot(completeCheckRes[["plot"]])
-    )
   })
   
   #---- adapted parameters for each omics type ----
@@ -340,15 +338,20 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   #---- run preprocessing - Normalization/transformation, filtering...----
   observeEvent(input$run, {
     
+    # check if input$selectSamples is empty
+    if(is.null(input$selectSamples)){
+      showModal(modalDialog(title = "Error message", "please select samples."))
+    }
+    validate({ need(!is.null(input$selectSamples), message="please select samples.") })
+    
     # check completeness for curent dataset
     if(!is.null(local.rea.values$message)){
       showModal(modalDialog(title = "Error message", local.rea.values$message))
     }
     validate({ need(is.null(local.rea.values$message), message=local.rea.values$message) })
     
-    
+
     # get parameters 
-    param.list <- list()
     switch( getOmicsTypes(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]]),
             "RNAseq" = {
               param.list <- list(Filter_Strategy = input$Filter_Strategy, 
@@ -360,6 +363,8 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
                                  NormMethod=input$selectProtMetNormMethod)
             }
     )
+    param.list <- c(param.list, list(samples = input$selectSamples))
+    
     
     if(check_run_process_execution(session$userData$FlomicsMultiAssay, dataset = dataset, param.list = param.list) == FALSE &&
        rea.values[[dataset]]$process == TRUE) return()
@@ -376,6 +381,8 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
     }
     
+    toto <<- session$userData$FlomicsMultiAssay
+    
     print(paste0("# 3  => Data processing: ", dataset))
     session$userData$FlomicsMultiAssay <- 
       runDataProcessing(object = session$userData$FlomicsMultiAssay, SE.name = dataset, samples = input$selectSamples,  
@@ -383,6 +390,9 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
                         normalisation_method=param.list[["NormMethod"]], transformation_method=param.list[["transform_method"]])
     
     rea.values[[dataset]]$process <- TRUE
+    
+    toto <<- session$userData$FlomicsMultiAssay
+    
     
   }, ignoreInit = TRUE)
   
@@ -399,6 +409,9 @@ check_run_process_execution <- function(object.MAE, dataset, param.list = NULL){
   if(!dataset %in% names(object.MAE))  return(TRUE)
 
   SE <- object.MAE[[dataset]]
+  
+  if(!dplyr::setequal(SE$samples, param.list$samples)) return(TRUE)
+  
   switch( getOmicsTypes(object.MAE[[dataset]]),
           "RNAseq" = {
             # filtering setting
