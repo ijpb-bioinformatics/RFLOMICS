@@ -10,21 +10,27 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
   comment = "#>"
 )
 
 ```
 
-```{r}
+```{r, echo=FALSE}
 library(RFLOMICS)
 ```
 
+RFLOMICS treats three types of omics (RNAseq, proteomics and metabolomics) and several datasets per omics issued from similar experimental design. Each dataset must respect completeness constraints (see ?).
 
-## Experimental design
+Below each input file is detailed :
+
+## Experimental design file
 <!-- ce fichier contient le plan experimental (conditions) plus des metadata par echantillons -->
 
-This file provides the experimental design table. The first column indicates the sample names. Next columns indicate experimental conditions (called biological factor or replicate factor) and metadata (optional). Each row describes a sample by specifying the level for each experimental condition.
-This file is edited by the user and must contain a header with explicit column names.
+This file provides the experimental design table. The first column indicates the sample names. Next columns indicate experimental conditions (called biological factors or replicate factors) and metadata (optional). Each row describes a sample by specifying the level for each experimental condition.
+This file is edited by the user and must contain a header with sensible column names that correspond respectively to the factor names and metadata names.
+
 It is advised that each factor's modality starts with a letter (for example, for a factor called Month, it is better to write M1 rather than 1).
 
 ```{r ImportDesign, output="asis"}
@@ -36,14 +42,16 @@ ExpDesign      <- read.table(file = ExpDesign.file, header = TRUE, row.names = 1
 DT::datatable(ExpDesign)
 ```
 
-## Omics data
+## Omic data file
 
-For each omics : 
-The first file **(mandatory)** provide matrix-likes of abundance of omics data : raw read counts per genes for RNAseq data, intensity of proteins for proteomics data, intensity of metabolites for metabolomics data. The first column indicates feature (gene, protein, metabolite) names and the other indicates sample names. 
+For each omic : 
+The matrix-like file with abundance of omic data is needed. The first column indicates feature names (genes, proteins, or metabolites), header indicates sample names.
 
 ### **RNAseq data**
 
 <!-- les comptage de reads sont obtenu après une analyse bioinfo (mapping sur le genome de ref et comptage des reads qui couvrent chaque gene) -->
+
+For RNAseq data the values correspond to raw read counts per genes.
 
 ```{r RNAseq, output="asis"}
 
@@ -57,7 +65,10 @@ DT::datatable(geneCount[1:10, 1:5])
 ```
 
 
-### **Proteomics data**
+### **Proteomic data**
+
+For proteomic data the values correspond to intensity of proteins.
+
 
 ```{r Proteomics, output="asis"}
 # protAbundance.file <- file.path(path = path.package("RFLOMICS"), 
@@ -70,7 +81,9 @@ DT::datatable(protAbundance[1:10, 1:5])
 ```
 
 
-### **Metabolomics data**
+### **Metabolomic data**
+
+For metabolomic data the values correspond to intensity of metabolites.
 
 ```{r Metabolomics, output="asis"}
 # metaAbundance.file <- file.path(path = path.package("RFLOMICS"), 
@@ -82,31 +95,9 @@ metaAbundance <- read.table(file = metaAbundance.file, header = TRUE, row.names 
 DT::datatable(metaAbundance[1:10, 1:5])
 ```
 
-## metadata
+## Annotation of features (optional)
 
-2) The second file **(optional)** provide supplementary information (metadata) for each sample (to develop).
-
-```{r metadata, output="asis"}
-
-# metadata.file <- file.path(path = path.package("RFLOMICS"), file ="/ExamplesFiles/ecoseed/???")
-# metadata      <- read.table(file = metadata.file, header = TRUE, row.names = 1, sep = "\t")
-# 
-# DT::datatable(metadata[1:10, 1:5])
-
-```
-
-![image](Images/Input1.png)
-
-![image](Images/Input2.png)
-
-## Annotation
-
-* **Load** annotation file(s) for enrichment analysis.
-
-The column 1 => feature names (same used in abundance matrix)
-The column 2 => term IDs (ex. GO term accession : GO:0034599)
-The column 3 => term names (ex. GO term name : cellular response to oxidative stress)
-The column 4 => source or type (ex. GO domain : biological_process)
+This file contains annotation about biological fonctions of genes/proteins/metabolites, or their implication in biological pathways. This annotation is needed to compute Over Representation Analysis (ORA). This file must contain at least 2 columns, names of features same as used in abundance matrix and term identifiants (ex. GO term accession : GO:0034599). It is possible to add 2 more informations, names of terms (ex. cellular response to oxidative stress) and domain of annotation in supplementary colomns (ex. biological_process).
 
 ```{r, output="asis"}
 
@@ -118,5 +109,4 @@ colnames(annot.genes) <- c("geneID", "Term", "Name", "Domain")
 
 DT::datatable(annot.genes[1:10,])
 ```
-
 
