@@ -43,11 +43,9 @@
 #' @noRd
 .ExpDesign <- methods::setClass(
   Class="ExpDesign",
-  slots=c(ExpDesign="data.frame",
-          List.Factors="list",
-          Factors.Type="vector",
-          Groups="data.frame",
-          Model.formula="vector")
+  slots=c(Factors.Type="vector",
+          Model.formula="vector",
+          Contrasts.Sel="data.frame")
   )
 
 

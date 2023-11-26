@@ -30,22 +30,40 @@ formulae <- RFLOMICS::GetModelFormulae(MAE = MAE)
 ## list of all hypothesis grouped by contarst type (run on MAE or SE)
 Contrasts.List <- RFLOMICS::getExpressionContrast(MAE, modelFormula = formulae[[1]])
 
-# utilisation en dehors de MAE ou SE
-#Contrasts.List <- RFLOMICS::getExpressionContrastF(MAE@colData, bioFactors=c("temperature", "imbibition"), model.formula = formulae[[1]])
-
 ## choice of hypothesis
 selcetedContrasts <- rbind(Contrasts.List$simple[1:3,],
                            Contrasts.List$averaged[1:3,],
                            Contrasts.List$interaction[1:3,])
 
 ## data processing
-sampleToKeep <- colnames(MAE[["RNAtest.raw"]])[-1]
+sampleToKeep <- dplyr::filter(as.data.frame(MAE@colData), temperature != "Elevated") %>% row.names()
 MAE <- MAE |> RFLOMICS::runDataProcessing(SE.name = "RNAtest"  , samples=sampleToKeep, lowCountFiltering_strategy="NbReplicates", lowCountFiltering_CPM_Cutoff=1, normalisation_method="TMM") |>
               RFLOMICS::runDataProcessing(SE.name = "protetest", samples=NULL, normalisation_method="none", transformation_method="none") |>
               RFLOMICS::runDataProcessing(SE.name = "metatest" , samples=NULL, normalisation_method=NULL, transformation_method="log2")
 
-getContrastMatrix(MAE[["RNAtest"]], modelFormula = formulae[[1]], contrastList = selcetedContrasts)
-MAE <- MAE |> getContrastMatrix(MAE, SE.name = "RNAtest", modelFormula = formulae[[1]], contrastList = selcetedContrasts)
 
+selcetedContrasts <- getExpressionContrast(MAE[["RNAtest"]], modelFormula=formulae[[1]]) %>% purrr::reduce(rbind) %>% dplyr::filter(contrast %in% selcetedContrasts$contrast)
+
+## get contrast coef
+MAE <- MAE |> RFLOMICS::getContrastMatrix(SE.name = "RNAtest",   modelFormula = formulae[[1]], contrastList = selcetedContrasts) |>
+              RFLOMICS::getContrastMatrix(SE.name = "protetest", modelFormula = formulae[[1]], contrastList = selcetedContrasts) |>
+              RFLOMICS::getContrastMatrix(SE.name = "metatest",  modelFormula = formulae[[1]], contrastList = selcetedContrasts)
+  
+
+
+
+
+RFLOMICS::getExpressionContrast(MAE[["RNAtest"]], modelFormula = formulae[[1]])$simple
+RFLOMICS::getExpressionContrastF(ExpDesign = MAE[["RNAtest"]]@colData, factorBio=c("temperature", "imbibition"), modelFormula = formulae[[1]])$simple
+
+
+
+test_that("getExpressionContrast", {
+  
+  Contrasts.List.m <- RFLOMICS::getExpressionContrast(MAE, modelFormula = formulae[[1]])
+  Contrasts.List.f <- RFLOMICS::getExpressionContrastF(ExpDesign = MAE@colData, factorBio=c("temperature", "imbibition"), modelFormula = formulae[[1]])
+  
+  expect_equal(Contrasts.List.m, Contrasts.List.f)
+})
 
 

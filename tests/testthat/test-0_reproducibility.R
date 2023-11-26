@@ -92,7 +92,7 @@ test_that("colData", {
   colData$temperature <- relevel(as.factor(colData$temperature), ref="Low")
   colData$imbibition  <- relevel(as.factor(colData$imbibition),  ref="DS")
   
-  expect_equal(as.data.frame(MAE@colData), colData)
+  expect_equal(as.data.frame(MAE@colData[colnames(colData)]), colData)
   
 })
 

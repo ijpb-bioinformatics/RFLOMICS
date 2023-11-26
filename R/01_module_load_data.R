@@ -126,7 +126,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     if (!is.null(design.tt$message)) {
       
-      showModal(modalDialog( title = "Error message", design.tt$message)) 
+      showModal(modalDialog( title = "Error message", design.tt$message))
     }
     validate({ need(expr = is.null(design.tt$message), message = design.tt$message) })
     
@@ -175,7 +175,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
         # if select 1 modality or 0 for a Factor we exclude this factor
         if(length(input[[paste0("selectFactors.", factor)]]) > 0){
           ExpDesign.tbl <- dplyr::filter(ExpDesign.tbl, get(factor) %in% input[[paste0("selectFactors.", factor)]])
-          ExpDesign.tbl[[factor]] <- factor(ExpDesign.tbl[[factor]], levels = unique(ExpDesign.tbl[[factor]]))
+          ExpDesign.tbl[[factor]] <- factor(ExpDesign.tbl[[factor]], levels = input[[paste0("selectFactors.", factor)]])
         }
         
         if(length(input[[paste0("selectFactors.", factor)]]) <= 1){

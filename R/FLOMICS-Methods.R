@@ -38,10 +38,6 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
     stop("ExpDesign matrix is empty!")
   }
   
-  # check refList length
-  if(length(refList) != length(names(ExpDesign))){
-    stop("refList length is different from the dimension of ExpDesign matrix!")
-  }
   
   # check typeList length
   if(length(typeList) != length(names(ExpDesign))){
@@ -49,41 +45,11 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
   }
   
   # Create the List.Factors list with the choosen level of reference for each factor
-  names(refList)  <- names(ExpDesign)
   names(typeList) <- names(ExpDesign)
   
-  # for(i in c(names(typeList[typeList == "batch"]), names(typeList[typeList == "Bio"]))){
-  #   ExpDesign      <- dplyr::arrange(ExpDesign, get(i))
-  # }
-  
-  
-  dF.List <- list()
-  for(i in names(ExpDesign)){
-    ExpDesign[[i]] <- relevel(as.factor(ExpDesign[[i]]), ref=refList[i])
-    dF.List[[i]]   <- ExpDesign[[i]]
-  }
-  # dF.List <- lapply(1:dim(ExpDesign)[2], function(i){
-  #
-  #   relevel(as.factor(ExpDesign[[i]]), ref=refList[i])
-  #
-  # })
-  names(dF.List) <- names(ExpDesign)
-  
-  # Create the groups data.frame
-  # groups <- tidyr::unite(as.data.frame(ExpDesign[typeList == "Bio"]), col="groups", sep="_", remove = TRUE) %>%
-  #           dplyr::mutate(samples = rownames(.))
-  
-  groups <- ExpDesign %>% dplyr::mutate(samples = rownames(.)) %>%
-    tidyr::unite(names(typeList[typeList == "Bio"]), col="groups", sep="_", remove = FALSE)
-  
-  groups$samples <- factor(groups$samples, levels = unique(groups$samples))
-  groups$groups  <- factor(groups$groups,  levels = unique(groups$groups))
   
   Design = new(Class           = "ExpDesign",
-               ExpDesign       = as.data.frame(ExpDesign),
-               List.Factors    = dF.List,
                Factors.Type    = typeList,
-               Groups          = groups,
                Model.formula   = vector())
   
   return(Design)
@@ -122,7 +88,7 @@ methods::setMethod(f         = "CheckExpDesign",
                      ####################
                      
                      BioFact <- bioFactors(object)
-                     coldata <- MultiAssayExperiment::colData(object) %>% as.data.frame() %>%
+                     coldata <- getDesignMat(object) %>%
                        dplyr::mutate(samples=rownames(.))
                      #coldata <- tibble::as_tibble(coldata)
                      coldata <- MultiAssayExperiment::sampleMap(object) %>% as.data.frame() %>% 
@@ -220,7 +186,7 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                      }
                      
                      # Only works with bio and batch factors for the rest of the function
-                     ExpDesign <- as.data.frame(object@colData)
+                     ExpDesign <- getDesignMat(object)
                      
                      bio.fact <- bioFactors(object)
                      
@@ -291,11 +257,15 @@ methods::setMethod(f         = "Datasets_overview_plot",
                        }
                      }
                      
+                     Groups <- getDesignMat(object)
+                     
                      nb_entities <- lapply(object@ExperimentList, function(SE){ dim(SE)[1] }) %>% unlist()
                      
                      data <- data.frame(nb_entities = nb_entities, assay = names(nb_entities)) %>%
                        dplyr::full_join(data.frame(MultiAssayExperiment::sampleMap(object)), by="assay") %>%
                        dplyr::mutate(y.axis = paste0(assay, "\n", "n=", nb_entities)) %>% dplyr::arrange(primary)
+                     
+                     data$primary <- factor(data$primary, levels = levels(Groups$samples)) 
                      
                      nb_entities_ord <- dplyr::select(data, y.axis, nb_entities) %>% unique() %>% dplyr::arrange(desc(nb_entities))
                      nb_entities_ord$nb_entities <- log(nb_entities_ord$nb_entities)
@@ -381,7 +351,7 @@ methods::setMethod(f          = "getContrastMatrix",
                      if(is.null(modelFormula)) stop("Model.formula arg is mandatory.")
                      if(is.null(contrastList)) stop("contrastList arg is mandatory.")
                      
-                     ExpDesign <- object@colData
+                     ExpDesign <- getDesignMat(object)
                      
                      factorBio <- bioFactors(object)
                       
@@ -496,6 +466,9 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
   if (is.null(factorRef$factorType)) stop("factorRef$factorType is mandatory.")
   if (any(!unique(factorRef$factorType) %in% c("batch", "Bio", "Meta"))) stop("factorRef$factorType must be part of batch, Bio or Meta")
   
+  factorBio   <- dplyr::filter(factorRef, factorType == "Bio")$factorName
+  factorBatch <- dplyr::filter(factorRef, factorType == "batch")$factorName
+  
   ## set ref and levels to ExpDesign
   for (i in 1:nrow(factorRef)){
     
@@ -526,6 +499,14 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
   typeList <- factorRef$factorType; names(typeList) <- factorRef$factorName
   Design   <- ExpDesign.constructor(ExpDesign = ExpDesign, refList = refList, typeList = typeList)
   
+  #
+  ExpDesign   <- dplyr::mutate(ExpDesign, samples=row.names(ExpDesign)) |>
+    tidyr::unite("groups", all_of(factorBio), sep = "_", remove = FALSE)
+  
+  order_levels      <- with(ExpDesign, do.call(order, ExpDesign[c(factorBio, factorBatch)]))
+  ExpDesign$samples <- factor(ExpDesign$samples, levels = unique(ExpDesign$samples[order_levels]))
+  ExpDesign$groups  <- factor(ExpDesign$groups,  levels = unique(ExpDesign$groups[order_levels]))
+  
   ## create SE object of each dataset
   SummarizedExperimentList <- list()
   listmap  <- list()
@@ -554,9 +535,6 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
     matrix.filt  <- matrix[rowSums(matrix)  > 0, ]
     
     # create SE object
-    factorBio   <- dplyr::filter(factorRef, factorType == "Bio")$factorName
-    factorBatch <- dplyr::filter(factorRef, factorType == "batch")$factorName
-    
     colData   <- dplyr::mutate(ExpDesign, samples=row.names(ExpDesign)) |>
                  dplyr::filter(samples %in% sample.intersect) |> 
                  tidyr::unite("groups", all_of(factorBio), sep = "_", remove = FALSE)
@@ -566,9 +544,10 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
       F.levels <- levels(colData[[factor]])
       colData[[factor]] <- factor(colData[[factor]], levels = intersect(F.levels, unique(colData[[factor]])))
     }
-    
-    colData$samples <- factor(colData$samples, levels = unique(colData$samples))
-    colData$groups  <- factor(colData$groups,  levels = unique(colData$groups))
+
+    order_levels <- with(colData, do.call(order, colData[c(factorBio, factorBatch)]))
+    colData$samples <- factor(colData$samples, levels = unique(colData$samples[order_levels]))
+    colData$groups  <- factor(colData$groups,  levels = unique(colData$groups[order_levels]))
 
     metadata <- list(omicType = omicsTypes[data], Groups = colData, 
                      design = list(factorType = typeList[intersect(names(typeList), names(colData))]), 
@@ -676,13 +655,13 @@ methods::setMethod(f          = "Library_size_barplot.plot",
                    signature  = "SummarizedExperiment",
                    definition <- function(object, raw = FALSE){
                      
-                     value    <- NULL
-                     warnning <- NULL
-                     
                      if (getOmicsTypes(object) != "RNAseq") stop("WARNING: data are not RNAseq!")
                      
                      abundances <- SummarizedExperiment::assay(object)
+                     Groups     <- getDesignMat(object)
                      samples    <- colnames(abundances)
+                     
+                     
                      
                      if (raw) {
                        
@@ -698,10 +677,10 @@ methods::setMethod(f          = "Library_size_barplot.plot",
                        title <- paste0("Filtered and normalized (", getNormSetting(object)$method, ") data")
                      }
                      
-                     libSizeNorm <-  dplyr::full_join(object@metadata$Groups, data.frame("value" = pseudo , "samples" = names(pseudo)), by = "samples") %>%
+                     libSizeNorm <-  dplyr::full_join(Groups, data.frame("value" = pseudo , "samples" = names(pseudo)), by = "samples") %>%
                        dplyr::arrange(groups)
                      
-                     libSizeNorm$samples <- factor(libSizeNorm$samples, levels = unique(libSizeNorm$samples))
+                     libSizeNorm$samples <- factor(libSizeNorm$samples, levels = levels(Groups$samples))
                      
                      p <- ggplot2::ggplot(libSizeNorm, ggplot2::aes(x = samples, y = value, fill = groups)) + 
                        ggplot2::geom_bar(stat = "identity" ) + 
@@ -754,6 +733,7 @@ methods::setMethod(
     
     object2 <- checkTransNorm(object, raw = raw)
     pseudo <- SummarizedExperiment::assay(object2)
+    Groups <- getDesignMat(object)
     
     omicsType <- getOmicsTypes(object2)
     
@@ -786,7 +766,7 @@ methods::setMethod(
     colnames(pseudo.gg) <- c("features", "samples", "value")
     
     pseudo.gg <- pseudo.gg %>%
-      dplyr::full_join(object@metadata$Groups, by = "samples") %>%
+      dplyr::full_join(Groups, by = "samples") %>%
       dplyr::arrange(groups)
     
     pseudo.gg$samples <- factor(pseudo.gg$samples, levels = unique(pseudo.gg$samples))
@@ -850,7 +830,7 @@ methods::setMethod(f= "plotPCA",
                    signature = "SummarizedExperiment",
                    definition <- function(object, PCA, PCs=c(1,2), condition="groups"){
                      
-                     ExpDesign <- as.data.frame(object@colData)
+                     ExpDesign <- getDesignMat(object)
                      
                      #
                      PC1 <- paste("Dim.",PCs[1], sep="")
@@ -859,7 +839,7 @@ methods::setMethod(f= "plotPCA",
                      if(PC1 == PC2) PC2 <- PC1+1
                      
                      score     <- object@metadata$PCAlist[[PCA]]$ind$coord[, PCs] %>% as.data.frame() %>%
-                       dplyr::mutate(samples=row.names(.)) %>% dplyr::full_join(., ExpDesign, by="samples")
+                       dplyr::mutate(samples=row.names(.)) %>% dplyr::right_join(., ExpDesign, by="samples")
                      
                      var1 <- round(object@metadata$PCAlist[[PCA]]$eig[PCs,2][1], digits=3)
                      var2 <- round(object@metadata$PCAlist[[PCA]]$eig[PCs,2][2], digits=3)
@@ -1024,7 +1004,8 @@ methods::setMethod(f         = "FilterLowAbundance",
                      
                      
                      objectFilt <- object
-                     assayFilt  <- assay(objectFilt)
+                     assayFilt  <- SummarizedExperiment::assay(objectFilt)
+                     Groups     <- getDesignMat(object)
                      
                      ## nbr of genes with 0 count
                      genes_flt0  <- objectFilt[rowSums(assayFilt) <= 0, ]@NAMES
@@ -1034,8 +1015,8 @@ methods::setMethod(f         = "FilterLowAbundance",
                      assayFilt   <- assay(objectFilt)
                      
                      ## filter cpm
-                     NbReplicate  <- table(object@metadata$Groups$groups)
-                     NbConditions <- length(unique(object@metadata$Groups$groups))
+                     NbReplicate  <- table(Groups$groups)
+                     NbConditions <- length(unique(Groups$groups))
                      
                      switch(filterStrategy,
                             "NbConditions" = { keep <- rowSums(edgeR::cpm(assayFilt) >= cpmCutoff) >=  NbConditions },
@@ -1121,6 +1102,8 @@ methods::setMethod(f          = "RunNormalization",
                    signature  = "SummarizedExperiment",
                    definition = function(object, NormMethod = NULL, modify_assay = FALSE){
                      
+                     Groups     <- getDesignMat(object)
+                     
                      if (isNorm(object)) 
                        warning("Data were already normalized before!")
                      
@@ -1148,7 +1131,7 @@ methods::setMethod(f          = "RunNormalization",
                        object2 <-  apply_transformation(object2)
                      
                      switch(NormMethod,
-                            "TMM"        = {coefNorm  <- TMM.Normalization(assay(object2), object2@metadata$Groups$groups) },
+                            "TMM"        = {coefNorm  <- TMM.Normalization(assay(object2), Groups$groups) },
                             "median"     = {coefNorm  <- apply(assay(object2), 2, FUN = function(sample_vect) {median(sample_vect)}) },
                             "totalSum"   = {coefNorm  <- apply(assay(object2), 2, FUN = function(sample_vect) {sum(sample_vect^2)}) },
                             "none"       = {coefNorm  <- rep(1, ncol(assay(object2))) },
@@ -1228,7 +1211,7 @@ methods::setMethod(f          = "runDataProcessing",
                      print("#    => select samples...")
                      object <- runSampleFiltering(object, samples)
                      
-                     if(nrow(object@colData) == 0) stop("no samples in object!")
+                     if(nrow(getDesignMat(object)) == 0) stop("no samples in object!")
                      
                      # spported values:
                      lowCountFiltering_strategy.sup     <- c("NbReplicates","NbConditions")
@@ -1377,9 +1360,10 @@ methods::setMethod(f          = "runSampleFiltering",
                          SE.new@colData[[factor]] <- factor(SE.new@colData[[factor]], levels = intersect(F.levels, unique(SE.new@colData[[factor]])))
                        }
                      }
-                         
-                     SE.new$samples <- factor(SE.new$samples, levels = unique(SE.new$samples))
-                     SE.new$groups  <- factor(SE.new$groups,  levels = unique(SE.new$groups))
+                     colData <- as.data.frame(SE.new@colData)
+                     order_levels <- with(colData, do.call(order, colData[c(bioFactors(SE.new), batchFactors(SE.new))]))
+                     SE.new$samples <- factor(SE.new$samples, levels = unique(SE.new$samples[order_levels]))
+                     SE.new$groups  <- factor(SE.new$groups,  levels = unique(SE.new$groups[order_levels]))
                      
                      # à retirer dès que je remplace Groups par colData
                      SE.new@metadata$Groups <- dplyr::filter(SE.new@metadata$Groups, samples %in% SE.new$samples)
@@ -1487,7 +1471,7 @@ methods::setMethod(f         = "RunDiffAnalysis",
                      }
                      
                      # move in ExpDesign Constructor
-                     model_matrix <- model.matrix(as.formula(paste(modelFormula, collapse = " ")), data = object@colData)
+                     model_matrix <- model.matrix(as.formula(paste(modelFormula, collapse = " ")), data = getDesignMat(object))
                      # model_matrix <- model.matrix(as.formula(paste(design@Model.formula, collapse = " ")), data = as.data.frame(design@ExpDesign))
                      # rownames(model_matrix) <- rownames(design@ExpDesign)
                      
@@ -1758,6 +1742,8 @@ methods::setMethod(f          = "heatmapPlot",
                                          draw_args = list(), 
                                          heatmap_args = list()){
                      
+                     Groups     <- getDesignMat(object)
+                     
                      if (is.null(object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]])) {
                        stop("no DE variables")
                      }
@@ -1767,7 +1753,6 @@ methods::setMethod(f          = "heatmapPlot",
                      if (dim(resTable)[1] == 0) {
                        stop("no differentially expressed variables...")
                      }
-                     
                      
                      if (dim(resTable)[1] > 2000) {
                        message("differentially expressed variables exceeding 2000 variables, only the first 2000 will be displayed")
@@ -1780,7 +1765,7 @@ methods::setMethod(f          = "heatmapPlot",
                      m.def  <- assay(object2)
                      
                      m.def <- as.data.frame(m.def) %>%
-                       dplyr::select(tidyselect::any_of(object2@metadata$Groups$samples))
+                       dplyr::select(tidyselect::any_of(Groups$samples))
                      
                      # filter by DE
                      m.def.filter <- subset(m.def, rownames(m.def) %in% row.names(resTable))
@@ -1791,7 +1776,7 @@ methods::setMethod(f          = "heatmapPlot",
                      m.def.filter.center <- t(scale(t(m.def.filter), center = TRUE, scale = FALSE))
                      
                      # Annotations datatable
-                     df_annotation <- object@metadata$Groups %>% dplyr::select(!samples & !groups)  
+                     df_annotation <- Groups %>% dplyr::select(!samples & !groups)  
                      df_annotation <- df_annotation[match(colnames(m.def.filter.center), rownames(df_annotation)),] 
                      
                      # Subset the dataset to print only interesting modalities
@@ -1912,16 +1897,17 @@ methods::setMethod(f          = "boxplot.DE.plot",
                    definition = function(object, DE = NULL, condition="groups", raw = FALSE){
                      
                      # check variable name
-                     if (is.null(DE) | DE == "" | length(DE) != 1) {
+                     if (is.null(DE) || DE == "" || length(DE) != 1) {
                        message("set variable name")
                        
-                       p <- ggplot2::ggplot() + ggplot2::theme_void() + ggplot2::ggtitle("set variable name") 
+                       p <- ggplot2::ggplot() + ggplot2::theme_void() + ggplot2::ggtitle("set variable name")
                        
                        return(p)
                      }
                      
+                     Groups <- getDesignMat(object)
                      object <- checkTransNorm(object, raw = raw)
-                     
+
                      # check presence of variable in SE
                      object.DE <- tryCatch(object[DE], error = function(e) e)
                      if (!is.null(object.DE$message)) {
@@ -1970,7 +1956,7 @@ methods::setMethod(f          = "boxplot.DE.plot",
                      pseudo.gg <- pseudo %>% reshape2::melt()
                      colnames(pseudo.gg) <- c("features", "samples", "value")
                      
-                     pseudo.gg <- pseudo.gg %>% dplyr::full_join(object@metadata$Groups, by="samples") %>%
+                     pseudo.gg <- pseudo.gg %>% dplyr::full_join(Groups, by="samples") %>%
                        dplyr::arrange(groups)
                      
                      pseudo.gg <- dplyr::arrange(pseudo.gg, get(condition))
@@ -2087,6 +2073,8 @@ methods::setMethod(f = "runCoExpression",
                      else if (is.null(nameList) && is.null(getValidContrasts(object)[["tag"]])) 
                        nameList <- colnames(object@metadata$DiffExpAnal[["mergeDEF"]])[-1]
                      
+                     Groups <- getDesignMat(object)
+                     
                      CoExpAnal <- list()
                      
                      CoExpAnal[["setting"]][["method"]]           <- "coseq"
@@ -2151,12 +2139,11 @@ methods::setMethod(f = "runCoExpression",
                      
                      if (cmd) print("#     => coseq... ")
                      
-                     conds <- object@metadata$Groups
-                     counts <- counts[, match(rownames(conds), colnames(counts))]
-                     if (!identical(colnames(counts), rownames(conds), attrib.as.set = FALSE)) {
+                     
+                     counts <- counts[, match(rownames(Groups), colnames(counts))]
+                     if (!identical(colnames(counts), rownames(Groups), attrib.as.set = FALSE)) {
                        stop("colnames counts and rownames conds don't match!")
                      }
-                     conds <- conds$groups
                      
                      coseq.res.list <- list()
                      
@@ -2164,7 +2151,7 @@ methods::setMethod(f = "runCoExpression",
                                               `FALSE` = {
                                                 try_rflomics(
                                                   runCoseq_local(counts, 
-                                                                 conds = object@metadata$Groups$groups,
+                                                                 conds = Groups$groups,
                                                                  K = K, 
                                                                  replicates = replicates, 
                                                                  param.list = param.list,
@@ -2174,7 +2161,7 @@ methods::setMethod(f = "runCoExpression",
                                               `TRUE` = {
                                                 try_rflomics(
                                                   runCoseq_clustermq(counts, 
-                                                                     conds = object@metadata$Groups$groups,
+                                                                     conds = Groups$groups,
                                                                      K = K, 
                                                                      replicates = replicates, 
                                                                      param.list = param.list,
@@ -2254,11 +2241,12 @@ coExpressionPlots <- methods::setMethod(f="CoExpressionPlots",
                                           if(is.null(object@metadata$CoExpAnal) || length(object@metadata$CoExpAnal) == 0) stop("No co-expression results!")
                                           CoExpAnal <- object@metadata$CoExpAnal
                                           
+                                          Groups <- getDesignMat(object)
+                                          
                                           coseq.res     <- CoExpAnal[["coseqResults"]]
                                           ICL.list      <- CoExpAnal[["plots"]][["ICL"]] 
                                           logLike.list  <- CoExpAnal[["plots"]][["logLike"]]
                                           K             <- CoExpAnal[["K.range"]]
-                                          conds         <- object@metadata$Groups$groups
                                           
                                           #### Plots
                                           ### plot ICL
@@ -2277,7 +2265,7 @@ coExpressionPlots <- methods::setMethod(f="CoExpressionPlots",
                                                                                                                 label = paste0("n=", n)), col = 'red', size = 4)
                                           
                                           ### coseq plots
-                                          plot.coseq.res <- coseq::plot(coseq.res, conds = conds, collapse_reps = "average",
+                                          plot.coseq.res <- coseq::plot(coseq.res, conds = Groups$groups, collapse_reps = "average",
                                                                         graphs = c("profiles", "boxplots", "probapost_boxplots",
                                                                                    "probapost_barplots", "probapost_histogram"))
                                           
@@ -2306,6 +2294,8 @@ methods::setMethod(f="coseq.profile.plot",
                    signature="SummarizedExperiment",
                    definition <- function(object, numCluster = 1, condition="groups", observation=NULL){
                      
+                     Groups <- getDesignMat(object)
+                     
                      coseq.res  <- object@metadata$CoExpAnal[["coseqResults"]]
                      assays.data <- dplyr::filter(as.data.frame(coseq.res@assays@data[[1]]), get(paste0("Cluster_",numCluster)) > 0.8)
                      
@@ -2314,7 +2304,7 @@ methods::setMethod(f="coseq.profile.plot",
                        dplyr::mutate(observations=rownames(.)) %>% 
                        reshape2::melt(id="observations", value.name = "y_profiles") %>%  
                        dplyr::rename(samples = variable) %>%
-                       dplyr::full_join(object@metadata$Groups , by = "samples")
+                       dplyr::full_join(Groups , by = "samples")
                      
                      y_profiles.gg <- dplyr::arrange(y_profiles.gg, get(condition))
                      y_profiles.gg$groups <- factor(y_profiles.gg$groups, levels = unique(y_profiles.gg$groups))

@@ -479,47 +479,6 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
 }
 
 
-
-#' @title colorPlot
-#'
-#' @param design design
-#' @param ColData ColData from summarizedExperiment
-#' @param condition Factor for the color of the plot. Default is samples, it takes all bio factors modalities to color the plot.
-#'
-#' @return a color palette
-#' @export
-#' @importFrom grDevices colorRampPalette
-#' @importFrom RColorBrewer brewer.pal 
-#' @importFrom tidyr unite
-#' @noRd
-
-colorPlot <- function(design, ColData, condition="samples"){
-  
-  getPalette <- colorRampPalette(brewer.pal(9, "Set1"))
-  
-  if(condition == "samples"){
-    
-    # combine only bio fact
-    groups <- design@List.Factors[design@Factors.Type == "Bio"] %>%
-      as.data.frame() %>% tidyr::unite(col="groups", sep="_")
-    list.cond <- factor(groups$groups)
-  }
-  else{
-    
-    list.cond <- design@List.Factors[[condition]]
-  }
-  
-  len.cond  <- length(levels(list.cond))
-  
-  colors    <- getPalette(len.cond)
-  
-  col <- colors[levels(list.cond)]
-  names(col) <- row.names(levels(list.cond))
-  
-  return(col)
-}
-
-
 #' plotDistr
 #'
 #' @param abundances matrix or dataframe of feature/gene abundances/counts
@@ -1115,8 +1074,6 @@ defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteraction
 #' @param modelFormula a model formula (characters or formula)
 #' @return list of 1 or 3 data.frames of contrast expression
 #' @export getExpressionContrast
-#'
-#' @examples
 #' 
 #' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
 #' @noRd
@@ -1130,7 +1087,7 @@ getExpressionContrast <- function(object, modelFormula=NULL){
   
   # args for getExpressionContrastF()
   factorBio <- bioFactors(object)
-  ExpDesign <- object@colData
+  ExpDesign <- getDesignMat(object)
   
   object <- setModelFormula(object, modelFormula)
   

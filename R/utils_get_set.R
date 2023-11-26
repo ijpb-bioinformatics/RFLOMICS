@@ -22,8 +22,14 @@ getFactorTypes <- function(object) {
   
 }
 
+
+#' @title Get bio factor.
+#'
+#' @param object a MAE object or SE object (produced by Flomics). 
+#' @return a vector with biological factors
+#' @rdname bioFactors
 #' @export
-#' @rdname getFactorTypes
+#' 
 bioFactors <- function(object){
   
   factVect <- toupper(getFactorTypes(object))
@@ -31,8 +37,14 @@ bioFactors <- function(object){
   
 }
 
+
+#' @title Get batch factor.
+#'
+#' @param object a MAE object or SE object (produced by Flomics). 
+#' @return a vector with batch factors
+#' @rdname batchFactors
 #' @export
-#' @rdname getFactorTypes
+#' 
 batchFactors <- function(object){
   
   factVect <- toupper(getFactorTypes(object))
@@ -40,8 +52,14 @@ batchFactors <- function(object){
   
 }
 
+
+#' @title Get metadata factor.
+#'
+#' @param object a MAE object or SE object (produced by Flomics). 
+#' @return a vector with metadata factors
+#' @rdname metaFactors
 #' @export
-#' @rdname getFactorTypes
+#' 
 metaFactors <- function(object){
   
   factVect <- toupper(getFactorTypes(object))
@@ -57,10 +75,9 @@ metaFactors <- function(object){
 #' @export
 #'
 getDesignMat <- function(object) {
-  if (is(object, "MultiAssayExperiment")) {
-    return(object@metadata$design@ExpDesign)
-  } else if (is(object, "SummarizedExperiment")) {
-    return(object@metadata$Groups)
+  if (is(object, "MultiAssayExperiment") || is(object, "SummarizedExperiment")) {
+    return(as.data.frame(object@colData))
+    
   } else {
     stop("object is not a MultiAssayExperiment nor a SummarizedExperiment.")
   }

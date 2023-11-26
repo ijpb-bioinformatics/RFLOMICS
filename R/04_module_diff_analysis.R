@@ -28,7 +28,7 @@ DiffExpAnalysisUI <- function(id){
 
 DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   
-  local.rea.values <- reactiveValues(Adj.pvalue.cutoff = 0.05, abs.logFC.cutoff = 0)
+  local.rea.values <- reactiveValues(Adj.pvalue.cutoff = 0.05, abs.logFC.cutoff = 0, selectedContrasts = NULL)
   
   # list of tools for diff analysis
   MethodList <- c("glmfit (edgeR)"="edgeRglmfit", "lmFit (limma)"="limmalmFit")
@@ -65,16 +65,21 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       need(rea.values[[dataset]]$compCheck != FALSE, session$userData$FlomicsMultiAssay@metadata$completeCheck[["error"]])
     )
     
+    local.rea.values$selectedContrasts <- 
+      getExpressionContrast(session$userData$FlomicsMultiAssay[[dataset]], modelFormula = getModelFormula(session$userData$FlomicsMultiAssay)) %>% 
+      purrr::reduce(rbind) %>% dplyr::filter(contrast %in% rea.values$Contrasts.Sel$contrast)
+    
+    
+    ## getcontrast
     box(title = span(tagList(icon("sliders-h"), "  ", "Setting")), width = 14, status = "warning",
         
         fluidRow(column(12,
+                        
                         ## list of contrasts to test
                         pickerInput(
                           inputId  = session$ns("contrastList"),
                           label    = "Selected contrasts:",
-                          choices  = rea.values$Contrasts.Sel$contrastName),
-                        #multiple = TRUE, selected = session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel$contrastName),
-                        
+                          choices  = local.rea.values$selectedContrasts$contrastName),
                         
                         # method for Diff analysis
                         selectInput(inputId  = session$ns("AnaDiffMethod"), label = "Method:",
@@ -189,7 +194,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                     Adj.pvalue.cutoff  = input$Adj.pvalue.cutoff, 
                                     logFC.cutoff       = input$abs.logFC.cutoff,
                                     cmd                = TRUE)
-      dataset.SE <<- dataset.SE
     }
     else{
       
