@@ -421,3 +421,108 @@ test_that("Coseq on Proteomics equivalence", {
   expect_identical(clustersRES, clustersMAE)
   
 })
+
+
+
+## .....Test: coseq.results.process 
+
+test_that("When Median.min.rep doesn't correspond to a rep.ICL.min, an error message is returned",{
+  
+  merge = "union"
+  K = 2:10
+  replicates = 2
+  iter <-  rep(K, each = replicates)
+  geneList <- opDEList(MAE[["RNAtest"]], operation = merge)
+  
+  param.list = list(model = "normal",
+                    GaussianModel = "Gaussian_pk_Lk_Ck",
+                    transformation = "arcsin",
+                    normFactors = "TMM",
+                    meanFilterCutoff = 50)
+  
+  countMat <- SummarizedExperiment::assay(MAE[["RNAtest"]])[geneList,]
+  
+  coseq.res.list <- lapply(1:replicates, function(x){
+    
+    try_rflomics(coseq::coseq(countMat, K = K, parallel = TRUE,
+                              model            = param.list[["model"]],
+                              transformation   = param.list[["transformation"]],
+                              meanFilterCutoff = param.list[["meanFilterCutoff"]],
+                              normFactors      = param.list[["normFactors"]],
+                              GaussianModel    = param.list[["GaussianModel"]],
+                              seed=4))
+  })
+  names(coseq.res.list) <- c(1:replicates)
+  
+  coseq.error.management <- coseq.error.manage(coseq.res.list = coseq.res.list, 
+                                               K = K, 
+                                               replicates = replicates,
+                                               cmd = TRUE)
+  
+  CoExpAnal <-  coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, 
+                                      K = K,
+                                      conds = conds)
+  
+  min.rep1 <- which.min(coseq::ICL(coseq.error.management$coseq.res.list.values[[1]]))
+  min.rep2 <- which.min(coseq::ICL(coseq.error.management$coseq.res.list.values[[2]]))
+  
+  median <- unlist(lapply(1:length(K),
+                          function(i){ 
+                            median(coseq::ICL(coseq.error.management$coseq.res.list.values[[1]])[i],
+                                   coseq::ICL(coseq.error.management$coseq.res.list.values[[2]])[i])}))
+  names(median)=paste0("K=",K)
+  min.median <- which.min(median)
+  
+  if((min.rep1 != min.median) & (min.rep2 != min.median)){
+  expect_equal(CoExpAnal[["error"]],"No min.median correspond to min.ICL.rep")
+  } else
+    expect_true(CoExpAnal[["results"]])
+})
+
+## .....Test: coseq.error.managment
+
+test_that("For a given K, a likelihood equal to 0 is counted as failed job", {
+  
+  merge = "union"
+  K = 2:10
+  replicates = 5
+  
+  iter <-  rep(K, each = replicates)
+  geneList <- opDEList(MAE[["RNAtest"]], operation = merge)
+  countMat <- SummarizedExperiment::assay(MAE[["RNAtest"]])[geneList,][1:100,]
+  
+  param.list = list(model = "normal",
+                    GaussianModel = "Gaussian_pk_Lk_Ck",
+                    transformation = "arcsin",
+                    normFactors = "TMM",
+                    meanFilterCutoff = 50)
+
+  coseq.res.list <- lapply(1:replicates, function(x){
+    
+    try_rflomics(coseq::coseq(countMat, K = K, parallel = TRUE,
+                              model            = param.list[["model"]],
+                              transformation   = param.list[["transformation"]],
+                              meanFilterCutoff = param.list[["meanFilterCutoff"]],
+                              normFactors      = param.list[["normFactors"]],
+                              GaussianModel    = param.list[["GaussianModel"]],
+                              seed = x))
+  })
+names(coseq.res.list) <- c(1:replicates)
+
+coseq.error.management <- coseq.error.manage(coseq.res.list = coseq.res.list, 
+                                             K = K, 
+                                             replicates = replicates,
+                                             cmd = TRUE)
+
+nbFailed <- dplyr::filter(coseq.error.management$jobs.tab.sum,K=="K=6")$n
+
+K6 <- unlist(lapply(1:5,function(i){
+  coseq::likelihood(coseq.error.management$coseq.res.list.values[[i]])["K=6"]}))
+
+nbK6eqNA <-sum(is.na(K6))
+nbK6eq0 <- sum(K6==0,na.rm=TRUE)
+
+expect_equal(nbFailed, nbK6eqNA + nbK6eq0)
+
+})
+

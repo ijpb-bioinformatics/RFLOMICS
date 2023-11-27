@@ -1397,7 +1397,7 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
   
   if (is.na(nK_success.job)) { nK_success.job <- 0 }
   
-  # if at least one failed job
+  # if there is at least one failed job
   # => generate table with error summary
   K.list <- rep(paste0("K",min(K), "-", max(K)), each = replicates)
   
@@ -1423,11 +1423,16 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
       }
     }
     
-    if (cmd) print("#     => error management: level 2 ")
-    ICL.vec <- unlist(lapply(1:nK_success.job, function(x){ (coseq::ICL(coseq.res.list[["value"]][[x]])) })) %>%
-      lapply(., function(x){ ifelse(is.na(x), "failed", "success") }) %>% unlist()
+    # if ICL == NA | loglike == 0
     
-    nK_success <- table(ICL.vec)["success"]
+    # if (cmd) print("#     => error management: level 2 ")
+     like.vec <- unlist(lapply(1:nK_success.job, function(x){ 
+       coseq::likelihood(coseq.res.list[["value"]][[x]])
+       })) %>%
+       lapply(., function(x){ 
+         ifelse(is.na(x) | (x==0), "failed", "success") }) %>% unlist()
+    
+    nK_success <- table(like.vec)["success"]
     
     replicates <- nK_success.job
     
@@ -1435,7 +1440,7 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
     K.list.ex <- rep(K, each = replicates)
     
     # observed list of cases
-    K.list.ob <- stringr::str_replace(string = names(ICL.vec), pattern = "K=", replacement = "") %>% 
+    K.list.ob <- stringr::str_replace(string = names(like.vec), pattern = "K=", replacement = "") %>% 
       as.numeric() %>% 
       sort()
     
@@ -1444,13 +1449,13 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
       
       missed.K.vec <- names(table(K.list.ob)[table(K.list.ob) < nK_success.job])
       
-      ICL.vec.bis <- rep("failed", length(missed.K.vec))
-      names(ICL.vec.bis) <- paste0("K=", missed.K.vec)
+      like.vec.bis <- rep("failed", length(missed.K.vec))
+      names(like.vec.bis) <- paste0("K=", missed.K.vec)
       
-      ICL.vec <- c(ICL.vec, ICL.vec.bis)
+      like.vec <- c(like.vec, like.vec.bis)
     }
     
-    jobs.tab <- data.frame(K = names(ICL.vec), error.message = as.factor(ICL.vec))
+    jobs.tab <- data.frame(K = names(like.vec), error.message = as.factor(like.vec))
     
     jobs.tab.sum2 <- jobs.tab %>% 
       dplyr::group_by(K, error.message) %>%
@@ -1458,15 +1463,10 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
       dplyr::mutate(prop.failed = round((n/replicates)*100)) %>%
       dplyr::filter(error.message != "success")
     
-    # if (dim(jobs.tab.sum1)[1] == 0){ jobs.tab.sum <- jobs.tab.sum2 }
-    # else if(dim(jobs.tab.sum2)[1] == 0){ jobs.tab.sum <- jobs.tab.sum1 }
-    # else{ jobs.tab.sum <- rbind(jobs.tab.sum1, jobs.tab.sum2) }
-    
     jobs.tab.sum <- data.table::rbindlist(list(jobs.tab.sum1, jobs.tab.sum2), use.names = TRUE) %>% 
       tibble::tibble()
     
-  }
-  else{
+  } else{
     nK_success <- 0
   }
   
@@ -1489,51 +1489,45 @@ coseq.results.process <- function(coseqObjectList, K, conds){
   # ICL plot
   ICL.list <- list()
   
+  # get ICL as one vector for all replicates
+  
   ICL.vec <- lapply(1:length(coseqObjectList), function(x){ coseq::ICL(coseqObjectList[[x]]) }) %>% unlist()
   ICL.list[["ICL.vec"]] <- ICL.vec
   
-  ICL.min.per.cluster <- lapply(1:length(coseqObjectList), function(x){
+  # Find the ICL min by replicates
+  
+    ICL.min.per.rep <- lapply(1:length(coseqObjectList), function(x){
     ICL.vec.min <- coseq::ICL(coseqObjectList[[x]])
     ICL.vec.min[which(ICL.vec.min == min(ICL.vec.min))]
   })  %>% unlist()
   
-  # TODO tests 231117
-  # ICL.min.per.cluster <- lapply(K, function(x){
-  #   # x = 2
-  #   ICL.vec.min <- ICL.vec[names(ICL.vec)==paste0("K=", x)]
-  #   # ICL.vec.min[]
-  #   which(ICL.vec.min == min(ICL.vec.min))
-  #   })  %>% unlist()
+  # Construct a table of results with ICL and K:
   
   ICL.tab <- data.frame(K = stringr::str_replace(names(ICL.vec), "K=", ""), ICL = ICL.vec) %>%
     dplyr::mutate(K = as.numeric(K))
   ICL.list[["ICL.tab"]] <- ICL.tab
+  
+  # Summarize the table: by K, compute the median of the replicate's ICL.
   
   ICL.n <- ICL.tab  %>% 
     dplyr::group_by(.,K) %>% 
     dplyr::filter(!is.na(ICL)) %>%
     dplyr::summarise(median = median(ICL, na.rm = TRUE), n = dplyr::n()) %>%
     dplyr::mutate(K = as.numeric(K))
+  
   ICL.list[["ICL.n"]] <- ICL.n
   
-  # min ICL
+  # Search for a replicate with a ICL min corresponding to the K with the min median 
+  
   K.ICL.median.min <- ICL.n[which.min(ICL.n$median),]$K
-  index  <- which(names(ICL.min.per.cluster) == paste0("K=", K.ICL.median.min))
-  index2 <- which(ICL.min.per.cluster[index] == min(ICL.min.per.cluster[index]))
   
-  # coseq object with the min ICL
-  coseq.res <- coseqObjectList[index][index2][[1]]
-  # coseq.res <- coseqObjectList[[index2]]@allResults[[index]]
-  
-  # K.ICL.min <- min(ICL.vec[names(ICL.vec) == paste0("K=", K.ICL.median.min)], na.rm = TRUE)
-  # 
-  # 
-  # index <- sapply(names(coseqObjectList), function(x){
-  #   
-  #   any(coseq::ICL(coseqObjectList[[x]]) == K.ICL.min)
-  #   })
-  # coseq.res <- coseqObjectList[index][[1]]
-  # coseq.res <- coseqObjectList[[which.min(ICL.vec)]]
+  index  <- which(names(ICL.min.per.rep) == paste0("K=", K.ICL.median.min))
+
+  # Case where the median.min has a K.min.rep
+  if(length(index)>0){
+  # Case where there is several rep with a min.rep, the min of them is taken
+    index2 <- which(ICL.min.per.rep[index] == min(ICL.min.per.rep[index]))
+    coseq.res <- coseqObjectList[index][index2][[1]]
   
   # logLike plot
   logLike.list <- list()
@@ -1570,32 +1564,12 @@ coseq.results.process <- function(coseqObjectList, K, conds){
   CoExpAnal[["clusters"]]     <- clusters
   CoExpAnal[["cluster.nb"]]   <- nb_cluster
   CoExpAnal[["plots"]]        <- list("ICL" = ICL.list, "logLike" = logLike.list)
-  
-  #### Plots
-  
-  #### plot ICL
-  # ICL.p   <- ggplot2::ggplot(data = ICL.tab) + 
-  #   ggplot2::geom_boxplot(ggplot2::aes(x = as.factor(K), y = ICL, group = K)) +
-  #   ggplot2::geom_text(data = ICL.n, ggplot2::aes(x = 1:length(K), y = max(ICL.vec, na.rm = TRUE), 
-  #                                                 label = paste0("n=", n)), col = 'red', size = 4) +
-  #   ggplot2::ylim(min(ICL.vec, na.rm = TRUE), max(ICL.vec, na.rm = TRUE)) +
-  #   ggplot2::xlab("K")
-  
-  #### plot logLike
-  # logLike.p   <- ggplot2::ggplot(data = logLike.tab) + 
-  #   ggplot2::geom_boxplot(ggplot2::aes(x = as.factor(K), y = logLike, group = K)) + 
-  #   ggplot2::xlab("K") +
-  #   ggplot2::geom_text(data = logLike.n, ggplot2::aes(x = 1:length(K), y = max(logLike.vec, na.rm = TRUE), 
-  #                                                     label = paste0("n=", n)), col = 'red', size = 4)
-  
-  #### coseq plots
-  # plot.coseq.res <- coseq::plot(coseq.res, conds = conds, collapse_reps = "average",
-  #                               graphs = c("profiles", "boxplots", "probapost_boxplots",
-  #                                          "probapost_barplots", "probapost_histogram")) 
-  
-  # CoExpAnal[["plots"]] <- plot.coseq.res
-  # CoExpAnal[["plots"]][["ICL"]]     <- ICL.p
-  # CoExpAnal[["plots"]][["logLike"]] <- logLike.p
+} else{
+    # Pb of convergence: if there is no K.min.rep which correspond to the median.min, return an error
+    CoExpAnal <- list()
+    CoExpAnal[["results"]]      <- FALSE
+    CoExpAnal[["error"]]  <- "No min.median correspond to min.ICL.rep"
+  }
   
   return(CoExpAnal)
 }
@@ -1718,7 +1692,6 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
     CoExpAnal[["warning"]] <- coseq.res.list$warning
     
     if(nK_success/length(iter) < 0.8){
-      
       CoExpAnal[["error"]] <- TRUE
     }
     
@@ -1798,30 +1771,31 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list, si
   
   nK_success   <- coseq.error.management$nK_success
   
-  # If they are at least the half of jobs succeed, valid results
-  if (nK_success != 0) {
+  # If they are more than 60 % of succeeded jobs, valid results, find min.median.ICL
+  
+  if (nK_success/length(iter) >=0.8) {
     
-    CoExpAnal <-  coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, 
+     CoExpAnal <-  coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, 
                                         K = K,
                                         conds = conds)
-    CoExpAnal[["warning"]] <- coseq.res.list$warning
+    # If ICL.median has been found
     
-    if (nK_success/length(iter) < 0.8) {
-      CoExpAnal[["error"]] <- TRUE
+    if(CoExpAnal[["results"]]==TRUE){
+      
+      CoExpAnal[["results"]]=TRUE
+      CoExpAnal[["warning"]] <- coseq.res.list$warning
+      
+      if (cmd) { 
+        print(paste0("#     => Number of clusters: ", 
+                     max(unique(coseq::clusters(CoExpAnal$coseqResults)))))
+      }
     }
-    
-    if (cmd) { 
-      print(paste0("#     => Number of clusters: ", 
-                   max(unique(coseq::clusters(CoExpAnal$coseqResults)))))
-    }
-    
-  }else{
-    
+  } else{
     CoExpAnal[["results"]] <- FALSE
-    CoExpAnal[["error"]] <- TRUE
+    CoExpAnal[["error"]] <- "nK_success/length(iter) < 0.8"
   }
   
-  CoExpAnal[["stats"]] <- coseq.error.management$jobs.tab.sum
+  CoExpAnal[["stats"]] <- coseq.error.management$jobs.tab.sum 
   
   return(CoExpAnal)
 }
