@@ -12,8 +12,8 @@ module_runEnrichment_UI <- function(id){
   htmltools::tagList(  
     fluidRow(
       column(width = 12,
-      uiOutput(ns("summary")),
-      uiOutput(ns("AnnotResults"))
+             uiOutput(ns("summary")),
+             uiOutput(ns("AnnotResults"))
       )
     ))
 }
@@ -79,18 +79,22 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
             tabPanel("DotPlot",
                      br(),
                      renderUI({
-                       outdot <- tryCatch(plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
-                                                  contrast = listname, 
-                                                  from = from,
-                                                  type = "dotplot",
-                                                  ont = dom.select,
-                                                  Domain = input[[paste0(listname, "-domain")]],
-                                                  showCategory = input[[paste0(listname, "-top.over")]],
-                                                  searchExpr = input[[paste0(listname, "-grep")]]),
-                                          error = function(e) e,
-                                          warnings = function(w) w)
+                       outdot <- .doNotSpeak({plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
+                                                      contrast = listname, 
+                                                      from = from,
+                                                      type = "dotplot",
+                                                      ont = dom.select,
+                                                      Domain = input[[paste0(listname, "-domain")]],
+                                                      showCategory = input[[paste0(listname, "-top.over")]],
+                                                      searchExpr = input[[paste0(listname, "-grep")]])
+                       })
                        
-                       if (is(outdot, "gg")) renderPlot(outdot)
+                       if (is(outdot, "gg")) renderPlot({
+                         warnOpt <- getOption("warn")
+                         options(warn = -1) # avoid ggrepel warnings, or at least trying to
+                         suppressMessages(suppressWarnings(print(outdot)))
+                         options(warn = warnOpt)
+                       })
                        else renderText({outdot$message})
                      }),
             ),
@@ -98,18 +102,22 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
             tabPanel("Heatplot",
                      br(),
                      renderUI({
-                       outheat <- tryCatch(plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
-                                                   contrast = listname, 
-                                                   from = from,
-                                                   type = "heatplot",
-                                                   ont = dom.select,
-                                                   Domain = input[[paste0(listname, "-domain")]],
-                                                   showCategory = input[[paste0(listname, "-top.over")]],
-                                                   searchExpr = input[[paste0(listname, "-grep")]]),
-                                           error = function(e) e,
-                                           warnings = function(w) w)
+                       outheat <- .doNotSpeak({  plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
+                                                         contrast = listname, 
+                                                         from = from,
+                                                         type = "heatplot",
+                                                         ont = dom.select,
+                                                         Domain = input[[paste0(listname, "-domain")]],
+                                                         showCategory = input[[paste0(listname, "-top.over")]],
+                                                         searchExpr = input[[paste0(listname, "-grep")]])})
                        
-                       if (is(outheat, "gg")) renderPlot(outheat)
+                       
+                       if (is(outheat, "gg")) renderPlot({ 
+                         warnOpt <- getOption("warn")
+                         options(warn = -1) # avoid ggrepel warnings, or at least trying to
+                         suppressMessages(suppressWarnings(print(outheat)))
+                         options(warn = warnOpt)
+                       })
                        else renderText({outheat$message})
                      })
             ),
@@ -127,19 +135,22 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
                            node_label_arg <- "category"
                          }
                          
-                         outcnet <- tryCatch(plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
-                                                     contrast = listname, 
-                                                     from = from,
-                                                     type = "cnetplot",
-                                                     ont = dom.select,
-                                                     Domain = input[[paste0(listname, "-domain")]],
-                                                     showCategory = input[[paste0(listname, "-top.over")]],
-                                                     searchExpr = input[[paste0(listname, "-grep")]],
-                                                     node_label = node_label_arg),
-                                             error = function(e) e,
-                                             warnings = function(w) w)
+                         outcnet <- .doNotSpeak({plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
+                                                         contrast = listname, 
+                                                         from = from,
+                                                         type = "cnetplot",
+                                                         ont = dom.select,
+                                                         Domain = input[[paste0(listname, "-domain")]],
+                                                         showCategory = input[[paste0(listname, "-top.over")]],
+                                                         searchExpr = input[[paste0(listname, "-grep")]],
+                                                         node_label = node_label_arg)})
                          
-                         if (is(outcnet, "gg")) renderPlot(outcnet)
+                         if (is(outcnet, "gg")) renderPlot({ 
+                           warnOpt <- getOption("warn")
+                           options(warn = -1) # avoid ggrepel warnings, or at least trying to
+                           suppressMessages(suppressWarnings(print(outcnet)))
+                           options(warn = warnOpt)
+                         })
                          else renderText({outcnet$message})
                          
                        }),
@@ -210,9 +221,9 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
                                                                            data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
                                                      paste0(link_to_map)
                                                    }),
-
+                                                   
                                                    # renderUI({
-                                                   #   # Créez le lien URL
+                                                   #   # Crée le lien URL
                                                    #   #link_to_map <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?", input[[paste0(listname, "-MAP.sel")]], "/", data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
                                                    #   #a("Link to interactive map online", href = link_to_map, target = "_blank")
                                                    # })
@@ -221,7 +232,7 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
                                           fluidRow(
                                             column(12,
                                                    renderPlot({
-
+                                                     
                                                      plotCPRKEGG(object = session$userData$FlomicsMultiAssay[[dataset]],
                                                                  contrast = listname,
                                                                  from = list.source,
@@ -657,7 +668,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     validate({ 
       need(input$keytype.go %in% accepted_keytypes, message = paste("Keytype must be one of: ", paste(accepted_keytypes, collapse = ", "), sep = " ")) 
     })
-
+    
     # set list args
     dom.select <- "GO"
     list_args <- list()
@@ -690,7 +701,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     #----------------------#
     
     #local.rea.values[[dom.select]] <- FALSE
-
+    
     # ---- Annotation on diff results: ----  
     if (length(input$GeneList.diff_GO) != 0) {
       
@@ -747,7 +758,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     }
     
     #local.rea.values[[dom.select]] <- TRUE
-
+    
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep = ""))
     #----------------------#
@@ -839,7 +850,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                 dom.select = dom.select, 
                                 Domain = Domain,
                                 col_domain = col_domain_arg)
-    
+      
       shiny::callModule(module  = module_runEnrichment, id = "KEGG_DiffExpEnrichAnal", dataset = dataset, dom.select = "KEGG", list.source = "DiffExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       
@@ -922,7 +933,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     list_args <- list()
     list_args[["pvalueCutoff"]] <- input$pValue_custom
     list_args[["minGSSize"]] <- 10
-
+    
     annotation <- data.table::fread(file = input$annotationFileCPR$datapath, sep = "\t", header = TRUE)
     listCharRm <- c(".", " ", "")
     annotation2 <- list()
@@ -946,7 +957,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     if (input$col_termName != "") annotation2[["name"]] <- annotation[[input$col_termName]]
     annotation2 <- data.frame(annotation2)
     
-
+    
     
     # rea.values[[dataset]]$diffAnnot  <- FALSE
     # rea.values[[dataset]]$coExpAnnot <- FALSE
@@ -1016,7 +1027,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep = ""))
     #----------------------#
-
+    
   }, ignoreInit = TRUE)
   
 }

@@ -320,6 +320,7 @@ methods::setMethod(
 #' @return A plot.
 #' @export
 #' @importFrom enrichplot cnetplot heatplot dotplot
+#' @importFrom ggrepel geom_label_repel
 #' @exportMethod plotCPR
 methods::setMethod(
   f = "plotCPR",
@@ -388,20 +389,23 @@ methods::setMethod(
     type <- tolower(type)
     returnplot <- NULL
     if (type == "cnetplot") {
-      suppressMessages( # delete warnings for scale fill replacement
-        returnplot <- cnetplot(dataPlot, showCategory = Categories, color.params = list(foldChange = log2FC_vect), node_label = node_label, ...) +
+      returnplot <- 
+        cnetplot(dataPlot, showCategory = Categories, color.params = list(foldChange = log2FC_vect), node_label = node_label, ...) +
           guides(colour = guide_colourbar(title = "log2FC")) +
-          scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)
-      )
+          scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) 
+ 
+      # )
     } else if (type == "heatplot") {
-      suppressMessages( # delete warnings for scale fill replacement
-        returnplot <- heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, ...) +
+      returnplot <-  
+          heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, ...) +
           labs(fill = "log2FC") +
           scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
           theme(axis.text.y = element_text(size = 10))
-      )
+
     } else if (type == "dotplot") {
-      returnplot <- dotplot(dataPlot, showCategory = Categories, ...)
+      returnplot <- tryCatch(dotplot(dataPlot, showCategory = Categories, ...),
+                             error = function(e) e,
+                             warnings = function(w) w)
     }
 
     return(returnplot)
