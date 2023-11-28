@@ -20,7 +20,7 @@ methods::setMethod(
   definition = function(object,
                         nameList = NULL,
                         list_args = list(),
-                        from = "DiffExpAnal",
+                        from = "DiffExp",
                         dom.select = "custom",
                         Domain = "no-domain",
                         col_term = "term",
@@ -35,9 +35,15 @@ methods::setMethod(
       stop("There is no differential analysis. Please run a differential analysis before running enrichment")
     }
     
+    if (toupper(from) %in% toupper(c("DiffExp", "DiffExpAnal", "DiffExpEnrichAnal"))) {
+      from <- "DiffExp"
+    } else {
+      from <- "CoExp"
+    }
+    
     # "Retrieving the lists of DE entities")
     switch(from,
-           "DiffExpAnal" = {
+           "DiffExp" = {
              contrasts <- NULL
              
              if (is.null(getValidContrasts(object))) contrasts <- getSelectedContrasts(object)$contrastName
@@ -55,7 +61,7 @@ methods::setMethod(
              names(geneLists) <- contrasts
              
            },
-           "CoExpAnal" = {
+           "CoExp" = {
              
              namesClust <- names(object@metadata[["CoExpAnal"]][["clusters"]])
              if (!is.null(nameList)) namesClust <- intersect(namesClust, nameList)
@@ -105,7 +111,6 @@ methods::setMethod(
 
     # for each list
     results_list <- lapply(names(geneLists), FUN = function(listname) {
-      # listname <- names(geneLists)[1]
       list_args$gene <- geneLists[[listname]]
       results_ont <- lapply(Domain, FUN = function(ont) {
         switch(dom.select,
@@ -140,17 +145,6 @@ methods::setMethod(
       return(results_ont)
     })
     names(results_list) <- names(geneLists)
-
-    ## summary
-
-    # after filter
-    #          BP  MF  CC
-    # case1    10  22  4
-    # case2    0   20  5
-    # case3    0   0   0
-    # case4    NA  10  3
-    # case5    NA  NA  NA
-
 
     overview_list <- list()
     term.list <- list()
@@ -194,9 +188,9 @@ methods::setMethod(
     EnrichAnal[["list_args"]] <- c(EnrichAnal[["list_args"]], list("Domain"=Domain))
     EnrichAnal[["enrichResult"]] <- results_list
     
-    if (from == "DiffExpAnal") {
+    if (from == "DiffExp") {
       object@metadata[["DiffExpEnrichAnal"]][[dom.select]] <- EnrichAnal
-    } else if (from == "CoExpAnal") {
+    } else if (from == "CoExp") {
       object@metadata[["CoExpEnrichAnal"]][[dom.select]] <- EnrichAnal
     }
 
@@ -214,7 +208,7 @@ methods::setMethod(
                         SE.name,
                         nameList = NULL,
                         list_args = list(),
-                        from = "DiffExpAnal",
+                        from = "DiffExp",
                         dom.select = "custom",
                         Domain = "no-domain",
                         col_term = "term",
@@ -268,10 +262,10 @@ methods::setMethod(
                         ...) {
 
     
-    if (toupper(from) %in% toupper(c("DiffExpAnal", "DiffExpEnrichAnal"))) {
-      from <- "DiffExpEnrichAnal"
+    if (toupper(from) %in% toupper(c("DiffExp", "DiffExpAnal", "DiffExpEnrichAnal"))) {
+      from <- "DiffExp"
     } else {
-      from <- "CoExpEnrichAnal"
+      from <- "CoExp"
     }
     
     if (isTagName(object, contrast)) contrast <- convertTagToContrast(object, contrast)
@@ -280,7 +274,7 @@ methods::setMethod(
 
     log2FC_vect <- NULL
     # Get the log2FC if appropriate
-    if (from == "DiffExpEnrichAnal") {
+    if (from == "DiffExp") {
       log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
       names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
     }
@@ -329,7 +323,7 @@ methods::setMethod(
                         contrast,
                         ont,
                         Domain = NULL,
-                        from = "DiffExpAnal",
+                        from = "DiffExp",
                         type = "dotplot",
                         showCategory = 15,
                         searchExpr = "",
@@ -344,7 +338,13 @@ methods::setMethod(
     
     # if (isTagName(contrast)) contrast <- convertTagToContrast(object, contrast)
     
-    if (from == "DiffExpAnal") {
+    if (toupper(from) %in% toupper(c("DiffExp", "DiffExpAnal", "DiffExpEnrichAnal"))) {
+      from <- "DiffExp"
+    } else {
+      from <- "CoExp"
+    }
+    
+    if (from == "DiffExp") {
       dataPlot <- object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult[[contrast]]
     } else {
       dataPlot <- object@metadata$CoExpEnrichAnal[[ont]]$enrichResult[[contrast]]
@@ -371,7 +371,7 @@ methods::setMethod(
 
     log2FC_vect <- NULL
     # Get the log2FC if appropriate
-    if (from == "DiffExpAnal") {
+    if (from == "DiffExp") {
       log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
       names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
     }
