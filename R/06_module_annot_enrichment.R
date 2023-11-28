@@ -18,6 +18,8 @@ module_runEnrichment_UI <- function(id){
     ))
 }
 
+
+#' @importFrom RCurl url.exists
 module_runEnrichment <- function(input, output, session, dataset, dom.select, list.source, rea.values, local.rea.values){
   
   ns <- session$ns
@@ -231,16 +233,27 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
                                           ),
                                           fluidRow(
                                             column(12,
-                                                   renderPlot({
+                                                   renderUI({
+                                                     link_to_map <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?",
+                                                                           input[[paste0(listname, "-MAP.sel")]], "/",
+                                                                           data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
                                                      
-                                                     plotCPRKEGG(object = session$userData$FlomicsMultiAssay[[dataset]],
-                                                                 contrast = listname,
-                                                                 from = list.source,
-                                                                 pathway_id = input[[paste0(listname, "-MAP.sel")]],
-                                                                 species = local.rea.values$KEGG_org,
-                                                                 gene_idtype = local.rea.values$keytype.kegg
-                                                     )
-                                                   }, res = 300, width = 1000, height = 1000),
+                                                     # test validity of URL
+                                                     if (RCurl::url.exists(link_to_map)) {
+                                                       
+                                                       renderPlot({
+                                                         plotCPRKEGG(object = session$userData$FlomicsMultiAssay[[dataset]],
+                                                                     contrast = listname,
+                                                                     from = list.source,
+                                                                     pathway_id = input[[paste0(listname, "-MAP.sel")]],
+                                                                     species = local.rea.values$KEGG_org,
+                                                                     gene_idtype = local.rea.values$keytype.kegg
+                                                         )}, res = 300, width = 1000, height = 1000)
+                                                     } else {
+                                                         renderText("Please check your connection. It seems the URL does not exist, or you're not connected.")
+                                                     }
+                                                    
+                                                   })
                                             )
                                           )
                                  )
@@ -840,7 +853,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     param.list <<- param.list
     
     if (.checkRunORAExecution(session$userData$FlomicsMultiAssay[[dataset]], "KEGG", param.list) == FALSE) return()
-
+    
     local.rea.values[["KEGG_org"]]     <- input$KEGG_org
     local.rea.values[["keytype.kegg"]] <- input$keytype.kegg
     
@@ -860,15 +873,15 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       
       # run annotation
       runRes <- tryCatch({
-      session$userData$FlomicsMultiAssay[[dataset]] <-  
-        runAnnotationEnrichment(object = session$userData$FlomicsMultiAssay[[dataset]], 
-                                nameList = input$GeneList.diff_KEGG,
-                                list_args = list_args, 
-                                from = "DiffExpAnal",
-                                annot = annotation2,
-                                dom.select = dom.select, 
-                                Domain = Domain,
-                                col_domain = col_domain_arg)
+        session$userData$FlomicsMultiAssay[[dataset]] <-  
+          runAnnotationEnrichment(object = session$userData$FlomicsMultiAssay[[dataset]], 
+                                  nameList = input$GeneList.diff_KEGG,
+                                  list_args = list_args, 
+                                  from = "DiffExpAnal",
+                                  annot = annotation2,
+                                  dom.select = dom.select, 
+                                  Domain = Domain,
+                                  col_domain = col_domain_arg)
       },
       warning = function(war) return(war),
       error   = function(err) return(err)
@@ -900,15 +913,15 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       session$userData$FlomicsMultiAssay[[dataset]]@metadata[["CoExpEnrichAnal"]][[dom.select]]   <- NULL
       
       runResCo <- tryCatch({
-      session$userData$FlomicsMultiAssay[[dataset]] <-  
-        runAnnotationEnrichment(session$userData$FlomicsMultiAssay[[dataset]], 
-                                nameList = input$GeneList.coseq_KEGG,
-                                list_args = list_args, 
-                                from = "CoExpAnal",
-                                annot = annotation2,
-                                dom.select = dom.select, 
-                                Domain = Domain,
-                                col_domain = col_domain_arg) 
+        session$userData$FlomicsMultiAssay[[dataset]] <-  
+          runAnnotationEnrichment(session$userData$FlomicsMultiAssay[[dataset]], 
+                                  nameList = input$GeneList.coseq_KEGG,
+                                  list_args = list_args, 
+                                  from = "CoExpAnal",
+                                  annot = annotation2,
+                                  dom.select = dom.select, 
+                                  Domain = Domain,
+                                  col_domain = col_domain_arg) 
       },
       warning = function(war) return(war),
       error   = function(err) return(err)
@@ -1015,15 +1028,15 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       
       # run annotation
       runRes <- tryCatch({
-      session$userData$FlomicsMultiAssay[[dataset]] <-  
-        runAnnotationEnrichment(object = session$userData$FlomicsMultiAssay[[dataset]], 
-                                nameList = input$GeneList.diff_custom,
-                                list_args = list_args, 
-                                from = "DiffExpAnal",
-                                annot = annotation2,
-                                dom.select = dom.select, 
-                                Domain = Domain,
-                                col_domain = col_domain_arg)  
+        session$userData$FlomicsMultiAssay[[dataset]] <-  
+          runAnnotationEnrichment(object = session$userData$FlomicsMultiAssay[[dataset]], 
+                                  nameList = input$GeneList.diff_custom,
+                                  list_args = list_args, 
+                                  from = "DiffExpAnal",
+                                  annot = annotation2,
+                                  dom.select = dom.select, 
+                                  Domain = Domain,
+                                  col_domain = col_domain_arg)  
       },
       warning = function(war) return(war),
       error   = function(err) return(err)
@@ -1055,15 +1068,15 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       session$userData$FlomicsMultiAssay[[dataset]]@metadata[["CoExpEnrichAnal"]][[dom.select]]   <- NULL
       
       runResCo <- tryCatch({
-      session$userData$FlomicsMultiAssay[[dataset]] <-  
-        runAnnotationEnrichment(session$userData$FlomicsMultiAssay[[dataset]], 
-                                nameList = input$GeneList.coseq_custom,
-                                list_args = list_args, 
-                                from = "CoExpAnal",
-                                annot = annotation2,
-                                dom.select = dom.select, 
-                                Domain = Domain,
-                                col_domain = col_domain_arg) 
+        session$userData$FlomicsMultiAssay[[dataset]] <-  
+          runAnnotationEnrichment(session$userData$FlomicsMultiAssay[[dataset]], 
+                                  nameList = input$GeneList.coseq_custom,
+                                  list_args = list_args, 
+                                  from = "CoExpAnal",
+                                  annot = annotation2,
+                                  dom.select = dom.select, 
+                                  Domain = Domain,
+                                  col_domain = col_domain_arg) 
       },
       warning = function(war) return(war),
       error   = function(err) return(err)

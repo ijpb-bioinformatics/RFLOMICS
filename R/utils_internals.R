@@ -19,12 +19,14 @@ see_pathview <- function(...) {
   msg <- capture.output(pathview::pathview(...), type = "message")
   msg <- grep("image file", msg, value = TRUE)
   filename <- sapply(strsplit(msg, " "), function(x) x[length(x)])
-  img <- png::readPNG(filename)
-  grid::grid.raster(img)
-  nam <- stringr::str_split(filename, "[.]")
-  invisible(file.remove(filename))
-  invisible(file.remove(paste0(nam[[1]][1], ".xml")))
-  invisible(file.remove(paste0(nam[[1]][1], ".png")))
+  if (length(filename) > 0 ) {
+    img <- png::readPNG(filename)
+    grid::grid.raster(img)
+    nam <- stringr::str_split(filename, "[.]")
+    invisible(file.remove(filename))
+    invisible(file.remove(paste0(nam[[1]][1], ".xml")))
+    invisible(file.remove(paste0(nam[[1]][1], ".png")))
+  }
   return()
 }
 
