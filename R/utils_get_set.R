@@ -597,8 +597,8 @@ getEnrichRes <- function(object,
   if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
     stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
   
-  if (toupper(from) %in% c("DIFFEXPANAL", "DIFFEXPENRICHANAL")) from <- "DiffExpEnrichAnal"
-  if (toupper(from) %in% c("COEXPANAL", "COEXPENRICHANAL"))     from <- "CoExpEnrichAnal"
+  if (toupper(from) %in% c("DIFFEXP", "DIFFEXPANAL", "DIFFEXPENRICHANAL")) from <- "DiffExpEnrichAnal"
+  if (toupper(from) %in% c("COEXP", "COEXPANAL", "COEXPENRICHANAL"))     from <- "CoExpEnrichAnal"
   
   classObj <- NULL
   if (is(object, "SummarizedExperiment")) classObj <- "SE"
