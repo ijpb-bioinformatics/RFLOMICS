@@ -308,20 +308,18 @@ setCoeffNorm <- function(object, coeff = NULL) {
 #' @noRd
 #'
 .doNotSpeak <- function(expr) {
-  out <- tryCatch(
+  capture.output(out <- tryCatch(
     {
-      capture.output(
         suppressWarnings(
           suppressMessages(eval(expr))
         )
-      )
+      
     },
     error = function(e) e,
     warning = function(w) w
-  )
+  ))
   return(out)
 }
-
 
 # ----- INTERNAL - Check if character vectors are contrasts Names : -----
 
