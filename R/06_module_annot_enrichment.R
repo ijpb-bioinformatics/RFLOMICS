@@ -691,7 +691,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     )
     
     # prevent multiple execution
-    if(check_run_ORA_execution(session$userData$FlomicsMultiAssay[[dataset]], "GO", param.list) == FALSE) return()
+    if (.checkRunORAExecution(session$userData$FlomicsMultiAssay[[dataset]], "GO", param.list) == FALSE) return()
     
     #---- progress bar ----#
     progress <- shiny::Progress$new()
@@ -710,8 +710,8 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       
       session$userData$FlomicsMultiAssay[[dataset]]@metadata[["DiffExpEnrichAnal"]][[dom.select]] <- NULL
       
-      # run annotation
-      session$userData$FlomicsMultiAssay[[dataset]] <-  
+      # run annotation diff analysis
+      runRes <- tryCatch({
         runAnnotationEnrichment(object = session$userData$FlomicsMultiAssay[[dataset]], 
                                 nameList = input$GeneList.diff_GO,
                                 list_args = list_args, 
@@ -719,13 +719,24 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                 annot = annotation2,
                                 dom.select = dom.select, 
                                 Domain = Domain,
-                                col_domain = col_domain_arg)  
+                                col_domain = col_domain_arg)
+      },
+      warning = function(war) return(war),
+      error   = function(err) return(err)
+      )
       
+      if (!is(runRes, "SummarizedExperiment")) {
+        showModal(modalDialog(title = paste("Something went wrong: ", runRes$message)))
+      }
+      validate({need(is(runRes, "SummarizedExperiment"), message = paste0("Something went wrong: ", runRes$message))})
+      
+      session$userData$FlomicsMultiAssay[[dataset]] <-  runRes
       rea.values[[dataset]]$diffAnnot <- TRUE
-      
       shiny::callModule(module  = module_runEnrichment, id = "GO_DiffExpEnrichAnal", dataset = dataset,
-                        dom.select = "GO", list.source = "DiffExpEnrichAnal",
+                        dom.select = "GO", 
+                        list.source = "DiffExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
+      
     }
     
     #---- progress bar ----#
@@ -740,18 +751,29 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       
       session$userData$FlomicsMultiAssay[[dataset]]@metadata[["CoExpEnrichAnal"]][[dom.select]]   <- NULL
       
-      session$userData$FlomicsMultiAssay[[dataset]] <-  
-        runAnnotationEnrichment(session$userData$FlomicsMultiAssay[[dataset]], 
-                                nameList = input$GeneList.coseq_GO,
-                                list_args = list_args, 
-                                from = "CoExpAnal",
-                                annot = annotation2,
-                                dom.select = dom.select, 
-                                Domain = Domain,
-                                col_domain = col_domain_arg)
+      runResCo <- tryCatch({
+        session$userData$FlomicsMultiAssay[[dataset]] <-  
+          runAnnotationEnrichment(session$userData$FlomicsMultiAssay[[dataset]], 
+                                  nameList = input$GeneList.coseq_GO,
+                                  list_args = list_args, 
+                                  from = "CoExpAnal",
+                                  annot = annotation2,
+                                  dom.select = dom.select, 
+                                  Domain = Domain,
+                                  col_domain = col_domain_arg)
+        
+      },
+      warning = function(war) return(war),
+      error   = function(err) return(err)
+      )
       
+      if (!is(runResCo, "SummarizedExperiment")) {
+        showModal(modalDialog(title = paste("Something went wrong: ", runResCo$message)))
+      }
+      validate({need(is(runResCo, "SummarizedExperiment"), message = paste0("Something went wrong: ", runResCo$message))})
+      
+      session$userData$FlomicsMultiAssay[[dataset]] <-  runResCo
       rea.values[[dataset]]$coExpAnnot <- TRUE
-      
       shiny::callModule(module  = module_runEnrichment, id = "GO_CoExpEnrichAnal", dataset = dataset, 
                         dom.select = "GO", list.source = "CoExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
@@ -765,7 +787,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     
   }, ignoreInit = TRUE)
   
-  # ---- run Annotation  ----
+  # ---- run Annotation  KEGG ----
   observeEvent(input$runEnrich_CPR_KEGG, {
     
     # check list of genes
@@ -817,14 +839,10 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     
     param.list <<- param.list
     
-    if(check_run_ORA_execution(session$userData$FlomicsMultiAssay[[dataset]], "KEGG", param.list) == FALSE) return()
-    
-    # rea.values[[dataset]]$diffAnnot  <- FALSE
-    # rea.values[[dataset]]$coExpAnnot <- FALSE
+    if (.checkRunORAExecution(session$userData$FlomicsMultiAssay[[dataset]], "KEGG", param.list) == FALSE) return()
+
     local.rea.values[["KEGG_org"]]     <- input$KEGG_org
     local.rea.values[["keytype.kegg"]] <- input$keytype.kegg
-    
-    #local.rea.values[[dom.select]] <- FALSE
     
     #---- progress bar ----#
     progress <- shiny::Progress$new()
@@ -841,6 +859,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       session$userData$FlomicsMultiAssay[[dataset]]@metadata[["DiffExpEnrichAnal"]][[dom.select]] <- NULL
       
       # run annotation
+      runRes <- tryCatch({
       session$userData$FlomicsMultiAssay[[dataset]] <-  
         runAnnotationEnrichment(object = session$userData$FlomicsMultiAssay[[dataset]], 
                                 nameList = input$GeneList.diff_KEGG,
@@ -850,8 +869,20 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                 dom.select = dom.select, 
                                 Domain = Domain,
                                 col_domain = col_domain_arg)
+      },
+      warning = function(war) return(war),
+      error   = function(err) return(err)
+      )
       
-      shiny::callModule(module  = module_runEnrichment, id = "KEGG_DiffExpEnrichAnal", dataset = dataset, dom.select = "KEGG", list.source = "DiffExpEnrichAnal",
+      if (!is(runRes, "SummarizedExperiment")) {
+        showModal(modalDialog(title = paste("Something went wrong: ", runRes$message)))
+      }
+      validate({need(is(runRes, "SummarizedExperiment"), message = paste0("Something went wrong: ", runRes$message))})
+      
+      session$userData$FlomicsMultiAssay[[dataset]] <-  runRes
+      shiny::callModule(module  = module_runEnrichment, id = "KEGG_DiffExpEnrichAnal", 
+                        dataset = dataset, dom.select = "KEGG", 
+                        list.source = "DiffExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       
       rea.values[[dataset]]$diffAnnot <- TRUE
@@ -868,6 +899,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       
       session$userData$FlomicsMultiAssay[[dataset]]@metadata[["CoExpEnrichAnal"]][[dom.select]]   <- NULL
       
+      runResCo <- tryCatch({
       session$userData$FlomicsMultiAssay[[dataset]] <-  
         runAnnotationEnrichment(session$userData$FlomicsMultiAssay[[dataset]], 
                                 nameList = input$GeneList.coseq_KEGG,
@@ -877,14 +909,24 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                 dom.select = dom.select, 
                                 Domain = Domain,
                                 col_domain = col_domain_arg) 
+      },
+      warning = function(war) return(war),
+      error   = function(err) return(err)
+      )
       
-      shiny::callModule(module  = module_runEnrichment, id = "KEGG_CoExpEnrichAnal", dataset = dataset, dom.select = "KEGG", list.source = "CoExpEnrichAnal",
+      if (!is(runResCo, "SummarizedExperiment")) {
+        showModal(modalDialog(title = paste("Something went wrong: ", runResCo$message)))
+      }
+      validate({need(is(runResCo, "SummarizedExperiment"), message = paste0("Something went wrong: ", runResCo$message))})
+      
+      session$userData$FlomicsMultiAssay[[dataset]] <-  runResCo
+      shiny::callModule(module  = module_runEnrichment, id = "KEGG_CoExpEnrichAnal", 
+                        dataset = dataset, dom.select = "KEGG", 
+                        list.source = "CoExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       
       rea.values[[dataset]]$coExpAnnot <- TRUE
     }
-    
-    #local.rea.values[[dom.select]] <- TRUE
     
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep = ""))
@@ -892,7 +934,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     
   }, ignoreInit = TRUE)
   
-  # ---- run Annotation  ----
+  # ---- run Annotation on custom file ----
   observeEvent(input$runEnrich_CPR_Custom, {
     
     # ---- Checks: ----
@@ -957,13 +999,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     if (input$col_termName != "") annotation2[["name"]] <- annotation[[input$col_termName]]
     annotation2 <- data.frame(annotation2)
     
-    
-    
-    # rea.values[[dataset]]$diffAnnot  <- FALSE
-    # rea.values[[dataset]]$coExpAnnot <- FALSE
-    #local.rea.values[[dom.select]]   <- FALSE
-    
-    
     #---- progress bar ----#
     progress <- shiny::Progress$new()
     progress$set(message = "Run Annot", value = 0)
@@ -979,6 +1014,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       session$userData$FlomicsMultiAssay[[dataset]]@metadata[["DiffExpEnrichAnal"]][[dom.select]] <- NULL
       
       # run annotation
+      runRes <- tryCatch({
       session$userData$FlomicsMultiAssay[[dataset]] <-  
         runAnnotationEnrichment(object = session$userData$FlomicsMultiAssay[[dataset]], 
                                 nameList = input$GeneList.diff_custom,
@@ -988,8 +1024,20 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                 dom.select = dom.select, 
                                 Domain = Domain,
                                 col_domain = col_domain_arg)  
+      },
+      warning = function(war) return(war),
+      error   = function(err) return(err)
+      )
       
-      shiny::callModule(module  = module_runEnrichment, id = "custom_DiffExpEnrichAnal", dataset = dataset, dom.select = dom.select, list.source = "DiffExpEnrichAnal",
+      if (!is(runRes, "SummarizedExperiment")) {
+        showModal(modalDialog(title = paste("Something went wrong: ", runRes$message)))
+      }
+      validate({need(is(runRes, "SummarizedExperiment"), message = paste0("Something went wrong: ", runRes$message))})
+      
+      session$userData$FlomicsMultiAssay[[dataset]] <-  runRes
+      shiny::callModule(module  = module_runEnrichment, id = "custom_DiffExpEnrichAnal", 
+                        dataset = dataset, dom.select = dom.select, 
+                        list.source = "DiffExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       
       rea.values[[dataset]]$diffAnnot <- TRUE
@@ -1006,6 +1054,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       
       session$userData$FlomicsMultiAssay[[dataset]]@metadata[["CoExpEnrichAnal"]][[dom.select]]   <- NULL
       
+      runResCo <- tryCatch({
       session$userData$FlomicsMultiAssay[[dataset]] <-  
         runAnnotationEnrichment(session$userData$FlomicsMultiAssay[[dataset]], 
                                 nameList = input$GeneList.coseq_custom,
@@ -1015,14 +1064,24 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                 dom.select = dom.select, 
                                 Domain = Domain,
                                 col_domain = col_domain_arg) 
+      },
+      warning = function(war) return(war),
+      error   = function(err) return(err)
+      )
       
-      shiny::callModule(module  = module_runEnrichment, id = "custom_CoExpEnrichAnal", dataset = dataset, dom.select = dom.select, list.source = "CoExpEnrichAnal",
+      if (!is(runResCo, "SummarizedExperiment")) {
+        showModal(modalDialog(title = paste("Something went wrong: ", runResCo$message)))
+      }
+      validate({need(is(runResCo, "SummarizedExperiment"), message = paste0("Something went wrong: ", runResCo$message))})
+      
+      session$userData$FlomicsMultiAssay[[dataset]] <-  runResCo
+      shiny::callModule(module  = module_runEnrichment, id = "custom_CoExpEnrichAnal", 
+                        dataset = dataset, dom.select = dom.select,
+                        list.source = "CoExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       
       rea.values[[dataset]]$coExpAnnot <- TRUE
     }
-    
-    #local.rea.values[[dom.select]] <- TRUE
     
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep = ""))
@@ -1034,17 +1093,21 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
 
 ############## functions ###############
 
-# ----- check run diff execution ------
-check_run_ORA_execution <- function(object.SE, db.type = NULL, param.list = NULL){
+# ----- check run enrichement analysis execution ------
+#' @title .checkRunORAExecution
+#' @noRd
+#' @keywords internal
+.checkRunORAExecution <- function(object.SE, db.type = NULL, param.list = NULL){
   
-  if(!is.null(param.list$diffList)){
-    
-    if(is.null(object.SE@metadata[["DiffExpEnrichAnal"]][[db.type]])) return(TRUE)
-    if(isFALSE(dplyr::setequal(names(object.SE@metadata[["DiffExpEnrichAnal"]][[db.type]]$enrichResult), param.list$diffList)) ) return(TRUE)
+
+  if (!is.null(param.list$diffList)) {
+
+    if (is.null(object.SE@metadata[["DiffExpEnrichAnal"]][[db.type]])) return(TRUE)
+    if (isFALSE(dplyr::setequal(names(object.SE@metadata[["DiffExpEnrichAnal"]][[db.type]]$enrichResult), param.list$diffList)) ) return(TRUE)
     
     # check param
-    if(isFALSE(dplyr::setequal(param.list$Domain, object.SE@metadata[["DiffExpEnrichAnal"]][[db.type]]$list_args$Domain))) return(TRUE)
-    if(param.list$pvalueCutoff != object.SE@metadata[["DiffExpEnrichAnal"]][[db.type]]$list_args$pvalueCutoff) return(TRUE)
+    if (isFALSE(dplyr::setequal(param.list$Domain, object.SE@metadata[["DiffExpEnrichAnal"]][[db.type]]$list_args$Domain))) return(TRUE)
+    if (param.list$pvalueCutoff != object.SE@metadata[["DiffExpEnrichAnal"]][[db.type]]$list_args$pvalueCutoff) return(TRUE)
     
     switch (db.type,
             "GO" = {
@@ -1058,23 +1121,23 @@ check_run_ORA_execution <- function(object.SE, db.type = NULL, param.list = NULL
     )
     
   }
-  if(!is.null(param.list$CoexpList)){
+  if (!is.null(param.list$CoexpList)) {
     
-    if(is.null(object.SE@metadata[["CoExpEnrichAnal"]][[db.type]])) return(TRUE)
-    if(isFALSE(dplyr::setequal(names(object.SE@metadata[["CoExpEnrichAnal"]][[db.type]]$enrichResult), param.list$CoexpList)) ) return(TRUE)
+    if (is.null(object.SE@metadata[["CoExpEnrichAnal"]][[db.type]])) return(TRUE)
+    if (isFALSE(dplyr::setequal(names(object.SE@metadata[["CoExpEnrichAnal"]][[db.type]]$enrichResult), param.list$CoexpList)) ) return(TRUE)
     
     # check param
-    if(isFALSE(dplyr::setequal(param.list$Domain, object.SE@metadata[["CoExpEnrichAnal"]][[db.type]]$list_args$Domain))) return(TRUE)
-    if(param.list$pvalueCutoff != object.SE@metadata[["CoExpEnrichAnal"]][[db.type]]$list_args$pvalueCutoff) return(TRUE)
+    if (isFALSE(dplyr::setequal(param.list$Domain, object.SE@metadata[["CoExpEnrichAnal"]][[db.type]]$list_args$Domain))) return(TRUE)
+    if (param.list$pvalueCutoff != object.SE@metadata[["CoExpEnrichAnal"]][[db.type]]$list_args$pvalueCutoff) return(TRUE)
     
     switch (db.type,
             "GO" = {
-              if(param.list$OrgDb        != object.SE@metadata[["CoExpEnrichAnal"]][[db.type]]$list_args$OrgDb)   return(TRUE)
-              if(param.list$keyType      != object.SE@metadata[["CoExpEnrichAnal"]][[db.type]]$list_args$keyType) return(TRUE)
+              if (param.list$OrgDb        != object.SE@metadata[["CoExpEnrichAnal"]][[db.type]]$list_args$OrgDb)   return(TRUE)
+              if (param.list$keyType      != object.SE@metadata[["CoExpEnrichAnal"]][[db.type]]$list_args$keyType) return(TRUE)
             },
             "KEGG" = {
-              if(param.list$keyType      != object.SE@metadata[["CoExpEnrichAnal"]][[db.type]]$list_args$keyType)  return(TRUE)
-              if(param.list$organism     != object.SE@metadata[["CoExpEnrichAnal"]][[db.type]]$list_args$organism) return(TRUE)
+              if (param.list$keyType      != object.SE@metadata[["CoExpEnrichAnal"]][[db.type]]$list_args$keyType)  return(TRUE)
+              if (param.list$organism     != object.SE@metadata[["CoExpEnrichAnal"]][[db.type]]$list_args$organism) return(TRUE)
             }
     )
     
