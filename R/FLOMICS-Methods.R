@@ -2345,6 +2345,98 @@ methods::setMethod(f          = "coseq.profile.plot",
                    })
 
 
+
+#' @title CoseqContrastsPlot
+#' This function describes the composition of clusters according to the contrast to which the gene belongs
+#' @param object An object of class \link{SummarizedExperiment}
+#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @export
+#' @exportMethod CoseqContrastsPlot
+#' @importFrom dplyr filter mutate rename full_join arrange group_by summarise
+#' @noRd
+
+
+methods::setMethod(f = "CoseqContrastsPlot",
+                   signature = "SummarizedExperiment",
+                   definition <-
+                     function(object){
+                    
+                       # Get Selected contrasts for coexpression
+                       H <- getCoexpSetting(object)$gene.list.names
+                       
+                       # Gene's repartition by clusters
+                       coseq.res  <-
+                         object@metadata$CoExpAnal[["coseqResults"]]
+                       genesByclusters <-
+                         as.data.frame(ifelse(coseq.res@assays@data[[1]] > 0.8, 1, 0))
+                       genesByclusters <-  tibble::rownames_to_column(genesByclusters,var="DEF") 
+                       
+                       # Gene's repartition by Contrasts
+                       genesByContrasts <-
+                         object@metadata$DiffExpAnal$mergeDEF |>
+                         dplyr::select("DEF",as.vector(H))
+                       
+                       # Pivot tab.clusters
+                       genesByclusters.piv <- tidyr::pivot_longer(
+                         data = genesByclusters,
+                         cols = 2:(dim(genesByclusters)[2]),
+                         names_to = "C",
+                         values_to = "does.belong") |>
+                         dplyr::filter(does.belong == 1) |>
+                         dplyr::select(-does.belong)
+                       
+                       # Merge the table of Cluster and Contrast
+                       tab <- dplyr::left_join(genesByclusters.piv, as.data.frame(genesByContrasts),by="DEF") |>
+                         dplyr::select(-DEF) |>
+                         dplyr::group_by(C) |>
+                         dplyr::mutate(sum = rowSums(dplyr::across(dplyr::starts_with("H"))))
+                       
+                       # Summarize repartition for specific genes
+                       tab.spe <- dplyr::filter(tab, sum == 1) |>
+                         dplyr::select(-sum) |>
+                         tidyr::pivot_longer(dplyr::starts_with("H"), names_to = "H") |>
+                         dplyr::filter(value == 1) |> 
+                         dplyr::group_by(C, H) |>
+                         dplyr::count()
+                       
+                       # Summarize repartition for genes common to at least 2 contrasts
+                       tab.com <- dplyr::filter(tab, sum > 1) |>
+                         dplyr::select(-sum) |>
+                         tidyr::pivot_longer(dplyr::starts_with("H"), names_to = "H") |>
+                         dplyr::filter(value == 1) |> 
+                         dplyr::group_by(C, H) |> 
+                         dplyr::count() |> dplyr::ungroup() |>
+                         dplyr::mutate(H= "common") |> dplyr::distinct()
+                         
+                       # Bind table and add prop
+                       tab <- rbind(tab.com,tab.spe) |> group_by(C) |> mutate(prop=(n/sum(n))*100)
+                      
+                       p <- ggplot2::ggplot(tab, ggplot2::aes(x = C, y = prop, fill = H)) + 
+                         ggplot2::geom_bar(stat ="identity") +
+                         ggplot2::coord_flip() +
+                         ggplot2::labs(x="",y=paste0("Proportion of", RFLOMICS:::omicsDic(object)$variableNamegenes)) +
+                         ggplot2::scale_fill_discrete(name="",
+                                             breaks=c("common", as.vector(H)),
+                                             labels=c("commons to at least 2 contrasts", 
+                                                      paste0("specifics to ",names(H)))) +
+                         ggplot2::theme(legend.position="bottom",legend.direction = "vertical")
+                       
+                       return(p)
+                     })
+
+#' @rdname CoseqContrastsPlot
+#' @title CoseqContrastsPlot
+#' @exportMethod CoseqContrastsPlot
+methods::setMethod(f          = "CoseqContrastsPlot",
+                   signature  = "MultiAssayExperiment",
+                   definition = function(object){
+                     
+                     CoseqContrastsPlot(object = object[[SE.name]])
+                     
+                   })
+
+
+
 ##### RESETTING ####
 
 #' resetFlomicsMultiAssay

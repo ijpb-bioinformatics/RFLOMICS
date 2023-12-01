@@ -120,6 +120,10 @@ methods::setGeneric(
   def  = function(object, ... ){standardGeneric("CoExpressionPlots")}
 )
 
+methods::setGeneric(
+  name = "CoseqContrastsPlot",
+  def  = function(object, ... ){standardGeneric("CoseqContrastsPlot")}
+)
 
 # ---- Diff Plots ----
 

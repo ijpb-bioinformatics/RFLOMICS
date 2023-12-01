@@ -133,11 +133,10 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
           fluidRow(
             
             column(12,
-                   selectInput(session$ns("scale"),
-                               label    = popify(actionLink("infoScale",paste0("Scale by ", name , ": (help)")),
+                   selectInput(inputId = session$ns("scale"),
+                               label    = shinyBS::popify(shiny::actionLink("infoScale",paste0("Scale by ", name , ": (help)")),
                                                  "",
-                                                 "By default for proteomics or metabolomics data,coseq is done onto Z-scores (data scaled by proteins or metabolites)
-                                                 to group them according to their expression profile rather than abundance",
+                                                 "By default for proteomics or metabolomics data,coseq is done onto Z-scores (data scaled by proteins or metabolites) to group them according to their expression profile rather than abundance",
                                                  options=list(container="body")),
                                choices  = Scale ,
                                selected = Scale[1])
@@ -163,9 +162,9 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
           
           fluidRow(
             column(12,
-                   selectInput(session$ns("GaussianModel"),
+                   selectInput(inputId = session$ns("GaussianModel"),
                                
-                               label    = popify(actionLink("infoGaussianModel", paste0("Gaussian Model:", warning,"")),"",
+                               label    = shinyBS::popify(shiny::actionLink("infoGaussianModel", paste0("Gaussian Model:", warning,"")),"",
                                                  "For proteomics or metabolomics data, coseq analysis may fail with default GaussianModel parameter. 
                                                  In this case, an error message will indicate to switch the other option: Gaussian_pk_Lk_Bk",
                                                  options=list(container="body")),
@@ -337,22 +336,6 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     cluster.comp   <- dataset.SE@metadata$CoExpAnal[["clusters"]]
     topDEF         <- dataset.SE@metadata$DiffExpAnal$mergeDEF
     
-    # For each id, get its cluster
-    tab.clusters <- as.data.frame(ifelse(coseq.res@allResults[[names(nb_cluster)]] > 0.5, 1,0))
-    tab.clusters <-  tibble::rownames_to_column(tab.clusters,var="DEF")
-    Cluster.tab <- tidyr::pivot_longer(data=tab.clusters,cols=2:(dim(tab.clusters)[2]),names_to="C",values_to="does.belong")
-    
-    # For each id, get its FC for all Contrasts
-    tmp <- lapply(1:length(dataset.SE@metadata$DiffExpAnal$TopDEF),function(x){
-      tmp <- dataset.SE@metadata$DiffExpAnal$TopDEF[x]
-      df  <- data.frame("id"=row.names(tmp[[1]]), "logFC"=tmp[[1]]$logFC)
-      names(df)=c("id",paste0("logFC.",filter(dataset.SE@metadata$DiffExpAnal$Validcontrasts,
-                                              contrastName== names(tmp))$tag))
-      return(df)
-    })
-    FC.tmp <- tmp %>% purrr::reduce(full_join, by='id')
-    FC.tmp.mat <- as.matrix(FC.tmp[,-1])
-    dimnames(FC.tmp.mat)[[1]] <- FC.tmp$id
     
     box(title = paste0("Number of clusters: ", nb_cluster), status = "warning", solidHeader = TRUE, width = 14,
         
@@ -385,21 +368,19 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                            column(9, 
                                   renderPlot({ 
                                     coseq.profile.plot(dataset.SE, input$selectCluster, condition=input$profile.condition, observation=input$observations) }))
-                         ),
-                         hr(),
+                         )),
+                tabPanel("cluster composition",
                          fluidRow(
-                           renderText("blabla"),
+                           renderText(paste0("Cluster's composition according to ",RFLOMICS:::omicsDic(dataset.SE)$variableName,"'s contrasts appartenance")),
                            renderPlot({ 
-                             
                              tag <- session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["Validcontrasts"]]$tag
                              
-                             
                              if(length(tag) > 1){
-                               UpSetR::upset(topDEF, sets = tag, order.by = "freq") 
+                               #UpSetR::upset(topDEF, sets = tag, order.by = "freq") 
+                               CoseqContrastsPlot(dataset.SE)
                              }
                            })
-                         )
-                )
+                         ))
         )
     )
   })
