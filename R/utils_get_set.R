@@ -190,9 +190,9 @@ getPossibleContrasts <- function(object, typeContrast = c("simple", "averaged", 
 #'
 getSelectedContrasts <- function(object) {
   # TODO check if it exists...
-  # if (is(object, "MultiAssayExperiment")) {
-  #   object@metadata$design@Contrasts.Sel
-  # } else 
+  if (is(object, "MultiAssayExperiment")) {
+    object@metadata$design@Contrasts.Sel
+  } else
     if (is(object, "SummarizedExperiment")) {
     object@metadata$DiffExpAnal$contrasts
   } else {
@@ -273,19 +273,21 @@ getDEMatrix <- function(object) {
 }
 
 #' @param contrast character name (can be a vector of name) for the contrast to select.
+#' @param union Booleen value. TRUE : union; FALSE : intersection
 #' @export
 #' @importFrom tidyselect any_of
 #' @importFrom dplyr select
 #' @rdname getDE
-getDE <- function(object, contrast) {
+getDE <- function(object, contrast, union = TRUE) {
   
   if (isContrastName(object, contrast)) contrast <- convertContrastToTag(object, contrast)
   
   DEmat <- getDEMatrix(object)
   DEmat <- DEmat %>% dplyr::select(tidyselect::any_of(c("DEF", contrast)))
-  DEmat <- DEmat[rowSums(DEmat[,-1]) >= 1,]
-  return(DEmat)
   
+  if(union) return(DEmat[rowSums(DEmat[,-1]) >= 1,])
+  
+  return(DEmat[rowSums(DEmat[,-1]) >= length(contrast),])
 }
 
 # ---- Get union or intersection from list of contrasts ----
@@ -459,7 +461,7 @@ getTransSetting <- function(object) {
 
 # ---- Get diff setting ----
 
-#' @title Get differential analysis setting parametres
+#' @title Get differential analysis setting parameters
 #'
 #' @param object a SE object (produced by Flomics).
 #' @return List of differential analysis setting parametres.
@@ -474,7 +476,7 @@ getDiffSetting <- function(object) {
 
 # ---- Get coseq setting ----
 
-#' @title Get co-expression analysis setting parametres
+#' @title Get co-expression analysis setting parameters
 #'
 #' @param object a SE object (produced by Flomics).
 #' @return List of co-expression analysis setting parametres.
@@ -486,6 +488,31 @@ getCoexpSetting <- function(object) {
   return(object@metadata$CoExpAnal$setting)
 }
 
+# ---- Get integration setting ----
+
+#' @title Get MOFA analysis setting parameters
+#'
+#' @param object a MultiAssayExperiment object (produced by Flomics).
+#' @return List of differential analysis setting parameters
+#' @export
+#'
+getMOFASetting <- function(object) {
+  if (!is(object, "MultiAssayExperiment")) stop("Object is not a MultiAssayExperiment")
+  
+  return(object@metadata$IntegrationAnalysis$MOFA$setting)
+}
+
+#' @title Get mixOmics analysis setting parameters
+#'
+#' @param object a MultiAssayExperiment object (produced by Flomics).
+#' @return List of differential analysis setting parameters
+#' @export
+#'
+getMixOmicsSetting <- function(object) {
+  if (!is(object, "MultiAssayExperiment")) stop("Object is not a MultiAssayExperiment")
+  
+  return(object@metadata$IntegrationAnalysis$mixOmics$setting)
+}
 
 # ----  Get a particular multi-omics result ----
 #
@@ -504,7 +531,7 @@ getMixOmics <- function(object,
                         response = NULL,
                         onlyResults = TRUE){
   
-  toreturn <- metadata(object)[["mixOmics"]]
+  toreturn <- metadata(object)[["IntegrationAnalysis"]][["mixOmics"]]
   
   if (is.null(toreturn)) {
     return(toreturn)
@@ -524,7 +551,7 @@ getMixOmics <- function(object,
 #' @export
 getMOFA <- function(object, onlyResults = TRUE){
   
-  toreturn <- metadata(object)[["MOFA"]]
+  toreturn <- metadata(object)[["IntegrationAnalysis"]][["MOFA"]]
   
   if (onlyResults && !is.null(toreturn)) toreturn <- toreturn[["MOFA_results"]]
   

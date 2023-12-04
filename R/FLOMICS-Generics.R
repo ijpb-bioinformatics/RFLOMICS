@@ -244,6 +244,11 @@ methods::setGeneric(
                   method = c("MOFA", "MixOmics"), ... ){standardGeneric("prepareForIntegration")}
 )
 
+
+methods::setGeneric(
+  name = "runIntegration",
+  def  = function(object, ... ){standardGeneric("runIntegration")}
+)
 # ---- RESET ----
 
 methods::setGeneric(

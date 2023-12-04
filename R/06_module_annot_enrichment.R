@@ -1026,7 +1026,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
 # ----- check run diff execution ------
 check_run_ORA_execution <- function(object.SE, db.type = NULL, param.list = NULL){
   
-  
   if(!is.null(param.list$diffList)){
     
     if(is.null(object.SE@metadata[["DiffExpEnrichAnal"]][[db.type]])) return(TRUE)

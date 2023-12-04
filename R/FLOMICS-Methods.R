@@ -2465,21 +2465,33 @@ methods::setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
                        }
                      }
                      
-                     for(data in datasets){
+                     for(res in results){
                        
-                       if(!is.null(object[[data]])){
-                         
-                         dataset <- object[[data]]
-                         
-                         for(res in results){
-                           if(!is.null(dataset@metadata[[res]])){ dataset@metadata[[res]] <- NULL }
+                       for(data in datasets){
+                         if(!is.null(object[[data]])){
+                           
+                           if(!is.null(object[[data]]@metadata[[res]])){ object[[data]]@metadata[[res]] <- NULL }
                          }
-                         
-                         object[[data]] <- dataset
                        }
                        
+                       object@metadata[[res]] <- NULL
                      }
                      
+                     
+                     # for(data in datasets){
+                     #   
+                     #   if(!is.null(object[[data]])){
+                     #     
+                     #     dataset <- object[[data]]
+                     #     
+                     #     for(res in results){
+                     #       if(!is.null(dataset@metadata[[res]])){ dataset@metadata[[res]] <- NULL }
+                     #     }
+                     #     
+                     #     object[[data]] <- dataset
+                     #   }
+                     #   
+                     # }
                      return(object)
                    })
 

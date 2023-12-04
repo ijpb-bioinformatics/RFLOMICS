@@ -2,7 +2,7 @@
 #' @importFrom MOFA2 views_names get_factors plot_factor get_weights 
 #' plot_weights plot_variance_explained plot_factor_cor
 #' plot_data_overview plot_data_heatmap get_dimensions
- 
+
 # ---- remove batch effects from omics : ----
 
 #' @title rbe_function
@@ -17,9 +17,9 @@
 #'
 rbe_function = function(object, SEobject, cmd = FALSE){
   
-  assayTransform <- assay(SEobject)
-  ftypes <- getFactorTypes(object)
-  colBatch <- names(ftypes)[ftypes == "batch"]
+  assayTransform <- SummarizedExperiment::assay(SEobject)
+  colBatch <- batchFactors(SEobject)
+  #colBatch <- names(ftypes)[ftypes == "batch"]
   
   if (cmd) {
     print(paste0("#     =>Correction for Batch: ", 
@@ -27,24 +27,25 @@ rbe_function = function(object, SEobject, cmd = FALSE){
                  " in ", SEobject@metadata$omicType))
   }
   
-  newFormula <- gsub(pattern = paste(paste(colBatch, "[+]"),  collapse = "|"), "", getModelFormula(object))
+  newFormula <- gsub(pattern = paste(paste(colBatch, "[+]"),  collapse = "|"), "", getModelFormula(SEobject))
   newFormula <- gsub(pattern = "~ [+] ", "~ ", newFormula) # use ?
-  designToPreserve <- model.matrix(as.formula(newFormula), data = SEobject@metadata$Groups)
+  colData <- getDesignMat(SEobject)
+  designToPreserve <- model.matrix(as.formula(newFormula), data = colData)
   
   if (length(colBatch) == 1) {
-    rbeRes <- removeBatchEffect(assayTransform, batch = SEobject@metadata$Groups[,colBatch], design = designToPreserve)
+    rbeRes <- limma::removeBatchEffect(assayTransform, batch = colData[,colBatch], design = designToPreserve)
   }else if (length(colBatch) >= 2) {
     
-    rbeRes <- removeBatchEffect(assayTransform,
-                                batch  = SEobject@metadata$Groups[,colBatch[1]],
-                                batch2 = SEobject@metadata$Groups[,colBatch[2]],
-                                design = designToPreserve)
+    rbeRes <- limma::removeBatchEffect( assayTransform,
+                                        batch  = colData[,colBatch[1]],
+                                        batch2 = colData[,colBatch[2]],
+                                        design = designToPreserve)
   }
   if (length(colBatch) > 2) print("sorry, only 2 batches effect for now!") 
   
   SEobject@metadata[["correction_batch_method"]] <- "limma (removeBatchEffect)"
   
-  assay(SEobject) <- rbeRes
+  SummarizedExperiment::assay(SEobject) <- rbeRes
   
   return(SEobject)
 }
@@ -57,6 +58,7 @@ rbe_function = function(object, SEobject, cmd = FALSE){
 #' @param SEname the name of the rnaseq data to transform. Supposed to be a SummarizedExperiment.
 #' @param correctBatch if TRUE, correction of batch effects. 
 #' @param transformation the name of the transformation to be applied on counts. Default is limma voom. 
+#' @param variableLists vector of variable names
 #' No other option for now. 
 #' @return An object of class \link{MultiAssayExperiment}
 #' @importFrom stats model.matrix formula
@@ -71,9 +73,7 @@ rnaseqRBETransform <- function(object,
                                SEname, 
                                correctBatch = FALSE, 
                                transformation = "limma (voom)",
-                               contrasts_names = NULL,
-                               type = "union",
-                               choice = "DE",
+                               variableNames = NULL,
                                cmd = FALSE
 ){
   
@@ -84,33 +84,29 @@ rnaseqRBETransform <- function(object,
   if (!is(object, "MultiAssayExperiment")) stop("object is not a MultiAssyExperiment")
   
   rnaDat <- object[[SEname]] 
-  assayTransform <- assay(rnaDat)
+  assayTransform <- SummarizedExperiment::assay(rnaDat)
   
   if (!is.integer(assayTransform) && !identical(assayTransform, floor(assayTransform))) {
     message("You indicated RNASeq data for ", SEname, "but it is not recognized as count data") 
     print(assayTransform[1:3, 1:3])
   }
   
-  DMat      <- getDesignMat(object)
+  DMat      <- getDesignMat(rnaDat)
   coefNorm  <- getCoeffNorm(rnaDat)
-  designMat <- model.matrix(formula(getModelFormula(object)), data = DMat)
+  designMat <- model.matrix(formula(getModelFormula(rnaDat)), data = DMat)
   
-  DGEObject <- DGEList(
+  DGEObject <- edgeR::DGEList(
     counts       = assayTransform,
     norm.factors = coefNorm$norm.factors,
     lib.size     = coefNorm$lib.size,
-    samples      = DMat %>% 
-      filter(row.names(DMat) %in% colnames(assayTransform))
-  )
+    samples      = DMat)
   
-  limmaRes <- voom(DGEObject,
-                   design = designMat[which(rownames(designMat) %in% colnames(assayTransform)),]) 
+  limmaRes <- limma::voom(DGEObject, design = designMat) 
   
-  assay(rnaDat) <- limmaRes$E
+  SummarizedExperiment::assay(rnaDat) <- limmaRes$E
   
-  if (correctBatch)    rnaDat <- rbe_function(object, rnaDat)
-  
-  if (choice == "DE")  rnaDat <- rnaDat[opDEList(rnaDat, contrasts = contrasts_names, operation = type),]
+  if (correctBatch) rnaDat <- rbe_function(object, rnaDat)
+  rnaDat <- rnaDat[variableNames,]
   
   rnaDat@metadata[["correction_batch"]]             <- correctBatch
   rnaDat@metadata[["transform_results_all"]]        <- limmaRes 
@@ -137,18 +133,18 @@ rnaseqRBETransform <- function(object,
 RBETransform <- function(object,
                          SEname,
                          correctBatch = TRUE,
-                         contrasts_names = NULL,
+                         variableNames = NULL,
                          type = "union",
                          choice = "DE",
                          cmd = FALSE){
   
   omicsDat <- object[[SEname]]
   omicsDat@metadata[["correction_batch"]]             <- correctBatch
-  omicsDat@metadata[["transform_method_integration"]] <- omicsDat@metadata$transform_method
+  omicsDat@metadata[["transform_method_integration"]] <- getTransSetting(omicsDat)$method
   
-  if (correctBatch)    omicsDat <- rbe_function(object, omicsDat)
-  if (choice == "DE")  omicsDat <- omicsDat[opDEList(omicsDat, contrasts = contrasts_names, operation = type),]
-
+  if (correctBatch) omicsDat <- rbe_function(object, omicsDat)
+  omicsDat <- omicsDat[variableNames,]
+  
   object[[SEname]] <- omicsDat
   
   return(object)
@@ -169,10 +165,10 @@ RBETransform <- function(object,
 plot_MO_varExp <- function(object, selectedResponse, mode = NULL){
   
   if (class(object) != "MultiAssayExperiment") stop("Object is not a MultiAssayExperiment.")
-  if (is.null(object@metadata$mixOmics)) stop("It seems this object has no mixOmics results.")
-  if (is.null(object@metadata$mixOmics[[selectedResponse]])) stop("It seems you didn't run MixOmics on this particular variable.")
+  if (is.null(object@metadata$IntegrationAnalysis$mixOmics)) stop("It seems this object has no mixOmics results.")
+  if (is.null(object@metadata$IntegrationAnalysis$mixOmics[[selectedResponse]])) stop("It seems you didn't run MixOmics on this particular variable.")
   
-  Data_res <- object@metadata$mixOmics[[selectedResponse]]$MixOmics_results
+  Data_res <- object@metadata$IntegrationAnalysis$mixOmics[[selectedResponse]]$MixOmics_results
   gg_return <- NULL
   
   if (is.null(mode)) {
@@ -407,9 +403,9 @@ runMOFAAnalysis <- function(object,
     stop("object has to be a MOFA results")
   }
   
-  data_opts  <- get_default_data_options(object)
-  model_opts <- get_default_model_options(object)
-  train_opts <- get_default_training_options(object)
+  data_opts  <- MOFA2::get_default_data_options(object)
+  model_opts <- MOFA2::get_default_model_options(object)
+  train_opts <- MOFA2::get_default_training_options(object)
   
   data_opts$scale_views  <- scale_views
   train_opts$maxiter     <- maxiter
@@ -487,7 +483,7 @@ runMixOmicsAnalysis <- function(object,
                                 sparsity = FALSE,
                                 cases_to_try = 5,
                                 ...) {
-
+  
   list_res <- list()
   dis_anal <- FALSE # is this a discriminant analysis
   
@@ -587,5 +583,4 @@ runMixOmicsAnalysis <- function(object,
   
   return(list_res)
 }
-
 

@@ -281,10 +281,11 @@ LoadOmicsData <- function(input, output, session, rea.values){
     rea.values$loadData <- FALSE
     rea.values$model    <- FALSE
     rea.values$analysis <- FALSE
-    rea.values$Contrasts.Sel <- NULL
-    rea.values$datasetList   <- NULL
-    rea.values$datasetDiff   <- NULL
-    rea.values$Contrasts.Sel <- NULL
+    rea.values$Contrasts.Sel  <- NULL
+    rea.values$datasetList    <- NULL
+    rea.values$datasetDiff    <- NULL
+    rea.values$datasetProcess <- NULL
+    rea.values$Contrasts.Sel  <- NULL
     
     session$userData$FlomicsMultiAssay <- NULL
     
@@ -334,10 +335,11 @@ LoadOmicsData <- function(input, output, session, rea.values){
     rea.values$loadData <- FALSE
     rea.values$model    <- FALSE
     rea.values$analysis <- FALSE
-    rea.values$Contrasts.Sel <- NULL
-    rea.values$datasetList   <- NULL
-    rea.values$datasetDiff   <- NULL
-    rea.values$Contrasts.Sel <- NULL
+    rea.values$Contrasts.Sel  <- NULL
+    rea.values$datasetList    <- NULL
+    rea.values$datasetDiff    <- NULL
+    rea.values$datasetProcess <- NULL
+    rea.values$Contrasts.Sel  <- NULL
     
     session$userData$FlomicsMultiAssay <- NULL
     

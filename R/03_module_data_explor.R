@@ -349,7 +349,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       showModal(modalDialog(title = "Error message", local.rea.values$message))
     }
     validate({ need(is.null(local.rea.values$message), message=local.rea.values$message) })
-    
 
     # get parameters 
     switch( getOmicsTypes(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]]),
@@ -380,9 +379,13 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     if (dataset %in% rea.values$datasetDiff){
       rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
     }
+    if (dataset %in% rea.values$datasetProcess){
+      rea.values$datasetProcess <- rea.values$datasetProcess[-which(rea.values$datasetProcess == dataset)]
+    }
     
-    toto <<- session$userData$FlomicsMultiAssay
-    
+    # remove integration analysis
+    session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(session$userData$FlomicsMultiAssay, results = c("IntegrationAnalysis"))
+
     print(paste0("# 3  => Data processing: ", dataset))
     session$userData$FlomicsMultiAssay <- 
       runDataProcessing(object = session$userData$FlomicsMultiAssay, SE.name = dataset, samples = input$selectSamples,  
@@ -391,8 +394,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     
     rea.values[[dataset]]$process <- TRUE
     
-    toto <<- session$userData$FlomicsMultiAssay
-    
+    rea.values$datasetProcess <- unique(c(rea.values$datasetProcess , dataset))
     
   }, ignoreInit = TRUE)
   

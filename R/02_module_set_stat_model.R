@@ -54,13 +54,14 @@ GLM_model <- function(input, output, session, rea.values){
     # => The model formulae is set and the interface to select the contrasts appear
     observeEvent(input$validModelFormula, {
 
-      rea.values$model         <- FALSE
-      rea.values$analysis      <- FALSE
-      rea.values$Contrasts.Sel <- NULL
-      rea.values$datasetDiff   <- NULL
-
+      rea.values$model          <- FALSE
+      rea.values$analysis       <- FALSE
+      rea.values$Contrasts.Sel  <- NULL
+      rea.values$datasetDiff    <- NULL
+      rea.values$datasetProcess <- NULL
+      
       session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(object=session$userData$FlomicsMultiAssay, 
-                                                                   results = c("DiffExpAnal", "CoExpAnal", "DiffExpEnrichAnal", "CoExpEnrichAnal"))
+                                                                   results = c("DiffExpAnal", "CoExpAnal", "DiffExpEnrichAnal", "CoExpEnrichAnal", "IntegrationAnalysis"))
       print("# 2- statistical setting...")
       print(paste0("#    => Choice of model: ", input$model.formulae))
 
@@ -117,6 +118,7 @@ GLM_model <- function(input, output, session, rea.values){
 
       rea.values$analysis    <- FALSE
       rea.values$datasetDiff <- NULL
+      rea.values$datasetProcess <- NULL
      
       # reset analysis
       lapply(unlist(rea.values$datasetList), function(dataset){
@@ -126,11 +128,12 @@ GLM_model <- function(input, output, session, rea.values){
         rea.values[[dataset]]$diffAnnot <- FALSE
         rea.values[[dataset]]$diffValid <- FALSE
       })
+      
 
       #unlist(session$userData$FlomicsMultiAssay@metadata$omicList)
       
       session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(object  = session$userData$FlomicsMultiAssay, 
-                                                                   results = c("DiffExpAnal", "CoExpAnal", "DiffExpEnrichAnal", "CoExpEnrichAnal"))
+                                                                   results = c("DiffExpAnal", "CoExpAnal", "DiffExpEnrichAnal", "CoExpEnrichAnal", "IntegrationAnalysis"))
 
       #get list of selected contrast data frames with expression, name and type
       
@@ -156,7 +159,7 @@ GLM_model <- function(input, output, session, rea.values){
       # # define all the coefficients of selected contrasts and return a contrast matrix with contrast sample name and associated coefficients
       # session$userData$FlomicsMultiAssay <- getContrastMatrix(object = session$userData$FlomicsMultiAssay, contrastList = contrast.sel.vec)
 
-      
+      session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel <- contrast.sel.vec
       rea.values$Contrasts.Sel <- contrast.sel.vec
       
       rea.values$analysis <- TRUE

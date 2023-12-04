@@ -24,6 +24,7 @@ Suggests:
     BiocStyle
 VignetteBuilder: knitr
 Imports:
+    statmod,
     vroom,
     AnnotationDbi,
     BiocParallel,
@@ -67,7 +68,6 @@ Imports:
     shinyWidgets,
     stats,
     stringr,
-    statmod,
     SummarizedExperiment,
     tibble,
     tidyr,
