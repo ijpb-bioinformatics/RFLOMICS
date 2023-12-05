@@ -232,7 +232,7 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
       showModal(modalDialog(title = "ERROR : ", "Please select at least 1 table."))
     }
     validate({ 
-      need(length(input$selectData) >= 2, "Please select at least 1 table.") 
+      need(length(input$selectData) >= 1, "Please select at least 1 table.") 
     })
     
     local.rea.values$runintegration <- FALSE
@@ -250,7 +250,6 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
       dplyr::mutate(sum = rowSums(dplyr::across(2:(length(MAE.red)+1)), na.rm = T))
     
     # if no common samples or no 100% overlapping
-    # 2- if no 100% overlapping : length(unique(samples.mat$sum)) != 1
     if(length(unique(samples.mat$sum)) != 1){
       
       if(!any(unique(samples.mat$sum) != length(MAE.red))){
@@ -260,7 +259,7 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
         need(any(unique(samples.mat$sum) != length(MAE.red)), "") 
       })
       
-      if(method == "mixOmics") 
+      if(method == "mixOmics")
         showModal(modalDialog(title = "WARNING : ", "mixOmics recommends using the same samples across all tables. These samples will be removed from the other tables."))
     }
     else if(unique(samples.mat$sum) != length(MAE.red)){
@@ -273,7 +272,7 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
     }
     
     # MOFA : nb sample should be higher then 15
-    if(length(unique(samples.mat$samples)) < 15) 
+    if(method == "MOFA" && length(unique(samples.mat$samples)) < 15) 
       showModal(modalDialog(title = "WARNING : ", "MOFA recommand the use of more of 15 samples."))
     
     # creat list with variations to keep per table
@@ -487,8 +486,6 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
   output$resultsUI <- renderUI({
     
     if (isFALSE(local.rea.values$runintegration)) return()
-    
-    print(getMixOmicsSetting(session$userData$FlomicsMultiAssay))
     
     setting <- getMixOmicsSetting(session$userData$FlomicsMultiAssay)
     
