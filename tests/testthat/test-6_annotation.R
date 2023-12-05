@@ -62,11 +62,11 @@ test_that("it's running from diffExpAnal - GO - RNASeq", {
   
   # Selecting only one contrast
   expect_no_error({
-   MAE <- runAnnotationEnrichment(MAE, nameList = "H1", SE.name = "RNAtest", dom.select = "GO",
-                                     list_args = list(OrgDb = "org.At.tair.db", 
-                                                      keyType = "TAIR", 
-                                                      pvalueCutoff = 0.05),
-                                     Domain = c("BP", "MF", "CC"))
+    MAE <- runAnnotationEnrichment(MAE, nameList = "H1", SE.name = "RNAtest", dom.select = "GO",
+                                   list_args = list(OrgDb = "org.At.tair.db", 
+                                                    keyType = "TAIR", 
+                                                    pvalueCutoff = 0.05),
+                                   Domain = c("BP", "MF", "CC"))
   })
   
   expect({
@@ -77,11 +77,11 @@ test_that("it's running from diffExpAnal - GO - RNASeq", {
   # All contrasts
   expect_no_error({
     MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", dom.select = "GO",
-                                     list_args = list(OrgDb = "org.At.tair.db", 
-                                                      keyType = "TAIR", 
-                                                      pvalueCutoff = 0.05),
-                                     Domain = c("BP", "MF", "CC"))
-                  
+                                   list_args = list(OrgDb = "org.At.tair.db", 
+                                                    keyType = "TAIR", 
+                                                    pvalueCutoff = 0.05),
+                                   Domain = c("BP", "MF", "CC"))
+    
   })
   
   expect({
@@ -89,7 +89,7 @@ test_that("it's running from diffExpAnal - GO - RNASeq", {
     nrow(obj@result) > 0
   }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
   
-
+  
   
 })
 
@@ -98,24 +98,24 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
   df_custom <- vroom::vroom(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/GO_annotations/Arabidopsis_thaliana_Ensembl_55.txt"))
   
   MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", dom.select = "custom",
-                                     list_args = list(pvalueCutoff = 0.05),
-                                     col_term = "GO term accession", 
-                                     col_gene = "Gene stable ID",
-                                     col_name = "GO term name",
-                                     col_domain = "GO domain",
-                                     annot = df_custom)
+                                 list_args = list(pvalueCutoff = 0.05),
+                                 col_term = "GO term accession", 
+                                 col_gene = "Gene stable ID",
+                                 col_name = "GO term name",
+                                 col_domain = "GO domain",
+                                 annot = df_custom)
   
   expect(!is.null(MAE[["RNAtest"]]@metadata$DiffExpEnrichAnal$custom$summary), failure_message = "Custom RNAseq didn't work (summary not present)")
   
   # Selecting only one contrast, custom file
   expect_no_error({
     MAE <- runAnnotationEnrichment(MAE, nameList = "H1", SE.name = "RNAtest", dom.select = "custom",
-                                       list_args = list(pvalueCutoff = 0.05),
-                                       col_term = "GO term accession", 
-                                       col_gene = "Gene stable ID",
-                                       col_name = "GO term name",
-                                       col_domain = "GO domain",
-                                       annot = df_custom)
+                                   list_args = list(pvalueCutoff = 0.05),
+                                   col_term = "GO term accession", 
+                                   col_gene = "Gene stable ID",
+                                   col_name = "GO term name",
+                                   col_domain = "GO domain",
+                                   annot = df_custom)
   })
   
   expect({
@@ -127,10 +127,10 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
   # All contrasts, GO database
   expect_no_error({
     MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", dom.select = "GO",
-                                       list_args = list(OrgDb = "org.At.tair.db", 
-                                                        keyType = "TAIR", 
-                                                        pvalueCutoff = 0.05),
-                                       Domain = c("BP", "MF", "CC"))
+                                   list_args = list(OrgDb = "org.At.tair.db", 
+                                                    keyType = "TAIR", 
+                                                    pvalueCutoff = 0.05),
+                                   Domain = c("BP", "MF", "CC"))
     
   })
   
@@ -150,10 +150,10 @@ test_that("it's running from CoExpAnal - GO - RNASeq", {
   
   expect_no_error({
     MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", from = "CoExpAnal", dom.select = "GO",
-                                       list_args = list(OrgDb = "org.At.tair.db", 
-                                                        keyType = "TAIR", 
-                                                        pvalueCutoff = 0.05),
-                                       Domain = c("BP", "MF", "CC"))
+                                   list_args = list(OrgDb = "org.At.tair.db", 
+                                                    keyType = "TAIR", 
+                                                    pvalueCutoff = 0.05),
+                                   Domain = c("BP", "MF", "CC"))
     
   })
   
@@ -162,15 +162,15 @@ test_that("it's running from CoExpAnal - GO - RNASeq", {
     obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "cluster.1", ont = "GO", domain = "BP", from = "CoExpAnal")
     nrow(obj@result) > 0
   }, failure_message = "(GO RNAseq from CoExp) - There is no result in the enrichment metadata part.")
-
+  
   
   expect_no_error({
     MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", nameList = c("cluster.1", "cluster.2") ,
-                                       from = "CoExpAnal", dom.select = "GO",
-                                       list_args = list(OrgDb = "org.At.tair.db", 
-                                                        keyType = "TAIR", 
-                                                        pvalueCutoff = 0.05),
-                                       Domain = c("BP", "MF", "CC"))
+                                   from = "CoExpAnal", dom.select = "GO",
+                                   list_args = list(OrgDb = "org.At.tair.db", 
+                                                    keyType = "TAIR", 
+                                                    pvalueCutoff = 0.05),
+                                   Domain = c("BP", "MF", "CC"))
     
   })
   
@@ -182,65 +182,28 @@ test_that("it's running from CoExpAnal - GO - RNASeq", {
 })
 
 
+# ------- TRASH DELETE THESE ! -----------
 
-plotCPR(MAE[["RNAtest"]], 
-        contrast = "(temperatureElevated - temperatureLow) in imbibitionDS",
-        ont = "GO",  
-        Domain = "BP", 
-        type = "cnetplot", searchExpr = "bou")
+# save(MAE, file = "tetAnnot_MAE.RData")
+load("tetAnnot_MAE.RData")
 
-.doNotPlot(plotCPR(MAE[["RNAtest"]], 
-                   contrast = "(temperatureElevated - temperatureLow) in imbibitionDS",
-                   ont = "GO",  
-                   Domain = "BP", 
-                   type = "cnetplot", searchExpr = "bou"))
-
-plotCPR(MAE[["RNAtest"]], 
-        contrast = "(temperatureElevated - temperatureLow) in imbibitionDS",
-        ont = "GO",  
-        Domain = "BP", 
-        type = "cnetplot", searchExpr = "bou")
+MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", nameList = c("H1") ,
+                               from = "DiffExp", dom.select = "KEGG",
+                               list_args = list(organism = "ath", 
+                                                keyType = "kegg", 
+                                                pvalueCutoff = 1))
 
 
-outheat <- tryCatch(plotCPR(MAE[["RNAtest"]], 
-                            contrast = "(temperatureElevated - temperatureLow) in imbibitionDS",
-                            ont = "GO",  
-                            Domain = "BP", 
-                            type = "heatplot"),
-                    error = function(e) e,
-                    warnings = function(w) w)
+sumORA(MAE[["RNAtest"]])
+KEGGRes <- getEnrichRes(MAE[["RNAtest"]], contrast = c("H1"), from = "DiffExp", ont = "KEGG")
+KEGGRes$`no-domain`@result$ID
 
-outheat
-class(outheat)
+plotCPRKEGG(MAE[["RNAtest"]], contrast = c("H1"), pathway_id = "ath00500")
+plotCPRKEGG(MAE[["RNAtest"]], contrast = c("H1"), pathway_id = "ath00")
 
-outdot <- tryCatch(plotCPR(MAE[["RNAtest"]], 
-                            contrast = "(temperatureElevated - temperatureLow) in imbibitionDS",
-                            ont = "GO",  
-                            Domain = "BP", 
-                            type = "dotplot"),
-                    error = function(e) e,
-                    warnings = function(w) w)
+out1 <- tryCatch(plotCPRKEGG(MAE[["RNAtest"]], contrast = c("H1"), pathway_id = "ath00"), 
+                 error = function(err) err, 
+                 warning = function(warn) warn
+)
 
-outdot
-class(outdot)
-
-is(outdot, "gg")
-
-outcnet <- tryCatch(plotCPR(MAE[["RNAtest"]], 
-                 contrast = "(temperatureElevated - temperatureLow) in imbibitionDS",
-                 ont = "GO",  
-                 Domain = "BP", 
-                 type = "cnetplot"),
-         error = function(e) e,
-         warnings = function(w) w)
-
-outcnet
-
-outcnete <- tryCatch(plotCPR(MAE[["RNAtest"]], 
-                            contrast = "(temperatureElevated - temperatureLow) in imbibitionDS",
-                            ont = "GO",  
-                            Domain = "BP", searchExpr = "ERR" ,
-                            type = "cnetplot"),
-                    error = function(e) e,
-                    warnings = function(w) w)
-outcnete
+out1$message

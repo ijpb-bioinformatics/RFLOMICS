@@ -2,8 +2,10 @@
 # Part6 : ANNOTAION
 ##########################################
 
-### subModule
-
+# ---- Module display results after enrichement is completed -----
+#' @title module_runEnrichment_UI
+#' @keywords internal
+#' @noRd
 module_runEnrichment_UI <- function(id){
   
   #name space for id
@@ -18,8 +20,10 @@ module_runEnrichment_UI <- function(id){
     ))
 }
 
-
+#' @title module_runEnrichment
 #' @importFrom RCurl url.exists
+#' @keywords internal
+#' @noRd
 module_runEnrichment <- function(input, output, session, dataset, dom.select, list.source, rea.values, local.rea.values){
   
   ns <- session$ns
@@ -57,7 +61,7 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
     }
   })
   
-  output$AnnotResults<- renderUI({
+  output$AnnotResults <- renderUI({
     
     if (rea.values[[dataset]][[diffAnnot_coExpAnal]] == FALSE || 
         is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[list.source]][[dom.select]][["summary"]])) return()
@@ -250,9 +254,9 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
                                                                      gene_idtype = local.rea.values$keytype.kegg
                                                          )}, res = 300, width = 1000, height = 1000)
                                                      } else {
-                                                         renderText("Please check your connection. It seems the URL does not exist, or you're not connected.")
+                                                       renderText("Please check your connection. It seems the URL does not exist, or you're not connected.")
                                                      }
-                                                    
+                                                     
                                                    })
                                             )
                                           )
@@ -292,9 +296,101 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
   })
   
 }
+# ---- Comparison between enrichment results ----
 
+#' @title module_compEnrichment_UI
+#' @keywords internal
+#' @noRd
+module_compEnrichment_UI <- function(id){
+  
+  #name space for id
+  ns <- NS(id)
+  
+  htmltools::tagList(  
+    fluidRow(
+      column(width = 12,
+             uiOutput(ns("CompResults"))
+      )
+    ))
+}
 
-### main 
+#' @title module_compEnrichment
+#' @importFrom RCurl url.exists
+#' @keywords internal
+#' @noRd
+module_compEnrichment <- function(input, output, session, dataset, dom.select, list.source, rea.values, local.rea.values){
+  
+  ns <- session$ns
+  
+  switch(list.source,
+         "DiffExpEnrichAnal" = {
+           title <- "Enrichment from differential expression analysis"
+           diffAnnot_coExpAnal <- "diffAnnot"
+           from <- "DiffExpAnal"
+         },
+         "CoExpEnrichAnal" = {
+           title <- "Enrichment from  co-expression analysis"
+           diffAnnot_coExpAnal <- "coExpAnnot"
+           from <- "CoExpAnal"
+         }
+  )
+  
+  output$CompResults <- renderUI({
+    
+    if (rea.values[[dataset]][[diffAnnot_coExpAnal]] == FALSE || 
+        is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[list.source]][[dom.select]][["summary"]])) return()
+    
+    # TODO two comparisons at least ?
+    # TODO what if nothing to show ?
+    
+    # Possible domains of ontology:
+    possDomain <-  unique(unlist(
+      lapply(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[list.source]][[dom.select]][["enrichResult"]], 
+             FUN = function(x) names(x)))) 
+    
+    # display results
+    verticalLayout(
+      fluidRow(
+        box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success", title = dom.select,
+            
+            fluidRow(
+              column(4,
+                     radioButtons(inputId = ns(paste0(dom.select, "-compDomain")), label = "Domain",
+                                  choices = possDomain, selected = possDomain[1])),
+              column(4,
+                     radioButtons(inputId = ns(paste0(dom.select, "-compDecorate")), label = "Decorate",
+                                  choices = c("GeneRatio", "stars", "none"), selected = "GeneRatio")),
+              column(4,
+                     radioButtons(inputId = ns(paste0(dom.select, "-compType")), label = "Matrix Type",
+                                  choices = c("GeneRatio", "p.adjust", "presence"), selected = "GeneRatio")),
+            ),
+            
+            fluidRow(
+              renderUI({
+                print(input[[paste0(dom.select, "-compDomain")]])
+                
+                # outHeatmap <- tryCatch({
+                outHeatmap <-  plotEnrichComp(session$userData$FlomicsMultiAssay[[dataset]],
+                                              from = from, ont = dom.select, 
+                                              domain = input[[paste0(dom.select, "-compDomain")]],
+                                              matrixType = input[[paste0(dom.select, "-compType")]],
+                                              decorate = input[[paste0(dom.select, "-compDecorate")]])
+                # },
+                # warning = function(warn) warn,
+                # error = function(err) err
+                # )
+                
+                if (is(outHeatmap, "Heatmap")) renderPlot({ComplexHeatmap::draw(outHeatmap)}, width = "auto", height = 1000)
+                else renderText({outHeatmap$message})
+              })
+              
+            ),  # box
+        ), # fluidrow
+      ))
+  })
+}
+
+# ---- Module running the enrichment -----
 
 AnnotationEnrichmentClusterProfUI <- function(id){
   
@@ -348,7 +444,7 @@ AnnotationEnrichmentClusterProfUI <- function(id){
       )
     ),
     ## parameters + input data
-    fluidRow( uiOutput(ns("tabsetPanel_DB_UI")) )
+    fluidRow(uiOutput(ns("tabsetPanel_DB_UI")) )
   )
 }
 
@@ -382,11 +478,19 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                         tabPanel(title = "Differential expression lists",
                                  br(),
                                  module_runEnrichment_UI(id = ns("custom_DiffExpEnrichAnal"))
+                        ),                       
+                        tabPanel(title = "Differential expression - Enrichment Comparison",
+                                 br(),
+                                 module_compEnrichment_UI(id = ns("custom_CompDiffExp"))
                         ),
                         tabPanel(title = "Co-expression clusters",
                                  br(),
                                  module_runEnrichment_UI(id = ns("custom_CoExpEnrichAnal"))
-                        )
+                        ),
+                        tabPanel(title = "Co-expression clusters - Enrichment Comparison",
+                                 br(),
+                                 module_compEnrichment_UI(id = ns("custom_CompCoExp"))
+                        ),
                       )
                )
       )
@@ -402,10 +506,18 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                  br(),
                                  module_runEnrichment_UI(id = ns("GO_DiffExpEnrichAnal"))
                         ),
+                        tabPanel(title = "Differential expression - Enrichment Comparison",
+                                 br(),
+                                 module_compEnrichment_UI(id = ns("GO_CompDiffExp"))
+                        ),
                         tabPanel(title = "Co-expression clusters",
                                  br(),
                                  module_runEnrichment_UI(id = ns("GO_CoExpEnrichAnal"))
-                        )
+                        ),
+                        tabPanel(title = "Co-expression clusters - Enrichment Comparison",
+                                 br(),
+                                 module_compEnrichment_UI(id = ns("GO_CompCoExp"))
+                        ),
                       )
                )
       ),
@@ -418,10 +530,18 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                                  br(),
                                  module_runEnrichment_UI(id = ns("KEGG_DiffExpEnrichAnal"))
                         ),
+                        tabPanel(title = "Differential expression lists - Enrichment Comparison",
+                                 br(),
+                                 module_compEnrichment_UI(id = ns("KEGG_CompDiffExp"))
+                        ),
                         tabPanel(title = "Co-expression clusters",
                                  br(),
                                  module_runEnrichment_UI(id = ns("KEGG_CoExpEnrichAnal"))
-                        )
+                        ),
+                        tabPanel(title = "Co-expression clusters - Enrichment Comparison",
+                                 br(),
+                                 module_compEnrichment_UI(id = ns("KEGG_CompCoExp"))
+                        ),
                       )
                )
       )
@@ -749,7 +869,10 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                         dom.select = "GO", 
                         list.source = "DiffExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
-      
+      shiny::callModule(module  = module_compEnrichment, id = "GO_CompDiffExp", dataset = dataset,
+                        dom.select = "GO", 
+                        list.source = "DiffExpEnrichAnal",
+                        rea.values = rea.values, local.rea.values = local.rea.values)
     }
     
     #---- progress bar ----#
@@ -790,9 +913,12 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
       shiny::callModule(module  = module_runEnrichment, id = "GO_CoExpEnrichAnal", dataset = dataset, 
                         dom.select = "GO", list.source = "CoExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
+      
+      shiny::callModule(module  = module_compEnrichment, id = "GO_CompCoExp", dataset = dataset,
+                        dom.select = "GO", 
+                        list.source = "CoExpEnrichAnal",
+                        rea.values = rea.values, local.rea.values = local.rea.values)
     }
-    
-    #local.rea.values[[dom.select]] <- TRUE
     
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep = ""))
@@ -897,7 +1023,10 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                         dataset = dataset, dom.select = "KEGG", 
                         list.source = "DiffExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
-      
+      shiny::callModule(module  = module_compEnrichment, id = "KEGG_CompDiffExp", dataset = dataset,
+                        dom.select = "KEGG", 
+                        list.source = "DiffExpEnrichAnal",
+                        rea.values = rea.values, local.rea.values = local.rea.values)
       rea.values[[dataset]]$diffAnnot <- TRUE
     }
     
@@ -937,7 +1066,10 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                         dataset = dataset, dom.select = "KEGG", 
                         list.source = "CoExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
-      
+      shiny::callModule(module  = module_compEnrichment, id = "KEGG_CompCoExp", dataset = dataset,
+                        dom.select = "KEGG", 
+                        list.source = "CoExpEnrichAnal",
+                        rea.values = rea.values, local.rea.values = local.rea.values)
       rea.values[[dataset]]$coExpAnnot <- TRUE
     }
     
@@ -1052,6 +1184,10 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                         dataset = dataset, dom.select = dom.select, 
                         list.source = "DiffExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
+      shiny::callModule(module  = module_compEnrichment, id = "custom_CompDiffExp", 
+                        dataset = dataset, dom.select = dom.select, 
+                        list.source = "DiffExpEnrichAnal",
+                        rea.values = rea.values, local.rea.values = local.rea.values)
       
       rea.values[[dataset]]$diffAnnot <- TRUE
     }
@@ -1092,7 +1228,10 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                         dataset = dataset, dom.select = dom.select,
                         list.source = "CoExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
-      
+      shiny::callModule(module  = module_compEnrichment, id = "custom_CompCoExp", 
+                        dataset = dataset, dom.select = dom.select,
+                        list.source = "CoExpEnrichAnal",
+                        rea.values = rea.values, local.rea.values = local.rea.values)
       rea.values[[dataset]]$coExpAnnot <- TRUE
     }
     

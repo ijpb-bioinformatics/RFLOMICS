@@ -28,9 +28,9 @@ methods::setMethod(
                         col_name = "name",
                         col_domain = NULL,
                         annot = NULL) {
-  
+    
     EnrichAnal <- list()
-
+    
     if (is.null(object@metadata$DiffExpAnal)) {
       stop("There is no differential analysis. Please run a differential analysis before running enrichment")
     }
@@ -72,7 +72,7 @@ methods::setMethod(
              names(geneLists) <- namesClust
            }
     )
-
+    
     # Checks arguments
     if (dom.select == "custom") {
       if (is.null(annot)) {
@@ -85,7 +85,7 @@ methods::setMethod(
         stop("The name of columns for gene and term names don't match the ones of the annotation files")
       }
     }
-
+    
     # Change Domain if needed
     if (is.null(Domain)) {
       Domain <- "no-domain"
@@ -98,7 +98,7 @@ methods::setMethod(
         Domain <- Domain[!is.na(Domain)]
       }
     }
-
+    
     # common parameters (is this useful ?)
     if (is.null(list_args$pvalueCutoff)) list_args$pvalueCutoff <- 0.05 # default in clusterprofiler
     if (is.null(list_args$qvalueCutoff)) list_args$qvalueCutoff <- 1 # no threshold on qvalue (default 0.2)
@@ -106,38 +106,38 @@ methods::setMethod(
     if (is.null(list_args$minGSSize)) list_args$minGSSize <- 3 # tried for SBML
     if (is.null(list_args$maxGSSize)) list_args$maxGSSize <- 500 # default in clusterprofiler
     if (is.null(list_args$universe)) list_args$universe <- names(object)
-
+    
     annotation <- annot
-
+    
     # for each list
     results_list <- lapply(names(geneLists), FUN = function(listname) {
       list_args$gene <- geneLists[[listname]]
       results_ont <- lapply(Domain, FUN = function(ont) {
         switch(dom.select,
-          "GO" = {
-            func_to_use <- "enrichGO"
-            list_args$ont <- ont
-          },
-          "KEGG" = {
-            func_to_use <- "enrichKEGG"
-          },
-          "custom" = {
-            func_to_use <- "enricher"
-
-            list_args$TERM2NAME <- NA
-            annotation2 <- annotation
-
-            if (ont != "no-domain") {
-              annotation2 <- filter(annotation, get(col_domain) == ont)
-            }
-
-            list_args$TERM2GENE <- list("term" = annotation2[[col_term]], "gene" = annotation2[[col_gene]])
-
-            if (!is.null(annotation2[[col_name]])) {
-              tmp <- dplyr::select(annotation2, tidyselect::all_of(c(col_term, col_name))) %>% unique()
-              list_args$TERM2NAME <- list("term" = tmp[[col_term]], "name" = tmp[[col_name]])
-            }
-          }
+               "GO" = {
+                 func_to_use <- "enrichGO"
+                 list_args$ont <- ont
+               },
+               "KEGG" = {
+                 func_to_use <- "enrichKEGG"
+               },
+               "custom" = {
+                 func_to_use <- "enricher"
+                 
+                 list_args$TERM2NAME <- NA
+                 annotation2 <- annotation
+                 
+                 if (ont != "no-domain") {
+                   annotation2 <- filter(annotation, get(col_domain) == ont)
+                 }
+                 
+                 list_args$TERM2GENE <- list("term" = annotation2[[col_term]], "gene" = annotation2[[col_gene]])
+                 
+                 if (!is.null(annotation2[[col_name]])) {
+                   tmp <- dplyr::select(annotation2, tidyselect::all_of(c(col_term, col_name))) %>% unique()
+                   list_args$TERM2NAME <- list("term" = tmp[[col_term]], "name" = tmp[[col_name]])
+                 }
+               }
         )
         do.call(getFromNamespace(func_to_use, ns = "clusterProfiler"), list_args)
       })
@@ -145,18 +145,18 @@ methods::setMethod(
       return(results_ont)
     })
     names(results_list) <- names(geneLists)
-
+    
     overview_list <- list()
     term.list <- list()
     for (listname in names(results_list)) {
       # TODO why is it a for?!
-
+      
       for (ont in names(results_list[[listname]])) {
         if (!is.null(results_list[[listname]][[ont]])) {
           res <- results_list[[listname]][[ont]]@result
           res.n <- nrow(res[res$p.adjust < list_args$pvalueCutoff, ])
           overview_list[[listname]][[ont]] <- res.n
-
+          
           if (res.n == 0) {
             results_list[[listname]][[ont]] <- NULL
           } else {
@@ -171,7 +171,7 @@ methods::setMethod(
         }
       }
     }
-
+    
     if (length(overview_list) == 0) {
       EnrichAnal[["summary"]] <- NULL
     } else {
@@ -183,7 +183,7 @@ methods::setMethod(
         EnrichAnal[["summary"]] <- dt_res
       }
     }
-
+    
     EnrichAnal[["list_args"]] <- list_args[names(list_args) %in% c("universe", "keyType", "pvalueCutoff", "qvalueCutoff", "OrgDb", "organism")]
     EnrichAnal[["list_args"]] <- c(EnrichAnal[["list_args"]], list("Domain"=Domain))
     EnrichAnal[["enrichResult"]] <- results_list
@@ -193,7 +193,7 @@ methods::setMethod(
     } else if (from == "CoExp") {
       object@metadata[["CoExpEnrichAnal"]][[dom.select]] <- EnrichAnal
     }
-
+    
     return(object)
   }
 )
@@ -218,15 +218,15 @@ methods::setMethod(
                         annot = NULL) {
     
     object[[SE.name]] <- runAnnotationEnrichment(object = object[[SE.name]],
-                                                     nameList = nameList,
-                                                     list_args = list_args,
-                                                     from = from,
-                                                     dom.select = dom.select,
-                                                     Domain = Domain, 
-                                                     col_term = col_term,
-                                                     col_gene = col_gene,
-                                                     col_domain = col_domain,
-                                                     annot = annot)
+                                                 nameList = nameList,
+                                                 list_args = list_args,
+                                                 from = from,
+                                                 dom.select = dom.select,
+                                                 Domain = Domain, 
+                                                 col_term = col_term,
+                                                 col_gene = col_gene,
+                                                 col_domain = col_domain,
+                                                 annot = annot)
     
     return(object)
     
@@ -260,7 +260,7 @@ methods::setMethod(
                         from = "DiffExpEnrichAnal",
                         pvalueCutoff = NULL,
                         ...) {
-
+    
     
     if (toupper(from) %in% toupper(c("DiffExp", "DiffExpAnal", "DiffExpEnrichAnal"))) {
       from <- "DiffExp"
@@ -271,14 +271,14 @@ methods::setMethod(
     if (isTagName(object, contrast)) contrast <- convertTagToContrast(object, contrast)
     
     if (is.null(pvalueCutoff)) pvalueCutoff <- metadata(object)[[from]][["KEGG"]]$list_args$pvalueCutoff
-
+    
     log2FC_vect <- NULL
     # Get the log2FC if appropriate
     if (from == "DiffExp") {
       log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
       names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
     }
-
+    
     see_pathview(
       gene.data = log2FC_vect,
       pathway.id = pathway_id,
@@ -292,7 +292,7 @@ methods::setMethod(
       na.col = "transparent"
       # cex = 1 # too much
     )
-
+    
     return()
   }
 )
@@ -333,7 +333,7 @@ methods::setMethod(
     # if from diffExpAnal, then takes the log2FC by default.
     # -> what if the user want something else printed ?! can modify it through scales ?
     # if from coexp, then no log2FC
-
+    
     # dataPlot the enrichment results for correct ontology and contrast.
     
     # if (isTagName(contrast)) contrast <- convertTagToContrast(object, contrast)
@@ -349,7 +349,7 @@ methods::setMethod(
     } else {
       dataPlot <- object@metadata$CoExpEnrichAnal[[ont]]$enrichResult[[contrast]]
     }
-
+    
     if (ont == "GO") {
       if (is.null(Domain)) {
         stop("Ontology is GO, non null Domain (BP, CC or MF) is expected.")
@@ -360,22 +360,22 @@ methods::setMethod(
       if (is.null(Domain)) {
         Domain <- "no-domain"
       }
-
+      
       if (!Domain %in% names(dataPlot)) {
         stop("Domain is expected to be one of ", paste(names(dataPlot), collapse = ","))
       } else {
         dataPlot <- dataPlot[[Domain]]
       }
     }
-
-
+    
+    
     log2FC_vect <- NULL
     # Get the log2FC if appropriate
     if (from == "DiffExp") {
       log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
       names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
     }
-
+    
     # Select categories to show
     dataTab <- dataPlot@result[dataPlot@result$p.adjust < pvalueCutoff, ]
     Categories <- dataTab$Description
@@ -391,27 +391,220 @@ methods::setMethod(
     if (type == "cnetplot") {
       returnplot <- 
         cnetplot(dataPlot, showCategory = Categories, color.params = list(foldChange = log2FC_vect), node_label = node_label, ...) +
-          guides(colour = guide_colourbar(title = "log2FC")) +
-          scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) 
- 
+        guides(colour = guide_colourbar(title = "log2FC")) +
+        scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) 
+      
       # )
     } else if (type == "heatplot") {
       returnplot <-  
-          heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, ...) +
-          labs(fill = "log2FC") +
-          scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-          theme(axis.text.y = element_text(size = 10))
-
+        heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, ...) +
+        labs(fill = "log2FC") +
+        scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+        theme(axis.text.y = element_text(size = 10))
+      
     } else if (type == "dotplot") {
       returnplot <- tryCatch(dotplot(dataPlot, showCategory = Categories, ...),
                              error = function(e) e,
                              warnings = function(w) w)
     }
-
+    
     return(returnplot)
   }
 )
 
 
 
-
+#' @title plotEnrichComp
+#' @description TODO
+#' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param from indicates if the enrichment results are taken from differential analysis results (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
+#' @param ont is it a custom annotation, GO or KEGG annotations
+#' @param domain domain from the ontology (eg GO has three domains, BP, CC and MF)
+#' @param matrixType Heatmap matrix to plot, one of GeneRatio, p.adjust or presence.
+#' @param nClust number of separate cluster to plot on the heatmap, based on the clustering. 
+#' @param decorate one of stars or GeneRatio. Decoration of the heatmap. Default is NULL, no decoration.
+#' @param ... more arguments for ComplexHeatmap::Heatmap. 
+#' @return A ggplot object
+#' @export
+#' @importFrom reshape2 recast
+#' @importFrom circlize colorRamp2
+#' @importFrom ComplexHeatmap Heatmap
+#' @importFrom stringr str_wrap
+#' @exportMethod plotEnrichComp
+#' @rdname plotEnrichComp
+methods::setMethod(
+  f = "plotEnrichComp",
+  signature = "SummarizedExperiment",
+  definition = function(object, 
+                        from = "DiffExp", 
+                        ont = NULL, 
+                        domain = "no-domain",
+                        matrixType = "GeneRatio",
+                        nClust = NULL,
+                        decorate = NULL,
+                        ...){
+    
+    # load("tetAnnot_MAE.RData")
+    
+    # df_custom <- vroom::vroom(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/GO_annotations/Arabidopsis_thaliana_Ensembl_55.txt"))
+    # 
+    # MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", dom.select = "custom",
+    #                                list_args = list(pvalueCutoff = 0.05),
+    #                                col_term = "GO term accession", 
+    #                                col_gene = "Gene stable ID",
+    #                                col_name = "GO term name",
+    #                                col_domain = "GO domain",
+    #                                annot = df_custom)
+    # 
+    # MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", dom.select = "GO",
+    #                                list_args = list(OrgDb = "org.At.tair.db", 
+    #                                                 keyType = "TAIR", 
+    #                                                 pvalueCutoff = 0.05),
+    #                                Domain = c("BP", "MF", "CC"))
+    # 
+    # 
+    # MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", 
+    #                                from = "DiffExp", dom.select = "KEGG",
+    #                                list_args = list(organism = "ath", 
+    #                                                 keyType = "kegg", 
+    #                                                 pvalueCutoff = 1))
+    
+    # object <- MAE[["RNAtest"]]
+    # from = "DiffExp"
+    # ont = "KEGG"
+    # domain = "no-domain"
+    # matrixType = "p.adjust"
+    # # matrixType = "presence"
+    
+    # print("it's ok")
+    allData <- switch(toupper(from), 
+                      "DIFFEXP"           = { object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult },
+                      "DIFFEXPANAL"       = { object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult },
+                      "DIFFEXPENRICHANAL" = { object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult },
+                      "COEXP"             = { object@metadata$CoExpEnrichAnal[[ont]]$enrichResult   },
+                      "COEXPANAL"         = { object@metadata$CoExpEnrichAnal[[ont]]$enrichResult   },
+                      "COEXPENRICHANAL"   = { object@metadata$CoExpEnrichAnal[[ont]]$enrichResult   },
+                      {
+                        message("Argument from is detected to be neither DiffExp nor CoExp, 
+                     taking DiffExp results.")
+                        allData <- object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult
+                      })
+    
+    if (length(allData) == 0) {
+      stop("The selected ontology ", ont, " does not seem to exist in the object.")
+    }
+    
+    print("allright")
+    print(length(allData))
+    
+    pvalThresh <- allData[[1]][[1]]@pvalueCutoff
+    
+    domainPoss <- unique(unlist(lapply(allData, names)))
+    if (missing(domain) || is.null(domain)) domain <- domainPoss
+    if (any(!domain %in% domainPoss)) {
+      stop("Trying to select a domain that does not exist in the object.")
+    }
+    
+    extract <- do.call("rbind", lapply(1:length(allData), FUN = function(i){
+      # i = 1
+      if (domain %in% names(allData[[i]])) {
+        cprRes <- allData[[i]][[domain]]
+        cprRes <- cprRes@result[cprRes@result$p.adjust < cprRes@pvalueCutoff,]
+        cprRes$contrast <- names(allData)[i]
+        cprRes$domain <- domain
+        return(cprRes)
+      }
+    }))
+    
+    print("The extraction worked")
+    
+    toKeep <- names(which(table(extract$ID) > 1)) 
+    if (length(toKeep) == 0) stop("There is no common terms to show.")
+    extract <- extract[extract$ID %in% toKeep,]
+    
+    # handling description and ID
+    extract$ID <- switch(ont, 
+                         "GO" = { 
+                           if (!identical(extract$ID, extract$Description)) {
+                             paste0("(", extract$ID, ")", "\n", extract$Description)
+                           } else {extract$ID}
+                         },
+                         "KEGG" = {
+                           gsub(" - .*", "", extract$Description)
+                           },
+                         "custom" = {  
+                           if (!identical(extract$ID, extract$Description)) {
+                             paste0("(", extract$ID, ")", "\n", extract$Description)
+                           } else {extract$ID}
+                         })
+    
+    extract$ID <- str_wrap(extract$ID, width = 20)
+    extract$contrast <- str_wrap(extract$contrast, width = 30)
+    
+    extract$GeneRatio <- as.numeric(vapply(extract$GeneRatio, 
+                                           FUN = function(x) eval(parse(text = x)),
+                                           FUN.VALUE = 1))
+    extract$BgRatio <- as.numeric(vapply(extract$BgRatio, 
+                                         FUN = function(x) eval(parse(text = x)),
+                                         FUN.VALUE = 1))
+    
+    dat <- switch(matrixType, 
+                  "GeneRatio" = {
+                    inter <- recast(extract[, c("ID", "contrast", "GeneRatio")], 
+                                    ID ~ contrast, 
+                                    measure.var = "GeneRatio")
+                    rownames(inter) <- inter$ID
+                    inter <- inter[, colnames(inter) != "ID"]
+                    inter[is.na(inter)] <- 0
+                    inter
+                  }, 
+                  "p.adjust" = {
+                    inter <- recast(extract[, c("ID", "contrast", "p.adjust")], 
+                                    ID ~ contrast, 
+                                    measure.var = "p.adjust")
+                    rownames(inter) <- inter$ID
+                    inter <- inter[, colnames(inter) != "ID"]
+                    inter[is.na(inter)] <- 1
+                    inter
+                  },
+                  "presence" = {
+                    inter <- recast(extract[, c("ID", "contrast", "p.adjust")], 
+                                    ID ~ contrast, 
+                                    measure.var = "p.adjust")
+                    rownames(inter) <- inter$ID
+                    inter <- inter <- inter[, colnames(inter) != "ID"]
+                    inter[!is.na(inter)] <- 1
+                    inter[is.na(inter)]  <- 0
+                    inter
+                  })
+    
+    hcPlot <- switch(matrixType, 
+                     "presence" = { hclust(dist(dat, method = "binary"), method = "complete") },
+                     { 
+                       extract$statistics <- extract$GeneRatio/extract$BgRatio
+                       clusteringDat <- recast(extract[, c("ID", "contrast", "statistics")],
+                                               ID ~ contrast,
+                                               measure.var = "statistics")
+                       rownames(clusteringDat) <- clusteringDat$ID
+                       clusteringDat <- clusteringDat[,-1]
+                       hclust(dist(clusteringDat, method = "euclidean"), method = "complete")
+                     })
+    
+    colors <- switch(matrixType,
+                     "presence"   = {structure(c("white", "firebrick"), names = c("0", "1"))},
+                     "GeneRatio"  = {colorRamp2(c(0, max(extract$GeneRatio)), c("white", "firebrick"))},
+                     "p.adjust" = {colorRamp2(c(0, pvalThresh, 1), c("firebrick", "white", "white"))})
+    
+    suppressWarnings(
+      Heatmap(dat, 
+              col = colors,
+              name = matrixType,
+              cluster_columns = FALSE, 
+              cluster_rows = hcPlot, 
+              row_names_side = "left", 
+              column_names_rot = 90, 
+              # column_names_centered = TRUE, 
+              border = TRUE))
+    
+  }
+)
