@@ -37,6 +37,12 @@ RUN git clone --branch  sk8-test  https://forgemia.inra.fr/flomics/rflomics.git
 
 WORKDIR /home/rflomics
 
+COPY renv.lock renv.lock
+
+RUN R -e "install.packages('renv', repos = c(CRAN = 'https://cloud.r-project.org'))"
+
+RUN R -e "renv::restore()"
+
 RUN Rscript -e 'remotes::install_local(".",upgrade="never")'
 
 RUN echo "local(options(shiny.port = 3838, shiny.host = '0.0.0.0'))" >> /usr/local/lib/R/etc/Rprofile.site
