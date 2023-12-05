@@ -11,15 +11,7 @@ QCNormalizationTabUI <- function(id){
   tagList(
     fluidRow(
       box(title = span(tagList(icon("filter"), "     Data Filtering and Normalization ", tags$small("(Scroll down for instructions)"))),
-          width = 12, status = "warning", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE,
-          
-          p("For each diagnostic plot, both raw and processed (filtered, normalized, ...) data are displayed with expertised default parameters."),
-          p("- You may first have a look at the default processed plots to eventually identify outliers sample"),
-          p("- You may check onto the PCA factorial map to control that samples are groupped with the replicat of the same condition."),
-          p("- You may play with filtered parameters to see if it improves the grouping"),
-          p("- If not, you may remove outliers from the sample list, update the analysis and check again."),
-          p("- To quickly overview the % of variability which is associated to each design factors, go to PCA (2/2) ")
-      )
+          width = 12, status = "warning", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE)
     ),
     fluidRow(
       column(4,

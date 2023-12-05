@@ -11,6 +11,8 @@ CoSeqAnalysisUI <- function(id){
                                tags$small("(Scroll down for instructions)")  )),
           solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
           div(
+            p("Analyses in this module are conducted using the coseq R-package. If you have more questions or interest in this package, 
+              please check the associated paper or the online vignette at https://bioconductor.org/packages/release/bioc/vignettes/coseq/inst/doc/coseq.html"),
             h4(tags$span("Parameters set up:", style = "color:orange")),
             p("You have first to choose between the ",tags$b("union")," or ",tags$b("intersection")," of your contrasts lists according to your biological question."),
             p("All the default parameters have been expertised according to each omic."),
