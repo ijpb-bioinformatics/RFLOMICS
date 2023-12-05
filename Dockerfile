@@ -1,4 +1,4 @@
-FROM rocker/r-ver:4.3.1
+FROM rocker/r-ver:4.3.2
 
 LABEL maintainer="ijpb-bioinfo-team@inrae.fr"
 LABEL version="0.1"
