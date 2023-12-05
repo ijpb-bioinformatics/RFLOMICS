@@ -206,6 +206,19 @@ methods::setGeneric(
                   ...){standardGeneric("plotCPR")}
 )
 
+
+methods::setGeneric(
+  name = "plotEnrichComp",
+  def = function(object, 
+                 from = "DiffExp", 
+                 ont = NULL, 
+                 domain = "no-domain",
+                 matrixType = "GeneRatio",
+                 nClust = NULL,
+                 decorate = NULL,
+                 ...
+    ){standardGeneric("plotEnrichComp")}
+)
 # ---- INTEGRATION ----
 
 methods::setGeneric(
