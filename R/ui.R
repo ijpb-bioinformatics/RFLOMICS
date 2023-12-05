@@ -18,5 +18,5 @@ rflomicsUI <- function(){
    return(uiout)
   }
 
-rflomicsUI()
+# rflomicsUI()
 
