@@ -215,7 +215,6 @@ methods::setGeneric(
                  domain = "no-domain",
                  matrixType = "GeneRatio",
                  nClust = NULL,
-                 decorate = NULL,
                  ...
     ){standardGeneric("plotEnrichComp")}
 )

@@ -316,6 +316,7 @@ module_compEnrichment_UI <- function(id){
 
 #' @title module_compEnrichment
 #' @importFrom RCurl url.exists
+#' @importFrom grid unit
 #' @keywords internal
 #' @noRd
 module_compEnrichment <- function(input, output, session, dataset, dom.select, list.source, rea.values, local.rea.values){
@@ -356,37 +357,38 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
             fluidRow(
               column(4,
                      radioButtons(inputId = ns(paste0(dom.select, "-compDomain")), label = "Domain",
-                                  choices = possDomain, selected = possDomain[1])),
-              column(4,
-                     radioButtons(inputId = ns(paste0(dom.select, "-compDecorate")), label = "Decorate",
-                                  choices = c("GeneRatio", "stars", "none"), selected = "GeneRatio")),
+                                  choices = possDomain, selected = possDomain[1], inline = TRUE)),
               column(4,
                      radioButtons(inputId = ns(paste0(dom.select, "-compType")), label = "Matrix Type",
-                                  choices = c("GeneRatio", "p.adjust", "presence"), selected = "GeneRatio")),
+                                  choices = c("presence", "FC", "log2FC"), selected = "FC", inline = TRUE)),
             ),
             
             fluidRow(
-              renderUI({
-                print(input[[paste0(dom.select, "-compDomain")]])
-                
-                # outHeatmap <- tryCatch({
-                outHeatmap <-  plotEnrichComp(session$userData$FlomicsMultiAssay[[dataset]],
-                                              from = from, ont = dom.select, 
-                                              domain = input[[paste0(dom.select, "-compDomain")]],
-                                              matrixType = input[[paste0(dom.select, "-compType")]],
-                                              decorate = input[[paste0(dom.select, "-compDecorate")]])
-                # },
-                # warning = function(warn) warn,
-                # error = function(err) err
-                # )
-                
-                if (is(outHeatmap, "Heatmap")) renderPlot({ComplexHeatmap::draw(outHeatmap)}, width = "auto", height = 1000)
-                else renderText({outHeatmap$message})
-              })
-              
-            ),  # box
-        ), # fluidrow
-      ))
+              column(12,
+                     renderUI({
+                       
+                       outHeatmap <- tryCatch({
+                         outHeatmap <-  plotEnrichComp(session$userData$FlomicsMultiAssay[[dataset]],
+                                                       from = from, ont = dom.select, 
+                                                       domain = input[[paste0(dom.select, "-compDomain")]],
+                                                       matrixType = input[[paste0(dom.select, "-compType")]])
+                       },
+                       warning = function(warn) warn,
+                       error = function(err) err
+                       )
+                       
+                       if (is(outHeatmap, "Heatmap")) renderPlot({ComplexHeatmap::draw(outHeatmap, 
+                                                                                       heatmap_legend_side = "top", 
+                                                                                       padding = unit(5, "mm"),
+                                                                                       gap = unit(2, "mm"))}, 
+                                                                 width = "auto", height = min(400 + nrow(outHeatmap@matrix)*50, 1000))
+                       else renderText({outHeatmap$message})
+                     })
+              ) # column
+            ),  # fluidrow
+        ), # box
+      ) # fluidrow
+    )
   })
 }
 
@@ -575,7 +577,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     
     if (omicsType %in% c("RNAseq", "proteomics")) {
       
-      box(title = span(tagList(icon("sliders"), "  ", "Setting")), width = 14, status = "warning",
+      box(title = span(tagList(icon("sliders"), "  ", "Settings")), width = 14, status = "warning",
           
           # select DE list
           pickerInput(
@@ -976,8 +978,6 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
                        pvalueCutoff = input$pValue_KEGG
     )
     
-    param.list <<- param.list
-    
     if (.checkRunORAExecution(session$userData$FlomicsMultiAssay[[dataset]], "KEGG", param.list) == FALSE) return()
     
     local.rea.values[["KEGG_org"]]     <- input$KEGG_org
@@ -1251,9 +1251,9 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
 #' @keywords internal
 .checkRunORAExecution <- function(object.SE, db.type = NULL, param.list = NULL){
   
-
+  
   if (!is.null(param.list$diffList)) {
-
+    
     if (is.null(object.SE@metadata[["DiffExpEnrichAnal"]][[db.type]])) return(TRUE)
     if (isFALSE(dplyr::setequal(names(object.SE@metadata[["DiffExpEnrichAnal"]][[db.type]]$enrichResult), param.list$diffList)) ) return(TRUE)
     

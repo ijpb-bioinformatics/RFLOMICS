@@ -428,7 +428,7 @@ methods::setMethod(
 #' @export
 #' @importFrom reshape2 recast
 #' @importFrom circlize colorRamp2
-#' @importFrom ComplexHeatmap Heatmap
+#' @importFrom ComplexHeatmap Heatmap ht_opt
 #' @importFrom stringr str_wrap
 #' @exportMethod plotEnrichComp
 #' @rdname plotEnrichComp
@@ -441,42 +441,8 @@ methods::setMethod(
                         domain = "no-domain",
                         matrixType = "GeneRatio",
                         nClust = NULL,
-                        decorate = NULL,
                         ...){
-    
-    # load("tetAnnot_MAE.RData")
-    
-    # df_custom <- vroom::vroom(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/GO_annotations/Arabidopsis_thaliana_Ensembl_55.txt"))
-    # 
-    # MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", dom.select = "custom",
-    #                                list_args = list(pvalueCutoff = 0.05),
-    #                                col_term = "GO term accession", 
-    #                                col_gene = "Gene stable ID",
-    #                                col_name = "GO term name",
-    #                                col_domain = "GO domain",
-    #                                annot = df_custom)
-    # 
-    # MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", dom.select = "GO",
-    #                                list_args = list(OrgDb = "org.At.tair.db", 
-    #                                                 keyType = "TAIR", 
-    #                                                 pvalueCutoff = 0.05),
-    #                                Domain = c("BP", "MF", "CC"))
-    # 
-    # 
-    # MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", 
-    #                                from = "DiffExp", dom.select = "KEGG",
-    #                                list_args = list(organism = "ath", 
-    #                                                 keyType = "kegg", 
-    #                                                 pvalueCutoff = 1))
-    
-    # object <- MAE[["RNAtest"]]
-    # from = "DiffExp"
-    # ont = "KEGG"
-    # domain = "no-domain"
-    # matrixType = "p.adjust"
-    # # matrixType = "presence"
-    
-    # print("it's ok")
+
     allData <- switch(toupper(from), 
                       "DIFFEXP"           = { object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult },
                       "DIFFEXPANAL"       = { object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult },
@@ -494,8 +460,10 @@ methods::setMethod(
       stop("The selected ontology ", ont, " does not seem to exist in the object.")
     }
     
-    print("allright")
-    print(length(allData))
+    allData <- allData[lengths(allData) > 0]
+    if (length(allData) == 0) {
+      stop("It seems there is no results here.")
+    }
     
     pvalThresh <- allData[[1]][[1]]@pvalueCutoff
     
@@ -506,7 +474,6 @@ methods::setMethod(
     }
     
     extract <- do.call("rbind", lapply(1:length(allData), FUN = function(i){
-      # i = 1
       if (domain %in% names(allData[[i]])) {
         cprRes <- allData[[i]][[domain]]
         cprRes <- cprRes@result[cprRes@result$p.adjust < cprRes@pvalueCutoff,]
@@ -515,8 +482,6 @@ methods::setMethod(
         return(cprRes)
       }
     }))
-    
-    print("The extraction worked")
     
     toKeep <- names(which(table(extract$ID) > 1)) 
     if (length(toKeep) == 0) stop("There is no common terms to show.")
@@ -531,7 +496,7 @@ methods::setMethod(
                          },
                          "KEGG" = {
                            gsub(" - .*", "", extract$Description)
-                           },
+                         },
                          "custom" = {  
                            if (!identical(extract$ID, extract$Description)) {
                              paste0("(", extract$ID, ")", "\n", extract$Description)
@@ -547,6 +512,7 @@ methods::setMethod(
     extract$BgRatio <- as.numeric(vapply(extract$BgRatio, 
                                          FUN = function(x) eval(parse(text = x)),
                                          FUN.VALUE = 1))
+    extract$FC <- extract$GeneRatio/extract$BgRatio
     
     dat <- switch(matrixType, 
                   "GeneRatio" = {
@@ -576,35 +542,71 @@ methods::setMethod(
                     inter[!is.na(inter)] <- 1
                     inter[is.na(inter)]  <- 0
                     inter
+                  },
+                  "FC" = {
+                    inter <- recast(extract[, c("ID", "contrast", "FC")], 
+                                    ID ~ contrast, 
+                                    measure.var = "FC")
+                    rownames(inter) <- inter$ID
+                    inter <- inter[, colnames(inter) != "ID"]
+                    inter[is.na(inter)] <- 0
+                    inter
+                  },
+                  "log2FC" = {
+                    inter <- recast(extract[, c("ID", "contrast", "FC")], 
+                                    ID ~ contrast, 
+                                    measure.var = "FC")
+                    rownames(inter) <- inter$ID
+                    inter <- inter[, colnames(inter) != "ID"]
+                    inter <- log2(inter)
+                    inter[is.infinite(as.matrix(inter))] <- 0
+                    # means FC is 0, shouldn't happen much...
+                    inter[is.na(inter)] <- 0
+                    # means it's not significant and not in the matrix. 
+                    inter
                   })
     
-    hcPlot <- switch(matrixType, 
-                     "presence" = { hclust(dist(dat, method = "binary"), method = "complete") },
-                     { 
-                       extract$statistics <- extract$GeneRatio/extract$BgRatio
-                       clusteringDat <- recast(extract[, c("ID", "contrast", "statistics")],
-                                               ID ~ contrast,
-                                               measure.var = "statistics")
-                       rownames(clusteringDat) <- clusteringDat$ID
-                       clusteringDat <- clusteringDat[,-1]
-                       hclust(dist(clusteringDat, method = "euclidean"), method = "complete")
-                     })
+    if (nrow(dat) > 1) {
+      switch(matrixType, 
+             "presence" = { 
+               hcPlot <- hclust(dist(dat, method = "binary"), method = "complete") 
+               hcCol <- hclust(dist(t(dat), method = "binary"), method = "complete")
+             },
+             { 
+               hcPlot <- hclust(dist(inter, method = "euclidean"), method = "complete")
+               hcCol <- hclust(dist(t(inter), method = "euclidean"), method = "complete")
+             })
+    } else {
+      hcPlot <- FALSE
+    }
     
     colors <- switch(matrixType,
                      "presence"   = {structure(c("white", "firebrick"), names = c("0", "1"))},
-                     "GeneRatio"  = {colorRamp2(c(0, max(extract$GeneRatio)), c("white", "firebrick"))},
-                     "p.adjust" = {colorRamp2(c(0, pvalThresh, 1), c("firebrick", "white", "white"))})
+                     "GeneRatio"  = {colorRamp2(c(0, max(dat)), c("white", "firebrick"))},
+                     "p.adjust"   = {colorRamp2(c(0, pvalThresh, 1), c("firebrick", "white", "white"))},
+                     "FC"         = {colorRamp2(c(0, max(dat)), c("white", "firebrick"))},
+                     "log2FC"     = {colorRamp2(c(-max(abs(dat)), 0, max(abs(dat))), c("blue", "white", "firebrick"))})
+    
+    ht_opt(DENDROGRAM_PADDING = unit(0.1, "cm"))
     
     suppressWarnings(
       Heatmap(dat, 
               col = colors,
               name = matrixType,
-              cluster_columns = FALSE, 
+              cluster_columns = hcCol, 
+              show_column_dend = FALSE,
               cluster_rows = hcPlot, 
               row_names_side = "left", 
-              column_names_rot = 90, 
+              column_names_rot = 30,
+              # column_names_rot = 0, 
               # column_names_centered = TRUE, 
-              border = TRUE))
+              rect_gp = gpar(col = "gray50", lwd = 0.5),
+              width =  ncol(dat)*5,
+              height = nrow(dat)*5,
+              heatmap_legend_param = list(direction = "horizontal"),
+              border = TRUE,
+              column_names_gp = gpar(fontsize = 10),
+              row_names_gp = gpar(fontsize = 10)))
     
   }
 )
