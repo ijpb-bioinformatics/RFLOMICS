@@ -227,7 +227,7 @@ rflomicsServer <- function(input, output, session) {
                     tabPanel("Annotation Enrichment",
                              tags$br(),
                              tags$br(),
-                             AnnotationEnrichmentClusterProfUI(paste0("RNAseq",i))
+                             .annotationEnrichmentUI(paste0("RNAseq",i))
                     )
                   )
                 })},
@@ -255,14 +255,13 @@ rflomicsServer <- function(input, output, session) {
                              tags$br(),
                              tags$br(),
                              CoSeqAnalysisUI(paste0("proteomics",i))
-                             #verbatimTextOutput("Asuivre")
                     ),
                     ### enrichment analysis CPR ####
                     #####################################
                     tabPanel("Annotation Enrichment",
                              tags$br(),
                              tags$br(),
-                             AnnotationEnrichmentClusterProfUI(paste0("proteomics",i))
+                             .annotationEnrichmentUI(paste0("proteomics",i))
                     )
                   )
                 })},
@@ -296,7 +295,7 @@ rflomicsServer <- function(input, output, session) {
                     tabPanel("Annotation Enrichment",
                              tags$br(),
                              tags$br(),
-                             AnnotationEnrichmentClusterProfUI(paste0("metabolomics",i))
+                             .annotationEnrichmentClusterProfUI(paste0("metabolomics",i))
                     )
                   )
                 })},
@@ -438,7 +437,7 @@ rflomicsServer <- function(input, output, session) {
         ##########################################
         # Part7 : Enrichment Analysis CPR
         ##########################################
-        callModule(module  = AnnotationEnrichmentClusterProf, id = paste0(omics, i),
+        callModule(module  = .annotationEnrichment, id = paste0(omics, i),
                    dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
         
       })

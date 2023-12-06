@@ -394,7 +394,8 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
 
 # ---- Module running the enrichment -----
 
-AnnotationEnrichmentClusterProfUI <- function(id){
+#' @keywords internal
+.annotationEnrichmentUI <- function(id){
   
   options(shiny.maxRequestSize = 3000*1024^2)
   
@@ -453,7 +454,8 @@ AnnotationEnrichmentClusterProfUI <- function(id){
 #' @importFrom data.table fread
 #' @importFrom AnnotationDbi keytypes
 #' @importFrom DT renderDataTable datatable
-AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea.values){
+#' @keywords internal
+.annotationEnrichment <- function(input, output, session, dataset, rea.values){
   
   ns <- session$ns
   
@@ -587,7 +589,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
           ),
           
           # select clusters
-          uiOutput(ns("GeneList.coseqCPRUI_GO")),
+          uiOutput(ns("coseqGeneListPR_GO_UI")),
           
           hr(),
           
@@ -647,7 +649,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
           ),
           
           # select clusters
-          uiOutput(ns("GeneList.coseqCPRUI_KEGG")),
+          uiOutput(ns("coseqGeneListPR_KEGG_UI")),
           
           hr(),
           
@@ -691,7 +693,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
         ),
         
         # select clusters
-        uiOutput(ns("GeneList.coseqCPRUI_custom")),
+        uiOutput(ns("coseqGeneListPR_custom_UI")),
         
         hr(),
         
@@ -735,7 +737,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
   })
   
   # ---- Coseq UI if there are results ----
-  output$GeneList.coseqCPRUI_GO <- renderUI({
+  output$coseqGeneListPR_GO_UI <- renderUI({
     
     if(rea.values[[dataset]]$coExpAnal == FALSE) return()
     
@@ -748,7 +750,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     )
   })
   
-  output$GeneList.coseqCPRUI_KEGG <- renderUI({
+  output$coseqGeneListPR_KEGG_UI <- renderUI({
     
     if(rea.values[[dataset]]$coExpAnal == FALSE) return()
     
@@ -761,7 +763,7 @@ AnnotationEnrichmentClusterProf <- function(input, output, session, dataset, rea
     )
   })
   
-  output$GeneList.coseqCPRUI_custom <- renderUI({
+  output$coseqGeneListPR_custom_UI <- renderUI({
     
     if(rea.values[[dataset]]$coExpAnal == FALSE) return()
     
