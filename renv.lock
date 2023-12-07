@@ -3818,17 +3818,11 @@
     "rhdf5filters": {
       "Package": "rhdf5filters",
       "Version": "1.14.1",
-      "Source": "Local",
-      "RemoteType": "local",
-      "RemoteUrl": "../../../../Desktop/rhdf5filters_1.14.1.tar.gz",
-      "git_url": "https://git.bioconductor.org/packages/rhdf5filters",
-      "git_branch": "RELEASE_3_18",
-      "git_last_commit": "5ddd484",
-      "git_last_commit_date": "2023-11-06",
+      "Source": "Bioconductor",
       "Requirements": [
         "Rhdf5lib"
       ],
-      "Hash": "11891ee8bb0f669d8c8cc69f75fda7b0"
+      "Hash": "d27a2f6a89def6388fad5b0aae026220"
     },
     "rjson": {
       "Package": "rjson",
