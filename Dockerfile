@@ -37,7 +37,7 @@ RUN git clone --branch  sk8-test  https://forgemia.inra.fr/flomics/rflomics.git
 
 WORKDIR /home/rflomics
 
-#COPY renv.lock renv.lock
+COPY renv.lock renv.lock
 
 RUN R -e "install.packages('renv', repos = c(CRAN = 'https://cloud.r-project.org'))"
 
