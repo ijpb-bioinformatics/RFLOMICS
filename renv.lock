@@ -3539,12 +3539,12 @@
     },
     "rhdf5filters": {
       "Package": "rhdf5filters",
-      "Version": "1.13.2",
+      "Version": "1.14.1",
       "Source": "Bioconductor",
       "Requirements": [
         "Rhdf5lib"
       ],
-      "Hash": "25b1ecc4d8c790562fccb76d71e56d75"
+      "Hash": "d27a2f6a89def6388fad5b0aae026220"
     },
     "rjson": {
       "Package": "rjson",
