@@ -328,12 +328,12 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
          "DiffExpEnrichAnal" = {
            title <- "Enrichment from differential expression analysis"
            diffAnnot_coExpAnal <- "diffAnnot"
-           from <- "DiffExpAnal"
+           from <- "DiffExp"
          },
          "CoExpEnrichAnal" = {
            title <- "Enrichment from  co-expression analysis"
            diffAnnot_coExpAnal <- "coExpAnnot"
-           from <- "CoExpAnal"
+           from <- "CoExp"
          }
   )
   

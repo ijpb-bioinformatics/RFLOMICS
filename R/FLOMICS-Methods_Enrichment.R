@@ -1,12 +1,21 @@
-######################## ANNOTATION USING CLUSTERPROFILER ########################
+######################## ANNOTATION USING CLUSTERPROFILER ######################
 
 #' @title runAnnotationEnrichment
-#' @description This function performs overrepresentation analysis (ORA) using clusterprofiler functions. It can be used with custom annotation file (via enricher), GO (enrichGO) or KEGG (enrichKEGG) annotations.
-#' @param object An object of class \link{SummarizedExperiment} or \link{MultiAssayExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
-#' @param SE.name name of the experiment to consider if object is a MultiAssayExperiment.
-#' @param nameList name of contrasts (tags or names) from which to extract DE genes if from is DiffExpAnal. 
-#' @param list_args list of arguments to pass to the enrichment function. These arguments must match the ones from the clusterprofiler package. E.g: universe, keytype, pvalueCutoff, qvalueCutoff, etc.
-#' @param from indicates if ListNames are from differential analysis results (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
+#' @description This function performs overrepresentation analysis (ORA) using
+#' clusterprofiler functions. It can be used with custom annotation file
+#' (via enricher), GO (enrichGO) or KEGG (enrichKEGG) annotations.
+#' @param object An object of class \link{SummarizedExperiment} or
+#' \link{MultiAssayExperiment}. It is expected the SE object is produced by
+#' rflomics previous analyses, as it relies on their results.
+#' @param SE.name name of the experiment to consider if object is a
+#' MultiAssayExperiment.
+#' @param nameList name of contrasts (tags or names) from which to extract DE
+#' genes if from is DiffExpAnal.
+#' @param list_args list of arguments to pass to the enrichment function.
+#' These arguments must match the ones from the clusterprofiler package.
+#' E.g: universe, keytype, pvalueCutoff, qvalueCutoff, etc.
+#' @param from indicates if ListNames are from differential analysis results
+#' (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
 #' @param dom.select: is it a custom annotation, GO or KEGG annotations
 #' @return A list of results from clusterprofiler.
 #' @export
@@ -19,7 +28,14 @@ methods::setMethod(
   signature = "SummarizedExperiment",
   definition = function(object,
                         nameList = NULL,
-                        list_args = list(),
+                        list_args = list(
+                          pvalueCutoff = 0.05,
+                          qvalueCutoff = 1,
+                          # minGSSize = 10,
+                          minGSSize = 3,
+                          maxGSSize = 500,
+                          universe = names(object)
+                        ),
                         from = "DiffExp",
                         dom.select = "custom",
                         Domain = "no-domain",
@@ -32,28 +48,28 @@ methods::setMethod(
     EnrichAnal <- list()
     
     if (is.null(object@metadata$DiffExpAnal)) {
-      stop("There is no differential analysis. Please run a differential analysis before running enrichment")
+      stop("There is no differential analysis. Please run a differential 
+           analysis before running enrichment")
     }
     
-    if (toupper(from) %in% toupper(c("DiffExp", "DiffExpAnal", "DiffExpEnrichAnal"))) {
-      from <- "DiffExp"
-    } else {
-      from <- "CoExp"
-    }
+    searchFrom <- as.character(c(1,2)[c(grepl("DIFFEXP", toupper(from)), 
+                                        grepl("COEXP", toupper(from)))])
+    if (length(searchFrom) < 1) searchFrom <- 3
     
-    # "Retrieving the lists of DE entities")
-    switch(from,
-           "DiffExp" = {
+    switch(searchFrom, 
+           "1" = { 
+             from <- "DiffExp"
              contrasts <- NULL
              
-             if (is.null(getValidContrasts(object))) contrasts <- getSelectedContrasts(object)$contrastName
-             else contrasts <- getValidContrasts(object)$contrastName                 
+             if (is.null(getValidContrasts(object))) {
+               contrasts <- getSelectedContrasts(object)$contrastName
+             } else contrasts <- getValidContrasts(object)$contrastName                 
              
              if (!is.null(nameList)) {
                if (isTagName(object, nameList)) nameList <- convertTagToContrast(object, nameList)
                
                contrasts <- intersect(contrasts, nameList)
-             }  
+             }
              
              geneLists <- lapply(contrasts, function(contrastName) {
                row.names(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]])
@@ -61,8 +77,8 @@ methods::setMethod(
              names(geneLists) <- contrasts
              
            },
-           "CoExp" = {
-             
+           "2" = { 
+             from <- "CoExp"   
              namesClust <- names(object@metadata[["CoExpAnal"]][["clusters"]])
              if (!is.null(nameList)) namesClust <- intersect(namesClust, nameList)
              
@@ -70,44 +86,29 @@ methods::setMethod(
                object@metadata[["CoExpAnal"]][["clusters"]][[namClust]]
              })
              names(geneLists) <- namesClust
-           }
-    )
+           },
+           {
+             message("Argument from is detected to be neither DiffExp nor CoExp, 
+                     taking DiffExp results.")
+             from <- "DiffExp"
+           })
     
-    # Checks arguments
     if (dom.select == "custom") {
       if (is.null(annot)) {
         stop("You need an annotation file for a custom enrichment")
-      }
-      if (nrow(annot) < 1) {
-        stop("Your annotation file seems to have 0 lines")
-      }
-      if (length(intersect(c(col_term, col_gene), colnames(annot))) != 2) {
+      }else if (length(intersect(c(col_term, col_gene), colnames(annot))) != 2) {
         stop("The name of columns for gene and term names don't match the ones of the annotation files")
       }
-    }
-    
-    # Change Domain if needed
-    if (is.null(Domain)) {
-      Domain <- "no-domain"
-    }
-    if (!is.null(col_domain) && dom.select == "custom") {
-      if (is.null(annot[[col_domain]])) {
+      if (!is.null(col_domain) && is.null(annot[[col_domain]])) {
         stop("The column you indicated for the domain in your annotation file doesn't seem to exist.")
-      } else {
+      } else if (!is.null(col_domain)) {
         Domain <- unique(annot[[col_domain]])
         Domain <- Domain[!is.na(Domain)]
       }
-    }
-    
-    # common parameters (is this useful ?)
-    if (is.null(list_args$pvalueCutoff)) list_args$pvalueCutoff <- 0.05 # default in clusterprofiler
-    if (is.null(list_args$qvalueCutoff)) list_args$qvalueCutoff <- 1 # no threshold on qvalue (default 0.2)
-    # if(is.null(list_args$minGSSize))    list_args$minGSSize    <- 10 # default in clusterprofiler
-    if (is.null(list_args$minGSSize)) list_args$minGSSize <- 3 # tried for SBML
-    if (is.null(list_args$maxGSSize)) list_args$maxGSSize <- 500 # default in clusterprofiler
-    if (is.null(list_args$universe)) list_args$universe <- names(object)
-    
-    annotation <- annot
+      
+      annotation <- annot
+      
+    } 
     
     # for each list
     results_list <- lapply(names(geneLists), FUN = function(listname) {
@@ -188,11 +189,14 @@ methods::setMethod(
     EnrichAnal[["list_args"]] <- c(EnrichAnal[["list_args"]], list("Domain"=Domain))
     EnrichAnal[["enrichResult"]] <- results_list
     
-    if (from == "DiffExp") {
-      object@metadata[["DiffExpEnrichAnal"]][[dom.select]] <- EnrichAnal
-    } else if (from == "CoExp") {
-      object@metadata[["CoExpEnrichAnal"]][[dom.select]] <- EnrichAnal
-    }
+    switch(from, 
+           "DiffExp" = {
+             object@metadata[["DiffExpEnrichAnal"]][[dom.select]] <- EnrichAnal
+           },
+           "CoExp" = {
+             object@metadata[["CoExpEnrichAnal"]][[dom.select]] <- EnrichAnal
+           }
+    )
     
     return(object)
   }
@@ -207,7 +211,14 @@ methods::setMethod(
   definition = function(object,
                         SE.name,
                         nameList = NULL,
-                        list_args = list(),
+                        list_args = list(
+                          pvalueCutoff = 0.05,
+                          qvalueCutoff = 1,
+                          # minGSSize = 10,
+                          minGSSize = 3,
+                          maxGSSize = 500,
+                          universe = names(object)
+                        ),
                         from = "DiffExp",
                         dom.select = "custom",
                         Domain = "no-domain",
@@ -257,27 +268,22 @@ methods::setMethod(
                         pathway_id = NULL,
                         species = "ath",
                         gene_idtype = "kegg",
-                        from = "DiffExpEnrichAnal",
-                        pvalueCutoff = NULL,
+                        from = "DiffExp",
+                        pvalueCutoff = metadata(object)[["DiffExpEnrichAnal"]][["KEGG"]]$list_args$pvalueCutoff,
                         ...) {
     
     
-    if (toupper(from) %in% toupper(c("DiffExp", "DiffExpAnal", "DiffExpEnrichAnal"))) {
-      from <- "DiffExp"
-    } else {
-      from <- "CoExp"
-    }
-    
-    if (isTagName(object, contrast)) contrast <- convertTagToContrast(object, contrast)
-    
-    if (is.null(pvalueCutoff)) pvalueCutoff <- metadata(object)[[from]][["KEGG"]]$list_args$pvalueCutoff
+    searchFrom <- as.character(c(1,2)[c(grepl("DIFFEXP", toupper(from)), 
+                                        grepl("COEXP", toupper(from)))])
+    if (length(searchFrom) < 1) searchFrom <- 3
     
     log2FC_vect <- NULL
-    # Get the log2FC if appropriate
-    if (from == "DiffExp") {
+    if (searchFrom == 1) {
       log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
       names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
     }
+    
+    if (isTagName(object, contrast)) contrast <- convertTagToContrast(object, contrast)
     
     see_pathview(
       gene.data = log2FC_vect,
@@ -330,25 +336,33 @@ methods::setMethod(
                         node_label = "all",
                         pvalueCutoff = object@metadata$DiffExpEnrichAnal[[ont]]$list_args$pvalueCutoff,
                         ...) {
-    # if from diffExpAnal, then takes the log2FC by default.
-    # -> what if the user want something else printed ?! can modify it through scales ?
-    # if from coexp, then no log2FC
-    
-    # dataPlot the enrichment results for correct ontology and contrast.
     
     # if (isTagName(contrast)) contrast <- convertTagToContrast(object, contrast)
     
-    if (toupper(from) %in% toupper(c("DiffExp", "DiffExpAnal", "DiffExpEnrichAnal"))) {
-      from <- "DiffExp"
-    } else {
-      from <- "CoExp"
-    }
+    searchFrom <- as.character(c(1,2)[c(grepl("DIFFEXP", toupper(from)), 
+                                        grepl("COEXP", toupper(from)))])
+    if (length(searchFrom) < 1) searchFrom <- 3
     
-    if (from == "DiffExp") {
-      dataPlot <- object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult[[contrast]]
-    } else {
-      dataPlot <- object@metadata$CoExpEnrichAnal[[ont]]$enrichResult[[contrast]]
-    }
+    log2FC_vect <- NULL
+    switch(searchFrom, 
+           "1" = { 
+             from <- "DiffExp"
+             dataPlot <- object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult[[contrast]]
+             log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
+             names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
+           },
+           "2" = { 
+             from <- "CoExp"   
+             dataPlot <- object@metadata$CoExpEnrichAnal[[ont]]$enrichResult[[contrast]]
+           },
+           {
+             message("Argument from is detected to be neither DiffExp nor CoExp, 
+                     taking DiffExp results.")
+             from <- "DiffExp"
+             dataPlot <- object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult[[contrast]]  
+             log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]  
+             names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
+           })
     
     if (ont == "GO") {
       if (is.null(Domain)) {
@@ -368,14 +382,6 @@ methods::setMethod(
       }
     }
     
-    
-    log2FC_vect <- NULL
-    # Get the log2FC if appropriate
-    if (from == "DiffExp") {
-      log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
-      names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
-    }
-    
     # Select categories to show
     dataTab <- dataPlot@result[dataPlot@result$p.adjust < pvalueCutoff, ]
     Categories <- dataTab$Description
@@ -388,25 +394,25 @@ methods::setMethod(
     # Create the plot
     type <- tolower(type)
     returnplot <- NULL
-    if (type == "cnetplot") {
-      returnplot <- 
-        cnetplot(dataPlot, showCategory = Categories, color.params = list(foldChange = log2FC_vect), node_label = node_label, ...) +
-        guides(colour = guide_colourbar(title = "log2FC")) +
-        scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) 
-      
-      # )
-    } else if (type == "heatplot") {
-      returnplot <-  
-        heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, ...) +
-        labs(fill = "log2FC") +
-        scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-        theme(axis.text.y = element_text(size = 10))
-      
-    } else if (type == "dotplot") {
-      returnplot <- tryCatch(dotplot(dataPlot, showCategory = Categories, ...),
-                             error = function(e) e,
-                             warnings = function(w) w)
-    }
+    
+    returnplot <-  switch(type, 
+                          "cnetplot" = {
+                            cnetplot(dataPlot, showCategory = Categories,
+                                     color.params = list(foldChange = log2FC_vect), 
+                                     node_label = node_label, ...) +
+                              guides(colour = guide_colourbar(title = "log2FC")) +
+                              scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) 
+                          },
+                          "heatplot" = { 
+                            heatplot(dataPlot, showCategory = Categories, foldChange = log2FC_vect, ...) +
+                              labs(fill = "log2FC") +
+                              scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+                              theme(axis.text.y = element_text(size = 10))},
+                          {
+                            tryCatch(dotplot(dataPlot, showCategory = Categories, ...),
+                                     error = function(e) e,
+                                     warnings = function(w) w)
+                          })
     
     return(returnplot)
   }
@@ -442,7 +448,7 @@ methods::setMethod(
                         matrixType = "GeneRatio",
                         nClust = NULL,
                         ...){
-
+    
     allData <- switch(toupper(from), 
                       "DIFFEXP"           = { object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult },
                       "DIFFEXPANAL"       = { object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult },

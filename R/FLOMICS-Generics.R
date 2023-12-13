@@ -168,7 +168,14 @@ methods::setGeneric(
   name = "runAnnotationEnrichment",
   def  = function(object,
                   nameList = NULL,
-                  list_args = list(),
+                  list_args = list(
+                    pvalueCutoff = 0.05,
+                    qvalueCutoff = 1,
+                    # minGSSize = 10,
+                    minGSSize = 3,
+                    maxGSSize = 500,
+                    universe = names(object)
+                  ),
                   from = "DiffExpAnal",
                   dom.select = "custom",
                   Domain = "no-domain",
