@@ -58,7 +58,9 @@ LoadOmicsData <- function(input, output, session, rea.values){
                                      ExpDesign  = NULL, 
                                      FactorList = NULL, 
                                      dataPath   = NULL, # chemin  
-                                     omicsData  = NULL, omicsNames = NULL, omicsTypes = NULL)
+                                     omicsData  = NULL,
+                                     omicsNames = NULL,
+                                     omicsTypes = NULL)
   
   observe({
     
@@ -77,6 +79,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
   # ---- Datapath depending on the button ----
   # load user own metadata file
   observeEvent(input$Experimental.Design.file, {
+    rea.values$exampleData <- FALSE
     local.rea.values$dataPath <- NULL
     local.rea.values$dataPath <- input$Experimental.Design.file$datapath
   })
@@ -86,6 +89,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     local.rea.values$dataPath <- NULL
     local.rea.values$dataPath <- paste0(system.file(package = "RFLOMICS"), 
                                         "/ExamplesFiles/ecoseed/condition.txt")
+    rea.values$exampleData <- TRUE
   })
   
   # ---- Load experimental design ----
@@ -112,7 +116,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     rea.values$datasetDiff   <- NULL
     
     session$userData$FlomicsMultiAssay      <- NULL
-    #session$userData$Design <- NULL
     
     print("# 1- Load data ...")
     
@@ -323,6 +326,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
     local.rea.values$omicsNames <- c(local.rea.values$omicsNames, "proteomics.set3")
     local.rea.values$omicsTypes <- c(local.rea.values$omicsTypes, "proteomics")
     
+    
+    rea.values$exampleData <- TRUE
   })
   
   # ---- Load Data button observe ---- 
@@ -414,6 +419,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
     local.rea.values$omicsNames <- omicsNames
     local.rea.values$omicsTypes <- omicsTypes
 
+    rea.values$exampleData <- FALSE
+    
   })
 
   # ---- observe Event load Data ----
@@ -435,7 +442,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     rea.values$Contrasts.Sel <- NULL
 
     session$userData$FlomicsMultiAssay <- NULL
-    #session$userData$Design   <- NULL
     
     local.rea.values$plots <- FALSE
     # #updateTabItems(session, "tabs", selected = "importData")
@@ -491,7 +497,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
                     (length(stringr::str_subset(dF.Type.dFac, "batch")) %in% 1:2), message="") })
     
     #### load omics data
-    #inputs <- list()
     #### list of omic data laoded from interface
     rea.values$validate.status <- 0
    
@@ -516,23 +521,11 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     # => completeness
     #### check experimental design : experimental design must be a complete and balanced.
-    
     print(paste0("#    => Design Completeness Check..."))
-    
-    #local.rea.values$completeCheckRes <-  CheckExpDesignCompleteness(object = session$userData$FlomicsMultiAssay)
     
     # plot : ok
     local.rea.values$plots <- TRUE
     
-    # if (isTRUE(local.rea.values$completeCheckRes[["error"]])){
-    #   showModal(modalDialog(title = "Error message", "One of loaded datasets have no complete design..."))
-    #   rea.values$validate.status <- 1
-    # }
-
-    # # continue only if message is true or warning
-    # validate({ need(!isTRUE(local.rea.values$completeCheckRes[["error"]]), message = "One of loaded datasets have no complete design...") })
-    
-    # 
     rea.values$datasetList <- session$userData$FlomicsMultiAssay@metadata$omicList
 
     rea.values$loadData <- TRUE
@@ -573,38 +566,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
     box(width = 12, status = "warning", title = "Dataset(s) overview", solidHeader = TRUE,
         renderPlot( isolate({  Datasets_overview_plot(session$userData$FlomicsMultiAssay) })),
     )
-    #}
   })
   
-
-  # # completeness check
-  # output$CompletenessUI <- renderUI({
-  #   
-  #   if (local.rea.values$plots == FALSE) return()
-  #   
-  #   print(paste0("#    => Completeness plot..."))
-  #   
-  #   box( width = 6,  status = "warning", title = "Completeness check", solidHeader = TRUE,
-  #        
-  #        # hr(),
-  #        tags$div(
-  #          HTML("<em>You <b>must</b> have a <b>complete design</b> (i.e. all possible combinations of factor's levels).
-  #                    <b>Balanced design</b> (presence of the same number of replicates for all
-  #                    possible combinations) is not required  but advised.
-  #                    You <b>must</b> also have at least one biological factor and 2 replicates</em>")
-  #        ),
-  #        hr(),
-  #        # plot of count per condition
-  #        # renderPrint(
-  #        #    isolate({ 
-  #        #      local.rea.values$completeCheckRes[["summary"]]
-  #        #    })
-  #        # )
-  #        DT::renderDataTable( DT::datatable(data = local.rea.values$completeCheckRes[["summary"]],
-  #                                           options = list( pageLength = 5, autoWidth = TRUE, dom = 'tp' )))
-  #   )
-  # })
-  # 
   return(input)
 }
 

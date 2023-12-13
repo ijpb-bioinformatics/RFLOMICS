@@ -28,10 +28,12 @@ rflomicsServer <- function(input, output, session) {
     resetAna = FALSE,
     report = FALSE,
     
-    datasetList  = NULL,
-    contrastList = NULL,
-    Contrasts.Sel= NULL,
-    datasetDiff  = NULL,
+    exampleData = NULL,
+    
+    datasetList   = NULL,
+    contrastList  = NULL,
+    Contrasts.Sel = NULL,
+    datasetDiff   = NULL,
     datasetProcess  = NULL
   )
   
@@ -295,7 +297,7 @@ rflomicsServer <- function(input, output, session) {
                     tabPanel("Annotation Enrichment",
                              tags$br(),
                              tags$br(),
-                             .annotationEnrichmentClusterProfUI(paste0("metabolomics",i))
+                             .annotationEnrichmentUI(paste0("metabolomics",i))
                     )
                   )
                 })},

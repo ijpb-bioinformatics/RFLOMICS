@@ -2,6 +2,7 @@
 # Part6 : ANNOTAION
 ##########################################
 
+
 # ---- Module display results after enrichement is completed -----
 #' @title module_runEnrichment_UI
 #' @keywords internal
@@ -108,14 +109,14 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
             tabPanel("Heatplot",
                      br(),
                      renderUI({
-                       outheat <- .doNotSpeak({  plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
-                                                         contrast = listname, 
-                                                         from = from,
-                                                         type = "heatplot",
-                                                         ont = dom.select,
-                                                         Domain = input[[paste0(listname, "-domain")]],
-                                                         showCategory = input[[paste0(listname, "-top.over")]],
-                                                         searchExpr = input[[paste0(listname, "-grep")]])})
+                       outheat <- .doNotSpeak(plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
+                                                      contrast = listname, 
+                                                      from = from,
+                                                      type = "heatplot",
+                                                      ont = dom.select,
+                                                      Domain = input[[paste0(listname, "-domain")]],
+                                                      showCategory = input[[paste0(listname, "-top.over")]],
+                                                      searchExpr = input[[paste0(listname, "-grep")]]))
                        
                        
                        if (is(outheat, "gg")) renderPlot({ 
@@ -141,15 +142,15 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
                            node_label_arg <- "category"
                          }
                          
-                         outcnet <- .doNotSpeak({plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
-                                                         contrast = listname, 
-                                                         from = from,
-                                                         type = "cnetplot",
-                                                         ont = dom.select,
-                                                         Domain = input[[paste0(listname, "-domain")]],
-                                                         showCategory = input[[paste0(listname, "-top.over")]],
-                                                         searchExpr = input[[paste0(listname, "-grep")]],
-                                                         node_label = node_label_arg)})
+                         outcnet <- .doNotSpeak(plotCPR(session$userData$FlomicsMultiAssay[[dataset]],
+                                                        contrast = listname, 
+                                                        from = from,
+                                                        type = "cnetplot",
+                                                        ont = dom.select,
+                                                        Domain = input[[paste0(listname, "-domain")]],
+                                                        showCategory = input[[paste0(listname, "-top.over")]],
+                                                        searchExpr = input[[paste0(listname, "-grep")]],
+                                                        node_label = node_label_arg))
                          
                          if (is(outcnet, "gg")) renderPlot({ 
                            warnOpt <- getOption("warn")
@@ -178,11 +179,11 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
                        tags$br(),
                        DT::renderDataTable({
                          
-                         dataPlot <-  getEnrichRes(object = session$userData$FlomicsMultiAssay[[dataset]],
-                                                   from = list.source,
-                                                   contrast = listname,
-                                                   ont = dom.select,
-                                                   domain = input[[paste0(listname, "-domain")]])
+                         dataPlot <- getEnrichRes(object = session$userData$FlomicsMultiAssay[[dataset]],
+                                                  from = list.source,
+                                                  contrast = listname,
+                                                  ont = dom.select,
+                                                  domain = input[[paste0(listname, "-domain")]])
                          
                          pvalue <- getEnrichPvalue(session$userData$FlomicsMultiAssay[[dataset]], from = list.source, dom = dom.select)
                          DT::datatable(dataPlot@result[dataPlot@result$p.adjust <  pvalue,], # sometimes it prints non significant results...
@@ -676,7 +677,7 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
   
   output$AnnotParamCustom_UI <-   renderUI({
     
-    if(rea.values[[dataset]]$diffValid == FALSE) return()
+    if (rea.values[[dataset]]$diffValid == FALSE) return()
     
     ## gene lists
     data.SE <- session$userData$FlomicsMultiAssay[[dataset]]
@@ -698,7 +699,9 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
         hr(),
         
         fileInput(inputId = ns("annotationFileCPR"), label = "Annotation file:",
-                  accept  = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
+                  accept  = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),  
+        
+        uiOutput(ns("useExampleFile_UI")),
         
         uiOutput(ns("selectColumnsFromCustomAnnot")),
         
@@ -706,16 +709,59 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
         numericInput(inputId = ns("pValue_custom"), label = "Adjusted p-value threshold:", value = 0.01 , min = 0, max = 1, step = 0.01),
         
         # run enrichment
-        actionButton(inputId = ns("runEnrich_CPR_Custom"), label = "Run")
+        actionButton(inputId = ns("runEnrich_CPR_Custom"), label = "Run") 
     )
   })
   
-  # ---- if custom annoattion ----
-  observeEvent(input$annotationFileCPR$datapath, {
+  # ---- Custom annotation and example annotation file button ----
+  observeEvent(rea.values$exampleData, {
+    
+    output$useExampleFile_UI <- renderUI({
+      if (!rea.values$exampleData) return()
+      
+      actionButton(inputId = ns("useExampleFile"), 
+                   label = "Use example annotation file")
+    })
+    
+  })
+  
+  # ---- if custom annotation ----
+  observeEvent(input$useExampleFile, {
+    local.rea.values$dataPathAnnot <- NULL
+    local.rea.values$dataPathAnnot <- paste0(system.file(package = "RFLOMICS"), 
+                                             "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt")
     
     output$selectColumnsFromCustomAnnot <- renderUI({
       
-      annotation <- data.table::fread(file = input$annotationFileCPR$datapath, sep = "\t", header = TRUE)
+      annotation <- data.table::fread(file = local.rea.values$dataPathAnnot, sep = "\t", header = TRUE)
+      
+      column(width = 12,
+             
+             # Select the right columns for the analysis
+             pickerInput(inputId = ns("col_geneName"), label = "Genes ID: *",
+                         choices = "Gene stable ID",
+                         selected = "Gene stable ID"),
+             pickerInput(inputId = ns("col_termID"), label = "Terms IDs: *",
+                         choices = "GO term accession",
+                         selected = "GO term accession"),
+             pickerInput(inputId = ns("col_termName"), label = "Term Names:",
+                         choices = "GO term name",
+                         selected = "GO term name"),
+             pickerInput(inputId = ns("col_domain"), label = "Domain:",
+                         choices = "GO domain",
+                         selected = "GO domain"),
+      )
+    })
+    
+  })
+  
+  observeEvent(input$annotationFileCPR, {
+    local.rea.values$dataPathAnnot <- NULL
+    local.rea.values$dataPathAnnot <- input$annotationFileCPR$datapath
+    
+    output$selectColumnsFromCustomAnnot <- renderUI({
+      
+      annotation <- data.table::fread(file = local.rea.values$dataPathAnnot, sep = "\t", header = TRUE)
       
       column(width = 12,
              
@@ -1096,11 +1142,11 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
     
     # check param
     ## if custom annotation file 
-    if (is.null(input$annotationFileCPR$datapath)) {
+    if (is.null(local.rea.values$dataPathAnnot)) {
       showModal(modalDialog(title = "Error message", "load custom annotation file."))
     }
     validate({ 
-      need(!is.null(input$annotationFileCPR$datapath), 
+      need(!is.null(local.rea.values$dataPathAnnot), 
            message = "load custom annotation file.")
     })
     # Check some custom elements and annotation file
@@ -1113,7 +1159,6 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
            message = "Please choose columns names for the gene names/ID and the ontology terms ID!")
     })
     
-    
     # set param
     dom.select <- "custom"
     Domain <- NULL
@@ -1123,7 +1168,7 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
     list_args[["pvalueCutoff"]] <- input$pValue_custom
     list_args[["minGSSize"]] <- 10
     
-    annotation <- data.table::fread(file = input$annotationFileCPR$datapath, sep = "\t", header = TRUE)
+    annotation <- data.table::fread(file = local.rea.values$dataPathAnnot, sep = "\t", header = TRUE)
     listCharRm <- c(".", " ", "")
     annotation2 <- list()
     
