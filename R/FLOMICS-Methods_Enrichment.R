@@ -93,6 +93,8 @@ methods::setMethod(
              from <- "DiffExp"
            })
     
+    if (is.null(Domain)) Domain <- "no-domain"
+    
     if (dom.select == "custom") {
       if (is.null(annot)) {
         stop("You need an annotation file for a custom enrichment")
