@@ -256,7 +256,6 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                        GaussianModel  = input$GaussianModel, 
                        clustermq      = input$clustermqCoseq,
                        scale          = input$scale)
-    param.list <<- param.list
     
     if(check_run_coseq_execution(session$userData$FlomicsMultiAssay[[dataset]], param.list) == FALSE) return()
 
@@ -309,8 +308,6 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     #---- progress bar ----#
     progress$inc(1, detail = paste("Doing part ", 100,"%", sep=""))
     #----------------------#
-    
-    toto <<- session$userData$FlomicsMultiAssay
     
     rea.values[[dataset]]$coExpAnal  <- TRUE
     
