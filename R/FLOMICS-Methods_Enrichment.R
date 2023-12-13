@@ -16,7 +16,7 @@
 #' E.g: universe, keytype, pvalueCutoff, qvalueCutoff, etc.
 #' @param from indicates if ListNames are from differential analysis results
 #' (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
-#' @param dom.select: is it a custom annotation, GO or KEGG annotations
+#' @param ontology: is it a custom annotation, GO or KEGG annotations
 #' @return A list of results from clusterprofiler.
 #' @export
 #' @importFrom dplyr filter select
@@ -37,8 +37,8 @@ methods::setMethod(
                           universe = names(object)
                         ),
                         from = "DiffExp",
-                        dom.select = "custom",
-                        Domain = "no-domain",
+                        ontology = "custom",
+                        domain = "no-domain",
                         col_term = "term",
                         col_gene = "gene",
                         col_name = "name",
@@ -93,9 +93,9 @@ methods::setMethod(
              from <- "DiffExp"
            })
     
-    if (is.null(Domain)) Domain <- "no-domain"
+    if (is.null(domain)) domain <- "no-domain"
     
-    if (dom.select == "custom") {
+    if (ontology == "custom") {
       if (is.null(annot)) {
         stop("You need an annotation file for a custom enrichment")
       }else if (length(intersect(c(col_term, col_gene), colnames(annot))) != 2) {
@@ -104,8 +104,8 @@ methods::setMethod(
       if (!is.null(col_domain) && is.null(annot[[col_domain]])) {
         stop("The column you indicated for the domain in your annotation file doesn't seem to exist.")
       } else if (!is.null(col_domain)) {
-        Domain <- unique(annot[[col_domain]])
-        Domain <- Domain[!is.na(Domain)]
+        domain <- unique(annot[[col_domain]])
+        domain <- domain[!is.na(domain)]
       }
       
       annotation <- annot
@@ -115,11 +115,11 @@ methods::setMethod(
     # for each list
     results_list <- lapply(names(geneLists), FUN = function(listname) {
       list_args$gene <- geneLists[[listname]]
-      results_ont <- lapply(Domain, FUN = function(ont) {
-        switch(dom.select,
+      results_ont <- lapply(domain, FUN = function(dom) {
+        switch(ontology,
                "GO" = {
                  func_to_use <- "enrichGO"
-                 list_args$ont <- ont
+                 list_args$ontology<- dom
                },
                "KEGG" = {
                  func_to_use <- "enrichKEGG"
@@ -130,8 +130,8 @@ methods::setMethod(
                  list_args$TERM2NAME <- NA
                  annotation2 <- annotation
                  
-                 if (ont != "no-domain") {
-                   annotation2 <- filter(annotation, get(col_domain) == ont)
+                 if (dom != "no-domain") {
+                   annotation2 <- filter(annotation, get(col_domain) == dom)
                  }
                  
                  list_args$TERM2GENE <- list("term" = annotation2[[col_term]], "gene" = annotation2[[col_gene]])
@@ -144,7 +144,7 @@ methods::setMethod(
         )
         do.call(getFromNamespace(func_to_use, ns = "clusterProfiler"), list_args)
       })
-      names(results_ont) <- Domain
+      names(results_ont) <- domain
       return(results_ont)
     })
     names(results_list) <- names(geneLists)
@@ -154,23 +154,23 @@ methods::setMethod(
     for (listname in names(results_list)) {
       # TODO why is it a for?!
       
-      for (ont in names(results_list[[listname]])) {
-        if (!is.null(results_list[[listname]][[ont]])) {
-          res <- results_list[[listname]][[ont]]@result
+      for (dom in names(results_list[[listname]])) {
+        if (!is.null(results_list[[listname]][[dom]])) {
+          res <- results_list[[listname]][[dom]]@result
           res.n <- nrow(res[res$p.adjust < list_args$pvalueCutoff, ])
-          overview_list[[listname]][[ont]] <- res.n
+          overview_list[[listname]][[dom]] <- res.n
           
           if (res.n == 0) {
-            results_list[[listname]][[ont]] <- NULL
+            results_list[[listname]][[dom]] <- NULL
           } else {
-            term.list[[ont]][[listname]] <- data.frame(
+            term.list[[dom]][[listname]] <- data.frame(
               term = row.names(res[res$p.adjust < list_args$pvalueCutoff, ]),
               bin = rep(1, res.n)
             )
-            names(term.list[[ont]][[listname]]) <- c("term", listname)
+            names(term.list[[dom]][[listname]]) <- c("term", listname)
           }
         } else {
-          results_list[[listname]][[ont]] <- NULL
+          results_list[[listname]][[dom]] <- NULL
         }
       }
     }
@@ -188,15 +188,15 @@ methods::setMethod(
     }
     
     EnrichAnal[["list_args"]] <- list_args[names(list_args) %in% c("universe", "keyType", "pvalueCutoff", "qvalueCutoff", "OrgDb", "organism")]
-    EnrichAnal[["list_args"]] <- c(EnrichAnal[["list_args"]], list("Domain"=Domain))
+    EnrichAnal[["list_args"]] <- c(EnrichAnal[["list_args"]], list("domain" = domain))
     EnrichAnal[["enrichResult"]] <- results_list
     
     switch(from, 
            "DiffExp" = {
-             object@metadata[["DiffExpEnrichAnal"]][[dom.select]] <- EnrichAnal
+             object@metadata[["DiffExpEnrichAnal"]][[ontology]] <- EnrichAnal
            },
            "CoExp" = {
-             object@metadata[["CoExpEnrichAnal"]][[dom.select]] <- EnrichAnal
+             object@metadata[["CoExpEnrichAnal"]][[ontology]] <- EnrichAnal
            }
     )
     
@@ -222,8 +222,8 @@ methods::setMethod(
                           universe = names(object)
                         ),
                         from = "DiffExp",
-                        dom.select = "custom",
-                        Domain = "no-domain",
+                        ontology = "custom",
+                        domain = "no-domain",
                         col_term = "term",
                         col_gene = "gene",
                         col_name = "name",
@@ -234,8 +234,8 @@ methods::setMethod(
                                                  nameList = nameList,
                                                  list_args = list_args,
                                                  from = from,
-                                                 dom.select = dom.select,
-                                                 Domain = Domain, 
+                                                 ontology = ontology,
+                                                 domain = domain, 
                                                  col_term = col_term,
                                                  col_gene = col_gene,
                                                  col_domain = col_domain,
@@ -249,8 +249,8 @@ methods::setMethod(
 #' @description TODO
 #' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param contrast the name of the contrast to consider. For Co expression analysis, it is expected to be one of "cluster.1", "cluster.2", etc.
-#' @param ont the ontology (GO, KEGG or custom)
-#' @param Domain if the ontology is GO, expect one of BP, MF or CC. Default is NULL.
+#' @param ontologythe ontology (GO, KEGG or custom)
+#' @param domain if the ontology is GO, expect one of BP, MF or CC. Default is NULL.
 #' @param from what type of analysis to consider? One of 'DiffExpAnal' or 'CoExpAnal'
 #' @param type type of plot. Define the function used inside. One of dotplot, heatplot or cnetplot.
 #' @param showCategory max number of terms to show.
@@ -309,8 +309,8 @@ methods::setMethod(
 #' @description TODO
 #' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param contrast the name of the contrast to consider. For Co expression analysis, it is expected to be one of "cluster.1", "cluster.2", etc.
-#' @param ont the ontology (GO, KEGG or custom)
-#' @param Domain if the ontology is GO, expect one of BP, MF or CC. Default is NULL.
+#' @param ontologythe ontology (GO, KEGG or custom)
+#' @param domain if the ontology is GO, expect one of BP, MF or CC. Default is NULL.
 #' @param from what type of analysis to consider? One of 'DiffExpAnal' or 'CoExpAnal'
 #' @param type type of plot. Define the function used inside. One of dotplot, heatplot or cnetplot.
 #' @param showCategory max number of terms to show.
@@ -329,14 +329,14 @@ methods::setMethod(
   signature = "SummarizedExperiment",
   definition = function(object,
                         contrast,
-                        ont,
-                        Domain = NULL,
+                        ontology,
+                        domain = NULL,
                         from = "DiffExp",
                         type = "dotplot",
                         showCategory = 15,
                         searchExpr = "",
                         node_label = "all",
-                        pvalueCutoff = object@metadata$DiffExpEnrichAnal[[ont]]$list_args$pvalueCutoff,
+                        pvalueCutoff = object@metadata$DiffExpEnrichAnal[[ontology]]$list_args$pvalueCutoff,
                         ...) {
     
     # if (isTagName(contrast)) contrast <- convertTagToContrast(object, contrast)
@@ -349,38 +349,38 @@ methods::setMethod(
     switch(searchFrom, 
            "1" = { 
              from <- "DiffExp"
-             dataPlot <- object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult[[contrast]]
+             dataPlot <- object@metadata$DiffExpEnrichAnal[[ontology]]$enrichResult[[contrast]]
              log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
              names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
            },
            "2" = { 
              from <- "CoExp"   
-             dataPlot <- object@metadata$CoExpEnrichAnal[[ont]]$enrichResult[[contrast]]
+             dataPlot <- object@metadata$CoExpEnrichAnal[[ontology]]$enrichResult[[contrast]]
            },
            {
              message("Argument from is detected to be neither DiffExp nor CoExp, 
                      taking DiffExp results.")
              from <- "DiffExp"
-             dataPlot <- object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult[[contrast]]  
+             dataPlot <- object@metadata$DiffExpEnrichAnal[[ontology]]$enrichResult[[contrast]]  
              log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]  
              names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
            })
     
-    if (ont == "GO") {
-      if (is.null(Domain)) {
-        stop("Ontology is GO, non null Domain (BP, CC or MF) is expected.")
+    if (ontology == "GO") {
+      if (is.null(domain)) {
+        stop("Ontology is GO, non null domain (BP, CC or MF) is expected.")
       } else {
-        dataPlot <- dataPlot[[Domain]]
+        dataPlot <- dataPlot[[domain]]
       }
-    } else if (ont == "custom" || ont == "KEGG") {
-      if (is.null(Domain)) {
-        Domain <- "no-domain"
+    } else if (ontology== "custom" || ontology == "KEGG") {
+      if (is.null(domain)) {
+        domain <- "no-domain"
       }
       
-      if (!Domain %in% names(dataPlot)) {
-        stop("Domain is expected to be one of ", paste(names(dataPlot), collapse = ","))
+      if (!domain %in% names(dataPlot)) {
+        stop("domain is expected to be one of ", paste(names(dataPlot), collapse = ","))
       } else {
-        dataPlot <- dataPlot[[Domain]]
+        dataPlot <- dataPlot[[domain]]
       }
     }
     
@@ -426,7 +426,7 @@ methods::setMethod(
 #' @description TODO
 #' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param from indicates if the enrichment results are taken from differential analysis results (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
-#' @param ont is it a custom annotation, GO or KEGG annotations
+#' @param ontology is it a custom annotation, GO or KEGG annotations
 #' @param domain domain from the ontology (eg GO has three domains, BP, CC and MF)
 #' @param matrixType Heatmap matrix to plot, one of GeneRatio, p.adjust or presence.
 #' @param nClust number of separate cluster to plot on the heatmap, based on the clustering. 
@@ -445,27 +445,27 @@ methods::setMethod(
   signature = "SummarizedExperiment",
   definition = function(object, 
                         from = "DiffExp", 
-                        ont = NULL, 
+                        ontology = NULL, 
                         domain = "no-domain",
                         matrixType = "GeneRatio",
                         nClust = NULL,
                         ...){
     
     allData <- switch(toupper(from), 
-                      "DIFFEXP"           = { object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult },
-                      "DIFFEXPANAL"       = { object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult },
-                      "DIFFEXPENRICHANAL" = { object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult },
-                      "COEXP"             = { object@metadata$CoExpEnrichAnal[[ont]]$enrichResult   },
-                      "COEXPANAL"         = { object@metadata$CoExpEnrichAnal[[ont]]$enrichResult   },
-                      "COEXPENRICHANAL"   = { object@metadata$CoExpEnrichAnal[[ont]]$enrichResult   },
+                      "DIFFEXP"           = { object@metadata$DiffExpEnrichAnal[[ontology]]$enrichResult },
+                      "DIFFEXPANAL"       = { object@metadata$DiffExpEnrichAnal[[ontology]]$enrichResult },
+                      "DIFFEXPENRICHANAL" = { object@metadata$DiffExpEnrichAnal[[ontology]]$enrichResult },
+                      "COEXP"             = { object@metadata$CoExpEnrichAnal[[ontology]]$enrichResult   },
+                      "COEXPANAL"         = { object@metadata$CoExpEnrichAnal[[ontology]]$enrichResult   },
+                      "COEXPENRICHANAL"   = { object@metadata$CoExpEnrichAnal[[ontology]]$enrichResult   },
                       {
                         message("Argument from is detected to be neither DiffExp nor CoExp, 
                      taking DiffExp results.")
-                        allData <- object@metadata$DiffExpEnrichAnal[[ont]]$enrichResult
+                        allData <- object@metadata$DiffExpEnrichAnal[[ontology]]$enrichResult
                       })
     
     if (length(allData) == 0) {
-      stop("The selected ontology ", ont, " does not seem to exist in the object.")
+      stop("The selected ontology ", ontology, " does not seem to exist in the object.")
     }
     
     allData <- allData[lengths(allData) > 0]
@@ -496,7 +496,7 @@ methods::setMethod(
     extract <- extract[extract$ID %in% toKeep,]
     
     # handling description and ID
-    extract$ID <- switch(ont, 
+    extract$ID <- switch(ontology, 
                          "GO" = { 
                            if (!identical(extract$ID, extract$Description)) {
                              paste0("(", extract$ID, ")", "\n", extract$Description)

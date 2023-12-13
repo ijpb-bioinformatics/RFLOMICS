@@ -25,7 +25,7 @@ module_runEnrichment_UI <- function(id){
 #' @importFrom RCurl url.exists
 #' @keywords internal
 #' @noRd
-module_runEnrichment <- function(input, output, session, dataset, dom.select, list.source, rea.values, local.rea.values){
+module_runEnrichment <- function(input, output, session, dataset, selectedOnt, list.source, rea.values, local.rea.values){
   
   ns <- session$ns
   
@@ -45,9 +45,9 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
   output$summary <- renderUI({
     
     if (rea.values[[dataset]][[diffAnnot_coExpAnal]] == FALSE || 
-        is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[list.source]][[dom.select]])) return()
+        is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[list.source]][[selectedOnt]])) return()
     
-    results <- session$userData$FlomicsMultiAssay[[dataset]]@metadata[[list.source]][[dom.select]]
+    results <- session$userData$FlomicsMultiAssay[[dataset]]@metadata[[list.source]][[selectedOnt]]
     
     if (is.null(results[["summary"]])) {
       
@@ -65,13 +65,13 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
   output$AnnotResults <- renderUI({
     
     if (rea.values[[dataset]][[diffAnnot_coExpAnal]] == FALSE || 
-        is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[list.source]][[dom.select]][["summary"]])) return()
+        is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[list.source]][[selectedOnt]][["summary"]])) return()
     
     #foreach genes list selected (contrast)
-    lapply(names(getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], from = list.source, ont = dom.select)), function(listname) {
+    lapply(names(getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], from = list.source, ont = selectedOnt)), function(listname) {
       
-      if (length(getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], from = list.source, ont = dom.select, contrast = listname)) != 0) {
-        if (sum(unlist(sumORA(session$userData$FlomicsMultiAssay[[dataset]], from = list.source, ont = dom.select)[-1]), na.rm = TRUE) == 0) {
+      if (length(getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], from = list.source, ont = selectedOnt, contrast = listname)) != 0) {
+        if (sum(unlist(sumORA(session$userData$FlomicsMultiAssay[[dataset]], from = list.source, ont = selectedOnt)[-1]), na.rm = TRUE) == 0) {
           
           fluidRow(
             box(width = 12, title = paste0(listname, ": 0 enriched terms found"), status = "danger")
@@ -79,7 +79,7 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
         }
         else{
           
-          choices <- names(getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], from = list.source, contrast = listname, ont = dom.select))
+          choices <- names(getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], from = list.source, contrast = listname, ont = selectedOnt))
           
           tabPanel.list <- list(
             # ---- Tab Panel : dotPlot : ----
@@ -90,8 +90,8 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
                                                       contrast = listname, 
                                                       from = from,
                                                       type = "dotplot",
-                                                      ont = dom.select,
-                                                      Domain = input[[paste0(listname, "-domain")]],
+                                                      ontology = selectedOnt,
+                                                      domain = input[[paste0(listname, "-domain")]],
                                                       showCategory = input[[paste0(listname, "-top.over")]],
                                                       searchExpr = input[[paste0(listname, "-grep")]])
                        })
@@ -113,8 +113,8 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
                                                       contrast = listname, 
                                                       from = from,
                                                       type = "heatplot",
-                                                      ont = dom.select,
-                                                      Domain = input[[paste0(listname, "-domain")]],
+                                                      ontology = selectedOnt,
+                                                      domain = input[[paste0(listname, "-domain")]],
                                                       showCategory = input[[paste0(listname, "-top.over")]],
                                                       searchExpr = input[[paste0(listname, "-grep")]]))
                        
@@ -146,8 +146,8 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
                                                         contrast = listname, 
                                                         from = from,
                                                         type = "cnetplot",
-                                                        ont = dom.select,
-                                                        Domain = input[[paste0(listname, "-domain")]],
+                                                        ontology = selectedOnt,
+                                                        domain = input[[paste0(listname, "-domain")]],
                                                         showCategory = input[[paste0(listname, "-top.over")]],
                                                         searchExpr = input[[paste0(listname, "-grep")]],
                                                         node_label = node_label_arg))
@@ -182,10 +182,10 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
                          dataPlot <- getEnrichRes(object = session$userData$FlomicsMultiAssay[[dataset]],
                                                   from = list.source,
                                                   contrast = listname,
-                                                  ont = dom.select,
+                                                  ont = selectedOnt,
                                                   domain = input[[paste0(listname, "-domain")]])
                          
-                         pvalue <- getEnrichPvalue(session$userData$FlomicsMultiAssay[[dataset]], from = list.source, dom = dom.select)
+                         pvalue <- getEnrichPvalue(session$userData$FlomicsMultiAssay[[dataset]], from = list.source, dom = selectedOnt)
                          DT::datatable(dataPlot@result[dataPlot@result$p.adjust <  pvalue,], # sometimes it prints non significant results...
                                        rownames = FALSE,
                                        options = list(pageLength = 5, lengthMenu = c(5, 10, 15, 20), scrollX = TRUE))
@@ -198,12 +198,12 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
           )# TabsetPanel
           
           # ---- Tab Panel : only for KEGG, pathview : ----
-          if (dom.select == "KEGG") {
+          if (selectedOnt == "KEGG") {
             data <-   getEnrichRes(object = session$userData$FlomicsMultiAssay[[dataset]],
                                    contrast = listname, from = list.source,
                                    ont = "KEGG")[["no-domain"]]@result
             
-            pvalue <- getEnrichPvalue(session$userData$FlomicsMultiAssay[[dataset]], from = list.source, dom = dom.select)
+            pvalue <- getEnrichPvalue(session$userData$FlomicsMultiAssay[[dataset]], from = list.source, dom = selectedOnt)
             mapChoices <- sort(data$ID[data$p.adjust < pvalue])
             
             tabPanel.list <- c(tabPanel.list,
@@ -228,12 +228,6 @@ module_runEnrichment <- function(input, output, session, dataset, dom.select, li
                                                                            data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
                                                      paste0(link_to_map)
                                                    }),
-                                                   
-                                                   # renderUI({
-                                                   #   # Crée le lien URL
-                                                   #   #link_to_map <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?", input[[paste0(listname, "-MAP.sel")]], "/", data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
-                                                   #   #a("Link to interactive map online", href = link_to_map, target = "_blank")
-                                                   # })
                                             )
                                           ),
                                           fluidRow(
@@ -320,7 +314,7 @@ module_compEnrichment_UI <- function(id){
 #' @importFrom grid unit
 #' @keywords internal
 #' @noRd
-module_compEnrichment <- function(input, output, session, dataset, dom.select, list.source, rea.values, local.rea.values){
+module_compEnrichment <- function(input, output, session, dataset, selectedOnt, list.source, rea.values, local.rea.values){
   
   ns <- session$ns
   
@@ -340,27 +334,27 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
   output$CompResults <- renderUI({
     
     if (rea.values[[dataset]][[diffAnnot_coExpAnal]] == FALSE || 
-        is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[list.source]][[dom.select]][["summary"]])) return()
+        is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[list.source]][[selectedOnt]][["summary"]])) return()
     
     # TODO two comparisons at least ?
     # TODO what if nothing to show ?
     
     # Possible domains of ontology:
     possDomain <-  unique(unlist(
-      lapply(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[list.source]][[dom.select]][["enrichResult"]], 
+      lapply(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[list.source]][[selectedOnt]][["enrichResult"]], 
              FUN = function(x) names(x)))) 
     
     # display results
     verticalLayout(
       fluidRow(
-        box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success", title = dom.select,
+        box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success", title = selectedOnt,
             
             fluidRow(
               column(4,
-                     radioButtons(inputId = ns(paste0(dom.select, "-compDomain")), label = "Domain",
+                     radioButtons(inputId = ns(paste0(selectedOnt, "-compDomain")), label = "Domain",
                                   choices = possDomain, selected = possDomain[1], inline = TRUE)),
               column(4,
-                     radioButtons(inputId = ns(paste0(dom.select, "-compType")), label = "Matrix Type",
+                     radioButtons(inputId = ns(paste0(selectedOnt, "-compType")), label = "Matrix Type",
                                   choices = c("presence", "FC", "log2FC"), selected = "FC", inline = TRUE)),
             ),
             
@@ -370,9 +364,9 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
                        
                        outHeatmap <- tryCatch({
                          outHeatmap <-  plotEnrichComp(session$userData$FlomicsMultiAssay[[dataset]],
-                                                       from = from, ont = dom.select, 
-                                                       domain = input[[paste0(dom.select, "-compDomain")]],
-                                                       matrixType = input[[paste0(dom.select, "-compType")]])
+                                                       from = from, ontology = selectedOnt, 
+                                                       domain = input[[paste0(selectedOnt, "-compDomain")]],
+                                                       matrixType = input[[paste0(selectedOnt, "-compType")]])
                        },
                        warning = function(warn) warn,
                        error = function(err) err
@@ -853,7 +847,7 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
     })
     
     # set list args
-    dom.select <- "GO"
+    selectedOnt <- "GO"
     list_args <- list()
     list_args[["OrgDb"]]        <- input$db.select
     list_args[["keyType"]]      <- input$keytype.go
@@ -869,7 +863,7 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
                        CoexpList    = input$GeneList.coseq_GO,
                        OrgDb        = input$db.select,
                        keyType      = input$keytype.go,
-                       Domain       = Domain,
+                       domain       = Domain,
                        pvalueCutoff = input$pValue_GO
     )
     
@@ -883,7 +877,7 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
     progress$inc(1/10, detail = "in progress...")
     #----------------------#
     
-    #local.rea.values[[dom.select]] <- FALSE
+    #local.rea.values[[selectedOnt]] <- FALSE
     
     # ---- Annotation on diff results: ----  
     if (length(input$GeneList.diff_GO) != 0) {
@@ -891,7 +885,7 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
       # run analysis
       print(paste("# 11- Enrichment Analysis of DE lists...", dataset))
       
-      session$userData$FlomicsMultiAssay[[dataset]]@metadata[["DiffExpEnrichAnal"]][[dom.select]] <- NULL
+      session$userData$FlomicsMultiAssay[[dataset]]@metadata[["DiffExpEnrichAnal"]][[selectedOnt]] <- NULL
       
       # run annotation diff analysis
       runRes <- tryCatch({
@@ -900,8 +894,8 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
                                 list_args = list_args, 
                                 from = "DiffExpAnal",
                                 annot = annotation2,
-                                dom.select = dom.select, 
-                                Domain = Domain,
+                                ontology = selectedOnt, 
+                                domain = Domain,
                                 col_domain = col_domain_arg)
       },
       warning = function(war) return(war),
@@ -916,11 +910,11 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
       session$userData$FlomicsMultiAssay[[dataset]] <-  runRes
       rea.values[[dataset]]$diffAnnot <- TRUE
       shiny::callModule(module  = module_runEnrichment, id = "GO_DiffExpEnrichAnal", dataset = dataset,
-                        dom.select = "GO", 
+                        selectedOnt = "GO", 
                         list.source = "DiffExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       shiny::callModule(module  = module_compEnrichment, id = "GO_CompDiffExp", dataset = dataset,
-                        dom.select = "GO", 
+                        selectedOnt = "GO", 
                         list.source = "DiffExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
     }
@@ -935,7 +929,7 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
       # run analysis
       print(paste("# 11- Enrichment Analysis of clusters...", dataset))
       
-      session$userData$FlomicsMultiAssay[[dataset]]@metadata[["CoExpEnrichAnal"]][[dom.select]]   <- NULL
+      session$userData$FlomicsMultiAssay[[dataset]]@metadata[["CoExpEnrichAnal"]][[selectedOnt]]   <- NULL
       
       runResCo <- tryCatch({
         session$userData$FlomicsMultiAssay[[dataset]] <-  
@@ -944,8 +938,8 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
                                   list_args = list_args, 
                                   from = "CoExpAnal",
                                   annot = annotation2,
-                                  dom.select = dom.select, 
-                                  Domain = Domain,
+                                  ontology = selectedOnt, 
+                                  domain = Domain,
                                   col_domain = col_domain_arg)
         
       },
@@ -961,11 +955,11 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
       session$userData$FlomicsMultiAssay[[dataset]] <-  runResCo
       rea.values[[dataset]]$coExpAnnot <- TRUE
       shiny::callModule(module  = module_runEnrichment, id = "GO_CoExpEnrichAnal", dataset = dataset, 
-                        dom.select = "GO", list.source = "CoExpEnrichAnal",
+                        selectedOnt = "GO", list.source = "CoExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       
       shiny::callModule(module  = module_compEnrichment, id = "GO_CompCoExp", dataset = dataset,
-                        dom.select = "GO", 
+                        selectedOnt = "GO", 
                         list.source = "CoExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
     }
@@ -1006,7 +1000,7 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
     })
     
     # set list args
-    dom.select <- "KEGG"
+    selectedOnt <- "KEGG"
     list_args <- list()
     Domain <- NULL
     annotation2 <- NULL
@@ -1043,7 +1037,7 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
       
       print(paste("# 11- Enrichment Analysis of DE lists...", dataset))
       
-      session$userData$FlomicsMultiAssay[[dataset]]@metadata[["DiffExpEnrichAnal"]][[dom.select]] <- NULL
+      session$userData$FlomicsMultiAssay[[dataset]]@metadata[["DiffExpEnrichAnal"]][[selectedOnt]] <- NULL
       
       # run annotation
       runRes <- tryCatch({
@@ -1053,8 +1047,8 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
                                   list_args = list_args, 
                                   from = "DiffExpAnal",
                                   annot = annotation2,
-                                  dom.select = dom.select, 
-                                  Domain = Domain,
+                                  ontology = selectedOnt, 
+                                  domain = Domain,
                                   col_domain = col_domain_arg)
       },
       warning = function(war) return(war),
@@ -1068,11 +1062,11 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
       
       session$userData$FlomicsMultiAssay[[dataset]] <-  runRes
       shiny::callModule(module  = module_runEnrichment, id = "KEGG_DiffExpEnrichAnal", 
-                        dataset = dataset, dom.select = "KEGG", 
+                        dataset = dataset, selectedOnt = "KEGG", 
                         list.source = "DiffExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       shiny::callModule(module  = module_compEnrichment, id = "KEGG_CompDiffExp", dataset = dataset,
-                        dom.select = "KEGG", 
+                        selectedOnt = "KEGG", 
                         list.source = "DiffExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       rea.values[[dataset]]$diffAnnot <- TRUE
@@ -1087,7 +1081,7 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
       
       print(paste("# 11- Enrichment Analysis of clusters...", dataset))
       
-      session$userData$FlomicsMultiAssay[[dataset]]@metadata[["CoExpEnrichAnal"]][[dom.select]]   <- NULL
+      session$userData$FlomicsMultiAssay[[dataset]]@metadata[["CoExpEnrichAnal"]][[selectedOnt]]   <- NULL
       
       runResCo <- tryCatch({
         session$userData$FlomicsMultiAssay[[dataset]] <-  
@@ -1096,7 +1090,7 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
                                   list_args = list_args, 
                                   from = "CoExpAnal",
                                   annot = annotation2,
-                                  dom.select = dom.select, 
+                                  selectedOnt = selectedOnt, 
                                   Domain = Domain,
                                   col_domain = col_domain_arg) 
       },
@@ -1111,11 +1105,11 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
       
       session$userData$FlomicsMultiAssay[[dataset]] <-  runResCo
       shiny::callModule(module  = module_runEnrichment, id = "KEGG_CoExpEnrichAnal", 
-                        dataset = dataset, dom.select = "KEGG", 
+                        dataset = dataset, selectedOnt = "KEGG", 
                         list.source = "CoExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       shiny::callModule(module  = module_compEnrichment, id = "KEGG_CompCoExp", dataset = dataset,
-                        dom.select = "KEGG", 
+                        selectedOnt = "KEGG", 
                         list.source = "CoExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       rea.values[[dataset]]$coExpAnnot <- TRUE
@@ -1160,7 +1154,7 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
     })
     
     # set param
-    dom.select <- "custom"
+    selectedOnt <- "custom"
     Domain <- NULL
     annotation2 <- NULL
     col_domain_arg <- NULL
@@ -1203,7 +1197,7 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
       
       print(paste("# 11- Enrichment Analysis of DE lists...", dataset))
       
-      session$userData$FlomicsMultiAssay[[dataset]]@metadata[["DiffExpEnrichAnal"]][[dom.select]] <- NULL
+      session$userData$FlomicsMultiAssay[[dataset]]@metadata[["DiffExpEnrichAnal"]][[selectedOnt]] <- NULL
       
       # run annotation
       runRes <- tryCatch({
@@ -1213,8 +1207,8 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
                                   list_args = list_args, 
                                   from = "DiffExpAnal",
                                   annot = annotation2,
-                                  dom.select = dom.select, 
-                                  Domain = Domain,
+                                  ontology = selectedOnt, 
+                                  domain = Domain,
                                   col_domain = col_domain_arg)  
       },
       warning = function(war) return(war),
@@ -1228,11 +1222,11 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
       
       session$userData$FlomicsMultiAssay[[dataset]] <-  runRes
       shiny::callModule(module  = module_runEnrichment, id = "custom_DiffExpEnrichAnal", 
-                        dataset = dataset, dom.select = dom.select, 
+                        dataset = dataset, selectedOnt = selectedOnt, 
                         list.source = "DiffExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       shiny::callModule(module  = module_compEnrichment, id = "custom_CompDiffExp", 
-                        dataset = dataset, dom.select = dom.select, 
+                        dataset = dataset, selectedOnt = selectedOnt, 
                         list.source = "DiffExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       
@@ -1248,7 +1242,7 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
       
       print(paste("# 11- Enrichment Analysis of clusters...", dataset))
       
-      session$userData$FlomicsMultiAssay[[dataset]]@metadata[["CoExpEnrichAnal"]][[dom.select]]   <- NULL
+      session$userData$FlomicsMultiAssay[[dataset]]@metadata[["CoExpEnrichAnal"]][[selectedOnt]]   <- NULL
       
       runResCo <- tryCatch({
         session$userData$FlomicsMultiAssay[[dataset]] <-  
@@ -1257,8 +1251,8 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
                                   list_args = list_args, 
                                   from = "CoExpAnal",
                                   annot = annotation2,
-                                  dom.select = dom.select, 
-                                  Domain = Domain,
+                                  ontology = selectedOnt, 
+                                  domain = Domain,
                                   col_domain = col_domain_arg) 
       },
       warning = function(war) return(war),
@@ -1272,11 +1266,11 @@ module_compEnrichment <- function(input, output, session, dataset, dom.select, l
       
       session$userData$FlomicsMultiAssay[[dataset]] <-  runResCo
       shiny::callModule(module  = module_runEnrichment, id = "custom_CoExpEnrichAnal", 
-                        dataset = dataset, dom.select = dom.select,
+                        dataset = dataset, selectedOnt = selectedOnt,
                         list.source = "CoExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       shiny::callModule(module  = module_compEnrichment, id = "custom_CompCoExp", 
-                        dataset = dataset, dom.select = dom.select,
+                        dataset = dataset, selectedOnt = selectedOnt,
                         list.source = "CoExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
       rea.values[[dataset]]$coExpAnnot <- TRUE

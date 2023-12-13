@@ -177,8 +177,8 @@ methods::setGeneric(
                     universe = names(object)
                   ),
                   from = "DiffExpAnal",
-                  dom.select = "custom",
-                  Domain = "no-domain",
+                  ontology = "custom",
+                  domain = "no-domain",
                   col_term = "term",
                   col_gene = "gene",
                   col_name = "name",
@@ -202,14 +202,14 @@ methods::setGeneric(
   name = "plotCPR",
   def  = function(object,
                   contrast,
-                  ont,
-                  Domain = NULL,
+                  ontology,
+                  domain = NULL,
                   from = "DiffExpAnal",
                   type = "dotplot",
                   showCategory = 15,
                   searchExpr = "",
                   node_label = "all",
-                  pvalueCutoff = object@metadata$DiffExpEnrichAnal[[ont]]$list_args$pvalueCutoff,
+                  pvalueCutoff = object@metadata$DiffExpEnrichAnal[[ontology]]$list_args$pvalueCutoff,
                   ...){standardGeneric("plotCPR")}
 )
 
@@ -218,7 +218,7 @@ methods::setGeneric(
   name = "plotEnrichComp",
   def = function(object, 
                  from = "DiffExp", 
-                 ont = NULL, 
+                 ontology = NULL, 
                  domain = "no-domain",
                  matrixType = "GeneRatio",
                  nClust = NULL,
