@@ -754,7 +754,7 @@ define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
   
   # paste all the column of the data table
   #df_comparisonPart[, contrastPart := do.call(paste, c(.SD, sep = "_")), .SDcols = names(df_comparisonPart)]
-  df_comparisonPart <- df_comparisonPart %>% tidyr::unite(contrastPart, sep="_", remove=F)
+  df_comparisonPart <- df_comparisonPart %>% tidyr::unite(contrastPart, sep="_", remove=FALSE)
   
   #colnameFactor_i <- names(df_comparisonPart)[i]
   colnameFactor_i <- names(treatmentFactorsList)[i]
@@ -765,7 +765,7 @@ define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
   if(length(names(treatmentFactorsList)) != 1){
     colnamesToKeep <- setdiff(names(df_comparisonPart),c("contrastPart", "comparisonPart", colnameFactor_i))
     #df_comparisonPart[, fixFactor := do.call(paste, c(.SD, sep = "_")), .SDcols = colnamesToKeep]
-    df_comparisonPart <- df_comparisonPart %>% tidyr::unite(fixFactor, all_of(colnamesToKeep), sep = "_", remove = F)
+    df_comparisonPart <- df_comparisonPart %>% tidyr::unite(fixFactor, all_of(colnamesToKeep), sep = "_", remove = FALSE)
   }else{
     df_comparisonPart <- df_comparisonPart %>% dplyr::mutate(fixFactor= NA)
   }
@@ -918,7 +918,9 @@ define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, 
   data.table::setDT(df_comparisonPart)
   # paste all the column of the data table
   #df_comparisonPart[, contrastPart := do.call(paste, c(.SD, sep = "_")), .SDcols = names(df_comparisonPart)]
-  df_comparisonPart <- df_comparisonPart %>% tidyr::unite(contrastPart_bis, names(df_comparisonPart), sep="_", remove=F) %>%
+  df_comparisonPart <- df_comparisonPart %>% 
+    tidyr::unite(contrastPart_bis, names(df_comparisonPart), 
+                 sep="_", remove=FALSE) %>%
     dplyr::mutate(contrastPart = contrastPart_bis) %>% dplyr::select(-contrastPart_bis)
   
   colnameFactor_i <- names(df_comparisonPart)[i]
@@ -936,7 +938,7 @@ define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, 
   #df_comparisonPart[, outsideGroup := do.call(paste, c(.SD, sep = "_")), .SDcols = colnamesToKeep]
   if(length(colnamesToKeep)){
     
-    df_comparisonPart <- df_comparisonPart %>% tidyr::unite(outsideGroup_bis, all_of(colnamesToKeep), sep="_", remove=F) %>%
+    df_comparisonPart <- df_comparisonPart %>% tidyr::unite(outsideGroup_bis, all_of(colnamesToKeep), sep="_", remove=FALSE) %>%
       dplyr::mutate(outsideGroup = outsideGroup_bis) %>% dplyr::select(-outsideGroup_bis)
   }else{
     
@@ -945,7 +947,7 @@ define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, 
   
   colnamesToKeep <- setdiff(names(df_comparisonPart),c("contrastPart", "comparisonPart", "fixPart", "outsideGroup", colnameFactor_i))
   #df_comparisonPart[, fixFactor := do.call(paste, c(.SD, sep = "_")), .SDcols = colnamesToKeep]
-  df_comparisonPart <- df_comparisonPart %>% tidyr::unite(fixFactor_bis, all_of(colnamesToKeep), sep="_", remove=F) %>%
+  df_comparisonPart <- df_comparisonPart %>% tidyr::unite(fixFactor_bis, all_of(colnamesToKeep), sep="_", remove=FALSE) %>%
     dplyr::mutate(fixFactor = fixFactor_bis) %>% dplyr::select(-fixFactor_bis)
   
   colnamesToDelete <- names(treatmentFactorsList)

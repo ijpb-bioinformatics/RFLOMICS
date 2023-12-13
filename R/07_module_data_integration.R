@@ -247,7 +247,7 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
       return(tab)
     }) |> 
       purrr::reduce(dplyr::full_join, by = "samples") |> 
-      dplyr::mutate(sum = rowSums(dplyr::across(2:(length(MAE.red)+1)), na.rm = T))
+      dplyr::mutate(sum = rowSums(dplyr::across(2:(length(MAE.red)+1)), na.rm = TRUE))
     
     # if no common samples or no 100% overlapping
     if(length(unique(samples.mat$sum)) != 1){
