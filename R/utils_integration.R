@@ -15,7 +15,7 @@
 #' @export
 #' @noRd
 #'
-rbe_function = function(object, SEobject, cmd = FALSE){
+rbe_function <- function(object, SEobject, cmd = FALSE){
   
   assayTransform <- SummarizedExperiment::assay(SEobject)
   colBatch <- batchFactors(SEobject)

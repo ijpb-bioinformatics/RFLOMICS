@@ -845,7 +845,7 @@ MOFA_Result_View <- function(input, output, session, rea.values, local.rea.value
                               if (input$group_by_MOFA == "none") group_by_par <- "group"
                               if (input$shape_by_MOFA == "none") shape_by_par <- NULL
                               dodge_par <- FALSE
-                              if (any(input$add_violin_MOFA, input$add_boxplot_MOFA)) dodge_par = TRUE
+                              if (any(input$add_violin_MOFA, input$add_boxplot_MOFA)) dodge_par <- TRUE
                               
                               
                               plot_factor(resMOFA,

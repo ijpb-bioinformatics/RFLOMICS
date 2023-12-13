@@ -26,7 +26,7 @@ UpdateRadioButtons <- function(input, output, session){
     
     x <- input$Firstaxis
     # Can also set the label and select items
-    choices=c("PC1" = 1, "PC2" = 2, "PC3" = 3)
+    choices <- c("PC1" = 1, "PC2" = 2, "PC3" = 3)
     updateRadioButtons(session, "Secondaxis",
                        choices = choices[-as.numeric(x)],
                        inline  = TRUE)

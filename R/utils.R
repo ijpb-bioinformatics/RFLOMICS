@@ -1783,7 +1783,7 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list, si
     
     if(CoExpAnal[["results"]]==TRUE){
       
-      CoExpAnal[["results"]]=TRUE
+      CoExpAnal[["results"]] <- TRUE
       CoExpAnal[["warning"]] <- coseq.res.list$warning
       
       if (cmd) { 

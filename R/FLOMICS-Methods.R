@@ -48,7 +48,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
   names(typeList) <- names(ExpDesign)
   
   
-  Design = new(Class           = "ExpDesign",
+  Design <- new(Class           = "ExpDesign",
                Factors.Type    = typeList,
                Model.formula   = vector())
   
@@ -518,7 +518,7 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
     k <- k+1
     
     abundance <- omicsData[[data]]
-    omicType = omicsTypes[data]
+    omicType <- omicsTypes[data]
     
     # check overlap between design and data
     sample.intersect <- intersect(row.names(ExpDesign), colnames(abundance))
@@ -1758,7 +1758,7 @@ methods::setMethod(f          = "heatmapPlot",
                      if (dim(resTable)[1] > 2000) {
                        message("differentially expressed variables exceeding 2000 variables, only the first 2000 will be displayed")
                        resTable <- resTable[1:2000,]
-                       title = ifelse(title == "", paste0(title, "plot only 2000 TOP DE variables"),
+                       title <- ifelse(title == "", paste0(title, "plot only 2000 TOP DE variables"),
                                       paste0(title, "\nplot only 2000 TOP DE variables"))
                      }
                      
