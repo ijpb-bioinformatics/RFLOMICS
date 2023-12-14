@@ -53,11 +53,12 @@ RUN echo "local(options(shiny.port = 3838, shiny.host = '0.0.0.0'))" >> /usr/loc
 RUN addgroup --system rfuser \
     && adduser --system --ingroup rfuser rfuser
 
-RUN chown -R rfuser:rfuser /home/rfuser
+#RUN chown -R rfuser:rfuser /home/rfuser
+# RUN chown -R rfuser:rfuser .
 
-USER rfuser
+# USER rfuser
 
-WORKDIR /home/rfuser
+#WORKDIR /home/rfuser
 
 # Install mofapy2
 RUN pip install mofapy2==0.7.0
