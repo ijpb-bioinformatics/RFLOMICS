@@ -38,7 +38,7 @@ RUN git clone --branch  sk8-test  https://forgemia.inra.fr/flomics/rflomics.git
 
 WORKDIR /home/rflomics
 
-COPY renv.lock renv.lock
+#COPY renv.lock renv.lock
 
 ENV RENV_PATHS_LIBRARY renv/library
 
