@@ -59,10 +59,13 @@ USER rfuser
 
 WORKDIR /home/rfuser
 
+# Install mofapy2
+RUN pip install mofapy2==0.7.0
+
 
 EXPOSE 3838
 
-CMD ["R","-e","library(RFLOMICS); RFLOMICS::runRFLOMICS()"]
+CMD ["R","-e","reticulate::use_python(\"/usr/bin/python3\", required = NULL);library(RFLOMICS); RFLOMICS::runRFLOMICS()"]
 
 
 
