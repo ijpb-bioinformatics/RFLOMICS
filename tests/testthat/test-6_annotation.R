@@ -62,11 +62,11 @@ test_that("it's running from diffExpAnal - GO - RNASeq", {
   
   # Selecting only one contrast
   expect_no_error({
-    MAE <- runAnnotationEnrichment(MAE, nameList = "H1", SE.name = "RNAtest", dom.select = "GO",
+    MAE <- runAnnotationEnrichment(MAE, nameList = "H1", SE.name = "RNAtest", ontology = "GO",
                                    list_args = list(OrgDb = "org.At.tair.db", 
                                                     keyType = "TAIR", 
                                                     pvalueCutoff = 0.05),
-                                   Domain = c("BP", "MF", "CC"))
+                                   domain = c("BP", "MF", "CC"))
   })
   
   expect({
@@ -76,11 +76,11 @@ test_that("it's running from diffExpAnal - GO - RNASeq", {
   
   # All contrasts
   expect_no_error({
-    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", dom.select = "GO",
+    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", ontology = "GO",
                                    list_args = list(OrgDb = "org.At.tair.db", 
                                                     keyType = "TAIR", 
                                                     pvalueCutoff = 0.05),
-                                   Domain = c("BP", "MF", "CC"))
+                                   domain = c("BP", "MF", "CC"))
     
   })
   
@@ -97,7 +97,7 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
   
   df_custom <- vroom::vroom(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/GO_annotations/Arabidopsis_thaliana_Ensembl_55.txt"))
   
-  MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", dom.select = "custom",
+  MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", ontology = "custom",
                                  list_args = list(pvalueCutoff = 0.05),
                                  col_term = "GO term accession", 
                                  col_gene = "Gene stable ID",
@@ -109,7 +109,7 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
   
   # Selecting only one contrast, custom file
   expect_no_error({
-    MAE <- runAnnotationEnrichment(MAE, nameList = "H1", SE.name = "RNAtest", dom.select = "custom",
+    MAE <- runAnnotationEnrichment(MAE, nameList = "H1", SE.name = "RNAtest", ontology = "custom",
                                    list_args = list(pvalueCutoff = 0.05),
                                    col_term = "GO term accession", 
                                    col_gene = "Gene stable ID",
@@ -126,11 +126,11 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
   
   # All contrasts, GO database
   expect_no_error({
-    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", dom.select = "GO",
+    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", ontology = "GO",
                                    list_args = list(OrgDb = "org.At.tair.db", 
                                                     keyType = "TAIR", 
                                                     pvalueCutoff = 0.05),
-                                   Domain = c("BP", "MF", "CC"))
+                                   domain = c("BP", "MF", "CC"))
     
   })
   
@@ -139,7 +139,19 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
     nrow(obj@result) > 0
   }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
   
+  # All contrasts, KEGG database
+  expect_no_error({
+    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", ontology = "KEGG",
+                                   list_args = list(organism = "ath", 
+                                                    keyType = "kegg", 
+                                                    pvalueCutoff = 0.05))
+    
+  })
   
+  expect({
+    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H2", ont = "KEGG")[["no-domain"]]
+    nrow(obj@result) > 0
+  }, failure_message = "(KEGG RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
   
 })
 
@@ -149,11 +161,11 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
 test_that("it's running from CoExpAnal - GO - RNASeq", {
   
   expect_no_error({
-    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", from = "CoExpAnal", dom.select = "GO",
+    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", from = "CoExpAnal", ontology = "GO",
                                    list_args = list(OrgDb = "org.At.tair.db", 
                                                     keyType = "TAIR", 
                                                     pvalueCutoff = 0.05),
-                                   Domain = c("BP", "MF", "CC"))
+                                   domain = c("BP", "MF", "CC"))
     
   })
   
@@ -166,11 +178,11 @@ test_that("it's running from CoExpAnal - GO - RNASeq", {
   
   expect_no_error({
     MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", nameList = c("cluster.1", "cluster.2") ,
-                                   from = "CoExpAnal", dom.select = "GO",
+                                   from = "CoExpAnal", ontology = "GO",
                                    list_args = list(OrgDb = "org.At.tair.db", 
                                                     keyType = "TAIR", 
                                                     pvalueCutoff = 0.05),
-                                   Domain = c("BP", "MF", "CC"))
+                                   domain = c("BP", "MF", "CC"))
     
   })
   
@@ -188,7 +200,7 @@ test_that("it's running from CoExpAnal - GO - RNASeq", {
 load("tetAnnot_MAE.RData")
 
 MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", nameList = c("H1") ,
-                               from = "DiffExp", dom.select = "KEGG",
+                               from = "DiffExp", ontology = "KEGG",
                                list_args = list(organism = "ath", 
                                                 keyType = "kegg", 
                                                 pvalueCutoff = 1))
