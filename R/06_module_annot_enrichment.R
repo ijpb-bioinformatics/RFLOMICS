@@ -52,7 +52,8 @@
                        ont = selectedOnt))) 
       return()
     
-    results <- getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], listSource, selectedOnt)
+    results <- getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], 
+                            listSource, selectedOnt)
     # session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[selectedOnt]]
     if (is.null(results[["summary"]])) {
       
@@ -146,11 +147,14 @@
                      verticalLayout(
                        renderUI({
                          nodeLabelArg <- "none"
-                         if (input[[paste0(listname, "-genesLabels_cnet")]] && input[[paste0(listname, "-termsLabels_cnet")]]) {
+                         if (input[[paste0(listname, "-genesLabels_cnet")]] && 
+                             input[[paste0(listname, "-termsLabels_cnet")]]) {
                            nodeLabelArg <- "all"
-                         }else if (input[[paste0(listname, "-genesLabels_cnet")]] && !input[[paste0(listname, "-termsLabels_cnet")]]) {
+                         }else if (input[[paste0(listname, "-genesLabels_cnet")]] && 
+                                   !input[[paste0(listname, "-termsLabels_cnet")]]) {
                            nodeLabelArg <- "gene"
-                         }else if (input[[paste0(listname, "-termsLabels_cnet")]] && !input[[paste0(listname, "-genesLabels_cnet")]]) {
+                         }else if (input[[paste0(listname, "-termsLabels_cnet")]] && 
+                                   !input[[paste0(listname, "-genesLabels_cnet")]]) {
                            nodeLabelArg <- "category"
                          }
                          
@@ -280,17 +284,22 @@
           # display results
           fluidRow(
             
-            box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success", title = listname,
+            box(width = 12, solidHeader = TRUE, collapsible = TRUE, 
+                collapsed = TRUE, status = "success", title = listname,
                 
                 fluidRow(
                   column(4,
-                         radioButtons(inputId = ns(paste0(listname, "-domain")), label = "Domain",
-                                      choices = choices, selected = choices[1])),
+                         radioButtons(inputId = ns(paste0(listname, "-domain")), 
+                                      label = "Domain",
+                                      choices = choices, 
+                                      selected = choices[1])),
                   column(4,
-                         numericInput(inputId = ns(paste0(listname, "-top.over")), label = "Top terms:" , value=15 ,
+                         numericInput(inputId = ns(paste0(listname, "-top.over")), 
+                                      label = "Top terms:" , value=15 ,
                                       min = 1, max = 10000, step = 5)), # max code en dur : pas bien
                   column(4,
-                         textInput(inputId = ns(paste0(listname, "-grep")), label = "Search Expression"))
+                         textInput(inputId = ns(paste0(listname, "-grep")), 
+                                   label = "Search Expression"))
                 ),
                 fluidRow(
                   column(width = 12,
@@ -360,15 +369,20 @@
     # display results
     verticalLayout(
       fluidRow(
-        box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success", title = selectedOnt,
+        box(width = 12, solidHeader = TRUE, collapsible = TRUE, 
+            collapsed = TRUE, status = "success", title = selectedOnt,
             
             fluidRow(
               column(4,
-                     radioButtons(inputId = ns(paste0(selectedOnt, "-compDomain")), label = "Domain",
-                                  choices = possDomain, selected = possDomain[1], inline = TRUE)),
+                     radioButtons(inputId = ns(paste0(selectedOnt, "-compDomain")), 
+                                  label = "Domain",
+                                  choices = possDomain, selected = possDomain[1], 
+                                  inline = TRUE)),
               column(4,
-                     radioButtons(inputId = ns(paste0(selectedOnt, "-compType")), label = "Matrix Type",
-                                  choices = c("presence", "FC", "log2FC"), selected = "FC", inline = TRUE)),
+                     radioButtons(inputId = ns(paste0(selectedOnt, "-compType")), 
+                                  label = "Matrix Type",
+                                  choices = c("presence", "FC", "log2FC"), 
+                                  selected = "FC", inline = TRUE)),
             ),
             
             fluidRow(
@@ -389,7 +403,8 @@
                                                                                        heatmap_legend_side = "top", 
                                                                                        padding = unit(5, "mm"),
                                                                                        gap = unit(2, "mm"))}, 
-                                                                 width = "auto", height = min(400 + nrow(outHeatmap@matrix)*50, 1000))
+                                                                 width = "auto", 
+                                                                 height = min(400 + nrow(outHeatmap@matrix)*50, 1000))
                        else renderText({outHeatmap$message})
                      })
               ) # column
@@ -563,7 +578,8 @@
     
     if (omicsType %in% c("RNAseq", "proteomics")) {
       
-      do.call(what = tabsetPanel, args = c(tabPanel_genes.list, tabPanel_custom.list) )
+      do.call(what = tabsetPanel, 
+              args = c(tabPanel_genes.list, tabPanel_custom.list) )
     }
     else{
       do.call(what = tabsetPanel, args = c(tabPanel_custom.list) )
@@ -587,13 +603,16 @@
     
     if (omicsType %in% c("RNAseq", "proteomics")) {
       
-      box(title = span(tagList(icon("sliders"), "  ", "Settings")), width = 14, status = "warning",
+      box(title = span(tagList(icon("sliders"), "  ", "Settings")),
+          width = 14, status = "warning",
           
           # select DE list
           pickerInput(
             inputId = ns("GeneList.diff_GO"), label = "Select DE lists:", 
-            choices = ListNames.diff, multiple = TRUE, selected = ListNames.diff,
-            options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+            choices = ListNames.diff, multiple = TRUE, 
+            selected = ListNames.diff,
+            options = list(`actions-box` = TRUE, size = 10, 
+                           `selected-text-format` = "count > 3")
           ),
           
           # select clusters
@@ -606,7 +625,8 @@
             inputId = ns("ont.select"), label = "Select Domain:",
             choices = c("ALL", "BP", "MF", "CC"),
             selected = "ALL",
-            options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+            options = list(`actions-box` = TRUE, size = 10, 
+                           `selected-text-format` = "count > 3")
           ),
           
           # select database
@@ -614,20 +634,25 @@
             inputId = ns("db.select"), label = "Select Data Base:",
             choices = c("", dir(.libPaths())[grep("org.*db", dir(.libPaths()))]),
             selected = "",
-            options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+            options = list(`actions-box` = TRUE, size = 10, 
+                           `selected-text-format` = "count > 3")
           ),
           
           # select keytype
           pickerInput(
             inputId = ns("keytype.go"), label = "Select id type:",
-            choices = c("", "ENTREZID", "SYMBOL",  "TAIR", "ENSEMBL", "PMID", "REFSEQ", "GENENAME"),
+            choices = c("", "ENTREZID", "SYMBOL",  "TAIR", 
+                        "ENSEMBL", "PMID", "REFSEQ", "GENENAME"),
             selected = "",
-            options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+            options = list(`actions-box` = TRUE, size = 10, 
+                           `selected-text-format` = "count > 3")
           ),
           #),
           
           ## alpha threshold
-          numericInput(inputId = ns("pValue_GO"), label = "Adjusted p-value threshold:", value = 0.01 , min = 0, max = 1, step = 0.01),
+          numericInput(inputId = ns("pValue_GO"), 
+                       label = "Adjusted p-value threshold:", 
+                       value = 0.01 , min = 0, max = 1, step = 0.01),
           
           # run enrichment
           actionButton(inputId = ns("runEnrich_CPR_GO"), label = "Run")
@@ -647,13 +672,16 @@
     
     if (omicsType %in% c("RNAseq", "proteomics")) {
       
-      box(title = span(tagList(icon("sliders"), "  ", "Setting")), width = 14, status = "warning",
+      box(title = span(tagList(icon("sliders"), "  ", "Setting")), 
+          width = 14, status = "warning",
           
           # select DE list
           pickerInput(
             inputId = ns("geneListDiffKEGG"), label = "Select DE lists:", 
-            choices = ListNames.diff, multiple = TRUE, selected = ListNames.diff,
-            options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+            choices = ListNames.diff, multiple = TRUE, 
+            selected = ListNames.diff,
+            options = list(`actions-box` = TRUE, size = 10, 
+                           `selected-text-format` = "count > 3")
           ),
           
           # select clusters
@@ -665,7 +693,8 @@
             inputId = ns("keyTypeKEGG"), label = "Select id type:",
             choices = c("", "kegg", "ncbi-geneid", "ncib-proteinid", "uniprot"),
             selected = "",
-            options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")),
+            options = list(`actions-box` = TRUE, size = 10, 
+                           `selected-text-format` = "count > 3")),
           
           # type organism 
           textInput(inputId = ns("organism"), 
@@ -673,7 +702,9 @@
                     width = NULL, placeholder = NULL),
           
           ## alpha threshold
-          numericInput(inputId = ns("pValueKEGG"), label = "Adjusted p-value threshold:", value = 0.01 , min = 0, max = 1, step = 0.01),
+          numericInput(inputId = ns("pValueKEGG"), 
+                       label = "Adjusted p-value threshold:",
+                       value = 0.01 , min = 0, max = 1, step = 0.01),
           
           # run enrichment
           actionButton(inputId = ns("runEnrichKEGG"), label = "Run")
@@ -691,13 +722,15 @@
     ListNames.diff <- getValidContrasts(data.SE)$contrastName
     omicsType <- getOmicsTypes(data.SE)
     
-    box(title = span(tagList(icon("sliders"), "  ", "Setting")), width = 14, status = "warning",
+    box(title = span(tagList(icon("sliders"), "  ", "Setting")), 
+        width = 14, status = "warning",
         
         # select DE list
         pickerInput(
           inputId = ns("GeneList.diff_custom"), label = "Select DE lists:", 
           choices = ListNames.diff, multiple = TRUE, selected = ListNames.diff,
-          options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+          options = list(`actions-box` = TRUE, size = 10,
+                         `selected-text-format` = "count > 3")
         ),
         
         # select clusters
@@ -713,7 +746,9 @@
         uiOutput(ns("selectColumnsFromCustomAnnot")),
         
         ## alpha threshold
-        numericInput(inputId = ns("pValue_custom"), label = "Adjusted p-value threshold:", value = 0.01 , min = 0, max = 1, step = 0.01),
+        numericInput(inputId = ns("pValue_custom"), 
+                     label = "Adjusted p-value threshold:", 
+                     value = 0.01 , min = 0, max = 1, step = 0.01),
         
         # run enrichment
         actionButton(inputId = ns("runEnrich_CPR_Custom"), label = "Run") 
@@ -740,7 +775,8 @@
     
     output$selectColumnsFromCustomAnnot <- renderUI({
       
-      annotation <- data.table::fread(file = local.rea.values$dataPathAnnot, sep = "\t", header = TRUE)
+      annotation <- data.table::fread(file = local.rea.values$dataPathAnnot, 
+                                      sep = "\t", header = TRUE)
       
       column(width = 12,
              
@@ -768,7 +804,8 @@
     
     output$selectColumnsFromCustomAnnot <- renderUI({
       
-      annotation <- data.table::fread(file = local.rea.values$dataPathAnnot, sep = "\t", header = TRUE)
+      annotation <- data.table::fread(file = local.rea.values$dataPathAnnot, 
+                                      sep = "\t", header = TRUE)
       
       column(width = 12,
              
@@ -799,7 +836,8 @@
     pickerInput(
       inputId = ns("GeneList.coseq_GO"), label = "Select Clusters:",
       choices = ListNames.coseq, multiple = TRUE, selected = ListNames.coseq,
-      options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+      options = list(`actions-box` = TRUE, size = 10, 
+                     `selected-text-format` = "count > 3")
     )
   })
   
@@ -812,7 +850,8 @@
     pickerInput(
       inputId = ns("geneListCoseqKEGG"), label = "Select Clusters:",
       choices = ListNames.coseq, multiple = TRUE, selected = ListNames.coseq,
-      options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+      options = list(`actions-box` = TRUE, size = 10,
+                     `selected-text-format` = "count > 3")
     )
   })
   
@@ -825,7 +864,8 @@
     pickerInput(
       inputId = ns("GeneList.coseq_custom"), label = "Select Clusters:",
       choices = ListNames.coseq, multiple = TRUE, selected = ListNames.coseq,
-      options = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3")
+      options = list(`actions-box` = TRUE, size = 10, 
+                     `selected-text-format` = "count > 3")
     )
   })
   
@@ -839,7 +879,8 @@
       showModal(modalDialog( title = "Error message", "Please select at least 1 variable list."))
     }
     validate({ 
-      need(length(c(input$GeneList.diff_GO, input$GeneList.coseq_GO)) != 0, message = "Please select at least 1 variable list") 
+      need(length(c(input$GeneList.diff_GO, input$GeneList.coseq_GO)) != 0, 
+           message = "Please select at least 1 variable list") 
     })
     
     # check parameters
@@ -853,10 +894,13 @@
     library(input$db.select, character.only = TRUE)
     accepted_keytypes <- AnnotationDbi::keytypes(get(input$db.select))
     if (!input$keytype.go %in% accepted_keytypes) {
-      showModal(modalDialog(title = paste("Keytype must be one of: ", paste(accepted_keytypes, collapse = ", "), sep = " ")))
+      showModal(modalDialog(title = paste("Keytype must be one of: ", 
+                                          paste(accepted_keytypes, collapse = ", "), sep = " ")))
     }
     validate({ 
-      need(input$keytype.go %in% accepted_keytypes, message = paste("Keytype must be one of: ", paste(accepted_keytypes, collapse = ", "), sep = " ")) 
+      need(input$keytype.go %in% accepted_keytypes, 
+           message = paste("Keytype must be one of: ", 
+                           paste(accepted_keytypes, collapse = ", "), sep = " ")) 
     })
     
     # set list args
@@ -918,18 +962,22 @@
       if (!is(runRes, "SummarizedExperiment")) {
         showModal(modalDialog(title = paste("Something went wrong: ", runRes$message)))
       }
-      validate({need(is(runRes, "SummarizedExperiment"), message = paste0("Something went wrong: ", runRes$message))})
+      validate({need(is(runRes, "SummarizedExperiment"), 
+                     message = paste0("Something went wrong: ", runRes$message))})
       
       session$userData$FlomicsMultiAssay[[dataset]] <-  runRes
       rea.values[[dataset]]$diffAnnot <- TRUE
-      shiny::callModule(module  = .modRunEnrichment, id = "GO_DiffExpEnrichAnal", dataset = dataset,
+      shiny::callModule(module  = .modRunEnrichment, 
+                        id = "GO_DiffExpEnrichAnal", dataset = dataset,
                         selectedOnt = "GO", 
                         listSource = "DiffExpEnrichAnal",
-                        rea.values = rea.values, local.rea.values = local.rea.values)
+                        rea.values = rea.values, 
+                        local.rea.values = local.rea.values)
       shiny::callModule(module  = .modCompEnrichment, id = "GO_CompDiffExp", dataset = dataset,
                         selectedOnt = "GO", 
                         listSource = "DiffExpEnrichAnal",
-                        rea.values = rea.values, local.rea.values = local.rea.values)
+                        rea.values = rea.values, 
+                        local.rea.values = local.rea.values)
     }
     
     #---- progress bar ----#
@@ -967,14 +1015,18 @@
       
       session$userData$FlomicsMultiAssay[[dataset]] <-  runResCo
       rea.values[[dataset]]$coExpAnnot <- TRUE
-      shiny::callModule(module  = .modRunEnrichment, id = "GO_CoExpEnrichAnal", dataset = dataset, 
+      shiny::callModule(module  = .modRunEnrichment, 
+                        id = "GO_CoExpEnrichAnal", dataset = dataset, 
                         selectedOnt = "GO", listSource = "CoExpEnrichAnal",
-                        rea.values = rea.values, local.rea.values = local.rea.values)
+                        rea.values = rea.values,
+                        local.rea.values = local.rea.values)
       
-      shiny::callModule(module  = .modCompEnrichment, id = "GO_CompCoExp", dataset = dataset,
+      shiny::callModule(module  = .modCompEnrichment,
+                        id = "GO_CompCoExp", dataset = dataset,
                         selectedOnt = "GO", 
                         listSource = "CoExpEnrichAnal",
-                        rea.values = rea.values, local.rea.values = local.rea.values)
+                        rea.values = rea.values, 
+                        local.rea.values = local.rea.values)
     }
     
     #---- progress bar ----#
@@ -991,7 +1043,8 @@
       showModal(modalDialog( title = "Error message", "Please select at least 1 variable list."))
     }
     validate({ 
-      need(length(c(input$geneListDiffKEGG, input$geneListCoseqKEGG)) != 0, message = "Please select at least 1 variable list") 
+      need(length(c(input$geneListDiffKEGG, input$geneListCoseqKEGG)) != 0,
+           message = "Please select at least 1 variable list") 
     })
     
     # check param
@@ -1076,14 +1129,17 @@
                      message = paste0("Something went wrong: ", runRes$message))})
       
       session$userData$FlomicsMultiAssay[[dataset]] <-  runRes
-      shiny::callModule(module  = .modRunEnrichment, id = "KEGG_DiffExpEnrichAnal", 
+      shiny::callModule(module  = .modRunEnrichment, 
+                        id = "KEGG_DiffExpEnrichAnal", 
                         dataset = dataset, selectedOnt = "KEGG", 
                         listSource = "DiffExpEnrichAnal",
                         rea.values = rea.values, local.rea.values = local.rea.values)
-      shiny::callModule(module  = .modCompEnrichment, id = "KEGG_CompDiffExp", dataset = dataset,
+      shiny::callModule(module  = .modCompEnrichment, 
+                        id = "KEGG_CompDiffExp", dataset = dataset,
                         selectedOnt = "KEGG", 
                         listSource = "DiffExpEnrichAnal",
-                        rea.values = rea.values, local.rea.values = local.rea.values)
+                        rea.values = rea.values, 
+                        local.rea.values = local.rea.values)
       rea.values[[dataset]]$diffAnnot <- TRUE
     }
     
@@ -1116,17 +1172,22 @@
       if (!is(runResCo, "SummarizedExperiment")) {
         showModal(modalDialog(title = paste("Something went wrong: ", runResCo$message)))
       }
-      validate({need(is(runResCo, "SummarizedExperiment"), message = paste0("Something went wrong: ", runResCo$message))})
+      validate({need(is(runResCo, "SummarizedExperiment"), 
+                     message = paste0("Something went wrong: ", runResCo$message))})
       
       session$userData$FlomicsMultiAssay[[dataset]] <-  runResCo
-      shiny::callModule(module  = .modRunEnrichment, id = "KEGG_CoExpEnrichAnal", 
+      shiny::callModule(module  = .modRunEnrichment, 
+                        id = "KEGG_CoExpEnrichAnal", 
                         dataset = dataset, selectedOnt = "KEGG", 
                         listSource = "CoExpEnrichAnal",
-                        rea.values = rea.values, local.rea.values = local.rea.values)
-      shiny::callModule(module  = .modCompEnrichment, id = "KEGG_CompCoExp", dataset = dataset,
+                        rea.values = rea.values, 
+                        local.rea.values = local.rea.values)
+      shiny::callModule(module  = .modCompEnrichment, 
+                        id = "KEGG_CompCoExp", dataset = dataset,
                         selectedOnt = "KEGG", 
                         listSource = "CoExpEnrichAnal",
-                        rea.values = rea.values, local.rea.values = local.rea.values)
+                        rea.values = rea.values, 
+                        local.rea.values = local.rea.values)
       rea.values[[dataset]]$coExpAnnot <- TRUE
     }
     
@@ -1143,10 +1204,12 @@
     
     # check list of genes
     if (length(c(input$GeneList.diff_custom, input$GeneList.coseq_custom )) == 0) {
-      showModal(modalDialog( title = "Error message", "Please select at least 1 variable list."))
+      showModal(modalDialog(title = "Error message", 
+                            "Please select at least 1 variable list."))
     }
     validate({ 
-      need(length(c(input$GeneList.diff_custom, input$GeneList.coseq_custom)) != 0, message = "Please select at least 1 variable list") 
+      need(length(c(input$GeneList.diff_custom, input$GeneList.coseq_custom)) != 0,
+           message = "Please select at least 1 variable list") 
     })
     
     # check param
@@ -1177,7 +1240,8 @@
     list_args[["pvalueCutoff"]] <- input$pValue_custom
     list_args[["minGSSize"]] <- 10
     
-    annotation <- data.table::fread(file = local.rea.values$dataPathAnnot, sep = "\t", header = TRUE)
+    annotation <- data.table::fread(file = local.rea.values$dataPathAnnot, 
+                                    sep = "\t", header = TRUE)
     listCharRm <- c(".", " ", "")
     annotation2 <- list()
     
@@ -1187,7 +1251,8 @@
       # remove column with domain == c(".", " ", "")
       domainRm <- intersect(annotation[[input$col_domain]], listCharRm)
       if (length(domainRm) != 0) {
-        annotation <- dplyr::filter(annotation, !get(input$col_domain) %in% listCharRm)
+        annotation <- dplyr::filter(annotation, 
+                                    !get(input$col_domain) %in% listCharRm)
       }
       
       annotation2[["domain"]] <- annotation[[input$col_domain]]
@@ -1197,7 +1262,9 @@
     
     annotation2[["gene"]] <- annotation[[input$col_geneName]]
     annotation2[["term"]] <- annotation[[input$col_termID]]
-    if (input$col_termName != "") annotation2[["name"]] <- annotation[[input$col_termName]]
+    if (input$col_termName != "") {
+      annotation2[["name"]] <- annotation[[input$col_termName]]
+    }
     annotation2 <- data.frame(annotation2)
     
     #---- progress bar ----#
@@ -1233,17 +1300,24 @@
       if (!is(runRes, "SummarizedExperiment")) {
         showModal(modalDialog(title = paste("Something went wrong: ", runRes$message)))
       }
-      validate({need(is(runRes, "SummarizedExperiment"), message = paste0("Something went wrong: ", runRes$message))})
+      validate({need(is(runRes, "SummarizedExperiment"), 
+                     message = paste0("Something went wrong: ", runRes$message))})
       
       session$userData$FlomicsMultiAssay[[dataset]] <-  runRes
-      shiny::callModule(module  = .modRunEnrichment, id = "custom_DiffExpEnrichAnal", 
-                        dataset = dataset, selectedOnt = selectedOnt, 
+      shiny::callModule(module  = .modRunEnrichment, 
+                        id = "custom_DiffExpEnrichAnal", 
+                        dataset = dataset, 
+                        selectedOnt = selectedOnt, 
                         listSource = "DiffExpEnrichAnal",
-                        rea.values = rea.values, local.rea.values = local.rea.values)
-      shiny::callModule(module  = .modCompEnrichment, id = "custom_CompDiffExp", 
-                        dataset = dataset, selectedOnt = selectedOnt, 
+                        rea.values = rea.values, 
+                        local.rea.values = local.rea.values)
+      shiny::callModule(module  = .modCompEnrichment, 
+                        id = "custom_CompDiffExp", 
+                        dataset = dataset, 
+                        selectedOnt = selectedOnt, 
                         listSource = "DiffExpEnrichAnal",
-                        rea.values = rea.values, local.rea.values = local.rea.values)
+                        rea.values = rea.values, 
+                        local.rea.values = local.rea.values)
       
       rea.values[[dataset]]$diffAnnot <- TRUE
     }
@@ -1277,17 +1351,24 @@
       if (!is(runResCo, "SummarizedExperiment")) {
         showModal(modalDialog(title = paste("Something went wrong: ", runResCo$message)))
       }
-      validate({need(is(runResCo, "SummarizedExperiment"), message = paste0("Something went wrong: ", runResCo$message))})
+      validate({need(is(runResCo, "SummarizedExperiment"), 
+                     message = paste0("Something went wrong: ", runResCo$message))})
       
       session$userData$FlomicsMultiAssay[[dataset]] <-  runResCo
-      shiny::callModule(module  = .modRunEnrichment, id = "custom_CoExpEnrichAnal", 
-                        dataset = dataset, selectedOnt = selectedOnt,
+      shiny::callModule(module  = .modRunEnrichment, 
+                        id = "custom_CoExpEnrichAnal", 
+                        dataset = dataset, 
+                        selectedOnt = selectedOnt,
                         listSource = "CoExpEnrichAnal",
-                        rea.values = rea.values, local.rea.values = local.rea.values)
-      shiny::callModule(module  = .modCompEnrichment, id = "custom_CompCoExp", 
-                        dataset = dataset, selectedOnt = selectedOnt,
+                        rea.values = rea.values, 
+                        local.rea.values = local.rea.values)
+      shiny::callModule(module  = .modCompEnrichment, 
+                        id = "custom_CompCoExp", 
+                        dataset = dataset, 
+                        selectedOnt = selectedOnt,
                         listSource = "CoExpEnrichAnal",
-                        rea.values = rea.values, local.rea.values = local.rea.values)
+                        rea.values = rea.values, 
+                        local.rea.values = local.rea.values)
       rea.values[[dataset]]$coExpAnnot <- TRUE
     }
     
@@ -1320,12 +1401,12 @@
     
     switch(dbType,
            "GO" = {
-             if (paramList$OrgDb        != object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$OrgDb)    return(TRUE)
-             if (paramList$keyType      != object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$keyType)  return(TRUE)
+             if (paramList$OrgDb    != object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$OrgDb)    return(TRUE)
+             if (paramList$keyType  != object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$keyType)  return(TRUE)
            },
            "KEGG" = {
-             if (paramList$keyType      != object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$keyType)  return(TRUE)
-             if (paramList$organism     != object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$organism) return(TRUE)
+             if (paramList$keyType  != object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$keyType)  return(TRUE)
+             if (paramList$organism != object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$organism) return(TRUE)
            }
     )
     
@@ -1341,12 +1422,12 @@
     
     switch(dbType,
            "GO" = {
-             if (paramList$OrgDb        != object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$OrgDb)   return(TRUE)
-             if (paramList$keyType      != object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$keyType) return(TRUE)
+             if (paramList$OrgDb    != object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$OrgDb)   return(TRUE)
+             if (paramList$keyType  != object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$keyType) return(TRUE)
            },
            "KEGG" = {
-             if (paramList$keyType      != object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$keyType)  return(TRUE)
-             if (paramList$organism     != object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$organism) return(TRUE)
+             if (paramList$keyType  != object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$keyType)  return(TRUE)
+             if (paramList$organism != object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$organism) return(TRUE)
            }
     )
     
