@@ -229,7 +229,7 @@ rflomicsServer <- function(input, output, session) {
                     tabPanel("Annotation Enrichment",
                              tags$br(),
                              tags$br(),
-                             .annotationEnrichmentUI(paste0("RNAseq",i))
+                             .modEnrichmentUI(paste0("RNAseq",i))
                     )
                   )
                 })},
@@ -263,7 +263,7 @@ rflomicsServer <- function(input, output, session) {
                     tabPanel("Annotation Enrichment",
                              tags$br(),
                              tags$br(),
-                             .annotationEnrichmentUI(paste0("proteomics",i))
+                             .modEnrichmentUI(paste0("proteomics",i))
                     )
                   )
                 })},
@@ -297,7 +297,7 @@ rflomicsServer <- function(input, output, session) {
                     tabPanel("Annotation Enrichment",
                              tags$br(),
                              tags$br(),
-                             .annotationEnrichmentUI(paste0("metabolomics",i))
+                             .modEnrichmentUI(paste0("metabolomics",i))
                     )
                   )
                 })},
@@ -439,7 +439,7 @@ rflomicsServer <- function(input, output, session) {
         ##########################################
         # Part7 : Enrichment Analysis CPR
         ##########################################
-        callModule(module  = .annotationEnrichment, id = paste0(omics, i),
+        callModule(module  = .modEnrichment, id = paste0(omics, i),
                    dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
         
       })

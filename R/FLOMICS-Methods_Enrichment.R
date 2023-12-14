@@ -119,7 +119,7 @@ methods::setMethod(
         switch(ontology,
                "GO" = {
                  func_to_use <- "enrichGO"
-                 list_args$ontology<- dom
+                 list_args$ont <- dom
                },
                "KEGG" = {
                  func_to_use <- "enrichKEGG"
@@ -255,7 +255,7 @@ methods::setMethod(
 #' @param type type of plot. Define the function used inside. One of dotplot, heatplot or cnetplot.
 #' @param showCategory max number of terms to show.
 #' @param searchExpr expression to search in the showCategory terms.
-#' @param node_label same as in enrichplot::cnetplot function, defines the labels on the graph. One of "all", "category" or "gene". Default is 'all'.
+#' @param nodeLabel same as in enrichplot::cnetplot function, defines the labels on the graph. One of "all", "category" or "gene". Default is 'all'.
 #' @param pvalueCutoff pvalueCutoff to define the enrichment threshold. Default is the one find in the clusterprofiler results in object.
 #' @param ... Not in use at the moment
 #'
@@ -315,7 +315,7 @@ methods::setMethod(
 #' @param type type of plot. Define the function used inside. One of dotplot, heatplot or cnetplot.
 #' @param showCategory max number of terms to show.
 #' @param searchExpr expression to search in the showCategory terms.
-#' @param node_label same as in enrichplot::cnetplot function, defines the labels on the graph. One of "all", "category" or "gene". Default is 'all'.
+#' @param nodeLabel same as in enrichplot::cnetplot function, defines the labels on the graph. One of "all", "category" or "gene". Default is 'all'.
 #' @param pvalueCutoff pvalueCutoff to define the enrichment threshold. Default is the one find in the clusterprofiler results in object.
 #' @param ... additionnal parameters for cnetplot, heatplot or enrichplot functions.
 #'
@@ -332,10 +332,10 @@ methods::setMethod(
                         ontology,
                         domain = NULL,
                         from = "DiffExp",
-                        type = "dotplot",
+                        plotType = "dotplot",
                         showCategory = 15,
                         searchExpr = "",
-                        node_label = "all",
+                        nodeLabel = "all",
                         pvalueCutoff = object@metadata$DiffExpEnrichAnal[[ontology]]$list_args$pvalueCutoff,
                         ...) {
     
@@ -393,15 +393,28 @@ methods::setMethod(
     
     Categories <- Categories[1:NbtoPlot]
     
+    ## delete same pattern (useful in KEGG, other db?)
+    # charRem <- "[.]|[|]|[(]|[)]|[{]|[}]"
+    # Description <- dataPlot$Description
+    # Description <- gsub(charRem, "", Description)
+    # commonPattern <- Reduce(intersect, strsplit(Description, " "))
+    # 
+    # if (length(commonPattern) > 0) {
+    #   dataPlot$Description <- gsub(
+    #     pattern = paste(commonPattern, collapse = " "),
+    #     replacement = "",
+    #     Description)
+    # }
+    
     # Create the plot
-    type <- tolower(type)
+    plotType <- tolower(plotType)
     returnplot <- NULL
     
-    returnplot <-  switch(type, 
+    returnplot <-  switch(plotType, 
                           "cnetplot" = {
                             cnetplot(dataPlot, showCategory = Categories,
                                      color.params = list(foldChange = log2FC_vect), 
-                                     node_label = node_label, ...) +
+                                     node_label = nodeLabel, ...) +
                               guides(colour = guide_colourbar(title = "log2FC")) +
                               scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) 
                           },
@@ -496,22 +509,21 @@ methods::setMethod(
     extract <- extract[extract$ID %in% toKeep,]
     
     # handling description and ID
-    extract$ID <- switch(ontology, 
-                         "GO" = { 
-                           if (!identical(extract$ID, extract$Description)) {
-                             paste0("(", extract$ID, ")", "\n", extract$Description)
-                           } else {extract$ID}
-                         },
+    extract$Description <- switch(ontology, 
                          "KEGG" = {
                            gsub(" - .*", "", extract$Description)
                          },
-                         "custom" = {  
-                           if (!identical(extract$ID, extract$Description)) {
-                             paste0("(", extract$ID, ")", "\n", extract$Description)
-                           } else {extract$ID}
+                          { 
+                            if (anyDuplicated(extract$Description)) {
+                              posDup <- duplicated(extract$Description)
+                              extract$Description[posDup] <- 
+                              paste0("(", extract$ID[posDup], ")", "\n", extract$Description[posDup])
+                            } else {
+                              extract$Description
+                            }
                          })
     
-    extract$ID <- str_wrap(extract$ID, width = 20)
+    extract$Description <- str_wrap(extract$Description, width = 20)
     extract$contrast <- str_wrap(extract$contrast, width = 30)
     
     extract$GeneRatio <- as.numeric(vapply(extract$GeneRatio, 
@@ -524,48 +536,48 @@ methods::setMethod(
     
     dat <- switch(matrixType, 
                   "GeneRatio" = {
-                    inter <- recast(extract[, c("ID", "contrast", "GeneRatio")], 
-                                    ID ~ contrast, 
+                    inter <- recast(extract[, c("Description", "contrast", "GeneRatio")], 
+                                    Description ~ contrast, 
                                     measure.var = "GeneRatio")
-                    rownames(inter) <- inter$ID
+                    rownames(inter) <- inter$Description
                     inter <- inter[, colnames(inter) != "ID"]
                     inter[is.na(inter)] <- 0
                     inter
                   }, 
                   "p.adjust" = {
-                    inter <- recast(extract[, c("ID", "contrast", "p.adjust")], 
-                                    ID ~ contrast, 
+                    inter <- recast(extract[, c("Description", "contrast", "p.adjust")], 
+                                    Description ~ contrast, 
                                     measure.var = "p.adjust")
-                    rownames(inter) <- inter$ID
-                    inter <- inter[, colnames(inter) != "ID"]
+                    rownames(inter) <- inter$Description
+                    inter <- inter[, colnames(inter) != "Description"]
                     inter[is.na(inter)] <- 1
                     inter
                   },
                   "presence" = {
-                    inter <- recast(extract[, c("ID", "contrast", "p.adjust")], 
-                                    ID ~ contrast, 
+                    inter <- recast(extract[, c("Description", "contrast", "p.adjust")], 
+                                    Description ~ contrast, 
                                     measure.var = "p.adjust")
-                    rownames(inter) <- inter$ID
-                    inter <- inter <- inter[, colnames(inter) != "ID"]
+                    rownames(inter) <- inter$Description
+                    inter <- inter <- inter[, colnames(inter) != "Description"]
                     inter[!is.na(inter)] <- 1
                     inter[is.na(inter)]  <- 0
                     inter
                   },
                   "FC" = {
-                    inter <- recast(extract[, c("ID", "contrast", "FC")], 
-                                    ID ~ contrast, 
+                    inter <- recast(extract[, c("Description", "contrast", "FC")], 
+                                    Description ~ contrast, 
                                     measure.var = "FC")
-                    rownames(inter) <- inter$ID
-                    inter <- inter[, colnames(inter) != "ID"]
+                    rownames(inter) <- inter$Description
+                    inter <- inter[, colnames(inter) != "Description"]
                     inter[is.na(inter)] <- 0
                     inter
                   },
                   "log2FC" = {
-                    inter <- recast(extract[, c("ID", "contrast", "FC")], 
-                                    ID ~ contrast, 
+                    inter <- recast(extract[, c("Description", "contrast", "FC")], 
+                                    Description ~ contrast, 
                                     measure.var = "FC")
-                    rownames(inter) <- inter$ID
-                    inter <- inter[, colnames(inter) != "ID"]
+                    rownames(inter) <- inter$Description
+                    inter <- inter[, colnames(inter) != "Description"]
                     inter <- log2(inter)
                     inter[is.infinite(as.matrix(inter))] <- 0
                     # means FC is 0, shouldn't happen much...

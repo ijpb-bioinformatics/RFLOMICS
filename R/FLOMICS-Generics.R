@@ -205,10 +205,10 @@ methods::setGeneric(
                   ontology,
                   domain = NULL,
                   from = "DiffExpAnal",
-                  type = "dotplot",
+                  plotType = "dotplot",
                   showCategory = 15,
                   searchExpr = "",
-                  node_label = "all",
+                  nodeLabel = "all",
                   pvalueCutoff = object@metadata$DiffExpEnrichAnal[[ontology]]$list_args$pvalueCutoff,
                   ...){standardGeneric("plotCPR")}
 )
