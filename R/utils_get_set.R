@@ -681,8 +681,8 @@ getEnrichPvalue <- function(object,
                             dom = "GO") {
   
   if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
-  if (!from %in% c("DiffExpEnrichAnal", "CoExpEnrichAnal")) stop(paste0(from, " don't existe"))
-  if (!dom  %in% c("GO", "KEGG", "custom")) stop(paste0(from, " not valide value. Choose from c(GO, KEGG, custom)"))
+  if (!from %in% c("DiffExpEnrichAnal", "CoExpEnrichAnal")) stop(from, " don't existe")
+  if (!dom  %in% c("GO", "KEGG", "custom")) stop(from, " not valide value. Choose from c(GO, KEGG, custom)")
   if (is.null(object@metadata[[from]][[dom]]$list_args$pvalueCutoff)) stop("P-value not found")
     
   return(object@metadata[[from]][[dom]]$list_args$pvalueCutoff)
