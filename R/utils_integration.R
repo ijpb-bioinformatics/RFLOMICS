@@ -164,7 +164,7 @@ RBETransform <- function(object,
 
 plot_MO_varExp <- function(object, selectedResponse, mode = NULL){
   
-  if (class(object) != "MultiAssayExperiment") stop("Object is not a MultiAssayExperiment.")
+  if (is(object, "MultiAssayExperiment")) stop("Object is not a MultiAssayExperiment.")
   if (is.null(object@metadata$IntegrationAnalysis$mixOmics)) stop("It seems this object has no mixOmics results.")
   if (is.null(object@metadata$IntegrationAnalysis$mixOmics[[selectedResponse]])) stop("It seems you didn't run MixOmics on this particular variable.")
   

@@ -10,7 +10,7 @@ sumDiffExp <- function(object, SE.name = NULL) {
   # TODO valid contrasts only by default
   # TODO if asked by user (all = TRUE), then provide all results even non-validated ones.
 
-  if (class(object) == "MultiAssayExperiment") {
+  if (is(object, "MultiAssayExperiment")) {
     if (!is.null(SE.name)) {
       object <- object[[SE.name]]
     }
@@ -90,7 +90,7 @@ sumORA <- function(SE, from = "DiffExpEnrichAnal", ont = NULL, contrast = NULL) 
 #' @export
 #'
 sumMixOmics <- function(object, selectedResponse = NULL) {
-  if (class(object) != "MultiAssayExperiment") stop("Object is not a MultiAssayExperiment.")
+  if (is(object, "MultiAssayExperiment")) stop("Object is not a MultiAssayExperiment.")
   if (is.null(object@metadata$mixOmics)) stop("It seems this object has no mixOmics results.")
 
   if (is.null(selectedResponse)) {
