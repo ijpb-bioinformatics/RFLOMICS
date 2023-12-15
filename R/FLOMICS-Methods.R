@@ -235,6 +235,20 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
                    })
 
 
+#' @title CheckExpDesignCompleteness
+#' @param SE.name the name of the data the normalization have to be applied to. 
+#' @exportMethod CheckExpDesignCompleteness
+#' @noRd
+methods::setMethod(f         = "CheckExpDesignCompleteness",
+                   signature = "MultiAssayExperiment",
+                   definition <- function(object, SE.name, sampleList=NULL){
+                     
+                     SEObject <- object[[SE.name]]
+                     
+                     CheckExpDesignCompleteness(SEObject, 
+                                                sampleList = sampleList)
+                     
+                   })
 
 #' @title Datasets overview plot
 #' @description This function plot overview of loaded datasets aligned per sample 
