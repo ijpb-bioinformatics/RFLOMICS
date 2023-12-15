@@ -2,7 +2,7 @@ FROM rocker/r-ver:4.3.2
 
 LABEL maintainer="ijpb-bioinfo-team@inrae.fr"
 LABEL version="0.1"
-LABEL description="Dockerfile to construct an iamge of the rflomics application"
+LABEL description="Dockerfile to construct an image of the rflomics application"
 
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -34,35 +34,53 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /home
 
+# Clone rflomics
+
 RUN git clone --branch  sk8-test  https://forgemia.inra.fr/flomics/rflomics.git
 
 WORKDIR /home/rflomics
 
-#COPY renv.lock renv.lock
+# Configure shiny port 
+RUN echo "local(options(shiny.port = 3838, shiny.host = '0.0.0.0'))" >> /usr/local/lib/R/etc/Rprofile.site
 
+# Install mofapy2 to use the MOFA2 package
+RUN pip install mofapy2==0.7.0
+
+# set the path to write the R packages
 ENV RENV_PATHS_LIBRARY renv/library
+
+# create a rfuser
+
+RUN addgroup --system rfuser \
+    && adduser --system --ingroup rfuser rfuser
+
+RUN chown -R rfuser:rfuser /home/rflomics
+
+USER rfuser
+
+# restore the R environment
 
 RUN R -e "install.packages('renv', repos = c(CRAN = 'https://cloud.r-project.org'))"
 
 RUN R -e "renv::restore()"
 
+# install 
+
 RUN Rscript -e 'remotes::install_local(".",upgrade="never")'
 
-RUN echo "local(options(shiny.port = 3838, shiny.host = '0.0.0.0'))" >> /usr/local/lib/R/etc/Rprofile.site
+# RUN echo "local(options(shiny.port = 3838, shiny.host = '0.0.0.0'))" >> /usr/local/lib/R/etc/Rprofile.site
 
-RUN addgroup --system rfuser \
-    && adduser --system --ingroup rfuser rfuser
+# RUN addgroup --system rfuser \
+#    && adduser --system --ingroup rfuser rfuser
 
-#RUN chown -R rfuser:rfuser /home/rfuser
+# RUN chown -R rfuser:rfuser /home/rfuser
 # RUN chown -R rfuser:rfuser .
 
 # USER rfuser
 
 #WORKDIR /home/rfuser
 
-# Install mofapy2
-RUN pip install mofapy2==0.7.0
-
+# Launch shiny app
 
 EXPOSE 3838
 
