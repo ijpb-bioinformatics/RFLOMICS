@@ -468,41 +468,18 @@ rflomicsServer <- function(input, output, session) {
       paste0(projectName, "_", format(Sys.time(), "%Y_%m_%d_%H_%M"), ".html")
     },
     content = function(file) {
-      # Copy the report file to a temporary directory before processing it, in
-      # case we don't have write permissions to the current working dir (which
-      # can happen when deployed).
       print(paste0("# ??- Create html report... ", file))
-      tempReport <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report.Rmd") # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       
-      #tempReport <- file.path(tempdir(), "report.Rmd")
-      #file.copy("report.Rmd", tempReport, overwrite = TRUE)
-      
-      # TEST
-      # save FE object in .Rdata and load it during report execution
       projectName  <- session$userData$FlomicsMultiAssay@metadata$projectName
-      # rflomics.MAE <- session$userData$FlomicsMultiAssay[,,-grep(".raw", names(session$userData$FlomicsMultiAssay))]
-      rflomics.MAE <- session$userData$FlomicsMultiAssay
-      RData.name   <- paste0(projectName, ".MAE.RData")
-      outDir <- file.path(tempdir(),paste0(format(Sys.time(),"%Y_%m_%d"),"_",projectName))
-      dir.create(path=outDir)
-      save(rflomics.MAE, file=file.path(outDir, RData.name))
+      outDir <- file.path(tempdir(),
+                          paste0(format(Sys.time(),"%Y_%m_%d"),"_",projectName))
       
-      # Set up parameters to pass to Rmd document
-      print(file.path(outDir, RData.name))
-      params <- list( FEdata = file.path(outDir, RData.name),
-                      title  = paste0(projectName, " project"),
-                      outDir = outDir)
-      
-      print(tempdir())
-      # Knit the document, passing in the `params` list, and eval it in a
-      # child of the global environment (this isolates the code in the document
-      # from the code in this app).
-      rmarkdown::render(tempReport, output_file = file,
-                        params = params,
-                        knit_root_dir=tempdir(),
-                        intermediates_dir=tempdir(),
-                        envir = new.env(parent = globalenv()))
-      
+      generateReport(session$userData$FlomicsMultiAssay,
+                     projectName = projectName,
+                     outDir = outDir,
+                     RDataName =  paste0(projectName, ".MAE.RData"),
+                     output_file = paste0(outDir, projectName, "_report.html"))
+
       rea.values$outdir <- dirname(file)
       rea.values$report <- TRUE
       
