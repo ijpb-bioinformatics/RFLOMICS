@@ -1119,7 +1119,7 @@ getExpressionContrastF <- function(ExpDesign, factorBio=NULL, modelFormula=NULL)
   # factorBio
   if (is.null(factorBio)) stop("factorBio arg is mandatory.")
   if (length(intersect(factorBio, names(ExpDesign))) == 0) stop("factorBio and names(ExpDesign) don't cover!")
-    
+  
   # bio factor list in formulat
   labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
   
@@ -1427,11 +1427,11 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
     # if ICL == NA | loglike == 0
     
     # if (cmd) print("#     => error management: level 2 ")
-     like.vec <- unlist(lapply(1:nK_success.job, function(x){ 
-       coseq::likelihood(coseq.res.list[["value"]][[x]])
-       })) %>%
-       lapply(., function(x){ 
-         ifelse(is.na(x) | (x==0), "failed", "success") }) %>% unlist()
+    like.vec <- unlist(lapply(1:nK_success.job, function(x){ 
+      coseq::likelihood(coseq.res.list[["value"]][[x]])
+    })) %>%
+      lapply(., function(x){ 
+        ifelse(is.na(x) | (x==0), "failed", "success") }) %>% unlist()
     
     nK_success <- table(like.vec)["success"]
     
@@ -1497,7 +1497,7 @@ coseq.results.process <- function(coseqObjectList, K, conds){
   
   # Find the ICL min by replicates
   
-    ICL.min.per.rep <- lapply(1:length(coseqObjectList), function(x){
+  ICL.min.per.rep <- lapply(1:length(coseqObjectList), function(x){
     ICL.vec.min <- coseq::ICL(coseqObjectList[[x]])
     ICL.vec.min[which(ICL.vec.min == min(ICL.vec.min))]
   })  %>% unlist()
@@ -1523,49 +1523,49 @@ coseq.results.process <- function(coseqObjectList, K, conds){
   K.ICL.median.min <- ICL.n[which.min(ICL.n$median),]$K
   
   index  <- which(names(ICL.min.per.rep) == paste0("K=", K.ICL.median.min))
-
+  
   # Case where the median.min has a K.min.rep
   if(length(index)>0){
-  # Case where there is several rep with a min.rep, the min of them is taken
+    # Case where there is several rep with a min.rep, the min of them is taken
     index2 <- which(ICL.min.per.rep[index] == min(ICL.min.per.rep[index]))
     coseq.res <- coseqObjectList[index][index2][[1]]
-  
-  # logLike plot
-  logLike.list <- list()
-  
-  logLike.vec <- lapply(1:length(coseqObjectList), function(x){ coseq::likelihood(coseqObjectList[[x]]) }) %>% unlist()
-  logLike.list[["logLike.vec"]] <- logLike.vec
-  
-  logLike.tab <- data.frame(K = stringr::str_replace(names(logLike.vec), "K=", ""), logLike = logLike.vec) %>% 
-    dplyr::mutate(K = as.numeric(K))
-  logLike.list[["logLike.tab"]] <- logLike.tab
-  
-  logLike.n <- logLike.tab %>% 
-    dplyr::group_by(.,K) %>% 
-    dplyr::filter(!is.na(logLike)) %>%
-    dplyr::summarise(median = median(logLike), n = dplyr::n()) %>%
-    dplyr::mutate(K = as.numeric(K))
-  logLike.list[["logLike.n"]] <- logLike.n
-  
-  # list of genes per cluster
-  clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
-    names(coseq::clusters(coseq.res)[coseq::clusters(coseq.res) == i])
-  })
-  names(clusters) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
-  
-  # nbr of cluster
-  # Gestion des NA dans les ICLs
-  ICLv <- na.omit(coseq.res@metadata$ICL)
-  nb_cluster <- na.omit(coseq.res@metadata$nbCluster)[min(ICLv) == ICLv]
-  
-  #output
-  CoExpAnal <- list()
-  CoExpAnal[["results"]]      <- TRUE
-  CoExpAnal[["coseqResults"]] <- coseq.res
-  CoExpAnal[["clusters"]]     <- clusters
-  CoExpAnal[["cluster.nb"]]   <- nb_cluster
-  CoExpAnal[["plots"]]        <- list("ICL" = ICL.list, "logLike" = logLike.list)
-} else{
+    
+    # logLike plot
+    logLike.list <- list()
+    
+    logLike.vec <- lapply(1:length(coseqObjectList), function(x){ coseq::likelihood(coseqObjectList[[x]]) }) %>% unlist()
+    logLike.list[["logLike.vec"]] <- logLike.vec
+    
+    logLike.tab <- data.frame(K = stringr::str_replace(names(logLike.vec), "K=", ""), logLike = logLike.vec) %>% 
+      dplyr::mutate(K = as.numeric(K))
+    logLike.list[["logLike.tab"]] <- logLike.tab
+    
+    logLike.n <- logLike.tab %>% 
+      dplyr::group_by(.,K) %>% 
+      dplyr::filter(!is.na(logLike)) %>%
+      dplyr::summarise(median = median(logLike), n = dplyr::n()) %>%
+      dplyr::mutate(K = as.numeric(K))
+    logLike.list[["logLike.n"]] <- logLike.n
+    
+    # list of genes per cluster
+    clusters <- lapply(1:length(table(coseq::clusters(coseq.res))), function(i){
+      names(coseq::clusters(coseq.res)[coseq::clusters(coseq.res) == i])
+    })
+    names(clusters) <- paste("cluster", 1:length(table(coseq::clusters(coseq.res))), sep = ".")
+    
+    # nbr of cluster
+    # Gestion des NA dans les ICLs
+    ICLv <- na.omit(coseq.res@metadata$ICL)
+    nb_cluster <- na.omit(coseq.res@metadata$nbCluster)[min(ICLv) == ICLv]
+    
+    #output
+    CoExpAnal <- list()
+    CoExpAnal[["results"]]      <- TRUE
+    CoExpAnal[["coseqResults"]] <- coseq.res
+    CoExpAnal[["clusters"]]     <- clusters
+    CoExpAnal[["cluster.nb"]]   <- nb_cluster
+    CoExpAnal[["plots"]]        <- list("ICL" = ICL.list, "logLike" = logLike.list)
+  } else{
     # Pb of convergence: if there is no K.min.rep which correspond to the median.min, return an error
     CoExpAnal <- list()
     CoExpAnal[["results"]]      <- FALSE
@@ -1776,7 +1776,7 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list, si
   
   if (nK_success/length(iter) >=0.8) {
     
-     CoExpAnal <-  coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, 
+    CoExpAnal <-  coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, 
                                         K = K,
                                         conds = conds)
     # If ICL.median has been found
