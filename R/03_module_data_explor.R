@@ -85,12 +85,12 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
                selectInput(inputId  = session$ns("Filter_Strategy"),
                            label    = "Stategy",
                            choices  = c("NbConditions" = "NbConditions",  "NbReplicates" = "NbReplicates"),
-                           selected = "NbConditions")
+                           selected = "NbReplicates")
         ),
         column(4,
                numericInput(inputId = session$ns("FilterSeuil"),
                             label="Cutoff:",
-                            value=5, min = 1, max=10, step = 1 )
+                            value=1, min = 1, max=10, step = 1 )
         )
       ),
       fluidRow(
