@@ -4,53 +4,63 @@ coverPageUI <- function(){
     
     fluidRow(style="display: flex; align-items: center;",
              column(12,
-                    div(
-                      h2(tags$span("Introduction", style = "color:orange")),
-                      hr(),
-                      p(
-                        tags$b("Rflomics is a (",tags$i("under devlopement"),") R package coupled with a shiny application"),
-                        "dedicated to the management and analysis of multiple omics-datasets (RNAseq illumina, proteomic LC-MS/MS, … )
-                    in the statistical framework of", tags$b("vertical integration")," of observations ",tags$i("(i.e. analysis of omics data
-                    across experiments on the same indivuals)."),
-                    tags$hr(), tags$img(src = "/www/Rflomics_features.png", width = "600px", height = "300px" )),
-                    hr(),
-                    p("For the moment, Rflomics can deal",
-                      tags$b("with multi-factorial experiments"),"(up to 3 biological factors with a batch factor) and
-                    helps to set up the statistical model and contrasts associated to the biological experiments. RNA,
-                    proteomic and metabolomic datasets are then analysed with expert methods and parameters.", 
-                    "It can allows the remote computing for time/cpu consuming tasks (",tags$a("clustermq package",href="#ref4"),")"),
-                    hr(),
-                    h2(tags$span("Aims", style = "color:orange")),
-                    tags$ul(
-                      tags$li("Guarantee the relevance of the used methods and parameters (RNAseq workflow: ", 
-                              tags$a("DicoExpress",href="#ref1"),")"),
-                      tags$li("Decrease the time spend to code robust analysis"),
-                      tags$li("Allow experiment sharing and capitalizing"),
-                      tags$li("Ensure the reproducibility of omics analysis")),
-                    hr(),
-                    h3(tags$span("Datasets example", style = "color:orange")),
-                    tags$ul(
-                      tags$li("Ecoseed dataset:
+                    h1(tags$span("An interactive web application for multi-omics data analysis", style = "color:orange")),
+                    tags$hr())),
+    
+    fluidRow(
+      column(8,
+             tags$div(style="text-align:justify",
+                      p(tags$b("RFLOMICS")," is an R package and Shiny interface. 
+                        It provides a guided, comprehensive, and reproducible analysis within a framework capable of handling multiple omics datasets. 
+                        The interface offers intriguing flexibility, allowing users to seamlessly navigate between result exploration and visualization."),
+                      p("RFLOMICS code source is available at : ", tags$a(href="https://forgemia.inra.fr/flomics/rflomics", "gitLab")),
+                      p("RFLOMICS user documentations are available at : ", tags$a(href="https://flomics.pages.mia.inra.fr/rflomics/index.html", "Vignette")),
+                      tags$hr(),
+                      
+                      h3(tags$span(tags$i("Features"), style = "color:orange")),
+                      
+                      p("RFLOMICS supports up to three types of omics (", tags$a(href="https://flomics.pages.mia.inra.fr/rflomics/articles/RFLOMICS-input-data.html",
+                                                                                 "RNA-Seq, proteomics, and metabolomics"), 
+                      "), along with multiple datasets per omics type (up to 10). These datasets should be part of the same biological experiment."),
+                      tags$img(src = "/www/workflow.png", width = "600px", height = "400px" ),
+                      
+                      tags$hr(),
+                      h3(tags$span(tags$i("Specifications"), style = "color:orange")),
+                      tags$ul(
+                        tags$li("Performs complete multi-omics project analysis,"),
+                        tags$li("Support multi-factorial experimental design,"),
+                        tags$li("Guarantees the relevance of the used methods,"),
+                        tags$li("Reduces the analysis time on the unavoidable steps,"),
+                        tags$li("Ensure the reproducibility of omics analysis,"),
+                        tags$li("Accessible via one and simple user-friendly interface")),
+                      
+                      tags$hr(),
+                      h3(tags$span(tags$i("Datasets example"), style = "color:orange")),
+                      tags$ul(
+                        tags$li("Ecoseed dataset:
                     data have been provided by Loic Rajjou and Gwendal Cueff.
                     They are included in the inst/ExampleFiles/ecoseed directory of the package. Briefly,
                     A. thaliana's transcriptoms, proteoms and metaboloms have been obtained in the context of the study of seed
                     germination and vigor. In particular, authors were interested in the influence of
                     temperature (high, medium and low) and imbibition (Dry: DI, early imbibition: EI and late
                     imbibition: LI) on gene's expression."),
-                    tags$li(tags$a(href="ecoseed-report.html","An example of report"),),
-                    ),
-                    hr(),
-                    h3(tags$span("Vignettes", style = "color:orange")),
-                    tags$ul(
-                      tags$li(tags$a(href = "/docs/articles/RFLOMICS-input-data.html", "Input format")),
-                      tags$li(tags$a(href = "/docs/articles/RFLOMICS.html", "Quick start"))),
-                    hr(),
-                    h3(tags$span("Contact and support", style = "color:orange")),
-                    tags$a(href="mailto:ijpb-bioinfo-team@inrae.fr","ijpb-bioinfo-team")
-                    )
-             )
+                        tags$li(tags$a(href="ecoseed-report.html","An example of report")),
+                      ),
+                      tags$hr(),
+                      h3(tags$span(tags$i("Contact and support"), style = "color:orange")),
+                      tags$a(href="mailto:ijpb-bioinfo-team@inrae.fr","ijpb-bioinfo-team")
+                      
+             )),
+      
+      column(4, 
+             tags$img(src = "/www/IJPB_logo.png",  width = "240px", height = "120px"),
+             tags$hr(), 
+             tags$img(src = "/www/INRAE_logo.png", width = "180px", height = "60px"),
+             tags$hr(), 
+             tags$img(src = "/www/catiSysmics_logo.png", width = "120px", height = "80px")
+      )
+      
     )
-    
   )
 }
 
