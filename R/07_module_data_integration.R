@@ -487,22 +487,36 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
     lapply(setting$selectedResponse, function(Response) { 
       
       Data_res <- getMixOmics(session$userData$FlomicsMultiAssay, response = Response)
-      
       fluidRow(
         
-        box(width = 12, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success", title = Response,
+        box(width = 12, solidHeader = TRUE, collapsible = TRUE, 
+            collapsed = TRUE, status = "success", title = Response,
             
             tabsetPanel(
               # ---- Tab panel Overview ----
               tabPanel("Overview",
                        column(6 , DT::renderDataTable({
                          
-                         df <- t(sapply(Data_res$X, dim))
-                         colnames(df) <- c("Ind", "Features")
-                         
-                         if (setting$sparsity) {
-                           df <- cbind(df, do.call("rbind", Data_res$keepX))
-                           colnames(df)[!colnames(df) %in% c("Ind", "Features")] <- paste("Comp", 1:length(Data_res$keepX[[1]]))
+                         if (is.list(Data_res$X)) {
+                           # block.plsda or block.splsda
+                           df <- t(sapply(Data_res$X, dim))
+                           colnames(df) <- c("Ind", "Features")
+                           
+                           if (setting$sparsity) {
+                             df <- cbind(df, do.call("rbind", Data_res$keepX))
+                             colnames(df)[!colnames(df) %in% c("Ind", "Features")] <-
+                               paste("Comp", seq_along(length(Data_res$keepX[[1]])))
+                           }
+                           
+                         } else {
+                           # plsda or splsda
+                           df <-  data.frame("Ind" = nrow(Data_res$X),
+                                             "Features" = ncol(Data_res$X))
+                           if (setting$sparsity) {
+                             df <- cbind(df, do.call("cbind", as.list(Data_res$keepX)))
+                             colnames(df)[!colnames(df) %in% c("Ind", "Features")] <- 
+                               paste("Comp", seq_along(length(Data_res$keepX)))
+                           }
                          }
                          
                          t(df) %>% DT::datatable()
@@ -513,7 +527,6 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
               # ---- Tab panel Explained Variance ----
               tabPanel("Explained Variance",
                        column(12, renderPlot({
-                         
                          plot_MO_varExp(session$userData$FlomicsMultiAssay, 
                                         selectedResponse = Response)
                        })),
@@ -535,11 +548,13 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
                                            max =  setting$ncomp,
                                            value = 2, step = 1)
                        ),
-                       column(11 , renderPlot(suppressWarnings(
-                         mixOmics::plotIndiv(Data_res, 
-                                             comp = c(input[[paste0(Response, "ind_comp_choice_1")]], input[[paste0(Response, "ind_comp_choice_2")]]),
-                                             ellipse = input[[paste0(Response, "ellipse_choice")]],
-                                             legend = TRUE))))
+                       column(11 , renderPlot(
+                         
+                         suppressWarnings(
+                           mixOmics::plotIndiv(Data_res, 
+                                               comp = c(input[[paste0(Response, "ind_comp_choice_1")]], input[[paste0(Response, "ind_comp_choice_2")]]),
+                                               ellipse = input[[paste0(Response, "ellipse_choice")]],
+                                               legend = TRUE))))
               ),
               # ---- Tab panel Features ----
               tabPanel("Features",
@@ -556,10 +571,11 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
                                            max =  setting$ncomp,
                                            value = 2, step = 1)
                        ),
-                       column(11 , renderPlot(mixOmics::plotVar(Data_res, 
-                                                                comp = c(input[[paste0(Response, "var_comp_choice_1")]], input[[paste0(Response, "var_comp_choice_2")]]),
-                                                                overlap = input$overlap,
-                                                                legend = TRUE)))
+                       column(11 , renderPlot(
+                         mixOmics::plotVar(Data_res, 
+                                           comp = c(input[[paste0(Response, "var_comp_choice_1")]], input[[paste0(Response, "var_comp_choice_2")]]),
+                                           overlap = input$overlap,
+                                           legend = TRUE)))
               ),     
               # ---- Tab panel Loadings ----
               tabPanel("Loadings",
@@ -572,34 +588,35 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
                               numericInput(inputId = session$ns(paste0(Response, "Load_ndisplay")),
                                            label = "Number of features to display:",
                                            min = 1,
-                                           max =  max(sapply(Data_res$X, ncol)),
+                                           max =  ifelse(is.list(Data_res$X), max(sapply(Data_res$X, ncol)), ncol(Data_res$X)),
                                            value = 25, step = 1),
                        ),
                        column(11 , renderPlot(mixOmics::plotLoadings(Data_res, 
                                                                      comp = input[[paste0(Response, "Load_comp_choice")]],
                                                                      ndisplay = input[[paste0(Response, "Load_ndisplay")]])))
-              ),   
+              ),     
+              # ---- Tab panel Network ----
               tabPanel("Networks",
                        column(1, numericInput(inputId = session$ns(paste0(Response, "Network_cutoff")),
                                               label = "Cutoff:",
                                               min = 0,
                                               max =  1,
                                               value = 0.9, step = 0.05)),
-                       column(11 , 
+                       column(11 ,
                               renderUI({
-                                outN <- .doNotPlot(mixOmics::network(mat = Data_res, 
+                                outN <- .doNotPlot(mixOmics::network(mat = Data_res,
                                                                      blocks = 1:length(setting$selectData),
-                                                                     cutoff = input[[paste0(Response, "Network_cutoff")]], 
-                                                                     shape.node = rep("rectangle", length(setting$selectData)))) 
+                                                                     cutoff = input[[paste0(Response, "Network_cutoff")]],
+                                                                     shape.node = rep("rectangle", length(setting$selectData))))
                                 
                                 if (is(outN, "simpleError")){
                                   renderText({outN$message})
                                 } else {
                                   renderPlot(
                                     .doNotSpeak(
-                                      mixOmics::network(mat = Data_res, 
+                                      mixOmics::network(mat = Data_res,
                                                         blocks = 1:length(setting$selectData),
-                                                        cutoff = input[[paste0(Response, "Network_cutoff")]], 
+                                                        cutoff = input[[paste0(Response, "Network_cutoff")]],
                                                         shape.node = rep("rectangle", length(setting$selectData)))
                                     ))
                                 }
@@ -607,7 +624,7 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
                               })
                               
                        )
-              ), 
+              ),
               # ---- Tab  Panel CircosPlot & cimPlot ----
               tabPanel("CircosPlot",
                        if (is(Data_res, "block.splsda") || is(Data_res, "block.plsda")) {

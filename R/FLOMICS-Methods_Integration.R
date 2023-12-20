@@ -339,7 +339,7 @@ methods::setMethod(
       names(MixOmics_res) <- selectedResponse
       object@metadata[["IntegrationAnalysis"]][["mixOmics"]] <- MixOmics_res
       object@metadata[["IntegrationAnalysis"]][["mixOmics"]][["setting"]] <- list(scale_views      = scale_views,
-                                                                                  ncomp.           = ncomp,
+                                                                                  ncomp           = ncomp,
                                                                                   sparsity         = sparsity,
                                                                                   cases_to_try     = cases_to_try,
                                                                                   selectedResponse = selectedResponse,
