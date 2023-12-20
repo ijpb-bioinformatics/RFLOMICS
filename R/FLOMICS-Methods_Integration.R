@@ -18,9 +18,10 @@ methods::setMethod(
   f = "integrationWrapper",
   signature = "MultiAssayExperiment",
   definition = function(object,
-                        omicsToIntegrate = NULL,
+                        omicsToIntegrate = names(object),
                         rnaSeq_transfo = "limma (voom)",
-                        variableLists = NULL,
+                        selOpt = rep(list("DE"), length(omicsToIntegrate)),
+                        type = rep(list("union"), length(selOpt)),
                         group = NULL,
                         method = "MOFA",
                         scale_views = FALSE,
@@ -42,19 +43,18 @@ methods::setMethod(
       stop("There are omics to integrate that are not names from the object")
     }
     
-    
-    # TODO handle NULL case better than that
-    if (isTagName(object, contrasts_names)) 
-      contrasts_names <- convertTagToContrast(object, contrasts_names)
-    
     if (cmd) print("#     => Preparing for multi-omics analysis")
+    
+    objectfilt <- filterFeatures(object = object, 
+                                 selOpt = selOpt, 
+                                 type = type)
+    
+    variableLists <- lapply(objectfilt@ExperimentList, names)
     
     preparedObject <- prepareForIntegration(object = object,
                                             omicsToIntegrate = omicsToIntegrate,
                                             rnaSeq_transfo = rnaSeq_transfo,
-                                            choice = choice,
                                             variableLists = variableLists,
-                                            type = type,
                                             group = group,
                                             method = method,
                                             cmd = cmd,
@@ -102,7 +102,7 @@ methods::setMethod(
                         rnaSeq_transfo = "limma (voom)",
                         variableLists = NULL,
                         group = NULL,
-                        method = c("MOFA", "MixOmics"),
+                        method = "MOFA",
                         cmd = FALSE, 
                         silent = TRUE) {
     
@@ -115,24 +115,6 @@ methods::setMethod(
     
     # if no omicsToIntegrate we keep all SE
     if (is.null(omicsToIntegrate)) omicsToIntegrate <- names(object)
-    
-    # # Checking if intersection is a possible type of selection
-    # if (type == "intersection") {
-    #   allrownames <- lapply(omicsToIntegrate, FUN = function(nam){
-    #     tryCatch(opDEList(object, SE.name = nam, contrasts = contrasts_names, operation = type),
-    #              error = function(e) e, 
-    #              warning = function(w) w)
-    #   })
-    #   names(allrownames) <- omicsToIntegrate
-    #   
-    #   if (any(sapply(allrownames, class) != "character")) {
-    #     probOmics <- names(allrownames)[sapply(allrownames, class) != "character"]
-    #     stop("It seems there  is a problem with: ", 
-    #          sapply(probOmics, FUN = function(namesError){
-    #            paste("\n", namesError, " -- error message:\n", allrownames[[namesError]])}))
-    #   }
-    #   
-    # } # does this chunk of code work?!
     
     object <- object[, , omicsToIntegrate]
     
@@ -366,3 +348,117 @@ methods::setMethod(
     return(object)
   }
 )
+
+
+# ---- Select features to  keep for integration (MAE) ----
+
+#' @title filterFeatures
+#' @param object multiAssayExperiment, produced by RFLOMICS. 
+#' @param selOpt list of vectors. Preferred named list with names corresponding to 
+#' the names of the experimentList in the object. For each Experiment, gives
+#' the option for the filtering: either 'all', 'DE', 'none', or a specific name of a 
+#' contrast or cluster (if coexpression results are available). Default is taking
+#' all features for all experiment list. If the vector is named and an
+#' Experiment is missing, no feature will be selected from it. 
+#' If the vector is not named, the selection will be applied in order of the
+#' Experiments in the object. 
+#' @param type if selOpt is set to a specific set of contrasts or clusters, 
+#' indicates whether the selection is "union" or "intersection" of entities in
+#' these sets.
+#' @return a MultiAssayExperiment, filtered with only the corresponding features.
+#' @rdname filterFeatures
+#' @exportMethod filterFeatures
+#' @examples
+#' MAE <- generateExample(integration = FALSE, annotation = FALSE)
+#'
+#' selOpt = list("RNAtest" = c("cluster.1", "H3"), protetest = c("DE"))
+#' MAE1 <- filterFeatures(MAE, selOpt)
+#'
+#' selOpt2 = list("RNAtest" = c("cluster.2", "H2", "H1"), protetest = c("DE"))
+#' MAE2 <- filterFeatures(MAE, selOpt2,  
+#' type = c("RNAtest" = "intersection", 
+#' "protetest" = 'union'))
+#' 
+methods::setMethod(
+  f = "filterFeatures",
+  signature = "MultiAssayExperiment",
+  definition = function(object,
+                        selOpt = rep(list("all"), length(object)),
+                        type = rep(list("union"), length(selOpt))) {
+    
+    # check if named vector
+    if (is.null(names(selOpt))) {
+      names(selOpt) <- names(object)[seq_along(selOpt)]
+    }
+    
+    if (is.null(names(type))) {
+      names(type) <- names(selOpt)[seq_along(selOpt)]
+    }
+    
+    # Applying corresponding filtering
+    res <- lapply(names(selOpt), FUN = function(nam){
+      SE.object <- object[[nam]]
+      vectSel <- selOpt[[nam]]
+      typeSel <- type[[nam]]
+      
+      if (is.null(typeSel)) typeSel <- "union" 
+      
+      # intermediate list: list of features for each selectiontype
+      # default: take all if typo somewhere.
+      resInter <- lapply(vectSel, FUN = function(listSel){
+        
+        if (!listSel %in% c("all", "none", "DE")) {
+          originList <- .getOrigin(SE.object, listSel)  
+        } else { originList <- listSel}
+        
+        switch(originList, 
+               "all" = {names(SE.object)},
+               "none" = {NULL},
+               "DE"  = {
+                 getDEMatrix(object = SE.object)$DEF
+               },
+               "Contrast" = {
+                 getDE(object = SE.object, contrast = listSel)$DEF}, 
+               "Tag" = {
+                 getDE(object = SE.object, contrast = listSel)$DEF 
+                 # TODO problem when only one selected
+               }, 
+               "CoexCluster" = {.getCluster(SE.object, clusterName = listSel)},
+               { # Default: all
+                 message("Cannot detect origin of ", listSel, " for ", 
+                         nam ," taking all features")
+                 names(SE.object)
+               }
+        )
+        
+      })
+      
+      # Union or intersection of all selected features
+      filtKeep <- if (!is.null(typeSel)) {
+        switch(typeSel, 
+               unique(unlist(resInter)), # default
+               "intersection" = Reduce(intersect, resInter))
+      }
+      if (length(filtKeep) == 0) {
+        message("No feature to keep in ", nam, ", it will be dropped." )
+      }
+      return(SE.object[filtKeep,])
+      
+    })
+    names(res) <- names(selOpt)
+    
+    res <- res[lengths(res) > 0]
+    
+    return(MultiAssayExperiment(experiments = res, 
+                                colData = colData(object), 
+                                sampleMap = sampleMap(object), 
+                                metadata = metadata(object)))
+    
+  })
+
+
+
+
+
+
+

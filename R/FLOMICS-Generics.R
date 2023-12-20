@@ -223,18 +223,17 @@ methods::setGeneric(
                  matrixType = "GeneRatio",
                  nClust = NULL,
                  ...
-    ){standardGeneric("plotEnrichComp")}
+  ){standardGeneric("plotEnrichComp")}
 )
 # ---- INTEGRATION ----
 
 methods::setGeneric(
   name = "integrationWrapper",
   def  = function(object,
-                  omicsToIntegrate = NULL,
+                  omicsToIntegrate = names(object),
                   rnaSeq_transfo = "limma (voom)",
-                  choice = "DE",
-                  contrasts_names = NULL,
-                  type = "union",
+                  selOpt = rep(list("DE"), length(omicsToIntegrate)),
+                  type = rep(list("union"), length(selOpt)),
                   group = NULL,
                   method = "MOFA",
                   scale_views = FALSE,
@@ -245,9 +244,10 @@ methods::setGeneric(
                   link_datasets = 1,
                   link_response = 1,
                   sparsity = FALSE,
-                  cases_to_try = 5, 
+                  cases_to_try = 5,
                   silent = TRUE, 
-                  cmd = FALSE, ... ){standardGeneric("integrationWrapper")}
+                  cmd = FALSE,
+                  ... ){standardGeneric("integrationWrapper")}
 )
 
 
@@ -256,18 +256,42 @@ methods::setGeneric(
   def  = function(object,
                   omicsToIntegrate = NULL,
                   rnaSeq_transfo = "limma (voom)",
-                  choice = "DE",
-                  contrasts_names = NULL,
-                  type = "union",
+                  variableLists = NULL,
                   group = NULL,
-                  method = c("MOFA", "MixOmics"), ... ){standardGeneric("prepareForIntegration")}
+                  method = "MOFA",
+                  cmd = FALSE, 
+                  silent = TRUE, ... ){standardGeneric("prepareForIntegration")}
 )
 
 
 methods::setGeneric(
   name = "runIntegration",
-  def  = function(object, ... ){standardGeneric("runIntegration")}
+  def  = function(object,
+                  preparedObject = NULL,
+                  method = "MOFA",
+                  scale_views = FALSE,
+                  maxiter = 1000,
+                  num_factors = 10,
+                  selectedResponse = NULL,
+                  ncomp = 2,
+                  link_datasets = 1,
+                  link_response = 1,
+                  sparsity = FALSE,
+                  cases_to_try = 5,
+                  silent = TRUE, 
+                  cmd = FALSE,
+                  ... ){standardGeneric("runIntegration")}
 )
+
+
+methods::setGeneric(
+  name = "filterFeatures",
+  def = function(object,
+                 selOpt = rep(list("all"), length(object)),
+                 type = rep(list("union"), length(selOpt))
+                 ){standardGeneric("filterFeatures")}
+)
+
 # ---- RESET ----
 
 methods::setGeneric(
