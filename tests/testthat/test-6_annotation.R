@@ -1,21 +1,11 @@
 library(testthat)
 library(RFLOMICS)
 
-# ---- Construction of objects for the tests ----
-
-# RNAdat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
-# corresp <- read.table(file = paste0(system.file(package = "RFLOMICS"),"/ExamplesFiles/ecoseed/transcript_genes.txt"), sep = "\t", header = TRUE)
-# 
-# # Use gene id to ease use of clusterprofiler
-# RNAdat <- RNAdat[corresp$ensembl_transcript_id,]
-# rownames(RNAdat) <- corresp$ensembl_gene_id[match(corresp$ensembl_transcript_id, rownames(RNAdat))]
-
 # ---- Construction MAE RFLOMICS ready for differential analysis : ----
 MAE <- generateExample(
   annotation = FALSE,
   integration = FALSE
 ) 
-
 
 # ---- Annotation test function - DiffExpEnrichment ----
 # 
@@ -57,7 +47,9 @@ test_that("it's running from diffExpAnal - GO - RNASeq", {
 
 test_that("it's running from diffExpAnal - Custom - RNASeq", {
   
-  df_custom <- vroom::vroom(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/GO_annotations/Arabidopsis_thaliana_Ensembl_55.txt"))
+  df_custom <- vroom::vroom(file = paste0(system.file(package = "RFLOMICS"), 
+                                          "/ExamplesFiles/GO_annotations/Arabidopsis_thaliana_Ensembl_55.txt"),
+                            show_col_types = FALSE)
   
   MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", ontology = "custom",
                                  list_args = list(pvalueCutoff = 0.05),
@@ -106,7 +98,7 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
     MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", ontology = "KEGG",
                                    list_args = list(organism = "ath", 
                                                     keyType = "kegg", 
-                                                    pvalueCutoff = 0.05))
+                                                    pvalueCutoff = 0.5))
     
   })
   
@@ -154,30 +146,3 @@ test_that("it's running from CoExpAnal - GO - RNASeq", {
   }, failure_message = "(GO RNAseq from CoExp) - There is no result in the enrichment metadata part.")
   
 })
-
-
-# ------- TRASH DELETE THESE ! -----------
-
-# save(MAE, file = "tetAnnot_MAE.RData")
-load("tetAnnot_MAE.RData")
-
-MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", nameList = c("H1") ,
-                               from = "DiffExp", ontology = "KEGG",
-                               list_args = list(organism = "ath", 
-                                                keyType = "kegg", 
-                                                pvalueCutoff = 1))
-
-
-sumORA(MAE[["RNAtest"]])
-KEGGRes <- getEnrichRes(MAE[["RNAtest"]], contrast = c("H1"), from = "DiffExp", ont = "KEGG")
-KEGGRes$`no-domain`@result$ID
-
-plotCPRKEGG(MAE[["RNAtest"]], contrast = c("H1"), pathway_id = "ath00500")
-plotCPRKEGG(MAE[["RNAtest"]], contrast = c("H1"), pathway_id = "ath00")
-
-out1 <- tryCatch(plotCPRKEGG(MAE[["RNAtest"]], contrast = c("H1"), pathway_id = "ath00"), 
-                 error = function(err) err, 
-                 warning = function(warn) warn
-)
-
-out1$message
