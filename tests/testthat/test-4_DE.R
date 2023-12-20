@@ -8,24 +8,8 @@ library(RFLOMICS)
 
 
 # ---- Construction MAE RFLOMICS ready for differential analysis : ----
-ExpDesign <- RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
-factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
-                        factorRef   = c("rep1",   "Low",          "DS"),
-                        factorType  = c("batch",  "Bio",          "Bio"),
-                        factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
 
-omicsData <- list(
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
-
-MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests", 
-                                               omicsData   = omicsData,
-                                               omicsNames  = c("RNAtest", "metatest", "protetest"),
-                                               omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-                                               ExpDesign   = ExpDesign,
-                                               factorRef   = factorRef)
-names(MAE) <- c("RNAtest", "metatest", "protetest")
+MAE <- initExampleMAE()
 
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
 
