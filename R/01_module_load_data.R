@@ -40,11 +40,7 @@ LoadOmicsDataUI <- function(id){
     br(),
     
     fluidRow(
-      uiOutput(ns("summaryMAE"))
-    ),
-    fluidRow(
-      uiOutput(ns("dataConditionUI")),
-      uiOutput(ns("CompletenessUI"))
+      uiOutput(ns("overViewUI"))
     )
     
   )
@@ -302,7 +298,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     # RNASeq
     data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"),
                                                            "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")), 
-                            error = function(e) e, warning = function(w) w)
+                             error = function(e) e, warning = function(w) w)
     
     local.rea.values$omicsData  <- list("RNAseq.set1" = data.mat.tt)
     local.rea.values$omicsNames <- c("RNAseq.set1")
@@ -311,7 +307,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     # Metabolomic
     data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
                                                            "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
-                            error = function(e) e, warning = function(w) w)
+                             error = function(e) e, warning = function(w) w)
     
     local.rea.values$omicsData  <- c(local.rea.values$omicsData , list("metabolomics.set2" = data.mat.tt))
     local.rea.values$omicsNames <- c(local.rea.values$omicsNames, "metabolomics.set2")
@@ -320,7 +316,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     # proteomics
     data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
                                                            "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")), 
-                            error = function(e) e, warning = function(w) w)
+                             error = function(e) e, warning = function(w) w)
     
     local.rea.values$omicsData  <- c(local.rea.values$omicsData , list("proteomics.set3" = data.mat.tt))
     local.rea.values$omicsNames <- c(local.rea.values$omicsNames, "proteomics.set3")
@@ -422,7 +418,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     rea.values$exampleData <- FALSE
     
   })
-
+  
   # ---- observe Event load Data ----
   # as soon as the "load" buttom has been clicked
   # => create ExpDesign object
@@ -431,7 +427,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
   observeEvent(local.rea.values$omicsData, {
     
     ### load Design
-
+    
     # reset objects and UI
     rea.values$loadData <- FALSE
     rea.values$model    <- FALSE
@@ -440,7 +436,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     rea.values$datasetList   <- NULL
     rea.values$datasetDiff   <- NULL
     rea.values$Contrasts.Sel <- NULL
-
+    
     session$userData$FlomicsMultiAssay <- NULL
     
     local.rea.values$plots <- FALSE
@@ -451,18 +447,18 @@ LoadOmicsData <- function(input, output, session, rea.values){
       showModal(modalDialog(title = "Error message", "Please load data"))
     }
     validate({ need(!is.null(local.rea.values$omicsData), message = "Please load data") })
-
+    
     if (length(local.rea.values$omicsData) == 0) {
       showModal(modalDialog(title = "Error message", "Please load data"))
     }
     validate({ need(length(local.rea.values$omicsData) > 0, message = "Please load data") })
-
+    
     ### check project name
     if (input$projectName == "") {
       showModal(modalDialog(title = "Error message", "project name is required"))
     }
     validate({ need(input$projectName != "", message="project name is required") })
-
+    
     if (is.null(local.rea.values$dataPath)) {
       showModal(modalDialog(title = "Error message", "Experimental Design is required"))
     }
@@ -494,21 +490,21 @@ LoadOmicsData <- function(input, output, session, rea.values){
       showModal(modalDialog(title = "Error message", "at least 1 batch factor (max = 2)"))}
     
     validate({ need((length(stringr::str_subset(dF.Type.dFac, "Bio"  )) %in% 1:3) &
-                    (length(stringr::str_subset(dF.Type.dFac, "batch")) %in% 1:2), message="") })
+                      (length(stringr::str_subset(dF.Type.dFac, "batch")) %in% 1:2), message="") })
     
     #### load omics data
     #### list of omic data laoded from interface
     rea.values$validate.status <- 0
-   
+    
     FlomicsMultiAssay.try <- tryCatch( 
-                FlomicsMultiAssay.constructor(projectName = input$projectName, 
-                                              omicsData   = local.rea.values$omicsData,
-                                              omicsNames  = local.rea.values$omicsNames,
-                                              omicsTypes  = local.rea.values$omicsTypes,
-                                              ExpDesign   = ExpDesign.tbl,
-                                              factorRef   = data.frame(factorName = names(dF.List.ref),
-                                                                       factorRef   = dF.List.ref,
-                                                                       factorType  = dF.Type.dFac)),
+      FlomicsMultiAssay.constructor(projectName = input$projectName, 
+                                    omicsData   = local.rea.values$omicsData,
+                                    omicsNames  = local.rea.values$omicsNames,
+                                    omicsTypes  = local.rea.values$omicsTypes,
+                                    ExpDesign   = ExpDesign.tbl,
+                                    factorRef   = data.frame(factorName = names(dF.List.ref),
+                                                             factorRef   = dF.List.ref,
+                                                             factorType  = dF.Type.dFac)),
       error = function(e) e, warning = function(w) w)
     
     if(!is.null(FlomicsMultiAssay.try$message)) {
@@ -526,8 +522,9 @@ LoadOmicsData <- function(input, output, session, rea.values){
     # plot : ok
     local.rea.values$plots <- TRUE
     
-    rea.values$datasetList <- session$userData$FlomicsMultiAssay@metadata$omicList
 
+    rea.values$datasetList <- session$userData$FlomicsMultiAssay@metadata$omicList
+    
     rea.values$loadData <- TRUE
     
   }, ignoreInit = TRUE)
@@ -536,36 +533,25 @@ LoadOmicsData <- function(input, output, session, rea.values){
   # (3) check data
   ##########################################
   
-  # dataset per condition check
-  output$dataConditionUI <- renderUI({
-    
-    if (local.rea.values$plots == FALSE) return()
-    
-    print(paste0("#    => Completeness plot..."))
-    
-    box( width = 6,  status = "warning", title = "Number of Datasets per Condition", solidHeader = TRUE,
-         
-         # plot of count per condition
-         renderPlot(
-           # isolate({ 
-             #local.rea.values$completeCheckRes[["plot"]] 
-             CheckExpDesign(session$userData$FlomicsMultiAssay)
-             # })
-         )
-         
-    )
-  })
-  
   # upset of all data
-  output$summaryMAE <- renderUI({
+  output$overViewUI <- renderUI({
     
     if (local.rea.values$plots == FALSE) return()
     
-    print(paste0("#    => overview plot..."))
-    
-    box(width = 12, status = "warning", title = "Dataset(s) overview", solidHeader = TRUE,
-        renderPlot( isolate({  Datasets_overview_plot(session$userData$FlomicsMultiAssay) })),
+    box(width = 12, status = "warning", title = "Data Overview", solidHeader = TRUE,
+        
+        tabsetPanel(
+          tabPanel(title = "Samples",
+                   h5(" Overview of the input omic data. Each color represents a distinct dataset, with their respective samples on the x-axis and the number of features on the y-axis. It illustrates the overlap between samples across datasets."),
+                   renderPlot( isolate({  Datasets_overview_plot(session$userData$FlomicsMultiAssay) }))
+          ),
+          tabPanel(title = "Conditions",
+                   h5(" Number of Datasets per Condition. Each axis represents a distinct biological factor, and each cell value signifies the count of datasets associated with that specific condition."),
+                   renderPlot( CheckExpDesign(session$userData$FlomicsMultiAssay) )
+          )
+        )
     )
+
   })
   
   return(input)
