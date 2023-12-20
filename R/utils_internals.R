@@ -312,9 +312,9 @@ setCoeffNorm <- function(object, coeff = NULL) {
 .doNotSpeak <- function(expr) {
   capture.output(out <- tryCatch(
     {
-        suppressWarnings(
-          suppressMessages(eval(expr))
-        )
+      suppressWarnings(
+        suppressMessages(eval(expr))
+      )
       
     },
     error = function(e) e,
@@ -374,6 +374,45 @@ isTagName <- function(object, tagName) {
     return(FALSE)
   }
 }
+
+# ----- INTERNAL - Check if character vectors are tags Names : -----
+
+#' @title Check if character vectors is a cluster name
+#'
+#' @param object a SE object (produced by Flomics). Expects to find
+#'  a slot of coExpression analysis
+#' @param clusterName vector of characters. For clusters, please
+#' specify cluster.1, cluster.2, ... although 1,2,3 can work as well.
+#' @return boolean. TRUE if all of tagName are indeed tags Names.
+#' @noRd
+#' @importFrom coseq clusters
+#' @keywords internal
+isClusterName <- function(object, clusterName) {
+  resClus <- object@metadata$CoExpAnal$coseqResults
+  
+  if (is.null(resClus)) {
+    warning("No coseq results in this object")
+    return(FALSE) 
+  }
+  
+  clusterPoss <- unique(clusters(resClus))
+  
+  if (is.integer(clusterName)) clusterName <- paste("cluster", clusterName, sep = ".")
+  namesClust <- paste("cluster", clusterPoss, sep = ".")
+  
+  search_match <- sapply(clusterName, FUN = function(cn) {
+    grep(cn, namesClust, fixed = TRUE)
+  })
+  search_success <- sapply(search_match, identical, integer(0)) 
+  # if TRUE, not a success at all.
+  
+  if (!any(search_success)) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
 
 # ---- INTERNAL - convert tag to contrastName ----
 
@@ -453,3 +492,6 @@ omicsDic <- function(object, SE.name = NULL){
   return(valReturn)
   
 }
+
+
+

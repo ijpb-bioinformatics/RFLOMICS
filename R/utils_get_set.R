@@ -134,6 +134,7 @@ setModelFormula <- function(object, modelFormula=NULL) {
 #' @title Get selected contrasts for the differential analysis
 #'
 #' @param object a MAE object (produced by Flomics) or a summarized experiment produced by Flomics after a differential analysis.
+#' @param formula The formula used to compute all possible contrasts. Default is the formula found in the object. 
 #' @param typeContrast the type of contrast from which the possible contrasts are extracted. Default is all contrasts types.
 #' @param modalities specific levels for the contrast selection
 #' @param returnTable return a dataTable with all contrasts information
@@ -142,20 +143,23 @@ setModelFormula <- function(object, modelFormula=NULL) {
 #' @export
 #' @importFrom data.table rbindlist
 #'
-getPossibleContrasts <- function(object, typeContrast = c("simple", "averaged", "interaction"),
+getPossibleContrasts <- function(object, 
+                                 formula = object@metadata$design@Model.formula,
+                                 typeContrast = c("simple", "averaged", "interaction"),
                                  modalities = NULL, returnTable = FALSE) {
-  if (is(object, "MultiAssayExperiment")) {
+  if (is(object, "SummarizedExperiment") || is(object, "MultiAssayExperiment")) {
     if (is.null(typeContrast)) typeContrast <- c("simple", "averaged", "interaction")
     
-    allContrasts <- MAE@metadata$design@Contrasts.List
+    allContrasts <- getExpressionContrast(object = object, modelFormula = formula)
     allContrasts <- allContrasts[which(names(allContrasts) %in% typeContrast)]
-    allContrastsdt <- data.table::rbindlist(allContrasts, fill = TRUE)
+    allContrastsdt <- rbindlist(allContrasts, fill = TRUE)
     
     if (!is.null(modalities)) {
-      allVarMod <- lapply(getDesignMat(MAE), FUN = function(vect) levels(factor(vect))[levels(factor(vect)) %in% modalities])
+      allVarMod <- lapply(getDesignMat(object), 
+                          FUN = function(vect) levels(factor(vect))[levels(factor(vect)) %in% modalities])
       allVarMod <- Filter(length, allVarMod)
       
-      allVarMod <- paste0(rep(names(allVarMod), times = sapply(allVarMod, length)), unlist(allVarMod))
+      allVarMod <- paste0(rep(names(allVarMod), times = lengths(allVarMod)), unlist(allVarMod))
       
       allContrastsdt <- allContrastsdt[grep(paste(allVarMod, collapse = "|"), allContrastsdt$contrastName), ]
     }
@@ -165,17 +169,18 @@ getPossibleContrasts <- function(object, typeContrast = c("simple", "averaged", 
     } else {
       return(allContrastsdt$contrast)
     }
-  } else if (is(object, "SummarizedExperiment")) {
-    # expects to find a diff analysis slot
-    allContrasts <- metadata(object)$DiffExpAnal$contrasts
-    
-    if (returnTable) {
-      return(allContrasts)
-    } else {
-      return(allContrasts$contrast)
-    }
-    
-  } else {
+  } 
+  # else if (is(object, "SummarizedExperiment")) {
+  #   # expects to find a diff analysis slot
+  #   allContrasts <- metadata(object)$DiffExpAnal$contrasts
+  #   
+  #   if (returnTable) {
+  #     return(allContrasts)
+  #   } else {
+  #     return(allContrasts$contrast)
+  #   }
+  
+  else {
     stop("object is not a MultiAssayExperiment or a SummarizedExperiment.")
   }
 }
@@ -194,10 +199,10 @@ getSelectedContrasts <- function(object) {
     object@metadata$design@Contrasts.Sel
   } else
     if (is(object, "SummarizedExperiment")) {
-    object@metadata$DiffExpAnal$contrasts
-  } else {
-    stop("object is not a MultiAssayExperiment or a SummarizedExperiment.")
-  }
+      object@metadata$DiffExpAnal$contrasts
+    } else {
+      stop("object is not a MultiAssayExperiment or a SummarizedExperiment.")
+    }
 }
 
 # ---- Set Valid Contrasts : (after differential analysis) ----
@@ -273,19 +278,20 @@ getDEMatrix <- function(object) {
 }
 
 #' @param contrast character name (can be a vector of name) for the contrast to select.
-#' @param union Booleen value. TRUE : union; FALSE : intersection
+#' @param union Boolean value. TRUE : union; FALSE : intersection
 #' @export
 #' @importFrom tidyselect any_of
 #' @importFrom dplyr select
 #' @rdname getDE
 getDE <- function(object, contrast, union = TRUE) {
   
-  if (isContrastName(object, contrast)) contrast <- convertContrastToTag(object, contrast)
+  if (isContrastName(object, contrast)) 
+    contrast <- convertContrastToTag(object, contrast)
   
   DEmat <- getDEMatrix(object)
-  DEmat <- DEmat %>% dplyr::select(tidyselect::any_of(c("DEF", contrast)))
+  DEmat <- DEmat %>% select(any_of(c("DEF", contrast)))
   
-  if(union) return(DEmat[rowSums(DEmat[,-1]) >= 1,])
+  if (union) return(DEmat[rowSums(DEmat[,-1]) >= 1,])
   
   return(DEmat[rowSums(DEmat[,-1]) >= length(contrast),])
 }
@@ -304,8 +310,8 @@ getDE <- function(object, contrast, union = TRUE) {
 #' @return vector of unique DE entities
 #' @rdname getDE
 #' @export
-#' @importFrom tidyselect starts_with
-#'
+#' @importFrom tidyselect starts_with any_of
+#' @importFrom dplyr select mutate filter
 opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "union") {
   
   if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
@@ -316,8 +322,10 @@ opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "unio
   
   if (is(object, "MultiAssayExperiment")) object <- object[[SE.name]] 
   
-  if (is.null(contrasts) || length(contrasts) == 0) contrasts <- getSelectedContrasts(object)[["tag"]]
-  if (isContrastName(object, contrasts)) contrasts <- convertContrastToTag(object, contrasts)
+  if (is.null(contrasts) || length(contrasts) == 0) 
+    contrasts <- getSelectedContrasts(object)[["tag"]]
+  if (isContrastName(object, contrasts)) 
+    contrasts <- convertContrastToTag(object, contrasts)
   
   if (!is.null(object@metadata$DiffExpAnal$Validcontrasts)) {
     validTags <- convertContrastToTag(object, getValidContrasts(object)$contrastName)
@@ -326,22 +334,23 @@ opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "unio
   }
   
   tagsConcerned <- intersect(contrasts, validTags)
-  if (length(tagsConcerned) == 0) stop("It seems there is no contrasts to select DE entities from.")
+  if (length(tagsConcerned) == 0) 
+    stop("It seems there is no contrasts to select DE entities from.")
   
   df_DE <- getDEMatrix(object) %>%
-    dplyr::select(c("DEF", tidyselect::any_of(tagsConcerned)))
+    select(c("DEF", any_of(tagsConcerned)))
   
   if (operation == "intersection") {
     DETab <- df_DE %>%
-      dplyr::mutate(SUMCOL = dplyr::select(., tidyselect::starts_with("H")) %>%
+      mutate(SUMCOL = select(., starts_with("H")) %>%
                       rowSums(na.rm = TRUE)) %>%
-      dplyr::filter(SUMCOL == length(validTags))
- 
+      filter(SUMCOL == length(validTags))
+    
   } else {
     DETab <- df_DE %>%
-      dplyr::mutate(SUMCOL = dplyr::select(., tidyselect::starts_with("H")) %>%
+      mutate(SUMCOL = select(., starts_with("H")) %>%
                       rowSums(na.rm = TRUE)) %>%
-      dplyr::filter(SUMCOL >= 1)
+      filter(SUMCOL >= 1)
   }
   
   return(unique(DETab$DEF))
@@ -563,7 +572,7 @@ getMOFA <- function(object, onlyResults = TRUE){
 setMOFA <- function(object, results = NULL){
   
   metadata(object)[["MOFA"]] <- results
-
+  
   return(object)
 }
 
@@ -667,7 +676,6 @@ getEnrichSum <- function(object,
 
 
 # ---- INTERNAL - Get a pvalue threshold used in enrichment analysis ----
-# TODO equivalent to sumORA (external)
 #
 #' @title Get a pvalue threshold used in enrichment analysis
 #'
@@ -684,8 +692,71 @@ getEnrichPvalue <- function(object,
   if (!from %in% c("DiffExpEnrichAnal", "CoExpEnrichAnal")) stop(from, " don't existe")
   if (!dom  %in% c("GO", "KEGG", "custom")) stop(from, " not valide value. Choose from c(GO, KEGG, custom)")
   if (is.null(object@metadata[[from]][[dom]]$list_args$pvalueCutoff)) stop("P-value not found")
-    
+  
   return(object@metadata[[from]][[dom]]$list_args$pvalueCutoff)
+}
+
+# ---- INTERNAL - get members of a cluster or coseq clusters ----
+#
+#' @title get members of a cluster
+#'
+#' @param object a SummarizedExperiment, produced by rflomics
+#' @param name name of the cluster
+#' @return The list of entities inside this cluster.
+#' @noRd
+#' @importFrom coseq clusters
+#' @keywords internal
+
+.getCluster <- function(object, clusterName) {
+  
+  clusterName <- gsub("cluster[.]", "", clusterName)
+  res <- object@metadata$CoExpAnal$coseqResults
+  
+  if (!is.null(res)) {
+    clList <- clusters(res)
+    return(names(clList == clusterName))
+  } else {
+    return(NULL)
+  }
+  
+}
+
+#' @param object a SummarizedExperiment, produced by rflomics
+#' @return all clusters
+#' @noRd
+#' @importFrom coseq clusters
+#' @keywords internal
+
+.getCoseqClusters <- function(object) {
+  
+  res <- object@metadata$CoExpAnal$coseqResults
+  
+  if (!is.null(res)) {
+    return(clusters(res))
+  } else {
+    return(NULL)
+  }
+  
+}
+
+# ---- INTERNAL - get origin of a particular name ----
+#
+#' @title get origin of a name given a rflomics MAE
+#'
+#' @param object a SummarizedExperiment, produced by rflomics
+#' @param name name of the parameter to identify. For clusters, please
+#' specify cluster.1, cluster.2, etc.
+#' @return The origin of the name, one of Contrast, Tag or CoexCluster.
+#' @noRd
+#' @keywords internal
+
+.getOrigin <- function(object, name) {
+  
+  if (isContrastName(object, name)) return("Contrast")
+  if (isTagName(object, name)) return("Tag")
+  if (isClusterName(object, name)) return("CoexCluster")
+  
+  return("NoOriginFound")
 }
 
 
