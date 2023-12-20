@@ -5,37 +5,18 @@ library(RFLOMICS)
 
 # ---- Construction of objects for the tests ----
 
-ExpDesign <- RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
-factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
-                        factorRef   = c("rep1",   "Low",          "DS"),
-                        factorType  = c("batch",  "Bio",          "Bio"),
-                        factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
-
-omicsData <- list(
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
-
-MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests", 
-                                               omicsData   = omicsData,
-                                               omicsNames  = c("RNAtest", "metatest", "protetest"),
-                                               omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-                                               ExpDesign   = ExpDesign,
-                                               factorRef   = factorRef)
-names(MAE) <- c("RNAtest", "metatest", "protetest")
+MAE <- initExampleMAE()
 
 protMat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
 rnaMat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
 
 rnaMat <- rnaMat[, match(colnames(SummarizedExperiment::assay(MAE[["RNAtest"]])), colnames(rnaMat))]
 protMat <- protMat[, match(colnames(SummarizedExperiment::assay(MAE[["protetest"]])), colnames(protMat))]
-# rnaMat <- rnaMat[, match(colnames(SummarizedExperiment::assay(MAE[["metatest"]])), colnames(rnaMat))]
 
 # ---- Some functions ----
 
 isTransformed <- function(object, SE.name) RFLOMICS:::isTransformed(object[[SE.name]])
 isNorm        <- function(object, SE.name) RFLOMICS:::isNorm(object[[SE.name]])
-
 
 ######################################-
 ########### FUNCTIONS TESTS ###########
