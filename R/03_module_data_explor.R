@@ -43,7 +43,7 @@ QCNormalizationTabUI <- function(id){
 QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   
   local.rea.values <- reactiveValues(message = NULL)
-
+  
   #---- sample list----
   output$selectSamplesUI <- renderUI({
     
@@ -63,9 +63,9 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     
     local.rea.values$message <- NULL
     completeCheckRes <- CheckExpDesignCompleteness(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], input$selectSamples)
-
+    
     if(isTRUE(completeCheckRes[["error"]])){
-
+      
       local.rea.values$message <- completeCheckRes[["messages"]]
     }
     # plot of count per condition
@@ -115,18 +115,18 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       hr(),
       
       radioButtons(inputId = session$ns("selectProtMetNormMethod"),
-                  label    = "Normalization method:",
-                  choices  =   c("median" = "median","totalSum" = "totalSum", "none" = "none"),
-                  selected = "none"),
+                   label    = "Normalization method:",
+                   choices  =   c("median" = "median","totalSum" = "totalSum", "none" = "none"),
+                   selected = "none"),
       
       
       actionButton(session$ns("run"),"Run")
     )
     
     switch(getOmicsTypes(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]]),
-            "RNAseq"       = { paramRNAseq.list },
-            "proteomics"   = { paramProtMeta.list },
-            "metabolomics" = { paramProtMeta.list }
+           "RNAseq"       = { paramRNAseq.list },
+           "proteomics"   = { paramProtMeta.list },
+           "metabolomics" = { paramProtMeta.list }
     )
   })
   
@@ -184,38 +184,19 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     MAE.data <- session$userData$FlomicsMultiAssay
     SE.data <- MAE.data[[paste0(dataset, ".raw")]]
     
-    factors.bio   <- bioFactors(MAE.data)
-    factors.batch <- batchFactors(MAE.data)
-    factors.meta  <- metaFactors(MAE.data)
-    
     tabPanel.default.list <- list(
       
       tabPanel("Distribution (density)",
                tags$br(),
-               tags$br(),
-               column(width = 12, plotOutput(session$ns("raw.CountDist"))),
-               column(width = 12, plotOutput(session$ns("norm.CountDist")))
+               uiOutput(session$ns("CountDistUI"))
       ),
       tabPanel("Distribution (boxplot)",
                tags$br(),
-               tags$br(),
-               column(width = 12, plotOutput(session$ns("raw.boxplot"))),
-               column(width = 12, plotOutput(session$ns("norm.boxplot")))
+               uiOutput(session$ns("boxplotUI"))
       ),
       tabPanel("Principal component analysis",
                tags$br(),
-               column(width = 12,  plotOutput(session$ns("raw.PCAcoord"))),
-               hr(),
-               fluidRow(
-                 column(width = 6, 
-                        radioButtons(inputId = session$ns("PCA.factor.condition"),
-                                     label = 'Levels:',
-                                     choices = c("groups", factors.bio, factors.batch),
-                                     selected = "groups")),
-                 column(width = 6, UpdateRadioButtonsUI(session$ns("factors")))
-               ),
-               hr(),
-               column(width = 12, plotOutput(session$ns("norm.PCAcoord")))
+               uiOutput(session$ns("PCAcoordUI"))
       )
     )
     
@@ -225,8 +206,8 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
              tabPanel.list <- c(
                list(
                  tabPanel("Library size",
-                          column(12, plotOutput(session$ns("raw.LibSize"))),
-                          column(12, plotOutput(session$ns("norm.LibSize"))))
+                          tags$br(),
+                          uiOutput(session$ns("LibSizeUI")))
                ),
                tabPanel.default.list)
            },
@@ -238,24 +219,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
            }
     )
     
-    if (any(getFactorTypes(MAE.data) %in% c("Meta")))
-      tabPanel.list <- c(tabPanel.list,
-                         list(tabPanel("PCA for metadata",
-                                       tags$br(),
-                                       column(width = 12,  plotOutput(session$ns("raw.PCA.meta"))),
-                                       hr(),
-                                       fluidRow(
-                                         column(width = 6, 
-                                                radioButtons(inputId = session$ns("PCA.meta.condition"),
-                                                             label = 'Levels:',
-                                                             choices = factors.meta,
-                                                             selected = factors.meta[1])),
-                                         column(width = 6, UpdateRadioButtonsUI(session$ns("meta")))
-                                       ),
-                                       hr(),
-                                       column(width = 12, plotOutput(session$ns("norm.PCA.meta")))
-                         )))
-    
     # Exploratory of Biological and Technical variability
     box(width = 14, title = "Exploratory of Biological and Technical variability", 
         solidHeader = TRUE, status = "warning",
@@ -264,36 +227,64 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   
   #---- QC plot for raw/processed data----
   # library size plot only for RNAseq data
-  output$raw.LibSize <- renderPlot({
-    Library_size_barplot.plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], raw = TRUE)
-  })
-  
-  output$norm.LibSize <- renderPlot({
+  output$LibSizeUI <- renderUI({
+    plot <- renderPlot(Library_size_barplot.plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], raw = TRUE))
     
-    if(rea.values[[dataset]]$process == FALSE) return()
-    Library_size_barplot.plot(session$userData$FlomicsMultiAssay[[dataset]])
+    if(rea.values[[dataset]]$process != FALSE){
+      plot <- list(renderPlot(Library_size_barplot.plot(session$userData$FlomicsMultiAssay[[dataset]])), plot)
+    }
+    
+    return(plot)
   })
   
   # value (count/intensity) distribution (boxplot/density)
-  output$raw.boxplot <- renderPlot({
-    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], plot = "boxplot", raw = TRUE)
-  })
-  output$norm.boxplot <- renderPlot({
-    if(rea.values[[dataset]]$process == FALSE) return()
+  output$boxplotUI <- renderUI({
+    plot <- renderPlot(Data_Distribution_plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], plot = "boxplot", raw = TRUE))
     
-    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[dataset]], plot = "boxplot", raw = FALSE)
-  })
+    if(rea.values[[dataset]]$process != FALSE){
+      plot <- list(renderPlot(Data_Distribution_plot(session$userData$FlomicsMultiAssay[[dataset]], plot = "boxplot", raw = FALSE)), plot)
+    }
+    
+    return(plot)
+  }) 
   
-  output$raw.CountDist <- renderPlot({
-    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], plot = "density", raw = TRUE)
-  })
-  output$norm.CountDist <- renderPlot({
-    if(rea.values[[dataset]]$process == FALSE) return()
+  output$CountDistUI <- renderUI({
+    plot <- renderPlot(Data_Distribution_plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], plot = "density", raw = TRUE))
     
-    Data_Distribution_plot(session$userData$FlomicsMultiAssay[[dataset]], plot = "density", raw = FALSE)
-  })
+    if(rea.values[[dataset]]$process != FALSE){
+      plot <- list(renderPlot(Data_Distribution_plot(session$userData$FlomicsMultiAssay[[dataset]], plot = "density", raw = FALSE)), plot)
+    }
+    
+    return(plot)
+  })   
   
   # PCA plot
+  output$PCAcoordUI <- renderUI({
+    
+    factors_type   <- getFactorTypes(session$userData$FlomicsMultiAssay)
+    choices        <- names(factors_type)
+    names(choices) <- paste( names(factors_type),  paste0("(", factors_type, ")"))
+    
+    ui <- list(
+      
+      fluidRow(
+        tags$br(),
+        column(width = 6,
+               radioButtons(inputId = session$ns("PCA.factor.condition"),
+                            label = 'Levels:', choices = c("groups", choices), selected = "groups")),
+        column(width = 6, UpdateRadioButtonsUI(session$ns("factors"))),
+        tags$br(),
+      ),
+      plotOutput(session$ns("raw.PCAcoord")))
+    
+    if(rea.values[[dataset]]$process != FALSE){
+      
+      ui <- list(plotOutput(session$ns("norm.PCAcoord")), ui)
+    }
+    
+    return(ui)
+  })
+  
   output$raw.PCAcoord <- renderPlot({
     
     PC1.value <- as.numeric(input$`factors-Firstaxis`[1])
@@ -314,27 +305,6 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     
   })
   
-  # PCA meta plot
-  output$raw.PCA.meta <- renderPlot({
-    
-    PC1.value <- as.numeric(input$`meta-Firstaxis`[1])
-    PC2.value <- as.numeric(input$`meta-Secondaxis`[1])
-    condGroup <- input$PCA.meta.condition
-    
-    RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup)
-  })
-  
-  output$norm.PCA.meta <- renderPlot({
-    
-    if(rea.values[[dataset]]$process == FALSE) return()
-    
-    PC1.value <- as.numeric(input$`meta-Firstaxis`[1])
-    PC2.value <- as.numeric(input$`meta-Secondaxis`[1])
-    condGroup <- input$PCA.meta.condition
-    
-    RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[dataset]], PCA="norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
-  })
-  
   #---- run preprocessing - Normalization/transformation, filtering...----
   observeEvent(input$run, {
     
@@ -349,7 +319,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       showModal(modalDialog(title = "Error message", local.rea.values$message))
     }
     validate({ need(is.null(local.rea.values$message), message=local.rea.values$message) })
-
+    
     # get parameters 
     switch( getOmicsTypes(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]]),
             "RNAseq" = {
@@ -385,7 +355,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     
     # remove integration analysis
     session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(session$userData$FlomicsMultiAssay, results = c("IntegrationAnalysis"))
-
+    
     print(paste0("# 3  => Data processing: ", dataset))
     session$userData$FlomicsMultiAssay <- 
       runDataProcessing(object = session$userData$FlomicsMultiAssay, SE.name = dataset, samples = input$selectSamples,  
@@ -407,9 +377,9 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
 
 # ----- check run norm execution ------
 check_run_process_execution <- function(object.MAE, dataset, param.list = NULL){
-
+  
   if(!dataset %in% names(object.MAE))  return(TRUE)
-
+  
   SE <- object.MAE[[dataset]]
   
   if(!dplyr::setequal(SE$samples, param.list$samples)) return(TRUE)
@@ -424,17 +394,17 @@ check_run_process_execution <- function(object.MAE, dataset, param.list = NULL){
             if(param.list$NormMethod      != getNormSetting(SE)$method) return(TRUE)
           },
           "proteomics" = {
-
+            
             if(param.list$transform_method != getTransSetting(SE)$method) return(TRUE)
             if(param.list$NormMethod       != getNormSetting(SE)$method) return(TRUE)
           },
           "metabolomics" = {
-
+            
             if(param.list$transform_method != getTransSetting(SE)$method) return(TRUE)
             if(param.list$NormMethod       != getNormSetting(SE)$method) return(TRUE)
           }
   )
-
+  
   return(FALSE)
 }
 
