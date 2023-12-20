@@ -4,45 +4,7 @@ library(RFLOMICS)
 # ---- Construction of objects for the tests ----
 
 # ---- Construction MAE RFLOMICS ready for differential analysis : ----
-ExpDesign <- RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
-factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
-                        factorRef   = c("rep1",   "Low",          "DS"),
-                        factorType  = c("batch",  "Bio",          "Bio"),
-                        factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
-
-omicsData <- list(
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
-
-MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests", 
-                                               omicsData   = omicsData,
-                                               omicsNames  = c("RNAtest", "metatest", "protetest"),
-                                               omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-                                               ExpDesign   = ExpDesign,
-                                               factorRef   = factorRef)
-names(MAE) <- c("RNAtest", "metatest", "protetest")
-
-formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
-
-contrastList <- RFLOMICS::getExpressionContrast(object = MAE, modelFormula = formulae[[1]]) |> purrr::reduce(rbind) |>
-  dplyr::filter(contrast %in% c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
-                                "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS))/3",
-                                "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" ))
-
-
-MAE2 <- MAE
-
-MAE <- MAE |>
-  TransformData(     SE.name = "metatest",  transformMethod = "log2")           |>
-  RunNormalization(  SE.name = "metatest",  NormMethod = "totalSum")            |>
-  RunNormalization(  SE.name = "RNAtest",   NormMethod = "TMM")                 |>
-  RunNormalization(  SE.name = "protetest", NormMethod = "median")              |>
-  FilterLowAbundance(SE.name = "RNAtest")                                       |>
-  RunDiffAnalysis(   SE.name = "metatest",  DiffAnalysisMethod = "limmalmFit", contrastList = contrastList, modelFormula = formulae[[1]])  |>
-  RunDiffAnalysis(   SE.name = "protetest", DiffAnalysisMethod = "limmalmFit", contrastList = contrastList, modelFormula = formulae[[1]])  |>
-  RunDiffAnalysis(   SE.name = "RNAtest",   DiffAnalysisMethod = "edgeRglmfit", contrastList = contrastList, modelFormula = formulae[[1]]) |>
-  FilterDiffAnalysis(SE.name = "RNAtest",   Adj.pvalue.cutoff = 0.05, logFC.cutoff = 1.5)
+MAE <- generateExample(coexp = FALSE, annotation = FALSE, integration = FALSE)
 
 ## ---- Construction of data tables differential analysis : ----
 
@@ -93,14 +55,13 @@ test_that("Everything works as expected", {
 
 test_that("Two runs, same results - seed is working - RNAseq", {
   
-  res1 <- runCoExpression (object = MAE, SE.name = "RNAtest", K = 2:10, replicates = 5, merge = "union", 
+  res1 <- runCoExpression(object = MAE, SE.name = "RNAtest", K = 2:10, replicates = 5, merge = "union", 
                                model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin", 
-                               normFactors = "TMM", nameList = c("H1"))
+                               normFactors = "TMM", nameList = c("H1", "H2"))
   
-  # Wrong SE.name
   res2 <- runCoExpression(object = MAE, SE.name = "RNAtest", K = 2:10, replicates = 5, merge = "union",
                                model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin",
-                               normFactors = "TMM", nameList = c("H1"))
+                               normFactors = "TMM", nameList = c("H1", "H2"))
   
   expect_identical(coseq::clusters(res1[["RNAtest"]]@metadata$CoExpAnal$coseqResults),
                    coseq::clusters(res2[["RNAtest"]]@metadata$CoExpAnal$coseqResults))
