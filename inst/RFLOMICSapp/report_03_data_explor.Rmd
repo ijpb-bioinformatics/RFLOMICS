@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 dataset.raw.SE <- rflomics.MAE@ExperimentList[[paste0(data,".raw")]]
 dataset.SE     <- rflomics.MAE@ExperimentList[[data]]
  
-check <- CheckExpDesignCompleteness(rflomics.MAE, data, colnames(rflomics.MAE[[data]]))
+check <- CheckExpDesignCompleteness(dataset.SE, colnames(rflomics.MAE[[data]]))
 check$plot
            
 ```

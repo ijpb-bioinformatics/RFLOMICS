@@ -18,11 +18,11 @@ DT::datatable(as.data.frame(rflomics.MAE@colData),
 
 ```{r factors, echo=FALSE, message=TRUE, warning=TRUE}
 
-fact.names <- names(rflomics.MAE@metadata$design@Factors.Type)
-fact.types <- rflomics.MAE@metadata$design@Factors.Type
+fact.types <- getFactorTypes(rflomics.MAE)
+fact.names <- names(fact.types)
 fact.ref <- vector()
 for(i in 1:length(fact.names)){
-  fact.ref[i] <- levels(rflomics.MAE@metadata$design@ExpDesign[,fact.names[i]])[1]
+  fact.ref[i] <- levels(getDesignMat(rflomics.MAE)[[fact.names[i]]])[1]
 }
 
 df <- data.frame("Factor.names" = fact.names ,
@@ -53,7 +53,7 @@ DT::datatable(df , rownames = FALSE ,options = list( pageLength = 6, scrollX = F
 
 ```{r contrastSel, echo=FALSE, results="asis", warning=FALSE, message=FALSE}
 
-DT::datatable(rflomics.MAE@metadata$design@Contrasts.Sel[,c(5,2:3)], rownames = FALSE,
+DT::datatable(rflomics.MAE@metadata$design@Contrasts.Sel, rownames = FALSE,
               options = list( pageLength = 6, scrollX = F, dom = 'tip'),
               class = 'cell-border stripe')
 ```
