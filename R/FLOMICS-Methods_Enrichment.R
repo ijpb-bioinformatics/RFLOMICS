@@ -31,8 +31,7 @@ methods::setMethod(
                         list_args = list(
                           pvalueCutoff = 0.05,
                           qvalueCutoff = 1,
-                          # minGSSize = 10,
-                          minGSSize = 3,
+                          minGSSize = 10,
                           maxGSSize = 500,
                           universe = names(object)
                         ),
