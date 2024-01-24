@@ -513,6 +513,15 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
   typeList <- factorRef$factorType; names(typeList) <- factorRef$factorName
   Design   <- ExpDesign.constructor(ExpDesign = ExpDesign, refList = refList, typeList = typeList)
   
+  # Create the List.Factors list with the choosen level of reference for each factor
+  names(typeList) <- names(ExpDesign)
+  
+  
+  Design <- list(Factors.Type  = typeList, 
+                 Model.formula = vector(), 
+                 Contrasts.Sel = data.frame())
+  
+  
   #
   ExpDesign   <- dplyr::mutate(ExpDesign, samples=row.names(ExpDesign)) |>
     tidyr::unite("groups", all_of(factorBio), sep = "_", remove = FALSE)
