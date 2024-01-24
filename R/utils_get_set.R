@@ -11,7 +11,7 @@
 getFactorTypes <- function(object) {
   
   if (is(object, "MultiAssayExperiment")) {
-    metadata(object)$design@Factors.Type
+    metadata(object)$design$Factors.Type
   } 
   else if(is(object, "SummarizedExperiment")){
     metadata(object)$design$factorType
@@ -94,7 +94,7 @@ getDesignMat <- function(object) {
 getModelFormula <- function(object) {
   # TODO check if it exists...
   if (is(object, "MultiAssayExperiment")) {
-    object@metadata$design@Model.formula
+    object@metadata$design$Model.formula
   } 
   else if(is(object, "SummarizedExperiment")){
     object@metadata$design$Model.formula
@@ -115,7 +115,7 @@ getModelFormula <- function(object) {
 setModelFormula <- function(object, modelFormula=NULL) {
   # TODO check if it exists...
   if (is(object, "MultiAssayExperiment")) {
-    object@metadata$design@Model.formula <- paste(modelFormula, collapse = " ")
+    object@metadata$design$Model.formula <- paste(modelFormula, collapse = " ")
     # set modelFormula foreach SE
     for(se in names(object)){
       object[[se]]@metadata$design$Model.formula <- paste(modelFormula, collapse = " ")
@@ -144,7 +144,7 @@ setModelFormula <- function(object, modelFormula=NULL) {
 #' @importFrom data.table rbindlist
 #'
 getPossibleContrasts <- function(object, 
-                                 formula = object@metadata$design@Model.formula,
+                                 formula = object@metadata$design$Model.formula,
                                  typeContrast = c("simple", "averaged", "interaction"),
                                  modalities = NULL, returnTable = FALSE) {
   if (is(object, "SummarizedExperiment") || is(object, "MultiAssayExperiment")) {
@@ -196,7 +196,7 @@ getPossibleContrasts <- function(object,
 getSelectedContrasts <- function(object) {
   # TODO check if it exists...
   if (is(object, "MultiAssayExperiment")) {
-    object@metadata$design@Contrasts.Sel
+    object@metadata$design$Contrasts.Sel
   } else
     if (is(object, "SummarizedExperiment")) {
       object@metadata$DiffExpAnal$contrasts
