@@ -7,9 +7,9 @@
 
 #' @title rbe_function
 #'
-#' @param object An object of class \link{MultiAssayExperiment}
-#' @param SEobject An object of class \link{SummarizedExperiment}
-#' @return An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsMAE}
+#' @param SEobject An object of class \link{RflomicsSE}
+#' @return An object of class \link{RflomicsSE}
 #' @importFrom limma removeBatchEffect
 #' @importFrom stats model.matrix as.formula
 #' @export
@@ -54,13 +54,13 @@ rbe_function <- function(object, SEobject, cmd = FALSE){
 
 #' @title Remove batch effect and transform rnaseq data
 #'
-#' @param object An object of class \link{MultiAssayExperiment}
-#' @param SEname the name of the rnaseq data to transform. Supposed to be a SummarizedExperiment.
+#' @param object An object of class \link{RflomicsMAE}
+#' @param SEname the name of the rnaseq data to transform. Supposed to be a RflomicsSE.
 #' @param correctBatch if TRUE, correction of batch effects. 
 #' @param transformation the name of the transformation to be applied on counts. Default is limma voom. 
 #' @param variableLists vector of variable names
 #' No other option for now. 
-#' @return An object of class \link{MultiAssayExperiment}
+#' @return An object of class \link{RflomicsMAE}
 #' @importFrom stats model.matrix formula
 #' @importFrom dplyr filter
 #' @importFrom limma voom
@@ -81,7 +81,7 @@ rnaseqRBETransform <- function(object,
   # TODO : in case of removeBatchEffect not working, what do we do?
   # TODO : if no DE (ex: intersection is 0 genes), what do we do?
   
-  if (!is(object, "MultiAssayExperiment")) stop("object is not a MultiAssyExperiment")
+  if (!is(object, "RflomicsMAE")) stop("object is not a RflomicsMAE")
   
   rnaDat <- object[[SEname]] 
   assayTransform <- SummarizedExperiment::assay(rnaDat)
@@ -122,10 +122,10 @@ rnaseqRBETransform <- function(object,
 
 #' @title RBETransform
 #'
-#' @param object An object of class \link{MultiAssayExperiment}
+#' @param object An object of class \link{RflomicsMAE}
 #' @param SEname the name of the omics data to transform. No counts data.  
 #' @param correctBatch if TRUE, correction of batch effects. 
-#' @return An object of class \link{MultiAssayExperiment}
+#' @return An object of class \link{RflomicsMAE}
 #' @export
 #' @noRd
 #'
@@ -154,17 +154,17 @@ RBETransform <- function(object,
 
 #' @title plot_MO_varExp
 #'
-#' @param object An object of class \link{MultiAssayExperiment}
+#' @param object An object of class \link{RflomicsMAE}
 #' @param selectedResponse a character string of the response variable to consider
 #' @param mode Can be NULL (default), "cumulative" or "comp". Defines the type of graph to return
-#' @return An object of class \link{MultiAssayExperiment}
+#' @return An object of class \link{RflomicsMAE}
 #' @importFrom ggpubr ggarrange
 #' @export
 #'
 
 plot_MO_varExp <- function(object, selectedResponse, mode = NULL){
   
-  if (!is(object, "MultiAssayExperiment")) stop("Object is not a MultiAssayExperiment.")
+  if (!is(object, "RflomicsMAE")) stop("Object is not a RflomicsMAE.")
   if (is.null(object@metadata$IntegrationAnalysis$mixOmics)) stop("It seems this object has no mixOmics results.")
   if (is.null(object@metadata$IntegrationAnalysis$mixOmics[[selectedResponse]])) stop("It seems you didn't run MixOmics on this particular variable.")
   

@@ -2,21 +2,21 @@
 
 
 #' @title integrationWrapper
-#' @description This function executes all the steps to ensure data integration from a \link{MultiAssayExperiment} object produced by FLOMICS.
-#' @param object An object of class \link{MultiAssayExperiment}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
+#' @description This function executes all the steps to ensure data integration from a \link{RflomicsMAE} object produced by FLOMICS.
+#' @param object An object of class \link{RflomicsMAE}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param omicsToIntegrate vector of characters strings, referring to the names of the filtered table in 'object@ExperimentList'.
 #' @param rnaSeq_transfo character string, only supports 'limma (voom)' for now. Transformation of the rnaSeq data from counts to continuous data.
 #' @param choice character. If choice is set to 'DE', filters the object to take only the DE omics using differential analysis results stored in object. If choice is different than DE, no filtering is applied.
 #' @param variableLists list of variables to keep per dataset.
 #' @param type one of union or intersection.
 #' @param group Not implemented yet in the interface. Useful for MOFA2 run.
-#' @return a MultiAssayExperiment object.
+#' @return a RflomicsMAE object.
 #' @export
 #' @rdname integrationWrapper
 #' @exportMethod integrationWrapper
 methods::setMethod(
   f = "integrationWrapper",
-  signature = "MultiAssayExperiment",
+  signature = "RflomicsMAE",
   definition = function(object,
                         omicsToIntegrate = names(object),
                         rnaSeq_transfo = "limma (voom)",
@@ -81,10 +81,10 @@ methods::setMethod(
 
 
 #' @title prepareForIntegration
-#' @description This function transforms a MultiAssayExperiment produced by rflomics into an untrained MOFA objects or a list to use for mixOmics. 
+#' @description This function transforms a RflomicsMAE produced by rflomics into an untrained MOFA objects or a list to use for mixOmics. 
 #' It checks for batch effect to correct them prior to the integration.
 #' It also transforms RNASeq counts data into continuous data. This is the first step into the integration.
-#' @param object An object of class \link{MultiAssayExperiment}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param object An object of class \link{RflomicsMAE}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param omicsToIntegrate vector of characters strings, referring to the names of the filtered table in 'object@ExperimentList'.
 #' @param rnaSeq_transfo character string, only supports 'limma (voom)' for now. Transformation of the rnaSeq data from counts to continuous data.
 #' @param variableLists list of variables to keep per dataset.
@@ -96,7 +96,7 @@ methods::setMethod(
 #' @importFrom MOFA2 create_mofa
 methods::setMethod(
   f = "prepareForIntegration",
-  signature = "MultiAssayExperiment",
+  signature = "RflomicsMAE",
   definition = function(object,
                         omicsToIntegrate = NULL,
                         rnaSeq_transfo = "limma (voom)",
@@ -223,18 +223,18 @@ methods::setMethod(
 
 
 #' @title runIntegration
-#' @description This function executes all the steps to ensure data integration from a \link{MultiAssayExperiment} object produced by FLOMICS.
-#' @param object An object of class \link{MultiAssayExperiment}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
+#' @description This function executes all the steps to ensure data integration from a \link{RflomicsMAE} object produced by FLOMICS.
+#' @param object An object of class \link{RflomicsMAE}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param preparedObject An untrained MOFA object or a list of dataset.
 #' @param type one of union or intersection.
 #' @param group Not implemented yet in the interface. Useful for MOFA2 run.
-#' @return a MultiAssayExperiment object.
+#' @return a RflomicsMAE object.
 #' @export
 #' @rdname runIntegration
 #' @exportMethod runIntegration
 methods::setMethod(
   f = "runIntegration",
-  signature = "MultiAssayExperiment",
+  signature = "RflomicsMAE",
   definition = function(object,
                         preparedObject = NULL,
                         method = "MOFA",
@@ -353,7 +353,7 @@ methods::setMethod(
 # ---- Select features to  keep for integration (MAE) ----
 
 #' @title filterFeatures
-#' @param object multiAssayExperiment, produced by RFLOMICS. 
+#' @param object RflomicsMAE, produced by RFLOMICS. 
 #' @param selOpt list of vectors. Preferred named list with names corresponding to 
 #' the names of the experimentList in the object. For each Experiment, gives
 #' the option for the filtering: either 'all', 'DE', 'none', or a specific name of a 
@@ -365,7 +365,7 @@ methods::setMethod(
 #' @param type if selOpt is set to a specific set of contrasts or clusters, 
 #' indicates whether the selection is "union" or "intersection" of entities in
 #' these sets.
-#' @return a MultiAssayExperiment, filtered with only the corresponding features.
+#' @return a RflomicsMAE, filtered with only the corresponding features.
 #' @rdname filterFeatures
 #' @exportMethod filterFeatures
 #' @examples
@@ -381,7 +381,7 @@ methods::setMethod(
 #' 
 methods::setMethod(
   f = "filterFeatures",
-  signature = "MultiAssayExperiment",
+  signature = "RflomicsMAE",
   definition = function(object,
                         selOpt = rep(list("all"), length(object)),
                         type = rep(list("union"), length(selOpt))) {

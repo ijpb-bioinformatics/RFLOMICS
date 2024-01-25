@@ -17,12 +17,19 @@ omicsData <- list(
   RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
   RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
 
-MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests", 
-                                               omicsData   = omicsData,
-                                               omicsNames  = c("RNAtest", "metatest", "protetest"),
-                                               omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-                                               ExpDesign   = ExpDesign,
-                                               factorRef   = factorRef)
+MAE <- RFLOMICS::createRflomicsMAE(projectName = "Tests",
+                                   omicsData   = omicsData,
+                                   omicsNames  = c("RNAtest", "metatest", "protetest"),
+                                   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+                                   ExpDesign   = ExpDesign,
+                                   factorRef   = factorRef)
+
+## 
+test_that("experiment names", {
+  
+  expect_equal(MAE[["RNAtest"]]@metadata$DataProcessing$filteredSamples, "Elevated_DS_1")
+})
+
 ## check completness 
 p <- CheckExpDesign(MAE)
 
@@ -59,7 +66,7 @@ MAE <- MAE |> RFLOMICS::runCoExpression(SE.name = "RNAtest",   nameList = "H1" ,
   RFLOMICS::runCoExpression(SE.name = "metatest",  nameList = "H1" , K = 2:10, replicates = 5, merge = "union", model = "normal")
 
 ## Enrichment
-MAE <- MAE |> RFLOMICS::runAnnotationEnrichment(nameList = "H1", SE.name = "RNAtest", dom.select = "GO", Domain = c("BP", "MF", "CC"), list_args = list(OrgDb = "org.At.tair.db", keyType = "TAIR", pvalueCutoff = 0.05))
+MAE <- MAE |> RFLOMICS::runAnnotationEnrichment(nameList = "H1", SE.name = "RNAtest", ontology = "GO", domain = c("BP", "MF", "CC"), list_args = list(OrgDb = "org.At.tair.db", keyType = "TAIR", pvalueCutoff = 0.05))
 # RFLOMICS::runAnnotationEnrichment(nameList = "H1", SE.name = "RNAtest", dom.select = "KEGG", list_args = list(..., pvalueCutoff = 0.05))
 
 ## runReport

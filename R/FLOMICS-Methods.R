@@ -1,64 +1,4 @@
 
-################################## EXPERIMENTAL DESIGN SET UP #################
-
-
-### ExpDesign CLASS Constructor
-
-#' @title Constructor for the class \link{ExpDesign-class}
-#' @description This method initializes an object of class \link{ExpDesign-class}.
-#' @param ExpDesign a data.frame. Row names give the name of each sample which has to be constructed
-#' by combining factor's modality separated by a "_" (EX: WT_treated_rep1). Column names give the name of
-#' an experimental factor which is a vector of character storing the factor modality for each sample.
-#' @param refList A list of string giving the reference modality for each factor.
-#' @param typeList A vector of string indicating the type of each experimental factor. Two types of effects
-#' are required ("Bio" or "batch"). A third one ("meta") is allowed but is not necessary.
-#' @return An object of class \link{ExpDesign-class}
-#' @examples
-#' Design.File <- read.table(file= paste(path.package("RFLOMICS"),"/ExamplesFiles/TP/experimental_design.txt",sep=""),header = TRUE,row.names = 1, sep = "\t")
-#'
-#' # Define the type of each factor
-#' Design.typeList <- c("Bio","Bio","batch")
-#'
-#' # Define the reference modality for each factor
-#' Design.refList <- c("WT","control","rep1")
-#'
-#' # Initialize an object of class ExpDesign
-#' Design.obj <- ExpDesign.constructor(ExpDesign = Design.File,
-#' refList = Design.refList, typeList = Design.typeList)
-#' @name ExpDesign-Constructor
-#' @rdname ExpDesign-Constructor
-#' @noRd
-#' @export
-#' @importFrom stats relevel
-#' @importFrom methods new
-ExpDesign.constructor <- function(ExpDesign, refList, typeList){
-  
-  # check ExpDesign dimension
-  if(dim(ExpDesign)[1] == 0 || dim(ExpDesign)[2] == 0){
-    stop("ExpDesign matrix is empty!")
-  }
-  
-  
-  # check typeList length
-  if(length(typeList) != length(names(ExpDesign))){
-    stop("typeList length is different from the dimension of ExpDesign matrix!")
-  }
-  
-  # Create the List.Factors list with the choosen level of reference for each factor
-  names(typeList) <- names(ExpDesign)
-  
-  
-  Design <- new(Class           = "ExpDesign",
-               Factors.Type    = typeList,
-               Model.formula   = vector())
-  
-  return(Design)
-}
-
-#
-# Error quand plus de 3 facteurs bio et plus de 1 facteur batch
-# TEST(design_nbbio_3)
-# TEST(design_nbbatch_1)
 
 
 ###### METHOD to check the completness of the ExpDesign
@@ -68,7 +8,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 #' @title CheckExpDesign
 #' @description This method checks some experimental design characteristics.
 #'  A complete design and at least one biological and one batch factors are required for using RFLOMICS workflow.
-#' @param An object of class \link{MultiAssayExperiment-class}
+#' @param An object of class \link{RflomicsMAE-class}
 #' @return a gg plot object
 #' \itemize{
 #'  \item{"plot:"}{ plot of count data.frame.}
@@ -78,7 +18,7 @@ ExpDesign.constructor <- function(ExpDesign, refList, typeList){
 #' @noRd
 
 methods::setMethod(f         = "CheckExpDesign",
-                   signature = "MultiAssayExperiment",
+                   signature = "RflomicsMAE",
                    definition <- function(object){
                      
                      # check presence of bio factors
@@ -147,7 +87,7 @@ methods::setMethod(f         = "CheckExpDesign",
 #' @title CheckExpDesignCompleteness
 #' @description This method checks some experimental design characteristics.
 #'  A complete design and at least one biological and one batch factors are required for using RFLOMICS workflow.
-#' @param An object of class \link{SummarizedExperiment-class}
+#' @param An object of class \link{RflomicsSE-class}
 #' @param sampleList list of samples to check.
 #' @return a named list of two objects
 #' \itemize{
@@ -166,7 +106,7 @@ methods::setMethod(f         = "CheckExpDesign",
 #' @noRd
 
 methods::setMethod(f         = "CheckExpDesignCompleteness",
-                   signature = "SummarizedExperiment",
+                   signature = "RflomicsSE",
                    definition <- function(object, sampleList=NULL){
                      
                      object <- runSampleFiltering(object, samples = sampleList)
@@ -240,7 +180,7 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
 #' @exportMethod CheckExpDesignCompleteness
 #' @noRd
 methods::setMethod(f         = "CheckExpDesignCompleteness",
-                   signature = "MultiAssayExperiment",
+                   signature = "RflomicsMAE",
                    definition <- function(object, SE.name, sampleList=NULL){
                      
                      SEObject <- object[[SE.name]]
@@ -253,12 +193,12 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
 #' @title Datasets overview plot
 #' @description This function plot overview of loaded datasets aligned per sample 
 #' (n=number of entities (genes/metabolites/proteins); k=number of samples)
-#' @param object An object of class \link{MultiAssayExperiment-class}
+#' @param object An object of class \link{RflomicsMAE-class}
 #' @exportMethod Datasets_overview_plot
 #' @return plot
 
 methods::setMethod(f         = "Datasets_overview_plot",
-                   signature = "MultiAssayExperiment",
+                   signature = "RflomicsMAE",
                    definition <- function(object, dataset.list=NULL, real.size=FALSE){
                      
                      if(length(object@ExperimentList) == 0) stop("object@ExperimentList is NULL")
@@ -321,16 +261,16 @@ methods::setMethod(f         = "Datasets_overview_plot",
 
 #' @title getContrastMatrix
 #' @description Defines contrast matrix or contrast list with contrast name and contrast coefficients
-#' @param object An object of class \link{MultiAssayExperiment-class}
+#' @param object An object of class \link{RflomicsMAE-class}
 #' @param contrastList A data.frame of contrast
-#' @return An object of class \link{MultiAssayExperiment-class}
+#' @return An object of class \link{RflomicsMAE-class}
 #' @seealso getExpressionContrast
 #' @exportMethod getContrastMatrix
 #' @importFrom stats formula terms.formula
 #' @noRd
 #' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
 methods::setMethod(f          = "getContrastMatrix",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition <- function(object, SE.name, modelFormula = NULL, contrastList=NULL){
                      
                      if (is.null(object[[SE.name]])) stop("no Experiment named ", SE.name, " in MAE object")
@@ -348,17 +288,17 @@ methods::setMethod(f          = "getContrastMatrix",
 
 #' @title getContrastMatrix
 #' @description Defines contrast matrix or contrast list with contrast name and contrast coefficients
-#' @param object An object of class \link{MultiAssayExperiment-class}
+#' @param object An object of class \link{RflomicsMAE-class}
 #' @param contrastList a data.frame of contrast
 #' @param modelFormula a model formula
-#' @return An object of class \link{SummarizedExperiment-class}
+#' @return An object of class \link{RflomicsSE-class}
 #' @seealso getExpressionContrast
 #' @exportMethod getContrastMatrix
 #' @importFrom stats formula terms.formula
 #' @noRd
 #' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
 methods::setMethod(f          = "getContrastMatrix",
-                   signature  = "SummarizedExperiment",
+                   signature  = "RflomicsSE",
                    definition <- function(object, modelFormula = NULL, contrastList=NULL){
 
                      
@@ -395,226 +335,6 @@ methods::setMethod(f          = "getContrastMatrix",
 # coef returns a data.frame containing the object's grid, along with columns named c.1, c.2, ... containing the contrast coefficients.
 
 
-
-################################################### OMICS DATA MANAGMENT AND ANALYSIS #################
-
-
-###### FlomicsMultiAssay CLASS Constructor for managing omics DATA and RESULTS
-
-#' @title FlomicsMultiAssay.constructor Constructor for the class \link{MultiAssayExperiment-class}
-#' @description This function initializes an object of class \link{MultiAssayExperiment-class}
-#' from a list of omics data and an object of class \link{ExpDesign-class}.
-#' @param projectName Project name
-#' @param omicsData list of omics dataset.
-#' @param omicsNames vector of dataset names
-#' @param omicsTypes vector of dataset types
-#' @param ExpDesign a data.frame. Row names give the name of each sample which has been to be construct
-#' @param factorRef data.frame describing experimental factors.
-#' \itemize{
-#' \item{factorName:}{factor names}
-#' \item{factorRef:}{factor references}
-#' \item{factorType:}{factor type : "Bio", "batch", "Meta"}
-#' \item{factorLevels:}{levels of each factor with "," separation.}
-#' }
-#' @return An object of class \link{MultiAssayExperiment-class}
-#' @examples
-#' 
-#' factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
-#' factorRef   = c("rep1",   "Low",          "DS"),
-#' factorType  = c("batch",  "Bio",          "Bio"),
-#' factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
-#' 
-#' omicsData <- list(
-#'   RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-#'   RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")),
-#'   RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
-#' 
-#' MAE <- RFLOMICS::FlomicsMultiAssay.constructor(projectName = "Tests",
-#'                                                omicsData   = omicsData,
-#'                                                omicsNames  = c("RNAtest", "metatest", "protetest"),
-#'                                                omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-#'                                                ExpDesign   = ExpDesign,
-#'                                                factorRef   = factorRef)
-#' 
-#'
-#' @name FlomicsMultiAssay.constructor
-#' @rdname FlomicsMultiAssay.constructor
-#' @export
-#'
-FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omicsNames=NULL, omicsTypes=NULL, ExpDesign=NULL, factorRef=NULL){
-  
-  #check arg
-  ##projectName
-  if(is.null(projectName)) stop("projectName is mandatory.")
-  projectName <- stringr::str_replace_all(string = projectName, pattern = "[# /-]", replacement = "")
-  
-  ## omicsNames
-  if(is.null(omicsNames)) stop("list of omicsNames is mandatory.")
-  nb_omicsData <- length(omicsNames)
-  omicsNames <- stringr::str_replace_all(string = omicsNames, pattern = "[# /-]", replacement = "")
-  if (isTRUE(any(duplicated(omicsNames)))) stop("presence of duplicates in the omicsNames")
-  
-  ## omicsData
-  if(!is.list(omicsData) || length(omicsData) == 0) stop("the omicsData list is mandatory.")
-  if(nb_omicsData != length(omicsData)) stop("the number of omicsData matrix must match the number of omicsNames.")
-  names(omicsData) <- omicsNames
-  
-  ## omicsTypes
-  if(is.null(omicsTypes)) stop("the list of omicsTypes is mandatory.")
-  if(nb_omicsData != length(omicsTypes)) stop("the number of omicsData matrix must match the number of omicsTypes")
-  if(isTRUE(any(!unique(omicsTypes) %in% c("RNAseq","metabolomics","proteomics")))) stop("omicsTypes must be part of RNAseq, metabolomics, or proteomics.")
-  names(omicsTypes) <- omicsNames
-  
-  ## ExpDesign
-  if (is.null(ExpDesign)) stop("the ExpDesign is mandatory.")
-  if (nrow(ExpDesign) == 0 || ncol(ExpDesign) == 0) stop("the ExpDesign is mandatory.")
-  designRownames <- stringr::str_replace_all(string = rownames(ExpDesign), pattern = "[*# -/]", replacement = "")
-  if (isTRUE(any(duplicated(designRownames)))) stop("presence of duplicates in the ExpDesign colnames")
-  rownames(ExpDesign) <- designRownames
-  
-  ## factorRef
-  if (is.null(factorRef)) stop("data.frame factorRef is mandatory.")
-  if (is.null(factorRef$factorName)) stop("factorRef$factorName is mandatory")
-  if (any(!factorRef$factorName %in% colnames(ExpDesign))) stop("factorRef$factorName don't match ExpDesign colnames")
-  
-  if (is.null(factorRef$factorType)) stop("factorRef$factorType is mandatory.")
-  if (any(!unique(factorRef$factorType) %in% c("batch", "Bio", "Meta"))) stop("factorRef$factorType must be part of batch, Bio or Meta")
-  
-  factorBio   <- dplyr::filter(factorRef, factorType == "Bio")$factorName
-  factorBatch <- dplyr::filter(factorRef, factorType == "batch")$factorName
-  
-  ## set ref and levels to ExpDesign
-  for (i in 1:nrow(factorRef)){
-    
-    # set ref 
-    if (!is.null(factorRef$factorRef)){
-      
-      if(!factorRef[i,]$factorRef %in% ExpDesign[[factorRef[i,]$factorName]]) stop(paste0("The factor ref : ", factorRef[i,]$factorRef, " don't exist"))
-      ref <- factorRef[i,]$factorRef
-    }
-    else{
-      ref <- sort(ExpDesign[[factorRef[i,]$factorName]])[1]
-    }
-    ExpDesign <- ExpDesign[order(row.names(ExpDesign)), ]
-    ExpDesign[[factorRef[i,]$factorName]] <- relevel(as.factor(ExpDesign[[factorRef[i,]$factorName]]), ref=ref)
-    
-    # set level
-    if (!is.null(factorRef$factorLevels)){
-      
-      levels <- stringr::str_split(factorRef[i,]$factorLevels, ",") |> unlist() %>% stringr::str_remove(" ")
-      if(any(!levels %in% ExpDesign[[factorRef[i,]$factorName]])) stop(paste0("The factor levels : ", factorRef[i,]$factorLevels, " don't exist"))
-      
-      ExpDesign[[factorRef[i,]$factorName]] <- factor(ExpDesign[[factorRef[i,]$factorName]], levels = levels)
-    }
-  }
-  
-  ## consctuct ExpDesign object
-  refList  <- factorRef$factorRef;  names(refList)  <- factorRef$factorName
-  typeList <- factorRef$factorType; names(typeList) <- factorRef$factorName
-  Design   <- ExpDesign.constructor(ExpDesign = ExpDesign, refList = refList, typeList = typeList)
-  
-  # Create the List.Factors list with the choosen level of reference for each factor
-  names(typeList) <- names(ExpDesign)
-  
-  
-  Design <- list(Factors.Type  = typeList, 
-                 Model.formula = vector(), 
-                 Contrasts.Sel = data.frame())
-  
-  
-  #
-  ExpDesign   <- dplyr::mutate(ExpDesign, samples=row.names(ExpDesign)) |>
-    tidyr::unite("groups", all_of(factorBio), sep = "_", remove = FALSE)
-  
-  order_levels      <- with(ExpDesign, do.call(order, ExpDesign[c(factorBio, factorBatch)]))
-  ExpDesign$samples <- factor(ExpDesign$samples, levels = unique(ExpDesign$samples[order_levels]))
-  ExpDesign$groups  <- factor(ExpDesign$groups,  levels = unique(ExpDesign$groups[order_levels]))
-  
-  ## create SE object of each dataset
-  SummarizedExperimentList <- list()
-  listmap  <- list()
-  omicList <- list()
-  k <- 0
-  
-  for(data in omicsNames){
-    
-    k <- k+1
-    
-    abundance <- omicsData[[data]]
-    omicType <- omicsTypes[data]
-    
-    # check overlap between design and data
-    sample.intersect <- intersect(row.names(ExpDesign), colnames(abundance))
-    if(length(sample.intersect) == 0) stop("samples in omics data should match the names in experimental design")
-    
-    # select abundance from design table and reorder
-    abundance <- dplyr::select(abundance, tidyselect::all_of(sample.intersect))
-    
-    # remove row with sum == 0
-    matrix <- as.matrix(abundance)
-    # nbr of genes with 0 count
-    genes_flt0  <- rownames(matrix[rowSums(matrix) <= 0, ])
-    # remove 0 count
-    matrix.filt  <- matrix[rowSums(matrix)  > 0, ]
-    
-    # create SE object
-    colData   <- dplyr::mutate(ExpDesign, samples=row.names(ExpDesign)) |>
-                 dplyr::filter(samples %in% sample.intersect) |> 
-                 tidyr::unite("groups", all_of(factorBio), sep = "_", remove = FALSE)
-    
-    for (factor in c(factorBio, factorBatch)){
-      
-      F.levels <- levels(colData[[factor]])
-      colData[[factor]] <- factor(colData[[factor]], levels = intersect(F.levels, unique(colData[[factor]])))
-    }
-
-    order_levels <- with(colData, do.call(order, colData[c(factorBio, factorBatch)]))
-    colData$samples <- factor(colData$samples, levels = unique(colData$samples[order_levels]))
-    colData$groups  <- factor(colData$groups,  levels = unique(colData$groups[order_levels]))
-
-    metadata <- list(omicType = omicsTypes[data], Groups = colData, 
-                     design = list(factorType = typeList[intersect(names(typeList), names(colData))]), 
-                     DataProcessing = list(rowSumsZero = genes_flt0,
-                                           Filtering = NULL, 
-                                           Normalization =  list(setting = list(method = "none"), results = NULL,  normalized = FALSE), 
-                                           Transformation = list(setting = list(method = "none"), results = NULL,  transformed = FALSE)))
-    
-    SE <- SummarizedExperiment::SummarizedExperiment(assays   = S4Vectors::SimpleList(abundance = as.matrix(matrix.filt)),
-                                                     colData  = colData,
-                                                     metadata = metadata)
-    
-    #### run PCA for raw count
-    SummarizedExperimentList[[data]] <- RunPCA(SE, raw = TRUE)
-    
-    # metadata for sampleMap for MultiAssayExperiment
-    listmap[[data]] <- data.frame(primary = as.vector(SummarizedExperimentList[[data]]@colData$samples),
-                                  colname = as.vector(SummarizedExperimentList[[data]]@colData$samples),
-                                  stringsAsFactors = FALSE)
-    
-    # 
-    colnames <- c(names(omicList[[omicType]]), k)
-    omicList[[omicType]] <- c(omicList[[omicType]] ,data)
-    names(omicList[[omicType]]) <- colnames
-    
-  }
-  
-  prepFlomicsMultiAssay <- MultiAssayExperiment::prepMultiAssay( ExperimentList = SummarizedExperimentList,
-                                                                 sampleMap      = MultiAssayExperiment::listToMap(listmap),
-                                                                 colData        = ExpDesign, outFile = stdout())
-  
-  
-  FlomicsMultiAssay <- MultiAssayExperiment::MultiAssayExperiment(experiments = prepFlomicsMultiAssay$experiments,
-                                                                  colData     = prepFlomicsMultiAssay$colData,
-                                                                  sampleMap   = prepFlomicsMultiAssay$sampleMap,
-                                                                  metadata    = list(omicList = omicList, projectName = projectName, design = Design)) 
-
-  # tag as raw data (le temps de trouver une solution pour ne pas faire co-exister les raw et les process)
-  names(FlomicsMultiAssay) <- paste(names(FlomicsMultiAssay), "raw", sep = ".")
-  return(FlomicsMultiAssay)
-}
-
-
-
 ################################# EXPLORATION OF BIOLOGICAL AND TECHNICAL VARIABILITY ##################################
 
 
@@ -622,18 +342,18 @@ FlomicsMultiAssay.constructor <- function(projectName=NULL, omicsData=NULL, omic
 
 
 #' @title RunPCA
-#' @description This function performs a principal component analysis on omic data stored in an object of class \link{SummarizedExperiment-class}
+#' @description This function performs a principal component analysis on omic data stored in an object of class \link{RflomicsSE-class}
 #' Results are stored in the metadata slot of the same object. If a "Normalization" slot is present in the metadata slot, then data are normalized before running the PCA according to the indicated transform method.
-#' @param object An object of class \link{SummarizedExperiment-class}.
+#' @param object An object of class \link{RflomicsSE-class}.
 #' @param nbcp Number of components to compute. Default is 5.
 #' @param raw boolean. Does the pca have to be ran on raw data or transformed and normalized data? Default is FALSE, pca is ran on transformed and normalized data.
-#' @return An object of class \link{SummarizedExperiment}
+#' @return An object of class \link{RflomicsSE}
 #' @exportMethod RunPCA
 #' @importFrom FactoMineR PCA
 #' @rdname RunPCA
 #' 
 methods::setMethod(f          = "RunPCA",
-                   signature  = "SummarizedExperiment",
+                   signature  = "RflomicsSE",
                    definition = function(object, nbcp = 5, raw = FALSE){
                      
                      object2 <- checkTransNorm(object, raw = raw)
@@ -652,7 +372,7 @@ methods::setMethod(f          = "RunPCA",
 #' @param SE.name the name of the data the normalization have to be applied to. 
 #' @exportMethod RunPCA
 methods::setMethod(f          = "RunPCA",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object, SE.name, nbcp = 5, raw = FALSE){
                      
                      object[[SE.name]] <-  RunPCA(object[[SE.name]], 
@@ -668,14 +388,14 @@ methods::setMethod(f          = "RunPCA",
 
 #' Library_size_barplot.plot
 #'
-#' @param object An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsSE}
 #' @return plot
 #' @export
 #' @importFrom ggplot2 ggplot geom_bar xlab ylab element_text ggtitle
 #' @rdname Library_size_barplot.plot
 #' @noRd
 methods::setMethod(f          = "Library_size_barplot.plot",
-                   signature  = "SummarizedExperiment",
+                   signature  = "RflomicsSE",
                    definition <- function(object, raw = FALSE){
                      
                      if (getOmicsTypes(object) != "RNAseq") stop("WARNING: data are not RNAseq!")
@@ -725,7 +445,7 @@ methods::setMethod(f          = "Library_size_barplot.plot",
 #' @param SE.name the name of the data the normalization have to be applied to. 
 #' @exportMethod Library_size_barplot.plot
 methods::setMethod(f          = "Library_size_barplot.plot",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object, SE.name, raw = FALSE){
                      
                      if (getOmicsTypes(object[[SE.name]]) == "RNAseq") {
@@ -739,7 +459,7 @@ methods::setMethod(f          = "Library_size_barplot.plot",
 
 #' @title Data_Distribution_plot
 #'
-#' @param object An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsSE}
 #' @param plot plot type ("boxplot" or "density")
 #' @export
 #' @exportMethod Data_Distribution_plot
@@ -751,7 +471,7 @@ methods::setMethod(f          = "Library_size_barplot.plot",
 
 methods::setMethod(
   f = "Data_Distribution_plot",
-  signature = "SummarizedExperiment",
+  signature = "RflomicsSE",
   definition = function(object, plot = "boxplot", raw = FALSE) {
     
     object2 <- checkTransNorm(object, raw = raw)
@@ -825,7 +545,7 @@ methods::setMethod(
 #' @exportMethod Data_Distribution_plot
 methods::setMethod(
   f = "Data_Distribution_plot",
-  signature = "MultiAssayExperiment",
+  signature = "RflomicsMAE",
   definition = function(object, SE.name, plot = "boxplot", raw = FALSE) {
     Data_Distribution_plot(
       object = object[[SE.name]],
@@ -837,9 +557,9 @@ methods::setMethod(
 
 #' @title plotPCA
 #' @description This function plot the factorial map from a PCA object stored
-#' in a \link{SummarizedExperiment-class} object. By default, samples are
+#' in a \link{RflomicsSE-class} object. By default, samples are
 #' colored by groups (all combinations of level's factor)
-#' @param object An object of class \link{SummarizedExperiment-class}
+#' @param object An object of class \link{RflomicsSE-class}
 #' @param PCA This argument indicates whether the scaled PCA has to be performed on raw [\sQuote{raw}] or normalized [\sQuote{norm}] data.
 #' @param PCs A vector giving the two axis that have to be drawn for the factorial map
 #' @param condition All combination of level's factor
@@ -851,7 +571,7 @@ methods::setMethod(
 #' @rdname plotPCA
 #' 
 methods::setMethod(f= "plotPCA",
-                   signature = "SummarizedExperiment",
+                   signature = "RflomicsSE",
                    definition <- function(object, PCA, PCs=c(1,2), condition="groups"){
                      
                      ExpDesign <- getDesignMat(object)
@@ -913,7 +633,7 @@ methods::setMethod(f= "plotPCA",
 #' @param SE.name the name of the data the normalization have to be applied to. 
 #' @exportMethod plotPCA
 methods::setMethod(f          = "plotPCA",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object, SE.name, PCA, PCs=c(1,2), condition="groups"){
                      
                      plotPCA(object[[SE.name]], PCA, PCs, condition)
@@ -926,17 +646,17 @@ methods::setMethod(f          = "plotPCA",
 
 #' @title TransformData
 #'
-#' @param object An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsSE}
 #' @param transformMethod The transformation to store in the metadata or to store and apply if modify_assay is TRUE.
 #' @param modify_assay Boolean. Do the transformation need to be applied on the data? The raw data will be replaced by the transformed ones.
 #'
-#' @return An object of class \link{SummarizedExperiment}
+#' @return An object of class \link{RflomicsSE}
 #'
 #' @exportMethod TransformData
 #' @rdname TransformData
 #' 
 methods::setMethod(f          = "TransformData",
-                   signature  = "SummarizedExperiment",
+                   signature  = "RflomicsSE",
                    definition = function(object, transformMethod = NULL, modify_assay = FALSE){
                      
                      if (is.null(transformMethod)) {
@@ -970,7 +690,7 @@ methods::setMethod(f          = "TransformData",
 #' @param SE.name the name of the data the normalization have to be applied to. 
 #' @exportMethod TransformData
 methods::setMethod(f          = "TransformData",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object, SE.name, transformMethod = NULL, modify_assay = FALSE){
                      
                      object[[SE.name]] <-  TransformData(object[[SE.name]], 
@@ -1001,16 +721,16 @@ methods::setMethod(f          = "TransformData",
 #' \item{NbReplicates: }{keep gene if the NbOfsample_over_cpm >= min(NbReplicat)}
 #' \item{filterByExpr:} {the default filtering method implemented in the edgeR filterByExpr() function.}
 #' }
-#' @param object An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsSE}
 #' @param filterMethod The filtering model ("CPM")
 #' @param filterStrategy The filtering strategy ("NbConditions" or "NbReplicates")
 #' @param cpmCutoff The CPM cutoff.
-#' @return An object of class \link{SummarizedExperiment}
+#' @return An object of class \link{RflomicsSE}
 #' @details
-#' Filtered dataset is stored in the ExperimentList slot of the \link{SummarizedExperiment} object
+#' Filtered dataset is stored in the ExperimentList slot of the \link{RflomicsSE} object
 #' as a List named (DataName.filtred).
 #' List of filtered features are stored as a named list ("FilteredFeatures") in the metadata slot of a
-#' given data set, stored itself in the ExperimentList slot of a \link{SummarizedExperiment} object.
+#' given data set, stored itself in the ExperimentList slot of a \link{RflomicsSE} object.
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod FilterLowAbundance
@@ -1020,7 +740,7 @@ methods::setMethod(f          = "TransformData",
 
 
 methods::setMethod(f         = "FilterLowAbundance",
-                   signature = "SummarizedExperiment",
+                   signature = "RflomicsSE",
                    definition <- function(object, filterMethod= "CPM", filterStrategy = "NbConditions", cpmCutoff = 5){
                      
                      if(isFALSE(filterStrategy %in% c("NbReplicates","NbConditions"))) 
@@ -1081,7 +801,7 @@ methods::setMethod(f         = "FilterLowAbundance",
 #' @param SE.name the name of the data the normalization have to be applied to. 
 #' @exportMethod FilterLowAbundance
 methods::setMethod(f          = "FilterLowAbundance",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object, SE.name, filterStrategy = "NbConditions", cpmCutoff = 5){
                      
                      if ( getOmicsTypes(object[[SE.name]]) == "RNAseq") {
@@ -1103,19 +823,19 @@ methods::setMethod(f          = "FilterLowAbundance",
 
 #' @title RunNormalization
 #' @description This function applied a normalization method on an omic data sets stored in an object of
-#' class \link{SummarizedExperiment}.
+#' class \link{RflomicsSE}.
 #' \itemize{
 #' \item{For RNAseq data:}{the TMM function of edgeR is proposed by default, see the ref}
 #' \item{For Proteomic data:}{}
 #' \item{For Metabolomic data:}{}
 #' }
-#' @param object An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsSE}
 #' @param NormMethod Normalization method
 #' @param modify_assay Does the normalization have to be applied or just stored for later? Recommended it stays FALSE.
-#' @return An object of class \link{SummarizedExperiment}
+#' @return An object of class \link{RflomicsSE}
 #' The applied normalization method and computed scaling factors (by samples) are stored as a named list
 #' ("normalization") of two elements (respectively "methode" and "coefNorm") in the metadata slot of a
-#' given data set, stored itself in the ExperimentList slot of a \link{SummarizedExperiment} object.
+#' given data set, stored itself in the ExperimentList slot of a \link{RflomicsSE} object.
 #' @exportMethod RunNormalization
 #' @seealso TMM.Normalization
 #' @rdname RunNormalization
@@ -1123,7 +843,7 @@ methods::setMethod(f          = "FilterLowAbundance",
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 
 methods::setMethod(f          = "RunNormalization",
-                   signature  = "SummarizedExperiment",
+                   signature  = "RflomicsSE",
                    definition = function(object, NormMethod = NULL, modify_assay = FALSE){
                      
                      Groups     <- getDesignMat(object)
@@ -1186,7 +906,7 @@ methods::setMethod(f          = "RunNormalization",
 #' @param SE.name the name of the data the normalization have to be applied to. 
 #' @exportMethod RunNormalization
 methods::setMethod(f          = "RunNormalization",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object, SE.name, NormMethod, modify_assay = FALSE){
                      
                      object[[SE.name]] <-  RunNormalization(object       = object[[SE.name]],
@@ -1205,19 +925,19 @@ methods::setMethod(f          = "RunNormalization",
 
 #' @title runDataProcessing
 #' @description This function applied a processing (filtering, normalization and/or transformation, PCA) on an omic data sets stored in an object of
-#' class \link{SummarizedExperiment}.
+#' class \link{RflomicsSE}.
 #' \itemize{
 #' \item{For RNAseq data:}{}
 #' \item{For Proteomic data:}{}
 #' \item{For Metabolomic data:}{}
 #' }
-#' @param object An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsSE}
 #' @param samples samples to keep.
 #' @param lowCountFiltering_strategy strategy of RNAseq low count filtering. Mandatory for RNAseq data. Default value : "NbReplicates".
 #' @param lowCountFiltering_CPM_Cutoff CPM cutoff for RNAseq low count filtering. Mandatory for RNAseq data. Default value : 1.
 #' @param normalisation_method method of normalisation. Mandatory for RNAseq data. Default value : RNAseq = TMM.
 #' @param transformation_method method of transformation.
-#' @return An object of class \link{SummarizedExperiment}
+#' @return An object of class \link{RflomicsSE}
 #' @exportMethod runDataProcessing
 #' @seealso runSampleFiltering
 #' @seealso FilterLowAbundance
@@ -1226,7 +946,7 @@ methods::setMethod(f          = "RunNormalization",
 #' @rdname runDataProcessing
 
 methods::setMethod(f          = "runDataProcessing",
-                   signature  = "SummarizedExperiment",
+                   signature  = "RflomicsSE",
                    definition = function(object, samples=NULL, lowCountFiltering_strategy = "NbReplicates", lowCountFiltering_CPM_Cutoff = 1, 
                                          normalisation_method = "none", transformation_method = "none")
                    {
@@ -1296,7 +1016,7 @@ methods::setMethod(f          = "runDataProcessing",
 #' @param SE.name the name of the data the normalization have to be applied to. 
 #' @exportMethod runDataProcessing
 methods::setMethod(f          = "runDataProcessing",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object, samples=NULL, lowCountFiltering_strategy = "NbReplicates", lowCountFiltering_CPM_Cutoff = 1, 
                                          normalisation_method = "none", transformation_method = "none", SE.name){
                      
@@ -1332,20 +1052,20 @@ methods::setMethod(f          = "runDataProcessing",
 
 #' @title runSampleFiltering
 #' @description This function applied sample filtering on an omic data sets stored in an object of
-#' class \link{SummarizedExperiment}.
+#' class \link{RflomicsSE}.
 #' \itemize{
 #' \item{For RNAseq data:}{}
 #' \item{For Proteomic data:}{}
 #' \item{For Metabolomic data:}{}
 #' }
-#' @param object An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsSE}
 #' @param samples samples to keep.
-#' @return An object of class \link{SummarizedExperiment}
+#' @return An object of class \link{RflomicsSE}
 #' @exportMethod runSampleFiltering
 #' @rdname runSampleFiltering
 
 methods::setMethod(f          = "runSampleFiltering",
-                   signature  = "SummarizedExperiment",
+                   signature  = "RflomicsSE",
                    definition = function(object, samples=NULL) {
                      
                      # if no samples to filter
@@ -1406,7 +1126,7 @@ methods::setMethod(f          = "runSampleFiltering",
 
 #' @title RunDiffAnalysis
 #' @description This is an interface method which run a differential analysis method on
-#' omic datasets stored in an object of class \link{SummarizedExperiment}.
+#' omic datasets stored in an object of class \link{RflomicsSE}.
 #' According to the type of omic and to a list of contrasts,
 #' a differential analysis method is applied to each contrasts (or hypothesis).
 #' Three methods are available according to the type of object:
@@ -1417,7 +1137,7 @@ methods::setMethod(f          = "runSampleFiltering",
 #' Parameters used for RNAseq are those recommended in DiCoExpress workflow (see the paper in reference)
 #' @return
 #' All the results are stored as a named list \code{DiffExpAnal} in the metadata slot of a
-#' given \code{SummarizedExperiment} object.
+#' given \code{RflomicsSE} object.
 #' Objects are:
 #' \itemize{
 #' \item{contrasts: }{The selected contrasts for which the differential analysis has been conducted}
@@ -1430,8 +1150,8 @@ methods::setMethod(f          = "runSampleFiltering",
 #' \item{TopDEF: }{a list giving for each contrast a data.frame of differential expressed features by Adj.pvalue.cutoff}
 #' \item{mergeDEF: }{A data frame indicating for each features in row, if it is DE in a given contrasts in column}
 #' }
-#' @param object an object of class \link{SummarizedExperiment} or \link{MultiAssayExperiment} 
-#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment 
+#' @param object an object of class \link{RflomicsSE} or \link{RflomicsMAE} 
+#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE 
 #' @param design an object of class \link{ExpDesign-class}
 #' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
 #' to run. Either "edgeRglmfit" or "limmalmFit".
@@ -1439,7 +1159,7 @@ methods::setMethod(f          = "runSampleFiltering",
 #' @param Adj.pvalue.method The method choosen to adjust pvalue. Takes the same values as the ones of adj.p.adjust method.
 #' @param Adj.pvalue.cutoff The adjusted pvalue cut-off
 #' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
-#' @return An object of class \link{SummarizedExperiment}
+#' @return An object of class \link{RflomicsSE}
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod RunDiffAnalysis
@@ -1447,7 +1167,7 @@ methods::setMethod(f          = "runSampleFiltering",
 #' @rdname RunDiffAnalysis
 #' 
 methods::setMethod(f         = "RunDiffAnalysis",
-                   signature = "SummarizedExperiment",
+                   signature = "RflomicsSE",
                    definition <- function(object, design, Adj.pvalue.method="BH", contrastList = NULL, DiffAnalysisMethod = NULL, 
                                           Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, parallel = FALSE, nworkers = 1,
                                           cmd = FALSE, modelFormula=NULL){
@@ -1550,7 +1270,7 @@ methods::setMethod(f         = "RunDiffAnalysis",
 #' @title RunDiffAnalysis
 #' @exportMethod RunDiffAnalysis
 methods::setMethod(f          = "RunDiffAnalysis",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object, SE.name, Adj.pvalue.method="BH",
                                          contrastList = NULL, DiffAnalysisMethod = NULL,
                                          Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, 
@@ -1577,12 +1297,12 @@ methods::setMethod(f          = "RunDiffAnalysis",
 
 #' Filter differential analysis
 #'
-#' @param object A SummarizedExperiment object
-#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @param object A RflomicsSE object
+#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
 #' @param Adj.pvalue.cutoff adjusted pvalue cutoff. Default is the parameter from the differential analysis.
 #' @param logFC.cutoff cutoff for absolute value of log2FC. Default is the parameter from the differential analysis. 
 #'
-#' @return A SummarizedExperiment object or a MultiAssayExperiment, depending on the object type, 
+#' @return A RflomicsSE object or a RflomicsMAE, depending on the object type, 
 #' where the differential analysis results have been actualized with the new parameters.
 #' @exportMethod FilterDiffAnalysis
 #' @rdname FilterDiffAnalysis
@@ -1591,7 +1311,7 @@ methods::setMethod(f          = "RunDiffAnalysis",
 #' @importFrom purrr reduce
 #'
 methods::setMethod(f          = "FilterDiffAnalysis",
-                   signature  = "SummarizedExperiment",
+                   signature  = "RflomicsSE",
                    definition <- function(object, Adj.pvalue.cutoff = NULL, logFC.cutoff = NULL){
                      
                      if(is.null(object@metadata$DiffExpAnal[["RawDEFres"]])){
@@ -1649,7 +1369,7 @@ methods::setMethod(f          = "FilterDiffAnalysis",
 #' @title FilterDiffAnalysis
 #' @exportMethod FilterDiffAnalysis
 methods::setMethod(f          = "FilterDiffAnalysis",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object, SE.name, 
                                          Adj.pvalue.cutoff = NULL, logFC.cutoff = NULL){
                      
@@ -1685,8 +1405,8 @@ methods::setMethod(f          = "FilterDiffAnalysis",
 #' @title DiffAnal.plot
 #' @description
 #' This is an interface method which draw a MAplot, a volcano plot and the pvalues distribution from the results of a differential analysis
-#' performed on omic datasets stored in an object of class \link{SummarizedExperiment}
-#' @param object An object of class \link{SummarizedExperiment}
+#' performed on omic datasets stored in an object of class \link{RflomicsSE}
+#' @param object An object of class \link{RflomicsSE}
 #' @param hypothesis The hypothesis for which the plots has to be drawn
 #' @param typeofplots The plots you want to return. Default is all possible plots: MA plot, Volcano plot and non adjusted pvalues histogram.
 #' @return plot
@@ -1695,7 +1415,7 @@ methods::setMethod(f          = "FilterDiffAnalysis",
 #' @export
 #' 
 methods::setMethod(f="DiffAnal.plot",
-                   signature="SummarizedExperiment",
+                   signature="RflomicsSE",
                    
                    definition <- function(object, hypothesis, typeofplots = c("MA.plot", "volcano", "histogram")){
                      
@@ -1717,10 +1437,10 @@ methods::setMethod(f="DiffAnal.plot",
 
 #' @rdname DiffAnal.plot
 #' @title DiffAnal.plot
-#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
 #' @exportMethod DiffAnal.plot
 methods::setMethod(f          = "DiffAnal.plot",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object, SE.name, hypothesis, typeofplots = c("MA.plot", "volcano", "histogram")){
                      
                      if (isTagName(object, hypothesis)) hypothesis <-  convertTagToContrast(object, hypothesis)
@@ -1735,8 +1455,8 @@ methods::setMethod(f          = "DiffAnal.plot",
 #' @title heatmapPlot
 #' @description
 #' This is an interface method which draw a heatmap from the results of a differential analysis
-#' performed on omic datasets stored in an object of class \link{SummarizedExperiment}
-#' @param object An object of class \link{SummarizedExperiment}
+#' performed on omic datasets stored in an object of class \link{RflomicsSE}
+#' @param object An object of class \link{RflomicsSE}
 #' @param hypothesis The hypothesis for which the MAplot has to be drawn
 #' @param condition characters. Default to none. Name of a feature in the design matrix, splits the samples on the heatmap according to its modalities.  
 #' @param title characters. Title of the heatmap. 
@@ -1756,7 +1476,7 @@ methods::setMethod(f          = "DiffAnal.plot",
 #' @rdname heatmapPlot
 #' 
 methods::setMethod(f          = "heatmapPlot",
-                   signature  = "SummarizedExperiment",
+                   signature  = "RflomicsSE",
                    definition = function(object, 
                                          hypothesis, 
                                          condition="none", 
@@ -1883,10 +1603,10 @@ methods::setMethod(f          = "heatmapPlot",
 
 #' @rdname heatmapPlot
 #' @title heatmapPlot
-#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
 #' @exportMethod heatmapPlot
 methods::setMethod(f          = "heatmapPlot",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object, SE.name, hypothesis, condition="none", title = "", annot_to_show = NULL, subset_list = NULL, draw_args = list(), heatmap_args = list()){
                      
                      
@@ -1908,7 +1628,7 @@ methods::setMethod(f          = "heatmapPlot",
 
 #' @title boxplot.DE.plot
 #'
-#' @param object An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsSE}
 #' @param DE variable name (gene/protein/metabolite name)
 #' @export
 #' @exportMethod boxplot.DE.plot
@@ -1917,7 +1637,7 @@ methods::setMethod(f          = "heatmapPlot",
 #' @noRd
 
 methods::setMethod(f          = "boxplot.DE.plot",
-                   signature  = "SummarizedExperiment",
+                   signature  = "RflomicsSE",
                    definition = function(object, DE = NULL, condition="groups", raw = FALSE){
                      
                      # check variable name
@@ -2003,10 +1723,10 @@ methods::setMethod(f          = "boxplot.DE.plot",
 
 #' @rdname boxplot.DE.plot
 #' @title boxplot.DE.plot
-#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
 #' @exportMethod boxplot.DE.plot
 methods::setMethod(f          = "boxplot.DE.plot",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object, SE.name, DE = NULL, condition="groups"){
                      
                      boxplot.DE.plot(object = object[[SE.name]], 
@@ -2034,9 +1754,9 @@ methods::setMethod(f          = "boxplot.DE.plot",
 #' \code{normFactors="none"},  \code{meanFilterCutoff = NULL}.
 #'
 #' @return
-#' An S4 object of class \link{SummarizedExperiment}
+#' An S4 object of class \link{RflomicsSE}
 #' All the results are stored as a named list \code{CoExpAnal} in the metadata slot of a
-#' given \code{SummarizedExperiment} object. Objects are:
+#' given \code{RflomicsSE} object. Objects are:
 #' The runCoExpression method return several results, for \link{coseq} method, objects are:
 #' \itemize{
 #' \item{\code{model:} }{see model params description}
@@ -2050,8 +1770,8 @@ methods::setMethod(f          = "boxplot.DE.plot",
 #' \item{\code{cluster.nb:} }{The number of cluster}
 #' \item{\code{plots:} }{The plots of \code{coseq} results}
 #' }
-#' @param object An object of class \link{SummarizedExperiment}
-#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @param object An object of class \link{RflomicsSE}
+#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
 #' @param nameList names of the contrasts from which the DE entities are taken. Can be NULL, in that case every contrasts from the differential analysis is taken into consideration.
 #' @param K Number of clusters (a single value or a vector of values)
 #' @param replicates The number of iteration for each K.
@@ -2073,7 +1793,7 @@ methods::setMethod(f          = "boxplot.DE.plot",
 #' @rdname runCoExpression
 #' 
 methods::setMethod(f = "runCoExpression",
-                   signature = "SummarizedExperiment",
+                   signature = "RflomicsSE",
                    definition = function(object,
                                          K=2:20, 
                                          replicates=5, 
@@ -2214,7 +1934,7 @@ methods::setMethod(f = "runCoExpression",
 #' @title runCoExpression
 #' @exportMethod runCoExpression
 methods::setMethod(f          = "runCoExpression",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object, SE.name, K=2:20, replicates=5, nameList, merge="union",
                                          model = "Normal", GaussianModel = NULL, 
                                          transformation = NULL, normFactors = NULL, clustermq = FALSE,
@@ -2250,7 +1970,7 @@ methods::setMethod(f          = "runCoExpression",
 
 #' @title CoExpressionPlots
 #' 
-#' @param object An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsSE}
 #' @return list plot of ICL, logLike and coseq object with min ICL
 #' @importFrom coseq plot
 #' @importFrom ggplot2 ggplot geom_boxplot geom_text
@@ -2259,7 +1979,7 @@ methods::setMethod(f          = "runCoExpression",
 #' @noRd
 #' 
 coExpressionPlots <- methods::setMethod(f="CoExpressionPlots",
-                                        signature="SummarizedExperiment",
+                                        signature="RflomicsSE",
                                         definition <- function(object){
                                           
                                           if(is.null(object@metadata$CoExpAnal) || length(object@metadata$CoExpAnal) == 0) stop("No co-expression results!")
@@ -2303,8 +2023,8 @@ coExpressionPlots <- methods::setMethod(f="CoExpressionPlots",
 
 #' @title coseq.profile.plot
 #'
-#' @param object An object of class \link{SummarizedExperiment}
-#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @param object An object of class \link{RflomicsSE}
+#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
 #' @param numCluster cluster number
 #' @param condition 
 #' @param observation 
@@ -2315,7 +2035,7 @@ coExpressionPlots <- methods::setMethod(f="CoExpressionPlots",
 #' @noRd
 
 methods::setMethod(f="coseq.profile.plot",
-                   signature="SummarizedExperiment",
+                   signature="RflomicsSE",
                    definition <- function(object, numCluster = 1, condition="groups", observation=NULL){
                      
                      Groups <- getDesignMat(object)
@@ -2357,7 +2077,7 @@ methods::setMethod(f="coseq.profile.plot",
 #' @title coseq.profile.plot
 #' @exportMethod coseq.profile.plot
 methods::setMethod(f          = "coseq.profile.plot",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object, SE.name, numCluster = 1, condition="groups", observation=NULL){
                      
                      coseq.profile.plot(object = object[[SE.name]],
@@ -2371,8 +2091,8 @@ methods::setMethod(f          = "coseq.profile.plot",
 
 #' @title CoseqContrastsPlot
 #' This function describes the composition of clusters according to the contrast to which the gene belongs
-#' @param object An object of class \link{SummarizedExperiment}
-#' @param SE.name the name of the data to fetch in the object if the object is a MultiAssayExperiment
+#' @param object An object of class \link{RflomicsSE}
+#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
 #' @export
 #' @exportMethod CoseqContrastsPlot
 #' @importFrom dplyr filter mutate rename full_join arrange group_by summarise
@@ -2380,7 +2100,7 @@ methods::setMethod(f          = "coseq.profile.plot",
 
 
 methods::setMethod(f = "CoseqContrastsPlot",
-                   signature = "SummarizedExperiment",
+                   signature = "RflomicsSE",
                    definition <-
                      function(object){
                     
@@ -2451,7 +2171,7 @@ methods::setMethod(f = "CoseqContrastsPlot",
 #' @title CoseqContrastsPlot
 #' @exportMethod CoseqContrastsPlot
 methods::setMethod(f          = "CoseqContrastsPlot",
-                   signature  = "MultiAssayExperiment",
+                   signature  = "RflomicsMAE",
                    definition = function(object){
                      
                      CoseqContrastsPlot(object = object[[SE.name]])
@@ -2464,26 +2184,26 @@ methods::setMethod(f          = "CoseqContrastsPlot",
 
 #' resetFlomicsMultiAssay
 #'
-#' @param object An object of class \link{MultiAssayExperiment}
+#' @param object An object of class \link{RflomicsMAE}
 #' @param results vector of results names
 #' @param dataset dataset name. If dataset == NULL, all datasets will be reset
-#' @return An object of class \link{MultiAssayExperiment}
+#' @return An object of class \link{RflomicsMAE}
 #' @export
 #' @exportMethod resetFlomicsMultiAssay
 #' @noRd
 #'
-methods::setMethod(f="resetFlomicsMultiAssay", signature="MultiAssayExperiment",
+methods::setMethod(f="resetFlomicsMultiAssay", signature="RflomicsMAE",
                    
                    definition <- function(object, results, datasets = NULL){
                      
-                     # if dataset is null we take all datasets present in MultiAssayExperiment object
+                     # if dataset is null we take all datasets present in RflomicsMAE object
                      if(is.null(datasets)){
                        datasets <- unlist(object@metadata$omicList)
                      }
                      else{
-                       # check if given dataset name include in datasets presente in MultiAssayExperiment object
+                       # check if given dataset name include in datasets presente in RflomicsMAE object
                        if(!datasets %in% unlist(object@metadata$omicList)){
-                         warning("The given dataset name is not present in MultiAssayExperiment object")
+                         warning("The given dataset name is not present in RflomicsMAE object")
                          return(object)
                        }
                      }

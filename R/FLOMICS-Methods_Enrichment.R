@@ -4,11 +4,11 @@
 #' @description This function performs overrepresentation analysis (ORA) using
 #' clusterprofiler functions. It can be used with custom annotation file
 #' (via enricher), GO (enrichGO) or KEGG (enrichKEGG) annotations.
-#' @param object An object of class \link{SummarizedExperiment} or
-#' \link{MultiAssayExperiment}. It is expected the SE object is produced by
+#' @param object An object of class \link{RflomicsSE} or
+#' \link{RflomicsMAE}. It is expected the SE object is produced by
 #' rflomics previous analyses, as it relies on their results.
 #' @param SE.name name of the experiment to consider if object is a
-#' MultiAssayExperiment.
+#' RflomicsMAE.
 #' @param nameList name of contrasts (tags or names) from which to extract DE
 #' genes if from is DiffExpAnal.
 #' @param list_args list of arguments to pass to the enrichment function.
@@ -25,7 +25,7 @@
 #' @rdname runAnnotationEnrichment
 methods::setMethod(
   f = "runAnnotationEnrichment",
-  signature = "SummarizedExperiment",
+  signature = "RflomicsSE",
   definition = function(object,
                         nameList = NULL,
                         list_args = list(
@@ -208,7 +208,7 @@ methods::setMethod(
 #' @exportMethod runAnnotationEnrichment
 methods::setMethod(
   f = "runAnnotationEnrichment",
-  signature = "MultiAssayExperiment",
+  signature = "RflomicsMAE",
   definition = function(object,
                         SE.name,
                         nameList = NULL,
@@ -246,7 +246,7 @@ methods::setMethod(
 
 #' @title plotCPRKEGG
 #' @description TODO
-#' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param object An object of class \link{RflomicsSE}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param contrast the name of the contrast to consider. For Co expression analysis, it is expected to be one of "cluster.1", "cluster.2", etc.
 #' @param ontologythe ontology (GO, KEGG or custom)
 #' @param domain if the ontology is GO, expect one of BP, MF or CC. Default is NULL.
@@ -263,7 +263,7 @@ methods::setMethod(
 #' @exportMethod plotCPRKEGG
 methods::setMethod(
   f = "plotCPRKEGG",
-  signature = "SummarizedExperiment",
+  signature = "RflomicsSE",
   definition = function(object,
                         contrast,
                         pathway_id = NULL,
@@ -306,7 +306,7 @@ methods::setMethod(
 
 #' @title plotCPR
 #' @description TODO
-#' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param object An object of class \link{RflomicsSE}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param contrast the name of the contrast to consider. For Co expression analysis, it is expected to be one of "cluster.1", "cluster.2", etc.
 #' @param ontologythe ontology (GO, KEGG or custom)
 #' @param domain if the ontology is GO, expect one of BP, MF or CC. Default is NULL.
@@ -325,7 +325,7 @@ methods::setMethod(
 #' @exportMethod plotCPR
 methods::setMethod(
   f = "plotCPR",
-  signature = "SummarizedExperiment",
+  signature = "RflomicsSE",
   definition = function(object,
                         contrast,
                         ontology,
@@ -436,7 +436,7 @@ methods::setMethod(
 
 #' @title plotEnrichComp
 #' @description TODO
-#' @param object An object of class \link{SummarizedExperiment}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param object An object of class \link{RflomicsSE}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param from indicates if the enrichment results are taken from differential analysis results (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
 #' @param ontology is it a custom annotation, GO or KEGG annotations
 #' @param domain domain from the ontology (eg GO has three domains, BP, CC and MF)
@@ -454,7 +454,7 @@ methods::setMethod(
 #' @rdname plotEnrichComp
 methods::setMethod(
   f = "plotEnrichComp",
-  signature = "SummarizedExperiment",
+  signature = "RflomicsSE",
   definition = function(object, 
                         from = "DiffExp", 
                         ontology = NULL, 

@@ -497,14 +497,14 @@ LoadOmicsData <- function(input, output, session, rea.values){
     rea.values$validate.status <- 0
     
     FlomicsMultiAssay.try <- tryCatch( 
-      FlomicsMultiAssay.constructor(projectName = input$projectName, 
-                                    omicsData   = local.rea.values$omicsData,
-                                    omicsNames  = local.rea.values$omicsNames,
-                                    omicsTypes  = local.rea.values$omicsTypes,
-                                    ExpDesign   = ExpDesign.tbl,
-                                    factorRef   = data.frame(factorName = names(dF.List.ref),
-                                                             factorRef   = dF.List.ref,
-                                                             factorType  = dF.Type.dFac)),
+      createRflomicsMAE(projectName = input$projectName, 
+                        omicsData   = local.rea.values$omicsData,
+                        omicsNames  = local.rea.values$omicsNames,
+                        omicsTypes  = local.rea.values$omicsTypes,
+                        ExpDesign   = ExpDesign.tbl,
+                        factorRef   = data.frame(factorName = names(dF.List.ref),
+                                                 factorRef   = dF.List.ref,
+                                                 factorType  = dF.Type.dFac)),
       error = function(e) e, warning = function(w) w)
     
     if(!is.null(FlomicsMultiAssay.try$message)) {
@@ -521,7 +521,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     # plot : ok
     local.rea.values$plots <- TRUE
-    
 
     rea.values$datasetList <- session$userData$FlomicsMultiAssay@metadata$omicList
     
@@ -551,7 +550,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
           )
         )
     )
-
   })
   
   return(input)

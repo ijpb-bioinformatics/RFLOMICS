@@ -150,7 +150,7 @@ read_omics_data <- function(file){
 #'
 #' @param FacBio a vector of character giving the name of the bio factors.
 #' @param FacBatch a vector of character giving the name of the batch factors.
-#' @param MAE a MultiAssayExperiment produced by RFLOMICS. Default is null. If not null, overwrite FacBio and FacBatch.
+#' @param MAE a RflomicsMAE produced by RFLOMICS. Default is null. If not null, overwrite FacBio and FacBatch.
 #'
 #' @return a named list of object of class formula
 #' @export
@@ -222,8 +222,7 @@ TMM.Normalization <- function(counts, groups){
 
 #' @title edgeR.AnaDiff
 #'
-#' @param object an object of class \link{SummarizedExperiment}]
-#' @param design an object of class \link{ExpDesign-class}
+#' @param object an object of class \link{RflomicsSE}]
 #' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
 #' @param parallel boolean. Compute parallel differential analyses (only when clustermq is FALSE)
 #' @param nworkers integer. Number of core to use for the parallel operations. Only used when parallel is TRUE.
@@ -368,8 +367,7 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
 
 #' @title limma.AnaDiff
 #'
-#' @param object an object of class \link{SummarizedExperiment}
-#' @param design an object of class \link{ExpDesign-class}
+#' @param object an object of class \link{RflomicsSE}
 #' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
 #' @return A list
 #' @export
@@ -1072,7 +1070,7 @@ defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteraction
 #' \item{averaged expression}
 #' \item{interaction expression}
 #' }
-#' @param An object of class [\code{\link{SummarizedExperiment-class}}] or class [\code{\link{MultiAssayExperiment-class}}]
+#' @param An object of class [\code{\link{RflomicsSE-class}}] or class [\code{\link{RflomicsMAE-class}}]
 #' @param modelFormula a model formula (characters or formula)
 #' @return list of 1 or 3 data.frames of contrast expression
 #' @export getExpressionContrast
