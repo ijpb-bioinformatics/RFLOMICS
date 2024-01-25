@@ -159,7 +159,7 @@ GLM_model <- function(input, output, session, rea.values){
       # # define all the coefficients of selected contrasts and return a contrast matrix with contrast sample name and associated coefficients
       # session$userData$FlomicsMultiAssay <- getContrastMatrix(object = session$userData$FlomicsMultiAssay, contrastList = contrast.sel.vec)
 
-      session$userData$FlomicsMultiAssay@metadata$design@Contrasts.Sel <- contrast.sel.vec
+      session$userData$FlomicsMultiAssay@metadata$design$Contrasts.Sel <- contrast.sel.vec
       rea.values$Contrasts.Sel <- contrast.sel.vec
       
       rea.values$analysis <- TRUE

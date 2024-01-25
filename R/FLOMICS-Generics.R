@@ -1,6 +1,20 @@
 #' @import MultiAssayExperiment
 #' @import SummarizedExperiment
 
+# ---- RflomicsMAE and RflomicsSE getteurs ----
+methods::setGeneric(
+  name = "getExperimentNames",
+  def  = function(object){standardGeneric("getExperimentNames")}
+)
+
+methods::setGeneric(
+  name = "getExperimentTypes",
+  def  = function(object, experimentNames = NULL, ...){standardGeneric("getExperimentTypes")}
+)
+
+# ---- RflomicsSE getteurs ----
+
+
 # ---- Transformation and normalization: ----
 
 methods::setGeneric(

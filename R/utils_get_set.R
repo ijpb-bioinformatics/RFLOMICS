@@ -10,14 +10,14 @@
 #' 
 getFactorTypes <- function(object) {
   
-  if (is(object, "MultiAssayExperiment")) {
-    metadata(object)$design@Factors.Type
+  if (is(object, "RflomicsMAE")) {
+    metadata(object)$design$Factors.Type
   } 
-  else if(is(object, "SummarizedExperiment")){
+  else if(is(object, "RflomicsSE")){
     metadata(object)$design$factorType
   }
   else {
-    stop("object is not a MultiAssayExperiment or SummarizedExperiment.")
+    stop("object is not a RflomicsMAE or RflomicsSE.")
   }
   
 }
@@ -75,17 +75,17 @@ metaFactors <- function(object){
 #' @export
 #'
 getDesignMat <- function(object) {
-  if (is(object, "MultiAssayExperiment") || is(object, "SummarizedExperiment")) {
+  if (is(object, "RflomicsMAE") || is(object, "RflomicsSE")) {
     return(as.data.frame(object@colData))
     
   } else {
-    stop("object is not a MultiAssayExperiment nor a SummarizedExperiment.")
+    stop("object is not a RflomicsMAE nor a RflomicsSE.")
   }
 }
 
 
 # ---- Get Model Formula : ----
-#' @title Get model formula from a Flomics multiassayexperiment.
+#' @title Get model formula from a Flomics RflomicsMAE
 #'
 #' @param object a MAE object (produced by Flomics)
 #' @return a formula
@@ -93,19 +93,19 @@ getDesignMat <- function(object) {
 #'
 getModelFormula <- function(object) {
   # TODO check if it exists...
-  if (is(object, "MultiAssayExperiment")) {
-    object@metadata$design@Model.formula
+  if (is(object, "RflomicsMAE")) {
+    object@metadata$design$Model.formula
   } 
-  else if(is(object, "SummarizedExperiment")){
+  else if(is(object, "RflomicsSE")){
     object@metadata$design$Model.formula
   }
   else {
-    stop("object is not a MultiAssayExperiment.")
+    stop("object is not a RflomicsMAE")
   }
 }
 
 # ---- Set Model Formula : ----
-#' @title Set model formula from a Flomics multiassayexperiment.
+#' @title Set model formula from a Flomics RflomicsMAE
 #'
 #' @param object a MAE or SE object (produced by Flomics)
 #' @param a formula
@@ -114,18 +114,18 @@ getModelFormula <- function(object) {
 #'
 setModelFormula <- function(object, modelFormula=NULL) {
   # TODO check if it exists...
-  if (is(object, "MultiAssayExperiment")) {
-    object@metadata$design@Model.formula <- paste(modelFormula, collapse = " ")
+  if (is(object, "RflomicsMAE")) {
+    object@metadata$design$Model.formula <- paste(modelFormula, collapse = " ")
     # set modelFormula foreach SE
     for(se in names(object)){
       object[[se]]@metadata$design$Model.formula <- paste(modelFormula, collapse = " ")
     }
   } 
-  else if(is(object, "SummarizedExperiment")){
+  else if(is(object, "RflomicsSE")){
     object@metadata$design$Model.formula <- paste(modelFormula, collapse = " ")
   }
   else {
-    stop("object is not a MultiAssayExperiment.")
+    stop("object is not a RflomicsMAE")
   }
   return(object)
 }
@@ -144,10 +144,10 @@ setModelFormula <- function(object, modelFormula=NULL) {
 #' @importFrom data.table rbindlist
 #'
 getPossibleContrasts <- function(object, 
-                                 formula = object@metadata$design@Model.formula,
+                                 formula = object@metadata$design$Model.formula,
                                  typeContrast = c("simple", "averaged", "interaction"),
                                  modalities = NULL, returnTable = FALSE) {
-  if (is(object, "SummarizedExperiment") || is(object, "MultiAssayExperiment")) {
+  if (is(object, "RflomicsSE") || is(object, "RflomicsMAE")) {
     if (is.null(typeContrast)) typeContrast <- c("simple", "averaged", "interaction")
     
     allContrasts <- getExpressionContrast(object = object, modelFormula = formula)
@@ -170,7 +170,7 @@ getPossibleContrasts <- function(object,
       return(allContrastsdt$contrast)
     }
   } 
-  # else if (is(object, "SummarizedExperiment")) {
+  # else if (is(object, "RflomicsSE")) {
   #   # expects to find a diff analysis slot
   #   allContrasts <- metadata(object)$DiffExpAnal$contrasts
   #   
@@ -181,7 +181,7 @@ getPossibleContrasts <- function(object,
   #   }
   
   else {
-    stop("object is not a MultiAssayExperiment or a SummarizedExperiment.")
+    stop("object is not a RflomicsMAE or a RflomicsSE.")
   }
 }
 
@@ -195,13 +195,13 @@ getPossibleContrasts <- function(object,
 #'
 getSelectedContrasts <- function(object) {
   # TODO check if it exists...
-  if (is(object, "MultiAssayExperiment")) {
-    object@metadata$design@Contrasts.Sel
+  if (is(object, "RflomicsMAE")) {
+    object@metadata$design$Contrasts.Sel
   } else
-    if (is(object, "SummarizedExperiment")) {
+    if (is(object, "RflomicsSE")) {
       object@metadata$DiffExpAnal$contrasts
     } else {
-      stop("object is not a MultiAssayExperiment or a SummarizedExperiment.")
+      stop("object is not a RflomicsMAE or a RflomicsSE.")
     }
 }
 
@@ -222,11 +222,11 @@ setValidContrasts <- function(object,
   # TODO : check if there are DE entities for each contrasts before really validating them.
   
   if (is.character(contrasts)) {
-    if (is(object, "SummarizedExperiment")) {
+    if (is(object, "RflomicsSE")) {
       allTab <- getPossibleContrasts(object, returnTable = TRUE)
       object@metadata$DiffExpAnal[["Validcontrasts"]] <- allTab[allTab$contrastName %in% contrasts,]
     } else {
-      stop("object is not a SummarizedExperiment.")
+      stop("object is not a RflomicsSE.")
     }
   }
   
@@ -241,9 +241,9 @@ setValidContrasts <- function(object,
 #' @export
 #'
 getValidContrasts <- function(object) {
-  if (is(object, "SummarizedExperiment")) {
+  if (is(object, "RflomicsSE")) {
     return(object@metadata$DiffExpAnal[["Validcontrasts"]])
-  } else if (is(object, "MultiAssayExperiment")) {
+  } else if (is(object, "RflomicsMAE")) {
     list_res <- lapply(names(object), FUN = function(tableName) {
       object[[tableName]]@metadata$DiffExpAnal[["Validcontrasts"]]
     })
@@ -266,14 +266,14 @@ getValidContrasts <- function(object) {
 #' @rdname getDE
 #'
 getDEMatrix <- function(object) {
-  if (is(object, "SummarizedExperiment")) {
+  if (is(object, "RflomicsSE")) {
     if (!is.null(object@metadata$DiffExpAnal$mergeDEF)) {
       object@metadata$DiffExpAnal$mergeDEF
     } else {
       stop("There is no DE matrix in this object.")
     }
   } else {
-    stop("object is not a SummarizedExperiment.")
+    stop("object is not a RflomicsSE.")
   }
 }
 
@@ -314,13 +314,13 @@ getDE <- function(object, contrast, union = TRUE) {
 #' @importFrom dplyr select mutate filter
 opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "union") {
   
-  if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
-    stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
+  if (!is(object, "RflomicsMAE") && !is(object, "RflomicsSE")) 
+    stop("Object is not a RflomicsSE or a RflomicsMAE")
   
-  if (is(object, "MultiAssayExperiment") && is.null(SE.name)) 
+  if (is(object, "RflomicsMAE") && is.null(SE.name)) 
     stop("Please provide SE.name argument.")
   
-  if (is(object, "MultiAssayExperiment")) object <- object[[SE.name]] 
+  if (is(object, "RflomicsMAE")) object <- object[[SE.name]] 
   
   if (is.null(contrasts) || length(contrasts) == 0) 
     contrasts <- getSelectedContrasts(object)[["tag"]]
@@ -367,10 +367,10 @@ opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "unio
 #'
 getOmicsTypes <- function(object) {
   
-  if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment"))
-    stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
+  if (!is(object, "RflomicsMAE") && !is(object, "RflomicsSE"))
+    stop("Object is not a RflomicsSE or a RflomicsMAE")
   
-  if (is(object, "MultiAssayExperiment")) {
+  if (is(object, "RflomicsMAE")) {
     return(names(object@metadata$omicList))
     
   } else {
@@ -389,7 +389,7 @@ getOmicsTypes <- function(object) {
 #'
 getDatasetNames <- function(object) {
   
-  if (!is(object, "MultiAssayExperiment")) stop("Object is not a MultiAssayExperiment")
+  if (!is(object, "RflomicsMAE")) stop("Object is not a RflomicsMAE")
   
   datasetNames <- unlist(object@metadata$omicList)
   names(datasetNames) <- NULL
@@ -407,7 +407,7 @@ getDatasetNames <- function(object) {
 #' @export
 #'
 getFilterSetting <- function(object) {
-  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  if (!is(object, "RflomicsSE")) stop("Object is not a RflomicsSE")
   
   return(object@metadata$DataProcessing$Filtering$setting)
 }
@@ -421,7 +421,7 @@ getFilterSetting <- function(object) {
 #' @export
 #'
 getFilteredFeatures <- function(object) {
-  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  if (!is(object, "RflomicsSE")) stop("Object is not a RflomicsSE")
   
   return(object@metadata$DataProcessing$Filtering$results$filteredFeatures)
 }
@@ -448,7 +448,7 @@ getCoeffNorm <- function(object) {
 #' @export
 #'
 getNormSetting <- function(object) {
-  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  if (!is(object, "RflomicsSE")) stop("Object is not a RflomicsSE")
   
   return(object@metadata$DataProcessing$Normalization$setting)
 }
@@ -462,7 +462,7 @@ getNormSetting <- function(object) {
 #' @export
 #'
 getTransSetting <- function(object) {
-  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  if (!is(object, "RflomicsSE")) stop("Object is not a RflomicsSE")
   
   return(object@metadata$DataProcessing$Transformation$setting)
 }
@@ -477,7 +477,7 @@ getTransSetting <- function(object) {
 #' @export
 #'
 getDiffSetting <- function(object) {
-  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  if (!is(object, "RflomicsSE")) stop("Object is not a RflomicsSE")
   
   return(object@metadata$DiffExpAnal$setting)
 }
@@ -492,7 +492,7 @@ getDiffSetting <- function(object) {
 #' @export
 #'
 getCoexpSetting <- function(object) {
-  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  if (!is(object, "RflomicsSE")) stop("Object is not a RflomicsSE")
   
   return(object@metadata$CoExpAnal$setting)
 }
@@ -501,24 +501,24 @@ getCoexpSetting <- function(object) {
 
 #' @title Get MOFA analysis setting parameters
 #'
-#' @param object a MultiAssayExperiment object (produced by Flomics).
+#' @param object a RflomicsMAE object (produced by Flomics).
 #' @return List of differential analysis setting parameters
 #' @export
 #'
 getMOFASetting <- function(object) {
-  if (!is(object, "MultiAssayExperiment")) stop("Object is not a MultiAssayExperiment")
+  if (!is(object, "RflomicsMAE")) stop("Object is not a RflomicsMAE")
   
   return(object@metadata$IntegrationAnalysis$MOFA$setting)
 }
 
 #' @title Get mixOmics analysis setting parameters
 #'
-#' @param object a MultiAssayExperiment object (produced by Flomics).
+#' @param object a RflomicsMAE object (produced by Flomics).
 #' @return List of differential analysis setting parameters
 #' @export
 #'
 getMixOmicsSetting <- function(object) {
-  if (!is(object, "MultiAssayExperiment")) stop("Object is not a MultiAssayExperiment")
+  if (!is(object, "RflomicsMAE")) stop("Object is not a RflomicsMAE")
   
   return(object@metadata$IntegrationAnalysis$mixOmics$setting)
 }
@@ -603,15 +603,15 @@ getEnrichRes <- function(object,
                          ont = "GO",
                          domain = NULL) {
   
-  if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
-    stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
+  if (!is(object, "RflomicsMAE") && !is(object, "RflomicsSE")) 
+    stop("Object is not a RflomicsSE or a RflomicsMAE")
   
   if (toupper(from) %in% c("DIFFEXP", "DIFFEXPANAL", "DIFFEXPENRICHANAL")) from <- "DiffExpEnrichAnal"
   if (toupper(from) %in% c("COEXP", "COEXPANAL", "COEXPENRICHANAL"))     from <- "CoExpEnrichAnal"
   
   classObj <- NULL
-  if (is(object, "SummarizedExperiment")) classObj <- "SE"
-  if (is(object, "MultiAssayExperiment")) classObj <- "MAE"
+  if (is(object, "RflomicsSE")) classObj <- "SE"
+  if (is(object, "RflomicsMAE")) classObj <- "MAE"
   
   res_return <- NULL
   
@@ -636,7 +636,7 @@ getEnrichRes <- function(object,
              res_return <- object[[experiment]]@metadata[[from]][[ont]][["enrichResult"]][[contrast]]
            }
          },
-         stop("Object is not a MultiAssayExperiment nor a SummarizedExperiment")
+         stop("Object is not a RflomicsMAE nor a RflomicsSE")
   )
   
   if (!is.null(domain) && !is.null(contrast)) {
@@ -660,12 +660,12 @@ getEnrichSum <- function(object,
                          experiment = NULL,
                          from = "DiffExpEnrichAnal",
                          dom = "GO") {
-  if (!is(object, "MultiAssayExperiment") && !is(object, "SummarizedExperiment")) 
-    stop("Object is not a SummarizedExperiment or a MultiAssayExperiment")
+  if (!is(object, "RflomicsMAE") && !is(object, "RflomicsSE")) 
+    stop("Object is not a RflomicsSE or a RflomicsMAE")
   
-  if (is(object, "SummarizedExperiment")) {
+  if (is(object, "RflomicsSE")) {
     return(object@metadata[[from]][[dom]][["summary"]])
-  } else if (is(object, "MultiAssayExperiment")) {
+  } else if (is(object, "RflomicsMAE")) {
     if (is.null(experiment)) {
       stop("Please indicate from which data you want to extract the enrichment results.")
     }
@@ -688,7 +688,7 @@ getEnrichPvalue <- function(object,
                             from = "DiffExpEnrichAnal",
                             dom = "GO") {
   
-  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  if (!is(object, "RflomicsSE")) stop("Object is not a RflomicsSE")
   if (!from %in% c("DiffExpEnrichAnal", "CoExpEnrichAnal")) stop(from, " don't existe")
   if (!dom  %in% c("GO", "KEGG", "custom")) stop(from, " not valide value. Choose from c(GO, KEGG, custom)")
   if (is.null(object@metadata[[from]][[dom]]$list_args$pvalueCutoff)) stop("P-value not found")
@@ -700,7 +700,7 @@ getEnrichPvalue <- function(object,
 #
 #' @title get members of a cluster
 #'
-#' @param object a SummarizedExperiment, produced by rflomics
+#' @param object a RflomicsSE, produced by rflomics
 #' @param name name of the cluster
 #' @return The list of entities inside this cluster.
 #' @noRd
@@ -721,7 +721,7 @@ getEnrichPvalue <- function(object,
   
 }
 
-#' @param object a SummarizedExperiment, produced by rflomics
+#' @param object a RflomicsSE, produced by rflomics
 #' @return all clusters
 #' @noRd
 #' @importFrom coseq clusters
@@ -743,7 +743,7 @@ getEnrichPvalue <- function(object,
 #
 #' @title get origin of a name given a rflomics MAE
 #'
-#' @param object a SummarizedExperiment, produced by rflomics
+#' @param object a RflomicsSE, produced by rflomics
 #' @param name name of the parameter to identify. For clusters, please
 #' specify cluster.1, cluster.2, etc.
 #' @return The origin of the name, one of Contrast, Tag or CoexCluster.

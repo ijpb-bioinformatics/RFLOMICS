@@ -32,10 +32,10 @@ see_pathview <- function(...) {
 
 ######## INTERNAL - CHECKS FUNCTIONS ###########
 
-# check_NA: checks if there are NA/nan in the summarizedExperiment assay
+# check_NA: checks if there are NA/nan in the RflomicsSE assay
 #' @title check_NA
 #'
-#' @param object An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsSE}
 #' @return boolean. if TRUE, NA/nan are detected in the SE::assay.
 #' @keywords internal
 #' @noRd
@@ -51,7 +51,7 @@ check_NA <- function(object) {
 # apply_transformation: apply the transformation method stored in object@metadata[["transform_method"]] and modify the assay.
 #' @title apply_transformation
 #'
-#' @param object An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsSE}
 #' @keywords internal
 #' @noRd
 #'
@@ -103,7 +103,7 @@ apply_transformation <- function(object) {
 # apply_norm: apply the normalization method stored in object@metadata[["Normalization"]] and modify the assay.
 #' @title apply_norm
 #'
-#' @param object An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsSE}
 #' @description apply the normalization to the assay. Usually, after the transformation,
 #' unless in the case of counts RNASeq data (TMM), where log2 is the second step.
 #' @keywords internal
@@ -156,7 +156,7 @@ apply_norm <- function(object) {
 # checkTransNorm: check the data, transform them and normalize them.
 #' @title checkTransNorm
 #'
-#' @param object An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsSE}
 #' @description apply the normalization and the transformation stored into the metadata of the SE object.
 #'  Applies TMM and log2 transformation for RNAseq data.
 #' @keywords internal
@@ -164,7 +164,7 @@ apply_norm <- function(object) {
 #'
 
 checkTransNorm <- function(object, raw = FALSE) {
-  if (!is(object, "SummarizedExperiment")) stop("Object is not a SummarizedExperiment")
+  if (!is(object, "RflomicsSE")) stop("Object is not a RflomicsSE")
   
   # check things
   if (check_NA(object)) stop("NA detected in the assay.")
@@ -232,7 +232,7 @@ checkTransNorm <- function(object, raw = FALSE) {
 
 #' @title isNorm, isTransform, getNorm, getTransform, setNorm, setTrans
 #'
-#' @param object An object of class \link{SummarizedExperiment}
+#' @param object An object of class \link{RflomicsSE}
 #' @description get if an assay has been transformed or normalized.
 #' @keywords internal
 #' @importFrom S4Vectors metadata
@@ -327,7 +327,7 @@ setCoeffNorm <- function(object, coeff = NULL) {
 
 #' @title Check if character vectors are contrasts Names
 #'
-#' @param object a MAE object or a SE object (produced by Flomics). If it's a summarizedExperiment, expect to find
+#' @param object a MAE object or a SE object (produced by Flomics). If it's a RflomicsSE, expect to find
 #'  a slot of differential analysis.
 #' @param contrastName vector of characters.
 #' @return boolean. TRUE if all of contrastName are indeed contrasts Names.
@@ -353,7 +353,7 @@ isContrastName <- function(object, contrastName) {
 
 #' @title Check if character vectors are tags Names
 #'
-#' @param object a MAE object or a SE object (produced by Flomics). If it's a summarizedExperiment, expect to find
+#' @param object a MAE object or a SE object (produced by Flomics). If it's a RflomicsSE, expect to find
 #'  a slot of differential analysis.
 #' @param tagName vector of characters.
 #' @return boolean. TRUE if all of tagName are indeed tags Names.
@@ -418,7 +418,7 @@ isClusterName <- function(object, clusterName) {
 
 #' @title Convert tags names to contrast Names
 #'
-#' @param object a MAE object or a SE object (produced by Flomics). If it's a summarizedExperiment, expects to find
+#' @param object a MAE object or a SE object (produced by Flomics). If it's a RflomicsSE, expects to find
 #'  a slot of differential analysis.
 #' @param tagName Vector of characters, expect to be tags (in the form of H1, H2, etc.).
 #' @return character vector, contrastNames associated to tags.
@@ -437,7 +437,7 @@ convertTagToContrast <- function(object, tagName) {
 
 #' @title Convert contrast Names names to tags
 #'
-#' @param object a MAE object or a SE object (produced by Flomics). If it's a summarizedExperiment, expects to find
+#' @param object a MAE object or a SE object (produced by Flomics). If it's a RflomicsSE, expects to find
 #'  a slot of differential analysis.
 #' @param contrasts Vector of characters, expect to be contrast names.
 #' @return character vector, tags associated to contrast names.
@@ -465,12 +465,12 @@ convertContrastToTag <- function(object, contrasts) {
 
 omicsDic <- function(object, SE.name = NULL){
   
-  if (!is(object, "SummarizedExperiment") && !is(object, "MultiAssayExperiment")) {
-    stop("Object must be a SummarizedExperiment or a MultiAssayExperiment, not a ",
+  if (!is(object, "RflomicsSE") && !is(object, "RflomicsMAE")) {
+    stop("Object must be a RflomicsSE or a RflomicsMAE, not a ",
          class(object))
   }
   
-  if (is(object, "MultiAssayExperiment")) {
+  if (is(object, "RflomicsMAE")) {
     if (missing(SE.name)) {
       stop("Please provide an Experiment name (SE.name).")
     }
