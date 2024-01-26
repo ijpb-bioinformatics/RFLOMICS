@@ -175,10 +175,10 @@ methods::setMethod(
       })
       names(res) <- names(object)
       
-      object <- MultiAssayExperiment(experiments = res, 
-                                     colData = colData(object), 
-                                     sampleMap = sampleMap(object), 
-                                     metadata = metadata(object))
+      object <- RflomicsMAE(experiments = res, 
+                            colData = colData(object), 
+                            sampleMap = sampleMap(object), 
+                            metadata = metadata(object))
     }
     
     # keep only columns corresponding to design factors (remove samples and groups)
@@ -449,10 +449,10 @@ methods::setMethod(
     
     res <- res[lengths(res) > 0]
     
-    return(MultiAssayExperiment(experiments = res, 
-                                colData = colData(object), 
-                                sampleMap = sampleMap(object), 
-                                metadata = metadata(object)))
+    return(RflomicsMAE(experiments = res, 
+                       colData = colData(object), 
+                       sampleMap = sampleMap(object), 
+                       metadata = metadata(object)))
     
   })
 
