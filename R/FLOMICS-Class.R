@@ -44,6 +44,8 @@ methods::setMethod(
 
 #' @title \link{RflomicsMAE-class} Class
 #' @description
+#' A short description...
+#' 
 #' @seealso \link{MultiAssayExperiment}
 #' @name RflomicsMAE-class
 #' @rdname RflomicsMAE-class
@@ -62,17 +64,18 @@ methods::setClass(
 methods::setMethod(
   f          = "initialize",
   signature  = "RflomicsMAE",
-  definition = function(.Object, 
+  definition = function(.Object,
                         ExperimentList = MultiAssayExperiment::ExperimentList(), 
-                        colData     = S4Vectors::DataFrame(), 
-                        sampleMap   = S4Vectors::DataFrame(assay = factor(), primary = character(), colname = character()), 
-                        metadata    = list()){
+                        colData        = S4Vectors::DataFrame(), 
+                        sampleMap      = S4Vectors::DataFrame(assay = factor(), primary = character(), colname = character()), 
+                        metadata       = list()){
     
+    # 
     .Object <- methods::callNextMethod(.Object, ExperimentList = ExperimentList, colData = colData, sampleMap = sampleMap)
     # initialization of metadata
     .Object@metadata <- metadata
     
     # Retourner l'objet initialisé
     return(.Object)
-  }
-)
+  })
+

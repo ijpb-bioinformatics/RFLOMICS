@@ -2,7 +2,7 @@
 ### Create Rflomics object / RflomicsSE and RflomicsMAE
 ### ----------------------------------------------------------------------------
 
-###### RflomicsMAE CLASS Constructor for managing omics DATA and RESULTS
+# ---- RflomicsMAE CLASS Constructor for managing omics DATA and RESULTS ----
 
 #' @title createRflomicsMAE is creator for the class \link{createRflomicsMAE-class}
 #' @description This function initializes an object of class \link{createRflomicsMAE-class}
@@ -164,29 +164,59 @@ createRflomicsMAE <- function(projectName=NULL, omicsData=NULL, omicsNames=NULL,
     
   }
   
-  prepMAE <- MultiAssayExperiment::prepMultiAssay( ExperimentList = SummarizedExperimentList,
-                                                   sampleMap      = MultiAssayExperiment::listToMap(listmap),
-                                                   colData        = ExpDesign, outFile = stdout())
+  # prepMAE <- MultiAssayExperiment::prepMultiAssay( ExperimentList = SummarizedExperimentList,
+  #                                                  sampleMap      = MultiAssayExperiment::listToMap(listmap),
+  #                                                  colData        = ExpDesign, outFile = stdout())
+  # 
+  # 
+  # MAE <- MultiAssayExperiment::MultiAssayExperiment(experiments = prepMAE$experiments,
+  #                                                   colData     = prepMAE$colData,
+  #                                                   sampleMap   = prepMAE$sampleMap,
+  #                                                   metadata    = list(omicList = omicList, projectName = projectName, design = Design)) 
+  # 
+  # rflomicsMAE <- new("RflomicsMAE")
+  # for(slot in slotNames(MAE)) {
+  #   slot(rflomicsMAE, slot) <- slot(MAE, slot)
+  # }
   
+  RfMAE <- RflomicsMAE(experiments = SummarizedExperimentList,
+                              colData     = ExpDesign,
+                              sampleMap   = MultiAssayExperiment::listToMap(listmap),
+                              metadata    = list(omicList = omicList, projectName = projectName, design = Design))
   
-  MAE <- MultiAssayExperiment::MultiAssayExperiment(experiments = prepMAE$experiments,
-                                                    colData     = prepMAE$colData,
-                                                    sampleMap   = prepMAE$sampleMap,
-                                                    metadata    = list(omicList = omicList, projectName = projectName, design = Design)) 
+  # tag as raw data (le temps de trouver une solution pour ne pas faire co-exister les raw et les process)
+  names(RfMAE) <- paste(names(RfMAE), "raw", sep = ".")
+  return(RfMAE)
+}
+
+
+
+#' @title RflomicsMAE is RflomicsMAE object constructor.
+#' @description
+#' A short description...
+#' 
+#' @param name description
+#' @seealso MultiAssayExperiment
+#' @return An object of class \link{RflomicsMAE-class}
+#' @name RflomicsMAE
+#' @rdname RflomicsMAE
+#' @export
+#'
+RflomicsMAE <- function(experiments = NULL, colData = NULL, sampleMap = NULL, metadata = NULL, ...){
+  
+  MAE <- MultiAssayExperiment::MultiAssayExperiment(experiments, colData, sampleMap, metadata, ...)
   
   rflomicsMAE <- new("RflomicsMAE")
   for(slot in slotNames(MAE)) {
     slot(rflomicsMAE, slot) <- slot(MAE, slot)
   }
   
-  # tag as raw data (le temps de trouver une solution pour ne pas faire co-exister les raw et les process)
-  names(rflomicsMAE) <- paste(names(rflomicsMAE), "raw", sep = ".")
   return(rflomicsMAE)
 }
 
 
 
-###### createRflomicsSE CLASS Constructor for managing omics DATA and RESULTS
+# ---- createRflomicsSE CLASS Constructor for managing omics DATA and RESULTS ----
 
 #' @title createRflomicsSE is creator for the class \link{createRflomicsSE-class}
 #' @description This function initializes an object of class \link{createRflomicsSE-class}
@@ -248,6 +278,4 @@ createRflomicsSE <- function(omicData, omicType, ExpDesign, design){
   
   return(rflomicsSE)
 }
-
-
 

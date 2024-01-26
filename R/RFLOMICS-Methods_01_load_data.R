@@ -47,7 +47,8 @@ methods::setMethod(f          = "getExperimentTypes",
                      all_experiment_names <- getExperimentNames(object)
                      
                      if(is.null(all_experiment_names)) stop("RflomicsMAE object is empty.")
-                     
+                     if(is.null(experimentNames)) experimentNames <- all_experiment_names
+
                      if(!any(experimentNames %in% all_experiment_names))
                        stop("No experimentNames matching...")
                      
@@ -58,8 +59,6 @@ methods::setMethod(f          = "getExperimentTypes",
                                   types = rep(x, length(object@metadata$omicList[[x]]))) 
                      }) |> purrr::reduce(rbind)
                      
-                     
-                     if(is.null(experimentNames)) return(df)
                      
                      # Check if all names from experimentNames exist in the object.
                      if(!all(experimentNames %in% all_experiment_names)) 

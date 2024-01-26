@@ -218,10 +218,15 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
     })
     names(list.SE) <- input$selectData
     
-    MAE2Integrate <- MultiAssayExperiment(experiments = list.SE,
-                                          colData     = colData(session$userData$FlomicsMultiAssay),
-                                          sampleMap   = sampleMap(session$userData$FlomicsMultiAssay),
-                                          metadata    = metadata(session$userData$FlomicsMultiAssay))
+    MAE2Integrate <- RflomicsMAE(experiments = MultiAssayExperiment::ExperimentList(list.SE), 
+                                 colData     = colData(session$userData$FlomicsMultiAssay),
+                                 sampleMap   = sampleMap(session$userData$FlomicsMultiAssay),
+                                 metadata    = metadata(session$userData$FlomicsMultiAssay))
+    
+    # MAE2Integrate <- MultiAssayExperiment(experiments = list.SE,
+    #                                       colData     = colData(session$userData$FlomicsMultiAssay),
+    #                                       sampleMap   = sampleMap(session$userData$FlomicsMultiAssay),
+    #                                       metadata    = metadata(session$userData$FlomicsMultiAssay))
     
     box(title = "", width = 12, status = "warning",
         renderPlot(Datasets_overview_plot(MAE2Integrate, 
@@ -236,8 +241,8 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
     if (length(input$selectData) < 1) {
       showModal(modalDialog(title = "ERROR: ", "Please select at least 1 table."))
     }
-    validate({ 
-      need(length(input$selectData) >= 1, "Please select at least 1 table.") 
+    validate({
+      need(length(input$selectData) >= 1, "Please select at least 1 table.")
     })
     
     local.rea.values$runintegration <- FALSE

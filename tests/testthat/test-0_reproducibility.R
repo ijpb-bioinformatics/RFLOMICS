@@ -24,10 +24,21 @@ MAE <- RFLOMICS::createRflomicsMAE(projectName = "Tests",
                                    ExpDesign   = ExpDesign,
                                    factorRef   = factorRef)
 
-## 
-test_that("experiment names", {
+# ---- getExperimentNames ----
+test_that("test getExperimentNames", {
   
-  expect_equal(MAE[["RNAtest"]]@metadata$DataProcessing$filteredSamples, "Elevated_DS_1")
+  expect_true(all(getExperimentNames(MAE) %in% c("RNAtest", "metatest", "protetest")))
+})
+
+# ---- getExperimentTypes ----
+test_that("test getExperimentTypes", {
+  
+  df <- data.frame(names = c("RNAtest", "metatest", "protetest"), 
+                   types = c("RNAseq", "metabolomics", "proteomics"))
+  
+  df.f <- getExperimentTypes(MAE)
+  
+  expect_equal(df.f, df)
 })
 
 ## check completness 
