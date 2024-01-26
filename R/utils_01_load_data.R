@@ -1,3 +1,14 @@
+##### Global import ####
+
+#' @importFrom ggplot2 ggplot geom_col theme_classic aes
+#' theme element_text element_blank ylab xlab ggtitle
+#' scale_fill_gradientn geom_tile theme_bw guides scale_fill_gradient2
+#' guide_colourbar labs
+
+# @export
+#' @importFrom magrittr "%>%" 
+magrittr::`%>%`
+
 ### ============================================================================
 ### Create Rflomics object / RflomicsSE and RflomicsMAE
 ### ----------------------------------------------------------------------------
@@ -278,4 +289,357 @@ createRflomicsSE <- function(omicData, omicType, ExpDesign, design){
   
   return(rflomicsSE)
 }
+
+
+
+
+
+
+
+#' @title Read Experimental Design
+#'
+#' @param file path to experimental design file
+#' @return data.frame
+#' @importFrom dplyr  mutate across 
+#' @importFrom tidyselect where
+#' @importFrom stringr str_remove_all fixed
+#' @importFrom purrr reduce
+#' @importFrom vroom vroom
+#' @export
+#' 
+read_exp_design <- function(file){
+  
+  if (missing(file)) {
+    stop('Please provide a file path')
+  }
+  
+  if(!file.exists(file))
+  {
+    stop(file, " don't exist!")
+    return(NULL)
+  }
+  
+  # read design and remove special characters
+  # remove "_" from modality and factor names
+  data <- vroom::vroom(file, delim = "\t", show_col_types = FALSE) %>%
+    dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), ~stringr::str_remove_all(.x, pattern = "[.,;:#@!?()§$€%&<>|=+-/]"))) %>%
+    dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), ~stringr::str_remove_all(.x, pattern = "[\\]\\[\'\"\ ]"))) %>%
+    dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), ~stringr::str_remove_all(.x, pattern = stringr::fixed("\\")))) %>% 
+    dplyr::mutate(dplyr::across(.cols = c(-1), ~stringr::str_remove_all(.x, pattern = stringr::fixed("_")))) %>% 
+    dplyr::mutate(dplyr::across(.cols = tidyselect::where(is.character), as.factor)) 
+  
+  names(data)  <- stringr::str_remove_all(string = names(data), pattern = "[.,;:#@!?()§$€%&<>|=+-/\\]\\[\'\"\ _]") %>%
+    stringr::str_remove_all(., pattern = stringr::fixed("\\"))
+  
+  # check if there is duplication in sample names
+  sample.dup <- as.vector(data[which(table(data[1]) > 1),1])[[1]]
+  
+  if (length(sample.dup) != 0) {
+    
+    stop("Duplicated sample names: ", paste0(sample.dup, collapse = ","))
+  }
+  
+  # check if there is duplication in factor names
+  # factor.dup <- as.vector(data[which(table(names(data[-1])) > 1),1])[[1]]
+  factor.dup <- names(data[-1])[duplicated(names(data[-1]))]
+  if (length(factor.dup) != 0) {
+    stop("Duplicated factor name: ", paste0(factor.dup, collapse = ","))
+  }
+  
+  # check if same name of moralities are used in diff factor
+  mod.list <- sapply(names(data[-1]), function(x){ 
+    unique(data[-1][[x]])
+  }) %>% purrr::reduce(c)
+  
+  mod.dup <- mod.list[duplicated(mod.list)]
+  if(length(mod.dup) != 0) {
+    
+    stop("Modality used in more than one factor: ", paste0(mod.dup[1:10], collapse = ", "))
+  }
+  
+  # warning if number of factors exceed n = 10
+  n <- 10
+  if (dim(data)[2]-1 >= n){
+    
+    data <- data[, 1:n]
+    warning("Large number of columns! only the first ", n," will be displayed")
+  }
+  
+  # check nbr of modality of the 5th fist columns
+  index <- sapply(names(data[-1]), function(x){ if(length(unique(data[-1][[x]]))>n){ FALSE }else{ TRUE } })
+  F.mod <- names(data[-1])[index]
+  
+  ratio <- length(F.mod)/length(names(data[-1]))
+  
+  if(ratio != 1)
+  {
+    warning("The select input contains a large number of options")
+  }
+  
+  data            <- data.frame(data) 
+  row.names(data) <- data[,1]
+  data            <- data[,-1]
+  return(data)
+}
+
+
+
+#' @title Read omics data 
+#'
+#' @param file omics data matrix
+#' @return data.frame
+#' @importFrom vroom vroom
+#' @importFrom stringr str_remove_all fixed
+#' @export
+#'
+
+read_omics_data <- function(file){
+  
+  if(!file.exists(file))
+  {
+    stop(file, " don't exist!")
+  }
+  
+  # read omics data and remove special characters
+  data <- vroom::vroom(file, delim = "\t", show_col_types = FALSE)
+  names(data)  <- stringr::str_remove_all(string = names(data), pattern = "[.,;:#@!?()§$€%&<>|=+-/\\]\\[\'\"\ ]") %>%
+    stringr::str_remove_all(., pattern = stringr::fixed("\\"))
+  
+  # check if there is duplication in sample names
+  sample.dup <- as.vector(data[which(table(names(data[-1])) > 1),1])[[1]]
+  
+  if (length(sample.dup) !=0){
+    
+    stop("Duplicated sample names: ", paste0(sample.dup, collapse = ","))
+  }
+  
+  # check if there is duplication in factor names
+  entity.dup <- as.vector(data[which(table(data[1]) > 1),1])[[1]]
+  
+  if (length(entity.dup) !=0){
+    
+    stop("Duplicated feature names: ", paste0(entity.dup, collapse = ","))
+  }
+  
+  data            <- data.frame(data) 
+  row.names(data) <- data[,1]
+  data            <- data[,-1]
+  return(data)
+}
+
+
+
+#' GetModelFormulae
+#'
+#' From a vector of character giving the name of the factors of an omics experiment,
+#' and their type of effect: biological or batch, it returns all models formulae
+#' that can be formulated in association with this factors. Batch effect factors do
+#' not appear in interaction terms with biological factor. Model formulae stop in
+#' second order interaction.
+#'
+#' @param FacBio a vector of character giving the name of the bio factors.
+#' @param FacBatch a vector of character giving the name of the batch factors.
+#' @param MAE a RflomicsMAE produced by RFLOMICS. Default is null. If not null, overwrite FacBio and FacBatch.
+#'
+#' @return a named list of object of class formula
+#' @export
+#' @noRd
+#' @examples
+#'
+#' GetModelFormulae(FacBio=c("Genotype","Temperature","Environment"), FacBatch=c("Replicat"))
+#' GetModelFormulae(FacBio=c("Genotype","Temperature"), FacBatch=c("Replicat"))
+#' GetModelFormulae(FacBio=c("Genotype"), FacBatch=c("Replicat"))
+#'
+#' GetModelFormulae(FacBio=c("Genotype","Temperature"), FacBatch=c("Replicat", "laboratory"))
+#' 
+GetModelFormulae <- function(FacBio=NULL, FacBatch=NULL, MAE = NULL){
+  
+  MAE <- MAE
+  
+  if (!is.null(MAE)) { 
+    facTypes <- getFactorTypes(MAE)
+    FacBio   <- bioFactors(MAE) #names(facTypes)[facTypes == "Bio"]
+    FacBatch <- batchFactors(MAE) #names(facTypes)[facTypes == "batch"]
+  }
+  
+  # Initialize
+  formulae <- list()
+  
+  # Verify that nbr of bio factors are between 1 and 3.
+  if(!length(FacBio) %in% 1:3) stop(".... !")
+  
+  # Verify that nbr of batch factors are between 1 and 2.
+  if(!length(FacBatch) %in% 1:2) stop(".... !")
+  
+  nFac <- length(FacBio)
+  
+  # get formulae without interation
+  formulae[[1]] <- update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+",paste(FacBio,collapse="+"))),new=~.)
+  
+  # get formulae with interation if nbr of FacBio > 1
+  if(nFac !=1)
+    formulae[[2]] <- update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+","(",paste(FacBio,collapse="+"),")^2")),new=~.)
+  
+  formulae <- unlist(formulae)
+  names(formulae) <- unlist(as.character(formulae))
+  
+  # Sort formulae
+  
+  formulae <- formulae[order(unlist(lapply(names(formulae),nchar)),decreasing=TRUE)]
+  
+  return(formulae)
+}
+
+
+
+
+
+#' Plot the balance of data in an experimental design
+#'
+#' This function provides easy visualization of the balance of data in a data set given a specified experimental design. This function is useful for identifying
+#' missing data and other issues. The core of this function is from the function ezDesign in the package ez.
+#'
+#' @param counts : the number of data in each cell of the design
+#' @param cell_border_size : Numeric value specifying the size of the border seperating cells (0 specifies no border)
+#'
+#' @return A printable/modifiable ggplot2 object.
+#' @export
+#' @importFrom ggplot2 aes_string theme facet_grid labs element_rect geom_rect scale_x_continuous scale_y_continuous facet_grid
+#' @importFrom dplyr mutate if_else
+#' @noRd
+plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
+  if (names(counts)[ncol(counts)] != "Count"){
+    stop("the last column of the input data frame must be labelled Count")
+  }
+  if(ncol(counts) < 2){
+    stop("data frame with less than 2 columns")
+  }
+  
+  # #add color column
+  # # #00BA38
+  
+  counts <- counts %>% dplyr::mutate(status = dplyr::if_else(Count > 2 , "pass", dplyr::if_else(Count == 2 , "warning", "error")))
+  
+  #list of factor names
+  factors <- names(counts)[1:(dim(counts)[2]-2)]
+  
+  col.panel <- c("pass", "warning", "error")
+  names(col.panel) <- c("#00BA38", "orange", "red")
+  
+  col.panel.u <- col.panel[col.panel %in% unique(counts$status)]
+  
+  switch (length(factors),
+          "1" = { p <- ggplot2::ggplot(counts ,ggplot2::aes_string(x = factors[1], y = 1)) + ggplot2::theme(axis.text.y = ggplot2::element_blank()) + ggplot2::ylab("") },
+          "2" = { p <- ggplot2::ggplot(counts ,ggplot2::aes_string(x = factors[1], y = factors[2])) },
+          "3" = {
+            #get factor with min conditions -> to select for "facet_grid"
+            factors.l <- lapply(factors, function(x){ length(unique(counts[[x]])) }) %>% unlist()
+            names(factors.l) <- factors
+            factor.min <- names(factors.l[factors.l == min(factors.l)][1])
+            
+            factors <- factors[factors != factor.min]
+            
+            #add column to rename facet_grid
+            counts <- counts %>% dplyr::mutate(grid = paste0(factor.min, "=",get(factor.min)))
+            
+            p <- ggplot2::ggplot(counts ,ggplot2::aes_string(x = factors[1], y = factors[2])) +
+              ggplot2::facet_grid(grid~.) })
+  
+  p <- p + ggplot2::geom_tile(ggplot2::aes(fill = status), color = "white", size = 1, width = 1, height = 1)  + ggplot2::geom_text(ggplot2::aes(label = Count)) +
+    ggplot2::scale_fill_manual(values = names(col.panel.u), breaks = col.panel.u) +
+    ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
+                   axis.ticks = ggplot2::element_blank(), axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
+    ggplot2::ggtitle(message)
+  
+  return(p)
+}
+
+
+
+######## INTERNAL - CHECKS FUNCTIONS ###########
+
+# check_NA: checks if there are NA/nan in the RflomicsSE assay
+#' @title check_NA
+#'
+#' @param object An object of class \link{RflomicsSE}
+#' @return boolean. if TRUE, NA/nan are detected in the SE::assay.
+#' @keywords internal
+#' @noRd
+#'
+check_NA <- function(object) {
+  NA_detect <- ifelse(any(is.na(assay(object))), TRUE, FALSE)
+  return(NA_detect)
+}
+
+
+# ----- INTERNAL - Check if character vectors are tags Names : -----
+
+#' @title Check if character vectors are tags Names
+#'
+#' @param object a MAE object or a SE object (produced by Flomics). If it's a RflomicsSE, expect to find
+#'  a slot of differential analysis.
+#' @param tagName vector of characters.
+#' @return boolean. TRUE if all of tagName are indeed tags Names.
+#' @noRd
+#' @keywords internal
+isTagName <- function(object, tagName) {
+  df_contrasts <- getSelectedContrasts(object)
+  
+  search_match <- sapply(tagName, FUN = function(cn) {
+    grep(cn, df_contrasts$tag, fixed = TRUE)
+  })
+  search_success <- sapply(search_match, identical, integer(0)) # if TRUE, not a success at all.
+  
+  if (!any(search_success)) {
+    # Congratulations, it's a tag name!
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+
+
+
+# ---- INTERNAL - get variable name and type from omicstype ----
+
+#' @title Omics Dictionary
+#'
+#' @param object a MAE object or a SE object (produced by Flomics). Expect to find a omicsType somewhere.
+#' @param SE.name if object is a MAE, expect to find the experiment name from which the omics info has to be retrieved.
+#' @return list of two elements: variableName and valueType.
+#' @noRd
+#' @keywords internal
+
+omicsDic <- function(object, SE.name = NULL){
+  
+  if (!is(object, "RflomicsSE") && !is(object, "RflomicsMAE")) {
+    stop("Object must be a RflomicsSE or a RflomicsMAE, not a ",
+         class(object))
+  }
+  
+  if (is(object, "RflomicsMAE")) {
+    if (missing(SE.name)) {
+      stop("Please provide an Experiment name (SE.name).")
+    }
+    
+    object <- object[[SE.name]]
+  }
+  
+  omicsType <- getOmicsTypes(object)
+  
+  valReturn <- switch(omicsType,
+                      "RNAseq"       =  list("variableName" = "transcripts",
+                                             "valueType" = "counts"),
+                      "proteomics"   =  list("variableName" = "proteins",
+                                             "valueType" = "XIC"),
+                      "metabolomics" =  list("variableName" = "metabolites",
+                                             "valueType" = "XIC")
+  )
+  
+  return(valReturn)
+  
+}
+
+
 

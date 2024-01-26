@@ -68,3 +68,135 @@ methods::setMethod(f          = "getExperimentTypes",
                      
                    })
 
+
+
+
+
+# ---- Get Factor types : ----
+#' @title Get factor types or names of particular factors given a type.
+#'
+#' @param object a MAE object (produced by Flomics). 
+#' @return a named vector (getFactorTypes) or a vector of factor names.
+#' @rdname getFactorTypes
+#' @export
+#' 
+getFactorTypes <- function(object) {
+  
+  if (is(object, "RflomicsMAE")) {
+    metadata(object)$design$Factors.Type
+  } 
+  else if(is(object, "RflomicsSE")){
+    metadata(object)$design$factorType
+  }
+  else {
+    stop("object is not a RflomicsMAE or RflomicsSE.")
+  }
+  
+}
+
+
+#' @title Get bio factor.
+#'
+#' @param object a MAE object or SE object (produced by Flomics). 
+#' @return a vector with biological factors
+#' @rdname bioFactors
+#' @export
+#' 
+bioFactors <- function(object){
+  
+  factVect <- toupper(getFactorTypes(object))
+  return(names(factVect)[factVect == "BIO"])
+  
+}
+
+
+#' @title Get batch factor.
+#'
+#' @param object a MAE object or SE object (produced by Flomics). 
+#' @return a vector with batch factors
+#' @rdname batchFactors
+#' @export
+#' 
+batchFactors <- function(object){
+  
+  factVect <- toupper(getFactorTypes(object))
+  return(names(factVect)[factVect == "BATCH"])
+  
+}
+
+
+#' @title Get metadata factor.
+#'
+#' @param object a MAE object or SE object (produced by Flomics). 
+#' @return a vector with metadata factors
+#' @rdname metaFactors
+#' @export
+#' 
+metaFactors <- function(object){
+  
+  factVect <- toupper(getFactorTypes(object))
+  return(names(factVect)[factVect == "META"])
+  
+}
+
+# ---- Get Design Matrix : ----
+#' @title Get design matrix used for a differential analysis
+#'
+#' @param object a MAE object (produced by Flomics)
+#' @return a dataframe
+#' @export
+#'
+getDesignMat <- function(object) {
+  if (is(object, "RflomicsMAE") || is(object, "RflomicsSE")) {
+    return(as.data.frame(object@colData))
+    
+  } else {
+    stop("object is not a RflomicsMAE nor a RflomicsSE.")
+  }
+}
+
+
+# ---- Get Model Formula : ----
+#' @title Get model formula from a Flomics RflomicsMAE
+#'
+#' @param object a MAE object (produced by Flomics)
+#' @return a formula
+#' @export
+#'
+getModelFormula <- function(object) {
+  # TODO check if it exists...
+  if (is(object, "RflomicsMAE")) {
+    object@metadata$design$Model.formula
+  } 
+  else if(is(object, "RflomicsSE")){
+    object@metadata$design$Model.formula
+  }
+  else {
+    stop("object is not a RflomicsMAE")
+  }
+}
+
+
+
+# ---- Get omics experiments and their types (vector) ----
+
+#' @title Get omics experiments and their types
+#'
+#' @param object a MAE object (produced by Flomics) or a Summarized Experiment object.
+#' @return a named vector with each omics name and its type.
+#' @export
+#'
+getOmicsTypes <- function(object) {
+  
+  if (!is(object, "RflomicsMAE") && !is(object, "RflomicsSE"))
+    stop("Object is not a RflomicsSE or a RflomicsMAE")
+  
+  if (is(object, "RflomicsMAE")) {
+    return(names(object@metadata$omicList))
+    
+  } else {
+    return(object@metadata$omicType)
+  }
+}
+
+
