@@ -7,27 +7,27 @@ knitr::opts_chunk$set(fig.path = explorDir)
 ```
 
 ```{r MOFA_extract}
-MOFARes <- rflomics.MAE@metadata[["MOFA"]][["MOFA_results"]]
+MOFARes <- rflomics.MAE@metadata$IntegrationAnalysis[["MOFA"]][["MOFA_results"]]
 ```
 
 ## Settings
 
 * MOFA2  R package was used to perform data unsupervised integration, on <span style="color:blue">`r paste(MOFA2::views_names(MOFARes), collapse = ", ")`</span> datatables.
-* Selected contrasts: `r cat(paste(paste0("\t [*] ", rflomics.MAE@metadata[["MOFA"]]$MOFA_selected_contrasts), collapse = " \n "))` 
+* Selected contrasts: `r cat(paste(paste0("\t [*] ", rflomics.MAE@metadata$IntegrationAnalysis[["MOFA"]]$MOFA_selected_contrasts), collapse = " \n "))` 
 
 <!-- TODO The above does not work... -->
-* Taking the <span style="color:blue">`r rflomics.MAE@metadata[["MOFA"]]$MOFA_selected_filter`</span> of lists of DE features lead to the following analysis setting: 
+* Taking the <span style="color:blue">`r rflomics.MAE@metadata$IntegrationAnalysis[["MOFA"]]$MOFA_selected_filter`</span> of lists of DE features lead to the following analysis setting: 
 
 ```{r MOFA2_data_overview, fig.width=6.5, fig.height = 5, fig.align="center"}
 MOFA2::plot_data_overview(MOFARes)
 ```
 
 * Options for the run:
-  * Scale views: `r rflomics.MAE@metadata[["MOFA"]]$MOFA_untrained@data_options$scale_views` 
-  * Number of factors: `r rflomics.MAE@metadata[["MOFA"]]$MOFA_untrained@model_options$num_factors` 
-  * Number of iterations: `r rflomics.MAE@metadata[["MOFA"]]$MOFA_untrained@training_options$maxiter` 
+  * Scale views: `r rflomics.MAE@metadata$IntegrationAnalysis[["MOFA"]]$MOFA_untrained@data_options$scale_views` 
+  * Number of factors: `r rflomics.MAE@metadata$IntegrationAnalysis[["MOFA"]]$MOFA_untrained@model_options$num_factors` 
+  * Number of iterations: `r rflomics.MAE@metadata$IntegrationAnalysis[["MOFA"]]$MOFA_untrained@training_options$maxiter` 
 * RNASeq data were transformed using <span style="color:DarkOrchid">voom</span> transformation from limma package 
-* Batch effects`r rflomics.MAE@metadata[["MOFA"]]$MOFA_untrained@training_options$maxiter`  were corrected using <span style="color:DarkOrchid">removebatcheffect</span> function from limma package.
+* Batch effects`r rflomics.MAE@metadata$IntegrationAnalysis[["MOFA"]]$MOFA_untrained@training_options$maxiter`  were corrected using <span style="color:DarkOrchid">removebatcheffect</span> function from limma package.
 
 ##  Results
 

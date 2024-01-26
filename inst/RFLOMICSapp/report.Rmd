@@ -104,13 +104,13 @@ knitr::asis_output(out)
 
 <!-- ## with MOFA -->
 
-`r if(is.null(rflomics.MAE@metadata$MOFA)) {"\\begin{comment}"}`
+`r if(is.null(rflomics.MAE@metadata$IntegrationAnalysis$MOFA)) {"\\begin{comment}"}`
 
 # MOFA2 Integration
 
-`r if(is.null(rflomics.MAE@metadata$MOFA)) {"\\end{comment}"}`
+`r if(is.null(rflomics.MAE@metadata$IntegrationAnalysis$MOFA)) {"\\end{comment}"}`
 
-```{r, eval = !is.null(rflomics.MAE@metadata$MOFA), hide = is.null(rflomics.MAE@metadata$MOFA) }
+```{r, eval = !is.null(rflomics.MAE@metadata$IntegrationAnalysis$MOFA), hide = is.null(rflomics.MAE@metadata$IntegrationAnalysis$MOFA) }
 
 out <- NULL
 
@@ -122,16 +122,16 @@ knitr::asis_output(out)
 
 <!-- ## with MixOmix -->
 
-`r if(is.null(rflomics.MAE@metadata$mixOmics)) {"\\begin{comment}"}`
+`r if(is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics)) {"\\begin{comment}"}`
 
 # MixOmics Integration
 
-`r if(is.null(rflomics.MAE@metadata$mixOmics)) {"\\end{comment}"}`
+`r if(is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics)) {"\\end{comment}"}`
 
-```{r, eval = !is.null(rflomics.MAE@metadata$mixOmics), hide = is.null(rflomics.MAE@metadata$mixOmics) }
+```{r, eval = !is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics), hide = is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics) }
 
 out <- NULL
-for (selectedResponse in names(rflomics.MAE@metadata$mixOmics)) { 
+for (selectedResponse in names(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics)) { 
   
   child <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_08_mixOmics_integration.Rmd") 
   

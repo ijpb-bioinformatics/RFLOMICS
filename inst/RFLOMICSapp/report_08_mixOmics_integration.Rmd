@@ -8,7 +8,7 @@ knitr::opts_chunk$set(fig.path = explorDir)
 ```
 
 ```{r}
-Data_res <- rflomics.MAE@metadata$mixOmics[[selectedResponse]]$MixOmics_results
+Data_res <- rflomics.MAE@metadata$IntegrationAnalysis$mixOmics[[selectedResponse]]$MixOmics_results
 ```
 
 ### Overview
