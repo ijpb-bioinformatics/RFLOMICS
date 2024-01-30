@@ -25,6 +25,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-server\
     git-all \
     cmake \
+    pandoc \
+    pandoc-citeproc \
     python3 \
     python3-setuptools \
     python3-dev \
@@ -61,6 +63,8 @@ USER rfuser
 # restore the R environment
 
 RUN R -e "install.packages('renv', repos = c(CRAN = 'https://cloud.r-project.org'))"
+
+ENV RENV_WATCHDOG_ENABLED FALSE
 
 RUN R -e "renv::restore()"
 
