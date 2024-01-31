@@ -222,9 +222,122 @@ methods::setMethod(
 )
 
 
+
+
+# ---- Select features to  keep for integration (MAE) ----
+
+#' @title filterFeatures
+#' @param object RflomicsMAE, produced by RFLOMICS. 
+#' @param selOpt list of vectors. Preferred named list with names corresponding to 
+#' the names of the experimentList in the object. For each Experiment, gives
+#' the option for the filtering: either 'all', 'DE', 'none', or a specific name of a 
+#' contrast or cluster (if coexpression results are available). Default is taking
+#' all features for all experiment list. If the vector is named and an
+#' Experiment is missing, no feature will be selected from it. 
+#' If the vector is not named, the selection will be applied in order of the
+#' Experiments in the object. 
+#' @param type if selOpt is set to a specific set of contrasts or clusters, 
+#' indicates whether the selection is "union" or "intersection" of entities in
+#' these sets.
+#' @return a RflomicsMAE, filtered with only the corresponding features.
+#' @rdname filterFeatures
+#' @exportMethod filterFeatures
+#' @examples
+#' MAE <- generateExample(integration = FALSE, annotation = FALSE)
+#'
+#' selOpt = list("RNAtest" = c("cluster.1", "H3"), protetest = c("DE"))
+#' MAE1 <- filterFeatures(MAE, selOpt)
+#'
+#' selOpt2 = list("RNAtest" = c("cluster.2", "H2", "H1"), protetest = c("DE"))
+#' MAE2 <- filterFeatures(MAE, selOpt2,  
+#' type = c("RNAtest" = "intersection", 
+#' "protetest" = 'union'))
+#' 
+methods::setMethod(
+  f = "filterFeatures",
+  signature = "RflomicsMAE",
+  definition = function(object,
+                        selOpt = rep(list("all"), length(object)),
+                        type = rep(list("union"), length(selOpt))) {
+    
+    # check if named vector
+    if (is.null(names(selOpt))) {
+      names(selOpt) <- names(object)[seq_along(selOpt)]
+    }
+    
+    if (is.null(names(type))) {
+      names(type) <- names(selOpt)[seq_along(selOpt)]
+    }
+    
+    # Applying corresponding filtering
+    res <- lapply(names(selOpt), FUN = function(nam){
+      SE.object <- object[[nam]]
+      vectSel <- selOpt[[nam]]
+      typeSel <- type[[nam]]
+      
+      if (is.null(typeSel)) typeSel <- "union" 
+      
+      # intermediate list: list of features for each selectiontype
+      # default: take all if typo somewhere.
+      resInter <- lapply(vectSel, FUN = function(listSel){
+        
+        if (!listSel %in% c("all", "none", "DE")) {
+          originList <- .getOrigin(SE.object, listSel)  
+        } else { originList <- listSel}
+        
+        switch(originList, 
+               "all" = {names(SE.object)},
+               "none" = {NULL},
+               "DE"  = {
+                 getDEMatrix(object = SE.object)$DEF
+               },
+               "Contrast" = {
+                 getDE(object = SE.object, contrast = listSel)$DEF}, 
+               "Tag" = {
+                 getDE(object = SE.object, contrast = listSel)$DEF 
+                 # TODO problem when only one selected
+               }, 
+               "CoexCluster" = {.getCluster(SE.object, clusterName = listSel)},
+               { # Default: all
+                 message("Cannot detect origin of ", listSel, " for ", 
+                         nam ," taking all features")
+                 names(SE.object)
+               }
+        )
+        
+      })
+      
+      # Union or intersection of all selected features
+      filtKeep <- if (!is.null(typeSel)) {
+        switch(typeSel, 
+               unique(unlist(resInter)), # default
+               "intersection" = Reduce(intersect, resInter))
+      }
+      if (length(filtKeep) == 0) {
+        message("No feature to keep in ", nam, ", it will be dropped." )
+      }
+      return(SE.object[filtKeep,])
+      
+    })
+    names(res) <- names(selOpt)
+    
+    res <- res[lengths(res) > 0]
+    
+    return(RflomicsMAE(experiments = res, 
+                       colData = colData(object), 
+                       sampleMap = sampleMap(object), 
+                       metadata = metadata(object)))
+    
+  })
+
+
+
 #' @title runOmicsIntegration
-#' @description This function executes all the steps to ensure data integration from a \link{RflomicsMAE} object produced by FLOMICS.
-#' @param object An object of class \link{RflomicsMAE}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
+#' @description This function executes all the steps to ensure data integration 
+#' from a \link{RflomicsMAE} object produced by FLOMICS.
+#' @param object An object of class \link{RflomicsMAE}. 
+#' It is expected the MAE object is produced by rflomics previous analyses, 
+#' as it relies on their results.
 #' @param preparedObject An untrained MOFA object or a list of dataset.
 #' @param type one of union or intersection.
 #' @param group Not implemented yet in the interface. Useful for MOFA2 run.
@@ -350,112 +463,6 @@ methods::setMethod(
 )
 
 
-# ---- Select features to  keep for integration (MAE) ----
-
-#' @title filterFeatures
-#' @param object RflomicsMAE, produced by RFLOMICS. 
-#' @param selOpt list of vectors. Preferred named list with names corresponding to 
-#' the names of the experimentList in the object. For each Experiment, gives
-#' the option for the filtering: either 'all', 'DE', 'none', or a specific name of a 
-#' contrast or cluster (if coexpression results are available). Default is taking
-#' all features for all experiment list. If the vector is named and an
-#' Experiment is missing, no feature will be selected from it. 
-#' If the vector is not named, the selection will be applied in order of the
-#' Experiments in the object. 
-#' @param type if selOpt is set to a specific set of contrasts or clusters, 
-#' indicates whether the selection is "union" or "intersection" of entities in
-#' these sets.
-#' @return a RflomicsMAE, filtered with only the corresponding features.
-#' @rdname filterFeatures
-#' @exportMethod filterFeatures
-#' @examples
-#' MAE <- generateExample(integration = FALSE, annotation = FALSE)
-#'
-#' selOpt = list("RNAtest" = c("cluster.1", "H3"), protetest = c("DE"))
-#' MAE1 <- filterFeatures(MAE, selOpt)
-#'
-#' selOpt2 = list("RNAtest" = c("cluster.2", "H2", "H1"), protetest = c("DE"))
-#' MAE2 <- filterFeatures(MAE, selOpt2,  
-#' type = c("RNAtest" = "intersection", 
-#' "protetest" = 'union'))
-#' 
-methods::setMethod(
-  f = "filterFeatures",
-  signature = "RflomicsMAE",
-  definition = function(object,
-                        selOpt = rep(list("all"), length(object)),
-                        type = rep(list("union"), length(selOpt))) {
-    
-    # check if named vector
-    if (is.null(names(selOpt))) {
-      names(selOpt) <- names(object)[seq_along(selOpt)]
-    }
-    
-    if (is.null(names(type))) {
-      names(type) <- names(selOpt)[seq_along(selOpt)]
-    }
-    
-    # Applying corresponding filtering
-    res <- lapply(names(selOpt), FUN = function(nam){
-      SE.object <- object[[nam]]
-      vectSel <- selOpt[[nam]]
-      typeSel <- type[[nam]]
-      
-      if (is.null(typeSel)) typeSel <- "union" 
-      
-      # intermediate list: list of features for each selectiontype
-      # default: take all if typo somewhere.
-      resInter <- lapply(vectSel, FUN = function(listSel){
-        
-        if (!listSel %in% c("all", "none", "DE")) {
-          originList <- .getOrigin(SE.object, listSel)  
-        } else { originList <- listSel}
-        
-        switch(originList, 
-               "all" = {names(SE.object)},
-               "none" = {NULL},
-               "DE"  = {
-                 getDEMatrix(object = SE.object)$DEF
-               },
-               "Contrast" = {
-                 getDE(object = SE.object, contrast = listSel)$DEF}, 
-               "Tag" = {
-                 getDE(object = SE.object, contrast = listSel)$DEF 
-                 # TODO problem when only one selected
-               }, 
-               "CoexCluster" = {.getCluster(SE.object, clusterName = listSel)},
-               { # Default: all
-                 message("Cannot detect origin of ", listSel, " for ", 
-                         nam ," taking all features")
-                 names(SE.object)
-               }
-        )
-        
-      })
-      
-      # Union or intersection of all selected features
-      filtKeep <- if (!is.null(typeSel)) {
-        switch(typeSel, 
-               unique(unlist(resInter)), # default
-               "intersection" = Reduce(intersect, resInter))
-      }
-      if (length(filtKeep) == 0) {
-        message("No feature to keep in ", nam, ", it will be dropped." )
-      }
-      return(SE.object[filtKeep,])
-      
-    })
-    names(res) <- names(selOpt)
-    
-    res <- res[lengths(res) > 0]
-    
-    return(RflomicsMAE(experiments = res, 
-                       colData = colData(object), 
-                       sampleMap = sampleMap(object), 
-                       metadata = metadata(object)))
-    
-  })
-
 # ---- Get integration setting ----
 
 #' @title Get MOFA analysis setting parameters
@@ -463,7 +470,7 @@ methods::setMethod(
 #' @param object a RflomicsMAE object (produced by Flomics).
 #' @return List of differential analysis setting parameters
 #' @exportMethod getMOFASettings
-#'
+#' @rdname runOmicsIntegration
 methods::setGeneric(
   name = "getMOFASettings",
   def  = function(object){standardGeneric("getMOFASettings")}
@@ -480,10 +487,9 @@ methods::setMethod(
 
 #' @title Get mixOmics analysis setting parameters
 #'
-#' @param object a RflomicsMAE object (produced by Flomics).
 #' @return List of differential analysis setting parameters
 #' @exportMethod getMixOmicsSettings
-#'
+#' @rdname runOmicsIntegration
 
 methods::setGeneric(
   name = "getMixOmicsSettings",
@@ -504,14 +510,17 @@ methods::setMethod(
 #
 #' @title Get a particular multi-omics result
 #'
-#' @param object a MAE object (produced by Flomics).
+#' @param object a \link{RflomicsMAE-class} object (produced by Flomics).
 #' @param response a character giving the response variable to access specifically. 
-#' @param onlyResults default return only the MixOmics or MOFA2 results. If you want to access all information of the integration, 
-#' set onlyResuts to FALSE. In MixOmics case, works only when response is specified.
-#' @return in getMixOmics, if response is NULL, then all the mixOmics results are returned. 
+#' @param onlyResults default return only the MixOmics or MOFA2 results. 
+#' If you want to access all information of the integration, 
+#' set onlyResuts to FALSE. 
+#' In MixOmics case, works only when response is specified.
+#' @return in getMixOmics, if response is NULL, 
+#' then all the mixOmics results are returned. 
 #' Otherwise, it gives the particular mixOmics result. 
 #' @exportMethod getMixOmics
-#' @rdname Multi-omics-access
+#' @rdname runOmicsIntegration
 #' @export
 methods::setGeneric(
   name = "getMixOmics",
@@ -543,7 +552,8 @@ methods::setMethod(
     
   })
 
-#' @rdname Multi-omics-access
+
+#' @rdname runOmicsIntegration
 #' @exportMethod getMOFA
 methods::setGeneric(
   name = "getMOFA",
@@ -562,7 +572,7 @@ methods::setMethod(
   return(toreturn)
 })
 
-#' @rdname Multi-omics-access
+#' @rdname runOmicsIntegration
 #' @exportMethod setMOFA
 methods::setGeneric(
   name = "setMOFA",
@@ -579,9 +589,7 @@ methods::setMethod(
   return(object)
 })
 
-
-
-#' @rdname Multi-omics-access
+#' @rdname runOmicsIntegration
 #' @exportMethod setMixOmics
 methods::setGeneric(
   name = "setMixOmics",
