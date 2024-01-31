@@ -23,16 +23,55 @@ initExampleMAE <- function(){
     read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
                                   "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
   
-  MAE <- FlomicsMultiAssay.constructor(projectName = "Tests", 
-                                       omicsData   = omicsData,
-                                       omicsNames  = c("RNAtest", "metatest", "protetest"),
-                                       omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-                                       ExpDesign   = ExpDesign,
-                                       factorRef   = factorRef)
-  names(MAE) <- c("RNAtest", "metatest", "protetest")
+  RMAE <- createRflomicsMAE(projectName = "Tests", 
+                           omicsData   = omicsData,
+                           omicsNames  = c("RNAtest", "metatest", "protetest"),
+                           omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+                           ExpDesign   = ExpDesign,
+                           factorRef   = factorRef)
+  names(RMAE) <- c("RNAtest", "metatest", "protetest")
   
-  return(MAE)  
+  return(RMAE)  
 }
+
+#' @title singleOmicsExample
+#'
+#' @return a Rflomics SummarizedExperiment, result of some RFLOMICS analyses
+#' @importFrom vroom vroom
+#' @export
+#' @rdname Example-functions
+#' @examples
+#' singleOmicsExample(omicType = "RNAseq")
+#' 
+singleOmicsExample <- function(omicType = "RNAseq"){
+  
+  if (missing(omicType)) stop("Please provide an omic type.")
+  
+  ExpDesign <- read_exp_design(file = paste0(system.file(package = "RFLOMICS"), 
+                                             "/ExamplesFiles/ecoseed/condition.txt"))
+  
+  design <- c("Repeat" = "batch",
+              "temperature" = "bio", 
+              "imbibition" = "bio")
+  
+  omicsData <- 
+    switch(toupper(omicType),
+           "RNASEQ" = { read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+                                                      "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))},
+           "PROTEOMICS" = {read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+                                                         "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"))},
+           "METABOLOMICS" = { read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+                                                            "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))}
+    )
+  
+  RSE <- createRflomicsSE(omicData   = omicsData,
+                         omicType = omicType,
+                         ExpDesign   = ExpDesign,
+                         design   = design)
+  
+  return(RSE)  
+}
+
 
 #' @title generateExample
 #'
@@ -58,9 +97,9 @@ generateExample <- function(processing   = TRUE,
   
   formulae <- GetModelFormulae(MAE = MAE) 
   contrastList <- rbind(getPossibleContrasts(MAE, 
-                                       formula = formulae[[1]], 
-                                       typeContrast = "simple",
-                                       returnTable = TRUE)[1:3,],
+                                             formula = formulae[[1]], 
+                                             typeContrast = "simple",
+                                             returnTable = TRUE)[1:3,],
                         getPossibleContrasts(MAE, 
                                              formula = formulae[[1]], 
                                              typeContrast = "averaged",
@@ -107,9 +146,10 @@ generateExample <- function(processing   = TRUE,
   
   if (annotation) {
     df_custom <- vroom(file = paste0(system.file(package = "RFLOMICS"), 
-                                            "/ExamplesFiles/GO_annotations/Arabidopsis_thaliana_Ensembl_55.txt"))
+                                     "/ExamplesFiles/GO_annotations/Arabidopsis_thaliana_Ensembl_55.txt"))
     MAE <- MAE |> 
       runAnnotationEnrichment(SE.name = "RNAtest", 
+                              nameList = getSelectedContrasts(MAE[["RNAtest"]])$tag,
                               ontology = "custom",
                               list_args = list(pvalueCutoff = 0.05),
                               col_term = "GO term accession", 
@@ -118,6 +158,7 @@ generateExample <- function(processing   = TRUE,
                               col_domain = "GO domain",
                               annot = df_custom) |>
       runAnnotationEnrichment(SE.name = "protetest", 
+                              nameList = getSelectedContrasts(MAE[["protetest"]])$tag,
                               ontology = "custom",
                               list_args = list(pvalueCutoff = 0.05),
                               col_term = "GO term accession", 
@@ -131,7 +172,7 @@ generateExample <- function(processing   = TRUE,
   
   if (annotation && coexp) {
     df_custom <- vroom(file = paste0(system.file(package = "RFLOMICS"), 
-                                     "/ExamplesFiles/GO_annotations/Arabidopsis_thaliana_Ensembl_55.txt"))
+                                     "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt"))
     MAE <- MAE |> 
       runAnnotationEnrichment(SE.name = "RNAtest", 
                               ontology = "custom",
