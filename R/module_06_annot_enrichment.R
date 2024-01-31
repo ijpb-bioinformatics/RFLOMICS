@@ -247,15 +247,17 @@
     list(
       
       fileInput(inputId = ns("annotationFileCPR"), label = "Annotation file:",
-                accept  = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),  
+                accept  = c("text/csv", "text/comma-separated-values,text/plain", ".csv")), 
       
-
-      if (rea.values$exampleData)
-        actionButton(inputId = ns("useExampleFile"), 
-                     label = "Use example annotation"),
-        
+      if (rea.values$exampleData){
+        tagList(
+          actionButton(inputId = ns("useExampleFile"), 
+                       label = "Use example annotation"),
+          br())
+      },
+      
       #uiOutput(ns("useExampleFile_UI")),
-      br(),
+      
       uiOutput(ns("selectColumnsFromCustomAnnot")),
       
       ## alpha threshold
@@ -475,7 +477,7 @@
     
     # display results
     verticalLayout(
-    #fluidRow(
+      #fluidRow(
       # box(width = 12, solidHeader = TRUE, collapsible = TRUE, 
       #     collapsed = TRUE, status = "success", title = database,
       
@@ -517,7 +519,7 @@
         ) # column
       )#,  # fluidrow
       #), # box
-    #) # fluidrow
+      #) # fluidrow
     )
   })
   
