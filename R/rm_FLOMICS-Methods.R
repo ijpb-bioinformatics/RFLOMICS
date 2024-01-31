@@ -1630,7 +1630,6 @@ methods::setMethod(f          = "heatmapPlot",
 #'
 #' @param object An object of class \link{RflomicsSE}
 #' @param DE variable name (gene/protein/metabolite name)
-#' @export
 #' @exportMethod boxplot.DE.plot
 #' @importFrom ggplot2 geom_density xlab theme_void ggtitle ggplot geom_boxplot guide_legend guides
 #' @importFrom dplyr full_join  arrange
