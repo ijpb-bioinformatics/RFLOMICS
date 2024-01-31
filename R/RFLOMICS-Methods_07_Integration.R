@@ -62,18 +62,18 @@ methods::setMethod(
     
     if (cmd) print("#     => run data integration")
     object <- runOmicsIntegration(object = object,
-                             preparedObject = preparedObject,
-                             method = method,
-                             scale_views = scale_views,
-                             maxiter = maxiter,
-                             num_factors = num_factors,
-                             selectedResponse = selectedResponse,
-                             ncomp = ncomp,
-                             link_datasets = link_datasets,
-                             link_response = link_response,
-                             sparsity = sparsity,
-                             cases_to_try = cases_to_try,
-                             silent = TRUE, cmd = FALSE)
+                                  preparedObject = preparedObject,
+                                  method = method,
+                                  scale_views = scale_views,
+                                  maxiter = maxiter,
+                                  num_factors = num_factors,
+                                  selectedResponse = selectedResponse,
+                                  ncomp = ncomp,
+                                  link_datasets = link_datasets,
+                                  link_response = link_response,
+                                  sparsity = sparsity,
+                                  cases_to_try = cases_to_try,
+                                  silent = TRUE, cmd = FALSE)
     
     return(object)
   }
@@ -456,7 +456,147 @@ methods::setMethod(
     
   })
 
+# ---- Get integration setting ----
 
+#' @title Get MOFA analysis setting parameters
+#'
+#' @param object a RflomicsMAE object (produced by Flomics).
+#' @return List of differential analysis setting parameters
+#' @exportMethod getMOFASettings
+#'
+methods::setGeneric(
+  name = "getMOFASettings",
+  def  = function(object){standardGeneric("getMOFASettings")}
+)
+
+methods::setMethod(
+  f = "getMOFASettings",
+  signature = "RflomicsMAE",
+  definition = function(object) {
+    return(object@metadata$IntegrationAnalysis$MOFA$setting)
+  })
+
+
+
+#' @title Get mixOmics analysis setting parameters
+#'
+#' @param object a RflomicsMAE object (produced by Flomics).
+#' @return List of differential analysis setting parameters
+#' @exportMethod getMixOmicsSettings
+#'
+
+methods::setGeneric(
+  name = "getMixOmicsSettings",
+  def  = function(object){standardGeneric("getMixOmicsSettings")}
+)
+
+methods::setMethod(
+  f = "getMixOmicsSettings",
+  signature = "RflomicsMAE",
+  definition = function(object) {
+    
+    return(object@metadata$IntegrationAnalysis$mixOmics$setting)
+  })
+
+
+
+# ----  Get a particular multi-omics result ----
+#
+#' @title Get a particular multi-omics result
+#'
+#' @param object a MAE object (produced by Flomics).
+#' @param response a character giving the response variable to access specifically. 
+#' @param onlyResults default return only the MixOmics or MOFA2 results. If you want to access all information of the integration, 
+#' set onlyResuts to FALSE. In MixOmics case, works only when response is specified.
+#' @return in getMixOmics, if response is NULL, then all the mixOmics results are returned. 
+#' Otherwise, it gives the particular mixOmics result. 
+#' @exportMethod getMixOmics
+#' @rdname Multi-omics-access
+#' @export
+methods::setGeneric(
+  name = "getMixOmics",
+  def  = function(object, 
+                  response = NULL,
+                  onlyResults = TRUE){standardGeneric("getMixOmics")}
+)
+
+methods::setMethod(
+  f = "getMixOmics",
+  signature = "RflomicsMAE",
+  definition = function(object,
+                        response = NULL,
+                        onlyResults = TRUE){
+    
+    toreturn <- metadata(object)[["IntegrationAnalysis"]][["mixOmics"]]
+    
+    if (is.null(toreturn)) {
+      return(toreturn)
+    }
+    
+    if (!is.null(response)) {
+      toreturn <- toreturn[[response]]
+      if (onlyResults) toreturn <- toreturn$MixOmics_results
+      return(toreturn)
+    }else{
+      return(toreturn)
+    }
+    
+  })
+
+#' @rdname Multi-omics-access
+#' @exportMethod getMOFA
+methods::setGeneric(
+  name = "getMOFA",
+  def  = function(object, onlyResults = TRUE){standardGeneric("getMOFA")}
+)
+
+methods::setMethod(
+  f = "getMOFA",
+  signature = "RflomicsMAE",
+  definition = function(object, onlyResults = TRUE){
+  
+  toreturn <- metadata(object)[["IntegrationAnalysis"]][["MOFA"]]
+  
+  if (onlyResults && !is.null(toreturn)) toreturn <- toreturn[["MOFA_results"]]
+  
+  return(toreturn)
+})
+
+#' @rdname Multi-omics-access
+#' @exportMethod setMOFA
+methods::setGeneric(
+  name = "setMOFA",
+  def  = function(object, results = NULL){standardGeneric("setMOFA")}
+)
+
+methods::setMethod(
+  f = "setMOFA",
+  signature = "RflomicsMAE",
+  definition = function(object, results = NULL){
+  
+  metadata(object)[["MOFA"]] <- results
+  
+  return(object)
+})
+
+
+
+#' @rdname Multi-omics-access
+#' @exportMethod setMixOmics
+methods::setGeneric(
+  name = "setMixOmics",
+  def  = function(object, results = NULL){standardGeneric("setMixOmics")}
+)
+
+methods::setMethod(
+  f = "setMixOmics",
+  signature = "RflomicsMAE",
+  definition =  function(object, results = NULL){
+  
+  metadata(object)[["mixOmics"]] <- results
+  
+  return(object)
+})
 
 
 

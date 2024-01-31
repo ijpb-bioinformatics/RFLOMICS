@@ -539,7 +539,7 @@
     
     if (isFALSE(local.rea.values$runintegration)) return()
     
-    setting <- getMixOmicsSetting(session$userData$FlomicsMultiAssay)
+    setting <- getMixOmicsSettings(session$userData$FlomicsMultiAssay)
     lapply(setting$selectedResponse, function(Response) { 
       
       Data_res <- getMixOmics(session$userData$FlomicsMultiAssay, response = Response)
