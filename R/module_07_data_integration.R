@@ -561,7 +561,7 @@
                            if (setting$sparsity) {
                              df <- cbind(df, do.call("rbind", Data_res$keepX))
                              colnames(df)[!colnames(df) %in% c("Ind", "Features")] <-
-                               paste("Comp", seq_along(length(Data_res$keepX[[1]])))
+                               paste("Comp", seq_len(length(Data_res$keepX[[1]])))
                            }
                            
                          } else {
@@ -571,7 +571,7 @@
                            if (setting$sparsity) {
                              df <- cbind(df, do.call("cbind", as.list(Data_res$keepX)))
                              colnames(df)[!colnames(df) %in% c("Ind", "Features")] <- 
-                               paste("Comp", seq_along(length(Data_res$keepX)))
+                               paste("Comp", seq_len(length(Data_res$keepX)))
                            }
                          }
                          
@@ -583,7 +583,7 @@
               # ---- Tab panel Explained Variance ----
               tabPanel("Explained Variance",
                        column(12, renderPlot({
-                         plot_MO_varExp(session$userData$FlomicsMultiAssay, 
+                         plotMOVarExp(session$userData$FlomicsMultiAssay, 
                                         selectedResponse = Response)
                        })),
                        
@@ -1064,7 +1064,8 @@
                      column(12,
                             renderPlot({
                               
-                              colors_list <- lapply(views_names(resMOFA), FUN = function(nam) input[[paste0("colors_", nam)]])
+                              colors_list <- lapply(views_names(resMOFA), 
+                                                    FUN = function(nam) input[[paste0("colors_", nam)]])
                               names(colors_list) <- views_names(resMOFA)
                               
                               MOFA_cor_network(resMOFA = resMOFA, 

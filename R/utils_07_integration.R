@@ -5,21 +5,20 @@
 
 # ---- remove batch effects from omics : ----
 
-#' @title rbe_function
+#' @title .rbeFunction
 #'
 #' @param object An object of class \link{RflomicsMAE}
 #' @param SEobject An object of class \link{RflomicsSE}
 #' @return An object of class \link{RflomicsSE}
 #' @importFrom limma removeBatchEffect
 #' @importFrom stats model.matrix as.formula
-#' @export
+#' @keywords internal
 #' @noRd
 #'
-rbe_function <- function(object, SEobject, cmd = FALSE){
+.rbeFunction <- function(object, SEobject, cmd = FALSE){
   
-  assayTransform <- SummarizedExperiment::assay(SEobject)
+  assayTransform <- assay(SEobject)
   colBatch <- batchFactors(SEobject)
-  #colBatch <- names(ftypes)[ftypes == "batch"]
   
   if (cmd) {
     print(paste0("#     =>Correction for Batch: ", 
@@ -33,19 +32,20 @@ rbe_function <- function(object, SEobject, cmd = FALSE){
   designToPreserve <- model.matrix(as.formula(newFormula), data = colData)
   
   if (length(colBatch) == 1) {
-    rbeRes <- limma::removeBatchEffect(assayTransform, batch = colData[,colBatch], design = designToPreserve)
+    rbeRes <- removeBatchEffect(assayTransform, batch = colData[,colBatch], 
+                                design = designToPreserve)
   }else if (length(colBatch) >= 2) {
     
-    rbeRes <- limma::removeBatchEffect( assayTransform,
-                                        batch  = colData[,colBatch[1]],
-                                        batch2 = colData[,colBatch[2]],
-                                        design = designToPreserve)
+    rbeRes <- removeBatchEffect( assayTransform,
+                                 batch  = colData[,colBatch[1]],
+                                 batch2 = colData[,colBatch[2]],
+                                 design = designToPreserve)
   }
   if (length(colBatch) > 2) print("sorry, only 2 batches effect for now!") 
   
   SEobject@metadata[["correction_batch_method"]] <- "limma (removeBatchEffect)"
   
-  SummarizedExperiment::assay(SEobject) <- rbeRes
+  assay(SEobject) <- rbeRes
   
   return(SEobject)
 }
@@ -55,9 +55,11 @@ rbe_function <- function(object, SEobject, cmd = FALSE){
 #' @title Remove batch effect and transform rnaseq data
 #'
 #' @param object An object of class \link{RflomicsMAE}
-#' @param SEname the name of the rnaseq data to transform. Supposed to be a RflomicsSE.
+#' @param SEname the name of the rnaseq data to transform. 
+#' Supposed to be a RflomicsSE.
 #' @param correctBatch if TRUE, correction of batch effects. 
-#' @param transformation the name of the transformation to be applied on counts. Default is limma voom. 
+#' @param transformation the name of the transformation to be applied on counts. 
+#' Default is limma voom. 
 #' @param variableLists vector of variable names
 #' No other option for now. 
 #' @return An object of class \link{RflomicsMAE}
@@ -65,11 +67,11 @@ rbe_function <- function(object, SEobject, cmd = FALSE){
 #' @importFrom dplyr filter
 #' @importFrom limma voom
 #' @importFrom edgeR DGEList
-#' @export
+#' @keywords internal
 #' @noRd
 #'
 
-rnaseqRBETransform <- function(object, 
+.rnaseqRBETransform <- function(object, 
                                SEname, 
                                correctBatch = FALSE, 
                                transformation = "limma (voom)",
@@ -77,35 +79,30 @@ rnaseqRBETransform <- function(object,
                                cmd = FALSE
 ){
   
-  # TODO : check if differential analysis has been performed.
-  # TODO : in case of removeBatchEffect not working, what do we do?
-  # TODO : if no DE (ex: intersection is 0 genes), what do we do?
-  
   if (!is(object, "RflomicsMAE")) stop("object is not a RflomicsMAE")
   
   rnaDat <- object[[SEname]] 
-  assayTransform <- SummarizedExperiment::assay(rnaDat)
+  assayTransform <- assay(rnaDat)
   
   if (!is.integer(assayTransform) && !identical(assayTransform, floor(assayTransform))) {
     message("You indicated RNASeq data for ", SEname, "but it is not recognized as count data") 
-    print(assayTransform[1:3, 1:3])
   }
   
   DMat      <- getDesignMat(rnaDat)
   coefNorm  <- getCoeffNorm(rnaDat)
   designMat <- model.matrix(formula(getModelFormula(rnaDat)), data = DMat)
   
-  DGEObject <- edgeR::DGEList(
+  DGEObject <- DGEList(
     counts       = assayTransform,
     norm.factors = coefNorm$norm.factors,
     lib.size     = coefNorm$lib.size,
     samples      = DMat)
   
-  limmaRes <- limma::voom(DGEObject, design = designMat) 
+  limmaRes <- voom(DGEObject, design = designMat) 
   
-  SummarizedExperiment::assay(rnaDat) <- limmaRes$E
+  assay(rnaDat) <- limmaRes$E
   
-  if (correctBatch) rnaDat <- rbe_function(object, rnaDat)
+  if (correctBatch) rnaDat <- .rbeFunction(object, rnaDat)
   rnaDat <- rnaDat[variableNames,]
   
   rnaDat@metadata[["correction_batch"]]             <- correctBatch
@@ -120,17 +117,17 @@ rnaseqRBETransform <- function(object,
 
 # ----- Transform rnaseq assay from SE ----
 
-#' @title RBETransform
+#' @title .rbeTransform
 #'
 #' @param object An object of class \link{RflomicsMAE}
 #' @param SEname the name of the omics data to transform. No counts data.  
 #' @param correctBatch if TRUE, correction of batch effects. 
 #' @return An object of class \link{RflomicsMAE}
-#' @export
+#' @keywords internal
 #' @noRd
 #'
 
-RBETransform <- function(object,
+.rbeTransform <- function(object,
                          SEname,
                          correctBatch = TRUE,
                          variableNames = NULL,
@@ -142,7 +139,7 @@ RBETransform <- function(object,
   omicsDat@metadata[["correction_batch"]]             <- correctBatch
   omicsDat@metadata[["transform_method_integration"]] <- getTransSetting(omicsDat)$method
   
-  if (correctBatch) omicsDat <- rbe_function(object, omicsDat)
+  if (correctBatch) omicsDat <- .rbeFunction(object, omicsDat)
   omicsDat <- omicsDat[variableNames,]
   
   object[[SEname]] <- omicsDat
@@ -152,35 +149,40 @@ RBETransform <- function(object,
 
 # ----- MixOmics: plot variance explained ----
 
-#' @title plot_MO_varExp
+#' @title plotMOVarExp
 #'
 #' @param object An object of class \link{RflomicsMAE}
 #' @param selectedResponse a character string of the response variable to consider
-#' @param mode Can be NULL (default), "cumulative" or "comp". Defines the type of graph to return
+#' @param mode Can be NULL (default), "cumulative" or "comp". 
+#' Defines the type of graph to return
 #' @return An object of class \link{RflomicsMAE}
 #' @importFrom ggpubr ggarrange
 #' @export
 #'
 
-plot_MO_varExp <- function(object, selectedResponse, mode = NULL){
+plotMOVarExp <- function(object, selectedResponse, mode = NULL){
   
   if (!is(object, "RflomicsMAE")) stop("Object is not a RflomicsMAE.")
-  if (is.null(object@metadata$IntegrationAnalysis$mixOmics)) stop("It seems this object has no mixOmics results.")
-  if (is.null(object@metadata$IntegrationAnalysis$mixOmics[[selectedResponse]])) stop("It seems you didn't run MixOmics on this particular variable.")
+  if (is.null(object@metadata$IntegrationAnalysis$mixOmics)) {
+    stop("It seems this object has no mixOmics results.")
+  }
+  if (is.null(object@metadata$IntegrationAnalysis$mixOmics[[selectedResponse]])) {
+    stop("It seems you didn't run MixOmics on this particular variable.")
+  }
   
   Data_res <- object@metadata$IntegrationAnalysis$mixOmics[[selectedResponse]]$MixOmics_results
   gg_return <- NULL
   
   if (is.null(mode)) {
-    gg_return <- ggarrange(plot_MO_1(Data_res),
-                           plot_MO_2(Data_res), 
+    gg_return <- ggarrange(.plot_MO_1(Data_res),
+                           .plot_MO_2(Data_res), 
                            ncol = 2)
   }
   else if (tolower(mode) == "cumulative") {
-    gg_return <- plot_MO_1(Data_res)
+    gg_return <- .plot_MO_1(Data_res)
   }
   else if (tolower(mode) == "comp") {
-    gg_return <- plot_MO_2(Data_res)
+    gg_return <- .plot_MO_2(Data_res)
   }
   
   return(gg_return)
@@ -196,7 +198,7 @@ plot_MO_varExp <- function(object, selectedResponse, mode = NULL){
 #' @importFrom reshape2 melt
 #' @noRd
 
-plot_MO_1 <- function(Data_res){
+.plot_MO_1 <- function(Data_res){
   dat_explained <- melt(do.call("rbind", Data_res$prop_expl_var))
   colnames(dat_explained) <- c("Dataset", "Component", "% of explained variance")
   dat_explained$`% of explained variance` <- dat_explained$`% of explained variance`*100
@@ -225,9 +227,11 @@ plot_MO_1 <- function(Data_res){
 
 #' @keywords internal
 #' @importFrom reshape2 melt
+#' @importFrom ggplot2 ggplot geom_tile aes theme_classic theme element_blank
+#' element_text scale_fill_gradientn ylab ggtitle
 #' @importFrom dplyr filter
 #' @noRd
-plot_MO_2 <- function(Data_res){
+.plot_MO_2 <- function(Data_res){
   dat_explained <- melt(do.call("rbind", Data_res$prop_expl_var))
   colnames(dat_explained) <- c("Dataset", "Component", "% of explained variance")
   dat_explained$`% of explained variance` <- dat_explained$`% of explained variance`*100
@@ -264,7 +268,8 @@ plot_MO_2 <- function(Data_res){
 #' @param abs_weight_network threshold of weight to select entities to print
 #' @param abs_min_cor_network correlation threshold 
 #' @param network_layout one of spring, circle , circle + omics
-#' @param omics_colors named list of colors palettes, one for each omics (can be NULL) 
+#' @param omics_colors named list of colors palettes, one for each omics 
+#' (can be NULL) 
 #' @param posCol colors of positive edges
 #' @param negCol colors of negative edges
 #' @importFrom MOFA2 get_factors get_weights
@@ -299,7 +304,8 @@ MOFA_cor_network <- function(resMOFA,
   cor_mat <- cor(data_reconst)
   
   
-  features_metadata <- do.call(rbind, lapply(1:length(get_weights(resMOFA)), FUN = function(i){
+  features_metadata <- do.call(rbind, lapply(seq_len(length(get_weights(resMOFA))), 
+                                             FUN = function(i){
     mat_weights <- data.frame(get_weights(resMOFA, scale = TRUE)[[i]])
     mat_weights$Table <- names(get_weights(resMOFA))[i]
     return(mat_weights)
@@ -317,7 +323,7 @@ MOFA_cor_network <- function(resMOFA,
   if (nrow(feature_filtered) > 0) {
     
     if(is.null(omics_colors)){
-      omics_colors <- as.list(rownames(brewer.pal.info)[1:length(unique(feature_filtered$Table))]) 
+      omics_colors <- as.list(rownames(brewer.pal.info)[seq_len(length(unique(feature_filtered$Table)))]) 
       names(omics_colors) <- unique(feature_filtered$Table)
     }
     
@@ -328,7 +334,7 @@ MOFA_cor_network <- function(resMOFA,
     
     feature_filtered <- feature_filtered %>% group_by(Table) %>%
       mutate(Color = cut(F_selected, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)))
-    feature_filtered$Color2 <- sapply(1:nrow(feature_filtered), 
+    feature_filtered$Color2 <- sapply(seq_len(nrow(feature_filtered)), 
                                       FUN = function(i) omics_colors[[feature_filtered$Table[i]]][as.numeric(feature_filtered$Color[i])])
     
     # Layout
@@ -344,7 +350,8 @@ MOFA_cor_network <- function(resMOFA,
       qgraph_plot <- qgraph(cor_display, minimum = abs_min_cor_network, 
                             cut = 0,
                             shape = "rectangle", labels = rownames(cor_display), vsize2 = 2, 
-                            vsize = sapply(rownames(cor_display), nchar)*1.1,  layout = layout_arg,
+                            vsize = sapply(rownames(cor_display), nchar)*1.1,  
+                            layout = layout_arg,
                             esize = 2,
                             groups = features_metadata$Table[match(rownames(cor_display), rownames(features_metadata))],
                             posCol = posCol, negCol = negCol, 
@@ -359,36 +366,46 @@ MOFA_cor_network <- function(resMOFA,
       
       gg.legend <-  ggplot(legend.reshape, aes(x = Var2, y = Var1)) + 
         geom_tile(fill = legend.reshape$value) + xlab("") + ylab("") + 
-        theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(), 
+        theme_bw() + theme(panel.grid.major = element_blank(), 
+                           panel.grid.minor = element_blank(), 
+                           panel.border = element_blank(), 
                            axis.ticks.y = element_blank(),
                            axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
       
       gg.legend <- ggarrange(gg.legend, nrow = 3, ncol = 1) 
       
       # Actual plotting
-      ggarrange(plotlist = list(qgraph_plot, gg.legend), nrow = 1, ncol = 2, widths = c(3, 1))
-      
-      
+      ggarrange(plotlist = list(qgraph_plot, gg.legend), 
+                nrow = 1, ncol = 2, widths = c(3, 1))
       
     }else{
-      print("There is nothing to plot. Please try to lower the absolute weight, the correlation threshold or change the factor.")
+      print("There is nothing to plot. Please try to lower the absolute weight, 
+            the correlation threshold or change the factor.")
     }
   }else{
-    print("There is nothing to plot. Please try to lower the absolute weight, the correlation threshold or change the factor.")
+    print("There is nothing to plot. Please try to lower the absolute weight, 
+          the correlation threshold or change the factor.")
   }
 }
 
 ######################## INTEGRATION USING MOFA ########################
 
 #' @title Run MOFA Analysis
-#' @description Runs a MOFA analysis based on an untrained MOFA object and user arguments.
+#' @description Runs a MOFA analysis based on an untrained MOFA object and 
+#' user arguments.
 #' @param object An untrained MOFA object
-#' @param scale_views boolean. MOFA option to scale the views so they have the same variance. Default is FALSE.
-#' @param maxiter integer. MOFA option, maximum number of iterations to be considered if there it does not converge. Default is 1000.
-#' @param num_factors integer. MOFA option, maximum number of factor to consider. Default is 10.
+#' @param scale_views boolean. 
+#' MOFA option to scale the views so they have the same variance. 
+#' Default is FALSE.
+#' @param maxiter integer. MOFA option, maximum number of iterations 
+#' to be considered if there it does not converge. Default is 1000.
+#' @param num_factors integer. MOFA option, 
+#' maximum number of factor to consider. Default is 10.
 #' @param ... Not in use.
-#' @return A list with an untrained MOFA object (containing all options for the run) and a trained MOFA object
-#' @importFrom MOFA2 get_default_data_options get_default_model_options get_default_training_options prepare_mofa run_mofa
+#' @return A list with an untrained MOFA object 
+#' (containing all options for the run) and a trained MOFA object
+#' @importFrom MOFA2 get_default_data_options get_default_model_options 
+#' get_default_training_options prepare_mofa run_mofa
 #' @importFrom reticulate py_capture_output
 #' @keywords internal
 #' 
@@ -403,9 +420,9 @@ runMOFAAnalysis <- function(object,
     stop("object has to be a MOFA results")
   }
   
-  data_opts  <- MOFA2::get_default_data_options(object)
-  model_opts <- MOFA2::get_default_model_options(object)
-  train_opts <- MOFA2::get_default_training_options(object)
+  data_opts  <- get_default_data_options(object)
+  model_opts <- get_default_model_options(object)
+  train_opts <- get_default_training_options(object)
   
   data_opts$scale_views  <- scale_views
   train_opts$maxiter     <- maxiter
@@ -443,9 +460,6 @@ runMOFAAnalysis <- function(object,
                                    save_data = TRUE)
   }
   
-  # peut poser probleme au niveau python et mofapy.
-  # Installer python, numpy et mofapy, ensuite reinstaller totalement package MOFA2 et restart R.
-  
   return(list("MOFAObject.untrained" = MOFAObject.untrained, 
               "MOFAObject.trained"   = MOFAObject.trained))
 }
@@ -454,24 +468,38 @@ runMOFAAnalysis <- function(object,
 ######################## INTEGRATION USING MixOMICS ########################
 
 #' @title Run MixOmics Analysis
-#' @description Run a mixOmics analysis. Given the specification of the user (type of response, if response there is, multi block or not)
-#'  the function will determine which mixOmics function to use. Please see mixOmics manual or website for more information.
+#' @description Run a mixOmics analysis. Given the specification of the user 
+#' (type of response, if response there is, multi block or not)
+#'  the function will determine which mixOmics function to use. 
+#'  Please see mixOmics manual or website for more information.
 #' @param object list of blocks (matrices) with the same samples (rows)
-#' @param scale_views Boolean. Do the matrices have to be scaled? Is used inside the mixOmics function.
-#' @param selectedResponse Default is NULL (pls functions). The response, can be a matrix or a single factor (discriminant analysis is set in this case).
+#' @param scale_views Boolean. Do the matrices have to be scaled? 
+#' Is used inside the mixOmics function.
+#' @param selectedResponse Default is NULL (pls functions). 
+#' The response, can be a matrix or a single factor 
+#' (discriminant analysis is set in this case).
 #' @param ncomp Number of component to be computed.
-#' @param link_dataset Numeric between 0 and 1. Only used for multi block analysis. Indicates the correlation to be considered between the matrices.
-#'        It impacts the weights of the features, hence the feature selection. Please see mixOmics user's guide for better explanation.
-#' @param link_response Numeric between 0 and 1. Indicates the correlation to be considered between the matrices and the response matrix.
-#'        It impacts the weights of the features, hence the feature selection. Please see mixOmics user's guide for better explanation.
-#' @param sparsity Boolean. Indicates if there is a feature selection purpose. If TRUE, functions like spls(da), block.spls(da) will be used.
-#' @param cases_to_try If sparsity is TRUE, indicates the number of cases to try for the feature selection. The best outcome, as computed by tuning function, will be displayed.
+#' @param link_dataset Numeric between 0 and 1. 
+#' Only used for multi block analysis. 
+#' Indicates the correlation to be considered between the matrices.
+#' It impacts the weights of the features, hence the feature selection. 
+#' Please see mixOmics user's guide for better explanation.
+#' @param link_response Numeric between 0 and 1. 
+#' Indicates the correlation to be considered between the matrices 
+#' and the response matrix.
+#' It impacts the weights of the features, hence the feature selection. 
+#' Please see mixOmics user's guide for better explanation.
+#' @param sparsity Boolean. Indicates if there is a feature selection purpose. 
+#' If TRUE, functions like spls(da), block.spls(da) will be used.
+#' @param cases_to_try If sparsity is TRUE, 
+#' indicates the number of cases to try for the feature selection. 
+#'  The best outcome, as computed by tuning function, will be displayed.
 #' @return A mixOmics result. 
 #' @importFrom tibble rownames_to_column column_to_rownames
 #' @importFrom dplyr arrange select select_if
 #' @importFrom tidyselect all_of
-#' @importFrom mixOmics plsda splsda block.plsda block.splsda tune.block.splsda tune.splsda
-#' unmap
+#' @importFrom mixOmics plsda splsda block.plsda block.splsda tune.block.splsda 
+#' tune.splsda unmap
 #' @keywords internal 
 
 runMixOmicsAnalysis <- function(object,
@@ -491,15 +519,6 @@ runMixOmicsAnalysis <- function(object,
     stop("Selected Responses are not columns from metadata")
   }
   
-  # TODO : check this, c'est un peu etrange d'avoir eu a reordonner les lignes dans prepareForIntegration
-  # du coup ca demande de le faire aussi pour Y
-  # TODO : faudrait le faire directement dans preparedList ?
-  # Y <- data.frame(object$metadata, stringsAsFactors = TRUE) %>%
-  #   rownames_to_column(var = "rowNam") %>%
-  #   arrange(rowNam) %>%
-  #   column_to_rownames(var = "rowNam") %>%
-  #   select(all_of(selectedResponse))
-  
   Y <- data.frame(object$metadata, stringsAsFactors = TRUE) 
   Y <- Y[, selectedResponse, drop = FALSE]
   
@@ -510,7 +529,7 @@ runMixOmicsAnalysis <- function(object,
     Y <- Y[, 1]
   } else {
     YrowNames <- rownames(Y)
-    YFactors <- do.call("cbind", lapply(1:ncol(Y), FUN = function(j) {
+    YFactors <- do.call("cbind", lapply(seq_len(ncol(Y)), FUN = function(j) {
       if (is.factor(Y[, j])) {
         mat_return <- unmap(Y[, j])
         colnames(mat_return) <- attr(mat_return, "levels")
@@ -532,7 +551,8 @@ runMixOmicsAnalysis <- function(object,
     Design_mat[nrow(Design_mat), ] <- link_response
   diag(Design_mat) <- 0
   
-  # What function to use for the analysis (can't be sparse if there is a continous response)
+  # What function to use for the analysis 
+  # (can't be sparse if there is a continous response)
   functionName <- "pls"
   if (dis_anal) functionName <- paste0(functionName, "da")
   if (sparsity && !is.numeric(Y)) functionName <- paste0("s", functionName)
@@ -543,12 +563,14 @@ runMixOmicsAnalysis <- function(object,
     # no tune.block.spls so far, there is one for spls
     # It is a bit weird to consider tuning with folds when there is very few samples per condition
     # Add a warning or something when it's the case?
-    # Also consider adding a warning when the number of feature is still very high even after differential analysis
+    # Also consider adding a warning when the number of feature is still very 
+    # high even after differential analysis
     
     tune_function <- paste0("tune.", functionName)
     
     test_keepX <- lapply(object$blocks, FUN = function(dat) {
-      ceiling(seq(from = ceiling(0.1 * ncol(dat)), to = ncol(dat), length.out = cases_to_try))
+      ceiling(seq(from = ceiling(0.1 * ncol(dat)), to = ncol(dat), 
+                  length.out = cases_to_try))
     })
     
     list_tuning_args <- list(
@@ -577,9 +599,12 @@ runMixOmicsAnalysis <- function(object,
     list_args$X <- object$blocks
   }
   if (length(object$blocks) > 1) list_args$design <- Design_mat
-  if (sparsity && !functionName %in% c("block.spls", "block.pls")) list_args$keepX <- list_res$tuning_res$choice.keepX
+  if (sparsity && !functionName %in% c("block.spls", "block.pls")) {
+    list_args$keepX <- list_res$tuning_res$choice.keepX
+  }
   
-  list_res$analysis_res <- do.call(getFromNamespace(functionName, ns = "mixOmics"), list_args)
+  list_res$analysis_res <- do.call(getFromNamespace(functionName, ns = "mixOmics"), 
+                                   list_args)
   
   return(list_res)
 }

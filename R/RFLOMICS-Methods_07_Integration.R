@@ -145,10 +145,10 @@ methods::setMethod(
       object <- switch(omicsType,
                        "RNAseq" = {
                          list_args$transformation <- rnaSeq_transfo
-                         do.call("rnaseqRBETransform", list_args)
+                         do.call(".rnaseqRBETransform", list_args)
                        },
-                       "proteomics" = do.call("RBETransform", list_args),
-                       "metabolomics" = do.call("RBETransform", list_args)
+                       "proteomics" = do.call(".rbeTransform", list_args),
+                       "metabolomics" = do.call(".rbeTransform", list_args)
       )
     }
     
