@@ -264,6 +264,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     # initialize reactive value
     rea.values[[dataset]]$coExpAnal  <- FALSE
     rea.values[[dataset]]$coExpAnnot <- FALSE
+    rea.values[[dataset]]$CoExpClusterNames <- NULL
     
     # initialize MAE object
     session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpAnal       <- NULL
@@ -312,6 +313,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     #----------------------#
     
     rea.values[[dataset]]$coExpAnal  <- TRUE
+    rea.values[[dataset]]$CoExpClusterNames <- names(dataset.SE@metadata$CoExpAnal$clusters)
     
   }, ignoreInit = TRUE)
   
