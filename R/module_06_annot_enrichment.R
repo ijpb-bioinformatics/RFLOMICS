@@ -72,9 +72,9 @@
   # UI
   output$tabsetPanel_DB_UI <- renderUI({
     
-    # validate(
-    #   need(rea.values[[dataset]]$diffValid != FALSE, "Please run diff analysis and validate your choices...")
-    # )
+    validate(
+      need(rea.values[[dataset]]$diffValid != FALSE, "Please run diff analysis and validate your choices...")
+    )
     
     omicsType <- getOmicsTypes(session$userData$FlomicsMultiAssay[[dataset]])
     
@@ -129,6 +129,8 @@
   
   ns <- session$ns
   
+  local.rea.values <- reactiveValues(dataPathAnnot = NULL)
+  
   # UI
   
   ## setting
@@ -146,14 +148,14 @@
   output$tabsetRes_UI <- renderUI({
     
     ### for diff analysis results
-    tabPanel.list <- list(tabPanel(title = "Differential expression lists", 
+    tabPanel.list <- list(tabPanel(title = "Enrichment from differential expression analysis", 
                                    br(),
                                    .modRunEnrichmentUI(id = ns("DiffExpEnrichAnal"))))
     
     ### for coexp analysis results if exist
     if(!isFALSE(rea.values[[dataset]]$coExpAnal)) 
       tabPanel.list <- c(tabPanel.list,
-                         list(tabPanel(title = "Co-expression clusters",
+                         list(tabPanel(title = "Enrichment from co-expression analysis",
                                        br(),
                                        .modRunEnrichmentUI(id = ns("CoExpEnrichAnal")))))
     
@@ -216,22 +218,22 @@
     
     #if (omicsType %in% c("RNAseq", "proteomics")) {
     list(
-        pickerInput(
-          inputId = ns("keyTypeKEGG"), label = "Select id type:",
-          choices = c("", "kegg", "ncbi-geneid", "ncib-proteinid", "uniprot"),
-          selected = "",
-          options = list(`actions-box` = TRUE, size = 10, 
-                         `selected-text-format` = "count > 3")),
-        
-        # type organism 
-        textInput(inputId = ns("organism"), 
-                  label = "Organism: (eg. ath)", value = "", 
-                  width = NULL, placeholder = NULL),
-        
-        ## alpha threshold
-        numericInput(inputId = ns("pValueKEGG"), 
-                     label = "Adjusted p-value threshold:",
-                     value = 0.01 , min = 0, max = 1, step = 0.01)
+      pickerInput(
+        inputId = ns("keyTypeKEGG"), label = "Select id type:",
+        choices = c("", "kegg", "ncbi-geneid", "ncib-proteinid", "uniprot"),
+        selected = "",
+        options = list(`actions-box` = TRUE, size = 10, 
+                       `selected-text-format` = "count > 3")),
+      
+      # type organism 
+      textInput(inputId = ns("organism"), 
+                label = "Organism: (eg. ath)", value = "", 
+                width = NULL, placeholder = NULL),
+      
+      ## alpha threshold
+      numericInput(inputId = ns("pValueKEGG"), 
+                   label = "Adjusted p-value threshold:",
+                   value = 0.01 , min = 0, max = 1, step = 0.01)
     )
     
     #}
@@ -243,21 +245,29 @@
     if (rea.values[[dataset]]$diffValid == FALSE) return()
     
     list(
+      
+      fileInput(inputId = ns("annotationFileCPR"), label = "Annotation file:",
+                accept  = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),  
+      
+
+      if (rea.values$exampleData)
+        actionButton(inputId = ns("useExampleFile"), 
+                     label = "Use example annotation"),
         
-        fileInput(inputId = ns("annotationFileCPR"), label = "Annotation file:",
-                  accept  = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),  
-        
-        #uiOutput(ns("useExampleFile_UI")),
-        
-        uiOutput(ns("selectColumnsFromCustomAnnot")),
-        
-        ## alpha threshold
-        numericInput(inputId = ns("pValue_custom"), 
-                     label = "Adjusted p-value threshold:", 
-                     value = 0.01 , min = 0, max = 1, step = 0.01)
+      #uiOutput(ns("useExampleFile_UI")),
+      br(),
+      uiOutput(ns("selectColumnsFromCustomAnnot")),
+      
+      ## alpha threshold
+      numericInput(inputId = ns("pValue_custom"), 
+                   label = "Adjusted p-value threshold:", 
+                   value = 0.01 , min = 0, max = 1, step = 0.01)
     )
   })
+  
+  ### select column
   observeEvent(input$annotationFileCPR, {
+    
     local.rea.values$dataPathAnnot <- NULL
     local.rea.values$dataPathAnnot <- input$annotationFileCPR$datapath
     
@@ -285,20 +295,53 @@
     })
   })
   
+  ### use example
+  observeEvent(input$useExampleFile, {
+    local.rea.values$dataPathAnnot <- NULL
+    local.rea.values$dataPathAnnot <- paste0(system.file(package = "RFLOMICS"), 
+                                             "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt")
+    
+    output$selectColumnsFromCustomAnnot <- renderUI({
+      
+      annotation <- data.table::fread(file = local.rea.values$dataPathAnnot, sep = "\t", header = TRUE)
+      
+      column(width = 12,
+             
+             # Select the right columns for the analysis
+             pickerInput(inputId = ns("col_geneName"), label = "Genes ID: *",
+                         choices = "Gene stable ID",
+                         selected = "Gene stable ID"),
+             pickerInput(inputId = ns("col_termID"), label = "Terms IDs: *",
+                         choices = "GO term accession",
+                         selected = "GO term accession"),
+             pickerInput(inputId = ns("col_termName"), label = "Term Names:",
+                         choices = "GO term name",
+                         selected = "GO term name"),
+             pickerInput(inputId = ns("col_domain"), label = "Domain:",
+                         choices = "GO domain",
+                         selected = "GO domain"),
+      )
+    })
+    
+  })
+  
+  
   # SERVEUR
-  shiny::callModule(module  = .modRunEnrichment, 
-                    id = "DiffExpEnrichAnal", dataset = dataset,
-                    database = database, 
+  shiny::callModule(module     = .modRunEnrichment, 
+                    id         = "DiffExpEnrichAnal", 
+                    dataset    = dataset,
+                    database   = database, 
                     listSource = "DiffExpEnrichAnal",
                     rea.values = rea.values, 
-                    input2 = input)
+                    input2     = input, local.rea.values = local.rea.values)
   
-  shiny::callModule(module  = .modRunEnrichment, 
-                    id = "CoExpEnrichAnal", dataset = dataset,
-                    database = database, 
+  shiny::callModule(module     = .modRunEnrichment, 
+                    id         = "CoExpEnrichAnal", 
+                    dataset    = dataset,
+                    database   = database, 
                     listSource = "CoExpEnrichAnal",
                     rea.values = rea.values, 
-                    input2 = input)
+                    input2     = input, local.rea.values = local.rea.values)
   
 }
 
@@ -325,17 +368,17 @@
 #' @importFrom DT renderDataTable datatable
 #' @noRd
 .modRunEnrichment <- function(input, output, session, dataset, database, 
-                              listSource, rea.values, input2){
+                              listSource, rea.values, input2, local.rea.values){
   ns <- session$ns
   
   switch(listSource,
          "DiffExpEnrichAnal" = {
-           title <- "Summary - Enrichment from differential expression analysis"
+           title <- "Summary"
            fromAnnot <- "diffAnnot"
            from <- "DiffExpAnal"
          },
          "CoExpEnrichAnal" = {
-           title <- "Summary - Enrichment from  co-expression analysis"
+           title <- "Summary"
            fromAnnot <- "coExpAnnot"
            from <- "CoExpAnal"
          }
@@ -346,12 +389,16 @@
   ## setting
   output$setting <- renderUI({
     
+    validate(
+      need(rea.values[[dataset]]$diffValid != FALSE, "Please run diff analysis")
+    )
+    
     ### lists
     data.SE <- session$userData$FlomicsMultiAssay[[dataset]]
     
     ListNames <- switch (listSource,
-                         "DiffExpEnrichAnal" = getValidContrasts(data.SE)$contrastName,
-                         "CoExpEnrichAnal"   = names(.getCoseqClusters(data.SE)))
+                         "DiffExpEnrichAnal" = rea.values[[dataset]]$DiffValidContrast$contrastName,
+                         "CoExpEnrichAnal"   = rea.values[[dataset]]$CoExpClusterNames)
     
     tagList(
       column(width = 6,
@@ -367,13 +414,14 @@
       ),
       #tag$br(),
       column(width = 6, 
+             br(),
              actionButton(inputId = ns("run"), label = "Run ORA"))
     )
   })
   
   ## display results
   output$summary <- renderUI({
-
+    
     # if (rea.values[[dataset]][[fromAnnot]] == FALSE ||
     #     is.null(sumORA(session$userData$FlomicsMultiAssay[[dataset]],
     #                    from = listSource,
@@ -381,12 +429,12 @@
     if (rea.values[[dataset]][[fromAnnot]] == FALSE || 
         is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]]))
       return()
-
+    
     results <- getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], listSource, database)
     
     # session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]]
     if (is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]][["summary"]])) {
-
+      
       fluidRow(
         box(width = 12, solidHeader = TRUE, collapsible = TRUE,
             collapsed = TRUE, status = "warning", title = title,
@@ -395,34 +443,106 @@
       fluidRow(
         box(width = 12, solidHeader = TRUE, collapsible = TRUE,
             collapsed = TRUE, status = "primary", title = title,
-            renderDataTable({datatable(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]][["summary"]],
-                                       rownames = FALSE,
-                                       options = list(pageLength = 6, dom = 'tip'))
-            })))
+            
+            tabsetPanel(
+              
+              tabPanel(title = "heatmap", 
+                       br(),
+                       uiOutput(ns("CompResults"))),
+              tabPanel(title = "table",
+                       br(),
+                       renderDataTable({datatable(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]][["summary"]],
+                                                  rownames = FALSE,
+                                                  options = list(pageLength = 6, dom = 'tip'))}))
+            )
+            
+        )
+        
+      )
     }
   })
+  
+  ## comparaison of all lists results
+  output$CompResults <- renderUI({
+    
+    if (rea.values[[dataset]][[fromAnnot]] == FALSE || 
+        is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]][["summary"]])) return()
+    
+    # Possible domains of ontology:
+    possDomain <-  unique(unlist(
+      lapply(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]][["enrichResult"]], 
+             FUN = function(x) names(x)))) 
+    
+    # display results
+    verticalLayout(
+    #fluidRow(
+      # box(width = 12, solidHeader = TRUE, collapsible = TRUE, 
+      #     collapsed = TRUE, status = "success", title = database,
+      
+      fluidRow(
+        column(4,
+               radioButtons(inputId = ns(paste0(database, "-compDomain")), 
+                            label = "Domain",
+                            choices = possDomain, selected = possDomain[1], 
+                            inline = TRUE)),
+        column(4,
+               radioButtons(inputId = ns(paste0(database, "-compType")), 
+                            label = "Matrix Type",
+                            choices = c("presence", "FC", "log2FC"), 
+                            selected = "FC", inline = TRUE)),
+      ),
+      
+      fluidRow(
+        column(12,
+               renderUI({
+                 
+                 outHeatmap <- tryCatch({
+                   outHeatmap <-  plotEnrichComp(session$userData$FlomicsMultiAssay[[dataset]],
+                                                 from = from, ontology = database, 
+                                                 domain = input[[paste0(database, "-compDomain")]],
+                                                 matrixType = input[[paste0(database, "-compType")]])
+                 },
+                 warning = function(warn) warn,
+                 error = function(err) err
+                 )
+                 
+                 if (is(outHeatmap, "Heatmap")) renderPlot({ComplexHeatmap::draw(outHeatmap, 
+                                                                                 heatmap_legend_side = "top", 
+                                                                                 padding = unit(5, "mm"),
+                                                                                 gap = unit(2, "mm"))}, 
+                                                           width = "auto", 
+                                                           height = min(400 + nrow(outHeatmap@matrix)*50, 1000))
+                 else renderText({outHeatmap$message})
+               })
+        ) # column
+      )#,  # fluidrow
+      #), # box
+    #) # fluidrow
+    )
+  })
+  
   output$AnnotResults <- renderUI({
-
+    
     dataSE <- session$userData$FlomicsMultiAssay[[dataset]]
-
+    
     if (rea.values[[dataset]][[fromAnnot]] == FALSE ||
         is.null(sumORA(dataSE, from = listSource, ont = database))) return()
-
+    
     #foreach genes list selected (contrast)
     lapply(names(getEnrichRes(dataSE, from = listSource, ont = database)), function(listname) {
       if (length(getEnrichRes(dataSE, from = listSource, ont = database, contrast = listname)) != 0) {
         if (sum(unlist(sumORA(dataSE, from = listSource, ont = database)[-1]), na.rm = TRUE) == 0) {
-
+          
           fluidRow(
             box(width = 12, title = paste0(listname, ": 0 enriched terms found"), status = "danger")
           )
         }
         else{
-
+          
           choices <- names(getEnrichRes(dataSE, from = listSource,
                                         contrast = listname,
                                         ont = database))
-
+          
           tabPanel.list <- list(
             # ---- Tab Panel : dotPlot : ----
             tabPanel("DotPlot",
@@ -437,7 +557,7 @@
                                                      showCategory = input[[paste0(listname, "-top.over")]],
                                                      searchExpr = input[[paste0(listname, "-grep")]])
                        )
-
+                       
                        if (is(outdot, "gg")) renderPlot({
                          warnOpt <- getOption("warn")
                          options(warn = -1) # avoid ggrepel warnings, or at least trying to
@@ -459,8 +579,8 @@
                                                       domain = input[[paste0(listname, "-domain")]],
                                                       showCategory = input[[paste0(listname, "-top.over")]],
                                                       searchExpr = input[[paste0(listname, "-grep")]]))
-
-
+                       
+                       
                        if (is(outheat, "gg")) renderPlot({
                          warnOpt <- getOption("warn")
                          options(warn = -1) # avoid ggrepel warnings, or at least trying to
@@ -486,7 +606,7 @@
                                    !input[[paste0(listname, "-genesLabels_cnet")]]) {
                            nodeLabelArg <- "category"
                          }
-
+                         
                          outcnet <- .doNotSpeak(plotCPR(dataSE,
                                                         contrast = listname,
                                                         from = from,
@@ -496,7 +616,7 @@
                                                         showCategory = input[[paste0(listname, "-top.over")]],
                                                         searchExpr = input[[paste0(listname, "-grep")]],
                                                         nodeLabel = nodeLabelArg))
-
+                         
                          if (is(outcnet, "gg")) renderPlot({
                            warnOpt <- getOption("warn")
                            options(warn = -1) # avoid ggrepel warnings, or at least trying to
@@ -504,15 +624,15 @@
                            options(warn = warnOpt)
                          })
                          else renderText({outcnet$message})
-
+                         
                        }),
                        fluidRow(
-
+                         
                          column(2, checkboxInput(inputId = ns(paste0(listname, "-genesLabels_cnet")),
                                                  label = "Genes Labels", value = FALSE)),
                          column(2, checkboxInput(inputId = ns(paste0(listname, "-termsLabels_cnet")),
                                                  label = "Terms Labels", value = TRUE))
-
+                         
                        )
                      )
             ),
@@ -520,16 +640,16 @@
             tabPanel("Result Table",
                      br(),
                      verticalLayout(
-
+                       
                        tags$br(),
                        DT::renderDataTable({
-
+                         
                          dataPlot <- getEnrichRes(object = dataSE,
                                                   from = listSource,
                                                   contrast = listname,
                                                   ont = database,
                                                   domain = input[[paste0(listname, "-domain")]])
-
+                         
                          pvalue <- getEnrichPvalue(dataSE,
                                                    from = listSource, dom = database)
                          DT::datatable(dataPlot@result[dataPlot@result$p.adjust <  pvalue,],
@@ -537,32 +657,32 @@
                                        options = list(pageLength = 5,
                                                       lengthMenu = c(5, 10, 15, 20),
                                                       scrollX = TRUE))
-
-
+                         
+                         
                        })
                      )
             )
-
+            
           )# TabsetPanel
-
+          
           # ---- Tab Panel : only for KEGG, pathview : ----
           if (database == "KEGG") {
             data <-   getEnrichRes(object = dataSE,
                                    contrast = listname, from = listSource,
                                    ont = "KEGG")[["no-domain"]]@result
-
+            
             pvalue <- getEnrichPvalue(dataSE,
                                       from = listSource,
                                       dom = database)
             mapChoices <- sort(data$ID[data$p.adjust < pvalue])
-
+            
             tabPanel.list <- c(tabPanel.list,
                                list(
                                  tabPanel("Pathview results",
                                           br(),
                                           fluidRow(
                                             column(3,
-
+                                                   
                                                    selectInput(
                                                      inputId = ns(paste0(listname, "-MAP.sel")), label = "Select map:",
                                                      choices = mapChoices, multiple = FALSE, selectize = FALSE,
@@ -586,10 +706,10 @@
                                                      link_to_map <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?",
                                                                            input[[paste0(listname, "-MAP.sel")]], "/",
                                                                            data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
-
+                                                     
                                                      # test validity of URL
                                                      if (RCurl::url.exists(link_to_map)) {
-
+                                                       
                                                        renderPlot({
                                                          plotCPRKEGG(object = dataSE,
                                                                      contrast = listname,
@@ -601,54 +721,59 @@
                                                      } else {
                                                        renderText("Please check your connection. It seems the URL does not exist, or you're not connected.")
                                                      }
-
+                                                     
                                                    })
                                             )
                                           )
                                  )
                                )
             )
-
+            
           }
+          
           # display results
           fluidRow(
-
+            
             box(width = 12, solidHeader = TRUE, collapsible = TRUE,
                 collapsed = TRUE, status = "success", title = listname,
-
+                
                 fluidRow(
                   column(4,
+                         # choice of domain
                          radioButtons(inputId = ns(paste0(listname, "-domain")),
                                       label = "Domain",
                                       choices = choices,
                                       selected = choices[1])),
                   column(4,
+                         # number of term
                          numericInput(inputId = ns(paste0(listname, "-top.over")),
                                       label = "Top terms:" , value=15 ,
                                       min = 1, max = 10000, step = 5)), # max code en dur : pas bien
                   column(4,
+                         # search term or gene
                          textInput(inputId = ns(paste0(listname, "-grep")),
                                    label = "Search Expression"))
                 ),
                 fluidRow(
+                  # display all tabsets
                   column(width = 12,
                          do.call(what = tabsetPanel, args = tabPanel.list)
                   )
                 )
-
+                
             ) # box
           ) # fluidrow
         } # else
       } # if
     })# lapply
   })
-
+  
   # SERVER
-
+  
   ## run enrichment
   # ---- run Annotation  ----
   observeEvent(input$run, {
-
+    
     # check list of genes
     if (length(input$listToAnnot) == 0) {
       showModal(modalDialog( title = "Error message", "Please select at least 1 variable list."))
@@ -657,9 +782,9 @@
       need(length(input$listToAnnot) != 0,
            message = "Please select at least 1 variable list")
     })
-
+    
     if(database == "GO"){
-
+      
       # check parameters
       if (input2$db.select == "") {
         showModal(modalDialog(title = "Error message", "Select databases..."))
@@ -667,7 +792,7 @@
       validate({
         need(input2$db.select != "", "Select databases...")
       })
-
+      
       library(input2$db.select, character.only = TRUE)
       accepted_keytypes <- AnnotationDbi::keytypes(get(input2$db.select))
       if (!input2$keytype.go %in% accepted_keytypes) {
@@ -679,28 +804,28 @@
              message = paste("Keytype must be one of: ",
                              paste(accepted_keytypes, collapse = ", "), sep = " "))
       })
-
+      
       # set list args
       database <- "GO"
       list_args <- list()
       list_args[["OrgDb"]]        <- input2$db.select
       list_args[["keyType"]]      <- input2$keytype.go
       list_args[["pvalueCutoff"]] <- input2$pValue_GO
-
+      
       domain <- input2$ont.select
       if (input2$ont.select == "ALL") domain <- c("MF", "BP", "CC")
-
+      
       paramList <- list(#method       = "ORA",
-                        ontology     = database,
-                        list_args    = list_args,
-                        #OrgDb        = input2$db.select,
-                        #keyType      = input2$keytype.go,
-                        domain       = domain#,
-                        #pvalueCutoff = input2$pValue_GO
+        ontology     = database,
+        list_args    = list_args,
+        #OrgDb        = input2$db.select,
+        #keyType      = input2$keytype.go,
+        domain       = domain#,
+        #pvalueCutoff = input2$pValue_GO
       )
     }
     if(database == "KEGG"){
-
+      
       # check param
       ## ID key
       if (!input2$keyTypeKEGG %in% c("kegg", "ncbi-geneid", "ncib-proteinid", "uniprot")) {
@@ -710,7 +835,7 @@
         need(input2$keyTypeKEGG %in% c("kegg", "ncbi-geneid", "ncib-proteinid", "uniprot"),
              message = "KEGG keytype must be one of kegg, ncbi-geneid, ncbi-proteinid or uniprot")
       })
-
+      
       ## code organism KEGG
       if (input2$organism == "") {
         showModal(modalDialog( title = "Error message", "set organism kegg code."))
@@ -718,38 +843,38 @@
       validate({
         need(input2$organism != "", message = "Set organism kegg code.")
       })
-
-
+      
+      
       # set list args
       database <- "KEGG"
       list_args <- list()
       list_args[["organism"]] <- input2$organism
       list_args[["keyType"]]  <- input2$keyTypeKEGG
       list_args[["pvalueCutoff"]] <- input2$pValueKEGG
-
+      
       # prevent multiple execution
       paramList <- list(#method       = "ORA",
-                        list_args    = list_args,
-                        ontology     = database,
-                        domain       = "no-domain"#,
-                        #organism     = input2$organism,
-                        #keyType      = input2$keyTypeKEGG,
-                        #pvalueCutoff = input2$pValueKEGG
+        list_args    = list_args,
+        ontology     = database,
+        domain       = "no-domain"#,
+        #organism     = input2$organism,
+        #keyType      = input2$keyTypeKEGG,
+        #pvalueCutoff = input2$pValueKEGG
       )
-
+      
       # input2[["organism"]]    <- input2$organism
       # input2[["keyTypeKEGG"]] <- input2$keyTypeKEGG
-
+      
     }
     if(database == "custom"){
-
+      
       # check param
       ## if custom annotation file
-      if (is.null(input2$dataPathAnnot)) {
+      if (is.null(local.rea.values$dataPathAnnot)) {
         showModal(modalDialog(title = "Error message", "load custom annotation file."))
       }
       validate({
-        need(!is.null(input2$dataPathAnnot),
+        need(!is.null(local.rea.values$dataPathAnnot),
              message = "load custom annotation file.")
       })
       # Check some custom elements and annotation file
@@ -761,68 +886,66 @@
         need(input2$col_geneName != "" && input2$col_termID != "",
              message = "Please choose columns names for the gene names/ID and the ontology terms ID!")
       })
-
+      
       # set param
       domain <- NULL
       annotation2 <- NULL
       col_domain_arg <- NULL
       list_args <- list()
       list_args[["pvalueCutoff"]] <- input2$pValue_custom
-
-      annotation <- data.table::fread(file = input2$dataPathAnnot,
+      
+      annotation <- data.table::fread(file = local.rea.values$dataPathAnnot,
                                       sep = "\t", header = TRUE)
       listCharRm <- c(".", " ", "")
       annotation2 <- list()
-
+      
       # if column with domain exist
       if (input2$col_domain != "") {
-
+        
         # remove column with domain == c(".", " ", "")
         domainRm <- intersect(annotation[[input2$col_domain]], listCharRm)
         if (length(domainRm) != 0) {
           annotation <- dplyr::filter(annotation,
                                       !get(input2$col_domain) %in% listCharRm)
         }
-
+        
         annotation2[["domain"]] <- annotation[[input2$col_domain]]
         domain <- unique(annotation2$domain)
         col_domain_arg <- "domain"
       }
-
+      
       annotation2[["gene"]] <- annotation[[input2$col_geneName]]
       annotation2[["term"]] <- annotation[[input2$col_termID]]
       if (input2$col_termName != "") {
         annotation2[["name"]] <- annotation[[input2$col_termName]]
       }
       annotation2 <- data.frame(annotation2)
-
+      
       ##
-      paramList <- list(method       = "ORA",
-                        list_args    = list_args,
-                        ontology     = "custom",
-                        domain       = domain,
-                        annot        = annotation2,
-                        col_domain   = col_domain_arg)
+      paramList <- list(#method       = "ORA",
+        list_args    = list_args,
+        ontology     = "custom",
+        domain       = domain,
+        annot        = annotation2,
+        col_domain   = col_domain_arg)
     }
-
+    
     # prevent multiple execution
     #if (.checkRunORAExecution(session$userData$FlomicsMultiAssay[[dataset]], database, paramList) == FALSE) return()
-
+    
     #input2[[database]] <- FALSE
-
+    
     # ---- Annotation on diff results: ----
     # run analysis
     print(paste("# 11- ", database, " Enrichment Analysis of ", listSource ," lists...", dataset))
-
+    
     session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]] <- NULL
     rea.values[[dataset]][[fromAnnot]] <- FALSE
-
+    
     # run annotation diff analysis
     runRes <- tryCatch({
       paramList <- c(paramList, list(object = session$userData$FlomicsMultiAssay[[dataset]], 
                                      from = from, nameList = input$listToAnnot))
-      
-      paramList <<- paramList
       
       do.call(runAnnotationEnrichment, paramList)
       
@@ -840,17 +963,19 @@
     warning = function(war) return(war),
     error   = function(err) return(err)
     )
-
+    
     if (!is(runRes, "SummarizedExperiment")) {
       showModal(modalDialog(title = paste("Something went wrong: ", runRes$message)))
     }
     validate({need(is(runRes, "SummarizedExperiment"),
                    message = paste0("Something went wrong: ", runRes$message))})
-
+    
     session$userData$FlomicsMultiAssay[[dataset]] <-  runRes
     rea.values[[dataset]][[fromAnnot]] <- TRUE
-    runRes <<- runRes
+    
   }, ignoreInit = TRUE)
+  
+  
 }
 
 # ---- Comparison between enrichment results ----
@@ -894,63 +1019,7 @@
          }
   )
   
-  output$CompResults <- renderUI({
-    
-    if (rea.values[[dataset]][[fromAnnot]] == FALSE || 
-        is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]][["summary"]])) return()
-    
-    # Possible domains of ontology:
-    possDomain <-  unique(unlist(
-      lapply(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]][["enrichResult"]], 
-             FUN = function(x) names(x)))) 
-    
-    # display results
-    verticalLayout(
-      fluidRow(
-        box(width = 12, solidHeader = TRUE, collapsible = TRUE, 
-            collapsed = TRUE, status = "success", title = database,
-            
-            fluidRow(
-              column(4,
-                     radioButtons(inputId = ns(paste0(database, "-compDomain")), 
-                                  label = "Domain",
-                                  choices = possDomain, selected = possDomain[1], 
-                                  inline = TRUE)),
-              column(4,
-                     radioButtons(inputId = ns(paste0(database, "-compType")), 
-                                  label = "Matrix Type",
-                                  choices = c("presence", "FC", "log2FC"), 
-                                  selected = "FC", inline = TRUE)),
-            ),
-            
-            fluidRow(
-              column(12,
-                     renderUI({
-                       
-                       outHeatmap <- tryCatch({
-                         outHeatmap <-  plotEnrichComp(session$userData$FlomicsMultiAssay[[dataset]],
-                                                       from = from, ontology = database, 
-                                                       domain = input[[paste0(database, "-compDomain")]],
-                                                       matrixType = input[[paste0(database, "-compType")]])
-                       },
-                       warning = function(warn) warn,
-                       error = function(err) err
-                       )
-                       
-                       if (is(outHeatmap, "Heatmap")) renderPlot({ComplexHeatmap::draw(outHeatmap, 
-                                                                                       heatmap_legend_side = "top", 
-                                                                                       padding = unit(5, "mm"),
-                                                                                       gap = unit(2, "mm"))}, 
-                                                                 width = "auto", 
-                                                                 height = min(400 + nrow(outHeatmap@matrix)*50, 1000))
-                       else renderText({outHeatmap$message})
-                     })
-              ) # column
-            ),  # fluidrow
-        ), # box
-      ) # fluidrow
-    )
-  })
+  
 }
 
 
