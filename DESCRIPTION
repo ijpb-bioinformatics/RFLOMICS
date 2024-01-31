@@ -17,7 +17,7 @@ Depends:
 biocViews: ShinyApps, DifferentialExpression, Metabolomics, Proteomics, Transcriptomics
 License: gpl-3 
 Encoding: UTF-8
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Suggests: 
     knitr,
     rmarkdown,
@@ -79,5 +79,3 @@ Imports:
     UpSetR,
     utils,
     org.At.tair.db
-    
-    
