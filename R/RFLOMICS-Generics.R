@@ -282,7 +282,7 @@ methods::setGeneric(
 
 
 methods::setGeneric(
-  name = "runIntegration",
+  name = "runOmicsIntegration",
   def  = function(object,
                   preparedObject = NULL,
                   method = "MOFA",
@@ -297,7 +297,7 @@ methods::setGeneric(
                   cases_to_try = 5,
                   silent = TRUE, 
                   cmd = FALSE,
-                  ... ){standardGeneric("runIntegration")}
+                  ... ){standardGeneric("runOmicsIntegration")}
 )
 
 

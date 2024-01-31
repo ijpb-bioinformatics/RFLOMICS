@@ -61,7 +61,7 @@ methods::setMethod(
                                             silent = silent)
     
     if (cmd) print("#     => run data integration")
-    object <- runIntegration(object = object,
+    object <- runOmicsIntegration(object = object,
                              preparedObject = preparedObject,
                              method = method,
                              scale_views = scale_views,
@@ -222,7 +222,7 @@ methods::setMethod(
 )
 
 
-#' @title runIntegration
+#' @title runOmicsIntegration
 #' @description This function executes all the steps to ensure data integration from a \link{RflomicsMAE} object produced by FLOMICS.
 #' @param object An object of class \link{RflomicsMAE}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param preparedObject An untrained MOFA object or a list of dataset.
@@ -230,10 +230,10 @@ methods::setMethod(
 #' @param group Not implemented yet in the interface. Useful for MOFA2 run.
 #' @return a RflomicsMAE object.
 #' @export
-#' @rdname runIntegration
-#' @exportMethod runIntegration
+#' @rdname runOmicsIntegration
+#' @exportMethod runOmicsIntegration
 methods::setMethod(
-  f = "runIntegration",
+  f = "runOmicsIntegration",
   signature = "RflomicsMAE",
   definition = function(object,
                         preparedObject = NULL,

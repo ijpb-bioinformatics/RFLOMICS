@@ -473,7 +473,7 @@
     
     # Run the analysis
     print(paste0("# 8- integration Analysis with ", method))
-    session$userData$FlomicsMultiAssay <- do.call(getFromNamespace("runIntegration", ns = "RFLOMICS"), list_args)
+    session$userData$FlomicsMultiAssay <- do.call(getFromNamespace("runOmicsIntegration", ns = "RFLOMICS"), list_args)
     
     #---- progress bar ----#
     progress$inc(1, detail = paste("Finished ", 100,"%", sep = ""))
