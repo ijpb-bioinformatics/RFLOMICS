@@ -317,7 +317,7 @@ rflomicsServer <- function(input, output, session) {
   ###############################
   output$withMOFA_UI <- renderUI({
     
-    IntegrationAnalysis_moduleUI("mofaSetting")
+    .modIntegrationAnalysisUI("mofaSetting")
     
   })
   
@@ -325,7 +325,7 @@ rflomicsServer <- function(input, output, session) {
   ###################################
   output$withMixOmics_UI <- renderUI({
     
-    IntegrationAnalysis_moduleUI("mixomicsSetting")
+    .modIntegrationAnalysisUI("mixomicsSetting")
     
   })
   
@@ -449,11 +449,8 @@ rflomicsServer <- function(input, output, session) {
   
   callModule(module = omics_data_analysis_summary, id = "omics", rea.values = rea.values)
   
-  #callModule(module = MOFA_setting, id = "mofaSetting", rea.values = rea.values)
-  
-
-  callModule(module = IntegrationAnalysis_module, id = "mixomicsSetting", rea.values = rea.values, method = "mixOmics")
-  callModule(module = IntegrationAnalysis_module, id = "mofaSetting",     rea.values = rea.values, method = "MOFA")
+  callModule(module = .modIntegrationAnalysis, id = "mixomicsSetting", rea.values = rea.values, method = "mixOmics")
+  callModule(module = .modIntegrationAnalysis, id = "mofaSetting",     rea.values = rea.values, method = "MOFA")
  
   
   ##########################################

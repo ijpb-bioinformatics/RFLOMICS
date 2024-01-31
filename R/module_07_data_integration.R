@@ -1,8 +1,12 @@
 ##########################################
-# module 08 : mixOmics
+# module 07 : integration analyses
 ##########################################
 
-IntegrationAnalysis_moduleUI <- function(id){
+
+#' @title .modIntegrationAnalysisUI
+#' @keywords internal
+#' @noRd
+.modIntegrationAnalysisUI <- function(id){
   
   #name space for id
   ns <- NS(id)
@@ -39,9 +43,13 @@ IntegrationAnalysis_moduleUI <- function(id){
   )
 }
 
-#' @importFrom mixOmics plotVar plotIndiv network circosPlot cimDiablo
+#' @title .modIntegrationAnalysis
 #' @importFrom DT renderDataTable datatable
-IntegrationAnalysis_module <- function(input, output, session, rea.values, method){
+#' @importFrom purrr reduce
+#' @importFrom dplyr mutate across full_join
+#' @keywords internal
+#' @noRd
+.modIntegrationAnalysis <- function(input, output, session, rea.values, method){
   
   output$overview <- renderUI({
     
@@ -54,37 +62,55 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
                   collapsible = TRUE, collapsed = TRUE,
                   div(
                     h4(tags$span("Blocks settings:", style = "color:orange")),
-                    p("You can choose which omics data you want to analyze together. It is required to have selected at least two to run an analysis."),
-                    p("As of now, rflomics only allows you to run an analysis on filtered tables, taking into account differential analysis performed previously.
-            You can choose which contrasts you want to take the DE genes from. You can select multiple ones (defaults select all the contrasts) 
+                    p("You can choose which omics data you want to analyze together. 
+                      It is required to have selected at least two to run an analysis."),
+                    p("As of now, rflomics only allows you to run an analysis on filtered tables, 
+                      taking into account differential analysis performed previously.
+            You can choose which contrasts you want to take the DE genes from. 
+            You can select multiple ones (defaults select all the contrasts) 
               and choose to perform the analysis on the union or intersection of the DE lists."),
             p("RNASeq data, given in the form of counts, will be processed using limma::voom transformation. 
-              If you have indicated a batch effect when loading your data, it will be corrected in all datatables using limma::removebatcheffect before running mixOmics, for each table."),
+              If you have indicated a batch effect when loading your data,
+              it will be corrected in all datatables using limma::removebatcheffect before running mixOmics, f
+              or each table."),
             p("Link between tables and response is set to 0.5 automatically."),
             
             h4(tags$span("Analysis settings:", style = "color:orange")),
             p("- Scale Datasets: in each table, scale every feature to unit variance"),
             p("- Components: number of components to be computed, default is 5"),
-            p("- Sparse Analysis: if checked, function block.splsda is run, a variable selection is performed for each component and each response variable"),
-            p("- Tuning cases: if \"sparse analysis\" is checked, to select the relevant features for each component, tuning has to be performed. Tuning cases determines the number of feature selection
-              to try and decide on. A little warning here: tuning cases are applied on each table and component, and all combinaisions are tested (for example: two datatables and five tuning cases will 
+            p("- Sparse Analysis: if checked, function block.splsda is run, a variable selection 
+              is performed for each component and each response variable"),
+            p("- Tuning cases: if \"sparse analysis\" is checked, to select the relevant features for each component, 
+              tuning has to be performed. Tuning cases determines the number of feature selection
+              to try and decide on. A little warning here: tuning cases are applied on each table and component, 
+              and all combinaisions are tested (for example: two datatables and five tuning cases will 
               make 5*5 cases for each component to test), it can be quite long."),
             
             h4(tags$span("Response variables:", style = "color:orange")),
-            p("You can select as many response variables as you want, the analysis is performed on each of them separately. The same parameters are applied for all of them."),
+            p("You can select as many response variables as you want, 
+              the analysis is performed on each of them separately. 
+              The same parameters are applied for all of them."),
             
             h4(tags$span("Outputs:", style = "color:orange")),
-            p("- Data Overview: shows how many samples and omic features are left per table after applying all filters. If you chose a sparse analysis, for each component, the number of
+            p("- Data Overview: shows how many samples and omic features are 
+              left per table after applying all filters. 
+              If you chose a sparse analysis, for each component, the number of
               selected features will be displayd."),
             p("- Explained variance: two graphs are displayed in this section. 
               The first graph is showing the total explained variance per omic table. 
-              The second one is a detailed version, showing the percentage of explained variance per feature per omic data."), 
-            p("- Individuals plot: coordinates of individuals on each component for each table. When toggled, ellipses force all windows to be on the same scale."),
-            p("- Features plot: similar to a pca correlation plot, coordinates of the (selected) features on the correlation circles for all datasets. "),
-            p("- Loadings: coefficients for the (selected) features for each dataset, by ascending order. Default is showing the first 25 entities for each block, on the first component."),
-            p("- Networks: similarity networks computed on selected components factors. It only shows the between table correlation, not the intra-table correlaction!"),
+              The second one is a detailed version, showing the percentage of 
+              explained variance per feature per omic data."), 
+            p("- Individuals plot: coordinates of individuals on each component for each table. 
+              When toggled, ellipses force all windows to be on the same scale."),
+            p("- Features plot: similar to a pca correlation plot, coordinates of the (selected) 
+              features on the correlation circles for all datasets. "),
+            p("- Loadings: coefficients for the (selected) features for each dataset,
+              by ascending order. Default is showing the first 25 entities for each block, on the first component."),
+            p("- Networks: similarity networks computed on selected components factors. 
+              It only shows the between table correlation, not the intra-table correlaction!"),
             p("- CircosPlot: only available for sparse analyses. 
-                Similarity networks computed on selected components factors. It only shows the between table correlation, not the intra-table correlaction!"),
+                Similarity networks computed on selected components factors. 
+              It only shows the between table correlation, not the intra-table correlaction!"),
             p("- CimPlot: only available for sparse analyses. 
                 For each component, shows the heatmap of selected features for all tables."),
             
@@ -96,25 +122,34 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
                   solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
                   div(      
                     h4(tags$span("Parameters set up:", style = "color:orange")),
-                    p("You can choose which omics data you want to analyze together. It is required to have selected at least two to run an analysis."),
-                    p("As of now, rflomics only allows you to run an analysis on filtered tables, taking into account differential analysis performed previously.
-            You can choose which contrast you want to take the DE genes from. You can select multiple ones (defaults select all the contrasts) 
+                    p("You can choose which omics data you want to analyze together.
+                      It is required to have selected at least two to run an analysis."),
+                    p("As of now, rflomics only allows you to run an analysis on filtered tables, 
+                      taking into account differential analysis performed previously.
+            You can choose which contrast you want to take the DE genes from. 
+            You can select multiple ones (defaults select all the contrasts) 
               and choose to perform the analysis on the union or intersection of the DE lists."),
             p("RNASeq data, given in the form of counts, will be processed using limma::voom transformation. 
-              If you have indicated a batch effect when loading your data, it will be corrected in all datatables using limma::removebatcheffect before running MOFA."),
+              If you have indicated a batch effect when loading your data,
+              it will be corrected in all datatables using limma::removebatcheffect before running MOFA."),
             
             h4(tags$span("Outputs:", style = "color:orange")),
-            p("- Data Overview: shows how many samples and omic features are left per table after applying all filters. These are the data on which MOFA is performed."),
-            p("- Factors correlation: shows the correlation between factors. It is essential that the factors are decorrelated between each other. If there is a correlation >0.5 in absolute value, 
+            p("- Data Overview: shows how many samples and omic features are left per table after applying all filters. 
+              These are the data on which MOFA is performed."),
+            p("- Factors correlation: shows the correlation between factors. 
+              It is essential that the factors are decorrelated between each other. 
+              If there is a correlation >0.5 in absolute value, 
               the results of the analysis cannot be trusted."),
             p("- Explained variance: two graphs are displayed in this section. 
             The first graph is showing the total explained variance per omic table. 
               The second one is a detailed version, showing the percentage of explained variance per feature per omic data."), 
             # The percentage of explained variance cannot be compared between views."),
             p("- Weights plot: displays the features weights, for selected factors, for each omic. 
-              You can scale the weights by checking the \"scale weight\" box. This will ensure weights are comprised between -1 and 1."),
+              You can scale the weights by checking the \"scale weight\" box. 
+              This will ensure weights are comprised between -1 and 1."),
             p("- Weights table: table of weights per selected factors."),
-            p("- Heatmap: shows the data for the selected number of features, per factor and per omic. Original data is displayed by default. 
+            p("- Heatmap: shows the data for the selected number of features, per factor and per omic. 
+              Original data is displayed by default. 
               You can use the denoise option to show the reconstruction using factors and weights computed by MOFA2. 
               The annotation parameter is used to place a color annotation on the sample, based on a metadata feature." ),
                   ))
@@ -218,15 +253,10 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
     })
     names(list.SE) <- input$selectData
     
-    MAE2Integrate <- RflomicsMAE(experiments = MultiAssayExperiment::ExperimentList(list.SE), 
+    MAE2Integrate <- RflomicsMAE(experiments = ExperimentList(list.SE), 
                                  colData     = colData(session$userData$FlomicsMultiAssay),
                                  sampleMap   = sampleMap(session$userData$FlomicsMultiAssay),
                                  metadata    = metadata(session$userData$FlomicsMultiAssay))
-    
-    # MAE2Integrate <- MultiAssayExperiment(experiments = list.SE,
-    #                                       colData     = colData(session$userData$FlomicsMultiAssay),
-    #                                       sampleMap   = sampleMap(session$userData$FlomicsMultiAssay),
-    #                                       metadata    = metadata(session$userData$FlomicsMultiAssay))
     
     box(title = "", width = 12, status = "warning",
         renderPlot(Datasets_overview_plot(MAE2Integrate, 
@@ -256,8 +286,8 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
       names(tab) <- c("samples", set)
       return(tab)
     }) |> 
-      purrr::reduce(dplyr::full_join, by = "samples") |> 
-      dplyr::mutate(sum = rowSums(dplyr::across(2:(length(MAE.red)+1)), na.rm = TRUE))
+      reduce(full_join, by = "samples") |> 
+      mutate(sum = rowSums(across(2:(length(MAE.red)+1)), na.rm = TRUE))
     
     # if no common samples or no 100% overlapping
     if (length(unique(samples.mat$sum)) != 1) {
@@ -305,7 +335,8 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
     
     if (length(lowNbVarTab) != 0) {
       showModal(modalDialog(title = "ERROR: ", 
-                            paste0("number of variables is lower than 5 in this(these) table(s): ", lowNbVarTab)))
+                            paste0("number of variables is lower than 5 in this(these) table(s): ",
+                                   lowNbVarTab)))
     }
     validate({ 
       need(length(lowNbVarTab) == 0, "") 
@@ -329,20 +360,25 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
     
     if (is.null(local.rea.values$preparedObject)) return()
     
-    box(title = span(tagList(icon("sliders"), "  ", "Settings")), width = 12, status = "warning",
+    box(title = span(tagList(icon("sliders"), "  ", "Settings")), 
+        width = 12, status = "warning",
         switch(method,
                "mixOmics" = {
                  
                  # set param in interface
                  list(
                    
-                   column(12, checkboxInput(inputId = session$ns("scale_views"), label = "Scale Datasets",
+                   column(12, checkboxInput(inputId = session$ns("scale_views"), 
+                                            label = "Scale Datasets",
                                             value = TRUE, width = NULL)),
-                   column(12, checkboxInput(inputId = session$ns("MO_sparsity"), label = "Sparse analysis", 
+                   column(12, checkboxInput(inputId = session$ns("MO_sparsity"), 
+                                            label = "Sparse analysis", 
                                             value = FALSE, width = NULL)),
-                   column(12, numericInput(inputId = session$ns("MO_ncomp"), label = "Components", 
+                   column(12, numericInput(inputId = session$ns("MO_ncomp"), 
+                                           label = "Components", 
                                            value = 5, min = 1, max = 20)),
-                   column(12, numericInput(inputId = session$ns("MO_cases_to_try"), label = "Tuning cases",
+                   column(12, numericInput(inputId = session$ns("MO_cases_to_try"), 
+                                           label = "Tuning cases",
                                            value = 5, min = 1, max = 100)),
                    column(12,
                           checkboxGroupInput(
@@ -362,11 +398,13 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
                                       choices  = c(FALSE, TRUE),
                                       selected = TRUE)),
                    column(12,
-                          numericInput(inputId = session$ns("MOFA_numfactor"), label = "Num factors:", 
+                          numericInput(inputId = session$ns("MOFA_numfactor"), 
+                                       label = "Num factors:", 
                                        value = 10, min = 5, max = 15)),
                    
                    column(12,
-                          numericInput(inputId = session$ns("MOFA_maxiter"), label = "Max iteration:", 
+                          numericInput(inputId = session$ns("MOFA_maxiter"), 
+                                       label = "Max iteration:", 
                                        value = 1000, min = 1000, max = 1000))
                  )
                }
@@ -393,10 +431,12 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
       
       # Check selection of response variables (at least one)
       if (is.null(input$MO_selectedResponse)) {
-        showModal(modalDialog(title = "Error message", "To run mixOmics, please select at least one response variable"))
+        showModal(modalDialog(title = "Error message", 
+                              "To run mixOmics, please select at least one response variable"))
       }
       validate({ 
-        need(!is.null(input$MO_selectedResponse), "To run mixOmics, please select at least one response variable") 
+        need(!is.null(input$MO_selectedResponse), 
+             "To run mixOmics, please select at least one response variable") 
       })
     }
     
@@ -447,22 +487,22 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
     
     switch(method,
            "mixOmics" = {
-             mixOmics_Result_View_UI(id = session$ns("mixOmics_res"))
+             .modMixOmicsResultViewUI(id = session$ns("mixOmics_res"))
            },
            "MOFA" = {
-             MOFA_Result_View_UI(id = session$ns("MOFA_res"))
+             .modMOFAResultViewUI(id = session$ns("MOFA_res"))
            }
     )
   })
   
   switch(method,
          "mixOmics" = {
-           callModule(module  = mixOmics_Result_View, id = "mixOmics_res", 
+           callModule(module  = .modMixOmicsResultView, id = "mixOmics_res", 
                       rea.values = rea.values, 
                       local.rea.values = local.rea.values)
          },
          "MOFA" = {
-           callModule(module  = MOFA_Result_View, id = "MOFA_res", 
+           callModule(module  = .modMOFAResultView, id = "MOFA_res", 
                       rea.values = rea.values, 
                       local.rea.values = local.rea.values)
          }
@@ -470,7 +510,12 @@ IntegrationAnalysis_module <- function(input, output, session, rea.values, metho
 }
 
 # ---------- mixOmics results ----------
-mixOmics_Result_View_UI <- function(id){
+
+
+#' @title .modMixOmicsResultViewUI
+#' @keywords internal
+#' @noRd
+.modMixOmicsResultViewUI <- function(id){
   
   #name space for id
   ns <- NS(id)
@@ -481,7 +526,13 @@ mixOmics_Result_View_UI <- function(id){
   )
 }
 
-mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.values){
+#' @title .modMixOmicsResultView
+#' @importFrom DT renderDataTable datatable
+#' @importFrom mixOmics plotIndiv plotVar plotLoadings network cimDiablo
+#' @keywords internal
+#' @noRd
+.modMixOmicsResultView <- function(input, output, session, rea.values, 
+                                   local.rea.values){
   
   ## Output results
   output$resultsUI <- renderUI({
@@ -500,7 +551,7 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
             tabsetPanel(
               # ---- Tab panel Overview ----
               tabPanel("Overview",
-                       column(6 , DT::renderDataTable({
+                       column(6 , renderDataTable({
                          
                          if (is.list(Data_res$X)) {
                            # block.plsda or block.splsda
@@ -524,7 +575,7 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
                            }
                          }
                          
-                         t(df) %>% DT::datatable()
+                         t(df) %>% datatable()
                          
                        })),
                        
@@ -556,10 +607,10 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
                        column(11 , renderPlot(
                          
                          suppressWarnings(
-                           mixOmics::plotIndiv(Data_res, 
-                                               comp = c(input[[paste0(Response, "ind_comp_choice_1")]], input[[paste0(Response, "ind_comp_choice_2")]]),
-                                               ellipse = input[[paste0(Response, "ellipse_choice")]],
-                                               legend = TRUE))))
+                           plotIndiv(Data_res, 
+                                     comp = c(input[[paste0(Response, "ind_comp_choice_1")]], input[[paste0(Response, "ind_comp_choice_2")]]),
+                                     ellipse = input[[paste0(Response, "ellipse_choice")]],
+                                     legend = TRUE))))
               ),
               # ---- Tab panel Features ----
               tabPanel("Features",
@@ -577,10 +628,10 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
                                            value = 2, step = 1)
                        ),
                        column(11 , renderPlot(
-                         mixOmics::plotVar(Data_res, 
-                                           comp = c(input[[paste0(Response, "var_comp_choice_1")]], input[[paste0(Response, "var_comp_choice_2")]]),
-                                           overlap = input$overlap,
-                                           legend = TRUE)))
+                         plotVar(Data_res, 
+                                 comp = c(input[[paste0(Response, "var_comp_choice_1")]], input[[paste0(Response, "var_comp_choice_2")]]),
+                                 overlap = input$overlap,
+                                 legend = TRUE)))
               ),     
               # ---- Tab panel Loadings ----
               tabPanel("Loadings",
@@ -596,9 +647,9 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
                                            max =  ifelse(is.list(Data_res$X), max(sapply(Data_res$X, ncol)), ncol(Data_res$X)),
                                            value = 25, step = 1),
                        ),
-                       column(11 , renderPlot(mixOmics::plotLoadings(Data_res, 
-                                                                     comp = input[[paste0(Response, "Load_comp_choice")]],
-                                                                     ndisplay = input[[paste0(Response, "Load_ndisplay")]])))
+                       column(11 , renderPlot(plotLoadings(Data_res, 
+                                                           comp = input[[paste0(Response, "Load_comp_choice")]],
+                                                           ndisplay = input[[paste0(Response, "Load_ndisplay")]])))
               ),     
               # ---- Tab panel Network ----
               tabPanel("Networks",
@@ -610,7 +661,7 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
                        column(11 ,
                               renderUI({
                                 outN <- .doNotPlot(mixOmics::network(mat = Data_res,
-                                                                     blocks = 1:length(setting$selectData),
+                                                                     blocks = seq_len(length(setting$selectData)),
                                                                      cutoff = input[[paste0(Response, "Network_cutoff")]],
                                                                      shape.node = rep("rectangle", length(setting$selectData))))
                                 
@@ -620,7 +671,7 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
                                   renderPlot(
                                     .doNotSpeak(
                                       mixOmics::network(mat = Data_res,
-                                                        blocks = 1:length(setting$selectData),
+                                                        blocks = seq_len(length(setting$selectData)),
                                                         cutoff = input[[paste0(Response, "Network_cutoff")]],
                                                         shape.node = rep("rectangle", length(setting$selectData)))
                                     ))
@@ -629,39 +680,6 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
                               })
                               
                        )
-              ),
-              # ---- Tab  Panel CircosPlot & cimPlot ----
-              tabPanel("CircosPlot",
-                       if (is(Data_res, "block.splsda") || is(Data_res, "block.plsda")) {
-                         tagList(
-                           fluidRow(
-                             column(1, numericInput(inputId = session$ns(paste0(Response, "Circos_cutoff")),
-                                                    label = "Cutoff:",
-                                                    min = 0,
-                                                    max =  1,
-                                                    value = 0.9, step = 0.05))),
-                           fluidRow(
-                             column(11, 
-                                    
-                                    renderUI({
-                                      out <- .doNotPlot(mixOmics::circosPlot(Data_res, cutoff = input[[paste0(Response, "Circos_cutoff")]]))
-                                      
-                                      if (is(out, "simpleWarning")) {
-                                        renderText({out$message})
-                                      } else {
-                                        renderPlot(
-                                          .doNotSpeak(
-                                            mixOmics::circosPlot(Data_res, cutoff = input[[paste0(Response, "Circos_cutoff")]])
-                                          )
-                                        )
-                                      }
-                                      
-                                    })
-                                    
-                             ))) # column # fluidrow
-                       } else {
-                         renderText({print("This plot is only available for multi-block discriminant analysis results.")})
-                       }
               ),
               tabPanel("CimPlot",
                        if (is(Data_res, "block.splsda")) {
@@ -674,10 +692,10 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
                                                value = 1, step = 1)),
                            column(12, 
                                   
-                                  renderPlot(mixOmics::cimDiablo(Data_res, 
-                                                                 legend.position = "bottomleft",
-                                                                 size.legend = 0.8,
-                                                                 comp = input[[paste0(Response, "cimComp")]])))
+                                  renderPlot(cimDiablo(Data_res, 
+                                                       legend.position = "bottomleft",
+                                                       size.legend = 0.8,
+                                                       comp = input[[paste0(Response, "cimComp")]])))
                          )
                        }else{
                          renderText({print("This plot is only available for sparse multi-block discriminant analysis results.")})
@@ -692,7 +710,10 @@ mixOmics_Result_View <- function(input, output, session, rea.values, local.rea.v
 }
 
 # ---------- MOFA results ----------
-MOFA_Result_View_UI <- function(id){
+#' @title .modMOFAResultViewUI
+#' @keywords internal
+#' @noRd
+.modMOFAResultViewUI <- function(id){
   
   #name space for id
   ns <- NS(id)
@@ -703,7 +724,16 @@ MOFA_Result_View_UI <- function(id){
   )
 }
 
-MOFA_Result_View <- function(input, output, session, rea.values, local.rea.values){
+#' @title .modMOFAResultView
+#' @importFrom MOFA2 plot_data_overview plot_factor_cor plot_variance_explained
+#' plot_weights views_names plot_factor get_dimensions plot_data_heatmap
+#' @importFrom ggplot2 ggtitle
+#' @importFrom DT renderDataTable datatable
+#' @importFrom dplyr select
+#' @importFrom grid grid.draw
+#' @keywords internal
+#' @noRd
+.modMOFAResultView <- function(input, output, session, rea.values, local.rea.values){
   
   output$resultsUI <- renderUI({
     
@@ -749,7 +779,7 @@ MOFA_Result_View <- function(input, output, session, rea.values, local.rea.value
                                            label = 'Factors:',
                                            min = 1, 
                                            max = resMOFA@dimensions$K, 
-                                           value = 1:2, step = 1)
+                                           value = c(1,2), step = 1)
                      ),
                      column(2, numericInput(inputId = session$ns("nfeat_choice_WeightsPlot"),
                                             label = "Features:",
@@ -767,28 +797,30 @@ MOFA_Result_View <- function(input, output, session, rea.values, local.rea.value
                             renderPlot({
                               
                               ggplot_list <- list()
-                              ggplot_list <- lapply(min(input$WeightsPlot_Factors_select):max(input$WeightsPlot_Factors_select), FUN = function(i) {
-                                
-                                res_inter <- list()
-                                res_inter <- lapply(views_names(resMOFA), FUN = function(vname) {
+                              ggplot_list <- lapply(
+                                seq(min(input$WeightsPlot_Factors_select),max(input$WeightsPlot_Factors_select)), 
+                                FUN = function(i) {
                                   
-                                  res_inter[[length(res_inter) + 1]] <- plot_weights(resMOFA,
-                                                                                     view = vname,
-                                                                                     factors = i,
-                                                                                     nfeatures = input$nfeat_choice_WeightsPlot,
-                                                                                     scale = input$scale_choice_WeightsPlot) 
-                                  res_inter[[length(res_inter)]] <- res_inter[[length(res_inter)]] + 
-                                    ggtitle(paste0(vname, " - Factor ", i))
+                                  res_inter <- list()
+                                  res_inter <- lapply(views_names(resMOFA), FUN = function(vname) {
+                                    
+                                    res_inter[[length(res_inter) + 1]] <- plot_weights(resMOFA,
+                                                                                       view = vname,
+                                                                                       factors = i,
+                                                                                       nfeatures = input$nfeat_choice_WeightsPlot,
+                                                                                       scale = input$scale_choice_WeightsPlot) 
+                                    res_inter[[length(res_inter)]] <- res_inter[[length(res_inter)]] + 
+                                      ggtitle(paste0(vname, " - Factor ", i))
+                                    
+                                    return(res_inter)
+                                  })
                                   
-                                  return(res_inter)
+                                  return(unlist(res_inter, recursive = FALSE))
                                 })
-                                
-                                return(unlist(res_inter, recursive = FALSE))
-                              })
                               ggplot_list <- unlist(ggplot_list, recursive = FALSE)
                               
                               ggpubr::ggarrange(plotlist = ggplot_list,
-                                                ncol = length(MOFA2::views_names(resMOFA)),
+                                                ncol = length(views_names(resMOFA)),
                                                 nrow = (max(input$WeightsPlot_Factors_select) - min(input$WeightsPlot_Factors_select) + 1))
                               
                             }, execOnResize = TRUE)
@@ -805,20 +837,22 @@ MOFA_Result_View <- function(input, output, session, rea.values, local.rea.value
                                             label = 'Factors:',
                                             min = 1, 
                                             max = resMOFA@dimensions$K,  
-                                            value = 1:2, step = 1)) 
+                                            value = c(1,2), step = 1)) 
                    ),
                    fluidRow(
                      column(11, 
-                            DT::renderDataTable({
-                              resTable <- get_weights(resMOFA, views = "all", factors = min(input$Factors_select_MOFA):max(input$Factors_select_MOFA),
+                            renderDataTable({
+                              resTable <- get_weights(resMOFA, 
+                                                      views = "all", 
+                                                      factors = seq(min(input$Factors_select_MOFA), max(input$Factors_select_MOFA)),
                                                       abs = FALSE, scale = FALSE, as.data.frame = TRUE)
                               
-                              resTable %>% DT::datatable(extensions = 'Buttons',
-                                                         options = list(dom = 'lfrtipB',
-                                                                        rownames = FALSE,
-                                                                        pageLength = 10,
-                                                                        buttons = c('csv', 'excel'),
-                                                                        lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All"))))
+                              datatable(resTable, extensions = 'Buttons',
+                                        options = list(dom = 'lfrtipB',
+                                                       rownames = FALSE,
+                                                       pageLength = 10,
+                                                       buttons = c('csv', 'excel'),
+                                                       lengthMenu = list(c(10,25,50,-1), c(10,25,50,"All"))))
                             }, server = FALSE))
                    )),
           # ---- Tab panel Factor Plots ----
@@ -828,24 +862,24 @@ MOFA_Result_View <- function(input, output, session, rea.values, local.rea.value
                      column(2, sliderInput(inputId = session$ns("factors_choices_MOFA"),
                                            label = 'Factors:',
                                            min = 1, 
-                                           max = resMOFA@dimensions$K, # pas forcement l'input, MOFA peut decider d'en enlever. 
-                                           value = 1:2, step = 1)),
+                                           max = resMOFA@dimensions$K, 
+                                           value = c(1,2), step = 1)),
                      column(2, radioButtons(inputId = session$ns("color_by_MOFA"),
                                             label = "Color:",
                                             choices = c('none', 
-                                                        colnames(resMOFA@samples_metadata %>% dplyr::select(!c(sample, group)))),
+                                                        colnames(resMOFA@samples_metadata %>% select(!c(sample, group)))),
                                             selected = "none")
                      ),                           
                      column(2, radioButtons(inputId = session$ns("shape_by_MOFA"),
                                             label = "Shape:",
                                             choices = c('none', 
-                                                        colnames(resMOFA@samples_metadata %>% dplyr::select(!c(sample, group)))),
+                                                        colnames(resMOFA@samples_metadata %>% select(!c(sample, group)))),
                                             selected = "none")
                      ),                                  
                      column(2, radioButtons(inputId = session$ns("group_by_MOFA"),
                                             label = "Group by:",
                                             choices = c('none', 
-                                                        colnames(resMOFA@samples_metadata %>% dplyr::select(!c(sample, group)))),
+                                                        colnames(resMOFA@samples_metadata %>% select(!c(sample, group)))),
                                             selected = "none")
                      ),                           
                      column(1,
@@ -871,7 +905,7 @@ MOFA_Result_View <- function(input, output, session, rea.values, local.rea.value
                               
                               
                               plot_factor(resMOFA,
-                                          factors = min(input$factors_choices_MOFA):max(input$factors_choices_MOFA), 
+                                          factors = seq(min(input$factors_choices_MOFA),max(input$factors_choices_MOFA)), 
                                           color_by = color_by_par,
                                           group_by = group_by_par, 
                                           shape_by = shape_by_par,
@@ -891,12 +925,12 @@ MOFA_Result_View <- function(input, output, session, rea.values, local.rea.value
                    
                    renderTable({
                      
-                     factors   <- MOFA2::get_factors(resMOFA)
+                     factors   <- get_factors(resMOFA)
                      ExpDesign <- resMOFA@samples_metadata
                      ExpDesign$group  <- NULL 
                      ExpDesign$sample <- NULL
                      
-                     res_aov <- lapply(1:ncol(ExpDesign), FUN = function(i){
+                     res_aov <- lapply(seq_len(ncol(ExpDesign)), FUN = function(i){
                        aov1 <- aov(factors$group1  ~ ExpDesign[,i])
                        sapply(summary(aov1), FUN = function(list_res) list_res[["Pr(>F)"]][[1]])
                      })
@@ -935,14 +969,15 @@ MOFA_Result_View <- function(input, output, session, rea.values, local.rea.value
                                             value = 50, # default in MOFA function.
                      )),
                      column(1,
-                            checkboxInput(inputId = session$ns("denoise_choice_heatmap_MOFA"), label = "Denoise", value = FALSE, width = NULL)
+                            checkboxInput(inputId = session$ns("denoise_choice_heatmap_MOFA"), 
+                                          label = "Denoise", value = FALSE, width = NULL)
                      ),
                      column(1,),
                      column(2, radioButtons(inputId = session$ns("annot_samples_MOFA"),
                                             label = "Annotation:",
                                             choices = c('none', 
                                                         colnames(resMOFA@samples_metadata %>% 
-                                                                   dplyr::select(!c(sample, group)))),
+                                                                   select(!c(sample, group)))),
                                             selected = "none"))
                      
                    ),
@@ -965,7 +1000,7 @@ MOFA_Result_View <- function(input, output, session, rea.values, local.rea.value
                                                                features = input$nfeat_choice_heatmap_MOFA,
                                                                denoise = input$denoise_choice_heatmap_MOFA,
                                                                annotation_samples = annot_samples_values)
-                              grid::grid.draw(res_heatmap)
+                              grid.draw(res_heatmap)
                             }))
                    ) # fluidrow heatmap
           ), # tabpanel heatmap
@@ -1016,7 +1051,7 @@ MOFA_Result_View <- function(input, output, session, rea.values, local.rea.value
                                                  returnName = FALSE,
                                                  closeOnClick = FALSE)),
                      ),
-                     column(2,  lapply(1:length(views_names(resMOFA)), function(i) {
+                     column(2,  lapply(seq_len(length(views_names(resMOFA))), function(i) {
                        selectInput(inputId = session$ns(paste0("colors_", views_names(resMOFA)[i])),
                                    label = views_names(resMOFA)[i],
                                    choices = colorPal_choices,
