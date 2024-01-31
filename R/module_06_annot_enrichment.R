@@ -980,53 +980,7 @@
   
 }
 
-# ---- Comparison between enrichment results ----
-
-#' @title .modCompEnrichmentUI
-#' @keywords internal
-#' @noRd
-.modCompEnrichmentUI <- function(id){
-  
-  #name space for id
-  ns <- NS(id)
-  
-  htmltools::tagList(  
-    fluidRow(
-      column(width = 12,
-             uiOutput(ns("CompResults"))
-      )
-    ))
-}
-
-#' @title .modCompEnrichment
-#' @importFrom RCurl url.exists
-#' @importFrom grid unit
-#' @keywords internal
-#' @noRd
-.modCompEnrichment <- function(input, output, session, dataset, database, 
-                               listSource, rea.values, local.rea.values){
-  
-  ns <- session$ns
-  
-  switch(listSource,
-         "DiffExpEnrichAnal" = {
-           title <- "Enrichment from differential expression analysis"
-           fromAnnot <- "diffAnnot"
-           from <- "DiffExp"
-         },
-         "CoExpEnrichAnal" = {
-           title <- "Enrichment from  co-expression analysis"
-           fromAnnot <- "coExpAnnot"
-           from <- "CoExp"
-         }
-  )
-  
-  
-}
-
-
-
-# ---- check run enrichement analysis execution ----
+# ---- check run enrichement analysis execution (à adapter) ----
 #' @title .checkRunORAExecution
 #' @noRd
 #' @keywords internal
