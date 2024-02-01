@@ -437,7 +437,7 @@
     
     local.rea.values$runintegration <- FALSE
     
-    # check setting
+    # check settings
     if (method == "mixOmics") {
       
       # Check selection of response variables (at least one)
@@ -550,8 +550,9 @@
     
     if (isFALSE(local.rea.values$runintegration)) return()
     
-    setting <- getMixOmicsSettings(session$userData$FlomicsMultiAssay)
-    lapply(setting$selectedResponse, function(Response) { 
+    settings <- getMixOmicsSettings(session$userData$FlomicsMultiAssay)
+    
+    lapply(settings$selectedResponse, function(Response) { 
       
       Data_res <- getMixOmics(session$userData$FlomicsMultiAssay, 
                               response = Response)
@@ -570,7 +571,7 @@
                            df <- t(sapply(Data_res$X, dim))
                            colnames(df) <- c("Ind", "Features")
                            
-                           if (setting$sparsity) {
+                           if (settings$sparsity) {
                              df <- cbind(df, do.call("rbind", Data_res$keepX))
                              colnames(df)[!colnames(df) %in% c("Ind", "Features")] <-
                                paste("Comp", seq_len(length(Data_res$keepX[[1]])))
@@ -580,7 +581,7 @@
                            # plsda or splsda
                            df <-  data.frame("Ind" = nrow(Data_res$X),
                                              "Features" = ncol(Data_res$X))
-                           if (setting$sparsity) {
+                           if (settings$sparsity) {
                              df <- cbind(df, do.call("cbind", as.list(Data_res$keepX)))
                              colnames(df)[!colnames(df) %in% c("Ind", "Features")] <- 
                                paste("Comp", seq_len(length(Data_res$keepX)))
@@ -608,12 +609,12 @@
                               numericInput(inputId = session$ns(paste0(Response, "ind_comp_choice_1")),
                                            label = "Comp x:",
                                            min = 1,
-                                           max =  setting$ncomp,
+                                           max =  settings$ncomp,
                                            value = 1, step = 1),
                               numericInput(inputId = session$ns(paste0(Response, "ind_comp_choice_2")),
                                            label = "Comp y:",
                                            min = 1,
-                                           max =  setting$ncomp,
+                                           max =  settings$ncomp,
                                            value = 2, step = 1)
                        ),
                        column(11 , renderPlot(
@@ -633,12 +634,12 @@
                               numericInput(inputId = session$ns(paste0(Response, "var_comp_choice_1")),
                                            label = "Comp x:",
                                            min = 1,
-                                           max =  setting$ncomp,
+                                           max =  settings$ncomp,
                                            value = 1, step = 1),
                               numericInput(inputId = session$ns(paste0(Response, "var_comp_choice_2")),
                                            label = "Comp y:",
                                            min = 1,
-                                           max =  setting$ncomp,
+                                           max =  settings$ncomp,
                                            value = 2, step = 1)
                        ),
                        column(11 , renderPlot(
@@ -654,7 +655,7 @@
                               numericInput(inputId = session$ns(paste0(Response, "Load_comp_choice")),
                                            label = "Component:",
                                            min = 1,
-                                           max =  setting$ncomp,
+                                           max =  settings$ncomp,
                                            value = 1, step = 1),
                               numericInput(inputId = session$ns(paste0(Response, "Load_ndisplay")),
                                            label = "Number of features to display:",
@@ -678,9 +679,9 @@
                        column(11 ,
                               renderUI({
                                 outN <- .doNotPlot(mixOmics::network(mat = Data_res,
-                                                                     blocks = seq_len(length(setting$selectData)),
+                                                                     blocks = seq_len(length(settings$selectData)),
                                                                      cutoff = input[[paste0(Response, "Network_cutoff")]],
-                                                                     shape.node = rep("rectangle", length(setting$selectData))))
+                                                                     shape.node = rep("rectangle", length(settings$selectData))))
                                 
                                 if (is(outN, "simpleError")){
                                   renderText({outN$message})
@@ -688,9 +689,9 @@
                                   renderPlot(
                                     .doNotSpeak(
                                       mixOmics::network(mat = Data_res,
-                                                        blocks = seq_len(length(setting$selectData)),
+                                                        blocks = seq_len(length(settings$selectData)),
                                                         cutoff = input[[paste0(Response, "Network_cutoff")]],
-                                                        shape.node = rep("rectangle", length(setting$selectData)))
+                                                        shape.node = rep("rectangle", length(settings$selectData)))
                                     ))
                                 }
                                 
@@ -705,7 +706,7 @@
                                   numericInput(inputId = session$ns(paste0(Response, "cimComp")),
                                                label = "Comp",
                                                min = 1,
-                                               max = setting$ncomp,
+                                               max = settings$ncomp,
                                                value = 1, step = 1)),
                            column(12, 
                                   
