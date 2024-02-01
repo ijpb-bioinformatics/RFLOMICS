@@ -247,7 +247,7 @@ methods::setGeneric(
 methods::setGeneric(
   name = "integrationWrapper",
   def  = function(object,
-                  omicsToIntegrate = names(object),
+                  omicsNames = names(object),
                   rnaSeq_transfo = "limma (voom)",
                   selOpt = rep(list("DE"), length(omicsToIntegrate)),
                   type = rep(list("union"), length(selOpt)),
@@ -271,7 +271,7 @@ methods::setGeneric(
 methods::setGeneric(
   name = "prepareForIntegration",
   def  = function(object,
-                  omicsToIntegrate = NULL,
+                  omicsNames = NULL,
                   rnaSeq_transfo = "limma (voom)",
                   variableLists = NULL,
                   group = NULL,
