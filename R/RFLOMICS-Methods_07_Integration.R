@@ -191,7 +191,7 @@ methods::setMethod(
     if (commonVarNames > 0) {
       if (cmd) cat("#   => Duplicated features names across tables, changing names for integration\n")
       
-      dupTab <- data.frame("dataTable" = rep(names(object), time = sapply(object@ExperimentList, nrow)),
+      dupTab <- data.frame("dataTable" = rep(names(object), time = vapply(object@ExperimentList, nrow, c(1))), 
                            "rownames" = unlist(rownames(object)), 
                            "dup" = duplicated(unlist(rownames(object))) + 
                              duplicated(unlist(rownames(object)), fromLast = TRUE))
@@ -580,7 +580,7 @@ methods::setMethod(
                         onlyResults = TRUE){
     
     toreturn <- metadata(object)[["IntegrationAnalysis"]][["mixOmics"]]
-
+    
     if (is.null(toreturn)) {
       return(toreturn)
     }
