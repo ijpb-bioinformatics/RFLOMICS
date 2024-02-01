@@ -99,15 +99,15 @@ generateExample <- function(processing   = TRUE,
   contrastList <- rbind(getPossibleContrasts(MAE, 
                                              formula = formulae[[1]], 
                                              typeContrast = "simple",
-                                             returnTable = TRUE)[1:3,],
+                                             returnTable = TRUE)[c(1,2,3),],
                         getPossibleContrasts(MAE, 
                                              formula = formulae[[1]], 
                                              typeContrast = "averaged",
-                                             returnTable = TRUE)[1:3,],
+                                             returnTable = TRUE)[c(1,2,3),],
                         getPossibleContrasts(MAE, 
                                              formula = formulae[[1]], 
                                              typeContrast = "interaction",
-                                             returnTable = TRUE)[1:3,])
+                                             returnTable = TRUE)[c(1,2,3),])
   
   if (processing) {
     MAE <- MAE |>
