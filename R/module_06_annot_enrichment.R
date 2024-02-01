@@ -365,9 +365,10 @@
 }
 
 #' @title .modRunEnrichment
-#' @importFrom RCurl url.exists
 #' @keywords internal
 #' @importFrom DT renderDataTable datatable
+#' @importFrom grid unit
+#' @importFrom RCurl url.exists
 #' @noRd
 .modRunEnrichment <- function(input, output, session, dataset, database, 
                               listSource, rea.values, input2, local.rea.values){
