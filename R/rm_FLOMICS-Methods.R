@@ -194,6 +194,10 @@ methods::setMethod(f         = "CheckExpDesignCompleteness",
 #' @description This function plot overview of loaded datasets aligned per sample 
 #' (n=number of entities (genes/metabolites/proteins); k=number of samples)
 #' @param object An object of class \link{RflomicsMAE-class}
+#' @importFrom dplyr full_join mutate arrange select
+#' @importFrom ggplot2 ggplot aes element_blank element_text geom_col theme 
+#' labs scale_y_continuous geom_tile
+#' 
 #' @exportMethod Datasets_overview_plot
 #' @return plot
 
@@ -216,12 +220,12 @@ methods::setMethod(f         = "Datasets_overview_plot",
                      nb_entities <- lapply(object@ExperimentList, function(SE){ dim(SE)[1] }) %>% unlist()
                      
                      data <- data.frame(nb_entities = nb_entities, assay = names(nb_entities)) %>%
-                       dplyr::full_join(data.frame(MultiAssayExperiment::sampleMap(object)), by="assay") %>%
-                       dplyr::mutate(y.axis = paste0(assay, "\n", "n=", nb_entities)) %>% dplyr::arrange(primary)
+                       full_join(data.frame(sampleMap(object)), by="assay") %>%
+                       mutate(y.axis = paste0(assay, "\n", "n=", nb_entities)) %>% arrange(primary)
                      
                      data$primary <- factor(data$primary, levels = levels(Groups$samples)) 
                      
-                     nb_entities_ord <- dplyr::select(data, y.axis, nb_entities) %>% unique() %>% dplyr::arrange(desc(nb_entities))
+                     nb_entities_ord <- select(data, y.axis, nb_entities) %>% unique() %>% arrange(desc(nb_entities))
                      nb_entities_ord$nb_entities <- log(nb_entities_ord$nb_entities)
                      tmp.vec <- c(0)
                      breaks  <- vector()
@@ -232,23 +236,23 @@ methods::setMethod(f         = "Datasets_overview_plot",
                      
                      switch (as.character(real.size),
                              "TRUE"  = {
-                               p <- ggplot2::ggplot(data, ggplot2::aes(x=primary, y=log(nb_entities))) +
-                                 ggplot2::geom_col(ggplot2::aes(fill = y.axis)) + 
-                                 ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(), 
-                                                panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), 
-                                                axis.text.x = ggplot2::element_text(angle = 90, hjust = 1), legend.position="none",
-                                                axis.text.y = ggplot2::element_text(hjust = 0)) +  
-                                 ggplot2::labs(x=paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")"), y="") +
-                                 ggplot2::scale_y_continuous(breaks = (breaks), labels = nb_entities_ord$y.axis)
+                               p <- ggplot(data, aes(x=primary, y=log(nb_entities))) +
+                                 geom_col(aes(fill = y.axis)) + 
+                                 theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+                                                panel.background = element_blank(), axis.ticks = element_blank(), 
+                                                axis.text.x = element_text(angle = 90, hjust = 1), legend.position="none",
+                                                axis.text.y =  element_text(hjust = 0)) +  
+                                  labs(x=paste0("Samples (k=", length(unique(sampleMap(object)$primary)), ")"), y="") +
+                                 scale_y_continuous(breaks = (breaks), labels = nb_entities_ord$y.axis)
                                
                              },
                              "FALSE" = {
-                               p <- ggplot2::ggplot(data, ggplot2::aes(x=primary, y=y.axis)) +
-                                 ggplot2::geom_tile(ggplot2::aes(fill = y.axis), colour = "grey50") +
-                                 ggplot2::theme(panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-                                                panel.background = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(), legend.position="none",
-                                                axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
-                                 ggplot2::labs(x=paste0("Samples (k=", length(unique(MultiAssayExperiment::sampleMap(object)$primary)), ")"), y="")
+                               p <-  ggplot(data,  aes(x=primary, y=y.axis)) +
+                                  geom_tile( aes(fill = y.axis), colour = "grey50") +
+                                  theme(panel.grid.major =  element_blank(), panel.grid.minor = element_blank(),
+                                                panel.background =  element_blank(), axis.ticks = element_blank(), legend.position="none",
+                                                axis.text.x =  element_text(angle = 90, hjust = 1)) +
+                                 labs(x=paste0("Samples (k=", length(unique(sampleMap(object)$primary)), ")"), y="")
                              }
                      )
                      return(p)
