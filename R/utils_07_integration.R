@@ -72,11 +72,11 @@
 #'
 
 .rnaseqRBETransform <- function(object, 
-                               SEname, 
-                               correctBatch = FALSE, 
-                               transformation = "limma (voom)",
-                               variableNames = NULL,
-                               cmd = FALSE
+                                SEname, 
+                                correctBatch = FALSE, 
+                                transformation = "limma (voom)",
+                                variableNames = NULL,
+                                cmd = FALSE
 ){
   
   if (!is(object, "RflomicsMAE")) stop("object is not a RflomicsMAE")
@@ -128,12 +128,12 @@
 #'
 
 .rbeTransform <- function(object,
-                         SEname,
-                         correctBatch = TRUE,
-                         variableNames = NULL,
-                         type = "union",
-                         choice = "DE",
-                         cmd = FALSE){
+                          SEname,
+                          correctBatch = TRUE,
+                          variableNames = NULL,
+                          type = "union",
+                          choice = "DE",
+                          cmd = FALSE){
   
   omicsDat <- object[[SEname]]
   omicsDat@metadata[["correction_batch"]]             <- correctBatch
@@ -306,10 +306,10 @@ MOFA_cor_network <- function(resMOFA,
   
   features_metadata <- do.call(rbind, lapply(seq_len(length(get_weights(resMOFA))), 
                                              FUN = function(i){
-    mat_weights <- data.frame(get_weights(resMOFA, scale = TRUE)[[i]])
-    mat_weights$Table <- names(get_weights(resMOFA))[i]
-    return(mat_weights)
-  }))
+                                               mat_weights <- data.frame(get_weights(resMOFA, scale = TRUE)[[i]])
+                                               mat_weights$Table <- names(get_weights(resMOFA))[i]
+                                               return(mat_weights)
+                                             }))
   
   factor_selected <- paste0("Factor", factor_choice)
   
@@ -332,10 +332,14 @@ MOFA_cor_network <- function(resMOFA,
     })
     names(omics_colors) <- unique(feature_filtered$Table)
     
-    feature_filtered <- feature_filtered %>% group_by(Table) %>%
+    feature_filtered <- feature_filtered %>% 
+      group_by(Table) %>%
       mutate(Color = cut(F_selected, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)))
-    feature_filtered$Color2 <- sapply(seq_len(nrow(feature_filtered)), 
-                                      FUN = function(i) omics_colors[[feature_filtered$Table[i]]][as.numeric(feature_filtered$Color[i])])
+    feature_filtered$Color2 <- unlist(lapply(
+      seq_len(nrow(feature_filtered)), 
+      FUN = function(i){
+        omics_colors[[feature_filtered$Table[i]]][as.numeric(feature_filtered$Color[i])]
+      }))
     
     # Layout
     layout_arg <- tolower(network_layout)
@@ -344,13 +348,14 @@ MOFA_cor_network <- function(resMOFA,
     }
     
     # Network main graph
-    cor_display <- cor_mat[rownames(cor_mat) %in% feature_filtered$EntityName, colnames(cor_mat) %in% feature_filtered$EntityName]
+    cor_display <- cor_mat[rownames(cor_mat) %in% feature_filtered$EntityName, 
+                           colnames(cor_mat) %in% feature_filtered$EntityName]
     
     if (any(abs(cor_display[upper.tri(cor_display)]) >= abs_min_cor_network)) {
       qgraph_plot <- qgraph(cor_display, minimum = abs_min_cor_network, 
                             cut = 0,
                             shape = "rectangle", labels = rownames(cor_display), vsize2 = 2, 
-                            vsize = sapply(rownames(cor_display), nchar)*1.1,  
+                            vsize = vapply(rownames(cor_display), nchar, c(1))*1.1,  
                             layout = layout_arg,
                             esize = 2,
                             groups = features_metadata$Table[match(rownames(cor_display), rownames(features_metadata))],
