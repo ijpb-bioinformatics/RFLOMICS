@@ -1,8 +1,16 @@
 ##########################################
 # module 07 : integration analyses
 ##########################################
+#' @importFrom htmltools span tagList p div a h4 h5 hr tags br HTML
+#' @importFrom shinyBS popify
+#' @importFrom shinydashboard box tabBox updateTabItems menuItem menuItemOutput 
+#' tabItem renderMenu tabItems sidebarMenu menuSubItem
+#' @rawNamespace import(shiny, except = renderDataTable)
+#' @importFrom shinyWidgets pickerInput materialSwitch
+#' @importFrom colourpicker colourInput
+#' @importFrom magrittr "%>%"
 
-
+# ---- Integration module ----
 #' @title .modIntegrationAnalysisUI
 #' @keywords internal
 #' @noRd
@@ -183,7 +191,7 @@
     )
   })
   
-  # select methode of variable reduction
+  # select method of variable reduction
   output$selectVariablesUI <- renderUI({
     
     # for each dataset select 
@@ -195,7 +203,7 @@
       SelectTypeChoices        <- c('none', 'diff')
       names(SelectTypeChoices) <- c('none', 'from diff analysis')
       
-      if(is.null(ValidContrasts)) SelectTypeChoices <- SelectTypeChoices[c(1)]
+      if (is.null(ValidContrasts)) SelectTypeChoices <- SelectTypeChoices[c(1)]
       
       box(title = set, width = 4, background = "green",
           # choose the method to select variable : none, diff, other?
@@ -207,17 +215,21 @@
           # if methode == diff -> dispay list of contrasts
           conditionalPanel(
             
-            condition = paste0("input[\'", session$ns(paste0("selectmethode", set)), "\'] == \'diff\'"),
+            condition = paste0("input[\'", 
+                               session$ns(paste0("selectmethode", set)), 
+                               "\'] == \'diff\'"),
             
             pickerInput(
               inputId  = session$ns(paste0("selectContrast", set)),
               label    = "Select contrasts",
               choices  = ListNames.diff,
-              options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+              options  = list(`actions-box` = TRUE, size = 10, 
+                              `selected-text-format` = "count > 3"),
               multiple = TRUE,
               selected = ListNames.diff),
             
-            radioButtons(inputId = session$ns(paste0("unionORintersect", set)), label = NULL, 
+            radioButtons(inputId = session$ns(paste0("unionORintersect", set)), 
+                         label = NULL, 
                          choiceNames = c("union", "intersection"), 
                          choiceValues = c(TRUE, FALSE),
                          selected = TRUE, inline = TRUE)
@@ -264,7 +276,7 @@
     )
   })
   
-  # befor go to MOFA integration
+  # before MOFA integration
   observeEvent(input$run_prep, {
     
     # check number of selected dataset min = 2
@@ -276,7 +288,7 @@
     })
     
     local.rea.values$runintegration <- FALSE
-    session$userData$FlomicsMultiAssay@metadata[[method]] <- NULL # TODO multi-omics
+    session$userData$FlomicsMultiAssay@metadata[[method]] <- NULL 
     MAE.red <- session$userData$FlomicsMultiAssay[,, input$selectData]
     
     # check sample covering
@@ -287,27 +299,28 @@
       return(tab)
     }) |> 
       reduce(full_join, by = "samples") |> 
-      mutate(sum = rowSums(across(2:(length(MAE.red)+1)), na.rm = TRUE))
+      mutate(sum = rowSums(across(seq(2,(length(MAE.red) + 1))), na.rm = TRUE))
     
     # if no common samples or no 100% overlapping
     if (length(unique(samples.mat$sum)) != 1) {
       
       if (!any(unique(samples.mat$sum) != length(MAE.red))) {
-        showModal(modalDialog(title = "ERROR: ", "No commun samples between tables."))
+        showModal(modalDialog(
+          title = "ERROR: ", "No common samples between tables."))
       }
       validate({
         need(any(unique(samples.mat$sum) != length(MAE.red)), "") 
       })
       
-      if(method == "mixOmics")
+      if (method == "mixOmics")
         showModal(modalDialog(title = "WARNING: ", 
                               "mixOmics recommends using the same samples across all tables. 
                               These samples will be removed from the other tables."))
-      # what samples will be removed ?
     }
     else if (unique(samples.mat$sum) != length(MAE.red)) {
       
-      showModal(modalDialog(title = "ERROR: ", "No commun samples between tables."))
+      showModal(
+        modalDialog(title = "ERROR: ", "No commun samples between tables."))
       
       validate({
         need(unique(samples.mat$sum) == length(MAE.red), "") 
@@ -346,7 +359,7 @@
     print(paste0("# 8- prepare data for integration with ", method))
     local.rea.values$preparedObject <-  prepareForIntegration(
       object           = MAE.red,
-      omicsToIntegrate = input$selectData,
+      omicsNames       = input$selectData,
       rnaSeq_transfo   = input$RNAseqTransfo,
       variableLists    = variableLists,
       method           = method,
@@ -417,7 +430,7 @@
   observeEvent(input$run_integration, {
     
     #---- progress bar ----#
-    progress <- shiny::Progress$new()
+    progress <- Progress$new()
     progress$set(message = "Run integration", value = 0)
     on.exit(progress$close())
     progress$inc(1/10, detail = "in progress...")
@@ -584,7 +597,7 @@
               tabPanel("Explained Variance",
                        column(12, renderPlot({
                          plotMOVarExp(session$userData$FlomicsMultiAssay, 
-                                        selectedResponse = Response)
+                                      selectedResponse = Response)
                        })),
                        
               ),
@@ -608,14 +621,16 @@
                          
                          suppressWarnings(
                            plotIndiv(Data_res, 
-                                     comp = c(input[[paste0(Response, "ind_comp_choice_1")]], input[[paste0(Response, "ind_comp_choice_2")]]),
+                                     comp = c(input[[paste0(Response, "ind_comp_choice_1")]], 
+                                              input[[paste0(Response, "ind_comp_choice_2")]]),
                                      ellipse = input[[paste0(Response, "ellipse_choice")]],
                                      legend = TRUE))))
               ),
               # ---- Tab panel Features ----
               tabPanel("Features",
                        column(1,
-                              checkboxInput(inputId = session$ns("overlap"), label = "Overlap", value = FALSE, width = NULL),
+                              checkboxInput(inputId = session$ns("overlap"), 
+                                            label = "Overlap", value = FALSE, width = NULL),
                               numericInput(inputId = session$ns(paste0(Response, "var_comp_choice_1")),
                                            label = "Comp x:",
                                            min = 1,
@@ -629,7 +644,8 @@
                        ),
                        column(11 , renderPlot(
                          plotVar(Data_res, 
-                                 comp = c(input[[paste0(Response, "var_comp_choice_1")]], input[[paste0(Response, "var_comp_choice_2")]]),
+                                 comp = c(input[[paste0(Response, "var_comp_choice_1")]], 
+                                          input[[paste0(Response, "var_comp_choice_2")]]),
                                  overlap = input$overlap,
                                  legend = TRUE)))
               ),     
@@ -644,7 +660,9 @@
                               numericInput(inputId = session$ns(paste0(Response, "Load_ndisplay")),
                                            label = "Number of features to display:",
                                            min = 1,
-                                           max =  ifelse(is.list(Data_res$X), max(sapply(Data_res$X, ncol)), ncol(Data_res$X)),
+                                           max =  ifelse(is.list(Data_res$X), 
+                                                         max(sapply(Data_res$X, ncol)), 
+                                                         ncol(Data_res$X)),
                                            value = 25, step = 1),
                        ),
                        column(11 , renderPlot(plotLoadings(Data_res, 
@@ -731,6 +749,7 @@
 #' @importFrom DT renderDataTable datatable
 #' @importFrom dplyr select
 #' @importFrom grid grid.draw
+#' @importFrom ggpubr ggarrange
 #' @keywords internal
 #' @noRd
 .modMOFAResultView <- function(input, output, session, rea.values, local.rea.values){
@@ -819,9 +838,9 @@
                                 })
                               ggplot_list <- unlist(ggplot_list, recursive = FALSE)
                               
-                              ggpubr::ggarrange(plotlist = ggplot_list,
-                                                ncol = length(views_names(resMOFA)),
-                                                nrow = (max(input$WeightsPlot_Factors_select) - min(input$WeightsPlot_Factors_select) + 1))
+                              ggarrange(plotlist = ggplot_list,
+                                        ncol = length(views_names(resMOFA)),
+                                        nrow = (max(input$WeightsPlot_Factors_select) - min(input$WeightsPlot_Factors_select) + 1))
                               
                             }, execOnResize = TRUE)
                             

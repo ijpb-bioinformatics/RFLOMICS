@@ -4,7 +4,7 @@
 #' @title integrationWrapper
 #' @description This function executes all the steps to ensure data integration from a \link{RflomicsMAE} object produced by FLOMICS.
 #' @param object An object of class \link{RflomicsMAE}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
-#' @param omicsToIntegrate vector of characters strings, referring to the names of the filtered table in 'object@ExperimentList'.
+#' @param omicsNames vector of characters strings, referring to the names of the filtered table in 'object@ExperimentList'.
 #' @param rnaSeq_transfo character string, only supports 'limma (voom)' for now. Transformation of the rnaSeq data from counts to continuous data.
 #' @param choice character. If choice is set to 'DE', filters the object to take only the DE omics using differential analysis results stored in object. If choice is different than DE, no filtering is applied.
 #' @param variableLists list of variables to keep per dataset.
@@ -18,9 +18,9 @@ methods::setMethod(
   f = "integrationWrapper",
   signature = "RflomicsMAE",
   definition = function(object,
-                        omicsToIntegrate = names(object),
+                        omicsNames = names(object),
                         rnaSeq_transfo = "limma (voom)",
-                        selOpt = rep(list("DE"), length(omicsToIntegrate)),
+                        selOpt = rep(list("DE"), length(omicsNames)),
                         type = rep(list("union"), length(selOpt)),
                         group = NULL,
                         method = "MOFA",
@@ -39,7 +39,7 @@ methods::setMethod(
     
     
     # TODO should do the intersection, not stopping everything !!
-    if (any(!omicsToIntegrate %in% names(object))) {
+    if (any(!omicsNames %in% names(object))) {
       stop("There are omics to integrate that are not names from the object")
     }
     
@@ -52,7 +52,7 @@ methods::setMethod(
     variableLists <- lapply(objectfilt@ExperimentList, names)
     
     preparedObject <- prepareForIntegration(object = object,
-                                            omicsToIntegrate = omicsToIntegrate,
+                                            omicsNames = omicsNames,
                                             rnaSeq_transfo = rnaSeq_transfo,
                                             variableLists = variableLists,
                                             group = group,
@@ -85,7 +85,7 @@ methods::setMethod(
 #' It checks for batch effect to correct them prior to the integration.
 #' It also transforms RNASeq counts data into continuous data. This is the first step into the integration.
 #' @param object An object of class \link{RflomicsMAE}. It is expected the MAE object is produced by rflomics previous analyses, as it relies on their results.
-#' @param omicsToIntegrate vector of characters strings, referring to the names of the filtered table in 'object@ExperimentList'.
+#' @param omicsNames vector of characters strings, referring to the names of the filtered table in 'object@ExperimentList'.
 #' @param rnaSeq_transfo character string, only supports 'limma (voom)' for now. Transformation of the rnaSeq data from counts to continuous data.
 #' @param variableLists list of variables to keep per dataset.
 #' @param type one of union or intersection.
@@ -98,7 +98,7 @@ methods::setMethod(
   f = "prepareForIntegration",
   signature = "RflomicsMAE",
   definition = function(object,
-                        omicsToIntegrate = NULL,
+                        omicsNames = NULL,
                         rnaSeq_transfo = "limma (voom)",
                         variableLists = NULL,
                         group = NULL,
@@ -113,10 +113,10 @@ methods::setMethod(
                      "MOFA+" = "MOFA"
     )
     
-    # if no omicsToIntegrate we keep all SE
-    if (is.null(omicsToIntegrate)) omicsToIntegrate <- names(object)
+    # if no omicsNames we keep all SE
+    if (is.null(omicsNames)) omicsNames <- names(object)
     
-    object <- object[, , omicsToIntegrate]
+    object <- object[, , omicsNames]
     
     # Checking for batch effects
     correct_batch <- FALSE
@@ -130,7 +130,7 @@ methods::setMethod(
     # Filter DE entities
     # TODO : add a possibility of choice for keeping every entity (small tables)
     # TODO change for lapply
-    for (SEname in omicsToIntegrate) {
+    for (SEname in omicsNames) {
       SEobject <- object[[SEname]]
       omicsType <- getOmicsTypes(SEobject)
       
