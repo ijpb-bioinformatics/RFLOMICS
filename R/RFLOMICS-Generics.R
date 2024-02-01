@@ -2,6 +2,7 @@
 #' @import SummarizedExperiment
 
 # ---- RflomicsMAE and RflomicsSE getteurs ----
+
 methods::setGeneric(
   name = "getExperimentNames",
   def  = function(object){standardGeneric("getExperimentNames")}
@@ -36,6 +37,19 @@ methods::setGeneric(
                   CPM_Cutoff = 5, ... ){standardGeneric("FilterLowAbundance")}
 )
 
+
+methods::setGeneric(
+  name = "runDataProcessing",
+  def  = function(object, ... ){standardGeneric("runDataProcessing")}
+)
+
+
+methods::setGeneric(
+  name = "runSampleFiltering",
+  def  = function(object, ... ){standardGeneric("runSampleFiltering")}
+)
+
+
 # ---- Diff Analysis ----
 
 methods::setGeneric(
@@ -57,17 +71,6 @@ methods::setGeneric(
   def  = function(object, 
                   Adj.pvalue.cutoff = NULL, 
                   logFC.cutoff = NULL, ... ){standardGeneric("FilterDiffAnalysis")}
-)
-
-methods::setGeneric(
-  name = "runDataProcessing",
-  def  = function(object, ... ){standardGeneric("runDataProcessing")}
-)
-
-
-methods::setGeneric(
-  name = "runSampleFiltering",
-  def  = function(object, ... ){standardGeneric("runSampleFiltering")}
 )
 
 # ---- PCA ----
