@@ -1,5 +1,12 @@
-######################## COMMON METHODS FOR OMICS INTEGRATION ########################
-#' @title Integration of omics data using RFLOMICS
+######################## METHODS FOR OMICS INTEGRATION ########################
+
+# ---- Wrapper ---- 
+#' @title Wrapper for integration of omics data using RFLOMICS
+#' @description This function executes all the steps to ensure data integration 
+#' from a \link{RflomicsMAE} object produced by FLOMICS. It encapsulates the
+#' three other functions: \link{filterFeatures}, \link{prepareForIntegration} 
+#' and \link{runOmicsIntegration} otherwise necessary 
+#' to complete the integration.
 #' @param object An object of class \link{RflomicsMAE}. 
 #' It is expected the MAE object is produced by rflomics previous analyses, 
 #' as it relies on their results.
@@ -7,20 +14,18 @@
 #' referring to the names of the filtered table in 'object@ExperimentList'.
 #' @param rnaSeq_transfo character string, only supports 'limma (voom)' for now. 
 #' Transformation of the rnaSeq data from counts to continuous data.
-
-
-
-#' @description This function executes all the steps to ensure data integration 
-#' from a \link{RflomicsMAE} object produced by FLOMICS.
 #' @param variableLists list of variables to keep per dataset.
 #' #' @param choice character. If choice is set to 'DE', 
 #' filters the object to take only the DE omics using differential analysis 
-#' results stored in object. If choice is different than DE, no filtering is applied.
+#' results stored in object. 
+#' If choice is different than DE, no filtering is applied.
 #' @param type one of union or intersection.
 #' @param group Not implemented yet in the interface. Useful for MOFA2 run.
-#' @return a RflomicsMAE object.
+#' @return a RflomicsMAE object. According to the method (MOFA or mixOmics), 
+#' the correct slot of metadata has been filled with the results and the 
+#' settings. 
 #' @export
-#' @rdname runOmicsIntegration
+#' @rdname integrationWrapper
 #' @exportMethod integrationWrapper
 methods::setMethod(
   f = "integrationWrapper",
@@ -88,11 +93,21 @@ methods::setMethod(
 )
 
 # ---- prepareForIntegration ----
+#' @title Preparation step for integration
 #' @description This function transforms a RflomicsMAE produced by rflomics 
 #' into an untrained MOFA objects or a list to use for mixOmics. 
 #' It checks for batch effect to correct them prior to the integration.
 #' It also transforms RNASeq counts data into continuous data. 
-#' This is the first step into the integration.
+#' This is the second step into the integration. It is usually preceded by
+#' \link{filterFeatures} to extract the correct variables,
+#'  and followed by \link{runOmicsIntegration}.
+#' @param object An object of class \link{RflomicsMAE}. 
+#' It is expected the MAE object is produced by rflomics previous analyses, 
+#' as it relies on their results.
+#' @param omicsNames vector of characters strings, 
+#' referring to the names of the filtered table in 'object@ExperimentList'.
+#' @param rnaSeq_transfo character string, only supports 'limma (voom)' for now. 
+#' Transformation of the rnaSeq data from counts to continuous data.
 #' @param variableLists list of variables to keep per dataset.
 #' @param type one of union or intersection.
 #' @param group Not implemented yet in the interface. Useful for MOFA2 run.
@@ -101,6 +116,16 @@ methods::setMethod(
 #' @exportMethod prepareForIntegration
 #' @rdname prepareForIntegration
 #' @importFrom MOFA2 create_mofa
+#' @examples
+#' MAEtest <- generateExample(annotation = FALSE, coexp = FALSE, integration = FALSE)
+#' mofaObj <- prepareForIntegration(MAEtest, omicsNames = c("protetest", "metatest"), 
+#' variableLists = rownames(MAEtest),
+#' method = "MOFA")
+#'
+#' mixOmicsList <- prepareForIntegration(MAEtest, omicsNames = c("protetest", "metatest"), 
+#' variableLists = rownames(MAEtest),
+#' method = "mixOmics")
+#' 
 methods::setMethod(
   f = "prepareForIntegration",
   signature = "RflomicsMAE",
@@ -173,7 +198,7 @@ methods::setMethod(
       dupTab <- dupTab[dupTab$dup == 1,]
       omicstochange <- unique(dupTab$dataTable)
       
-      res <- lapply(1:length(object), FUN = function(i){
+      res <- lapply(seq_len(length(object)), FUN = function(i){
         SE.object <- object[[names(object)[i]]]
         if (names(object)[i] %in% omicstochange) {
           rownames(SE.object) <- paste(rownames(SE.object), i, sep = ".")
@@ -189,8 +214,9 @@ methods::setMethod(
     }
     
     # keep only columns corresponding to design factors (remove samples and groups)
-    #groups <- object@colData$groups
-    object@colData <- object@colData[c(bioFactors(object), batchFactors(object), metaFactors(object))]
+    object@colData <- object@colData[c(bioFactors(object), 
+                                       batchFactors(object),
+                                       metaFactors(object))]
     
     if (method == "MOFA") {    
       if (silent) {
@@ -221,7 +247,8 @@ methods::setMethod(
       )
       
       MixOmicsObject$blocks <- lapply(MixOmicsObject$blocks, 
-                                      FUN = function(mat) mat[match(rownames(mat), rownames(MixOmicsObject$metadata)), ])
+                                      FUN = function(mat) 
+                                        mat[match(rownames(mat), rownames(MixOmicsObject$metadata)), ])
       
       return(MixOmicsObject)
     }
@@ -232,7 +259,13 @@ methods::setMethod(
 
 
 # ---- Select features to  keep for integration (MAE) ----
-
+# 
+#' @title Feature selection in a Rflomics MAE
+#' @description This function selects all the features to keep according to 
+#' user's choices on each omic data. 
+#' @param object An object of class \link{RflomicsMAE}. 
+#' It is expected the MAE object is produced by rflomics previous analyses, 
+#' as it relies on their results.
 #' @param selOpt list of vectors. Preferred named list with names corresponding to 
 #' the names of the experimentList in the object. For each Experiment, gives
 #' the option for the filtering: either 'all', 'DE', 'none', or a specific name of a 
@@ -336,18 +369,37 @@ methods::setMethod(
   })
 
 
+# ---- Run Omics integration ----
 
 #' @title runOmicsIntegration
+#' @description Runs the integration according to the selected method (MOFA or
+#' mixOmics) and the settings given by the user. Requires to have the correct
+#' entry format in preparedObject before running. 
 #' @param object An object of class \link{RflomicsMAE}. 
 #' It is expected the MAE object is produced by rflomics previous analyses, 
 #' as it relies on their results.
 #' @param preparedObject An untrained MOFA object or a list of dataset.
+#' Usually a result of \link{prepareForIntegration}. 
 #' @param type one of union or intersection.
 #' @param group Not implemented yet in the interface. Useful for MOFA2 run.
-#' @return a RflomicsMAE object.
+#' @param ... not in use at the moment
+#' @return a RflomicsMAE object with the correct metadata slot filled with the
+#' results and the settings.
 #' @export
 #' @rdname runOmicsIntegration
 #' @exportMethod runOmicsIntegration
+#' @examples 
+#' MAEtest <- generateExample(annotation = FALSE, coexp = FALSE, integration = FALSE)
+#' 
+#' # Create the appropriate object using prepareForIntegration:
+#' mofaObj <- prepareForIntegration(MAEtest, omicsNames = c("protetest", "metatest"), 
+#' variableLists = rownames(MAEtest),
+#' method = "MOFA")
+#' 
+#' # Perform integration:
+#' MAEtest <- runOmicsIntegration(MAEtest, mofaObj, method = "MOFA")
+#' MOFA2::plot_variance_explained(getMOFA(MAEtest))
+#' 
 methods::setMethod(
   f = "runOmicsIntegration",
   signature = "RflomicsMAE",
@@ -473,19 +525,46 @@ methods::setMethod(
 
 # ----  Get a particular multi-omics result ----
 #
-#' @title Get a particular multi-omics result
-#'
+#' @title Get a particular multi-omics result or settings.
+#' @description
+#' These methods are used to directly access the results of multi-omics analyses
+#' or their settings, usually stored in the metadata of the \link{RflomicsMAE}
+#' object. Setters are also available.
+#' 
+#' @param object An object of class \link{RflomicsMAE}. 
+#' It is expected the MAE object is produced by rflomics previous analyses, 
+#' as it relies on their results.
 #' @param response a character giving the response variable to access specifically. 
 #' @param onlyResults default return only the MixOmics or MOFA2 results. 
 #' If you want to access all information of the integration, 
-#' set onlyResuts to FALSE. 
+#' set onlyResults to FALSE. 
 #' In MixOmics case, works only when response is specified.
-#' @return in getMixOmics, if response is NULL, 
+#' @return 
+#' For getters: 
+#' in getMixOmics, if response is NULL, 
 #' then all the mixOmics results are returned. 
 #' Otherwise, it gives the particular mixOmics result. 
+#' For MOFA, returns the untrained object and the trained object as a list. 
+#' 
+#' For setters: always returns a \link{RflomicsMAE} object.
+#' 
 #' @exportMethod getMixOmics
-#' @rdname runOmicsIntegration
+#' @rdname methods-for-integration
 #' @export
+#' @examples
+#' 
+#' MAEtest <- generateExample(annotation = FALSE, coexp = FALSE)
+#' 
+#' # Access mixOmics results:
+#' getMixOmics(MAEtest, response = "temperature")
+#' getMixOmicsSettings(MAEtest)
+#' mixOmics::plotIndiv(getMixOmics(MAEtest, response = "imbibition"))
+#' 
+#' # Access MOFA2 results:
+#' getMOFA(MAEtest)
+#' getMOFASettings(MAEtest)
+#' MOFA2::plot_variance_explained(getMOFA(MAEtest))
+#' 
 methods::setGeneric(
   name = "getMixOmics",
   def  = function(object, 
@@ -501,8 +580,7 @@ methods::setMethod(
                         onlyResults = TRUE){
     
     toreturn <- metadata(object)[["IntegrationAnalysis"]][["mixOmics"]]
-    
-    ### ???
+
     if (is.null(toreturn)) {
       return(toreturn)
     }
@@ -518,7 +596,7 @@ methods::setMethod(
   })
 
 
-#' @rdname runOmicsIntegration
+#' @rdname methods-for-integration
 #' @exportMethod getMOFA
 methods::setGeneric(
   name = "getMOFA",
@@ -534,10 +612,40 @@ methods::setMethod(
     
     return(toreturn)
   })
+# ---- Get integration setting ----
+
+#' @exportMethod getMOFASettings
+#' @rdname methods-for-integration
+methods::setGeneric(
+  name = "getMOFASettings",
+  def  = function(object){standardGeneric("getMOFASettings")}
+)
+
+methods::setMethod(
+  f = "getMOFASettings",
+  signature = "RflomicsMAE",
+  definition = function(object) {
+    return(getMOFA(object, onlyResults = FALSE)$settings)
+  })
+
+#' @exportMethod getMixOmicsSettings
+#' @rdname methods-for-integration
+
+methods::setGeneric(
+  name = "getMixOmicsSettings",
+  def  = function(object){standardGeneric("getMixOmicsSettings")}
+)
+
+methods::setMethod(
+  f = "getMixOmicsSettings",
+  signature = "RflomicsMAE",
+  definition = function(object) {
+    return(metadata(object)[["IntegrationAnalysis"]][["mixOmics"]][["settings"]])
+  })
 
 # ---- Set Integration Results ----
 
-#' @rdname runOmicsIntegration
+#' @rdname methods-for-integration
 #' @exportMethod setMOFA
 methods::setGeneric(
   name = "setMOFA",
@@ -552,7 +660,7 @@ methods::setMethod(
     return(object)
   })
 
-#' @rdname runOmicsIntegration
+#' @rdname methods-for-integration
 #' @exportMethod setMixOmics
 methods::setGeneric(
   name = "setMixOmics",
@@ -568,45 +676,7 @@ methods::setMethod(
   })
 
 
-# ---- Get integration setting ----
 
-#' @title Get MOFA analysis setting parameters
-#'
-#' @param object a RflomicsMAE object (produced by Flomics).
-#' @return List of differential analysis setting parameters
-#' @exportMethod getMOFASettings
-#' @rdname runOmicsIntegration
-methods::setGeneric(
-  name = "getMOFASettings",
-  def  = function(object){standardGeneric("getMOFASettings")}
-)
-
-methods::setMethod(
-  f = "getMOFASettings",
-  signature = "RflomicsMAE",
-  definition = function(object) {
-    return(getMOFA(object)$settings)
-  })
-
-
-
-#' @title Get mixOmics analysis setting parameters
-#'
-#' @return List of differential analysis setting parameters
-#' @exportMethod getMixOmicsSettings
-#' @rdname runOmicsIntegration
-
-methods::setGeneric(
-  name = "getMixOmicsSettings",
-  def  = function(object){standardGeneric("getMixOmicsSettings")}
-)
-
-methods::setMethod(
-  f = "getMixOmicsSettings",
-  signature = "RflomicsMAE",
-  definition = function(object) {
-    return(metadata(object)[["IntegrationAnalysis"]][["mixOmics"]][["settings"]])
-  })
 
 
 

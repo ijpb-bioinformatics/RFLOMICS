@@ -198,9 +198,9 @@ generateExample <- function(processing   = TRUE,
   if (integration) {
     
     MAE <- integrationWrapper(MAE, 
-                              omicsToIntegrate = c("RNAtest", "metatest", "protetest"))
+                              omicsNames = c("RNAtest", "metatest", "protetest"))
     MAE <- integrationWrapper(MAE, 
-                              omicsToIntegrate = c("RNAtest", "metatest", "protetest"),
+                              omicsNames = c("RNAtest", "metatest", "protetest"),
                               method = "mixOmics")
   }
   
