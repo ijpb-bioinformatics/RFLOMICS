@@ -288,7 +288,6 @@
     })
     
     local.rea.values$runintegration <- FALSE
-    session$userData$FlomicsMultiAssay@metadata[[method]] <- NULL 
     MAE.red <- session$userData$FlomicsMultiAssay[,, input$selectData]
     
     # check sample covering
@@ -437,7 +436,6 @@
     #----------------------#
     
     local.rea.values$runintegration <- FALSE
-    session$userData$FlomicsMultiAssay@metadata[[method]] <- NULL
     
     # check setting
     if (method == "mixOmics") {
@@ -555,7 +553,8 @@
     setting <- getMixOmicsSettings(session$userData$FlomicsMultiAssay)
     lapply(setting$selectedResponse, function(Response) { 
       
-      Data_res <- getMixOmics(session$userData$FlomicsMultiAssay, response = Response)
+      Data_res <- getMixOmics(session$userData$FlomicsMultiAssay, 
+                              response = Response)
       fluidRow(
         
         box(width = 12, solidHeader = TRUE, collapsible = TRUE, 
@@ -924,7 +923,8 @@
                               
                               
                               plot_factor(resMOFA,
-                                          factors = seq(min(input$factors_choices_MOFA),max(input$factors_choices_MOFA)), 
+                                          factors = seq(min(input$factors_choices_MOFA),
+                                                        max(input$factors_choices_MOFA)), 
                                           color_by = color_by_par,
                                           group_by = group_by_par, 
                                           shape_by = shape_by_par,
