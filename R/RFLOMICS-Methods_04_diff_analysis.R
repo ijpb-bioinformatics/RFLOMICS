@@ -627,23 +627,32 @@ methods::setMethod(f          = "boxplot.DE.plot",
 
 #' @title Get DE matrix
 #'
-#' @param object a SE object (produced by Flomics)
+#' @param object a RflomicsSE object
 #' @return a matrix of results from the differential analyses.
-#' @export
-#' @rdname getDE
+#' @exportMethod getDEMatrix
+#' @rdname getDEMatrix
 #'
-getDEMatrix <- function(object) {
-  if (is(object, "RflomicsSE")) {
-    if (!is.null(object@metadata$DiffExpAnal$mergeDEF)) {
-      object@metadata$DiffExpAnal$mergeDEF
-    } else {
-      stop("There is no DE matrix in this object.")
-    }
-  } else {
-    stop("object is not a RflomicsSE.")
-  }
-}
 
+methods::setMethod(f          = "getDEMatrix",
+                   signature  = "RflomicsSE",
+                   definition = function(object){
+                       if (!is.null(object@metadata$DiffExpAnal$mergeDEF)) {
+                         object@metadata$DiffExpAnal$mergeDEF
+                       } else {
+                         stop("There is no DE matrix in this object.")
+                       }
+                   })
+
+#' @rdname getDEMAtrix
+#' @title getDEMatrix
+#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
+#' @exportMethod getDEMatrix
+
+methods::setMethod(f          = "getDEMatrix",
+                   signature  = "RflomicsMAE",
+                   definition = function(object, SE.name){
+                     getDEMatrix(object = object[[SE.name]])
+                   })
 
 
 #' @param contrast character name (can be a vector of name) for the contrast to select.

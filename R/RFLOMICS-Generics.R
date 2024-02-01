@@ -80,7 +80,10 @@ methods::setGeneric(
   def  = function(object, ... ){standardGeneric("getDEList")}
 )
 
-
+methods::setGeneric(
+  name = "getDEMatrix",
+  def  = function(object, ... ){standardGeneric("getDEMAtrix")}
+)
 
 # ---- PCA ----
 
