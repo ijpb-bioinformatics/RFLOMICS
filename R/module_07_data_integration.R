@@ -186,7 +186,7 @@
                                 selected = rea.values$datasetProcess)
       ),
       column(width = 4,
-             actionButton(session$ns("run_prep"), label = "Let's go ;)")
+             actionButton(session$ns("run_prep"), label = "Run preparation")
       )
     )
   })
@@ -248,9 +248,12 @@
   output$prepareDataUI <- renderUI({
     
     if (length(input$selectData) == 0) return()
-    
+    if (is.null(input$selectData)) return() 
     
     list.SE <- lapply(input$selectData, function(set){
+      
+      if (is.null(input[[paste0("selectmethode", set)]])) return()
+      
       switch(input[[paste0("selectmethode", set)]],
              "diff" = {
                variable.to.keep <- getDE(object = session$userData$FlomicsMultiAssay[[set]], 
@@ -265,15 +268,18 @@
     })
     names(list.SE) <- input$selectData
     
-    MAE2Integrate <- RflomicsMAE(experiments = ExperimentList(list.SE), 
+    if (any(is.null(list.SE))) return()
+    
+    MAE2Integrate <- RflomicsMAE(experiments = lapply(list.SE, SummarizedExperiment), 
                                  colData     = colData(session$userData$FlomicsMultiAssay),
                                  sampleMap   = sampleMap(session$userData$FlomicsMultiAssay),
-                                 metadata    = metadata(session$userData$FlomicsMultiAssay))
-    
+                                 metadata    = metadata(session$userData$FlomicsMultiAssay)) 
+
     box(title = "", width = 12, status = "warning",
         renderPlot(Datasets_overview_plot(MAE2Integrate, 
                                           dataset.list = input$selectData))
     )
+    
   })
   
   # before MOFA integration
