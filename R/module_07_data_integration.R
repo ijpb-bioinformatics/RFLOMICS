@@ -568,7 +568,7 @@
                          
                          if (is.list(Data_res$X)) {
                            # block.plsda or block.splsda
-                           df <- t(sapply(Data_res$X, dim))
+                           df <- t(vapply(Data_res$X, dim, c(1, 1)))
                            colnames(df) <- c("Ind", "Features")
                            
                            if (settings$sparsity) {
@@ -661,7 +661,7 @@
                                            label = "Number of features to display:",
                                            min = 1,
                                            max =  ifelse(is.list(Data_res$X), 
-                                                         max(sapply(Data_res$X, ncol)), 
+                                                         max(vapply(Data_res$X, ncol, c(1))), 
                                                          ncol(Data_res$X)),
                                            value = 25, step = 1),
                        ),
@@ -952,7 +952,7 @@
                      
                      res_aov <- lapply(seq_len(ncol(ExpDesign)), FUN = function(i){
                        aov1 <- aov(factors$group1  ~ ExpDesign[,i])
-                       sapply(summary(aov1), FUN = function(list_res) list_res[["Pr(>F)"]][[1]])
+                       unlist(lapply(summary(aov1), FUN = function(list_res) list_res[["Pr(>F)"]][[1]]))
                      })
                      names(res_aov) <- colnames(ExpDesign)
                      
