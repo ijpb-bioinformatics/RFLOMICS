@@ -169,9 +169,9 @@
 
 #' @title .modEnrichmentDB
 #' @importFrom RCurl url.exists
-#' @keywords internal
 #' @importFrom DT renderDataTable datatable
 #' @importFrom data.table fread
+#' @keywords internal
 #' @noRd
 .modEnrichmentDB <- function(input, output, session, dataset, database, rea.values){
   
@@ -437,8 +437,6 @@
     )
     
     ### lists
-    data.SE <- session$userData$FlomicsMultiAssay[[dataset]]
-    
     ListNames <- switch(listSource,
                         "DiffExpEnrichAnal" = rea.values[[dataset]]$DiffValidContrast$contrastName,
                         "CoExpEnrichAnal"   = rea.values[[dataset]]$CoExpClusterNames)
@@ -465,23 +463,17 @@
   ## display results
   output$summary <- renderUI({
     
-    # if (rea.values[[dataset]][[fromAnnot]] == FALSE ||
-    #     is.null(sumORA(session$userData$FlomicsMultiAssay[[dataset]],
-    #                    from = listSource,
-    #                    database = database)))
-    if (rea.values[[dataset]][[fromAnnot]] == FALSE || 
-        is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]]))
+    if (rea.values[[dataset]][[fromAnnot]] == FALSE ||
+        is.null(sumORA(session$userData$FlomicsMultiAssay[[dataset]],
+                       from     = listSource,
+                       database = database)))
       return()
     
     results <- getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], 
                             listSource, database)
     
-    # session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]]
-    # if (is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]][["summary"]])) 
-    if (is.null(sumORA(session$userData$FlomicsMultiAssay[[dataset]], listSource, database)))  
-      
-      {
-      
+    if (is.null(sumORA(session$userData$FlomicsMultiAssay[[dataset]], 
+                       listSource, database)))  {
       fluidRow(
         box(width = 12, solidHeader = TRUE, collapsible = TRUE,
             collapsed = TRUE, status = "warning", title = title,
@@ -499,9 +491,11 @@
               tabPanel(title = "table",
                        br(),
                        renderDataTable({
-                         datatable(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]][["summary"]],
-                                   rownames = FALSE,
-                                   options = list(pageLength = 6, dom = 'tip'))
+                         datatable(
+                           sumORA(session$userData$FlomicsMultiAssay[[dataset]],
+                                  listSource, database),
+                           rownames = FALSE,
+                           options = list(pageLength = 6, dom = 'tip'))
                        }))
             )
             
@@ -515,7 +509,7 @@
   output$CompResults <- renderUI({
     
     if (rea.values[[dataset]][[fromAnnot]] == FALSE || 
-        is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]][["summary"]])) return()
+        is.null(sumORA(session$userData$FlomicsMultiAssay[[dataset]], listSource, database))) return()
     
     # Possible domains of ontology:
     possDomain <-  unique(unlist(
@@ -541,7 +535,6 @@
       fluidRow(
         column(12,
                renderUI({
-                 
                  outHeatmap <- tryCatch({
                    outHeatmap <-  plotEnrichComp(session$userData$FlomicsMultiAssay[[dataset]],
                                                  from = from, database = database, 
