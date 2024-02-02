@@ -111,7 +111,7 @@ test_that("Coseq on RNAseq equivalence", {
   K = 2:10
   replicates = 2
   iter <-  rep(K, each = replicates)
-  geneList <- opDEList(MAE[["RNAtest"]], operation = merge)
+  geneList <- getDEList(MAE[["RNAtest"]], operation = merge)
   
   param.list = list(model = "normal",
                     GaussianModel = "Gaussian_pk_Lk_Ck",
@@ -238,7 +238,7 @@ test_that("Coseq on RNAseq equivalence", {
 #   # Equivalent pipeline outside (supposed to be equivalent)
 # 
 #   countMat <- data.frame(SummarizedExperiment::assay(MAE[["RNAtest"]])) %>%
-#     dplyr::filter(rownames(.) %in% opDEList(MAE, SE.name = "RNAtest", operation = merge))
+#     dplyr::filter(rownames(.) %in% getDEList(MAE, SE.name = "RNAtest", operation = merge))
 # 
 #   fx <- function(x, seed_arg){
 #     co <- suppressMessages(capture.output(
@@ -278,7 +278,7 @@ test_that("Coseq on Proteomics equivalence", {
   # Parameters for the three analyses
   merge = "union"
   
-  geneList <- opDEList(MAE[["protetest"]], operation = merge)
+  geneList <- getDEList(MAE[["protetest"]], operation = merge)
   
   K = 2:20
   replicates = 2
@@ -393,7 +393,7 @@ test_that("When Median.min.rep doesn't correspond to a rep.ICL.min, an error mes
   K = 2:10
   replicates = 2
   iter <-  rep(K, each = replicates)
-  geneList <- opDEList(MAE[["RNAtest"]], operation = merge)
+  geneList <- getDEList(MAE[["RNAtest"]], operation = merge)
   
   param.list = list(model = "normal",
                     GaussianModel = "Gaussian_pk_Lk_Ck",
@@ -449,7 +449,7 @@ test_that("For a given K, a likelihood equal to 0 is counted as failed job", {
   replicates = 5
   
   iter <-  rep(K, each = replicates)
-  geneList <- opDEList(MAE[["RNAtest"]], operation = merge)
+  geneList <- getDEList(MAE[["RNAtest"]], operation = merge)
   countMat <- SummarizedExperiment::assay(MAE[["RNAtest"]])[geneList,][1:100,]
   
   param.list = list(model = "normal",

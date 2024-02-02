@@ -41,13 +41,13 @@ test_that("Working?", code = {
   
   
   allrownames <- lapply( c("metatest", "protetest"), FUN = function(nam){
-    try_rflomics(opDEList(MAE, SE.name = nam, contrasts = c("H1", "H2"), operation = 'intersection'))
+    try_rflomics(getDEList(MAE, SE.name = nam, contrasts = c("H1", "H2"), operation = 'intersection'))
   })
   names(allrownames) <- c("metatest", "protetest")
   allrownames
   
   allrownames <- lapply( c("metatest", "protetest"), FUN = function(nam){
-    tryCatch(opDEList(MAE, SE.name = nam, contrasts = c("H1", "H2"), operation = 'intersection'), 
+    tryCatch(getDEList(MAE, SE.name = nam, contrasts = c("H1", "H2"), operation = 'intersection'), 
              error = function(e) e, 
              warning = function(w) w)
   })
