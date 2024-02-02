@@ -24,11 +24,11 @@ initExampleMAE <- function(){
                                   "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
   
   RMAE <- createRflomicsMAE(projectName = "Tests", 
-                           omicsData   = omicsData,
-                           omicsNames  = c("RNAtest", "metatest", "protetest"),
-                           omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-                           ExpDesign   = ExpDesign,
-                           factorRef   = factorRef)
+                            omicsData   = omicsData,
+                            omicsNames  = c("RNAtest", "metatest", "protetest"),
+                            omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+                            ExpDesign   = ExpDesign,
+                            factorRef   = factorRef)
   names(RMAE) <- c("RNAtest", "metatest", "protetest")
   
   return(RMAE)  
@@ -56,18 +56,24 @@ singleOmicsExample <- function(omicType = "RNAseq"){
   
   omicsData <- 
     switch(toupper(omicType),
-           "RNASEQ" = { read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
-                                                      "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))},
-           "PROTEOMICS" = {read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
-                                                         "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"))},
-           "METABOLOMICS" = { read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
-                                                            "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))}
+           "RNASEQ" = { 
+             read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+                                           "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
+           },
+           "PROTEOMICS" = {
+             read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+                                           "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"))
+           },
+           "METABOLOMICS" = { 
+             read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+                                           "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
+           }
     )
   
-  RSE <- createRflomicsSE(omicData   = omicsData,
-                         omicType = omicType,
-                         ExpDesign   = ExpDesign,
-                         design   = design)
+  RSE <- createRflomicsSE(omicData  = omicsData,
+                          omicType  = omicType,
+                          ExpDesign = ExpDesign,
+                          design    = design)
   
   return(RSE)  
 }
@@ -146,11 +152,11 @@ generateExample <- function(processing   = TRUE,
   
   if (annotation) {
     df_custom <- vroom(file = paste0(system.file(package = "RFLOMICS"), 
-                                     "/ExamplesFiles/GO_annotations/Arabidopsis_thaliana_Ensembl_55.txt"))
+                                     "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt"))
     MAE <- MAE |> 
       runAnnotationEnrichment(SE.name = "RNAtest", 
                               nameList = getSelectedContrasts(MAE[["RNAtest"]])$tag,
-                              ontology = "custom",
+                              database = "custom",
                               list_args = list(pvalueCutoff = 0.05),
                               col_term = "GO term accession", 
                               col_gene = "Gene stable ID",
@@ -159,7 +165,7 @@ generateExample <- function(processing   = TRUE,
                               annot = df_custom) |>
       runAnnotationEnrichment(SE.name = "protetest", 
                               nameList = getSelectedContrasts(MAE[["protetest"]])$tag,
-                              ontology = "custom",
+                              database = "custom",
                               list_args = list(pvalueCutoff = 0.05),
                               col_term = "GO term accession", 
                               col_gene = "Gene stable ID",
@@ -175,7 +181,7 @@ generateExample <- function(processing   = TRUE,
                                      "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt"))
     MAE <- MAE |> 
       runAnnotationEnrichment(SE.name = "RNAtest", 
-                              ontology = "custom",
+                              database = "custom",
                               from = "coexp",
                               list_args = list(pvalueCutoff = 0.05),
                               col_term = "GO term accession", 
@@ -184,7 +190,7 @@ generateExample <- function(processing   = TRUE,
                               col_domain = "GO domain",
                               annot = df_custom) |>
       runAnnotationEnrichment(SE.name = "protetest", 
-                              ontology = "custom",
+                              database = "custom",
                               from = "coexp",
                               list_args = list(pvalueCutoff = 0.05),
                               col_term = "GO term accession", 

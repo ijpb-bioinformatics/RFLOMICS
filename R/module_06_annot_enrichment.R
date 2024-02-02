@@ -20,47 +20,84 @@
   #name space for id
   ns <- NS(id)
   
-  htmltools::tagList(  
+  tagList(  
     fluidRow(
       box(title = span(tagList(icon("chart-pie"), " ", 
-                               a("ClusterProfiler/", href = "https://bioconductor.org/packages/release/bioc/vignettes/clusterProfiler/inst/doc/clusterProfiler.html"), 
-                               a("Pathview",         href = "https://bioconductor.org/packages/devel/bioc/vignettes/pathview/inst/doc/pathview.pdf"), 
+                               a("ClusterProfiler/", 
+                                 href = "https://bioconductor.org/packages/release/bioc/vignettes/clusterProfiler/inst/doc/clusterProfiler.html"), 
+                               a("Pathview",         
+                                 href = "https://bioconductor.org/packages/devel/bioc/vignettes/pathview/inst/doc/pathview.pdf"), 
                                "   " , 
                                tags$small("(Scroll down for instructions)"))),
           solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
           div(  
-            p("Analyses in this module are conducted using the clusterprofiler R-package. If you have more questions or interest in this package,
-              please check the associated paper or the online vignette at https://yulab-smu.top/biomedical-knowledge-mining-book/index.html."),
+            p("Analyses in this module are conducted using the clusterprofiler R-package. 
+              If you have more questions or interest in this package,
+              please check the associated paper or the online vignette at
+              https://yulab-smu.top/biomedical-knowledge-mining-book/index.html."),
             p(""),
             h4(tags$span("Parameters set up:", style = "color:orange")),
-            p("Choose the lists of genes you want to run the enrichment for. Default option selects all the available lists (contrasts or co-expression clusters)."),
-            p("Then choose the ontology you want to refer to for the analysis. Multiple choices are not allowed. 
+            p("Choose the lists of genes you want to run the enrichment for.
+              Default option selects all the available lists (contrasts or co-expression clusters)."),
+            p("Then choose the ontology you want to refer to for the analysis.
+              Multiple choices are not allowed. 
             If you select custom, you'll have to enter an annotation file with at least two columns : 
-              the names of the entity (same as the rownames of your dataset) and an id for an ontology term (eg: GO:0030198). 
-              It can also contains a column for a more explicit name for the term (eg: extracellular matrix organization) 
+              the names of the entity (same as the rownames of your dataset) and 
+            an id for an ontology term (eg: GO:0030198). 
+              It can also contains a column for a more explicit name for the term 
+            (eg: extracellular matrix organization) 
               and a column for specifying the domain (eg: MF, BP or CC). 
               An enrichment analysis will be ran on each specified domain."),
             p("You will have to specify the names of the columns after validating the annotation file."),
-            p("If you choose GO, the three GO:BP, GO:MF and GO:CC will be analyzed. You can chose to only analyze one of them by selecting the wanted ontology domain).
-              It requires to indicate an R-package for the database, in the form of org.*db. (eg: org.At.tair.db for Arabidopsis thaliana), 
-              and to specify which type of identifier is used in the data (eg: TAIR for arabidopsis)."),
-            p("For KEGG analysis, only four identifiers are possible. Please check if the rownames correspond to one of them (eg: TAIR is also kegg identifiers)."),
-            p("KEGG analysis uses an API to search for pathways online, it requires to have access to an internet connection."),
-            p("Set the adjusted pvalue threshold. Only results below this threshold will be displayed."),
+            p("If you choose GO, the three GO:BP, GO:MF and GO:CC will be analyzed. 
+              You can chose to only analyze one of them by selecting the wanted ontology domain).
+              It requires to indicate an R-package for the database, in the form of org.*db.
+              (eg: org.At.tair.db for Arabidopsis thaliana), 
+              and to specify which type of identifier is used in the data 
+              (eg: TAIR for arabidopsis)."),
+            p("For KEGG analysis, only four identifiers are possible. 
+              Please check if the rownames correspond to one of them
+              (eg: TAIR is also kegg identifiers)."),
+            p("KEGG analysis uses an API to search for pathways online,
+              it requires to have access to an internet connection."),
+            p("Set the adjusted pvalue threshold. 
+              Only results below this threshold will be displayed."),
             
             h4(tags$span("Outputs:", style = "color:orange")),
-            p("For each list, either contrast results or co-expression cluster, multiple table and plots are displayed."),
-            p("- Overview: shows all results for all ontology domain (usefull when multiple domains) for all contrasts or all clusters. The blue line indicates the current results"),
-            p("- Results table: for the current list, all terms that passed the adjusted pvalue threshold, ordered by increasing adjusted pvalue. You can change the domain at the bottom of the table.
-              You can also order the table with the columns or search for a particular expression"),
-            p("- Dotplot: for each domain, shows the 15 (default) first terms by adj. pvalue. You can also change the domain or search for a particular expression. When searching for the expression, 
-              you might want to increase the number of terms to consider (if there is enough that passed the threshold)"),
-            p("- Heatplot: for each domain, shows the 15 (default) first terms and the genes that are both part of the list and the pathway in the form of a heatmap. 
-            For the contrasts lists, colors indicate the log2FC of the gene as found in the differential analysis. You can change the domain and search for a particular expression 
-              (adjusting the number of terms to consider if you want to check further on the list of terms)"),
-            p("- cnetplot: for each domain, shows the 15 (default) first terms and the genes that are both part of the list and the pathway in the form of a network. 
-            As for the heatplot, only the contrasts list have colors, according to the log2FC of each genes.
-              Default only shows the terms labels, you can turn on the genes names as well (it can be unreadable). You can also search for a particular expression."),
+            p("For each list, either contrast results or co-expression cluster,
+              multiple table and plots are displayed."),
+            p("- Overview: shows all results for all ontology domain 
+              (usefull when multiple domains)
+              for all contrasts or all clusters. The blue line
+              indicates the current results"),
+            p("- Results table: for the current list, 
+              all terms that passed the adjusted pvalue threshold, 
+              ordered by increasing adjusted pvalue. You can change the domain 
+              at the bottom of the table.
+              You can also order the table with the columns or search 
+              for a particular expression"),
+            p("- Dotplot: for each domain, shows the 15 (default) 
+              first terms by adj. pvalue. 
+              You can also change the domain or search for a particular expression. 
+              When searching for the expression, 
+              you might want to increase the number of terms to consider 
+              (if there is enough that passed the threshold)"),
+            p("- Heatplot: for each domain, shows the 15 (default) first terms 
+              and the genes that are both part of the list and the pathway 
+              in the form of a heatmap. 
+            For the contrasts lists, colors indicate the log2FC of the gene 
+            as found in the differential analysis.
+            You can change the domain and search for a particular expression 
+              (adjusting the number of terms to consider if you want to check 
+            further on the list of terms)"),
+            p("- cnetplot: for each domain, shows the 15 (default) 
+              first terms and the genes that are both part of the list and 
+              the pathway in the form of a network. 
+            As for the heatplot, only the contrasts list have colors, according 
+            to the log2FC of each genes.
+              Default only shows the terms labels, you can turn on the genes
+            names as well (it can be unreadable). 
+            You can also search for a particular expression."),
           )
       )
     ),
@@ -101,9 +138,9 @@
   })
   
   # SERVEUR
-  shiny::callModule(module = .modEnrichmentDB, id = "GO", dataset = dataset, database = "GO", rea.values)
-  shiny::callModule(module = .modEnrichmentDB, id = "KEGG", dataset = dataset, database = "KEGG", rea.values)
-  shiny::callModule(module = .modEnrichmentDB, id = "custom", dataset = dataset, database = "custom", rea.values)
+  callModule(module = .modEnrichmentDB, id = "GO", dataset = dataset, database = "GO", rea.values)
+  callModule(module = .modEnrichmentDB, id = "KEGG", dataset = dataset, database = "KEGG", rea.values)
+  callModule(module = .modEnrichmentDB, id = "custom", dataset = dataset, database = "custom", rea.values)
   
 }
 
@@ -117,7 +154,7 @@
   #name space for id
   ns <- NS(id)
   
-  htmltools::tagList(  
+  tagList(  
     br(),
     box(title = span(tagList(icon("sliders"), "  ", "Settings")),
         width = 3, status = "warning",
@@ -358,7 +395,7 @@
   #name space for id
   ns <- NS(id)
   
-  htmltools::tagList(
+  tagList(
     uiOutput(ns("setting")),
     uiOutput(ns("summary")),
     uiOutput(ns("AnnotResults"))
@@ -436,10 +473,14 @@
         is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]]))
       return()
     
-    results <- getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], listSource, database)
+    results <- getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], 
+                            listSource, database)
     
     # session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]]
-    if (is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]][["summary"]])) {
+    # if (is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]][["summary"]])) 
+    if (is.null(sumORA(session$userData$FlomicsMultiAssay[[dataset]], listSource, database)))  
+      
+      {
       
       fluidRow(
         box(width = 12, solidHeader = TRUE, collapsible = TRUE,
@@ -533,7 +574,7 @@
     
     #foreach genes list selected (contrast)
     lapply(names(getEnrichRes(dataSE, from = listSource, database = database)), function(listname) {
-      if (length(getEnrichRes(dataSE, from = listSource, database = database, contrast = listname)) != 0) {
+      if (length(getEnrichRes(dataSE, from = listSource, database = database, contrastName = listname)) != 0) {
         if (sum(unlist(sumORA(dataSE, from = listSource, database = database)[-1]), na.rm = TRUE) == 0) {
           
           fluidRow(
@@ -543,7 +584,7 @@
         else{
           
           choices <- names(getEnrichRes(dataSE, from = listSource,
-                                        contrast = listname,
+                                        contrastName = listname,
                                         database = database))
           
           tabPanel.list <- list(
@@ -552,7 +593,7 @@
                      br(),
                      renderUI({
                        outdot <- .doNotSpeak(plotClusterProfiler(dataSE,
-                                                                 contrast = listname,
+                                                                 contrastName = listname,
                                                                  from = from,
                                                                  plotType = "dotplot",
                                                                  database = database,
@@ -575,7 +616,7 @@
                      br(),
                      renderUI({
                        outheat <- .doNotSpeak(plotClusterProfiler(dataSE,
-                                                                  contrast = listname,
+                                                                  contrastName = listname,
                                                                   from = from,
                                                                   plotType = "heatplot",
                                                                   database = database,
@@ -611,7 +652,7 @@
                          }
                          
                          outcnet <- .doNotSpeak(plotClusterProfiler(dataSE,
-                                                                    contrast = listname,
+                                                                    contrastName = listname,
                                                                     from = from,
                                                                     plotType = "cnetplot",
                                                                     database = database,
@@ -649,7 +690,7 @@
                          
                          dataPlot <- getEnrichRes(object = dataSE,
                                                   from = listSource,
-                                                  contrast = listname,
+                                                  contrastName = listname,
                                                   database = database,
                                                   domain = input[[paste0(listname, "-domain")]])
                          
@@ -671,7 +712,7 @@
           # ---- Tab Panel : only for KEGG, pathview : ----
           if (database == "KEGG") {
             data <-   getEnrichRes(object = dataSE,
-                                   contrast = listname, from = listSource,
+                                   contrastName = listname, from = listSource,
                                    database = "KEGG")[["no-domain"]]@result
             
             pvalue <- getEnrichPvalue(dataSE,
@@ -714,7 +755,7 @@
                                                        
                                                        renderPlot({
                                                          plotKEGG(object = dataSE,
-                                                                  contrast = listname,
+                                                                  contrastName = listname,
                                                                   from = listSource,
                                                                   pathway_id = input[[paste0(listname, "-MAP.sel")]],
                                                                   species = input2$organism,
@@ -949,8 +990,9 @@
     
     # run annotation diff analysis
     runRes <- tryCatch({
-      paramList <- c(paramList, list(object = session$userData$FlomicsMultiAssay[[dataset]], 
-                                     from = from, nameList = input$listToAnnot))
+      paramList <- c(paramList, 
+                     list(object = session$userData$FlomicsMultiAssay[[dataset]], 
+                          from = from, nameList = input$listToAnnot))
       
       do.call(runAnnotationEnrichment, paramList)
     },

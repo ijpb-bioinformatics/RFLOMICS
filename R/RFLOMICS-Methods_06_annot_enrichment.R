@@ -113,6 +113,8 @@ methods::setMethod(
       
     } 
     
+    geneLists <- geneLists[lengths(geneLists) > 0]
+    
     # for each list
     results_list <- lapply(names(geneLists), FUN = function(listname) {
       list_args$gene <- geneLists[[listname]]
@@ -247,18 +249,28 @@ methods::setMethod(
     
   })
 
+
 #' @title plotKEGG
 #' @description TODO
-#' @param object An object of class \link{RflomicsSE}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
-#' @param contrast the name of the contrast to consider. For Co expression analysis, it is expected to be one of "cluster.1", "cluster.2", etc.
+#' @param object An object of class \link{RflomicsSE}. 
+#' It is expected the SE object is produced by rflomics previous analyses, 
+#' as it relies on their results.
+#' @param contrast the name of the contrast to consider. 
+#' For Co expression analysis, 
+#' it is expected to be one of "cluster.1", "cluster.2", etc.
 #' @param databasethe database (GO, KEGG or custom)
 #' @param domain if the database is GO, expect one of BP, MF or CC. Default is NULL.
-#' @param from what type of analysis to consider? One of 'DiffExpAnal' or 'CoExpAnal'
-#' @param type type of plot. Define the function used inside. One of dotplot, heatplot or cnetplot.
+#' @param from what type of analysis to consider? 
+#' One of 'DiffExpAnal' or 'CoExpAnal'
+#' @param type type of plot. Define the function used inside.
+#'  One of dotplot, heatplot or cnetplot.
 #' @param showCategory max number of terms to show.
 #' @param searchExpr expression to search in the showCategory terms.
-#' @param nodeLabel same as in enrichplot::cnetplot function, defines the labels on the graph. One of "all", "category" or "gene". Default is 'all'.
-#' @param pvalueCutoff pvalueCutoff to define the enrichment threshold. Default is the one find in the clusterprofiler results in object.
+#' @param nodeLabel same as in enrichplot::cnetplot function, 
+#' defines the labels on the graph. One of "all", "category" or "gene".
+#'  Default is 'all'.
+#' @param pvalueCutoff pvalueCutoff to define the enrichment threshold. 
+#' Default is the one find in the clusterprofiler results in object.
 #' @param ... Not in use at the moment
 #'
 #' @return A plot.
@@ -268,7 +280,7 @@ methods::setMethod(
   f = "plotKEGG",
   signature = "RflomicsSE",
   definition = function(object,
-                        contrast,
+                        contrastName,
                         pathway_id = NULL,
                         species = "ath",
                         gene_idtype = "kegg",
@@ -281,14 +293,15 @@ methods::setMethod(
                                         grepl("COEXP", toupper(from)))])
     if (length(searchFrom) < 1) searchFrom <- 3
     
+    # if (isTagName(object, contrastName))
+    #   contrastName <- convertTagToContrast(object, contrastName)
+    
     log2FC_vect <- NULL
     if (searchFrom == 1) {
-      log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
-      names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
+      obj <- object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]]
+      log2FC_vect <- obj[["logFC"]]
+      names(log2FC_vect) <- rownames(obj)
     }
-    
-    if (isTagName(object, contrast)) 
-      contrast <- convertTagToContrast(object, contrast)
     
     .see_pathview(
       gene.data = log2FC_vect,
@@ -310,16 +323,25 @@ methods::setMethod(
 
 #' @title plotClusterProfiler
 #' @description TODO
-#' @param object An object of class \link{RflomicsSE}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
-#' @param contrast the name of the contrast to consider. For Co expression analysis, it is expected to be one of "cluster.1", "cluster.2", etc.
+#' @param object An object of class \link{RflomicsSE}. 
+#' It is expected the SE object is produced by rflomics previous analyses, 
+#' as it relies on their results.
+#' @param contrastName the name of the contrast to consider. 
+#' For Co expression analysis, it is expected to be one of
+#' "cluster.1", "cluster.2", etc.
 #' @param databasethe database (GO, KEGG or custom)
-#' @param domain if the database is GO, expect one of BP, MF or CC. Default is NULL.
-#' @param from what type of analysis to consider? One of 'DiffExpAnal' or 'CoExpAnal'
-#' @param type type of plot. Define the function used inside. One of dotplot, heatplot or cnetplot.
+#' @param domain if the database is GO, expect one of BP, MF or CC. 
+#' Default is NULL.
+#' @param from what type of analysis to consider? 
+#' One of 'DiffExpAnal' or 'CoExpAnal'
+#' @param type type of plot. Define the function used inside. 
+#' One of dotplot, heatplot or cnetplot.
 #' @param showCategory max number of terms to show.
 #' @param searchExpr expression to search in the showCategory terms.
-#' @param nodeLabel same as in enrichplot::cnetplot function, defines the labels on the graph. One of "all", "category" or "gene". Default is 'all'.
-#' @param pvalueCutoff pvalueCutoff to define the enrichment threshold. Default is the one find in the clusterprofiler results in object.
+#' @param nodeLabel same as in enrichplot::cnetplot function, defines 
+# the labels on the graph. One of "all", "category" or "gene". Default is 'all'.
+#' @param pvalueCutoff pvalueCutoff to define the enrichment threshold. 
+# Default is the one find in the clusterprofiler results in object.
 #' @param ... additionnal parameters for cnetplot, heatplot or enrichplot functions.
 #'
 #' @return A plot.
@@ -331,7 +353,7 @@ methods::setMethod(
   f = "plotClusterProfiler",
   signature = "RflomicsSE",
   definition = function(object,
-                        contrast,
+                        contrastName,
                         database,
                         domain = NULL,
                         from = "DiffExp",
@@ -342,7 +364,7 @@ methods::setMethod(
                         pvalueCutoff = object@metadata$DiffExpEnrichAnal[[database]]$list_args$pvalueCutoff,
                         ...) {
     
-    # if (isTagName(contrast)) contrast <- convertTagToContrast(object, contrast)
+    # if (isTagName(contrastName)) contrastName <- convertTagTocontrastName(object, contrastName)
     
     searchFrom <- as.character(c(1,2)[c(grepl("DIFFEXP", toupper(from)), 
                                         grepl("COEXP", toupper(from)))])
@@ -352,21 +374,21 @@ methods::setMethod(
     switch(searchFrom, 
            "1" = { 
              from <- "DiffExp"
-             dataPlot <- object@metadata$DiffExpEnrichAnal[[database]]$enrichResult[[contrast]]
-             log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]
-             names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
+             dataPlot <- object@metadata$DiffExpEnrichAnal[[database]]$enrichResult[[contrastName]]
+             log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]][["logFC"]]
+             names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]])
            },
            "2" = { 
              from <- "CoExp"   
-             dataPlot <- object@metadata$CoExpEnrichAnal[[database]]$enrichResult[[contrast]]
+             dataPlot <- object@metadata$CoExpEnrichAnal[[database]]$enrichResult[[contrastName]]
            },
            {
              message("Argument from is detected to be neither DiffExp nor CoExp, 
                      taking DiffExp results.")
              from <- "DiffExp"
-             dataPlot <- object@metadata$DiffExpEnrichAnal[[database]]$enrichResult[[contrast]]  
-             log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrast]][["logFC"]]  
-             names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrast]])
+             dataPlot <- object@metadata$DiffExpEnrichAnal[[database]]$enrichResult[[contrastName]]  
+             log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]][["logFC"]]  
+             names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]])
            })
     
     if (database == "GO") {
@@ -495,7 +517,7 @@ methods::setMethod(
       if (domain %in% names(allData[[i]])) {
         cprRes <- allData[[i]][[domain]]
         cprRes <- cprRes@result[cprRes@result$p.adjust < cprRes@pvalueCutoff,]
-        cprRes$contrast <- names(allData)[i]
+        cprRes$contrastName <- names(allData)[i]
         cprRes$domain <- domain
         return(cprRes)
       }
@@ -521,7 +543,7 @@ methods::setMethod(
                                   })
     
     extract$Description <- str_wrap(extract$Description, width = 20)
-    extract$contrast <- str_wrap(extract$contrast, width = 30)
+    extract$contrastName <- str_wrap(extract$contrastName, width = 30)
     
     extract$GeneRatio <- as.numeric(vapply(extract$GeneRatio, 
                                            FUN = function(x) eval(parse(text = x)),
@@ -533,8 +555,8 @@ methods::setMethod(
     
     dat <- switch(matrixType, 
                   "GeneRatio" = {
-                    inter <- recast(extract[, c("Description", "contrast", "GeneRatio")], 
-                                    Description ~ contrast, 
+                    inter <- recast(extract[, c("Description", "contrastName", "GeneRatio")], 
+                                    Description ~ contrastName, 
                                     measure.var = "GeneRatio")
                     rownames(inter) <- inter$Description
                     inter <- inter[, colnames(inter) != "ID"]
@@ -542,8 +564,8 @@ methods::setMethod(
                     inter
                   }, 
                   "p.adjust" = {
-                    inter <- recast(extract[, c("Description", "contrast", "p.adjust")], 
-                                    Description ~ contrast, 
+                    inter <- recast(extract[, c("Description", "contrastName", "p.adjust")], 
+                                    Description ~ contrastName, 
                                     measure.var = "p.adjust")
                     rownames(inter) <- inter$Description
                     inter <- inter[, colnames(inter) != "Description"]
@@ -551,8 +573,8 @@ methods::setMethod(
                     inter
                   },
                   "presence" = {
-                    inter <- recast(extract[, c("Description", "contrast", "p.adjust")], 
-                                    Description ~ contrast, 
+                    inter <- recast(extract[, c("Description", "contrastName", "p.adjust")], 
+                                    Description ~ contrastName, 
                                     measure.var = "p.adjust")
                     rownames(inter) <- inter$Description
                     inter <- inter <- inter[, colnames(inter) != "Description"]
@@ -561,8 +583,8 @@ methods::setMethod(
                     inter
                   },
                   "FC" = {
-                    inter <- recast(extract[, c("Description", "contrast", "FC")], 
-                                    Description ~ contrast, 
+                    inter <- recast(extract[, c("Description", "contrastName", "FC")], 
+                                    Description ~ contrastName, 
                                     measure.var = "FC")
                     rownames(inter) <- inter$Description
                     inter <- inter[, colnames(inter) != "Description"]
@@ -570,8 +592,8 @@ methods::setMethod(
                     inter
                   },
                   "log2FC" = {
-                    inter <- recast(extract[, c("Description", "contrast", "FC")], 
-                                    Description ~ contrast, 
+                    inter <- recast(extract[, c("Description", "contrastName", "FC")], 
+                                    Description ~ contrastName, 
                                     measure.var = "FC")
                     rownames(inter) <- inter$Description
                     inter <- inter[, colnames(inter) != "Description"]
@@ -634,7 +656,7 @@ methods::setMethod(
 #' @title Get a particular enrichment result
 #'
 #' @param object a SE object or a MAE object (produced by Flomics).
-#' @param contrast description
+#' @param contrastName description
 #' @param experiment description
 #' @param from description
 #' @param database description
@@ -644,7 +666,7 @@ methods::setMethod(
 methods::setGeneric(
   name = "getEnrichRes",
   def  = function(object,
-                  contrast = NULL,
+                  contrastName = NULL,
                   experiment = NULL,
                   from = "DiffExpEnrichAnal",
                   database = "GO",
@@ -657,18 +679,18 @@ methods::setMethod(
   f = "getEnrichRes",
   signature = "RflomicsSE",
   definition = function(object,
-                        contrast = NULL,
+                        contrastName = NULL,
                         from = "DiffExpEnrichAnal",
                         database = "GO",
                         domain = NULL) {
     
     res_return <- .getEnrichResIntSE(object, 
-                                     contrast = contrast, 
+                                     contrastName = contrastName, 
                                      from = from,
                                      database = database, 
                                      domain = domain)
     
-    if (!is.null(domain) && !is.null(contrast)) {
+    if (!is.null(domain) && !is.null(contrastName)) {
       return(res_return[[domain]])
     } else {
       return(res_return)
@@ -679,7 +701,7 @@ methods::setMethod(
   f = "getEnrichRes",
   signature = "RflomicsMAE",
   definition = function(object,
-                        contrast = NULL,
+                        contrastName = NULL,
                         experiment = NULL,
                         from = "DiffExpEnrichAnal",
                         database = "GO",
@@ -691,12 +713,12 @@ methods::setMethod(
     }
     
     res_return <- .getEnrichResIntSE(object[[experiment]], 
-                                     contrast = contrast, 
+                                     contrastName = contrastName, 
                                      from = from,
                                      database = database, 
                                      domain = domain)
     
-    if (!is.null(domain) && !is.null(contrast)) {
+    if (!is.null(domain) && !is.null(contrastName)) {
       return(res_return[[domain]])
     } else {
       return(res_return)
@@ -809,7 +831,7 @@ methods::setGeneric(
   def  = function(object, 
                   from = "DiffExpEnrichAnal", 
                   database = NULL, 
-                  contrast = NULL){standardGeneric("sumORA")}
+                  contrastName = NULL){standardGeneric("sumORA")}
 )
 
 methods::setMethod(
@@ -818,7 +840,7 @@ methods::setMethod(
   definition = function(object, 
                         from = "DiffExpEnrichAnal", 
                         database = NULL, 
-                        contrast = NULL) {
+                        contrastName = NULL) {
     
     if (toupper(from) %in% c("DIFFEXPANAL", "DIFFEXPENRICHANAL")){
       from <- "DiffExpEnrichAnal"
@@ -828,24 +850,24 @@ methods::setMethod(
     
     # cat("|From: ", from, "\n")
     
-    if (!is.null(contrast)) {
-      if (isTagName(object, contrast)) {
-        contrast <- convertTagToContrast(object, contrast)
+    if (!is.null(contrastName)) {
+      if (isTagName(object, contrastName)) {
+        contrastName <- convertTagToContrast(object, contrastName)
       }
     }
     
     if (!is.null(database)) {
       toReturn <- object@metadata[[from]][[database]]$summary
-      if (!is.null(contrast)) {
-        toReturn <- toReturn[which(toReturn$Contrast == contrast), ]
+      if (!is.null(contrastName)) {
+        toReturn <- toReturn[which(toReturn$contrastName == contrastName), ]
       }
       return(toReturn)
     } else {
       list_res <- lapply(names(object@metadata[[from]]), 
                          FUN = function(ontres) {
                            interRes <- object@metadata[[from]][[ontres]]$summary
-                           if (!is.null(contrast)) {
-                             interRes <- interRes[which(interRes$Contrast == contrast), ]
+                           if (!is.null(contrastName)) {
+                             interRes <- interRes[which(interRes$contrastName == contrastName), ]
                            }
                            interRes
                          })

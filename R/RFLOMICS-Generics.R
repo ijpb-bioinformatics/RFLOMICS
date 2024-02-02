@@ -255,7 +255,7 @@ methods::setGeneric(
 methods::setGeneric(
   name = "plotKEGG",
   def  = function(object,
-                  contrast,
+                  contrastName,
                   pathway_id = NULL,
                   species = "ath",
                   gene_idtype = "kegg",
@@ -267,7 +267,7 @@ methods::setGeneric(
 methods::setGeneric(
   name = "plotClusterProfiler",
   def  = function(object,
-                  contrast,
+                  contrastName,
                   database,
                   domain = NULL,
                   from = "DiffExpAnal",

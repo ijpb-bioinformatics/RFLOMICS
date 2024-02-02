@@ -45,7 +45,7 @@
 
 .getEnrichResIntSE <- function(
     object, 
-    contrast, 
+    contrastName, 
     from ,
     database,  
     domain
@@ -57,12 +57,12 @@
     from <- "CoExpEnrichAnal"
   }
   
-  if (is.null(contrast)) {
+  if (is.null(contrastName)) {
     res_return <- object@metadata[[from]][[database]][["enrichResult"]]
   } else {
-    if (isTagName(object, contrast))
-      contrast <- convertTagToContrast(object, contrast)
-    res_return <- object@metadata[[from]][[database]]$enrichResult[[contrast]]
+    if (isTagName(object, contrastName))
+      contrastName <- convertTagToContrast(object, contrastName)
+    res_return <- object@metadata[[from]][[database]]$enrichResult[[contrastName]]
   }
   
   
