@@ -533,10 +533,25 @@ methods::setMethod(
                                     gsub(" - .*", "", extract$Description)
                                   },
                                   { 
-                                    if (anyDuplicated(extract$Description)) {
-                                      posDup <- duplicated(extract$Description)
-                                      extract$Description[posDup] <- 
-                                        paste0("(", extract$ID[posDup], ")", "\n", extract$Description[posDup])
+                                    # if there is duplication in description 
+                                    # not necessarily duplicated in the ID
+                                    # should not be grouped in the heatmap
+                                    if (sum(duplicated(extract$Description)) > 0) {
+                                      if (!identical(extract$Description,
+                                                     extract$ID)) {
+                                        posDup <- 
+                                          unique(which(duplicated(extract$Description),
+                                                       duplicated(extract$Description, fromLast = TRUE)
+                                          ))
+                                        extract$Description[posDup] <- 
+                                          paste0("(", extract$ID[posDup], ")", 
+                                                 "\n",
+                                                 extract$Description[posDup])
+                                        extract$Description
+                                      }else{
+                                        extract$Description
+                                      }
+                                      
                                     } else {
                                       extract$Description
                                     }
@@ -724,57 +739,6 @@ methods::setMethod(
       return(res_return)
     }
   })
-
-# ---- INTERNAL - Get a particular enrichment summary ----
-# TODO equivalent to sumORA (external)
-#
-#' @title Get a particular enrichment result
-#'
-#' @param object a SE object or a MAE object (produced by Flomics).
-#' @return enrichment summary
-#' @noRd
-#' @keywords internal
-
-methods::setGeneric(
-  name = "getEnrichSum",
-  def  = function(object,
-                  experiment = NULL,
-                  from = "DiffExpEnrichAnal",
-                  database = "GO"){standardGeneric("getEnrichSum")}
-)
-
-methods::setMethod(
-  f = "getEnrichSum",
-  signature = "RflomicsSE",
-  definition = function(object,
-                        from = "DiffExpEnrichAnal",
-                        database = "GO") {
-    
-    .getEnrichSumIntSE(object, 
-                       from = from, 
-                       database = database)
-    
-  })
-
-methods::setMethod(
-  f = "getEnrichSum",
-  signature = "RflomicsMAE",
-  definition = function(object,
-                        experiment = NULL,
-                        from = "DiffExpEnrichAnal",
-                        database = "GO") {
-    
-    if (is.null(experiment)) {
-      stop("Please indicate from which data you want to extract 
-           the enrichment results.")
-    }
-    
-    .getEnrichSumIntSE(object[[experiment]], 
-                       from = from, 
-                       database = database)
-    
-  })
-
 
 # ---- INTERNAL - Get a pvalue threshold used in enrichment analysis ----
 #
