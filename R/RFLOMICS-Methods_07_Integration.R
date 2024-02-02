@@ -329,9 +329,12 @@ methods::setMethod(
                  getDEMatrix(object = SE.object)$DEF
                },
                "Contrast" = {
-                 getDE(object = SE.object, contrast = listSel)$DEF}, 
+                 #getDE(object = SE.object, contrast = listSel)$DEF}, 
+                 getDEList(object = SE.object, contrasts = listSel)
+                 },
                "Tag" = {
-                 getDE(object = SE.object, contrast = listSel)$DEF 
+                 #getDE(object = SE.object, contrast = listSel)$DEF 
+                 getDEList(object = SE.object, contrasts = listSel)
                  # TODO problem when only one selected
                }, 
                "CoexCluster" = {.getCluster(SE.object, clusterName = listSel)},

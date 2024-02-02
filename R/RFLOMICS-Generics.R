@@ -82,7 +82,7 @@ methods::setGeneric(
 
 methods::setGeneric(
   name = "getDEMatrix",
-  def  = function(object, ... ){standardGeneric("getDEMAtrix")}
+  def  = function(object, ... ){standardGeneric("getDEMatrix")}
 )
 
 # ---- PCA ----

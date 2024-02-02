@@ -256,9 +256,9 @@
       
       switch(input[[paste0("selectmethode", set)]],
              "diff" = {
-               variable.to.keep <- getDE(object = session$userData$FlomicsMultiAssay[[set]], 
-                                         contrast = input[[paste0("selectContrast", set)]], 
-                                         union = input[[paste0("unionORintersect", set)]])$DEF
+               variable.to.keep <- getDEList(object = session$userData$FlomicsMultiAssay[[set]], 
+                                         contrasts = input[[paste0("selectContrast", set)]], 
+                                         operation = input[[paste0("unionORintersect", set)]])
                session$userData$FlomicsMultiAssay[[set]][variable.to.keep]
              },
              {
@@ -340,9 +340,9 @@
     # create list with variations to keep per table
     variableLists <- lapply(input$selectData, function(set){
       switch(input[[paste0("selectmethode", set)]],
-             "diff"  = getDE(object = session$userData$FlomicsMultiAssay[[set]], 
-                             contrast = input[[paste0("selectContrast", set)]], 
-                             union = input[[paste0("unionORintersect", set)]])$DEF,
+             "diff"  = getDEList(object = session$userData$FlomicsMultiAssay[[set]], 
+                             contrasts = input[[paste0("selectContrast", set)]], 
+                             operation = input[[paste0("unionORintersect", set)]]),
              "none"  = names(MAE.red[[set]])
       )
     })

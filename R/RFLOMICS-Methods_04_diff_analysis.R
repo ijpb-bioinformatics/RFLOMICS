@@ -631,7 +631,6 @@ methods::setMethod(f          = "boxplot.DE.plot",
 #' @return a matrix of results from the differential analyses.
 #' @exportMethod getDEMatrix
 #' @rdname getDEMatrix
-#'
 
 methods::setMethod(f          = "getDEMatrix",
                    signature  = "RflomicsSE",
@@ -643,7 +642,7 @@ methods::setMethod(f          = "getDEMatrix",
                        }
                    })
 
-#' @rdname getDEMAtrix
+#' @rdname getDEMatrix
 #' @title getDEMatrix
 #' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
 #' @exportMethod getDEMatrix
@@ -654,25 +653,25 @@ methods::setMethod(f          = "getDEMatrix",
                      getDEMatrix(object = object[[SE.name]])
                    })
 
-
-#' @param contrast character name (can be a vector of name) for the contrast to select.
-#' @param union Boolean value. TRUE : union; FALSE : intersection
-#' @export
-#' @importFrom tidyselect any_of
-#' @importFrom dplyr select
-#' @rdname getDE
-getDE <- function(object, contrast, union = TRUE) {
-  
-  if (isContrastName(object, contrast)) 
-    contrast <- convertContrastToTag(object, contrast)
-  
-  DEmat <- getDEMatrix(object)
-  DEmat <- DEmat %>% select(any_of(c("DEF", contrast)))
-  
-  if (union) return(DEmat[rowSums(DEmat[,-1]) >= 1,])
-  
-  return(DEmat[rowSums(DEmat[,-1]) >= length(contrast),])
-}
+#' 
+#' #' @param contrast character name (can be a vector of name) for the contrast to select.
+#' #' @param union Boolean value. TRUE : union; FALSE : intersection
+#' #' @export
+#' #' @importFrom tidyselect any_of
+#' #' @importFrom dplyr select
+#' #' @rdname getDE
+#' getDE <- function(object, contrast, union = TRUE) {
+#'   
+#'   if (isContrastName(object, contrast)) 
+#'     contrast <- convertContrastToTag(object, contrast)
+#'   
+#'   DEmat <- getDEMatrix(object)
+#'   DEmat <- DEmat %>% select(any_of(c("DEF", contrast)))
+#'   
+#'   if (union) return(DEmat[rowSums(DEmat[,-1]) >= 1,])
+#'   
+#'   return(DEmat[rowSums(DEmat[,-1]) >= length(contrast),])
+#' }
 
 
 # ---- Get union or intersection from list of contrasts ----
@@ -746,31 +745,31 @@ methods::setMethod(f          = "getDEList",
                    })
 
 
-#' return gene list
-#'
-#' @param matrix matrix of DE results
-#' @param colnames colnames
-#' @param mergeType either union or intersection.
-#' @return list of genes
-#' @export
-#' @noRd
-#'
-getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1], mergeType="union"){
-  
-  if (length(colnames) == 0 ){ return(NULL) }
-  
-  matrix_sum <- matrix %>% dplyr::mutate(sum = dplyr::select(., tidyselect::all_of(colnames)) %>% rowSums(.))
-  
-  DEG_list <- switch(mergeType,
-                     
-                     "union"={        dplyr::filter(matrix_sum, sum != 0) },
-                     "intersection"={ dplyr::filter(matrix_sum, sum == length(colnames)) }
-  )
-  
-  if (length(DEG_list$DEF) == 0 ){ return(NULL) }
-  
-  return(DEG_list$DEF)
-}
+#' #' return gene list
+#' #'
+#' #' @param matrix matrix of DE results
+#' #' @param colnames colnames
+#' #' @param mergeType either union or intersection.
+#' #' @return list of genes
+#' #' @export
+#' #' @noRd
+#' #'
+#' getDEGlist_for_coseqAnalysis <- function(matrix, colnames = colnames(matrix)[-1], mergeType="union"){
+#'   
+#'   if (length(colnames) == 0 ){ return(NULL) }
+#'   
+#'   matrix_sum <- matrix %>% dplyr::mutate(sum = dplyr::select(., tidyselect::all_of(colnames)) %>% rowSums(.))
+#'   
+#'   DEG_list <- switch(mergeType,
+#'                      
+#'                      "union"={        dplyr::filter(matrix_sum, sum != 0) },
+#'                      "intersection"={ dplyr::filter(matrix_sum, sum == length(colnames)) }
+#'   )
+#'   
+#'   if (length(DEG_list$DEF) == 0 ){ return(NULL) }
+#'   
+#'   return(DEG_list$DEF)
+#' }
 
 
 

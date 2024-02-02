@@ -191,9 +191,11 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
   
   #get list of DGE to process
   DEG_list <- reactive({
-    getDEGlist_for_coseqAnalysis( matrix   = session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["mergeDEF"]],
-                                  colnames = input$select, mergeType = input$unionInter)})
-  
+    # getDEGlist_for_coseqAnalysis( matrix   = session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["mergeDEF"]],
+    #                              colnames = input$select, mergeType = input$unionInter)})
+     getDEList(object=session$userData$FlomicsMultiAssay[[dataset]] , 
+               contrasts = input$select, operation = input$unionInter)})
+    
   # display nbr of selected genes
   output$mergeValue <- renderText({ 
     
