@@ -69,17 +69,3 @@
 }
 
 
-#
-#' @title Get a particular enrichment result
-#' @description
-#' Called inside the getEnrichSum method
-#' 
-#' @param object a SE object or a MAE object (produced by Flomics).
-#' @return enrichment result summary
-#' @noRd
-#' @keywords internal
-.getEnrichSumIntSE <- function(object,
-                               from = "DiffExpEnrichAnal",
-                               database = "GO"){
-  return(object@metadata[[from]][[database]][["summary"]])
-}
