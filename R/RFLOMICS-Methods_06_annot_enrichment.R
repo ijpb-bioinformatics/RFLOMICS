@@ -247,7 +247,7 @@ methods::setMethod(
     
   })
 
-#' @title plotCPRKEGG
+#' @title plotKEGG
 #' @description TODO
 #' @param object An object of class \link{RflomicsSE}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param contrast the name of the contrast to consider. For Co expression analysis, it is expected to be one of "cluster.1", "cluster.2", etc.
@@ -263,9 +263,9 @@ methods::setMethod(
 #'
 #' @return A plot.
 #' @export
-#' @exportMethod plotCPRKEGG
+#' @exportMethod plotKEGG
 methods::setMethod(
-  f = "plotCPRKEGG",
+  f = "plotKEGG",
   signature = "RflomicsSE",
   definition = function(object,
                         contrast,
@@ -308,7 +308,7 @@ methods::setMethod(
   }
 )
 
-#' @title plotCPR
+#' @title plotClusterProfiler
 #' @description TODO
 #' @param object An object of class \link{RflomicsSE}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
 #' @param contrast the name of the contrast to consider. For Co expression analysis, it is expected to be one of "cluster.1", "cluster.2", etc.
@@ -326,9 +326,9 @@ methods::setMethod(
 #' @export
 #' @importFrom enrichplot cnetplot heatplot dotplot
 #' @importFrom ggrepel geom_label_repel
-#' @exportMethod plotCPR
+#' @exportMethod plotClusterProfiler
 methods::setMethod(
-  f = "plotCPR",
+  f = "plotClusterProfiler",
   signature = "RflomicsSE",
   definition = function(object,
                         contrast,
@@ -660,13 +660,11 @@ methods::setMethod(
                         database = "GO",
                         domain = NULL) {
     
-    classObj <- "SE"
-    res_return <- .getEnrichResInt(object, 
-                                   contrast = contrast, 
-                                   from = from,
-                                   database = database, 
-                                   domain = domain,
-                                   classObj = classObj)
+    res_return <- .getEnrichResIntSE(object, 
+                                     contrast = contrast, 
+                                     from = from,
+                                     database = database, 
+                                     domain = domain)
     
     if (!is.null(domain) && !is.null(contrast)) {
       return(res_return[[domain]])
@@ -685,14 +683,16 @@ methods::setMethod(
                         database = "GO",
                         domain = NULL) {
     
-    classObj <- "MAE"
-    res_return <- .getEnrichResInt(object, 
-                                   contrast = contrast, 
-                                   experiment = experiment, 
-                                   from = from,
-                                   database = database, 
-                                   domain = domain,
-                                   classObj = classObj)
+    if (is.null(experiment)) {
+      stop("Please indicate from which data you want to extract 
+           the enrichment results.")
+    }
+    
+    res_return <- .getEnrichResIntSE(object[[experiment]], 
+                                     contrast = contrast, 
+                                     from = from,
+                                     database = database, 
+                                     domain = domain)
     
     if (!is.null(domain) && !is.null(contrast)) {
       return(res_return[[domain]])
@@ -740,10 +740,14 @@ methods::setMethod(
                         from = "DiffExpEnrichAnal",
                         database = "GO") {
     
-    .getEnrichSumIntMAE(object, 
-                        experiment = experiment, 
-                        from = from, 
-                        database = database)
+    if (is.null(experiment)) {
+      stop("Please indicate from which data you want to extract 
+           the enrichment results.")
+    }
+    
+    .getEnrichSumIntSE(object[[experiment]], 
+                       from = from, 
+                       database = database)
     
   })
 

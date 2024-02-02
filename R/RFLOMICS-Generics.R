@@ -204,7 +204,7 @@ methods::setGeneric(
 )
 
 methods::setGeneric(
-  name = "plotCPRKEGG",
+  name = "plotKEGG",
   def  = function(object,
                   contrast,
                   pathway_id = NULL,
@@ -212,11 +212,11 @@ methods::setGeneric(
                   gene_idtype = "kegg",
                   from = "DiffExpAnal",
                   pvalueCutoff = object@metadata$DiffExpEnrichAnal[["KEGG"]]$list_args$pvalueCutoff,
-                  ...){standardGeneric("plotCPRKEGG")}
+                  ...){standardGeneric("plotKEGG")}
 )
 
 methods::setGeneric(
-  name = "plotCPR",
+  name = "plotClusterProfiler",
   def  = function(object,
                   contrast,
                   database,
@@ -227,7 +227,7 @@ methods::setGeneric(
                   searchExpr = "",
                   nodeLabel = "all",
                   pvalueCutoff = object@metadata$DiffExpEnrichAnal[[database]]$list_args$pvalueCutoff,
-                  ...){standardGeneric("plotCPR")}
+                  ...){standardGeneric("plotClusterProfiler")}
 )
 
 
@@ -306,7 +306,7 @@ methods::setGeneric(
   def = function(object,
                  selOpt = rep(list("all"), length(object)),
                  type = rep(list("union"), length(selOpt))
-                 ){standardGeneric("filterFeatures")}
+  ){standardGeneric("filterFeatures")}
 )
 
 # ---- RESET ----

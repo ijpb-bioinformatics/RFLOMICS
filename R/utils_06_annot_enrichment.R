@@ -10,7 +10,8 @@
 #' @importFrom png readPNG
 #' @noRd
 #'
-# Code from: https://stackoverflow.com/questions/60141841/how-to-get-pathview-plot-displayed-directly-rather-than-saving-as-a-file-in-r
+# Code from: https://stackoverflow.com/questions/60141841/
+# how-to-get-pathview-plot-displayed-directly-rather-than-saving-as-a-file-in-r
 # It deletes every file created by pathview
 .see_pathview <- function(...) {
   if (!exists("bods")) {
@@ -40,47 +41,33 @@
 #' @return enrichment result.
 #' @noRd
 #' @keywords internal
-.getEnrichResInt <- function(
+#' 
+
+.getEnrichResIntSE <- function(
     object, 
     contrast, 
-    experiment = NULL, 
     from ,
     database,  
-    domain,
-    classObj
+    domain
 ){
-  
-  if (toupper(from) %in% c("DIFFEXP", "DIFFEXPANAL", "DIFFEXPENRICHANAL")){
+  if (toupper(from) %in% c("DIFFEXP", "DIFFEXPANAL", "DIFFEXPENRICHANAL")) {
     from <- "DiffExpEnrichAnal"
   }
   if (toupper(from) %in% c("COEXP", "COEXPANAL", "COEXPENRICHANAL")) {
     from <- "CoExpEnrichAnal"
   }
   
-  switch(classObj,
-         "SE" = {
-           if (is.null(contrast)) {
-             res_return <- object@metadata[[from]][[database]][["enrichResult"]]
-           } else {
-             if (isTagName(object, contrast)) contrast <- convertTagToContrast(object, contrast)
-             res_return <- object@metadata[[from]][[database]][["enrichResult"]][[contrast]]
-           }
-         },
-         "MAE" = {
-           if (is.null(experiment)) {
-             stop("Please indicate from which data you want to extract the enrichment results.")
-           }
-           
-           if (is.null(contrast)) {
-             res_return <- object[[experiment]]@metadata[[from]][[database]][["enrichResult"]]
-           } else {
-             if (isTagName(object, contrast)) contrast <- convertTagToContrast(object[[experiment]], contrast)
-             res_return <- object[[experiment]]@metadata[[from]][[database]][["enrichResult"]][[contrast]]
-           }
-         },
-         stop("Object is not a RflomicsMAE nor a RflomicsSE")
-  )
+  if (is.null(contrast)) {
+    res_return <- object@metadata[[from]][[database]][["enrichResult"]]
+  } else {
+    if (isTagName(object, contrast))
+      contrast <- convertTagToContrast(object, contrast)
+    res_return <- object@metadata[[from]][[database]]$enrichResult[[contrast]]
+  }
+  
+  
 }
+
 
 #
 #' @title Get a particular enrichment result
@@ -91,17 +78,6 @@
 #' @return enrichment result summary
 #' @noRd
 #' @keywords internal
-.getEnrichSumIntMAE <- function(object,
-                                experiment = NULL,
-                                from = "DiffExpEnrichAnal",
-                                database = "GO"){
-  if (is.null(experiment)) {
-    stop("Please indicate the experiment
-         from which you want to extract the enrichment results.")
-  }
-  return(object[[experiment]]@metadata[[from]][[database]][["summary"]])
-} 
-
 .getEnrichSumIntSE <- function(object,
                                from = "DiffExpEnrichAnal",
                                database = "GO"){

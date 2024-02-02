@@ -551,14 +551,14 @@
             tabPanel("DotPlot",
                      br(),
                      renderUI({
-                       outdot <- .doNotSpeak(plotCPR(dataSE,
-                                                     contrast = listname,
-                                                     from = from,
-                                                     plotType = "dotplot",
-                                                     database = database,
-                                                     domain = input[[paste0(listname, "-domain")]],
-                                                     showCategory = input[[paste0(listname, "-top.over")]],
-                                                     searchExpr = input[[paste0(listname, "-grep")]])
+                       outdot <- .doNotSpeak(plotClusterProfiler(dataSE,
+                                                                 contrast = listname,
+                                                                 from = from,
+                                                                 plotType = "dotplot",
+                                                                 database = database,
+                                                                 domain = input[[paste0(listname, "-domain")]],
+                                                                 showCategory = input[[paste0(listname, "-top.over")]],
+                                                                 searchExpr = input[[paste0(listname, "-grep")]])
                        )
                        
                        if (is(outdot, "gg")) renderPlot({
@@ -574,14 +574,14 @@
             tabPanel("Heatplot",
                      br(),
                      renderUI({
-                       outheat <- .doNotSpeak(plotCPR(dataSE,
-                                                      contrast = listname,
-                                                      from = from,
-                                                      plotType = "heatplot",
-                                                      database = database,
-                                                      domain = input[[paste0(listname, "-domain")]],
-                                                      showCategory = input[[paste0(listname, "-top.over")]],
-                                                      searchExpr = input[[paste0(listname, "-grep")]]))
+                       outheat <- .doNotSpeak(plotClusterProfiler(dataSE,
+                                                                  contrast = listname,
+                                                                  from = from,
+                                                                  plotType = "heatplot",
+                                                                  database = database,
+                                                                  domain = input[[paste0(listname, "-domain")]],
+                                                                  showCategory = input[[paste0(listname, "-top.over")]],
+                                                                  searchExpr = input[[paste0(listname, "-grep")]]))
                        
                        
                        if (is(outheat, "gg")) renderPlot({
@@ -610,15 +610,15 @@
                            nodeLabelArg <- "category"
                          }
                          
-                         outcnet <- .doNotSpeak(plotCPR(dataSE,
-                                                        contrast = listname,
-                                                        from = from,
-                                                        plotType = "cnetplot",
-                                                        database = database,
-                                                        domain = input[[paste0(listname, "-domain")]],
-                                                        showCategory = input[[paste0(listname, "-top.over")]],
-                                                        searchExpr = input[[paste0(listname, "-grep")]],
-                                                        nodeLabel = nodeLabelArg))
+                         outcnet <- .doNotSpeak(plotClusterProfiler(dataSE,
+                                                                    contrast = listname,
+                                                                    from = from,
+                                                                    plotType = "cnetplot",
+                                                                    database = database,
+                                                                    domain = input[[paste0(listname, "-domain")]],
+                                                                    showCategory = input[[paste0(listname, "-top.over")]],
+                                                                    searchExpr = input[[paste0(listname, "-grep")]],
+                                                                    nodeLabel = nodeLabelArg))
                          
                          if (is(outcnet, "gg")) renderPlot({
                            warnOpt <- getOption("warn")
@@ -713,12 +713,12 @@
                                                      if (url.exists(link_to_map)) {
                                                        
                                                        renderPlot({
-                                                         plotCPRKEGG(object = dataSE,
-                                                                     contrast = listname,
-                                                                     from = listSource,
-                                                                     pathway_id = input[[paste0(listname, "-MAP.sel")]],
-                                                                     species = input2$organism,
-                                                                     gene_idtype = input2$keyTypeKEGG
+                                                         plotKEGG(object = dataSE,
+                                                                  contrast = listname,
+                                                                  from = listSource,
+                                                                  pathway_id = input[[paste0(listname, "-MAP.sel")]],
+                                                                  species = input2$organism,
+                                                                  gene_idtype = input2$keyTypeKEGG
                                                          )}, res = 300, width = 1000, height = 1000)
                                                      } else {
                                                        renderText("Please check your connection. It seems the URL does not exist, or you're not connected.")
@@ -900,7 +900,7 @@
       list_args[["pvalueCutoff"]] <- input2$pValue_custom
       
       annotation <- fread(file = local.rea.values$dataPathAnnot,
-                                      sep = "\t", header = TRUE)
+                          sep = "\t", header = TRUE)
       listCharRm <- c(".", " ", "")
       annotation2 <- list()
       
@@ -911,7 +911,7 @@
         domainRm <- intersect(annotation[[input2$col_domain]], listCharRm)
         if (length(domainRm) != 0) {
           annotation <- filter(annotation,
-                                      !get(input2$col_domain) %in% listCharRm)
+                               !get(input2$col_domain) %in% listCharRm)
         }
         
         annotation2[["domain"]] <- annotation[[input2$col_domain]]
