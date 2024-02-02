@@ -1,4 +1,14 @@
-# Step 6 : ANNOTAION
+##########################################
+# module 06 - ANNOTATION & ENRICHMENT
+##########################################
+#' @importFrom htmltools span tagList p div a h4 h5 hr tags br HTML
+#' @importFrom shinyBS popify
+#' @importFrom shinydashboard box tabBox updateTabItems menuItem menuItemOutput 
+#' tabItem renderMenu tabItems sidebarMenu menuSubItem
+#' @rawNamespace import(shiny, except = renderDataTable)
+#' @importFrom shinyWidgets pickerInput materialSwitch
+#' @importFrom colourpicker colourInput
+#' @importFrom magrittr "%>%"
 
 # ---- Module enrichment : main -----
 
@@ -124,6 +134,7 @@
 #' @importFrom RCurl url.exists
 #' @keywords internal
 #' @importFrom DT renderDataTable datatable
+#' @importFrom data.table fread
 #' @noRd
 .modEnrichmentDB <- function(input, output, session, dataset, database, rea.values){
   
@@ -165,12 +176,7 @@
   ## GO setting
   output$AnnotParamGO_UI <-   renderUI({
     
-    if(rea.values[[dataset]]$diffValid == FALSE) return()
-    
-    #if (omicsType %in% c("RNAseq", "proteomics")) {
-    
-    # box(title = span(tagList(icon("sliders"), "  ", "Settings")),
-    #     width = 12, status = "warning",
+    if (rea.values[[dataset]]$diffValid == FALSE) return()
     
     list(
       # select ontology
@@ -214,9 +220,8 @@
   ## KEGG setting
   output$AnnotParamKEGG_UI <-   renderUI({
     
-    if(rea.values[[dataset]]$diffValid == FALSE) return()
+    if (rea.values[[dataset]]$diffValid == FALSE) return()
     
-    #if (omicsType %in% c("RNAseq", "proteomics")) {
     list(
       pickerInput(
         inputId = ns("keyTypeKEGG"), label = "Select id type:",
@@ -235,8 +240,6 @@
                    label = "Adjusted p-value threshold:",
                    value = 0.01 , min = 0, max = 1, step = 0.01)
     )
-    
-    #}
   })
   
   ## custom setting
@@ -249,14 +252,12 @@
       fileInput(inputId = ns("annotationFileCPR"), label = "Annotation file:",
                 accept  = c("text/csv", "text/comma-separated-values,text/plain", ".csv")), 
       
-      if (rea.values$exampleData){
+      if (rea.values$exampleData) {
         tagList(
           actionButton(inputId = ns("useExampleFile"), 
                        label = "Use example annotation"),
           br())
       },
-      
-      #uiOutput(ns("useExampleFile_UI")),
       
       uiOutput(ns("selectColumnsFromCustomAnnot")),
       
@@ -275,8 +276,8 @@
     
     output$selectColumnsFromCustomAnnot <- renderUI({
       
-      annotation <- data.table::fread(file = local.rea.values$dataPathAnnot, 
-                                      sep = "\t", header = TRUE)
+      annotation <- fread(file = local.rea.values$dataPathAnnot, 
+                          sep = "\t", header = TRUE)
       
       column(width = 12,
              
@@ -305,7 +306,7 @@
     
     output$selectColumnsFromCustomAnnot <- renderUI({
       
-      annotation <- data.table::fread(file = local.rea.values$dataPathAnnot, sep = "\t", header = TRUE)
+      annotation <- fread(file = local.rea.values$dataPathAnnot, sep = "\t", header = TRUE)
       
       column(width = 12,
              
@@ -329,21 +330,21 @@
   
   
   # SERVEUR
-  shiny::callModule(module     = .modRunEnrichment, 
-                    id         = "DiffExpEnrichAnal", 
-                    dataset    = dataset,
-                    database   = database, 
-                    listSource = "DiffExpEnrichAnal",
-                    rea.values = rea.values, 
-                    input2     = input, local.rea.values = local.rea.values)
+  callModule(module     = .modRunEnrichment, 
+             id         = "DiffExpEnrichAnal", 
+             dataset    = dataset,
+             database   = database, 
+             listSource = "DiffExpEnrichAnal",
+             rea.values = rea.values, 
+             input2     = input, local.rea.values = local.rea.values)
   
-  shiny::callModule(module     = .modRunEnrichment, 
-                    id         = "CoExpEnrichAnal", 
-                    dataset    = dataset,
-                    database   = database, 
-                    listSource = "CoExpEnrichAnal",
-                    rea.values = rea.values, 
-                    input2     = input, local.rea.values = local.rea.values)
+  callModule(module     = .modRunEnrichment, 
+             id         = "CoExpEnrichAnal", 
+             dataset    = dataset,
+             database   = database, 
+             listSource = "CoExpEnrichAnal",
+             rea.values = rea.values, 
+             input2     = input, local.rea.values = local.rea.values)
   
 }
 
@@ -369,6 +370,8 @@
 #' @importFrom DT renderDataTable datatable
 #' @importFrom grid unit
 #' @importFrom RCurl url.exists
+#' @importFrom AnnotationDbi keytypes
+#' @importMethodsFrom ComplexHeatmap draw
 #' @noRd
 .modRunEnrichment <- function(input, output, session, dataset, database, 
                               listSource, rea.values, input2, local.rea.values){
@@ -399,9 +402,9 @@
     ### lists
     data.SE <- session$userData$FlomicsMultiAssay[[dataset]]
     
-    ListNames <- switch (listSource,
-                         "DiffExpEnrichAnal" = rea.values[[dataset]]$DiffValidContrast$contrastName,
-                         "CoExpEnrichAnal"   = rea.values[[dataset]]$CoExpClusterNames)
+    ListNames <- switch(listSource,
+                        "DiffExpEnrichAnal" = rea.values[[dataset]]$DiffValidContrast$contrastName,
+                        "CoExpEnrichAnal"   = rea.values[[dataset]]$CoExpClusterNames)
     
     tagList(
       column(width = 6,
@@ -428,7 +431,7 @@
     # if (rea.values[[dataset]][[fromAnnot]] == FALSE ||
     #     is.null(sumORA(session$userData$FlomicsMultiAssay[[dataset]],
     #                    from = listSource,
-    #                    ont = database)))
+    #                    database = database)))
     if (rea.values[[dataset]][[fromAnnot]] == FALSE || 
         is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]]))
       return()
@@ -454,9 +457,11 @@
                        uiOutput(ns("CompResults"))),
               tabPanel(title = "table",
                        br(),
-                       renderDataTable({datatable(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]][["summary"]],
-                                                  rownames = FALSE,
-                                                  options = list(pageLength = 6, dom = 'tip'))}))
+                       renderDataTable({
+                         datatable(session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]][["summary"]],
+                                   rownames = FALSE,
+                                   options = list(pageLength = 6, dom = 'tip'))
+                       }))
             )
             
         )
@@ -478,9 +483,6 @@
     
     # display results
     verticalLayout(
-      #fluidRow(
-      # box(width = 12, solidHeader = TRUE, collapsible = TRUE, 
-      #     collapsed = TRUE, status = "success", title = database,
       
       fluidRow(
         column(4,
@@ -501,7 +503,7 @@
                  
                  outHeatmap <- tryCatch({
                    outHeatmap <-  plotEnrichComp(session$userData$FlomicsMultiAssay[[dataset]],
-                                                 from = from, ontology = database, 
+                                                 from = from, database = database, 
                                                  domain = input[[paste0(database, "-compDomain")]],
                                                  matrixType = input[[paste0(database, "-compType")]])
                  },
@@ -509,18 +511,16 @@
                  error = function(err) err
                  )
                  
-                 if (is(outHeatmap, "Heatmap")) renderPlot({ComplexHeatmap::draw(outHeatmap, 
-                                                                                 heatmap_legend_side = "top", 
-                                                                                 padding = unit(5, "mm"),
-                                                                                 gap = unit(2, "mm"))}, 
+                 if (is(outHeatmap, "Heatmap")) renderPlot({draw(outHeatmap, 
+                                                                 heatmap_legend_side = "top", 
+                                                                 padding = unit(5, "mm"),
+                                                                 gap = unit(2, "mm"))}, 
                                                            width = "auto", 
                                                            height = min(400 + nrow(outHeatmap@matrix)*50, 1000))
                  else renderText({outHeatmap$message})
                })
         ) # column
       )#,  # fluidrow
-      #), # box
-      #) # fluidrow
     )
   })
   
@@ -529,12 +529,12 @@
     dataSE <- session$userData$FlomicsMultiAssay[[dataset]]
     
     if (rea.values[[dataset]][[fromAnnot]] == FALSE ||
-        is.null(sumORA(dataSE, from = listSource, ont = database))) return()
+        is.null(sumORA(dataSE, from = listSource, database = database))) return()
     
     #foreach genes list selected (contrast)
-    lapply(names(getEnrichRes(dataSE, from = listSource, ont = database)), function(listname) {
-      if (length(getEnrichRes(dataSE, from = listSource, ont = database, contrast = listname)) != 0) {
-        if (sum(unlist(sumORA(dataSE, from = listSource, ont = database)[-1]), na.rm = TRUE) == 0) {
+    lapply(names(getEnrichRes(dataSE, from = listSource, database = database)), function(listname) {
+      if (length(getEnrichRes(dataSE, from = listSource, database = database, contrast = listname)) != 0) {
+        if (sum(unlist(sumORA(dataSE, from = listSource, database = database)[-1]), na.rm = TRUE) == 0) {
           
           fluidRow(
             box(width = 12, title = paste0(listname, ": 0 enriched terms found"), status = "danger")
@@ -544,7 +544,7 @@
           
           choices <- names(getEnrichRes(dataSE, from = listSource,
                                         contrast = listname,
-                                        ont = database))
+                                        database = database))
           
           tabPanel.list <- list(
             # ---- Tab Panel : dotPlot : ----
@@ -555,7 +555,7 @@
                                                      contrast = listname,
                                                      from = from,
                                                      plotType = "dotplot",
-                                                     ontology = database,
+                                                     database = database,
                                                      domain = input[[paste0(listname, "-domain")]],
                                                      showCategory = input[[paste0(listname, "-top.over")]],
                                                      searchExpr = input[[paste0(listname, "-grep")]])
@@ -578,7 +578,7 @@
                                                       contrast = listname,
                                                       from = from,
                                                       plotType = "heatplot",
-                                                      ontology = database,
+                                                      database = database,
                                                       domain = input[[paste0(listname, "-domain")]],
                                                       showCategory = input[[paste0(listname, "-top.over")]],
                                                       searchExpr = input[[paste0(listname, "-grep")]]))
@@ -614,7 +614,7 @@
                                                         contrast = listname,
                                                         from = from,
                                                         plotType = "cnetplot",
-                                                        ontology = database,
+                                                        database = database,
                                                         domain = input[[paste0(listname, "-domain")]],
                                                         showCategory = input[[paste0(listname, "-top.over")]],
                                                         searchExpr = input[[paste0(listname, "-grep")]],
@@ -645,21 +645,21 @@
                      verticalLayout(
                        
                        tags$br(),
-                       DT::renderDataTable({
+                       renderDataTable({
                          
                          dataPlot <- getEnrichRes(object = dataSE,
                                                   from = listSource,
                                                   contrast = listname,
-                                                  ont = database,
+                                                  database = database,
                                                   domain = input[[paste0(listname, "-domain")]])
                          
                          pvalue <- getEnrichPvalue(dataSE,
-                                                   from = listSource, dom = database)
-                         DT::datatable(dataPlot@result[dataPlot@result$p.adjust <  pvalue,],
-                                       rownames = FALSE,
-                                       options = list(pageLength = 5,
-                                                      lengthMenu = c(5, 10, 15, 20),
-                                                      scrollX = TRUE))
+                                                   from = listSource, database = database)
+                         datatable(dataPlot@result[dataPlot@result$p.adjust <  pvalue,],
+                                   rownames = FALSE,
+                                   options = list(pageLength = 5,
+                                                  lengthMenu = c(5, 10, 15, 20),
+                                                  scrollX = TRUE))
                          
                          
                        })
@@ -672,11 +672,11 @@
           if (database == "KEGG") {
             data <-   getEnrichRes(object = dataSE,
                                    contrast = listname, from = listSource,
-                                   ont = "KEGG")[["no-domain"]]@result
+                                   database = "KEGG")[["no-domain"]]@result
             
             pvalue <- getEnrichPvalue(dataSE,
                                       from = listSource,
-                                      dom = database)
+                                      database = database)
             mapChoices <- sort(data$ID[data$p.adjust < pvalue])
             
             tabPanel.list <- c(tabPanel.list,
@@ -685,7 +685,6 @@
                                           br(),
                                           fluidRow(
                                             column(3,
-                                                   
                                                    selectInput(
                                                      inputId = ns(paste0(listname, "-MAP.sel")), label = "Select map:",
                                                      choices = mapChoices, multiple = FALSE, selectize = FALSE,
@@ -711,7 +710,7 @@
                                                                            data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
                                                      
                                                      # test validity of URL
-                                                     if (RCurl::url.exists(link_to_map)) {
+                                                     if (url.exists(link_to_map)) {
                                                        
                                                        renderPlot({
                                                          plotCPRKEGG(object = dataSE,
@@ -751,7 +750,7 @@
                          # number of term
                          numericInput(inputId = ns(paste0(listname, "-top.over")),
                                       label = "Top terms:" , value=15 ,
-                                      min = 1, max = 10000, step = 5)), # max code en dur : pas bien
+                                      min = 1, max = 10000, step = 5)), 
                   column(4,
                          # search term or gene
                          textInput(inputId = ns(paste0(listname, "-grep")),
@@ -779,14 +778,15 @@
     
     # check list of genes
     if (length(input$listToAnnot) == 0) {
-      showModal(modalDialog( title = "Error message", "Please select at least 1 variable list."))
+      showModal(modalDialog(
+        title = "Error message", "Please select at least 1 variable list."))
     }
     validate({
       need(length(input$listToAnnot) != 0,
            message = "Please select at least 1 variable list")
     })
     
-    if(database == "GO"){
+    if (database == "GO"){
       
       # check parameters
       if (input2$db.select == "") {
@@ -796,11 +796,12 @@
         need(input2$db.select != "", "Select databases...")
       })
       
-      library(input2$db.select, character.only = TRUE)
-      accepted_keytypes <- AnnotationDbi::keytypes(get(input2$db.select))
+      # library(input2$db.select, character.only = TRUE)
+      accepted_keytypes <- keytypes(get(input2$db.select))
       if (!input2$keytype.go %in% accepted_keytypes) {
         showModal(modalDialog(title = paste("Keytype must be one of: ",
-                                            paste(accepted_keytypes, collapse = ", "), sep = " ")))
+                                            paste(accepted_keytypes, collapse = ", "),
+                                            sep = " ")))
       }
       validate({
         need(input2$keytype.go %in% accepted_keytypes,
@@ -819,7 +820,7 @@
       if (input2$ont.select == "ALL") domain <- c("MF", "BP", "CC")
       
       paramList <- list(#method       = "ORA",
-        ontology     = database,
+        database     = database,
         list_args    = list_args,
         #OrgDb        = input2$db.select,
         #keyType      = input2$keytype.go,
@@ -827,7 +828,8 @@
         #pvalueCutoff = input2$pValue_GO
       )
     }
-    if(database == "KEGG"){
+    
+    if (database == "KEGG"){
       
       # check param
       ## ID key
@@ -858,7 +860,7 @@
       # prevent multiple execution
       paramList <- list(#method       = "ORA",
         list_args    = list_args,
-        ontology     = database,
+        database     = database,
         domain       = "no-domain"#,
         #organism     = input2$organism,
         #keyType      = input2$keyTypeKEGG,
@@ -897,7 +899,7 @@
       list_args <- list()
       list_args[["pvalueCutoff"]] <- input2$pValue_custom
       
-      annotation <- data.table::fread(file = local.rea.values$dataPathAnnot,
+      annotation <- fread(file = local.rea.values$dataPathAnnot,
                                       sep = "\t", header = TRUE)
       listCharRm <- c(".", " ", "")
       annotation2 <- list()
@@ -908,7 +910,7 @@
         # remove column with domain == c(".", " ", "")
         domainRm <- intersect(annotation[[input2$col_domain]], listCharRm)
         if (length(domainRm) != 0) {
-          annotation <- dplyr::filter(annotation,
+          annotation <- filter(annotation,
                                       !get(input2$col_domain) %in% listCharRm)
         }
         
@@ -927,7 +929,7 @@
       ##
       paramList <- list(#method       = "ORA",
         list_args    = list_args,
-        ontology     = "custom",
+        database     = "custom",
         domain       = domain,
         annot        = annotation2,
         col_domain   = col_domain_arg)
@@ -951,17 +953,6 @@
                                      from = from, nameList = input$listToAnnot))
       
       do.call(runAnnotationEnrichment, paramList)
-      
-      # Something went wrong: unused arguments (method = "ORA", organism = "ath", keyType = "kegg", pvalueCutoff = 0, listToAnnot = c("(temperatureLow - temperatureElevated) in mean", "(temperatureMedium - temperatureElevated) in mean", "(temperatureMedium - temperatureLow) in mean", "(imbibitionDS - imbibitionLI) in mean", "(imbibitionEI - imbibitionLI) in mean", "(imbibitionEI - imbibitionDS) in mean")
-      
-      # runAnnotationEnrichment(object = session$userData$FlomicsMultiAssay[[dataset]],
-      #                         nameList = input$listToAnnot,
-      #                         list_args = list_args,
-      #                         from = from,
-      #                         annot = annotation2,
-      #                         ontology = database,
-      #                         domain = domain,
-      #                         col_domain = col_domain_arg)
     },
     warning = function(war) return(war),
     error   = function(err) return(err)
@@ -992,10 +983,10 @@
   if (!is.null(paramList$diffList)) {
     
     if (is.null(object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]])) return(TRUE)
-    if (isFALSE(dplyr::setequal(names(object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$enrichResult), paramList$diffList)) ) return(TRUE)
+    if (isFALSE(setequal(names(object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$enrichResult), paramList$diffList)) ) return(TRUE)
     
     # check param
-    if (isFALSE(dplyr::setequal(paramList$domain, object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$domain))) return(TRUE)
+    if (isFALSE(setequal(paramList$domain, object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$domain))) return(TRUE)
     if (paramList$pvalueCutoff != object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$pvalueCutoff) return(TRUE)
     
     switch(dbType,
@@ -1013,10 +1004,10 @@
   if (!is.null(paramList$CoexpList)) {
     
     if (is.null(object.SE@metadata[["CoExpEnrichAnal"]][[dbType]])) return(TRUE)
-    if (isFALSE(dplyr::setequal(names(object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$enrichResult), paramList$CoexpList)) ) return(TRUE)
+    if (isFALSE(setequal(names(object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$enrichResult), paramList$CoexpList)) ) return(TRUE)
     
     # check param
-    if (isFALSE(dplyr::setequal(paramList$domain, object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$domain))) return(TRUE)
+    if (isFALSE(setequal(paramList$domain, object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$domain))) return(TRUE)
     if (paramList$pvalueCutoff != object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$pvalueCutoff) return(TRUE)
     
     switch(dbType,
