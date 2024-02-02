@@ -24,7 +24,6 @@
 #' @return a RflomicsMAE object. According to the method (MOFA or mixOmics), 
 #' the correct slot of metadata has been filled with the results and the 
 #' settings. 
-#' @export
 #' @rdname integrationWrapper
 #' @exportMethod integrationWrapper
 methods::setMethod(
@@ -112,7 +111,6 @@ methods::setMethod(
 #' @param type one of union or intersection.
 #' @param group Not implemented yet in the interface. Useful for MOFA2 run.
 #' @return An untrained MOFA object or a list of dataset
-#' @export
 #' @exportMethod prepareForIntegration
 #' @rdname prepareForIntegration
 #' @importFrom MOFA2 create_mofa
@@ -268,7 +266,8 @@ methods::setMethod(
 #' as it relies on their results.
 #' @param selOpt list of vectors. Preferred named list with names corresponding to 
 #' the names of the experimentList in the object. For each Experiment, gives
-#' the option for the filtering: either 'all', 'DE', 'none', or a specific name of a 
+#' the option for the filtering: either 'all', 'DE', 'none', 
+#' or a specific name of a 
 #' contrast or cluster (if coexpression results are available). Default is taking
 #' all features for all experiment list. If the vector is named and an
 #' Experiment is missing, no feature will be selected from it. 
@@ -385,14 +384,15 @@ methods::setMethod(
 #' @param ... not in use at the moment
 #' @return a RflomicsMAE object with the correct metadata slot filled with the
 #' results and the settings.
-#' @export
 #' @rdname runOmicsIntegration
 #' @exportMethod runOmicsIntegration
 #' @examples 
-#' MAEtest <- generateExample(annotation = FALSE, coexp = FALSE, integration = FALSE)
+#' MAEtest <- generateExample(annotation = FALSE, coexp = FALSE, 
+#' integration = FALSE)
 #' 
 #' # Create the appropriate object using prepareForIntegration:
-#' mofaObj <- prepareForIntegration(MAEtest, omicsNames = c("protetest", "metatest"), 
+#' mofaObj <- prepareForIntegration(MAEtest, 
+#' omicsNames = c("protetest", "metatest"), 
 #' variableLists = rownames(MAEtest),
 #' method = "MOFA")
 #' 
@@ -534,7 +534,8 @@ methods::setMethod(
 #' @param object An object of class \link{RflomicsMAE}. 
 #' It is expected the MAE object is produced by rflomics previous analyses, 
 #' as it relies on their results.
-#' @param response a character giving the response variable to access specifically. 
+#' @param response a character giving the response variable to access 
+#' specifically. 
 #' @param onlyResults default return only the MixOmics or MOFA2 results. 
 #' If you want to access all information of the integration, 
 #' set onlyResults to FALSE. 
@@ -550,7 +551,6 @@ methods::setMethod(
 #' 
 #' @exportMethod getMixOmics
 #' @rdname methods-for-integration
-#' @export
 #' @examples
 #' 
 #' MAEtest <- generateExample(annotation = FALSE, coexp = FALSE)
@@ -608,7 +608,9 @@ methods::setMethod(
   signature = "RflomicsMAE",
   definition = function(object, onlyResults = TRUE){
     toreturn <- metadata(object)[["IntegrationAnalysis"]][["MOFA"]]
-    if (onlyResults && !is.null(toreturn)) toreturn <- toreturn[["MOFA_results"]]
+    if (onlyResults && !is.null(toreturn)) {
+      toreturn <- toreturn[["MOFA_results"]]
+    }
     
     return(toreturn)
   })
@@ -677,6 +679,74 @@ methods::setMethod(
 
 
 
+# ---- MixOmics summary ----
+
+#' @title Get an overview of MixOmics integration results
+#'
+#' @param object a MAE object (produced by Flomics).
+#' @param selectedResponse a character. 
+#' Useful if MixOmics was run on several response variable. 
+#' If NULL, all variables are taken into account.
+#' @return sumMixOmics: A data frame or a list of dataframe 
+#' (if selectedResponse is NULL) presenting the summary of mixOmics analyses.
+#'
+#' @rdname methods-for-integration
+#' @exportMethod sumMixOmics
+methods::setGeneric(
+  name = "sumMixOmics",
+  def  = function(object, selectedResponse = NULL){
+    standardGeneric("sumMixOmics")}
+)
+
+methods::setMethod(
+  f = "sumMixOmics",
+  signature = "RflomicsMAE",
+  definition =  function(object, selectedResponse = NULL) {
+    if (is.null(object@metadata$mixOmics)){
+      stop("It seems this object has no mixOmics results.")
+    }
+    
+    if (is.null(selectedResponse)) {
+      res <- lapply(names(object@metadata$mixOmics), FUN = function(selResponse) {
+        .getOneMORes(object, selectedResponse = selResponse)
+      })
+      names(res) <- names(object@metadata$mixOmics)
+      return(res)
+    } else {
+      .getOneMORes(object, selectedResponse = selectedResponse)
+    }
+  })
+
+#' @title get one MixOmics result
+#' @description Get an overview of MixOmics integration results for a specific response variable.
+#' @param object a MAE object (produced by Flomics).
+#' @param selectedResponse a character string.
+#' @return A data frame.
+#' @keywords internal
+#' @noRd
+methods::setGeneric(
+  name = ".getOneMORes",
+  def  = function(object, selectedResponse){standardGeneric(".getOneMORes")}
+)
+
+methods::setMethod(
+  f = ".getOneMORes",
+  signature = "RflomicsMAE",
+  definition =   function(object, selectedResponse) {
+    res <- getMixOmics(object, response = selectedResponse)
+    Data_res <- res$MixOmics_results
+    
+    df <- t(sapply(Data_res$X, dim))
+    colnames(df) <- c("Ind", "Features")
+    
+    if (!is.null(res$MixOmics_tuning_results)) {
+      df <- cbind(df, do.call("rbind", Data_res$keepX))
+      colnames(df)[!colnames(df) %in% c("Ind", "Features")] <- 
+        paste("Comp", seq_len(length(Data_res$keepX[[1]])))
+    }
+    
+    return(df)
+  })
 
 
 
