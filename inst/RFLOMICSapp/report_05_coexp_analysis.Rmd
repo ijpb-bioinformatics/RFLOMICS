@@ -39,7 +39,7 @@ No clustering results.
 **Integrated Completed Likelihood (ICL) plotted versus number of clusters**
 
 ```{r coseq-icl, echo=FALSE, eval=isResults}
-plot.coseq.res <- CoExpressionPlots(dataset.SE)
+plot.coseq.res <- plotCoExpression(dataset.SE)
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$ICL 
 ```
