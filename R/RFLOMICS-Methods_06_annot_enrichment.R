@@ -685,7 +685,7 @@ methods::setGeneric(
                   experiment = NULL,
                   from = "DiffExpEnrichAnal",
                   database = "GO",
-                  domain = NULL){standardGeneric("getEnrichRes")}
+                  domain = NULL, ...){standardGeneric("getEnrichRes")}
 )
 
 
