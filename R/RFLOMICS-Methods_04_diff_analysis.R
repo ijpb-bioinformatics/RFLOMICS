@@ -773,3 +773,31 @@ methods::setMethod(f          = "getDEList",
 
 
 
+# ---- Get diff setting ----
+
+#' @title Get differential analysis setting parameters
+#'
+#' @param object of class RflomicsSE
+#' @return List of differential analysis setting parametres.
+#' @exportMethod getDiffSetting
+#' @rdname getDiffSetting
+#'
+
+methods::setMethod(f          = "getDiffSetting",
+                   signature  = "RflomicsSE",
+                   
+                   definition = function(object){
+                    return(object@metadata$DiffExpAnal$setting)   
+                   })
+
+#' @rdname getDiffSetting
+#' @title getDiffSetting
+#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
+#' @exportMethod getDiffSetting
+
+methods::setMethod(f          = "getDiffSetting",
+                   signature  = "RflomicsMAE",
+                   definition = function(object, SE.name){
+                     getDiffSetting(object = object[[SE.name]])
+                   })
+

@@ -85,6 +85,11 @@ methods::setGeneric(
   def  = function(object, ... ){standardGeneric("getDEMatrix")}
 )
 
+methods::setGeneric(
+  name = "getDiffSetting",
+  def  = function(object, ... ){standardGeneric("getDiffSetting")}
+)
+
 # ---- PCA ----
 
 methods::setGeneric(
@@ -153,6 +158,12 @@ methods::setGeneric(
   name = "CoseqContrastsPlot",
   def  = function(object, ... ){standardGeneric("CoseqContrastsPlot")}
 )
+
+methods::setGeneric(
+  name = "getCoexpSetting",
+  def  = function(object, ... ){standardGeneric("getCoexpSetting")}
+)
+
 
 # ---- Diff Plots ----
 

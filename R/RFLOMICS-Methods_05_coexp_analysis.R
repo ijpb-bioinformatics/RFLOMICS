@@ -442,46 +442,32 @@ methods::setMethod(f          = "CoseqContrastsPlot",
                    })
 
 
+# ---- Get diff setting ----
 
-# ---- INTERNAL - get members of a cluster or coseq clusters ----
-#
-#' @title get members of a cluster
+#' @title Get differential analysis setting parameters
 #'
-#' @param object a RflomicsSE, produced by rflomics
-#' @param name name of the cluster
-#' @return The list of entities inside this cluster.
-#' @noRd
-#' @importFrom coseq clusters
-#' @keywords internal
+#' @param object of class RflomicsSE
+#' @return List of differential analysis setting parametres.
+#' @exportMethod getCoexpSetting
+#' @rdname getCoexpSetting
+#'
 
-.getCluster <- function(object, clusterName) {
-  
-  clusterName <- gsub("cluster[.]", "", clusterName)
-  res <- object@metadata$CoExpAnal$coseqResults
-  
-  if (!is.null(res)) {
-    clList <- clusters(res)
-    return(names(clList == clusterName))
-  } else {
-    return(NULL)
-  }
-  
-}
+methods::setMethod(f          = "getCoexpSetting",
+                   signature  = "RflomicsSE",
+                   
+                   definition = function(object){
+                     return(object@metadata$CoExpAnal$setting)   
+                   })
 
-#' @param object a RflomicsSE, produced by rflomics
-#' @return all clusters
-#' @noRd
-#' @importFrom coseq clusters
-#' @keywords internal
+#' @rdname getCoexpSetting
+#' @title getCoexpSetting
+#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
+#' @exportMethod getCoexpSetting
 
-.getCoseqClusters <- function(object) {
-  
-  res <- object@metadata$CoExpAnal$coseqResults
-  
-  if (!is.null(res)) {
-    return(clusters(res))
-  } else {
-    return(NULL)
-  }
-  
-}
+methods::setMethod(f          = "getCoexpSetting",
+                   signature  = "RflomicsMAE",
+                   definition = function(object, SE.name){
+                     getCoexpSetting(object = object[[SE.name]])
+                   })
+
+

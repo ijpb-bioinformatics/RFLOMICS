@@ -2,37 +2,46 @@
 ####################################### CO-EXPRESSION ##############################
 
 
-#' @title try_rflomics
-#' @details
-#' This function come from https://stackoverflow.com/questions/4948361/how-do-i-save-warnings-and-errors-as-output-from-a-function
-#  The author indicated that he merged Martins solution (https://stackoverflow.com/a/4952908/2161065) and
-#  the one from the R-help mailing list you get with demo(error.catching).
-#' @param expr The expression that has been to be evaluated.
-#' @return a named list
-#' \itemize{
-#' \item{\code{value:} }{The results of the expr evaluation or NULL if an error occured }
-#' \item{\code{warning:} }{warning message or NULL}
-#' \item{\code{error:} }{error message or NULL}
-#' }
-#' @export
-#' @keywords internal
+# ---- INTERNAL - get members of a cluster or coseq clusters ----
+#
+#' @title get members of a cluster
+#'
+#' @param object a RflomicsSE, produced by rflomics
+#' @param name name of the cluster
+#' @return The list of entities inside this cluster.
 #' @noRd
+#' @importFrom coseq clusters
+#' @keywords internal
 
-try_rflomics <- function(expr) {
-  warn <- err <- NULL
-  value <- withCallingHandlers(
-    tryCatch(expr,
-             error    = function(e){ err <- e
-             NULL
-             }),
-    warning = function(w){ warn <- w
-    invokeRestart("muffleWarning")}
-  )
+.getCluster <- function(object, clusterName) {
   
-  return(list(value = value,
-              warning = warn,
-              error = err)
-  )
+  clusterName <- gsub("cluster[.]", "", clusterName)
+  res <- object@metadata$CoExpAnal$coseqResults
+  
+  if (!is.null(res)) {
+    clList <- clusters(res)
+    return(names(clList == clusterName))
+  } else {
+    return(NULL)
+  }
+  
+}
+
+#' @param object a RflomicsSE, produced by rflomics
+#' @return all clusters
+#' @noRd
+#' @importFrom coseq clusters
+#' @keywords internal
+
+.getCoseqClusters <- function(object) {
+  
+  res <- object@metadata$CoExpAnal$coseqResults
+  
+  if (!is.null(res)) {
+    return(clusters(res))
+  } else {
+    return(NULL)
+  }
   
 }
 
@@ -506,3 +515,43 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
   
   print(p)
 }
+
+
+
+
+
+
+#' @title try_rflomics
+#' @details
+#' This function come from https://stackoverflow.com/questions/4948361/how-do-i-save-warnings-and-errors-as-output-from-a-function
+#  The author indicated that he merged Martins solution (https://stackoverflow.com/a/4952908/2161065) and
+#  the one from the R-help mailing list you get with demo(error.catching).
+#' @param expr The expression that has been to be evaluated.
+#' @return a named list
+#' \itemize{
+#' \item{\code{value:} }{The results of the expr evaluation or NULL if an error occured }
+#' \item{\code{warning:} }{warning message or NULL}
+#' \item{\code{error:} }{error message or NULL}
+#' }
+#' @export
+#' @keywords internal
+#' @noRd
+
+try_rflomics <- function(expr) {
+  warn <- err <- NULL
+  value <- withCallingHandlers(
+    tryCatch(expr,
+             error    = function(e){ err <- e
+             NULL
+             }),
+    warning = function(w){ warn <- w
+    invokeRestart("muffleWarning")}
+  )
+  
+  return(list(value = value,
+              warning = warn,
+              error = err)
+  )
+  
+}
+
