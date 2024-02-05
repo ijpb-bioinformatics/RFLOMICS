@@ -10,7 +10,7 @@
 #' @description This is an interface method which run a differential analysis method on
 #' omic datasets stored in an object of class \link{RflomicsSE}.
 #' According to the type of omic and to a list of contrasts,
-#' a differential analysis method is applied to each contrasts (or hypothesis).
+#' a differential analysis method is applied to each contrasts.
 #' Three methods are available according to the type of object:
 #' \itemize{
 #' \item{For RNAseq data: }{the \code{glmFit} function of the \code{edgeR} package}
@@ -24,22 +24,22 @@
 #' \itemize{
 #' \item{contrasts: }{The selected contrasts for which the differential analysis has been conducted}
 #' \item{method: }{The method used for the differential analysis. }
-#' \item{Adj.pvalue.method: The method applied for the pvalue adjustment.}
-#' \item{Adj.pvalue.cutoff: The threshold applied for the pvalue adjustment}
+#' \item{p.adj.method: The method applied for the pvalue adjustment.}
+#' \item{p.adj.cutoff: The threshold applied for the pvalue adjustment}
 #' \item{FDR: }{The false discovery rate given in input}
 #' \item{RawDEFres: }{a list giving for each contrast the raw results of the differential analysis method}
 #' \item{DEF: }{a list giving for each contrast a data.frame of non filtered differential expressed features}
-#' \item{TopDEF: }{a list giving for each contrast a data.frame of differential expressed features by Adj.pvalue.cutoff}
+#' \item{TopDEF: }{a list giving for each contrast a data.frame of differential expressed features by p.adj.cutoff}
 #' \item{mergeDEF: }{A data frame indicating for each features in row, if it is DE in a given contrasts in column}
 #' }
 #' @param object an object of class \link{RflomicsSE} or \link{RflomicsMAE} 
 #' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE 
 #' @param design an object of class \link{ExpDesign-class}
-#' @param DiffAnalysisMethod A character vector giving the name of the differential analysis method
+#' @param method A character vector giving the name of the differential analysis method
 #' to run. Either "edgeRglmfit" or "limmalmFit".
 #' @param contrastList data.frame of contrast from getExpressionContrastF()
-#' @param Adj.pvalue.method The method choosen to adjust pvalue. Takes the same values as the ones of adj.p.adjust method.
-#' @param Adj.pvalue.cutoff The adjusted pvalue cut-off
+#' @param p.adj.method The method choosen to adjust pvalue. Takes the same values as the ones of adj.p.adjust method.
+#' @param p.adj.cutoff The adjusted pvalue cut-off
 #' @param clustermq A boolean indicating whether the constrasts have to be computed in local or in a distant machine
 #' @return An object of class \link{RflomicsSE}
 #' @references
@@ -50,19 +50,19 @@
 #' 
 methods::setMethod(f         = "runDiffAnalysis",
                    signature = "RflomicsSE",
-                   definition <- function(object, design, Adj.pvalue.method="BH", contrastList = NULL, DiffAnalysisMethod = NULL, 
-                                          Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, parallel = FALSE, nworkers = 1,
+                   definition = function(object, design, p.adj.method="BH", contrastList = NULL, method = NULL, 
+                                          p.adj.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, parallel = FALSE, nworkers = 1,
                                           cmd = FALSE, modelFormula=NULL){
                      
                      # check args
                      if(is.null(contrastList) || nrow(contrastList) == 0) stop("contrastList arg is mandatory.")
                      
-                     if(is.null(DiffAnalysisMethod) || isFALSE(DiffAnalysisMethod %in% c("edgeRglmfit", "limmalmFit"))) {
+                     if(is.null(method) || isFALSE(method %in% c("edgeRglmfit", "limmalmFit"))) {
                        switch (object@metadata$omicType,
-                               "RNAseq" = { DiffAnalysisMethod <- "edgeRglmfit"},
-                               { DiffAnalysisMethod <- "limmalmFit" }
+                               "RNAseq" = { method <- "edgeRglmfit"},
+                               { method <- "limmalmFit" }
                        )
-                       warning("DiffAnalyseMethod was missing. Detected omic type is ", object@metadata$omicType ," using ", DiffAnalysisMethod, " for differential analysis.")
+                       warning("DiffAnalyseMethod was missing. Detected omic type is ", object@metadata$omicType ," using ", method, " for differential analysis.")
                      }
                      
                      ## check completness
@@ -82,13 +82,13 @@ methods::setMethod(f         = "runDiffAnalysis",
                      object@metadata$DiffExpAnal[["contrasts"]] <- object@metadata$design$Contrasts.Sel
                      
                      # remplacera à terme les lignes ci-dessus
-                     object@metadata$DiffExpAnal[["setting"]][["method"]]            <- DiffAnalysisMethod
-                     object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.method"]] <- Adj.pvalue.method
-                     object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.cutoff"]] <- Adj.pvalue.cutoff
+                     object@metadata$DiffExpAnal[["setting"]][["method"]]            <- method
+                     object@metadata$DiffExpAnal[["setting"]][["p.adj.method"]] <- p.adj.method
+                     object@metadata$DiffExpAnal[["setting"]][["p.adj.cutoff"]] <- p.adj.cutoff
                      object@metadata$DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- logFC.cutoff
                      
                      # transform and norm if needed
-                     if (DiffAnalysisMethod == "limmalmFit") {
+                     if (method == "limmalmFit") {
                        
                        object2 <- object
                        
@@ -101,7 +101,7 @@ methods::setMethod(f         = "runDiffAnalysis",
                      # model_matrix <- model.matrix(as.formula(paste(design@Model.formula, collapse = " ")), data = as.data.frame(design@ExpDesign))
                      # rownames(model_matrix) <- rownames(design@ExpDesign)
                      
-                     ListRes <- switch(DiffAnalysisMethod,
+                     ListRes <- switch(method,
                                        "edgeRglmfit" = .tryRflomics(.edgeRAnaDiff(count_matrix  = SummarizedExperiment::assay(object),
                                                                                   model_matrix    = model_matrix[colnames(object),],
                                                                                   group           = getCoeffNorm(object)$group,
@@ -118,8 +118,8 @@ methods::setMethod(f         = "runDiffAnalysis",
                                                                                  model_matrix      = model_matrix[colnames(object2),],
                                                                                  Contrasts.Sel     = object@metadata$design$Contrasts.Sel,
                                                                                  Contrasts.Coeff   = object@metadata$design$Contrasts.Coeff,
-                                                                                 Adj.pvalue.cutoff = 1,
-                                                                                 Adj.pvalue.method = Adj.pvalue.method,
+                                                                                 p.adj.cutoff = 1,
+                                                                                 p.adj.method = p.adj.method,
                                                                                  clustermq         = clustermq,
                                                                                  cmd               = cmd)))
                      
@@ -142,7 +142,7 @@ methods::setMethod(f         = "runDiffAnalysis",
                      }
                      
                      ## filtering
-                     object <-  filterDiffAnalysis(object = object, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff)
+                     object <-  filterDiffAnalysis(object = object, p.adj.cutoff = p.adj.cutoff, logFC.cutoff = logFC.cutoff)
                      
                      return(object)
                    })
@@ -153,19 +153,19 @@ methods::setMethod(f         = "runDiffAnalysis",
 #' @exportMethod runDiffAnalysis
 methods::setMethod(f          = "runDiffAnalysis",
                    signature  = "RflomicsMAE",
-                   definition = function(object, SE.name, Adj.pvalue.method="BH",
-                                         contrastList = NULL, DiffAnalysisMethod = NULL,
-                                         Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, 
+                   definition = function(object, SE.name, p.adj.method="BH",
+                                         contrastList = NULL, method = NULL,
+                                         p.adj.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, 
                                          parallel = FALSE, nworkers = 1, cmd = FALSE, modelFormula=NULL){
                      
                      # all verifications are done in this method
                      object[[SE.name]] <-  runDiffAnalysis(object = object[[SE.name]],
                                                            design = object@metadata$design,
-                                                           Adj.pvalue.method = Adj.pvalue.method,
+                                                           p.adj.method = p.adj.method,
                                                            modelFormula = modelFormula,
                                                            contrastList = contrastList,
-                                                           DiffAnalysisMethod = DiffAnalysisMethod,
-                                                           Adj.pvalue.cutoff = Adj.pvalue.cutoff,
+                                                           method = method,
+                                                           p.adj.cutoff = p.adj.cutoff,
                                                            logFC.cutoff = logFC.cutoff,
                                                            clustermq = clustermq,
                                                            parallel = parallel,
@@ -181,7 +181,7 @@ methods::setMethod(f          = "runDiffAnalysis",
 #'
 #' @param object A RflomicsSE object
 #' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
-#' @param Adj.pvalue.cutoff adjusted pvalue cutoff. Default is the parameter from the differential analysis.
+#' @param p.adj.cutoff adjusted pvalue cutoff. Default is the parameter from the differential analysis.
 #' @param logFC.cutoff cutoff for absolute value of log2FC. Default is the parameter from the differential analysis. 
 #'
 #' @return A RflomicsSE object or a RflomicsMAE, depending on the object type, 
@@ -194,26 +194,26 @@ methods::setMethod(f          = "runDiffAnalysis",
 #'
 methods::setMethod(f          = "filterDiffAnalysis",
                    signature  = "RflomicsSE",
-                   definition <- function(object, Adj.pvalue.cutoff = NULL, logFC.cutoff = NULL){
+                   definition <- function(object, p.adj.cutoff = NULL, logFC.cutoff = NULL){
                      
                      if(is.null(object@metadata$DiffExpAnal[["RawDEFres"]])){
                        stop("can't filter the DiffExpAnal object because it doesn't exist")
                      }
                      
-                     if (is.null(Adj.pvalue.cutoff)) 
-                       Adj.pvalue.cutoff <- getDiffSetting(object)$Adj.pvalue.cutoff
+                     if (is.null(p.adj.cutoff)) 
+                       p.adj.cutoff <- getDiffSetting(object)$p.adj.cutoff
                      
                      if (is.null(logFC.cutoff))
                        logFC.cutoff <- getDiffSetting(object)$abs.logFC.cutoff
                      
                      # remplacera à terme les lignes ci-dessus
-                     object@metadata$DiffExpAnal[["setting"]][["Adj.pvalue.cutoff"]] <- Adj.pvalue.cutoff
+                     object@metadata$DiffExpAnal[["setting"]][["p.adj.cutoff"]] <- p.adj.cutoff
                      object@metadata$DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- logFC.cutoff
                      
                      ## TopDEF: Top differential expressed features
                      DEF_filtred <- lapply(1:length(object@metadata$DiffExpAnal[["DEF"]]), function(x){
                        res <- object@metadata$DiffExpAnal[["DEF"]][[x]]
-                       keep <- (res$Adj.pvalue < Adj.pvalue.cutoff) & (abs(res$logFC) > logFC.cutoff)
+                       keep <- (res$Adj.pvalue < p.adj.cutoff) & (abs(res$logFC) > logFC.cutoff)
                        res <- res[keep,]
                        return(res)
                      })
@@ -253,26 +253,26 @@ methods::setMethod(f          = "filterDiffAnalysis",
 methods::setMethod(f          = "filterDiffAnalysis",
                    signature  = "RflomicsMAE",
                    definition = function(object, SE.name, 
-                                         Adj.pvalue.cutoff = NULL, logFC.cutoff = NULL){
+                                         p.adj.cutoff = NULL, logFC.cutoff = NULL){
                      
                      if(!SE.name %in% names(object))
                        stop(SE.name, " isn't the name of an experiment in ", object)
                      
-                     if (is.null(Adj.pvalue.cutoff) && is.null(logFC.cutoff)) {
+                     if (is.null(p.adj.cutoff) && is.null(logFC.cutoff)) {
                        
-                       message("Parameter Adj.pvalue.cutoff and logFC.cutoff are both NULL. Not changing anything")
+                       message("Parameter p.adj.cutoff and logFC.cutoff are both NULL. Not changing anything")
                        return(object)
                        
                      }else{
                        
-                       if (is.null(Adj.pvalue.cutoff)) 
-                         Adj.pvalue.cutoff <- getDiffSetting(object[[SE.name]])$Adj.pvalue.cutoff
+                       if (is.null(p.adj.cutoff)) 
+                         p.adj.cutoff <- getDiffSetting(object[[SE.name]])$p.adj.cutoff
                        
                        if (is.null(logFC.cutoff))
                          logFC.cutoff <- getDiffSetting(object[[SE.name]])$abs.logFC.cutoff
                        
                        object[[SE.name]] <-  filterDiffAnalysis(object = object[[SE.name]],
-                                                                Adj.pvalue.cutoff = Adj.pvalue.cutoff,
+                                                                p.adj.cutoff = p.adj.cutoff,
                                                                 logFC.cutoff = logFC.cutoff)
                        
                        return(object)
@@ -289,7 +289,7 @@ methods::setMethod(f          = "filterDiffAnalysis",
 #' This is an interface method which draw a MAplot, a volcano plot and the pvalues distribution from the results of a differential analysis
 #' performed on omic datasets stored in an object of class \link{RflomicsSE}
 #' @param object An object of class \link{RflomicsSE}
-#' @param hypothesis The hypothesis for which the plots has to be drawn
+#' @param contrastName The contrastName for which the plots has to be drawn
 #' @param typeofplots The plots you want to return. Default is all possible plots: MA plot, Volcano plot and non adjusted pvalues histogram.
 #' @return plot
 #' @exportMethod plotDiffAnalysis
@@ -299,21 +299,21 @@ methods::setMethod(f          = "filterDiffAnalysis",
 methods::setMethod(f="plotDiffAnalysis",
                    signature="RflomicsSE",
                    
-                   definition <- function(object, hypothesis, typeofplots = c("MA.plot", "volcano", "histogram")){
+                   definition <- function(object, contrastName, typeofplots = c("MA.plot", "volcano", "histogram")){
                      
-                     if ( isTagName(object, hypothesis)) hypothesis <-  convertTagToContrast(object, hypothesis)
+                     if ( isTagName(object, contrastName)) contrastName <-  convertTagToContrast(object, contrastName)
                      
                      plots <- list()
                      
-                     res      <- object@metadata$DiffExpAnal[["RawDEFres"]][[hypothesis]]
-                     resTable <- object@metadata$DiffExpAnal[["DEF"]][[hypothesis]]
+                     res      <- object@metadata$DiffExpAnal[["RawDEFres"]][[contrastName]]
+                     resTable <- object@metadata$DiffExpAnal[["DEF"]][[contrastName]]
                      
                      logFC.cutoff      <- getDiffSetting(object)[["abs.logFC.cutoff"]]
-                     Adj.pvalue.cutoff <- getDiffSetting(object)[["Adj.pvalue.cutoff"]]
+                     p.adj.cutoff <- getDiffSetting(object)[["p.adj.cutoff"]]
                      
-                     if ("MA.plot" %in% typeofplots) plots[["MA.plot"]]        <-  .plotMA(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
-                     if ("volcano" %in% typeofplots) plots[["Volcano.plot"]]   <-  .plotVolcanoPlot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
-                     if ("histogram" %in% typeofplots) plots[["Pvalue.hist"]]  <-  .plotPValue(data =resTable, hypothesis=hypothesis)
+                     if ("MA.plot" %in% typeofplots) plots[["MA.plot"]]        <-  .plotMA(data = resTable, p.adj.cutoff = p.adj.cutoff, logFC.cutoff = logFC.cutoff, contrastName=contrastName)
+                     if ("volcano" %in% typeofplots) plots[["Volcano.plot"]]   <-  .plotVolcanoPlot(data = resTable, p.adj.cutoff = p.adj.cutoff, logFC.cutoff = logFC.cutoff, contrastName=contrastName)
+                     if ("histogram" %in% typeofplots) plots[["Pvalue.hist"]]  <-  .plotPValue(data =resTable, contrastName=contrastName)
                      return(plots)
                    })
 
@@ -323,12 +323,12 @@ methods::setMethod(f="plotDiffAnalysis",
 #' @exportMethod plotDiffAnalysis
 methods::setMethod(f          = "plotDiffAnalysis",
                    signature  = "RflomicsMAE",
-                   definition = function(object, SE.name, hypothesis, typeofplots = c("MA.plot", "volcano", "histogram")){
+                   definition = function(object, SE.name, contrastName, typeofplots = c("MA.plot", "volcano", "histogram")){
                      
-                     if (isTagName(object, hypothesis)) hypothesis <-  convertTagToContrast(object, hypothesis)
+                     if (isTagName(object, contrastName)) contrastName <-  convertTagToContrast(object, contrastName)
                      
                      return(plotDiffAnalysis(object      = object[[SE.name]],
-                                          hypothesis  = hypothesis,
+                                          contrastName  = contrastName,
                                           typeofplots = typeofplots))
                      
                    })
@@ -339,12 +339,12 @@ methods::setMethod(f          = "plotDiffAnalysis",
 #' This is an interface method which draw a heatmap from the results of a differential analysis
 #' performed on omic datasets stored in an object of class \link{RflomicsSE}
 #' @param object An object of class \link{RflomicsSE}
-#' @param hypothesis The hypothesis for which the MAplot has to be drawn
-#' @param condition characters. Default to none. Name of a feature in the design matrix, splits the samples on the heatmap according to its modalities.  
+#' @param contrastName The contrastName for which the MAplot has to be drawn
+#' @param groupColor characters. Default to none. Name of a feature in the design matrix, splits the samples on the heatmap according to its modalities.  
 #' @param title characters. Title of the heatmap. 
-#' @param annot_to_show vector. Names of the annotations to keep in the Heatmap. Default takes all available information.
-#' @param subset_list named list of vectors of modalities to subset and print on the heatmap. 
-#' @param draw_args,heatmap_args  named lists. Any additional parameter passed to ComplexHeatmap::Heatmap or ComplexHeatmap::draw
+#' @param annotNames vector. Names of the annotations to keep in the Heatmap. Default takes all available information.
+#' @param modalities named list of vectors of modalities to subset and print on the heatmap. 
+#' @param drawArgs,heatmapArgs  named lists. Any additional parameter passed to ComplexHeatmap::Heatmap or ComplexHeatmap::draw
 #' @return plot
 #' @exportMethod plotHeatmapDesign
 #' @export
@@ -360,21 +360,21 @@ methods::setMethod(f          = "plotDiffAnalysis",
 methods::setMethod(f          = "plotHeatmapDesign",
                    signature  = "RflomicsSE",
                    definition = function(object, 
-                                         hypothesis, 
-                                         condition="none", 
+                                         contrastName, 
+                                         splitFactor="none", 
                                          title = "", 
-                                         annot_to_show = NULL, 
-                                         subset_list = NULL, 
-                                         draw_args = list(), 
-                                         heatmap_args = list()){
+                                         annotNames = NULL, 
+                                         modalities = NULL, 
+                                         drawArgs = list(), 
+                                         heatmapArgs = list()){
                      
                      Groups     <- getDesignMat(object)
                      
-                     if (is.null(object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]])) {
+                     if (is.null(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]])) {
                        stop("no DE variables")
                      }
                      
-                     resTable <- dplyr::arrange(object@metadata$DiffExpAnal[["TopDEF"]][[hypothesis]], Adj.pvalue)
+                     resTable <- dplyr::arrange(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]], Adj.pvalue)
                      
                      if (dim(resTable)[1] == 0) {
                        stop("no differentially expressed variables...")
@@ -406,15 +406,15 @@ methods::setMethod(f          = "plotHeatmapDesign",
                      df_annotation <- df_annotation[match(colnames(m.def.filter.center), rownames(df_annotation)),] 
                      
                      # Subset the dataset to print only interesting modalities
-                     if (!is.null(subset_list)) {
-                       if (is.null(names(subset_list))) {
-                         message("In heatmapPlot, subset_list argument needs a named list. Not subsetting")
+                     if (!is.null(modalities)) {
+                       if (is.null(names(modalities))) {
+                         message("In heatmapPlot, modalities argument needs a named list. Not subsetting")
                        }else{ 
                          samplesToKeep <- Reduce("intersect", lapply(
-                           1:length(subset_list),
+                           1:length(modalities),
                            FUN = function(i){
-                             col_nam <- names(subset_list)[i]
-                             rownames(df_annotation[which(df_annotation[[col_nam]] %in% subset_list[[i]]),])
+                             col_nam <- names(modalities)[i]
+                             rownames(df_annotation[which(df_annotation[[col_nam]] %in% modalities[[i]]),])
                            }
                          ))
                          
@@ -426,11 +426,11 @@ methods::setMethod(f          = "plotHeatmapDesign",
                      }
                      
                      # Split management
-                     column_split.value <- if (condition != "none") { df_annotation[, condition] } else { NULL }
+                     column_split.value <- if (splitFactor != "none") { df_annotation[, splitFactor] } else { NULL }
                      
                      # Select the right columns
-                     if (!is.null(annot_to_show)) {
-                       df_annotation <- df_annotation %>% dplyr::select(tidyselect::any_of(annot_to_show))
+                     if (!is.null(annotNames)) {
+                       df_annotation <- df_annotation %>% dplyr::select(tidyselect::any_of(annotNames))
                      }
                      
                      # Color annotations
@@ -452,7 +452,7 @@ methods::setMethod(f          = "plotHeatmapDesign",
                      namArg <- ifelse(getOmicsTypes(object) == "RNAseq", "normalized counts", "XIC")
                      
                      # Arguments for Heatmap
-                     heatmap_args <- c(
+                     heatmapArgs <- c(
                        list(matrix = m.def.filter.center,
                             name = namArg,
                             show_row_names = ifelse( dim(m.def.filter.center)[1] > 50, FALSE, TRUE),
@@ -464,18 +464,18 @@ methods::setMethod(f          = "plotHeatmapDesign",
                             column_split = column_split.value,
                             top_annotation = column_ha,
                             column_title = title),
-                       heatmap_args)
+                       heatmapArgs)
                      
                      # Arguments for drawing the heatmap
-                     draw_args <- c(list(merge_legend = TRUE),
-                                    draw_args)            
+                     drawArgs <- c(list(merge_legend = TRUE),
+                                    drawArgs)            
                      
                      # Drawing heatmap in a null file to not plot it
                      pdf(file = NULL)
-                     ha <- do.call(ComplexHeatmap::Heatmap, heatmap_args)
+                     ha <- do.call(ComplexHeatmap::Heatmap, heatmapArgs)
                      
-                     draw_args$object <- ha
-                     ha <- do.call(ComplexHeatmap::draw, draw_args)
+                     drawArgs$object <- ha
+                     ha <- do.call(ComplexHeatmap::draw, drawArgs)
                      
                      dev.off()
                      
@@ -489,19 +489,19 @@ methods::setMethod(f          = "plotHeatmapDesign",
 #' @exportMethod plotHeatmapDesign
 methods::setMethod(f          = "plotHeatmapDesign",
                    signature  = "RflomicsMAE",
-                   definition = function(object, SE.name, hypothesis, condition="none", title = "", annot_to_show = NULL, subset_list = NULL, draw_args = list(), heatmap_args = list()){
+                   definition = function(object, SE.name, contrastName, splitFactor="none", title = "", annotNames = NULL, modalities = NULL, drawArgs = list(), heatmapArgs = list()){
                      
                      
-                     if (isTagName(object, hypothesis)) hypothesis <- convertTagToContrast(object, hypothesis)
+                     if (isTagName(object, contrastName)) contrastName <- convertTagToContrast(object, contrastName)
                      
                      return(plotHeatmapDesign(object        = object[[SE.name]],
-                                        hypothesis    = hypothesis,
-                                        condition     = condition,
+                                        contrastName    = contrastName,
+                                        splitFactor     = splitFactor,
                                         title         = title,
-                                        annot_to_show = annot_to_show,
-                                        subset_list   = subset_list,
-                                        draw_args     = draw_args,
-                                        heatmap_args  = heatmap_args))
+                                        annotNames = annotNames,
+                                        modalities   = modalities,
+                                        drawArgs     = drawArgs,
+                                        heatmapArgs  = heatmapArgs))
                      
                    })
 
@@ -511,7 +511,7 @@ methods::setMethod(f          = "plotHeatmapDesign",
 #' @title plotBoxplotDE
 #'
 #' @param object An object of class \link{RflomicsSE}
-#' @param DE variable name (gene/protein/metabolite name)
+#' @param features variable name (gene/protein/metabolite name)
 #' @exportMethod plotBoxplotDE
 #' @importFrom ggplot2 geom_density xlab theme_void ggtitle ggplot geom_boxplot guide_legend guides
 #' @importFrom dplyr full_join  arrange
@@ -519,10 +519,10 @@ methods::setMethod(f          = "plotHeatmapDesign",
 
 methods::setMethod(f          = "plotBoxplotDE",
                    signature  = "RflomicsSE",
-                   definition = function(object, DE = NULL, condition="groups", raw = FALSE){
+                   definition = function(object, features = NULL, groupColor="groups", raw = FALSE){
                      
                      # check variable name
-                     if (is.null(DE) || DE == "" || length(DE) != 1) {
+                     if (is.null(features) || features == "" || length(features) != 1) {
                        message("set variable name")
                        
                        p <- ggplot2::ggplot() + ggplot2::theme_void() + ggplot2::ggtitle("set variable name")
@@ -534,7 +534,7 @@ methods::setMethod(f          = "plotBoxplotDE",
                      object <- checkTransNorm(object, raw = raw)
                      
                      # check presence of variable in SE
-                     object.DE <- tryCatch(object[DE], error = function(e) e)
+                     object.DE <- tryCatch(object[features], error = function(e) e)
                      if (!is.null(object.DE$message)) {
                        message(object.DE$message)
                        
@@ -547,21 +547,21 @@ methods::setMethod(f          = "plotBoxplotDE",
                        if (object.DE@metadata$omicType != "RNAseq") {
                          
                          pseudo <- SummarizedExperiment::assay(object.DE)
-                         x_lab  <- DE
-                         title  <- DE
+                         x_lab  <- features
+                         title  <- features
                          
                        } else {
                          pseudo <- log2(SummarizedExperiment::assay(object.DE) + 1)
                          
                          x_lab  <- paste0("log2(", DE, " data)")
-                         title  <- DE
+                         title  <- features
                        }
                      } else{ 
                        if (object.DE@metadata$omicType != "RNAseq") {
                          
-                         title <- DE
+                         title <- features
                          pseudo <- SummarizedExperiment::assay(object.DE)
-                         x_lab  <- paste0(DE, " data")
+                         x_lab  <- paste0(features, " data")
                          
                          if (isTransformed(object.DE) && getTransSetting(object.DE)$method != "none") {
                            title  <- paste0("Transformed (", getTransSetting(object.DE)$method, ") ", title)
@@ -572,8 +572,8 @@ methods::setMethod(f          = "plotBoxplotDE",
                        } else {
                          
                          pseudo <- SummarizedExperiment::assay(object.DE) 
-                         title  <- DE
-                         x_lab  <- paste0("log2(", DE, " data)") 
+                         title  <- features
+                         x_lab  <- paste0("log2(", features, " data)") 
                          
                        }
                      }
@@ -584,12 +584,12 @@ methods::setMethod(f          = "plotBoxplotDE",
                      pseudo.gg <- pseudo.gg %>% dplyr::full_join(Groups, by="samples") %>%
                        dplyr::arrange(groups)
                      
-                     pseudo.gg <- dplyr::arrange(pseudo.gg, get(condition))
+                     pseudo.gg <- dplyr::arrange(pseudo.gg, get(groupColor))
                      
                      pseudo.gg$groups <- factor(pseudo.gg$groups, levels = unique(pseudo.gg$groups))
                      
                      p <- ggplot2::ggplot(pseudo.gg, ggplot2::aes(x=groups, y=value, label = features)) +
-                       ggplot2::geom_boxplot(ggplot2::aes(fill=get(condition))) +
+                       ggplot2::geom_boxplot(ggplot2::aes(fill=get(groupColor))) +
                        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)) +
                        ggplot2::guides(fill=guide_legend(title="condition")) + 
                        ggplot2::xlab("") + 
@@ -608,11 +608,11 @@ methods::setMethod(f          = "plotBoxplotDE",
 #' @exportMethod plotBoxplotDE
 methods::setMethod(f          = "plotBoxplotDE",
                    signature  = "RflomicsMAE",
-                   definition = function(object, SE.name, DE = NULL, condition="groups",raw=FALSE){
+                   definition = function(object, SE.name, features = NULL, groupColor="groups",raw=FALSE){
                      
                      plotBoxplotDE(object = object[[SE.name]], 
-                                     DE = DE,
-                                     condition = condition, raw=raw)
+                                     features = features,
+                                   groupColor = groupColor, raw=raw)
                      
                    })
 

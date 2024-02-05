@@ -43,7 +43,7 @@ In a second time, contrasts.fit() was used and empirical bayes statistics were o
 
 
 P-values of differential expressed `r RFLOMICS:::omicsDic(dataset.raw.SE)[["variableName"]]` were adjusted according 
-to the `r getDiffSetting(dataset.SE)$Adj.pvalue.method` procedure with a cutoff set to `r getDiffSetting(dataset.SE)$Adj.pvalue.cutoff`.
+to the `r getDiffSetting(dataset.SE)$p.adj.method` procedure with a cutoff set to `r getDiffSetting(dataset.SE)$p.adj.cutoff`.
 LogFC cut-off was set to `r getDiffSetting(dataset.SE)$abs.logFC.cutoff`
 
 
@@ -58,7 +58,6 @@ DEdown <- vector()
 
 for (i  in  1:dim(tmpRes[["contrasts"]])[1]){
   contrastName <- tmpRes[["contrasts"]][i,]$contrastName
-  #hyp <- tmpRes[["contrasts"]][i,]$tag
   stats <- tmpRes[["stats"]][contrastName,]
   DE[i] <- stats[["All"]]
   DEup[i] <- paste(stats[["Up"]]," (",round(stats[["Up"]]/stats[["All"]],2)*100," %)",sep="")

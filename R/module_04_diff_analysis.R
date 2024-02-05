@@ -28,7 +28,7 @@ DiffExpAnalysisUI <- function(id){
 
 DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   
-  local.rea.values <- reactiveValues(Adj.pvalue.cutoff = 0.05, abs.logFC.cutoff = 0, selectedContrasts = NULL)
+  local.rea.values <- reactiveValues(p.adj.cutoff = 0.05, abs.logFC.cutoff = 0, selectedContrasts = NULL)
   
   # list of tools for diff analysis
   MethodList <- c("glmfit (edgeR)"="edgeRglmfit", "lmFit (limma)"="limmalmFit")
@@ -41,9 +41,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   output$instruction <- renderUI({
     box(title = span(tagList(icon("cogs"), "  ",  a(names(method), href="https://bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf"), tags$small("(Scroll down for instructions)")  )),
         solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
-        p("Differential expression analysis is performed for each hypothesis. 
+        p("Differential expression analysis is performed for each contrast. 
           There are two options to set (the adjusted-pvalue cut-off and the |logFC| cut-off).
-          The results will appear in blocks (one per hypothesis) with several outputs:"),
+          The results will appear in blocks (one per contrast) with several outputs:"),
         p("- Distribution of pvalue's which has to be validate to trust results", a("(some help to identify the good shapes)", href="/www/Pvalue_distrib.pdf"),""),
         p("- MA plot"),
         p("- Volcano plot"),
@@ -90,16 +90,16 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                     choices  = method,
                                     selected = method),
                         
-                        numericInput(inputId = session$ns("Adj.pvalue.cutoff"), 
+                        numericInput(inputId = session$ns("p.adj.cutoff"), 
                                      label="Adjusted pvalue cutoff:",
-                                     value=local.rea.values$Adj.pvalue.cutoff, min=0, max=1, 0.01),
+                                     value=local.rea.values$p.adj.cutoff, min=0, max=1, 0.01),
                         numericInput(inputId = session$ns("abs.logFC.cutoff"),
                                      label="|logFC| cutoff:",
                                      value=local.rea.values$abs.logFC.cutoff, min=0, max=100, 0.01),
                         
                         # use of cluster. need setting step
                         materialSwitch(inputId = session$ns("clustermq"),
-                                       label   =  popify(actionLink("infoCluster",paste0("Cluster: (?)")),"",
+                                       label   =  shinyBS::popify(shiny::actionLink("infoCluster",paste0("Cluster: (?)")),"",
                                                          "If there is a huge number of contrasts, the calculation can be send to the cluster to be run in parrallel",
                                                          options=list(container="body"))
                                        , value = FALSE, status = "success"),
@@ -148,8 +148,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     
     param.list <- list(method             = input$AnaDiffMethod,
                        clustermq          = input$clustermq,
-                       Adj.pvalue.method  = "BH",
-                       Adj.pvalue.cutoff  = input$Adj.pvalue.cutoff, 
+                       p.adj.method  = "BH",
+                       p.adj.cutoff  = input$p.adj.cutoff, 
                        abs.logFC.cutoff   = input$abs.logFC.cutoff)
     
     if(check_run_diff_execution(session$userData$FlomicsMultiAssay[[dataset]], param.list) == FALSE) return()
@@ -192,10 +192,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                     design             = session$userData$FlomicsMultiAssay@metadata$design,
                                     modelFormula       = session$userData$FlomicsMultiAssay@metadata$design$Model.formula,
                                     contrastList       = rea.values$Contrasts.Sel,
-                                    Adj.pvalue.method  = "BH",
+                                    p.adj.method  = "BH",
                                     DiffAnalysisMethod = input$AnaDiffMethod,
                                     clustermq          = input$clustermq,
-                                    Adj.pvalue.cutoff  = input$Adj.pvalue.cutoff, 
+                                    p.adj.cutoff  = input$p.adj.cutoff, 
                                     logFC.cutoff       = input$abs.logFC.cutoff,
                                     cmd                = TRUE)
     }
@@ -204,7 +204,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       print(paste("#    => Filter Diff Analysis..."))
       ### adj_pvalue filtering by calling the RundDiffAnalysis method without filtering
       dataset.SE <- filterDiffAnalysis(object            = dataset.SE,
-                                       Adj.pvalue.cutoff = input$Adj.pvalue.cutoff,
+                                       p.adj.cutoff = input$p.adj.cutoff,
                                        logFC.cutoff      = input$abs.logFC.cutoff)
     }
     
@@ -284,7 +284,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
         stats    <- dataset.SE@metadata$DiffExpAnal[["stats"]][vect["contrastName"],]
         
-        diff.plots <- plotDiffAnalysis(dataset.SE, hypothesis=vect["contrastName"])
+        diff.plots <- plotDiffAnalysis(dataset.SE, contrastName=vect["contrastName"])
         
         if(dim(dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]])[1] == 0){
           
@@ -350,9 +350,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                     }
                                     
                                     plotHeatmapDesign(object     = dataset.SE, 
-                                                hypothesis = vect["contrastName"], 
-                                                condition  = input[[paste0(vect["contrastName"],"-heat.condColorSelect")]],
-                                                annot_to_show =  annot_arg)
+                                                contrastName = vect["contrastName"], 
+                                                splitFactor  = input[[paste0(vect["contrastName"],"-heat.condColorSelect")]],
+                                                annotNames =  annot_arg)
                                   }),
                                   renderText("Clustering method = ward.D2, center = TRUE, scale = FALSE"),
                                   ## select cluster to plot
@@ -434,8 +434,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                     ),
                                     column(width = 9,
                                            renderPlot({
-                                             plotBoxplotDE(object=dataset.SE, DE=input[[paste0(vect["contrastName"], "-DE")]], 
-                                                             condition=input[[paste0(vect["contrastName"], "-DEcondition")]]) })
+                                             plotBoxplotDE(object=dataset.SE, features=input[[paste0(vect["contrastName"], "-DE")]], 
+                                                           groupColor=input[[paste0(vect["contrastName"], "-DEcondition")]]) })
                                     )
                                   )
                          )
@@ -488,8 +488,8 @@ check_run_diff_execution <- function(object.SE, param.list = NULL){
   if(is.null(object.SE@metadata[["DiffExpAnal"]]) || object.SE@metadata[["DiffExpAnal"]]$results != TRUE) return(TRUE)
   
   if(param.list$method             != getDiffSetting(object.SE)$method)            return(TRUE)
-  if(param.list$Adj.pvalue.method  != getDiffSetting(object.SE)$Adj.pvalue.method) return(TRUE)
-  if(param.list$Adj.pvalue.cutoff  != getDiffSetting(object.SE)$Adj.pvalue.cutoff) return(TRUE)
+  if(param.list$p.adj.method  != getDiffSetting(object.SE)$p.adj.method) return(TRUE)
+  if(param.list$p.adj.cutoff  != getDiffSetting(object.SE)$p.adj.cutoff) return(TRUE)
   if(param.list$abs.logFC.cutoff   != getDiffSetting(object.SE)$abs.logFC.cutoff)  return(TRUE)
   
   return(FALSE)

@@ -164,7 +164,7 @@
 
 
 .limmaAnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.Coeff, 
-                          Adj.pvalue.cutoff, Adj.pvalue.method,clustermq, cmd = FALSE){
+                          p.adj.cutoff, p.adj.method,clustermq, cmd = FALSE){
   
   ListRes <- list()
   
@@ -233,8 +233,8 @@
     ListRes[[2]] <- lapply(ListRes[[1]], function(x){
       
       fit2 <- limma::eBayes(x, robust=TRUE)
-      res <- limma::topTable(fit2, adjust.method = Adj.pvalue.method, number=Inf, sort.by="AveExpr")
-      DEPs <- res[res$adj.P.Val <= Adj.pvalue.cutoff,]
+      res <- limma::topTable(fit2, adjust.method = p.adj.method, number=Inf, sort.by="AveExpr")
+      DEPs <- res[res$adj.P.Val <= p.adj.cutoff,]
       return(DEPs)
     })
     
@@ -280,7 +280,7 @@ sumDiffExp <- function(object, SE.name = NULL) {
     }
   }
   
-  pcut <- getDiffSetting(object)$Adj.pvalue.cutoff
+  pcut <- getDiffSetting(object)$p.adj.cutoff
   lcut <- getDiffSetting(object)$abs.logFC.cutoff
   # n_entities <- nrow(assay(object))
   # n_samples <- ncol(assay(object))
@@ -316,18 +316,18 @@ sumDiffExp <- function(object, SE.name = NULL) {
 #'.plotPValue
 #'
 #' @param data dataframe (ggplot2)
-#' @param hypothesis the contrast, useful for plot title
+#' @param contrastName the contrast, useful for plot title
 #' @return plot
 #' @keywords internal
 #' @importFrom ggplot2 geom_histogram theme_bw labs ggplot
 #' @noRd
-.plotPValue <- function(data, hypothesis=hypothesis){
+.plotPValue <- function(data, contrastName=contrastName){
   
   PValue <- NULL
   
   p <- ggplot2::ggplot(data=data) +
     ggplot2::geom_histogram(aes(x=pvalue), bins = 200) +
-    ggplot2::labs(x = expression(p - value), y = "count", title = hypothesis )+
+    ggplot2::labs(x = expression(p - value), y = "count", title = contrastName )+
     ggplot2::theme_bw(base_size = 10)
   
   return(p)
@@ -338,9 +338,9 @@ sumDiffExp <- function(object, SE.name = NULL) {
 #' MA.plot
 #'
 #' @param data dataframe (ggplot2)
-#' @param Adj.pvalue.cutoff adjusted pvalue cutoff
+#' @param p.adj.cutoff adjusted pvalue cutoff
 #' @param logFC.cutoff log2FC cutoff (absolute value)
-#' @param hypothesis the contrast, useful for plot title
+#' @param contrastName the contrast, useful for plot title
 #' @return MA plot
 #' @keywords internal
 #' @importFrom ggplot2 aes geom_point scale_colour_manual ggsave theme_linedraw
@@ -348,15 +348,15 @@ sumDiffExp <- function(object, SE.name = NULL) {
 #' @importFrom dplyr select rename
 #' @noRd
 
-.plotMA <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypothesis){
+.plotMA <- function(data, p.adj.cutoff, logFC.cutoff, contrastName=contrastName){
   
   #Abundance <- logFC <- Adj.pvalue <- NULL
   
   tmp <-dplyr::select(data,"Abundance","logFC","Adj.pvalue") %>% 
     dplyr::rename(., baseMeanLog2=Abundance, log2FoldChange=logFC, padj=Adj.pvalue)
   
-  p <- ggpubr::ggmaplot(tmp, main = hypothesis,
-                        fdr = Adj.pvalue.cutoff, fc = 2^logFC.cutoff, size = 0.4,
+  p <- ggpubr::ggmaplot(tmp, main = contrastName,
+                        fdr = p.adj.cutoff, fc = 2^logFC.cutoff, size = 0.4,
                         ylab = bquote(~Log[2] ~ "fold change"),
                         xlab = bquote(~Log[2] ~ "mean expression"),
                         palette = c("#B31B21", "#1465AC", "grey30"),
@@ -365,7 +365,7 @@ sumDiffExp <- function(object, SE.name = NULL) {
                         font.label = c("plain", 7),
                         font.legend = c(11, "plain", "black"),
                         font.main = c(11, "bold", "black"),
-                        caption = paste("logFC cutoff=",logFC.cutoff, " and " ,"FDR cutoff=",Adj.pvalue.cutoff,sep=""),
+                        caption = paste("logFC cutoff=",logFC.cutoff, " and " ,"FDR cutoff=",p.adj.cutoff,sep=""),
                         ggtheme = ggplot2::theme_linedraw())
   
   
@@ -379,15 +379,15 @@ sumDiffExp <- function(object, SE.name = NULL) {
 #' Title
 #'
 #' @param data dataframe (ggplot2)
-#' @param Adj.pvalue.cutoff adjusted pvalue cutoff
+#' @param p.adj.cutoff adjusted pvalue cutoff
 #' @param logFC.cutoff log2FC cutoff (absolute value)
-#' @param hypothesis the contrast, useful for plot title
+#' @param contrastName the contrast, useful for plot title
 #' @return a volcano plot, made with the \link{EnhancedVolcano} package.
 #' @importFrom EnhancedVolcano EnhancedVolcano
 #' @keywords internal
 #' @noRd
 #'
-.plotVolcanoPlot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis){
+.plotVolcanoPlot <- function(data, p.adj.cutoff, logFC.cutoff, contrastName){
   
   # Modified 221123
   # Find pvalue corresponding to the FDR cutoff for the plot (mean between the last that passes the cutoff
@@ -395,10 +395,10 @@ sumDiffExp <- function(object, SE.name = NULL) {
   # if pvalcutoff is 1 (no cutoff) no need to adjust
   
   
-  if(Adj.pvalue.cutoff > 1){stop("Adj.pvalue.cutoff must be between 0 and 1")}
+  if(p.adj.cutoff > 1){stop("p.adj.cutoff must be between 0 and 1")}
   
-  pval1 <- data$pvalue[data$Adj.pvalue<Adj.pvalue.cutoff] %>% dplyr::last()
-  pval2 <- data$pvalue[data$Adj.pvalue>Adj.pvalue.cutoff] %>% dplyr::first()
+  pval1 <- data$pvalue[data$Adj.pvalue<p.adj.cutoff] %>% dplyr::last()
+  pval2 <- data$pvalue[data$Adj.pvalue>p.adj.cutoff] %>% dplyr::first()
   pvalCutoff <- (pval1 + pval2)/2
   
   
@@ -416,17 +416,17 @@ sumDiffExp <- function(object, SE.name = NULL) {
                                         lab = rownames(data),
                                         x = 'logFC',
                                         y = 'pvalue',
-                                        # pCutoff = Adj.pvalue.cutoff,
+                                        # pCutoff = p.adj.cutoff,
                                         pCutoff = pvalCutoff,
                                         FCcutoff = logFC.cutoff,
                                         axisLabSize=10,
                                         pointSize = 1.5,
                                         labSize = 2,
-                                        title = hypothesis,
+                                        title = contrastName,
                                         titleLabSize=11,
                                         subtitle = "",
                                         subtitleLabSize = 10,
-                                        caption = paste("logFC cutoff=", logFC.cutoff, " & " ,"FDR cutoff=", Adj.pvalue.cutoff, sep=""),
+                                        caption = paste("logFC cutoff=", logFC.cutoff, " & " ,"FDR cutoff=", p.adj.cutoff, sep=""),
                                         legendPosition = "bottom",
                                         legendLabSize = 10,
                                         legendIconSize=1.5,

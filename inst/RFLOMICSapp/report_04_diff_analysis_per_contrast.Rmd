@@ -21,7 +21,7 @@ evalExport <-  dim(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]])
 
 
 ```{r , echo=FALSE,out.width = "50%"}
-diff.plots <- plotDiffAnalysis(dataset.SE, hypothesis=contrast)
+diff.plots <- plotDiffAnalysis(dataset.SE, contrastName=contrast)
 ```
 
 
@@ -47,7 +47,7 @@ diff.plots$Volcano.plot
 3- Heatmap of the euclidean distances with a link of Ward 
 
 ```{r heatmap-plot, echo=FALSE,out.width = "40%", warning=FALSE}
-plotHeatmapDesign(object = dataset.SE,hypothesis = contrast)
+plotHeatmapDesign(object = dataset.SE, contrastName = contrast)
 ```
 
 
@@ -92,7 +92,7 @@ reactable::reactable(signif(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[co
 
  write.table(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],
              file=paste0(contrastDir,"Table_of_DE_", RFLOMICS:::omicsDic(dataset.SE)[["variableName"]],"_pvalmax_",
-                         dataset.SE@metadata[["DiffExpAnal"]][["Adj.pvalue.cutoff"]],"_FCmin_",
+                         dataset.SE@metadata[["DiffExpAnal"]][["p.adj.cutoff"]],"_FCmin_",
                          dataset.SE@metadata[["DiffExpAnal"]][["abs.logFC.cutoff"]],".txt"),
              sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
  

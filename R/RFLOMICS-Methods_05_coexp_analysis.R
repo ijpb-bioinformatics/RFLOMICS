@@ -26,7 +26,7 @@
 #' \item{\code{transformation:} }{see transformation params description}
 #' \item{\code{normFactors:} }{see normFactors params description}
 #' \item{\code{meanFilterCutoff:} }{set to 50 for RNA and to NULL for others}
-#' \item{\code{gene.list.names:} }{see nameList in Arguments description}
+#' \item{\code{gene.list.names:} }{see contrastNames in Arguments description}
 #' \item{\code{merge.type:} }{see merge params description}
 #' \item{\code{coseqResults:} }{the raw results of \code{coseq}}
 #' \item{\code{clusters:} }{a List of clusters}
@@ -35,7 +35,7 @@
 #' }
 #' @param object An object of class \link{RflomicsSE}
 #' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
-#' @param nameList names of the contrasts from which the DE entities are taken. Can be NULL, in that case every contrasts from the differential analysis is taken into consideration.
+#' @param contrastNames names of the contrasts from which the DE entities are taken. Can be NULL, in that case every contrasts from the differential analysis is taken into consideration.
 #' @param K Number of clusters (a single value or a vector of values)
 #' @param replicates The number of iteration for each K.
 #' @param model Type of mixture model to use \code{"Poisson"} or \code{"normal"}. By default, it is the normal.
@@ -60,7 +60,7 @@ methods::setMethod(f = "runCoExpression",
                    definition = function(object,
                                          K=2:20, 
                                          replicates=5, 
-                                         nameList = NULL, 
+                                         contrastNames = NULL, 
                                          merge="union",
                                          model = "Normal",
                                          GaussianModel = NULL, 
@@ -75,24 +75,24 @@ methods::setMethod(f = "runCoExpression",
                      if (is.null(object@metadata$DiffExpAnal[["mergeDEF"]]))
                        stop("Please run a differential analysis. runCoExpression uses these results.")
                      
-                     if (is.null(nameList) && !is.null(getValidContrasts(object)[["tag"]])) 
-                       nameList <- getValidContrasts(object)[["tag"]]
-                     else if (is.null(nameList) && is.null(getValidContrasts(object)[["tag"]])) 
-                       nameList <- colnames(object@metadata$DiffExpAnal[["mergeDEF"]])[-1]
+                     if (is.null(contrastNames) && !is.null(getValidContrasts(object)[["tag"]])) 
+                       contrastNames <- getValidContrasts(object)[["tag"]]
+                     else if (is.null(contrastNames) && is.null(getValidContrasts(object)[["tag"]])) 
+                       contrastNames <- colnames(object@metadata$DiffExpAnal[["mergeDEF"]])[-1]
                      
                      Groups <- getDesignMat(object)
                      
                      CoExpAnal <- list()
                      
                      CoExpAnal[["setting"]][["method"]]           <- "coseq"
-                     CoExpAnal[["setting"]][["gene.list.names"]]  <- nameList
-                     names(CoExpAnal[["setting"]][["gene.list.names"]])  <- dplyr::filter(object@metadata$DiffExpAnal$contrasts, tag %in% nameList)$contrastName
+                     CoExpAnal[["setting"]][["gene.list.names"]]  <- contrastNames
+                     names(CoExpAnal[["setting"]][["gene.list.names"]])  <- dplyr::filter(object@metadata$DiffExpAnal$contrasts, tag %in% contrastNames)$contrastName
                      CoExpAnal[["setting"]][["merge.type"]]       <- merge
                      CoExpAnal[["setting"]][["replicates.nb"]]    <- replicates
                      CoExpAnal[["setting"]][["K.range"]]          <- K
                      CoExpAnal[["setting"]][["scale"]]            <- scale
                      
-                     geneList <- getDEList(object = object, contrasts = nameList, operation = merge)
+                     geneList <- getDEList(object = object, contrasts = contrastNames, operation = merge)
                      
                      # set default parameters based on data type
                      param.list <- list("model" = model)
@@ -198,7 +198,7 @@ methods::setMethod(f = "runCoExpression",
 #' @exportMethod runCoExpression
 methods::setMethod(f          = "runCoExpression",
                    signature  = "RflomicsMAE",
-                   definition = function(object, SE.name, K=2:20, replicates=5, nameList, merge="union",
+                   definition = function(object, SE.name, K=2:20, replicates=5, contrastNames, merge="union",
                                          model = "Normal", GaussianModel = NULL, 
                                          transformation = NULL, normFactors = NULL, clustermq = FALSE,
                                          meanFilterCutoff = NULL, scale = NULL, silent = TRUE, cmd = FALSE){
@@ -210,7 +210,7 @@ methods::setMethod(f          = "runCoExpression",
                      object[[SE.name]] <-  runCoExpression(object = object[[SE.name]],
                                                            K = K,
                                                            replicates = replicates,
-                                                           nameList = nameList, 
+                                                           contrastNames = contrastNames, 
                                                            merge = merge, 
                                                            model = model,
                                                            GaussianModel = GaussianModel,

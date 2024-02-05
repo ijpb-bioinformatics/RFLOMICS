@@ -97,7 +97,7 @@ methods::setGeneric(
   name = "runDiffAnalysis",
   def  = function(object,  
                   design = NULL,
-                  Adj.pvalue.method="BH",
+                  p.adj.method="BH",
                   contrastList = NULL, 
                   DiffAnalysisMethod = NULL, 
                   Adj.pvalue.cutoff = 0.05, 

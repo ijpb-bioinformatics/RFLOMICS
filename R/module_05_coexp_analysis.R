@@ -285,7 +285,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     # run coseq
     dataset.SE <- runCoExpression(object = dataset.SE, 
                                   merge = input$unionInter, 
-                                  nameList = input$select,
+                                  contrastNames = input$select,
                                   K = input$K.values[1]:input$K.values[2], 
                                   replicates = input$iter,
                                   model  = input$model, 
