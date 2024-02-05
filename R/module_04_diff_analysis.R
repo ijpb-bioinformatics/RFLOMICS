@@ -99,8 +99,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                         
                         # use of cluster. need setting step
                         materialSwitch(inputId = session$ns("clustermq"),
-                                       label   =  shinyBS::popify(shiny::actionLink("infoCluster",paste0("Cluster: (?)")),"",
-                                                         "If there is a huge number of contrasts, the calculation can be send to the cluster to be run in parrallel",
+                                       label   =  shinyBS::popify(shiny::actionLink("infoCluster",paste0("Cluster: (?)")),
+                                                                  title= "",
+                                                         content="If there is a huge number of contrasts, the calculation can be send to the cluster to be run in parrallel",
                                                          options=list(container="body"))
                                        , value = FALSE, status = "success"),
                         
@@ -193,7 +194,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                     modelFormula       = session$userData$FlomicsMultiAssay@metadata$design$Model.formula,
                                     contrastList       = rea.values$Contrasts.Sel,
                                     p.adj.method  = "BH",
-                                    DiffAnalysisMethod = input$AnaDiffMethod,
+                                    method = input$AnaDiffMethod,
                                     clustermq          = input$clustermq,
                                     p.adj.cutoff  = input$p.adj.cutoff, 
                                     logFC.cutoff       = input$abs.logFC.cutoff,

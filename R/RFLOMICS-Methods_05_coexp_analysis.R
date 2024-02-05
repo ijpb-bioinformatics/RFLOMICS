@@ -287,10 +287,10 @@ methods::setMethod(f="plotCoExpression",
 #' @exportMethod plotCoExpression
 methods::setMethod(f          = "plotCoExpression",
                    signature  = "RflomicsMAE",
-                   definition = function(object, SE.name, numCluster = 1, condition="groups", observation=NULL){
+                   definition = function(object, SE.name, cluster = 1, condition="groups", observation=NULL){
                      
                      plotCoExpression(object = object[[SE.name]],
-                                             numCluster = numCluster,
+                                             cluster = cluster,
                                              condition = condition,
                                              observation = observation)
                    })
@@ -301,9 +301,9 @@ methods::setMethod(f          = "plotCoExpression",
 #'
 #' @param object An object of class \link{RflomicsSE}
 #' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
-#' @param numCluster cluster number
+#' @param cluster cluster number
 #' @param condition 
-#' @param observation 
+#' @param features
 #' @export
 #' @exportMethod plotCoExpressionProfile
 #' @importFrom dplyr filter mutate rename full_join arrange group_by summarise
@@ -312,12 +312,12 @@ methods::setMethod(f          = "plotCoExpression",
 
 methods::setMethod(f="plotCoExpressionProfile",
                    signature="RflomicsSE",
-                   definition <- function(object, numCluster = 1, condition="groups", observation=NULL){
+                   definition <- function(object, cluster = 1, condition="groups", features=NULL){
                      
                      Groups <- getDesignMat(object)
                      
                      coseq.res  <- object@metadata$CoExpAnal[["coseqResults"]]
-                     assays.data <- dplyr::filter(as.data.frame(coseq.res@assays@data[[1]]), get(paste0("Cluster_",numCluster)) > 0.8)
+                     assays.data <- dplyr::filter(as.data.frame(coseq.res@assays@data[[1]]), get(paste0("Cluster_",cluster)) > 0.8)
                      
                      y_profiles.gg <- coseq.res@y_profiles[rownames(assays.data),] %>% 
                        data.frame() %>% 
@@ -333,17 +333,17 @@ methods::setMethod(f="plotCoExpressionProfile",
                        ggplot2::geom_boxplot(ggplot2::aes_string(fill = condition), outlier.size = 0.3) +
                        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +  
                        ggplot2::xlab("Conditions") + ggplot2::ylab("Expression profiles") +
-                       ggplot2::ggtitle(paste0("Cluster: ",numCluster, "; nb_observations : ", dim(assays.data)[1]))
+                       ggplot2::ggtitle(paste0("Cluster: ",cluster, "; nb_observations : ", dim(assays.data)[1]))
                      
-                     if(!is.null(observation)){
+                     if(!is.null(features)){
                        
-                       df <- dplyr::filter(y_profiles.gg, observations == observation) %>% 
+                       df <- dplyr::filter(y_profiles.gg, observations == features) %>% 
                          dplyr::group_by(groups) %>% 
                          dplyr::summarise(mean.y_profiles=mean(y_profiles))
                        p <- p + 
                          ggplot2::geom_point(data = df, ggplot2::aes(x = groups, y = mean.y_profiles), color = "red", size = 2) +
                          ggplot2::geom_line( data = df, ggplot2::aes(x = groups, y = mean.y_profiles), color = "red", group = 1) +
-                         ggplot2::ggtitle(paste0("Cluster: ",numCluster, "; nb_observations : ", dim(assays.data)[1], "; red : ", observation))
+                         ggplot2::ggtitle(paste0("Cluster: ",cluster, "; nb_observations : ", dim(assays.data)[1], "; red : ", features))
                      }
                      -                     
                        return(p)
@@ -354,10 +354,10 @@ methods::setMethod(f="plotCoExpressionProfile",
 #' @exportMethod plotCoExpressionProfile
 methods::setMethod(f          = "plotCoExpressionProfile",
                    signature  = "RflomicsMAE",
-                   definition = function(object, SE.name, numCluster = 1, condition="groups", observation=NULL){
+                   definition = function(object, SE.name, cluster = 1, condition="groups", observation=NULL){
                      
                      plotCoExpressionProfile(object = object[[SE.name]],
-                                        numCluster = numCluster,
+                                        cluster = cluster,
                                         condition = condition,
                                         observation = observation)
                      

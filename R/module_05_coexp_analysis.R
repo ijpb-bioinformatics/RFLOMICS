@@ -137,8 +137,8 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
             column(12,
                    selectInput(inputId = session$ns("scale"),
                                label    = shinyBS::popify(shiny::actionLink("infoScale",paste0("Scale by ", name , ": (help)")),
-                                                 "",
-                                                 "By default for proteomics or metabolomics data,coseq is done onto Z-scores (data scaled by proteins or metabolites) to group them according to their expression profile rather than abundance",
+                                                 title="",
+                                                 content="By default for proteomics or metabolomics data, coseq is done onto Z-scores (data scaled by proteins or metabolites) to group them according to their expression profile rather than abundance",
                                                  options=list(container="body")),
                                choices  = Scale ,
                                selected = Scale[1])
@@ -166,9 +166,10 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
             column(12,
                    selectInput(inputId = session$ns("GaussianModel"),
                                
-                               label    = shinyBS::popify(shiny::actionLink("infoGaussianModel", paste0("Gaussian Model:", warning,"")),"",
-                                                 "For proteomics or metabolomics data, coseq analysis may fail with default GaussianModel parameter. 
-                                                 In this case, an error message will indicate to switch the other option: Gaussian_pk_Lk_Bk",
+                               label    = shinyBS::popify(
+                                  shiny::actionLink("infoGaussianModel", paste0("Gaussian Model:", warning,"")),
+                                  title= "",
+                                  content="For proteomics or metabolomics data, coseq analysis may fail with default GaussianModel parameter. In this case, an error message will indicate to switch the other option: Gaussian_pk_Lk_Bk",
                                                  options=list(container="body")),
                                choices  = Gaussian,
                                selected = Gaussian[1]))
@@ -370,7 +371,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                            ),
                            column(9, 
                                   renderPlot({ 
-                                    plotCoExpressionProfile(dataset.SE, input$selectCluster, condition=input$profile.condition, observation=input$observations) }))
+                                    plotCoExpressionProfile(dataset.SE, input$selectCluster, condition=input$profile.condition, features=input$observations) }))
                          )),
                 tabPanel("cluster composition",
                          fluidRow(
