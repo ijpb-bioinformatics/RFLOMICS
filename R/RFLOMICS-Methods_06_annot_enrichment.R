@@ -678,17 +678,6 @@ methods::setMethod(
 #' @param domain description
 #' @return enrichment result.
 #' @exportMethod getEnrichRes
-methods::setGeneric(
-  name = "getEnrichRes",
-  def  = function(object,
-                  contrastName = NULL,
-                  from = "DiffExpEnrichAnal",
-                  database = "GO",
-                  domain = NULL, ...){standardGeneric("getEnrichRes")}
-)
-
-
-
 methods::setMethod(
   f = "getEnrichRes",
   signature = "RflomicsSE",
@@ -747,14 +736,6 @@ methods::setMethod(
 #' @return pvalue
 #' @noRd
 #' @keywords internal
-
-methods::setGeneric(
-  name = "getEnrichPvalue",
-  def  = function(object,
-                  from = "DiffExpEnrichAnal",
-                  database = "GO"){standardGeneric("getEnrichPvalue")}
-)
-
 methods::setMethod(
   f = "getEnrichPvalue",
   signature = "RflomicsSE",
@@ -788,15 +769,6 @@ methods::setMethod(
 #' @param from either DiffExpEnrichAnal or CoExpAnal.
 #' @return a list of tables or a table
 #' @exportMethod sumORA
-
-methods::setGeneric(
-  name = "sumORA",
-  def  = function(object, 
-                  from = "DiffExpEnrichAnal", 
-                  database = NULL, 
-                  contrastName = NULL){standardGeneric("sumORA")}
-)
-
 methods::setMethod(
   f = "sumORA",
   signature = "RflomicsSE",

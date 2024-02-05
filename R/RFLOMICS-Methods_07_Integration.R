@@ -568,13 +568,6 @@ methods::setMethod(
 #' getMOFASettings(MAEtest)
 #' MOFA2::plot_variance_explained(getMOFA(MAEtest))
 #' 
-methods::setGeneric(
-  name = "getMixOmics",
-  def  = function(object, 
-                  response = NULL,
-                  onlyResults = TRUE){standardGeneric("getMixOmics")}
-)
-
 methods::setMethod(
   f = "getMixOmics",
   signature = "RflomicsMAE",
@@ -601,10 +594,6 @@ methods::setMethod(
 
 #' @rdname methods-for-integration
 #' @exportMethod getMOFA
-methods::setGeneric(
-  name = "getMOFA",
-  def  = function(object, onlyResults = TRUE){standardGeneric("getMOFA")}
-)
 
 methods::setMethod(
   f = "getMOFA",
@@ -621,11 +610,6 @@ methods::setMethod(
 
 #' @exportMethod getMOFASettings
 #' @rdname methods-for-integration
-methods::setGeneric(
-  name = "getMOFASettings",
-  def  = function(object){standardGeneric("getMOFASettings")}
-)
-
 methods::setMethod(
   f = "getMOFASettings",
   signature = "RflomicsMAE",
@@ -636,10 +620,6 @@ methods::setMethod(
 #' @exportMethod getMixOmicsSettings
 #' @rdname methods-for-integration
 
-methods::setGeneric(
-  name = "getMixOmicsSettings",
-  def  = function(object){standardGeneric("getMixOmicsSettings")}
-)
 
 methods::setMethod(
   f = "getMixOmicsSettings",
@@ -652,11 +632,6 @@ methods::setMethod(
 
 #' @rdname methods-for-integration
 #' @exportMethod setMOFA
-methods::setGeneric(
-  name = "setMOFA",
-  def  = function(object, results = NULL){standardGeneric("setMOFA")}
-)
-
 methods::setMethod(
   f = "setMOFA",
   signature = "RflomicsMAE",
@@ -667,11 +642,6 @@ methods::setMethod(
 
 #' @rdname methods-for-integration
 #' @exportMethod setMixOmics
-methods::setGeneric(
-  name = "setMixOmics",
-  def  = function(object, results = NULL){standardGeneric("setMixOmics")}
-)
-
 methods::setMethod(
   f = "setMixOmics",
   signature = "RflomicsMAE",
@@ -695,11 +665,6 @@ methods::setMethod(
 #'
 #' @rdname methods-for-integration
 #' @exportMethod sumMixOmics
-methods::setGeneric(
-  name = "sumMixOmics",
-  def  = function(object, selectedResponse = NULL){
-    standardGeneric("sumMixOmics")}
-)
 
 methods::setMethod(
   f = "sumMixOmics",
@@ -727,10 +692,6 @@ methods::setMethod(
 #' @return A data frame.
 #' @keywords internal
 #' @noRd
-methods::setGeneric(
-  name = ".getOneMORes",
-  def  = function(object, selectedResponse){standardGeneric(".getOneMORes")}
-)
 
 methods::setMethod(
   f = ".getOneMORes",

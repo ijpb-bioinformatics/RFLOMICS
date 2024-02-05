@@ -291,6 +291,31 @@ methods::setGeneric(
                  ...
   ){standardGeneric("plotEnrichComp")}
 )
+methods::setGeneric(
+  name = "getEnrichRes",
+  def  = function(object,
+                  contrastName = NULL,
+                  from = "DiffExpEnrichAnal",
+                  database = "GO",
+                  domain = NULL, ...){standardGeneric("getEnrichRes")}
+)
+
+
+methods::setGeneric(
+  name = "getEnrichPvalue",
+  def  = function(object,
+                  from = "DiffExpEnrichAnal",
+                  database = "GO"){standardGeneric("getEnrichPvalue")}
+)
+
+
+methods::setGeneric(
+  name = "sumORA",
+  def  = function(object, 
+                  from = "DiffExpEnrichAnal", 
+                  database = NULL, 
+                  contrastName = NULL){standardGeneric("sumORA")}
+)
 
 ################# INTEGRATION #################
 
@@ -357,6 +382,51 @@ methods::setGeneric(
                  selOpt = rep(list("all"), length(object)),
                  type = rep(list("union"), length(selOpt))
   ){standardGeneric("filterFeatures")}
+)
+
+
+methods::setGeneric(
+  name = "getMixOmics",
+  def  = function(object, 
+                  response = NULL,
+                  onlyResults = TRUE){standardGeneric("getMixOmics")}
+)
+
+methods::setGeneric(
+  name = "getMOFA",
+  def  = function(object, onlyResults = TRUE){standardGeneric("getMOFA")}
+)
+
+methods::setGeneric(
+  name = "getMOFASettings",
+  def  = function(object){standardGeneric("getMOFASettings")}
+)
+
+methods::setGeneric(
+  name = "setMOFA",
+  def  = function(object, results = NULL){standardGeneric("setMOFA")}
+)
+
+methods::setGeneric(
+  name = "setMixOmics",
+  def  = function(object, results = NULL){standardGeneric("setMixOmics")}
+)
+
+methods::setGeneric(
+  name = "sumMixOmics",
+  def  = function(object, selectedResponse = NULL){
+    standardGeneric("sumMixOmics")}
+)
+
+methods::setGeneric(
+  name = ".getOneMORes",
+  def  = function(object, selectedResponse){standardGeneric(".getOneMORes")}
+)
+
+
+methods::setGeneric(
+  name = "getMixOmicsSettings",
+  def  = function(object){standardGeneric("getMixOmicsSettings")}
 )
 
 # ---- RESET ----
