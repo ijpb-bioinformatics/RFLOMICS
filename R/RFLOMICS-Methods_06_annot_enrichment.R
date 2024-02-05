@@ -682,7 +682,6 @@ methods::setGeneric(
   name = "getEnrichRes",
   def  = function(object,
                   contrastName = NULL,
-                  experiment = NULL,
                   from = "DiffExpEnrichAnal",
                   database = "GO",
                   domain = NULL, ...){standardGeneric("getEnrichRes")}
