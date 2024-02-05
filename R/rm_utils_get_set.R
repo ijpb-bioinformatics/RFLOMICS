@@ -1,10 +1,5 @@
 
 
-
-
-
-
-
 # ---- Get filtering parameters ----
 
 #' @title Get filtering setting

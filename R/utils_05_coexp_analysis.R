@@ -2,63 +2,19 @@
 ####################################### CO-EXPRESSION ##############################
 
 
-# ---- INTERNAL - get members of a cluster or coseq clusters ----
-#
-#' @title get members of a cluster
-#'
-#' @param object a RflomicsSE, produced by rflomics
-#' @param name name of the cluster
-#' @return The list of entities inside this cluster.
-#' @noRd
-#' @importFrom coseq clusters
-#' @keywords internal
-
-.getCluster <- function(object, clusterName) {
-  
-  clusterName <- gsub("cluster[.]", "", clusterName)
-  res <- object@metadata$CoExpAnal$coseqResults
-  
-  if (!is.null(res)) {
-    clList <- clusters(res)
-    return(names(clList == clusterName))
-  } else {
-    return(NULL)
-  }
-  
-}
-
-#' @param object a RflomicsSE, produced by rflomics
-#' @return all clusters
-#' @noRd
-#' @importFrom coseq clusters
-#' @keywords internal
-
-.getCoseqClusters <- function(object) {
-  
-  res <- object@metadata$CoExpAnal$coseqResults
-  
-  if (!is.null(res)) {
-    return(clusters(res))
-  } else {
-    return(NULL)
-  }
-  
-}
-
-
-#' @title coseq.error.manage
+#' @title .coseq.error.manage
 #' @param coseq.res.list list of coseq object
 #' @param K number of group
 #' @param replicates number of replication to run
 #' @return list plot of ICL, logLike and coseq object with min ICL
-#' @export
+#' @keywords internal
 #' @importFrom dplyr n group_by summarise mutate filter
 #' @importFrom coseq ICL
 #' @importFrom stringr str_replace
 #' @importFrom tibble tibble
 #' @noRd
 #'
-coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
+.coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
   
   # Create a table of jobs summary
   error.list <- unlist(lapply(coseq.res.list, function(x){
@@ -154,10 +110,10 @@ coseq.error.manage <- function(coseq.res.list, K, replicates, cmd = FALSE){
 #' @param coseqObjectList list of coseq object
 #' @return list plot of ICL, logLike and coseq object with min ICL
 #' @importFrom coseq ICL likelihood clusters
-#' @export
+#' @keywords internal
 #' @noRd
 #'
-coseq.results.process <- function(coseqObjectList, K, conds){
+.coseq.results.process <- function(coseqObjectList, K, conds){
   
   # ICL plot
   ICL.list <- list()
@@ -256,10 +212,10 @@ coseq.results.process <- function(coseqObjectList, K, conds){
 #' @return coseqResults
 #' @importFrom coseq coseq
 #' @importFrom clustermq Q_rows 
-#' @export
+#' @keywords internal
 #' @noRd
 #'
-runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list, silent = TRUE, cmd = FALSE){
+.runCoseqClustermq <- function(counts, conds, K=2:20, replicates = 5, param.list, silent = TRUE, cmd = FALSE){
   
   # iter <-  rep(K, each = replicates)
   # seed_arg = rep(1:replicates, max(K) - 1)  
@@ -279,7 +235,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
   
   fx <- function(x, seed_arg){
     
-    try_rflomics <- function(expr) {
+    .tryRflomics <- function(expr) {
       warn <- err <- NULL
       value <- withCallingHandlers(
         tryCatch(expr,
@@ -293,7 +249,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
     }
     if (silent) { 
       co <- suppressMessages(capture.output(
-        res <- try_rflomics(coseq::coseq(object = param.list[["object"]], 
+        res <- .tryRflomics(coseq::coseq(object = param.list[["object"]], 
                                          K = x,
                                          model = param.list$model,
                                          transformation = param.list$transformation,
@@ -304,7 +260,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
                                          verbose = FALSE))
       ))
     }else{
-      res <- try_rflomics(coseq::coseq(object = param.list[["object"]], 
+      res <- .tryRflomics(coseq::coseq(object = param.list[["object"]], 
                                        K = x,
                                        model = param.list$model,
                                        transformation = param.list$transformation,
@@ -361,7 +317,7 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
       }
     }
     
-    CoExpAnal <- coseq.results.process(coseq.res.list[["value"]], K = K, conds = conds)
+    CoExpAnal <- .coseq.results.process(coseq.res.list[["value"]], K = K, conds = conds)
     CoExpAnal[["warning"]] <- coseq.res.list$warning
     
     if(nK_success/length(iter) < 0.8){
@@ -391,10 +347,10 @@ runCoseq_clustermq <- function(counts, conds, K=2:20, replicates = 5, param.list
 #' @param param.list list of coseq parameters
 #' @return coseqResults
 #' @importFrom coseq coseq clusters
-#' @export
+#' @keywords internal
 #' @noRd
 #'
-runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list, silent = TRUE, cmd = FALSE){
+.runCoseqLocal <- function(counts, conds, K=2:20, replicates = 5, param.list, silent = TRUE, cmd = FALSE){
   
   iter <- rep(K, replicates)
   coseq.res.list <- list()
@@ -405,7 +361,7 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list, si
     coseq.res.list <- lapply(1:replicates, function(x){
       
       co <- capture.output(suppressMessages(
-        res <- try_rflomics(
+        res <- .tryRflomics(
           coseq::coseq(counts, K = K, parallel = TRUE,
                        model            = param.list[["model"]],
                        transformation   = param.list[["transformation"]],
@@ -421,7 +377,7 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list, si
   }else{
     coseq.res.list <- lapply(1:replicates, function(x){
       
-      try_rflomics(coseq::coseq(counts, K = K, parallel = TRUE,
+      .tryRflomics(coseq::coseq(counts, K = K, parallel = TRUE,
                                 model            = param.list[["model"]],
                                 transformation   = param.list[["transformation"]],
                                 meanFilterCutoff = param.list[["meanFilterCutoff"]],
@@ -437,7 +393,7 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list, si
   
   # error managment
   if (cmd) print("#     => error management: level 1 ")
-  coseq.error.management <- coseq.error.manage(coseq.res.list = coseq.res.list, 
+  coseq.error.management <- .coseq.error.manage(coseq.res.list = coseq.res.list, 
                                                K = K, 
                                                replicates = replicates,
                                                cmd = cmd)
@@ -448,7 +404,7 @@ runCoseq_local <- function(counts, conds, K=2:20, replicates = 5, param.list, si
   
   if (nK_success/length(iter) >=0.8) {
     
-    CoExpAnal <-  coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, 
+    CoExpAnal <-  .coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, 
                                         K = K,
                                         conds = conds)
     # If ICL.median has been found
@@ -521,7 +477,7 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
 
 
 
-#' @title try_rflomics
+#' @title .tryRflomics
 #' @details
 #' This function come from https://stackoverflow.com/questions/4948361/how-do-i-save-warnings-and-errors-as-output-from-a-function
 #  The author indicated that he merged Martins solution (https://stackoverflow.com/a/4952908/2161065) and
@@ -533,11 +489,10 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
 #' \item{\code{warning:} }{warning message or NULL}
 #' \item{\code{error:} }{error message or NULL}
 #' }
-#' @export
 #' @keywords internal
 #' @noRd
 
-try_rflomics <- function(expr) {
+.tryRflomics <- function(expr) {
   warn <- err <- NULL
   value <- withCallingHandlers(
     tryCatch(expr,

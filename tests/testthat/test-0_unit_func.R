@@ -37,10 +37,10 @@ MAE <- MAE |>
   RunNormalization(  SE.name = "RNAtest",   NormMethod = "TMM")                 |>
   RunNormalization(  SE.name = "protetest", NormMethod = "median")              |>
   FilterLowAbundance(SE.name = "RNAtest")                                       |>
-  RunDiffAnalysis(   SE.name = "metatest",  DiffAnalysisMethod = "limmalmFit", contrastList = contrastList, modelFormula = formulae[[1]])  |>
-  RunDiffAnalysis(   SE.name = "protetest", DiffAnalysisMethod = "limmalmFit", contrastList = contrastList, modelFormula = formulae[[1]])  |>
-  RunDiffAnalysis(   SE.name = "RNAtest",   DiffAnalysisMethod = "edgeRglmfit", contrastList = contrastList, modelFormula = formulae[[1]]) |>
-  FilterDiffAnalysis(SE.name = "RNAtest",  Adj.pvalue.cutoff = 0.05, logFC.cutoff = 2)
+  runDiffAnalysis(   SE.name = "metatest",  DiffAnalysisMethod = "limmalmFit", contrastList = contrastList, modelFormula = formulae[[1]])  |>
+  runDiffAnalysis(   SE.name = "protetest", DiffAnalysisMethod = "limmalmFit", contrastList = contrastList, modelFormula = formulae[[1]])  |>
+  runDiffAnalysis(   SE.name = "RNAtest",   DiffAnalysisMethod = "edgeRglmfit", contrastList = contrastList, modelFormula = formulae[[1]]) |>
+  filterDiffAnalysis(SE.name = "RNAtest",  Adj.pvalue.cutoff = 0.05, logFC.cutoff = 2)
 
 # ----- Test equivalence geneList selection : ----
 

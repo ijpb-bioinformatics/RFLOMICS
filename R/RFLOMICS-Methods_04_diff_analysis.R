@@ -6,7 +6,7 @@
 
 ## METHOD to perform differential analysis
 
-#' @title RunDiffAnalysis
+#' @title runDiffAnalysis
 #' @description This is an interface method which run a differential analysis method on
 #' omic datasets stored in an object of class \link{RflomicsSE}.
 #' According to the type of omic and to a list of contrasts,
@@ -44,11 +44,11 @@
 #' @return An object of class \link{RflomicsSE}
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
-#' @exportMethod RunDiffAnalysis
+#' @exportMethod runDiffAnalysis
 #' @importFrom dplyr filter
-#' @rdname RunDiffAnalysis
+#' @rdname runDiffAnalysis
 #' 
-methods::setMethod(f         = "RunDiffAnalysis",
+methods::setMethod(f         = "runDiffAnalysis",
                    signature = "RflomicsSE",
                    definition <- function(object, design, Adj.pvalue.method="BH", contrastList = NULL, DiffAnalysisMethod = NULL, 
                                           Adj.pvalue.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, parallel = FALSE, nworkers = 1,
@@ -102,7 +102,7 @@ methods::setMethod(f         = "RunDiffAnalysis",
                      # rownames(model_matrix) <- rownames(design@ExpDesign)
                      
                      ListRes <- switch(DiffAnalysisMethod,
-                                       "edgeRglmfit" = try_rflomics(edgeR.AnaDiff(count_matrix  = SummarizedExperiment::assay(object),
+                                       "edgeRglmfit" = .tryRflomics(.edgeRAnaDiff(count_matrix  = SummarizedExperiment::assay(object),
                                                                                   model_matrix    = model_matrix[colnames(object),],
                                                                                   group           = getCoeffNorm(object)$group,
                                                                                   lib.size        = getCoeffNorm(object)$lib.size,
@@ -114,7 +114,7 @@ methods::setMethod(f         = "RunDiffAnalysis",
                                                                                   parallel        = parallel,
                                                                                   nworkers        = nworkers,
                                                                                   cmd             = cmd)),
-                                       "limmalmFit" = try_rflomics(limma.AnaDiff(count_matrix    = SummarizedExperiment::assay(object2),
+                                       "limmalmFit" = .tryRflomics(.limmaAnaDiff(count_matrix    = SummarizedExperiment::assay(object2),
                                                                                  model_matrix      = model_matrix[colnames(object2),],
                                                                                  Contrasts.Sel     = object@metadata$design$Contrasts.Sel,
                                                                                  Contrasts.Coeff   = object@metadata$design$Contrasts.Coeff,
@@ -142,16 +142,16 @@ methods::setMethod(f         = "RunDiffAnalysis",
                      }
                      
                      ## filtering
-                     object <-  FilterDiffAnalysis(object = object, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff)
+                     object <-  filterDiffAnalysis(object = object, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff)
                      
                      return(object)
                    })
 
 
-#' @rdname RunDiffAnalysis
-#' @title RunDiffAnalysis
-#' @exportMethod RunDiffAnalysis
-methods::setMethod(f          = "RunDiffAnalysis",
+#' @rdname runDiffAnalysis
+#' @title runDiffAnalysis
+#' @exportMethod runDiffAnalysis
+methods::setMethod(f          = "runDiffAnalysis",
                    signature  = "RflomicsMAE",
                    definition = function(object, SE.name, Adj.pvalue.method="BH",
                                          contrastList = NULL, DiffAnalysisMethod = NULL,
@@ -159,7 +159,7 @@ methods::setMethod(f          = "RunDiffAnalysis",
                                          parallel = FALSE, nworkers = 1, cmd = FALSE, modelFormula=NULL){
                      
                      # all verifications are done in this method
-                     object[[SE.name]] <-  RunDiffAnalysis(object = object[[SE.name]],
+                     object[[SE.name]] <-  runDiffAnalysis(object = object[[SE.name]],
                                                            design = object@metadata$design,
                                                            Adj.pvalue.method = Adj.pvalue.method,
                                                            modelFormula = modelFormula,
@@ -186,13 +186,13 @@ methods::setMethod(f          = "RunDiffAnalysis",
 #'
 #' @return A RflomicsSE object or a RflomicsMAE, depending on the object type, 
 #' where the differential analysis results have been actualized with the new parameters.
-#' @exportMethod FilterDiffAnalysis
-#' @rdname FilterDiffAnalysis
+#' @exportMethod filterDiffAnalysis
+#' @rdname rilterDiffAnalysis
 #' @importFrom dplyr filter if_else mutate_at
 #' @importFrom data.table data.table
 #' @importFrom purrr reduce
 #'
-methods::setMethod(f          = "FilterDiffAnalysis",
+methods::setMethod(f          = "filterDiffAnalysis",
                    signature  = "RflomicsSE",
                    definition <- function(object, Adj.pvalue.cutoff = NULL, logFC.cutoff = NULL){
                      
@@ -247,10 +247,10 @@ methods::setMethod(f          = "FilterDiffAnalysis",
                      return(object)
                    })
 
-#' @rdname FilterDiffAnalysis
-#' @title FilterDiffAnalysis
-#' @exportMethod FilterDiffAnalysis
-methods::setMethod(f          = "FilterDiffAnalysis",
+#' @rdname filterDiffAnalysis
+#' @title filterDiffAnalysis
+#' @exportMethod filterDiffAnalysis
+methods::setMethod(f          = "filterDiffAnalysis",
                    signature  = "RflomicsMAE",
                    definition = function(object, SE.name, 
                                          Adj.pvalue.cutoff = NULL, logFC.cutoff = NULL){
@@ -271,7 +271,7 @@ methods::setMethod(f          = "FilterDiffAnalysis",
                        if (is.null(logFC.cutoff))
                          logFC.cutoff <- getDiffSetting(object[[SE.name]])$abs.logFC.cutoff
                        
-                       object[[SE.name]] <-  FilterDiffAnalysis(object = object[[SE.name]],
+                       object[[SE.name]] <-  filterDiffAnalysis(object = object[[SE.name]],
                                                                 Adj.pvalue.cutoff = Adj.pvalue.cutoff,
                                                                 logFC.cutoff = logFC.cutoff)
                        
@@ -284,7 +284,7 @@ methods::setMethod(f          = "FilterDiffAnalysis",
 
 ## Method to plot results of a differential analysis
 
-#' @title DiffAnal.plot
+#' @title plotDiffAnalysis
 #' @description
 #' This is an interface method which draw a MAplot, a volcano plot and the pvalues distribution from the results of a differential analysis
 #' performed on omic datasets stored in an object of class \link{RflomicsSE}
@@ -292,11 +292,11 @@ methods::setMethod(f          = "FilterDiffAnalysis",
 #' @param hypothesis The hypothesis for which the plots has to be drawn
 #' @param typeofplots The plots you want to return. Default is all possible plots: MA plot, Volcano plot and non adjusted pvalues histogram.
 #' @return plot
-#' @exportMethod DiffAnal.plot
-#' @rdname DiffAnal.plot
+#' @exportMethod plotDiffAnalysis
+#' @rdname plotDiffAnalysis
 #' @export
 #' 
-methods::setMethod(f="DiffAnal.plot",
+methods::setMethod(f="plotDiffAnalysis",
                    signature="RflomicsSE",
                    
                    definition <- function(object, hypothesis, typeofplots = c("MA.plot", "volcano", "histogram")){
@@ -311,30 +311,30 @@ methods::setMethod(f="DiffAnal.plot",
                      logFC.cutoff      <- getDiffSetting(object)[["abs.logFC.cutoff"]]
                      Adj.pvalue.cutoff <- getDiffSetting(object)[["Adj.pvalue.cutoff"]]
                      
-                     if ("MA.plot" %in% typeofplots) plots[["MA.plot"]]        <-  MA.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
-                     if ("volcano" %in% typeofplots) plots[["Volcano.plot"]]   <-  Volcano.plot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
-                     if ("histogram" %in% typeofplots) plots[["Pvalue.hist"]]  <-  pvalue.plot(data =resTable, hypothesis=hypothesis)
+                     if ("MA.plot" %in% typeofplots) plots[["MA.plot"]]        <-  .plotMA(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
+                     if ("volcano" %in% typeofplots) plots[["Volcano.plot"]]   <-  .plotVolcanoPlot(data = resTable, Adj.pvalue.cutoff = Adj.pvalue.cutoff, logFC.cutoff = logFC.cutoff, hypothesis=hypothesis)
+                     if ("histogram" %in% typeofplots) plots[["Pvalue.hist"]]  <-  .plotPValue(data =resTable, hypothesis=hypothesis)
                      return(plots)
                    })
 
-#' @rdname DiffAnal.plot
-#' @title DiffAnal.plot
+#' @rdname plotDiffAnalysis
+#' @title plotDiffAnalysis
 #' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
-#' @exportMethod DiffAnal.plot
-methods::setMethod(f          = "DiffAnal.plot",
+#' @exportMethod plotDiffAnalysis
+methods::setMethod(f          = "plotDiffAnalysis",
                    signature  = "RflomicsMAE",
                    definition = function(object, SE.name, hypothesis, typeofplots = c("MA.plot", "volcano", "histogram")){
                      
                      if (isTagName(object, hypothesis)) hypothesis <-  convertTagToContrast(object, hypothesis)
                      
-                     return(DiffAnal.plot(object      = object[[SE.name]],
+                     return(plotDiffAnalysis(object      = object[[SE.name]],
                                           hypothesis  = hypothesis,
                                           typeofplots = typeofplots))
                      
                    })
 
 
-#' @title heatmapPlot
+#' @title plotHeatmapDesign
 #' @description
 #' This is an interface method which draw a heatmap from the results of a differential analysis
 #' performed on omic datasets stored in an object of class \link{RflomicsSE}
@@ -346,7 +346,7 @@ methods::setMethod(f          = "DiffAnal.plot",
 #' @param subset_list named list of vectors of modalities to subset and print on the heatmap. 
 #' @param draw_args,heatmap_args  named lists. Any additional parameter passed to ComplexHeatmap::Heatmap or ComplexHeatmap::draw
 #' @return plot
-#' @exportMethod heatmapPlot
+#' @exportMethod plotHeatmapDesign
 #' @export
 #' @importFrom dplyr arrange select
 #' @importFrom tidyselect any_of
@@ -355,9 +355,9 @@ methods::setMethod(f          = "DiffAnal.plot",
 #' @importClassesFrom ComplexHeatmap HeatmapAnnotation Heatmap
 #' @importMethodsFrom ComplexHeatmap draw
 #' @importFrom grid gpar
-#' @rdname heatmapPlot
+#' @rdname plotHeatmapDesign
 #' 
-methods::setMethod(f          = "heatmapPlot",
+methods::setMethod(f          = "plotHeatmapDesign",
                    signature  = "RflomicsSE",
                    definition = function(object, 
                                          hypothesis, 
@@ -483,18 +483,18 @@ methods::setMethod(f          = "heatmapPlot",
                    })
 
 
-#' @rdname heatmapPlot
-#' @title heatmapPlot
+#' @rdname plotHeatmapDesign
+#' @title plotHeatmapDesign
 #' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
-#' @exportMethod heatmapPlot
-methods::setMethod(f          = "heatmapPlot",
+#' @exportMethod plotHeatmapDesign
+methods::setMethod(f          = "plotHeatmapDesign",
                    signature  = "RflomicsMAE",
                    definition = function(object, SE.name, hypothesis, condition="none", title = "", annot_to_show = NULL, subset_list = NULL, draw_args = list(), heatmap_args = list()){
                      
                      
                      if (isTagName(object, hypothesis)) hypothesis <- convertTagToContrast(object, hypothesis)
                      
-                     return(heatmapPlot(object        = object[[SE.name]],
+                     return(plotHeatmapDesign(object        = object[[SE.name]],
                                         hypothesis    = hypothesis,
                                         condition     = condition,
                                         title         = title,
@@ -508,16 +508,16 @@ methods::setMethod(f          = "heatmapPlot",
 
 
 
-#' @title boxplot.DE.plot
+#' @title plotBoxplotDE
 #'
 #' @param object An object of class \link{RflomicsSE}
 #' @param DE variable name (gene/protein/metabolite name)
-#' @exportMethod boxplot.DE.plot
+#' @exportMethod plotBoxplotDE
 #' @importFrom ggplot2 geom_density xlab theme_void ggtitle ggplot geom_boxplot guide_legend guides
 #' @importFrom dplyr full_join  arrange
 #' @noRd
 
-methods::setMethod(f          = "boxplot.DE.plot",
+methods::setMethod(f          = "plotBoxplotDE",
                    signature  = "RflomicsSE",
                    definition = function(object, DE = NULL, condition="groups", raw = FALSE){
                      
@@ -602,17 +602,17 @@ methods::setMethod(f          = "boxplot.DE.plot",
                    }
 )
 
-#' @rdname boxplot.DE.plot
-#' @title boxplot.DE.plot
+#' @rdname plotBoxplotDE
+#' @title plotBoxplotDE
 #' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
-#' @exportMethod boxplot.DE.plot
-methods::setMethod(f          = "boxplot.DE.plot",
+#' @exportMethod plotBoxplotDE
+methods::setMethod(f          = "plotBoxplotDE",
                    signature  = "RflomicsMAE",
-                   definition = function(object, SE.name, DE = NULL, condition="groups"){
+                   definition = function(object, SE.name, DE = NULL, condition="groups",raw=FALSE){
                      
-                     boxplot.DE.plot(object = object[[SE.name]], 
+                     plotBoxplotDE(object = object[[SE.name]], 
                                      DE = DE,
-                                     condition = condition)
+                                     condition = condition, raw=raw)
                      
                    })
 

@@ -332,7 +332,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     factors.bio <- bioFactors(MAE.data)
     
     #plot.coseq.res <- dataset.SE@metadata$CoExpAnal[["plots"]]
-    plot.coseq.res <- CoExpressionPlots(dataset.SE)
+    plot.coseq.res <- plotCoExpression(dataset.SE)
     
     nb_cluster     <- dataset.SE@metadata$CoExpAnal[["cluster.nb"]]
     coseq.res      <- dataset.SE@metadata$CoExpAnal[["coseqResults"]]
@@ -370,7 +370,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                            ),
                            column(9, 
                                   renderPlot({ 
-                                    coseq.profile.plot(dataset.SE, input$selectCluster, condition=input$profile.condition, observation=input$observations) }))
+                                    plotCoExpressionProfile(dataset.SE, input$selectCluster, condition=input$profile.condition, observation=input$observations) }))
                          )),
                 tabPanel("cluster composition",
                          fluidRow(
@@ -380,7 +380,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                              
                              if(length(tag) > 1){
                                #UpSetR::upset(topDEF, sets = tag, order.by = "freq") 
-                               CoseqContrastsPlot(dataset.SE)
+                               plotCoseqContrasts(dataset.SE)
                              }
                            })
                          ))

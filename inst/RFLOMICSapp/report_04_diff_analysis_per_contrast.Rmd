@@ -21,7 +21,7 @@ evalExport <-  dim(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]])
 
 
 ```{r , echo=FALSE,out.width = "50%"}
-diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=contrast)
+diff.plots <- plotDiffAnalysis(dataset.SE, hypothesis=contrast)
 ```
 
 
@@ -47,7 +47,7 @@ diff.plots$Volcano.plot
 3- Heatmap of the euclidean distances with a link of Ward 
 
 ```{r heatmap-plot, echo=FALSE,out.width = "40%", warning=FALSE}
-heatmapPlot(object = dataset.SE,hypothesis = contrast)
+plotHeatmapDesign(object = dataset.SE,hypothesis = contrast)
 ```
 
 

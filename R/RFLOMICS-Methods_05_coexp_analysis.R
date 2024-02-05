@@ -156,8 +156,8 @@ methods::setMethod(f = "runCoExpression",
                      
                      coseq.res.list <- switch(as.character(clustermq),
                                               `FALSE` = {
-                                                try_rflomics(
-                                                  runCoseq_local(counts, 
+                                                .tryRflomics(
+                                                  .runCoseqLocal(counts, 
                                                                  conds = Groups$groups,
                                                                  K = K, 
                                                                  replicates = replicates, 
@@ -166,8 +166,8 @@ methods::setMethod(f = "runCoExpression",
                                                                  cmd = cmd))
                                               },
                                               `TRUE` = {
-                                                try_rflomics(
-                                                  runCoseq_clustermq(counts, 
+                                                .tryRflomics(
+                                                  .runCoseqClustermq(counts, 
                                                                      conds = Groups$groups,
                                                                      K = K, 
                                                                      replicates = replicates, 
@@ -231,17 +231,16 @@ methods::setMethod(f          = "runCoExpression",
 
 
 
-#' @title CoExpressionPlots
+#' @title plotCoExpression
 #' 
 #' @param object An object of class \link{RflomicsSE}
 #' @return list plot of ICL, logLike and coseq object with min ICL
 #' @importFrom coseq plot
 #' @importFrom ggplot2 ggplot geom_boxplot geom_text
-#' @export
-#' @exportMethod CoExpressionPlots
+#' @exportMethod plotCoExpression
 #' @noRd
 #' 
-coExpressionPlots <- methods::setMethod(f="CoExpressionPlots",
+methods::setMethod(f="plotCoExpression",
                                         signature="RflomicsSE",
                                         definition <- function(object){
                                           
@@ -283,8 +282,22 @@ coExpressionPlots <- methods::setMethod(f="CoExpressionPlots",
                                           return(c(plot.coseq.res, list("ICL" = ICL.p, "logLike" = logLike.p)))
                                         })
 
+#' @rdname plotCoExpression
+#' @title plotCoExpression
+#' @exportMethod plotCoExpression
+methods::setMethod(f          = "plotCoExpression",
+                   signature  = "RflomicsMAE",
+                   definition = function(object, SE.name, numCluster = 1, condition="groups", observation=NULL){
+                     
+                     plotCoExpression(object = object[[SE.name]],
+                                             numCluster = numCluster,
+                                             condition = condition,
+                                             observation = observation)
+                   })
 
-#' @title coseq.profile.plot
+
+
+#' @title plotCoExpressionProfile
 #'
 #' @param object An object of class \link{RflomicsSE}
 #' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
@@ -292,12 +305,12 @@ coExpressionPlots <- methods::setMethod(f="CoExpressionPlots",
 #' @param condition 
 #' @param observation 
 #' @export
-#' @exportMethod coseq.profile.plot
+#' @exportMethod plotCoExpressionProfile
 #' @importFrom dplyr filter mutate rename full_join arrange group_by summarise
 #' @importFrom reshape2 melt 
 #' @noRd
 
-methods::setMethod(f="coseq.profile.plot",
+methods::setMethod(f="plotCoExpressionProfile",
                    signature="RflomicsSE",
                    definition <- function(object, numCluster = 1, condition="groups", observation=NULL){
                      
@@ -336,14 +349,14 @@ methods::setMethod(f="coseq.profile.plot",
                        return(p)
                    })
 
-#' @rdname coseq.profile.plot
-#' @title coseq.profile.plot
-#' @exportMethod coseq.profile.plot
-methods::setMethod(f          = "coseq.profile.plot",
+#' @rdname plotCoExpressionProfile
+#' @title plotCoExpressionProfile
+#' @exportMethod plotCoExpressionProfile
+methods::setMethod(f          = "plotCoExpressionProfile",
                    signature  = "RflomicsMAE",
                    definition = function(object, SE.name, numCluster = 1, condition="groups", observation=NULL){
                      
-                     coseq.profile.plot(object = object[[SE.name]],
+                     plotCoExpressionProfile(object = object[[SE.name]],
                                         numCluster = numCluster,
                                         condition = condition,
                                         observation = observation)
@@ -352,17 +365,17 @@ methods::setMethod(f          = "coseq.profile.plot",
 
 
 
-#' @title CoseqContrastsPlot
+#' @title plotCoseqContrasts
 #' This function describes the composition of clusters according to the contrast to which the gene belongs
 #' @param object An object of class \link{RflomicsSE}
 #' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
 #' @export
-#' @exportMethod CoseqContrastsPlot
+#' @exportMethod plotCoseqContrasts
 #' @importFrom dplyr filter mutate rename full_join arrange group_by summarise
 #' @noRd
 
 
-methods::setMethod(f = "CoseqContrastsPlot",
+methods::setMethod(f = "plotCoseqContrasts",
                    signature = "RflomicsSE",
                    definition <-
                      function(object){
@@ -430,14 +443,14 @@ methods::setMethod(f = "CoseqContrastsPlot",
                        return(p)
                      })
 
-#' @rdname CoseqContrastsPlot
-#' @title CoseqContrastsPlot
-#' @exportMethod CoseqContrastsPlot
-methods::setMethod(f          = "CoseqContrastsPlot",
+#' @rdname plotCoseqContrasts
+#' @title plotCoseqContrasts
+#' @exportMethod plotCoseqContrasts
+methods::setMethod(f          = "plotCoseqContrasts",
                    signature  = "RflomicsMAE",
                    definition = function(object){
                      
-                     CoseqContrastsPlot(object = object[[SE.name]])
+                     plotCoseqContrasts(object = object[[SE.name]])
                      
                    })
 
@@ -469,5 +482,136 @@ methods::setMethod(f          = "getCoexpSetting",
                    definition = function(object, SE.name){
                      getCoexpSetting(object = object[[SE.name]])
                    })
+
+
+
+#' # ---- INTERNAL - get members of a cluster or coseq clusters ----
+#' #
+#' #' @title get members of a cluster
+#' #'
+#' #' @param object a RflomicsSE, produced by rflomics
+#' #' @param name name of the cluster
+#' #' @return The list of entities inside this cluster.
+#' #' @noRd
+#' #' @importFrom coseq clusters
+#' #' @keywords internal
+#' 
+#' .getCluster <- function(object, clusterName) {
+#'   
+#'   clusterName <- gsub("cluster[.]", "", clusterName)
+#'   res <- object@metadata$CoExpAnal$coseqResults
+#'   
+#'   if (!is.null(res)) {
+#'     clList <- clusters(res)
+#'     return(names(clList == clusterName))
+#'   } else {
+#'     return(NULL)
+#'   }
+#'   
+#' }
+
+#' @title get members of a cluster
+#'
+#' @param object a RflomicsSE, produced by rflomics
+#' @param clusterName name of the cluster
+#' @return The list of entities inside this cluster.
+#' @exportMethod getClusterEntities
+#' @importFrom coseq clusters
+
+
+methods::setMethod(
+  f          = "getClusterEntities",
+  signature  = "RflomicsSE",
+  definition = function(object, clusterName) {
+    
+    clusterName <- gsub("cluster[.]", "", clusterName)
+    res <- object@metadata$CoExpAnal$coseqResults
+    
+    if (!is.null(res)) {
+      clList <- clusters(res)
+      return(names(clList == clusterName))
+    } else {
+      return(NULL)
+    }
+    
+  }
+)
+
+#' @title get members of a cluster
+#'
+#' @param object an oblject of class RflomicsMAE, produced by rflomics
+#' @param name name of the cluster
+#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
+#' @return The list of entities inside this cluster.
+#' @exportMethod getClusterEntities
+#' @importFrom coseq clusters
+
+
+methods::setMethod(
+  f          = "getClusterEntities",
+  signature  = "RflomicsMAE",
+  definition = function(object, SE.name, clusterName) {
+    getClusterEntities(object = object[[SE.name]], clusterName = clusterName)
+  }
+)
+
+#' #' @param object a RflomicsSE, produced by rflomics
+#' #' @return all clusters
+#' #' @noRd
+#' #' @importFrom coseq clusters
+#' #' @keywords internal
+#' 
+#' .getCoseqClusters <- function(object) {
+#'   
+#'   res <- object@metadata$CoExpAnal$coseqResults
+#'   
+#'   if (!is.null(res)) {
+#'     return(clusters(res))
+#'   } else {
+#'     return(NULL)
+#'   }
+#'   
+#' }
+
+
+#' @title get cluster
+#'
+#' @param object a RflomicsSE, produced by rflomics
+#' @return all clusters
+#' @exportMethod getCoseqClusters
+#' @importFrom coseq clusters
+
+
+methods::setMethod(
+  f          = "getCoseqClusters",
+  signature  = "RflomicsSE",
+  definition = function(object) {
+    
+    res <- object@metadata$CoExpAnal$coseqResults
+    
+    if (!is.null(res)) {
+      return(clusters(res))
+    } else {
+      return(NULL)
+    }
+  }
+)
+
+#' @title get members of a cluster
+#'
+#' @param object an oblject of class RflomicsMAE, produced by rflomics
+#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
+#' @return all clusters
+#' @exportMethod getCoseqClusters
+#' @importFrom coseq clusters
+
+
+methods::setMethod(
+  f          = "getCoseqClusters",
+  signature  = "RflomicsMAE",
+  definition = function(object, SE.name) {
+    getCoseqClusters(object = object[[SE.name]])
+  }
+)
 
 

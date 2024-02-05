@@ -41,7 +41,7 @@ test_that("Working?", code = {
   
   
   allrownames <- lapply( c("metatest", "protetest"), FUN = function(nam){
-    try_rflomics(getDEList(MAE, SE.name = nam, contrasts = c("H1", "H2"), operation = 'intersection'))
+    .tryRflomics(getDEList(MAE, SE.name = nam, contrasts = c("H1", "H2"), operation = 'intersection'))
   })
   names(allrownames) <- c("metatest", "protetest")
   allrownames

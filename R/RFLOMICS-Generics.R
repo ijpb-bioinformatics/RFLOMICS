@@ -1,7 +1,28 @@
 #' @import MultiAssayExperiment
 #' @import SummarizedExperiment
 
-# ---- RflomicsMAE and RflomicsSE getteurs ----
+
+################# set stat #################
+
+
+
+methods::setGeneric(
+  name = "CheckExpDesign",
+  def  = function(object, sampleList=NULL, ... ){standardGeneric("CheckExpDesign")}
+)
+
+methods::setGeneric(
+  name = "CheckExpDesignCompleteness",
+  def  = function(object, sampleList=NULL, ... ){standardGeneric("CheckExpDesignCompleteness")}
+)
+
+# ---- GET / SET ----
+
+methods::setGeneric(
+  name = "getContrastMatrix",
+  def  = function(object, modelFormula, contrastList, ... ){standardGeneric("getContrastMatrix")}
+)
+
 
 methods::setGeneric(
   name = "getExperimentNames",
@@ -13,7 +34,27 @@ methods::setGeneric(
   def  = function(object, experimentNames = NULL, ...){standardGeneric("getExperimentTypes")}
 )
 
-# ---- RflomicsSE getteurs ----
+# ---- plot ----
+
+methods::setGeneric(
+  name = "Datasets_overview_plot",
+  def  = function(object, ... ){standardGeneric("Datasets_overview_plot")}
+)
+
+
+########### data Explore ###########
+
+# ---- PCA ----
+
+methods::setGeneric(
+  name = "plotPCA",
+  def  = function(object, PCA, PCs = c(1,2), condition = "groups", ... ){standardGeneric("plotPCA")}
+)
+
+methods::setGeneric(
+  name = "RunPCA",
+  def  = function(object, nbcp = 5, raw = FALSE, ... ){standardGeneric("RunPCA")}
+)
 
 
 # ---- Transformation and normalization: ----
@@ -53,7 +94,7 @@ methods::setGeneric(
 ################# Diff Analysis #################
 
 methods::setGeneric(
-  name = "RunDiffAnalysis",
+  name = "runDiffAnalysis",
   def  = function(object,  
                   design = NULL,
                   Adj.pvalue.method="BH",
@@ -63,14 +104,14 @@ methods::setGeneric(
                   logFC.cutoff = 0, 
                   clustermq=FALSE, 
                   parallel = FALSE, 
-                  nworkers = 1, ... ){standardGeneric("RunDiffAnalysis")}
+                  nworkers = 1, ... ){standardGeneric("runDiffAnalysis")}
 )
 
 methods::setGeneric(
-  name = "FilterDiffAnalysis",
+  name = "filterDiffAnalysis",
   def  = function(object, 
                   Adj.pvalue.cutoff = NULL, 
-                  logFC.cutoff = NULL, ... ){standardGeneric("FilterDiffAnalysis")}
+                  logFC.cutoff = NULL, ... ){standardGeneric("filterDiffAnalysis")}
 )
 
 # ----GET/SET---------
@@ -90,41 +131,35 @@ methods::setGeneric(
   def  = function(object, ... ){standardGeneric("getDiffSetting")}
 )
 
-# ---- PCA ----
+
+# ---- Plots ----
 
 methods::setGeneric(
-  name = "plotPCA",
-  def  = function(object, PCA, PCs = c(1,2), condition = "groups", ... ){standardGeneric("plotPCA")}
+  name = "plotDiffAnalysis",
+  def  = function(object, hypothesis, 
+                  typeofplots = c("MA.plot", "volcano", "histogram"), ...){standardGeneric("plotDiffAnalysis")}
 )
 
 methods::setGeneric(
-  name = "RunPCA",
-  def  = function(object, nbcp = 5, raw = FALSE, ... ){standardGeneric("RunPCA")}
-)
-
-# ---- Design ----
-
-methods::setGeneric(
-  name = "CheckExpDesign",
-  def  = function(object, sampleList=NULL, ... ){standardGeneric("CheckExpDesign")}
-)
-
-methods::setGeneric(
-  name = "CheckExpDesignCompleteness",
-  def  = function(object, sampleList=NULL, ... ){standardGeneric("CheckExpDesignCompleteness")}
+  name = "plotHeatmapDesign",
+  def  = function(object, 
+                  hypothesis, 
+                  condition="none", 
+                  title = "", 
+                  annot_to_show = NULL, 
+                  subset_list = NULL, 
+                  draw_args = list(), 
+                  heatmap_args = list(),
+                  ...){standardGeneric("plotHeatmapDesign")}
 )
 
 methods::setGeneric(
-  name = "getContrastMatrix",
-  def  = function(object, modelFormula, contrastList, ... ){standardGeneric("getContrastMatrix")}
+  name = "plotBoxplotDE",
+  def  = function(object, ... ){standardGeneric("plotBoxplotDE")}
 )
 
-methods::setGeneric(
-  name = "Datasets_overview_plot",
-  def  = function(object, ... ){standardGeneric("Datasets_overview_plot")}
-)
 
-# ---- Co Expression ----
+################# Coexp Analysis #################
 
 methods::setGeneric(
   name = "runCoExpression",
@@ -144,33 +179,41 @@ methods::setGeneric(
                   cmd = FALSE,  ... ){standardGeneric("runCoExpression")}
 )
 
+# -------- Coexp plot --------# 
+
 methods::setGeneric(
-  name = "coseq.profile.plot",
-  def  = function(object, ... ){standardGeneric("coseq.profile.plot")}
+  name = "plotCoExpressionProfile",
+  def  = function(object, ... ){standardGeneric("plotCoExpressionProfile")}
+)
+
+
+methods::setGeneric(
+  name = "plotCoExpression",
+  def  = function(object, ... ){standardGeneric("plotCoExpression")}
 )
 
 methods::setGeneric(
-  name = "CoExpressionPlots",
-  def  = function(object, ... ){standardGeneric("CoExpressionPlots")}
+  name = "plotCoseqContrasts",
+  def  = function(object, ... ){standardGeneric("plotCoseqContrasts")}
 )
 
-methods::setGeneric(
-  name = "CoseqContrastsPlot",
-  def  = function(object, ... ){standardGeneric("CoseqContrastsPlot")}
-)
+
+# ---- Coexp GET/SET---------
+
 
 methods::setGeneric(
   name = "getCoexpSetting",
   def  = function(object, ... ){standardGeneric("getCoexpSetting")}
 )
 
-
-# ---- Diff Plots ----
+methods::setGeneric(
+  name = "getClusterEntities",
+  def  = function(object, ... ){standardGeneric("getClusterEntities")}
+)
 
 methods::setGeneric(
-  name = "DiffAnal.plot",
-  def  = function(object, hypothesis, 
-                  typeofplots = c("MA.plot", "volcano", "histogram"), ... ){standardGeneric("DiffAnal.plot")}
+  name = "getCoseqClusters",
+  def  = function(object, ... ){standardGeneric("getCoseqClusters")}
 )
 
 
@@ -184,25 +227,8 @@ methods::setGeneric(
   def  = function(object, raw = FALSE, ... ){standardGeneric("Library_size_barplot.plot")}
 )
 
-methods::setGeneric(
-  name = "heatmapPlot",
-  def  = function(object, 
-                  hypothesis, 
-                  condition="none", 
-                  title = "", 
-                  annot_to_show = NULL, 
-                  subset_list = NULL, 
-                  draw_args = list(), 
-                  heatmap_args = list(),
-                  ...){standardGeneric("heatmapPlot")}
-)
 
-methods::setGeneric(
-  name = "boxplot.DE.plot",
-  def  = function(object, ... ){standardGeneric("boxplot.DE.plot")}
-)
-
-#---- ANNOTATION ----
+################# ANNOTATION #################
 
 methods::setGeneric(
   name = "runAnnotationEnrichment",
@@ -265,7 +291,8 @@ methods::setGeneric(
                  ...
   ){standardGeneric("plotEnrichComp")}
 )
-# ---- INTEGRATION ----
+
+################# INTEGRATION #################
 
 methods::setGeneric(
   name = "integrationWrapper",

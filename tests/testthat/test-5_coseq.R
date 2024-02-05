@@ -138,7 +138,7 @@ test_that("Coseq on RNAseq equivalence", {
   countMat <- countMat[, match(rownames(MAE[["RNAtest"]]@metadata$Groups), colnames(countMat))]
   identical(rownames(MAE[["RNAtest"]]@metadata$Groups), colnames(countMat), attrib.as.set = FALSE)
   
-  test_rcl <- runCoseq_local(countMat, 
+  test_rcl <- .runCoseqLocal(countMat, 
                              conds = MAE[["RNAtest"]]@metadata$Groups$groups,
                              K = K, replicates = replicates, 
                              param.list = param.list)
@@ -315,7 +315,7 @@ test_that("Coseq on Proteomics equivalence", {
   countMat2 <- t(apply(countMat , 1, function(x){scale(x, center = TRUE, scale = TRUE) }))
   colnames(countMat2) <- colnames(countMat)
   
-  test_rcl <- runCoseq_local(countMat2, 
+  test_rcl <- .runCoseqLocal(countMat2, 
                              conds = MAE[["protetest"]]@metadata$Groups$groups,
                              K = K, replicates = replicates, 
                              param.list = param.list)
@@ -405,7 +405,7 @@ test_that("When Median.min.rep doesn't correspond to a rep.ICL.min, an error mes
   
   coseq.res.list <- lapply(1:replicates, function(x){
     
-    try_rflomics(coseq::coseq(countMat, K = K, parallel = TRUE,
+    .tryRflomics(coseq::coseq(countMat, K = K, parallel = TRUE,
                               model            = param.list[["model"]],
                               transformation   = param.list[["transformation"]],
                               meanFilterCutoff = param.list[["meanFilterCutoff"]],
@@ -415,12 +415,12 @@ test_that("When Median.min.rep doesn't correspond to a rep.ICL.min, an error mes
   })
   names(coseq.res.list) <- c(1:replicates)
   
-  coseq.error.management <- coseq.error.manage(coseq.res.list = coseq.res.list, 
+  coseq.error.management <- .coseq.error.manage(coseq.res.list = coseq.res.list, 
                                                K = K, 
                                                replicates = replicates,
                                                cmd = TRUE)
   
-  CoExpAnal <-  coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, 
+  CoExpAnal <-  .coseq.results.process(coseqObjectList = coseq.error.management$coseq.res.list.values, 
                                       K = K,
                                       conds = conds)
   
@@ -460,7 +460,7 @@ test_that("For a given K, a likelihood equal to 0 is counted as failed job", {
 
   coseq.res.list <- lapply(1:replicates, function(x){
     
-    try_rflomics(coseq::coseq(countMat, K = K, parallel = TRUE,
+    .tryRflomics(coseq::coseq(countMat, K = K, parallel = TRUE,
                               model            = param.list[["model"]],
                               transformation   = param.list[["transformation"]],
                               meanFilterCutoff = param.list[["meanFilterCutoff"]],
@@ -470,7 +470,7 @@ test_that("For a given K, a likelihood equal to 0 is counted as failed job", {
   })
 names(coseq.res.list) <- c(1:replicates)
 
-coseq.error.management <- coseq.error.manage(coseq.res.list = coseq.res.list, 
+coseq.error.management <- .coseq.error.manage(coseq.res.list = coseq.res.list, 
                                              K = K, 
                                              replicates = replicates,
                                              cmd = TRUE)

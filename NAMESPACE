@@ -29,11 +29,8 @@ export(generateReport)
 export(getCoeffNorm)
 export(getContrastMatrixF)
 export(getDesignMat)
-<<<<<<< HEAD
 export(getDiffSetting)
-=======
 export(getEnrichRes)
->>>>>>> f7d971d (change settings getter function to methods)
 export(getExpressionContrast)
 export(getExpressionContrastF)
 export(getFactorTypes)

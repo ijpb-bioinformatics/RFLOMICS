@@ -188,7 +188,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       print(paste("#    => Filter Diff Analysis..."))
       
       # run diff analysis with selected method
-      dataset.SE <- RunDiffAnalysis(object             = dataset.SE,
+      dataset.SE <- runDiffAnalysis(object             = dataset.SE,
                                     design             = session$userData$FlomicsMultiAssay@metadata$design,
                                     modelFormula       = session$userData$FlomicsMultiAssay@metadata$design$Model.formula,
                                     contrastList       = rea.values$Contrasts.Sel,
@@ -203,7 +203,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       
       print(paste("#    => Filter Diff Analysis..."))
       ### adj_pvalue filtering by calling the RundDiffAnalysis method without filtering
-      dataset.SE <- FilterDiffAnalysis(object            = dataset.SE,
+      dataset.SE <- filterDiffAnalysis(object            = dataset.SE,
                                        Adj.pvalue.cutoff = input$Adj.pvalue.cutoff,
                                        logFC.cutoff      = input$abs.logFC.cutoff)
     }
@@ -284,7 +284,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
         stats    <- dataset.SE@metadata$DiffExpAnal[["stats"]][vect["contrastName"],]
         
-        diff.plots <- DiffAnal.plot(dataset.SE, hypothesis=vect["contrastName"])
+        diff.plots <- plotDiffAnalysis(dataset.SE, hypothesis=vect["contrastName"])
         
         if(dim(dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]])[1] == 0){
           
@@ -349,7 +349,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                       annot_arg <- c(annot_arg, input[[paste0(vect["contrastName"], "-annotMeta")]])
                                     }
                                     
-                                    heatmapPlot(object     = dataset.SE, 
+                                    plotHeatmapDesign(object     = dataset.SE, 
                                                 hypothesis = vect["contrastName"], 
                                                 condition  = input[[paste0(vect["contrastName"],"-heat.condColorSelect")]],
                                                 annot_to_show =  annot_arg)
@@ -434,7 +434,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                     ),
                                     column(width = 9,
                                            renderPlot({
-                                             boxplot.DE.plot(object=dataset.SE, DE=input[[paste0(vect["contrastName"], "-DE")]], 
+                                             plotBoxplotDE(object=dataset.SE, DE=input[[paste0(vect["contrastName"], "-DE")]], 
                                                              condition=input[[paste0(vect["contrastName"], "-DEcondition")]]) })
                                     )
                                   )

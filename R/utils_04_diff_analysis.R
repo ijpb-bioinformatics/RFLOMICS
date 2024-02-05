@@ -3,14 +3,14 @@
 
 
 
-#' @title edgeR.AnaDiff
+#' @title .edgeRAnaDiff
 #'
 #' @param object an object of class \link{RflomicsSE}]
 #' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
 #' @param parallel boolean. Compute parallel differential analyses (only when clustermq is FALSE)
 #' @param nworkers integer. Number of core to use for the parallel operations. Only used when parallel is TRUE.
 #' @return A list of object of class \link{DGELRT}
-#' @export
+#' @keywords internal
 #' @importFrom stats model.matrix as.formula 
 #' @importFrom edgeR DGEList estimateGLMCommonDisp estimateGLMTrendedDisp estimateGLMTagwiseDisp glmFit glmLRT topTags
 #' @importFrom clustermq Q 
@@ -19,7 +19,9 @@
 #' @noRd
 #'
 
-edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.factors, Contrasts.Sel, Contrasts.Coeff, FDR, clustermq = FALSE,
+.edgeRAnaDiff <- function(count_matrix, model_matrix, group, 
+                          lib.size, norm.factors, Contrasts.Sel, 
+                          Contrasts.Coeff, FDR, clustermq = FALSE,
                           parallel = FALSE, nworkers = 1, cmd = FALSE){
   
   z <- y <- NULL
@@ -59,7 +61,7 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
     
     fx <- function(x){
       
-      try_rflomics <- function(expr) {
+      .tryRflomics <- function(expr) {
         warn <- err <- NULL
         value <- withCallingHandlers(
           tryCatch(expr,
@@ -72,7 +74,7 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
         list(value=value, warning=warn, error=err)
       }
       
-      try_rflomics(edgeR::glmLRT(y, contrast = unlist(z[x,])))
+      .tryRflomics(edgeR::glmLRT(y, contrast = unlist(z[x,])))
     }
     
     ResGlm <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
@@ -89,7 +91,7 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
     # }, BPOPTIONS = bpoptions(workers = nworkers))
     ResGlm <-  parallel::mclapply(Contrasts.Sel$contrast, function(x){
       #print(unlist(Contrasts.Coeff[x,]))
-      try_rflomics(edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,])))
+      .tryRflomics(edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,])))
       
     }, mc.cores = nworkers)
     
@@ -148,12 +150,12 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
 }
 
 
-#' @title limma.AnaDiff
+#' @title .limmaAnaDiff
 #'
 #' @param object an object of class \link{RflomicsSE}
 #' @param clustermq A boolean indicating if the constrasts have to be computed in local or in a distant machine
 #' @return A list
-#' @export
+#' @keywords internal
 #' @importFrom stats model.matrix as.formula
 #' @importFrom dplyr filter rename
 #' @importFrom limma lmFit contrasts.fit eBayes topTable
@@ -161,7 +163,7 @@ edgeR.AnaDiff <- function(count_matrix, model_matrix, group, lib.size, norm.fact
 #'
 
 
-limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.Coeff, 
+.limmaAnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.Coeff, 
                           Adj.pvalue.cutoff, Adj.pvalue.method,clustermq, cmd = FALSE){
   
   ListRes <- list()
@@ -190,7 +192,7 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
       # Fonction to run on contrast per job
       # y is the model, Contrasts are stored in a matrix, by columns
       
-      try_rflomics(limma::contrasts.fit(y, contrasts  = unlist(z[x,])))
+      .tryRflomics(limma::contrasts.fit(y, contrasts  = unlist(z[x,])))
     }
     
     ResGlm  <- clustermq::Q(fx, x=1:length(Contrasts.Sel$contrast),
@@ -202,7 +204,7 @@ limma.AnaDiff <- function(count_matrix, model_matrix, Contrasts.Sel, Contrasts.C
     if(cmd) print("[cmd] fit contrasts")
     ResGlm <-  lapply(Contrasts.Sel$contrast, function(x){
       #print(paste0(x," : ",as.vector(unlist(Contrasts.Coeff[x,]))))
-      try_rflomics(limma::contrasts.fit(fit, contrasts  = as.vector(unlist(Contrasts.Coeff[x,]))))
+      .tryRflomics(limma::contrasts.fit(fit, contrasts  = as.vector(unlist(Contrasts.Coeff[x,]))))
     })
   }
   
@@ -311,15 +313,15 @@ sumDiffExp <- function(object, SE.name = NULL) {
 ######### Plot functions for differential analysis #########
 
 
-#' pvalue.plot
+#'.plotPValue
 #'
 #' @param data dataframe (ggplot2)
 #' @param hypothesis the contrast, useful for plot title
 #' @return plot
-#' @export 
+#' @keywords internal
 #' @importFrom ggplot2 geom_histogram theme_bw labs ggplot
 #' @noRd
-pvalue.plot <- function(data, hypothesis=hypothesis){
+.plotPValue <- function(data, hypothesis=hypothesis){
   
   PValue <- NULL
   
@@ -340,16 +342,19 @@ pvalue.plot <- function(data, hypothesis=hypothesis){
 #' @param logFC.cutoff log2FC cutoff (absolute value)
 #' @param hypothesis the contrast, useful for plot title
 #' @return MA plot
-#' @export
+#' @keywords internal
 #' @importFrom ggplot2 aes geom_point scale_colour_manual ggsave theme_linedraw
 #' @importFrom ggpubr ggmaplot
 #' @importFrom dplyr select rename
 #' @noRd
-MA.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypothesis){
+
+.plotMA <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypothesis){
   
-  Abundance <- logFC <- Adj.pvalue <- NULL
+  #Abundance <- logFC <- Adj.pvalue <- NULL
+  
   tmp <-dplyr::select(data,"Abundance","logFC","Adj.pvalue") %>% 
     dplyr::rename(., baseMeanLog2=Abundance, log2FoldChange=logFC, padj=Adj.pvalue)
+  
   p <- ggpubr::ggmaplot(tmp, main = hypothesis,
                         fdr = Adj.pvalue.cutoff, fc = 2^logFC.cutoff, size = 0.4,
                         ylab = bquote(~Log[2] ~ "fold change"),
@@ -377,13 +382,12 @@ MA.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis=hypothesis
 #' @param Adj.pvalue.cutoff adjusted pvalue cutoff
 #' @param logFC.cutoff log2FC cutoff (absolute value)
 #' @param hypothesis the contrast, useful for plot title
-#'
 #' @return a volcano plot, made with the \link{EnhancedVolcano} package.
 #' @importFrom EnhancedVolcano EnhancedVolcano
-#' @export
+#' @keywords internal
 #' @noRd
 #'
-Volcano.plot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis){
+.plotVolcanoPlot <- function(data, Adj.pvalue.cutoff, logFC.cutoff, hypothesis){
   
   # Modified 221123
   # Find pvalue corresponding to the FDR cutoff for the plot (mean between the last that passes the cutoff

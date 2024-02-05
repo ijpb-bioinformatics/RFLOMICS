@@ -71,7 +71,7 @@ test_that("Differential analysis on RNAseq (counts) returns the same result with
   MAE <- MAE |>
     RFLOMICS::FilterLowAbundance(SE.name = "RNAtest")                           |>
     RFLOMICS::RunNormalization(SE.name = "RNAtest", NormMethod = "TMM")         |>
-    RFLOMICS::RunDiffAnalysis(SE.name = "RNAtest", contrastList = contrastList, 
+    RFLOMICS::runDiffAnalysis(SE.name = "RNAtest", contrastList = contrastList, 
                               modelFormula = formulae[[1]],
                               DiffAnalysisMethod = "edgeRglmfit")
   
@@ -128,7 +128,7 @@ test_that("Diff Analysis on metabolomics returns the same result within and outs
   MAE <- MAE |>
     RFLOMICS::TransformData(SE.name = "metatest", transformMethod = "log2")     |>
     RFLOMICS::RunNormalization(SE.name = "metatest", NormMethod = "totalSum")   |>
-    RFLOMICS::RunDiffAnalysis(SE.name = "metatest", contrastList = contrastList, 
+    RFLOMICS::runDiffAnalysis(SE.name = "metatest", contrastList = contrastList, 
                               modelFormula = formulae[[1]],
                               DiffAnalysisMethod = "limmalmFit")                       
   
@@ -175,7 +175,7 @@ test_that("Diff Analysis on proteomics returns the same result within and outsid
   
   MAE <- MAE |>
     RFLOMICS::RunNormalization(SE.name = "protetest", NormMethod = "median")    |>
-    RFLOMICS::RunDiffAnalysis(SE.name = "protetest", contrastList = contrastList, 
+    RFLOMICS::runDiffAnalysis(SE.name = "protetest", contrastList = contrastList, 
                               modelFormula = formulae[[1]],
                               DiffAnalysisMethod = "limmalmFit")
   
