@@ -665,32 +665,28 @@ getDE <- function(object, contrast, union = TRUE) {
   return(DEmat[rowSums(DEmat[,-1]) >= length(contrast),])
 }
 
+
 # ---- Get union or intersection from list of contrasts ----
 
 # very similar to filter_DE_from_SE but returns a vector instead of a SE.
 
 #' @title Operation on differential analyses lists. Get union vector of DE entities from list of contrasts
 #'
-#' @param object a SE object (produced by Flomics). Expects to find a slot with differential analyses results.
+#' @param object an object of class RflomicsSE. Expects to find a slot with differential analyses results.
 #' @param contrasts Vector of characters, expect to be contrast names. Default is null, the operation (union) is performed
 #' on every contrasts found.
 #' @param operation character. Either union or intersection.
 #' Defines the operation to perform on the DE lists from the contrasts.
 #' @return vector of unique DE entities
-#' @rdname getDE
-#' @export
+#' @rdname getDEList
+#' @exportMethod getDEList
 #' @importFrom tidyselect starts_with any_of
 #' @importFrom dplyr select mutate filter
-opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "union") {
-  
-  if (!is(object, "RflomicsMAE") && !is(object, "RflomicsSE")) 
-    stop("Object is not a RflomicsSE or a RflomicsMAE")
-  
-  if (is(object, "RflomicsMAE") && is.null(SE.name)) 
-    stop("Please provide SE.name argument.")
-  
-  if (is(object, "RflomicsMAE")) object <- object[[SE.name]] 
-  
+
+methods::setMethod(f          = "getDEList",
+                   signature  = "RflomicsSE",
+                   definition = function(object, contrasts = NULL, operation = "union"){
+                   
   if (is.null(contrasts) || length(contrasts) == 0) 
     contrasts <- getSelectedContrasts(object)[["tag"]]
   if (isContrastName(object, contrasts)) 
@@ -724,7 +720,21 @@ opDEList <- function(object, SE.name = NULL, contrasts = NULL, operation = "unio
   }
   
   return(unique(DETab$DEF))
-}
+})
+
+#' @rdname getDEList
+#' @title getDEList
+#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
+#' @exportMethod getDEList
+
+methods::setMethod(f          = "getDEList",
+                   signature  = "RflomicsMAE",
+                   definition = function(object, SE.name, contrasts = NULL, operation = "union"){
+    
+                     getDEList(object = object[[SE.name]], 
+                                      contrasts = contrasts,
+                                      operation = operation)
+                   })
 
 
 #' return gene list

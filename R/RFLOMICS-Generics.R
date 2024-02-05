@@ -50,7 +50,7 @@ methods::setGeneric(
 )
 
 
-# ---- Diff Analysis ----
+################# Diff Analysis #################
 
 methods::setGeneric(
   name = "RunDiffAnalysis",
@@ -72,6 +72,15 @@ methods::setGeneric(
                   Adj.pvalue.cutoff = NULL, 
                   logFC.cutoff = NULL, ... ){standardGeneric("FilterDiffAnalysis")}
 )
+
+# ----GET/SET---------
+
+methods::setGeneric(
+  name = "getDEList",
+  def  = function(object, ... ){standardGeneric("getDEList")}
+)
+
+
 
 # ---- PCA ----
 

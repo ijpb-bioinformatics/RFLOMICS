@@ -92,7 +92,7 @@ methods::setMethod(f = "runCoExpression",
                      CoExpAnal[["setting"]][["K.range"]]          <- K
                      CoExpAnal[["setting"]][["scale"]]            <- scale
                      
-                     geneList <- opDEList(object = object, contrasts = nameList, operation = merge)
+                     geneList <- getDEList(object = object, contrasts = nameList, operation = merge)
                      
                      # set default parameters based on data type
                      param.list <- list("model" = model)
