@@ -651,6 +651,8 @@ methods::setGeneric(
                   domain = NULL){standardGeneric("getEnrichRes")}
 )
 
+
+
 methods::setMethod(
   f = "getEnrichRes",
   signature = "RflomicsSE",

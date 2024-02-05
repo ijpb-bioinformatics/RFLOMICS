@@ -187,7 +187,7 @@ methods::setMethod(f          = "runDiffAnalysis",
 #' @return A RflomicsSE object or a RflomicsMAE, depending on the object type, 
 #' where the differential analysis results have been actualized with the new parameters.
 #' @exportMethod filterDiffAnalysis
-#' @rdname rilterDiffAnalysis
+#' @rdname filterDiffAnalysis
 #' @importFrom dplyr filter if_else mutate_at
 #' @importFrom data.table data.table
 #' @importFrom purrr reduce
