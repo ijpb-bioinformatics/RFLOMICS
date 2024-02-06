@@ -2,7 +2,6 @@
 # module 06 - ANNOTATION & ENRICHMENT
 ##########################################
 #' @importFrom htmltools span tagList p div a h4 h5 hr tags br HTML
-#' @importFrom shinyBS popify
 #' @importFrom shinydashboard box tabBox updateTabItems menuItem menuItemOutput 
 #' tabItem renderMenu tabItems sidebarMenu menuSubItem
 #' @rawNamespace import(shiny, except = renderDataTable)
@@ -120,12 +119,14 @@
   output$tabsetPanel_DB_UI <- renderUI({
     
     validate(
-      need(rea.values[[dataset]]$diffValid != FALSE, "Please run diff analysis and validate your choices...")
+      need(rea.values[[dataset]]$diffValid != FALSE, 
+           "Please run diff analysis and validate your choices...")
     )
     
     omicsType <- getOmicsTypes(session$userData$FlomicsMultiAssay[[dataset]])
     
-    tabPanel.list <- list(tabPanel(title = "Custom annotation", .modEnrichmentDBUI(id = ns("custom"))))
+    tabPanel.list <- list(tabPanel(title = "Custom annotation", 
+                                   .modEnrichmentDBUI(id = ns("custom"))))
     
     if (omicsType %in% c("RNAseq", "proteomics")) {
       
@@ -184,10 +185,10 @@
   ## setting
   output$ParamDB_UI <- renderUI({
     
-    switch (database,
-            "GO"     = { uiOutput(ns("AnnotParamGO_UI")) },
-            "KEGG"   = { uiOutput(ns("AnnotParamKEGG_UI")) },
-            "custom" = { uiOutput(ns("AnnotParamCustom_UI")) }
+    switch(database,
+           "GO"     = { uiOutput(ns("AnnotParamGO_UI")) },
+           "KEGG"   = { uiOutput(ns("AnnotParamKEGG_UI")) },
+           "custom" = { uiOutput(ns("AnnotParamCustom_UI")) }
     )
     
   })
@@ -201,7 +202,7 @@
                                    .modRunEnrichmentUI(id = ns("DiffExpEnrichAnal"))))
     
     ### for coexp analysis results if exist
-    if(!isFALSE(rea.values[[dataset]]$coExpAnal)) 
+    if (!isFALSE(rea.values[[dataset]]$coExpAnal)) 
       tabPanel.list <- c(tabPanel.list,
                          list(tabPanel(title = "Enrichment from co-expression analysis",
                                        br(),
@@ -210,8 +211,9 @@
     do.call(what = tabsetPanel, args = tabPanel.list )
   })
   
-  ## GO setting
-  output$AnnotParamGO_UI <-   renderUI({
+  ## GO settings
+  # output$AnnotParamGO_UI <- .annotParamGO(session, rea.values, dataset)  
+  output$AnnotParamGO_UI <- renderUI({
     
     if (rea.values[[dataset]]$diffValid == FALSE) return()
     
@@ -247,63 +249,17 @@
       
       ## alpha threshold
       numericInput(inputId = ns("pValue_GO"), 
-                   label = "Adjusted p-value threshold:", 
+                   label = .adjustPvalPop(ns("pvalGopop")),
                    value = 0.01 , min = 0, max = 1, step = 0.01)
     )
     
     #}
   })
+  ## KEGG settings
+  output$AnnotParamKEGG_UI <- .annotParamKEGG(session, rea.values, dataset)  
   
-  ## KEGG setting
-  output$AnnotParamKEGG_UI <-   renderUI({
-    
-    if (rea.values[[dataset]]$diffValid == FALSE) return()
-    
-    list(
-      pickerInput(
-        inputId = ns("keyTypeKEGG"), label = "Select id type:",
-        choices = c("", "kegg", "ncbi-geneid", "ncib-proteinid", "uniprot"),
-        selected = "",
-        options = list(`actions-box` = TRUE, size = 10, 
-                       `selected-text-format` = "count > 3")),
-      
-      # type organism 
-      textInput(inputId = ns("organism"), 
-                label = "Organism: (eg. ath)", value = "", 
-                width = NULL, placeholder = NULL),
-      
-      ## alpha threshold
-      numericInput(inputId = ns("pValueKEGG"), 
-                   label = "Adjusted p-value threshold:",
-                   value = 0.01 , min = 0, max = 1, step = 0.01)
-    )
-  })
-  
-  ## custom setting
-  output$AnnotParamCustom_UI <-   renderUI({
-    
-    if (rea.values[[dataset]]$diffValid == FALSE) return()
-    
-    list(
-      
-      fileInput(inputId = ns("annotationFileCPR"), label = "Annotation file:",
-                accept  = c("text/csv", "text/comma-separated-values,text/plain", ".csv")), 
-      
-      if (rea.values$exampleData) {
-        tagList(
-          actionButton(inputId = ns("useExampleFile"), 
-                       label = "Use example annotation"),
-          br())
-      },
-      
-      uiOutput(ns("selectColumnsFromCustomAnnot")),
-      
-      ## alpha threshold
-      numericInput(inputId = ns("pValue_custom"), 
-                   label = "Adjusted p-value threshold:", 
-                   value = 0.01 , min = 0, max = 1, step = 0.01)
-    )
-  })
+  ## custom settings
+  output$AnnotParamCustom_UI <- .outputAnnotFile(session, rea.values, dataset) 
   
   ### select column
   observeEvent(input$annotationFileCPR, {
@@ -373,7 +329,8 @@
              database   = database, 
              listSource = "DiffExpEnrichAnal",
              rea.values = rea.values, 
-             input2     = input, local.rea.values = local.rea.values)
+             input2     = input, 
+             local.rea.values = local.rea.values)
   
   callModule(module     = .modRunEnrichment, 
              id         = "CoExpEnrichAnal", 
@@ -381,7 +338,8 @@
              database   = database, 
              listSource = "CoExpEnrichAnal",
              rea.values = rea.values, 
-             input2     = input, local.rea.values = local.rea.values)
+             input2     = input, 
+             local.rea.values = local.rea.values)
   
 }
 
@@ -509,7 +467,9 @@
   output$CompResults <- renderUI({
     
     if (rea.values[[dataset]][[fromAnnot]] == FALSE || 
-        is.null(sumORA(session$userData$FlomicsMultiAssay[[dataset]], listSource, database))) return()
+        is.null(sumORA(session$userData$FlomicsMultiAssay[[dataset]], listSource, database))) { 
+      return()
+    }
     
     # Possible domains of ontology:
     possDomain <-  unique(unlist(
@@ -518,7 +478,6 @@
     
     # display results
     verticalLayout(
-      
       fluidRow(
         column(4,
                radioButtons(inputId = ns(paste0(database, "-compDomain")), 
@@ -531,28 +490,10 @@
                             choices = c("presence", "FC", "log2FC"), 
                             selected = "FC", inline = TRUE)),
       ),
-      
       fluidRow(
         column(12,
-               renderUI({
-                 outHeatmap <- tryCatch({
-                   outHeatmap <-  plotEnrichComp(session$userData$FlomicsMultiAssay[[dataset]],
-                                                 from = from, database = database, 
-                                                 domain = input[[paste0(database, "-compDomain")]],
-                                                 matrixType = input[[paste0(database, "-compType")]])
-                 },
-                 warning = function(warn) warn,
-                 error = function(err) err
-                 )
-                 
-                 if (is(outHeatmap, "Heatmap")) renderPlot({draw(outHeatmap, 
-                                                                 heatmap_legend_side = "top", 
-                                                                 padding = unit(5, "mm"),
-                                                                 gap = unit(2, "mm"))}, 
-                                                           width = "auto", 
-                                                           height = min(400 + nrow(outHeatmap@matrix)*50, 1000))
-                 else renderText({outHeatmap$message})
-               })
+               .outHeatmapComparison(session, input, rea.values, 
+                                     dataset, from, database)
         ) # column
       )#,  # fluidrow
     )
@@ -563,7 +504,9 @@
     dataSE <- session$userData$FlomicsMultiAssay[[dataset]]
     
     if (rea.values[[dataset]][[fromAnnot]] == FALSE ||
-        is.null(sumORA(dataSE, from = listSource, database = database))) return()
+        is.null(sumORA(dataSE, from = listSource, database = database))) { 
+      return()
+    }
     
     #foreach genes list selected (contrast)
     lapply(names(getEnrichRes(dataSE, from = listSource, database = database)), function(listname) {
@@ -579,99 +522,22 @@
           choices <- names(getEnrichRes(dataSE, from = listSource,
                                         contrastName = listname,
                                         database = database))
-          
+          # ---- TabPanel plots ----
           tabPanel.list <- list(
-            # ---- Tab Panel : dotPlot : ----
             tabPanel("DotPlot",
                      br(),
-                     renderUI({
-                       outdot <- .doNotSpeak(plotClusterProfiler(dataSE,
-                                                                 contrastName = listname,
-                                                                 from = from,
-                                                                 plotType = "dotplot",
-                                                                 database = database,
-                                                                 domain = input[[paste0(listname, "-domain")]],
-                                                                 showCategory = input[[paste0(listname, "-top.over")]],
-                                                                 searchExpr = input[[paste0(listname, "-grep")]])
-                       )
-                       
-                       if (is(outdot, "gg")) renderPlot({
-                         warnOpt <- getOption("warn")
-                         options(warn = -1) # avoid ggrepel warnings, or at least trying to
-                         suppressMessages(suppressWarnings(print(outdot)))
-                         options(warn = warnOpt)
-                       })
-                       else renderText({outdot$message})
-                     }),
+                     .outDotPlot(input, dataSE, listname, 
+                                 from, "dotplot", database)
             ),
-            # ---- Tab Panel : heatplot : ----
             tabPanel("Heatplot",
                      br(),
-                     renderUI({
-                       outheat <- .doNotSpeak(plotClusterProfiler(dataSE,
-                                                                  contrastName = listname,
-                                                                  from = from,
-                                                                  plotType = "heatplot",
-                                                                  database = database,
-                                                                  domain = input[[paste0(listname, "-domain")]],
-                                                                  showCategory = input[[paste0(listname, "-top.over")]],
-                                                                  searchExpr = input[[paste0(listname, "-grep")]]))
-                       
-                       
-                       if (is(outheat, "gg")) renderPlot({
-                         warnOpt <- getOption("warn")
-                         options(warn = -1) # avoid ggrepel warnings, or at least trying to
-                         suppressMessages(suppressWarnings(print(outheat)))
-                         options(warn = warnOpt)
-                       })
-                       else renderText({outheat$message})
-                     })
+                     .outHeatPlot(input, dataSE, listname, 
+                                  from, "heatplot", database)
             ),
-            # ---- Tab Panel : cnetplot : ----
             tabPanel("Cnetplot",
                      br(),
-                     verticalLayout(
-                       renderUI({
-                         nodeLabelArg <- "none"
-                         if (input[[paste0(listname, "-genesLabels_cnet")]] &&
-                             input[[paste0(listname, "-termsLabels_cnet")]]) {
-                           nodeLabelArg <- "all"
-                         }else if (input[[paste0(listname, "-genesLabels_cnet")]] &&
-                                   !input[[paste0(listname, "-termsLabels_cnet")]]) {
-                           nodeLabelArg <- "gene"
-                         }else if (input[[paste0(listname, "-termsLabels_cnet")]] &&
-                                   !input[[paste0(listname, "-genesLabels_cnet")]]) {
-                           nodeLabelArg <- "category"
-                         }
-                         
-                         outcnet <- .doNotSpeak(plotClusterProfiler(dataSE,
-                                                                    contrastName = listname,
-                                                                    from = from,
-                                                                    plotType = "cnetplot",
-                                                                    database = database,
-                                                                    domain = input[[paste0(listname, "-domain")]],
-                                                                    showCategory = input[[paste0(listname, "-top.over")]],
-                                                                    searchExpr = input[[paste0(listname, "-grep")]],
-                                                                    nodeLabel = nodeLabelArg))
-                         
-                         if (is(outcnet, "gg")) renderPlot({
-                           warnOpt <- getOption("warn")
-                           options(warn = -1) # avoid ggrepel warnings, or at least trying to
-                           suppressMessages(suppressWarnings(print(outcnet)))
-                           options(warn = warnOpt)
-                         })
-                         else renderText({outcnet$message})
-                         
-                       }),
-                       fluidRow(
-                         
-                         column(2, checkboxInput(inputId = ns(paste0(listname, "-genesLabels_cnet")),
-                                                 label = "Genes Labels", value = FALSE)),
-                         column(2, checkboxInput(inputId = ns(paste0(listname, "-termsLabels_cnet")),
-                                                 label = "Terms Labels", value = TRUE))
-                         
-                       )
-                     )
+                     .outCnetPlot(session, input, dataSE, listname, 
+                                  from, "cnetplot", database)
             ),
             # ---- Tab Panel : Results table : ----
             tabPanel("Result Table",
@@ -688,7 +554,8 @@
                                                   domain = input[[paste0(listname, "-domain")]])
                          
                          pvalue <- getEnrichPvalue(dataSE,
-                                                   from = listSource, database = database)
+                                                   from = listSource, 
+                                                   database = database)
                          datatable(dataPlot@result[dataPlot@result$p.adjust <  pvalue,],
                                    rownames = FALSE,
                                    options = list(pageLength = 5,
@@ -705,7 +572,8 @@
           # ---- Tab Panel : only for KEGG, pathview : ----
           if (database == "KEGG") {
             data <-   getEnrichRes(object = dataSE,
-                                   contrastName = listname, from = listSource,
+                                   contrastName = listname, 
+                                   from = listSource,
                                    database = "KEGG")[["no-domain"]]@result
             
             pvalue <- getEnrichPvalue(dataSE,
@@ -853,22 +721,20 @@
       domain <- input2$ont.select
       if (input2$ont.select == "ALL") domain <- c("MF", "BP", "CC")
       
-      paramList <- list(#method       = "ORA",
+      paramList <- list(
         database     = database,
         list_args    = list_args,
-        #OrgDb        = input2$db.select,
-        #keyType      = input2$keytype.go,
-        domain       = domain#,
-        #pvalueCutoff = input2$pValue_GO
+        domain       = domain
       )
     }
     
-    if (database == "KEGG"){
+    if (database == "KEGG") {
       
       # check param
       ## ID key
       if (!input2$keyTypeKEGG %in% c("kegg", "ncbi-geneid", "ncib-proteinid", "uniprot")) {
-        showModal(modalDialog( title = "KEGG keytype must be one of kegg, ncbi-geneid, ncbi-proteinid or uniprot"))
+        showModal(modalDialog( 
+          title = "KEGG keytype must be one of kegg, ncbi-geneid, ncbi-proteinid or uniprot"))
       }
       validate({
         need(input2$keyTypeKEGG %in% c("kegg", "ncbi-geneid", "ncib-proteinid", "uniprot"),
@@ -892,20 +758,14 @@
       list_args[["pvalueCutoff"]] <- input2$pValueKEGG
       
       # prevent multiple execution
-      paramList <- list(#method       = "ORA",
+      paramList <- list(
         list_args    = list_args,
         database     = database,
-        domain       = "no-domain"#,
-        #organism     = input2$organism,
-        #keyType      = input2$keyTypeKEGG,
-        #pvalueCutoff = input2$pValueKEGG
+        domain       = "no-domain"
       )
       
-      # input2[["organism"]]    <- input2$organism
-      # input2[["keyTypeKEGG"]] <- input2$keyTypeKEGG
-      
     }
-    if(database == "custom"){
+    if (database == "custom") {
       
       # check param
       ## if custom annotation file
@@ -970,9 +830,8 @@
     }
     
     # prevent multiple execution
-    #if (.checkRunORAExecution(session$userData$FlomicsMultiAssay[[dataset]], database, paramList) == FALSE) return()
-    
-    #input2[[database]] <- FALSE
+    #if (.checkRunORAExecution(session$userData$FlomicsMultiAssay[[dataset]],
+    # database, paramList) == FALSE) return()
     
     # ---- Annotation on diff results: ----
     # run analysis
@@ -1063,4 +922,278 @@
 
 
 
+# ----- explain content ----
+# functions for popify/bsshiny content
 
+#' @noRd
+#' @keywords internal
+.adjustPvalPop <- function(id){
+  popify(actionLink(inputId = id,
+                    label = "Adjusted p-value threshold:"),
+         title = "Adjusted p-value threshold",
+         content = paste0("<p>The adjusted pvalue threshold for the enrichment results</p>",
+                          "<p>Only results with an adjusted pvalue below this threshold will be ",
+                          "displayed</p>",
+                          "<p>Usually 0.01 or 0.05.</p>"))
+}
+
+
+
+# ---- Output functions ----
+
+#' @noRd
+#' @keywords internal
+.outputAnnotFile <- function(session, rea.values, dataset){
+  
+  ns <- session$ns
+  
+  renderUI({
+    
+    if (rea.values[[dataset]]$diffValid == FALSE) return()
+    
+    list(
+      
+      fileInput(inputId = ns("annotationFileCPR"), 
+                label = .annotFileInput("customAnnotFilepop"),
+                accept  = c("text/csv", "text/comma-separated-values,text/plain", ".csv")), 
+      
+      if (rea.values$exampleData) {
+        popify(bsButton(inputId = ns("useExampleFile"),
+                        label = "Use example annotation file",
+                        style = "primary", size = "default",
+                        type = "action"),
+               title = "Example file",
+               content = paste0("Run annotation enrichment",
+                                "using the example annotation file",
+                                "(extract of GO terms for Arabidopsis thaliana",
+                                "genes in plant biomart"),
+               placement = "bottom", trigger = "hover")
+      },
+      
+      uiOutput(ns("selectColumnsFromCustomAnnot")),
+      
+      ## alpha threshold
+      numericInput(inputId = ns("pValue_custom"), 
+                   label = .adjustPvalPop(ns("pvalCustomPop")), 
+                   value = 0.01 , min = 0, max = 1, step = 0.01)
+    )
+  })
+}
+
+#' @noRd
+#' @keywords internal
+.annotFileInput <- function(id){
+  popify(actionLink(inputId = id,
+                    label = "Annotation file"),
+         title = "Annotation File format",
+         content = paste0("Required format:",
+                          "a tsv file with at least two columns, ",
+                          "genes and associated terms."))
+}
+
+#' @noRd
+#' @keywords internal
+.annotParamGO <- function(session, rea.values, dataset){
+  
+  ns <- session$ns
+  
+  renderUI({
+    
+    if (rea.values[[dataset]]$diffValid == FALSE) return()
+    
+    list(
+      # select ontology
+      pickerInput(
+        inputId = ns("ont.select"), label = "Select Domain:",
+        choices = c("ALL", "BP", "MF", "CC"),
+        selected = "ALL",
+        options = list(`actions-box` = TRUE, size = 10, 
+                       `selected-text-format` = "count > 3")
+      ),
+      
+      # select database
+      pickerInput(
+        inputId = ns("db.select"), label = "Select Data Base:",
+        choices = c("", dir(.libPaths())[grep("org.*db", dir(.libPaths()))]),
+        selected = "",
+        options = list(`actions-box` = TRUE, size = 10, 
+                       `selected-text-format` = "count > 3")
+      ),
+      
+      # select keytype
+      pickerInput(
+        inputId = ns("keytype.go"), label = "Select id type:",
+        choices = c("", "ENTREZID", "SYMBOL",  "TAIR", 
+                    "ENSEMBL", "PMID", "REFSEQ", "GENENAME"),
+        selected = "",
+        options = list(`actions-box` = TRUE, size = 10, 
+                       `selected-text-format` = "count > 3")
+      ),
+      #),
+      
+      ## alpha threshold
+      numericInput(inputId = ns("pValue_GO"), 
+                   label = .adjustPvalPop(ns("pvalGopop")),
+                   value = 0.01 , min = 0, max = 1, step = 0.01)
+    )
+    
+    #}
+  })
+}  
+
+#' @noRd
+#' @keywords internal
+.annotParamKEGG <- function(session, rea.values, dataset){
+  ns <- session$ns
+  renderUI({
+    
+    if (rea.values[[dataset]]$diffValid == FALSE) return()
+    
+    list(
+      pickerInput(
+        inputId = ns("keyTypeKEGG"), label = "Select id type:",
+        choices = c("", "kegg", "ncbi-geneid", "ncib-proteinid", "uniprot"),
+        selected = "",
+        options = list(`actions-box` = TRUE, size = 10, 
+                       `selected-text-format` = "count > 3")),
+      
+      # type organism 
+      textInput(inputId = ns("organism"), 
+                label = "Organism: (eg. ath)", value = "", 
+                width = NULL, placeholder = NULL),
+      
+      ## alpha threshold
+      numericInput(inputId = ns("pValueKEGG"), 
+                   label = .adjustPvalPop(ns("pvalKeggpop")),
+                   value = 0.01 , min = 0, max = 1, step = 0.01)
+      
+      
+    )
+  })
+}
+
+# ---- plots ----
+#' @noRd
+#' @keywords internal
+.outHeatmapComparison <- function(session, input, rea.values, dataset, from, database){
+  renderUI({
+    outHeatmap <- tryCatch({
+      outHeatmap <-  plotEnrichComp(session$userData$FlomicsMultiAssay[[dataset]],
+                                    from = from, database = database, 
+                                    domain = input[[paste0(database, "-compDomain")]],
+                                    matrixType = input[[paste0(database, "-compType")]])
+    },
+    warning = function(warn) warn,
+    error = function(err) err
+    )
+    
+    if (is(outHeatmap, "Heatmap")) {
+      renderPlot({
+        draw(outHeatmap, 
+             heatmap_legend_side = "top", 
+             padding = unit(5, "mm"),
+             gap = unit(2, "mm"))}, 
+        width = "auto", 
+        height = min(400 + nrow(outHeatmap@matrix)*50, 1000)
+      )
+    }else { renderText({outHeatmap$message}) }
+  })
+}
+
+#' @noRd
+#' @keywords internal
+.outHeatPlot <- function(input,
+                         dataSE, 
+                         listname, from, plotType, database){
+  renderUI({
+    outplot <- .doNotSpeak(plotClusterProfiler(dataSE,
+                                               contrastName = listname,
+                                               from = from,
+                                               plotType = plotType,
+                                               database = database,
+                                               domain = input[[paste0(listname, "-domain")]],
+                                               showCategory = input[[paste0(listname, "-top.over")]],
+                                               searchExpr = input[[paste0(listname, "-grep")]]))
+    
+    
+    if (is(outplot, "gg")) renderPlot({
+      warnOpt <- getOption("warn")
+      options(warn = -1) # avoid ggrepel warnings, or at least trying to
+      suppressMessages(suppressWarnings(print(outplot)))
+      options(warn = warnOpt)
+    })
+    else renderText({outplot$message})
+  })
+} 
+
+#' @noRd
+#' @keywords internal
+.outDotPlot <- function(input, dataSE, listname, from, plotType, database){
+  renderUI({
+    outdot <- .doNotSpeak(plotClusterProfiler(dataSE,
+                                              contrastName = listname,
+                                              from = from,
+                                              plotType = plotType,
+                                              database = database,
+                                              domain = input[[paste0(listname, "-domain")]],
+                                              showCategory = input[[paste0(listname, "-top.over")]],
+                                              searchExpr = input[[paste0(listname, "-grep")]])
+    )
+    
+    if (is(outdot, "gg")) renderPlot({
+      warnOpt <- getOption("warn")
+      options(warn = -1) # avoid ggrepel warnings, or at least trying to
+      suppressMessages(suppressWarnings(print(outdot)))
+      options(warn = warnOpt)
+    })
+    else renderText({outdot$message})
+  })
+}
+
+.outCnetPlot <- function(session, input, dataSE, listname, from, plotType, database){
+  
+  ns <- session$ns
+  
+  verticalLayout(
+    renderUI({
+      nodeLabelArg <- "none"
+      if (input[[paste0(listname, "-genesLabels_cnet")]] &&
+          input[[paste0(listname, "-termsLabels_cnet")]]) {
+        nodeLabelArg <- "all"
+      }else if (input[[paste0(listname, "-genesLabels_cnet")]] &&
+                !input[[paste0(listname, "-termsLabels_cnet")]]) {
+        nodeLabelArg <- "gene"
+      }else if (input[[paste0(listname, "-termsLabels_cnet")]] &&
+                !input[[paste0(listname, "-genesLabels_cnet")]]) {
+        nodeLabelArg <- "category"
+      }
+      
+      outcnet <- .doNotSpeak(plotClusterProfiler(dataSE,
+                                                 contrastName = listname,
+                                                 from = from,
+                                                 plotType = plotType,
+                                                 database = database,
+                                                 domain = input[[paste0(listname, "-domain")]],
+                                                 showCategory = input[[paste0(listname, "-top.over")]],
+                                                 searchExpr = input[[paste0(listname, "-grep")]],
+                                                 nodeLabel = nodeLabelArg))
+      
+      if (is(outcnet, "gg")) renderPlot({
+        warnOpt <- getOption("warn")
+        options(warn = -1) # avoid ggrepel warnings, or at least trying to
+        suppressMessages(suppressWarnings(print(outcnet)))
+        options(warn = warnOpt)
+      })
+      else renderText({outcnet$message})
+      
+    }),
+    fluidRow(
+      
+      column(2, checkboxInput(inputId = ns(paste0(listname, "-genesLabels_cnet")),
+                              label = "Genes Labels", value = FALSE)),
+      column(2, checkboxInput(inputId = ns(paste0(listname, "-termsLabels_cnet")),
+                              label = "Terms Labels", value = TRUE))
+      
+    )
+  )
+}

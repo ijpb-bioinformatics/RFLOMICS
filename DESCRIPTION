@@ -13,7 +13,10 @@ Description: R-package with shiny interface, provides a framework for the analys
 URL: https://forgemia.inra.fr/flomics/rflomics/
 BugReports: https://forgemia.inra.fr/flomics/rflomics/-/issues
 Depends: 
-    R (>= 4.3.0)
+    R (>= 4.3.0),
+    SummarizedExperiment,
+    MultiAssayExperiment,
+    shinyBS
 biocViews: ShinyApps, DifferentialExpression, Metabolomics, Proteomics, Transcriptomics
 License: gpl-3 
 Encoding: UTF-8
@@ -28,6 +31,7 @@ Suggests:
 VignetteBuilder: knitr
 Imports:
     statmod,
+    shinyBS,
     vroom,
     AnnotationDbi,
     BiocParallel,
@@ -54,7 +58,6 @@ Imports:
     methods,
     mixOmics,
     MOFA2,
-    MultiAssayExperiment,
     pathview,
     pheatmap,
     purrr,
@@ -65,13 +68,11 @@ Imports:
     reticulate,
     S4Vectors,
     shiny,
-    shinyBS,
     shinyFiles,
     shinydashboard,
     shinyWidgets,
     stats,
     stringr,
-    SummarizedExperiment,
     tibble,
     tidyr,
     tibble,

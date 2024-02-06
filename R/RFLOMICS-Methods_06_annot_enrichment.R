@@ -700,17 +700,18 @@ methods::setMethod(
     }
   })
 
+#' @exportMethod getEnrichRes
 methods::setMethod(
   f = "getEnrichRes",
   signature = "RflomicsMAE",
   definition = function(object,
+                        experiment,
                         contrastName = NULL,
-                        experiment = NULL,
                         from = "DiffExpEnrichAnal",
                         database = "GO",
                         domain = NULL) {
     
-    if (is.null(experiment)) {
+    if (missing(experiment)) {
       stop("Please indicate from which data you want to extract 
            the enrichment results.")
     }
@@ -726,36 +727,6 @@ methods::setMethod(
     } else {
       return(res_return)
     }
-  })
-
-# ---- INTERNAL - Get a pvalue threshold used in enrichment analysis ----
-#
-#' @title Get a pvalue threshold used in enrichment analysis
-#'
-#' @param object a SE object
-#' @return pvalue
-#' @noRd
-#' @keywords internal
-methods::setMethod(
-  f = "getEnrichPvalue",
-  signature = "RflomicsSE",
-  definition = function(object,
-                        from = "DiffExpEnrichAnal",
-                        database = "GO") {
-    
-    if (!from %in% c("DiffExpEnrichAnal", "CoExpEnrichAnal")) {
-      stop(from, " doesn't exist")
-    }
-    if (!database  %in% c("GO", "KEGG", "custom")) {
-      stop(from, " not a valid value. Choose one of GO, KEGG or custom.")
-    }
-    pvalCutoff <- object@metadata[[from]][[database]]$list_args$pvalueCutoff
-    if (is.null(pvalCutoff)){
-      stop("P-value not found")
-    } 
-    
-    return(pvalCutoff)
-    
   })
 
 # ---- Get summary from ORA : ----
@@ -809,4 +780,37 @@ methods::setMethod(
       names(list_res) <- names(object@metadata[[from]])
       return(list_res)
     }
+  })
+
+
+
+# ---- Get a pvalue threshold used in enrichment analysis ----
+#
+#' @title Get a pvalue threshold used in enrichment analysis
+#'
+#' @param object a SE object
+#' @param from results
+#' @param database which database (GO, KEGG, custom...)
+#' @return pvalue
+#' @exportMethod getEnrichPvalue
+methods::setMethod(
+  f = "getEnrichPvalue",
+  signature = "RflomicsSE",
+  definition = function(object,
+                        from = "DiffExpEnrichAnal",
+                        database = "GO") {
+    
+    if (!from %in% c("DiffExpEnrichAnal", "CoExpEnrichAnal")) {
+      stop(from, " doesn't exist")
+    }
+    if (!database  %in% c("GO", "KEGG", "custom")) {
+      stop(from, " not a valid value. Choose one of GO, KEGG or custom.")
+    }
+    pvalCutoff <- metadata(object)[[from]][[database]]$list_args$pvalueCutoff
+    if (is.null(pvalCutoff)) {
+      stop("P-value not found")
+    } 
+    
+    return(pvalCutoff)
+    
   })
