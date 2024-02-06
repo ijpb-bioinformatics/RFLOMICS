@@ -1,6 +1,14 @@
 
 #' @importFrom UpSetR upset
 #' @importFrom DT formatSignif datatable renderDataTable styleInterval formatStyle
+#' @importFrom htmltools span tagList p div a h4 h5 hr tags br HTML
+#' @importFrom shinyBS popify bsButton addPopover bsTooltip
+#' @importFrom shinydashboard box tabBox updateTabItems menuItem menuItemOutput 
+#' tabItem renderMenu tabItems sidebarMenu menuSubItem
+#' @rawNamespace import(shiny, except = renderDataTable)
+#' @importFrom shinyWidgets pickerInput materialSwitch
+#' @importFrom colourpicker colourInput
+#' @importFrom magrittr "%>%"
 
 DiffExpAnalysisUI <- function(id){
   
@@ -99,8 +107,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                         
                         # use of cluster. need setting step
                         materialSwitch(inputId = session$ns("clustermq"),
-                                       label   =  shinyBS::popify(shiny::actionLink("infoCluster",paste0("Cluster: (?)")),
-                                                                  title= "",
+                                       label   =  popify(actionLink(inputId=session$ns("infoCluster"),label=paste0("Cluster: (?)")),
+                                                         title= "",
                                                          content="If there is a huge number of contrasts, the calculation can be send to the cluster to be run in parrallel",
                                                          options=list(container="body"))
                                        , value = FALSE, status = "success"),
