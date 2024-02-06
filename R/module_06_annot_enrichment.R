@@ -699,7 +699,12 @@
       })
       
       # library(input2$db.select, character.only = TRUE)
-      accepted_keytypes <- keytypes(get(input2$db.select))
+      # accepted_keytypes <- keytypes(get(input2$db.select))
+      # eval(parse(text = "AnnotationDbi::keytypes(org.At.tair.db::org.At.tair.db)")) # good one
+      # textToEval <- paste0("AnnotationDbi::keytypes(", "org.At.tair.db", "::", "org.At.tair.db", ")")
+      textToEval <- paste0("keytypes(", input2$db.select, "::", input2$db.select, ")")
+      accepted_keytypes <- eval(parse(text = textToEval))
+      
       if (!input2$keytype.go %in% accepted_keytypes) {
         showModal(modalDialog(title = paste("Keytype must be one of: ",
                                             paste(accepted_keytypes, collapse = ", "),
