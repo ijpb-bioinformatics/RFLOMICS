@@ -5,9 +5,9 @@ Authors@R:
     c(
     person(given = "Nadia", family = "Bessoltane",email = "nadia.bessoltane@inrae.fr", role = c("aut", "cre")),
     person(given = "Delphine", family = "Charif", email = "delphine.charif@inrae.fr", role = c("aut")),
-    person(given = "Gwendal", family = "Cueff", email = "gwendal.cueff@inrae.fr", role = c("aut")),
+    person(given = "Christine", family = "Paysant-Leroux", email = "christine.paysant-le-roux@inrae.fr", role = c("aut")),
     person(given = "Audrey", family = "Hulot", email = "audrey.hulot@inrae.fr", role = c("aut"), comment = c(ORCID = "0000-0002-9647-6470")),
-    person(given = "Christine", family = "Paysant-Leroux", email = "christine.paysant-le-roux@inrae.fr", role = c("aut"))
+    person(given = "Gwendal", family = "Cueff", email = "gwendal.cueff@inrae.fr", role = c("aut"))
     )
 Description: R-package with shiny interface, provides a framework for the analysis of transcriptomics, proteomics and/or metabolomics data. 
 URL: https://forgemia.inra.fr/flomics/rflomics/
