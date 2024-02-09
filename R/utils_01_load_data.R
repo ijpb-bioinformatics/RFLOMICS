@@ -159,8 +159,8 @@ createRflomicsMAE <- function(projectName=NULL, omicsData=NULL, omicsNames=NULL,
     RflomicsSE <- createRflomicsSE(omicsData[[data]], omicType, ExpDesign, typeList)
     
     #### run PCA for raw count
-    # SummarizedExperimentList[[data]] <- RunPCA(SE, raw = TRUE)
-    SummarizedExperimentList[[data]] <- RflomicsSE
+    SummarizedExperimentList[[data]] <- runOmicsPCA(RflomicsSE, raw = TRUE)
+    #SummarizedExperimentList[[data]] <- RflomicsSE
     
     
     # metadata for sampleMap for RflomicsMAE
@@ -277,11 +277,12 @@ createRflomicsSE <- function(omicData, omicType, ExpDesign, design){
                    DataProcessing = list(rowSumsZero = genes_flt0,
                                          Filtering = NULL, 
                                          Normalization =  list(setting = list(method = "none"), results = NULL,  normalized = FALSE), 
-                                         Transformation = list(setting = list(method = "none"), results = NULL,  transformed = FALSE)))
+                                         Transformation = list(setting = list(method = "none"), results = NULL,  transformed = FALSE)
+                                         ))
   
   SE <- SummarizedExperiment::SummarizedExperiment(assays = S4Vectors::SimpleList(abundance = as.matrix(matrix.filt)), 
                                                    colData = DataFrame(colData), metadata = metadata)
-  
+
   rflomicsSE <- new("RflomicsSE")
   for(slot in slotNames(SE)) {
     slot(rflomicsSE, slot) <- slot(SE, slot)
@@ -558,15 +559,15 @@ plotExperimentalDesign <- function(counts, cell_border_size = 10, message=""){
 
 ######## INTERNAL - CHECKS FUNCTIONS ###########
 
-# check_NA: checks if there are NA/nan in the RflomicsSE assay
-#' @title check_NA
+# .check_NA: checks if there are NA/nan in the RflomicsSE assay
+#' @title .checkNA
 #'
 #' @param object An object of class \link{RflomicsSE}
 #' @return boolean. if TRUE, NA/nan are detected in the SE::assay.
 #' @keywords internal
 #' @noRd
 #'
-check_NA <- function(object) {
+.checkNA <- function(object) {
   NA_detect <- ifelse(any(is.na(assay(object))), TRUE, FALSE)
   return(NA_detect)
 }

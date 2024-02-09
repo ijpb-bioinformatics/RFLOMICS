@@ -92,8 +92,8 @@ methods::setMethod(f         = "runDiffAnalysis",
                        
                        object2 <- object
                        
-                       if (!isTransformed(object2)) object2 <-  apply_transformation(object2)
-                       if (!isNorm(object2))        object2 <-  apply_norm(object2)
+                       if (!.isTransformed(object2)) object2 <-  .applyTransformation(object2)
+                       if (!.isNorm(object2))        object2 <-  .applyNorm(object2)
                      }
                      
                      # move in ExpDesign Constructor
@@ -201,10 +201,10 @@ methods::setMethod(f          = "filterDiffAnalysis",
                      }
                      
                      if (is.null(p.adj.cutoff)) 
-                       p.adj.cutoff <- getDiffSetting(object)$p.adj.cutoff
+                       p.adj.cutoff <- getDiffSettings(object)$p.adj.cutoff
                      
                      if (is.null(logFC.cutoff))
-                       logFC.cutoff <- getDiffSetting(object)$abs.logFC.cutoff
+                       logFC.cutoff <- getDiffSettings(object)$abs.logFC.cutoff
                      
                      # remplacera à terme les lignes ci-dessus
                      object@metadata$DiffExpAnal[["setting"]][["p.adj.cutoff"]] <- p.adj.cutoff
@@ -266,10 +266,10 @@ methods::setMethod(f          = "filterDiffAnalysis",
                      }else{
                        
                        if (is.null(p.adj.cutoff)) 
-                         p.adj.cutoff <- getDiffSetting(object[[SE.name]])$p.adj.cutoff
+                         p.adj.cutoff <- getDiffSettings(object[[SE.name]])$p.adj.cutoff
                        
                        if (is.null(logFC.cutoff))
-                         logFC.cutoff <- getDiffSetting(object[[SE.name]])$abs.logFC.cutoff
+                         logFC.cutoff <- getDiffSettings(object[[SE.name]])$abs.logFC.cutoff
                        
                        object[[SE.name]] <-  filterDiffAnalysis(object = object[[SE.name]],
                                                                 p.adj.cutoff = p.adj.cutoff,
@@ -308,8 +308,8 @@ methods::setMethod(f="plotDiffAnalysis",
                      res      <- object@metadata$DiffExpAnal[["RawDEFres"]][[contrastName]]
                      resTable <- object@metadata$DiffExpAnal[["DEF"]][[contrastName]]
                      
-                     logFC.cutoff      <- getDiffSetting(object)[["abs.logFC.cutoff"]]
-                     p.adj.cutoff <- getDiffSetting(object)[["p.adj.cutoff"]]
+                     logFC.cutoff      <- getDiffSettings(object)[["abs.logFC.cutoff"]]
+                     p.adj.cutoff <- getDiffSettings(object)[["p.adj.cutoff"]]
                      
                      if ("MA.plot" %in% typeofplots) plots[["MA.plot"]]        <-  .plotMA(data = resTable, p.adj.cutoff = p.adj.cutoff, logFC.cutoff = logFC.cutoff, contrastName=contrastName)
                      if ("volcano" %in% typeofplots) plots[["Volcano.plot"]]   <-  .plotVolcanoPlot(data = resTable, p.adj.cutoff = p.adj.cutoff, logFC.cutoff = logFC.cutoff, contrastName=contrastName)
@@ -387,7 +387,7 @@ methods::setMethod(f          = "plotHeatmapDesign",
                                        paste0(title, "\nplot only 2000 TOP DE variables"))
                      }
                      
-                     object2 <- checkTransNorm(object, raw = FALSE)
+                     object2 <- .checkTransNorm(object, raw = FALSE)
                      m.def  <- assay(object2)
                      
                      m.def <- as.data.frame(m.def) %>%
@@ -531,7 +531,7 @@ methods::setMethod(f          = "plotBoxplotDE",
                      }
                      
                      Groups <- getDesignMat(object)
-                     object <- checkTransNorm(object, raw = raw)
+                     object <- .checkTransNorm(object, raw = raw)
                      
                      # check presence of variable in SE
                      object.DE <- tryCatch(object[features], error = function(e) e)
@@ -563,11 +563,11 @@ methods::setMethod(f          = "plotBoxplotDE",
                          pseudo <- SummarizedExperiment::assay(object.DE)
                          x_lab  <- paste0(features, " data")
                          
-                         if (isTransformed(object.DE) && getTransSetting(object.DE)$method != "none") {
-                           title  <- paste0("Transformed (", getTransSetting(object.DE)$method, ") ", title)
+                         if (.isTransformed(object.DE) && getTransSettings(object.DE)$method != "none") {
+                           title  <- paste0("Transformed (", getTransSettings(object.DE)$method, ") ", title)
                          }
-                         if (isNorm(object.DE) && getNormSetting(object.DE)$method != "none") {
-                           title <- paste0(title, " - normalization: ", getNormSetting(object.DE)$method)
+                         if (.isNorm(object.DE) && getNormSettings(object.DE)$method != "none") {
+                           title <- paste0(title, " - normalization: ", getNormSettings(object.DE)$method)
                          }  
                        } else {
                          
@@ -779,25 +779,25 @@ methods::setMethod(f          = "getDEList",
 #'
 #' @param object of class RflomicsSE
 #' @return List of differential analysis setting parametres.
-#' @exportMethod getDiffSetting
-#' @rdname getDiffSetting
+#' @exportMethod getDiffSettings
+#' @rdname getDiffSettings
 #'
 
-methods::setMethod(f          = "getDiffSetting",
+methods::setMethod(f          = "getDiffSettings",
                    signature  = "RflomicsSE",
                    
                    definition = function(object){
                     return(object@metadata$DiffExpAnal$setting)   
                    })
 
-#' @rdname getDiffSetting
-#' @title getDiffSetting
+#' @rdname getDiffSettings
+#' @title getDiffSettings
 #' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
-#' @exportMethod getDiffSetting
+#' @exportMethod getDiffSettings
 
-methods::setMethod(f          = "getDiffSetting",
+methods::setMethod(f          = "getDiffSettings",
                    signature  = "RflomicsMAE",
                    definition = function(object, SE.name){
-                     getDiffSetting(object = object[[SE.name]])
+                     getDiffSettings(object = object[[SE.name]])
                    })
 

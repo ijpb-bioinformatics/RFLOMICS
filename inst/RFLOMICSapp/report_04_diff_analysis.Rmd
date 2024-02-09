@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 <!-- ## Summary table of differential expression analysis -->
 
 
-Differential expression analysis was carried out for each selected contrast thanks to the `r getDiffSetting(dataset.SE)$method` model.
+Differential expression analysis was carried out for each selected contrast thanks to the `r getDiffSettings(dataset.SE)$method` model.
 
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
 
@@ -43,8 +43,8 @@ In a second time, contrasts.fit() was used and empirical bayes statistics were o
 
 
 P-values of differential expressed `r RFLOMICS:::omicsDic(dataset.raw.SE)[["variableName"]]` were adjusted according 
-to the `r getDiffSetting(dataset.SE)$p.adj.method` procedure with a cutoff set to `r getDiffSetting(dataset.SE)$p.adj.cutoff`.
-LogFC cut-off was set to `r getDiffSetting(dataset.SE)$abs.logFC.cutoff`
+to the `r getDiffSettings(dataset.SE)$p.adj.method` procedure with a cutoff set to `r getDiffSettings(dataset.SE)$p.adj.cutoff`.
+LogFC cut-off was set to `r getDiffSettings(dataset.SE)$abs.logFC.cutoff`
 
 
 * **Summary of differential expression analysis**

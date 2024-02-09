@@ -3,7 +3,7 @@ library(RFLOMICS)
 
 ##### Checks on transformation and normalization of data through command line functions
 
-# ---- Construction of objects for the tests ----
+# ---- Construction of objects for the tests ---- 
 
 MAE <- initExampleMAE()
 
@@ -15,8 +15,8 @@ protMat <- protMat[, match(colnames(SummarizedExperiment::assay(MAE[["protetest"
 
 # ---- Some functions ----
 
-isTransformed <- function(object, SE.name) RFLOMICS:::isTransformed(object[[SE.name]])
-isNorm        <- function(object, SE.name) RFLOMICS:::isNorm(object[[SE.name]])
+isTransformed <- function(object, SE.name) RFLOMICS:::.isTransformed(object[[SE.name]])
+isNorm        <- function(object, SE.name) RFLOMICS:::.isNorm(object[[SE.name]])
 
 ######################################-
 ########### FUNCTIONS TESTS ###########
@@ -32,64 +32,64 @@ test_that("transformData and apply_transform yield expected results", {
   ####
   # --- no transformation, no modification asked, nothing is supposed to happen.
   
-  MAE2 <- TransformData(MAE, SE.name = "protetest", modify_assay = FALSE, transformMethod = "none")
+    
+  MAE2 <- runTransformData(MAE, SE.name = "protetest", modifyAssay = FALSE, transformMethod = "none")
   expect_identical(SummarizedExperiment::assay(MAE2[["protetest"]]), as.matrix(protMat))
-  expect(!RFLOMICS:::isTransformed(MAE2[["protetest"]]), failure_message = "It was transformed, it shouldn't be.")
+  expect(!RFLOMICS:::.isTransformed(MAE2[["protetest"]]), failure_message = "It was transformed, it shouldn't be.")
   
-  MAE2 <- TransformData(MAE, SE.name = "RNAtest", modify_assay = FALSE, transformMethod = "none")
+  MAE2 <- runTransformData(MAE, SE.name = "RNAtest", modifyAssay = FALSE, transformMethod = "none")
   expect_identical(SummarizedExperiment::assay(MAE2[["RNAtest"]]), as.matrix(rnaSeqMat))
-  expect(!RFLOMICS:::isTransformed(MAE2[["RNAtest"]]), failure_message = "It was transformed, it shouldn't be.")
+  expect(!RFLOMICS:::.isTransformed(MAE2[["RNAtest"]]), failure_message = "It was transformed, it shouldn't be.")
   
   ####
-  # --- modify_assay = FALSE, transform method is wrong. 
+  # --- modifyAssay = FALSE, transform method is wrong. 
   
-  MAE3 <- TransformData(MAE, SE.name = "protetest", modify_assay = FALSE, transformMethod = "nothing")
+  MAE3 <- runTransformData(MAE, SE.name = "protetest", modifyAssay = FALSE, transformMethod = "nothing")
   expect_identical(SummarizedExperiment::assay(MAE3[["protetest"]]), as.matrix(protMat))
-  expect(!RFLOMICS:::isTransformed(MAE3[["protetest"]]), failure_message = "It was transformed, it shouldn't be.")
+  expect(!RFLOMICS:::.isTransformed(MAE3[["protetest"]]), failure_message = "It was transformed, it shouldn't be.")
   # TODO It should have a warning... or something
   
-  MAE3 <- TransformData(MAE, SE.name = "RNAtest", modify_assay = FALSE, transformMethod = "nothing")
-  expect_message(TransformData(MAE, SE.name = "RNAtest", modify_assay = FALSE, transformMethod = "nothing")) # forced to "none".
+  MAE3 <- runTransformData(MAE, SE.name = "RNAtest", modifyAssay = FALSE, transformMethod = "nothing")
+  expect_message(runTransformData(MAE, SE.name = "RNAtest", modifyAssay = FALSE, transformMethod = "nothing")) # forced to "none".
   expect_identical(SummarizedExperiment::assay(MAE3[["RNAtest"]]), as.matrix(rnaSeqMat))
-  expect(!RFLOMICS:::isTransformed(MAE3[["RNAtest"]]), failure_message = "It was transformed, it shouldn't be.")
+  expect(!RFLOMICS:::.isTransformed(MAE3[["RNAtest"]]), failure_message = "It was transformed, it shouldn't be.")
   
   ####
-  # --- modify_assay = TRUE, wrong transformation
+  # --- modifyAssay = TRUE, wrong transformation
   
-  MAE4 <- TransformData(MAE, SE.name = "protetest", modify_assay = TRUE, transformMethod = "nothing")
-  expect_message(TransformData(MAE, SE.name = "protetest", modify_assay = TRUE, transformMethod = "nothing"))
+  MAE4 <- runTransformData(MAE, SE.name = "protetest", modifyAssay = TRUE, transformMethod = "nothing")
+  expect_message(runTransformData(MAE, SE.name = "protetest", modifyAssay = TRUE, transformMethod = "nothing"))
   expect_identical(SummarizedExperiment::assay(MAE4[["protetest"]]), as.matrix(protMat)) # no transformation applied
-  expect(!RFLOMICS:::isTransformed(MAE4[["protetest"]]), failure_message = "It was transformed, it shouldn't be.")
+  expect(!RFLOMICS:::.isTransformed(MAE4[["protetest"]]), failure_message = "It was transformed, it shouldn't be.")
   
-  MAE4 <- TransformData(MAE, SE.name = "RNAtest", modify_assay = TRUE, transformMethod = "nothing")
-  expect_message(TransformData(MAE, SE.name = "RNAtest", modify_assay = TRUE, transformMethod = "nothing"))
+  MAE4 <- runTransformData(MAE, SE.name = "RNAtest", modifyAssay = TRUE, transformMethod = "nothing")
+  expect_message(runTransformData(MAE, SE.name = "RNAtest", modifyAssay = TRUE, transformMethod = "nothing"))
   expect_identical(SummarizedExperiment::assay(MAE4[["RNAtest"]]), as.matrix(rnaSeqMat)) # no transformation applied
-  expect(!RFLOMICS:::isTransformed(MAE4[["RNAtest"]]), failure_message = "It was transformed, it shouldn't be.")
+  expect(!RFLOMICS:::.isTransformed(MAE4[["RNAtest"]]), failure_message = "It was transformed, it shouldn't be.")
   
   ####
   # --- right transformation, no assay modification.
   
-  MAE5 <- MAE5b <- TransformData(MAE, SE.name = "protetest", modify_assay = FALSE, transformMethod = "log2")
+  MAE5 <- MAE5b <- runTransformData(MAE, SE.name = "protetest", modifyAssay = FALSE, transformMethod = "log2")
   expect_identical(SummarizedExperiment::assay(MAE5[["protetest"]]), as.matrix(protMat)) 
-  expect(!RFLOMICS:::isTransformed(MAE5[["protetest"]]), failure_message = "It was transformed, it shouldn't be.")
+  expect(!RFLOMICS:::.isTransformed(MAE5[["protetest"]]), failure_message = "It was transformed, it shouldn't be.")
   
   ####
   # --- apply transformation:
   
-  MAE5b[["protetest"]] <- RFLOMICS:::apply_transformation(MAE5[["protetest"]])
+  MAE5b[["protetest"]] <- RFLOMICS:::.applyTransformation(MAE5[["protetest"]])
   expect_identical(SummarizedExperiment::assay(MAE5b[["protetest"]]), as.matrix(log2(protMat + 1))) 
-  expect(RFLOMICS:::isTransformed(MAE5b[["protetest"]]), failure_message = "It wasn't transformed, it should be.")
+  expect(RFLOMICS:::.isTransformed(MAE5b[["protetest"]]), failure_message = "It wasn't transformed, it should be.")
   
   ####
   # --- apply transformation directly: 
   
-  MAE6 <- TransformData(MAE, SE.name = "protetest", modify_assay = TRUE, transformMethod = "log2")
+ MAE6 <- runTransformData(MAE, SE.name = "protetest", modifyAssay = TRUE, transformMethod = "log2")
   expect_identical(SummarizedExperiment::assay(MAE6[["protetest"]]), as.matrix(log2(protMat + 1))) 
-  expect(RFLOMICS:::isTransformed(MAE6[["protetest"]]), failure_message = "It wasn't transformed, it should be.")
+  expect(RFLOMICS:::.isTransformed(MAE6[["protetest"]]), failure_message = "It wasn't transformed, it should be.")
   
   
 })
-
 
 # ---- RunNormalization, apply_norm ----
 
@@ -101,50 +101,50 @@ test_that("RunNormalization and apply_norm yield expected results", {
   ####
   # --- Missing norm argument
   
-  MAE2 <- RunNormalization(MAE, SE.name = "protetest", modify_assay = FALSE)
+  MAE2 <- runNormalization(MAE, SE.name = "protetest", modifyAssay = FALSE)
   expect_identical(SummarizedExperiment::assay(MAE2[["protetest"]]), as.matrix(protMat))
-  expect(!isNorm(MAE2, "protetest"), failure_message = "It was normalized, it shouldn't be.")
+  expect( ! isNorm(MAE2,"protetest"), failure_message = "It was normalized, it shouldn't be.")
   
-  MAE2 <- RunNormalization(MAE, SE.name = "RNAtest", modify_assay = FALSE)
+  MAE2 <- runNormalization(MAE, SE.name = "RNAtest", modifyAssay = FALSE)
   expect_identical(SummarizedExperiment::assay(MAE2[["RNAtest"]]), as.matrix(rnaSeqMat))
-  expect(getNormSetting(MAE2[["RNAtest"]])$method == "TMM", failure_message = "TMM was not forced on RNAseq data")
-  expect(!isNorm(MAE2, "RNAtest"), failure_message = "It was normalized, it shouldn't be.")
+  expect(getNormSettings(MAE2[["RNAtest"]])$method == "TMM", failure_message = "TMM was not forced on RNAseq data")
+  expect(!isNorm(MAE2,"RNAtest"), failure_message = "It was normalized, it shouldn't be.")
   
   ####
   # --- no norm, no modification asked, nothing is supposed to happen.
    
-  MAE2 <- RunNormalization(MAE, SE.name = "protetest", modify_assay = FALSE, NormMethod = "none")
+  MAE2 <- runNormalization(MAE, SE.name = "protetest",normMethod = "none",  modifyAssay = FALSE)
   expect_identical(SummarizedExperiment::assay(MAE2[["protetest"]]), as.matrix(protMat))
-  expect(!isNorm(MAE2, "protetest"), failure_message = "It was normalized, it shouldn't be.")
+  expect(!isNorm(MAE2,"protetest"), failure_message = "It was normalized, it shouldn't be.")
   
-  MAE2 <- RunNormalization(MAE, SE.name = "RNAtest", modify_assay = FALSE, NormMethod = "none")
+  MAE2 <- runNormalization(MAE, SE.name = "RNAtest", normMethod = "none", modifyAssay = FALSE)
   expect_identical(SummarizedExperiment::assay(MAE2[["RNAtest"]]), as.matrix(rnaSeqMat))
-  expect(getNormSetting(MAE2[["RNAtest"]])$method == "TMM", failure_message = "TMM was not forced on RNAseq data")
-  expect(!isNorm(MAE2, "RNAtest"), failure_message = "It was normalized, it shouldn't be.")
+  expect(getNormSettings(MAE2[["RNAtest"]])$method == "TMM", failure_message = "TMM was not forced on RNAseq data")
+  expect(!isNorm(MAE2,"RNAtest"), failure_message = "It was normalized, it shouldn't be.")
   
   ####
-  # --- modify_assay = FALSE
+  # --- modifyAssay = FALSE
   
-  MAE3 <- RunNormalization(MAE, SE.name = "protetest", modify_assay = FALSE, NormMethod = "nothing")
+  MAE3 <- runNormalization(MAE, SE.name = "protetest", modifyAssay = FALSE, normMethod = "nothing")
   expect_identical(SummarizedExperiment::assay(MAE3[["protetest"]]), as.matrix(protMat))
-  expect(!isNorm(MAE3, "protetest"), failure_message = "It was normalized, it shouldn't be.")
+  expect(!isNorm(MAE3,"protetest"), failure_message = "It was normalized, it shouldn't be.")
   # TODO It should have a warning... or something
   
-  MAE3 <- RunNormalization(MAE, SE.name = "RNAtest", modify_assay = FALSE, NormMethod = "nothing")
-  expect_message(RunNormalization(MAE, SE.name = "RNAtest", modify_assay = FALSE, NormMethod = "nothing")) # forced to "none".
+  MAE3 <- runNormalization(MAE, SE.name = "RNAtest", modifyAssay = FALSE, normMethod = "nothing")
+  expect_message(runNormalization(MAE, SE.name = "RNAtest", modifyAssay = FALSE, normMethod = "nothing")) # forced to "none".
   expect_identical(SummarizedExperiment::assay(MAE3[["RNAtest"]]), as.matrix(rnaSeqMat))
   expect(!isNorm(MAE3, "RNAtest"), failure_message = "It was normalized, it shouldn't be.")
   
   ####
-  # --- modify_assay = TRUE, wrong transformation
+  # --- modifyAssay = TRUE, wrong transformation
   
-  MAE4 <- RunNormalization(MAE, SE.name = "protetest", modify_assay = TRUE, NormMethod = "nothing")
-  expect_message(RunNormalization(MAE, SE.name = "protetest", modify_assay = TRUE, NormMethod = "nothing"))
+  MAE4 <- runNormalization(MAE, SE.name = "protetest", modifyAssay = TRUE, normMethod = "nothing")
+  expect_message(runNormalization(MAE, SE.name = "protetest", modifyAssay = TRUE, normMethod = "nothing"))
   expect_identical(SummarizedExperiment::assay(MAE4[["protetest"]]), as.matrix(protMat)) # no transformation applied
   expect(!isNorm(MAE4, "protetest"), failure_message = "It was normalized, it shouldn't be.")
   
-  MAE4 <- RunNormalization(MAE, SE.name = "RNAtest", modify_assay = TRUE, NormMethod = "nothing")
-  expect_message(RunNormalization(MAE, SE.name = "RNAtest", modify_assay = TRUE, NormMethod = "nothing"))
+  MAE4 <- runNormalization(MAE, SE.name = "RNAtest", modifyAssay = TRUE, normMethod = "nothing")
+  expect_message(runNormalization(MAE, SE.name = "RNAtest", modifyAssay = TRUE, normMethod = "nothing"))
   
   scales_factors <- getCoeffNorm(MAE4[["RNAtest"]])$lib.size*getCoeffNorm(MAE4[["RNAtest"]])$norm.factors
   assayTransform <- SummarizedExperiment::assay(MAE[["RNAtest"]])
@@ -156,14 +156,14 @@ test_that("RunNormalization and apply_norm yield expected results", {
   ####
   # --- right transformation.
   
-  MAE5 <- MAE5b <- RunNormalization(MAE, SE.name = "protetest", modify_assay = FALSE, NormMethod = "median")
+  MAE5 <- MAE5b <- runNormalization(MAE, SE.name = "protetest", modifyAssay = FALSE, normMethod = "median")
   expect_identical(SummarizedExperiment::assay(MAE5[["protetest"]]), as.matrix(protMat)) 
   expect(!isNorm(MAE5, "protetest"), failure_message = "It was normalized, it shouldn't be.")
   
   ####
   # --- apply transformation:
   
-  MAE5b[["protetest"]] <- RFLOMICS:::apply_norm(MAE5[["protetest"]])
+  MAE5b[["protetest"]] <- RFLOMICS:::.applyNorm(MAE5[["protetest"]])
   # getNorm(MAE5b, "protetest") # median
   protMed <- apply(protMat, 2, FUN = function(vect) vect - median(vect))
   expect_identical(SummarizedExperiment::assay(MAE5b[["protetest"]]), as.matrix(protMed)) 
@@ -172,7 +172,7 @@ test_that("RunNormalization and apply_norm yield expected results", {
   ####
   # --- apply transformation directly: 
   
-  MAE6 <- RunNormalization(MAE, SE.name = "protetest", modify_assay = TRUE, NormMethod = "median")
+  MAE6 <- runNormalization(MAE, SE.name = "protetest", modifyAssay = TRUE, normMethod = "median")
   protMed <- apply(protMat, 2, FUN = function(vect) vect - median(vect))
   expect_identical(SummarizedExperiment::assay(MAE6[["protetest"]]), as.matrix(protMed)) 
   expect(isNorm(MAE6, "protetest"), failure_message = "It wasn't normalized.")
@@ -199,7 +199,7 @@ test_that("Transformation and normalisation combination - proteomics", {
   res_equal <- lapply(1:nrow(casesMat), FUN = function(i){
     
     case_vect <- casesMat[i,]
-    
+    print(case_vect)
     # matrix version
     protMattransnorm <- protMat
     
@@ -229,16 +229,16 @@ test_that("Transformation and normalisation combination - proteomics", {
     
     # RFLOMICS version
     MAE2 <- MAE
-    MAE2 <- TransformData(MAE2, SE = "protetest", transformMethod = as.character(case_vect[[1]]))
-    MAE2 <- RunNormalization(MAE2, SE.name = "protetest", NormMethod = as.character(case_vect[[2]]))
+    MAE2 <- runTransformData(MAE2, SE = "protetest", transformMethod = as.character(case_vect[[1]]))
+    MAE2 <- runNormalization(MAE2, SE.name = "protetest", normMethod = as.character(case_vect[[2]]))
     
-    MAE2 <- RFLOMICS::RunPCA(MAE2, SE = "protetest")
+    MAE2 <- RFLOMICS::runOmicsPCA(MAE2, SE = "protetest")
     expect_equal(pca.norm$eig, MAE2[["protetest"]]@metadata$PCAlist$norm$eig)
     expect_equal(pca.norm$svd, MAE2[["protetest"]]@metadata$PCAlist$norm$svd)
     expect_equal(pca.norm$ind, MAE2[["protetest"]]@metadata$PCAlist$norm$ind)
     expect_equal(pca.norm$var, MAE2[["protetest"]]@metadata$PCAlist$norm$var)
     
-    MAE2[["protetest"]] <- RFLOMICS:::checkTransNorm(MAE2[["protetest"]]) 
+    MAE2[["protetest"]] <- RFLOMICS:::.checkTransNorm(MAE2[["protetest"]]) 
     
     expect_equal(SummarizedExperiment::assay(MAE2[["protetest"]]), as.matrix(protMattransnorm))
     
@@ -249,26 +249,26 @@ test_that("Transformation and normalisation combination - proteomics", {
 # ---- PROTEO - Check if transformation working without arguments ----
 test_that("Transformation - no method - no modification", {
   
-  MAE2 <- TransformData(MAE, SE = "protetest")
+  MAE2 <- runTransformData(MAE, SE = "protetest")
   
-  expect_message(TransformData(MAE, SE = "protetest"))
-  expect(getTransSetting(MAE2[["protetest"]])$method == "log2", failure_message = "The transformation is not log2 by default.")
+  expect_message(runTransformData(MAE, SE = "protetest"))
+  expect(getTransSettings(MAE2[["protetest"]])$method == "log2", failure_message = "The transformation is not log2 by default.")
   expect_equal(SummarizedExperiment::assay(MAE[["protetest"]]), SummarizedExperiment::assay(MAE2[["protetest"]]))
 })
 
 test_that("Transformation - no method - modification", { # 
   
-  MAE2 <- TransformData(MAE, SE = "protetest", modify_assay = TRUE)
+  MAE2 <- runTransformData(MAE, SE = "protetest", transformMethod = NULL, modifyAssay = TRUE)
   
   # Message if argument method is forgotten
-  expect_message(TransformData(MAE, SE = "protetest"))
+  expect_message(runTransformData(MAE, SE = "protetest"))
   
   # Default transformation must be log2 + 1 for proteomics data
   expect_equal(log2(SummarizedExperiment::assay(MAE[["protetest"]]) + 1), SummarizedExperiment::assay(MAE2[["protetest"]]))
-  expect(getTransSetting(MAE2[["protetest"]])$method == "log2", failure_message = "The transformation is not log2 by default.")
+  expect(getTransSettings(MAE2[["protetest"]])$method == "log2", failure_message = "The transformation is not log2 by default.")
   
   # Modification of the assay: expect transformed metadata to be TRUE 
-  expect(isTransformed(MAE2 , "protetest"), failure_message = "The assay was not transformed.")
+  expect(.isTransformed(MAE2[["protetest"]]), failure_message = "The assay was not transformed.")
 })
 
 ######################################-
@@ -303,10 +303,10 @@ test_that("RNAseq - none + TMM + log2", {
   
   # RFLOMICS version
   MAE2 <- MAE
-  MAE2 <- TransformData(MAE2, SE = "RNAtest", transformMethod = "none")
-  MAE2 <- RunNormalization(MAE2, SE.name = "RNAtest", NormMethod = "TMM")
+  MAE2 <- runTransformData(MAE2, SE = "RNAtest", transformMethod = "none")
+  MAE2 <- runNormalization(MAE2, SE.name = "RNAtest", normMethod = "TMM")
   
-  MAE2 <- RFLOMICS::RunPCA(MAE2, SE = "RNAtest")
+  MAE2 <- RFLOMICS::runOmicsPCA(MAE2, SE = "RNAtest")
   expect_equal(pca.norm$eig, MAE2[["RNAtest"]]@metadata$PCAlist$norm$eig)
   expect_equal(pca.norm$svd, MAE2[["RNAtest"]]@metadata$PCAlist$norm$svd)
   expect_equal(pca.norm$ind, MAE2[["RNAtest"]]@metadata$PCAlist$norm$ind)
@@ -319,29 +319,29 @@ test_that("RNAseq - none + TMM + log2", {
 test_that("RNAseq - correct behaviour of normalization and transformation",  {
   
   MAE2 <- MAE
-  MAE2 <- TransformData(MAE2, SE = "RNAtest")
-  expect(getTransSetting(MAE2[["RNAtest"]])$method == "none", 
+  MAE2 <- runTransformData(MAE2, SE = "RNAtest")
+  expect(getTransSettings(MAE2[["RNAtest"]])$method == "none", 
          failure_message = "TransformData does not put 'none' as default for RNAseq data")
-  expect(!isTransformed(MAE2, "RNAtest"), 
+  expect(!.isTransformed(MAE2[["RNAtest"]]), 
          failure_message = "TransformData transformed the data when not asked to")
 
-  MAE2 <- RunNormalization(MAE2, SE = "RNAtest")
-  expect(getNormSetting(MAE2[["RNAtest"]])$method == "TMM", 
+  MAE2 <- runNormalization(MAE2, SE = "RNAtest")
+  expect(getNormSettings(MAE2[["RNAtest"]])$method == "TMM", 
          failure_message = "Normalization is not defaulted to TMM for RNAseq data.")
-  expect(!isNorm(MAE2, "RNAtest"), 
+  expect(!.isNorm(MAE2[["RNAtest"]]), 
          failure_message = "RunNormalization transformed the data when not asked to")
   
-  MAE2 <- TransformData(MAE2, SE = "RNAtest", transformMethod = "log2") # shouldn't be at all
-  MAE2 <- RunNormalization(MAE2, SE = "RNAtest", NormMethod = "median") # shouldn't be at all.
+  MAE2 <- runTransformData(MAE2, SE = "RNAtest", transformMethod = "log2") # shouldn't be at all
+  MAE2 <- runNormalization(MAE2, SE = "RNAtest", normMethod = "median") # shouldn't be at all.
   
-  expect(getTransSetting(MAE2[["RNAtest"]])$method == "none",
+  expect(getTransSettings(MAE2[["RNAtest"]])$method == "none",
          failure_message = "TransformData did not replace by 'none' for RNAseq data ")
-  expect(!isTransformed(MAE2, "RNAtest"), 
+  expect(!.isTransformed(MAE2[["RNAtest"]]), 
          failure_message = "TransformData transformed the data when not asked to")
   
-  expect(getNormSetting(MAE2[["RNAtest"]])$method == "TMM", 
+  expect(getNormSettings(MAE2[["RNAtest"]])$method == "TMM", 
          failure_message = "Normalization did not replace by TMM for RNAseq data.")
-  expect(!isNorm(MAE2, "RNAtest"),
+  expect(!.isNorm(MAE2[["RNAtest"]]),
          failure_message = "RunNormalization transformed the data when not asked to")
 
 }) 
@@ -352,13 +352,13 @@ test_that("RNAseq - correct behaviour of checkTransNorm",  {
   # Compare with the MAE built buy Flomics constructor 
   MAE2 <- MAE # none, none at the building
   
-  MAE2[["RNAtest"]] <- RFLOMICS:::checkTransNorm(MAE2[["RNAtest"]])
+  MAE2[["RNAtest"]] <- RFLOMICS:::.checkTransNorm(MAE2[["RNAtest"]])
   
   MAE3 <- MAE
-  MAE3 <- TransformData(MAE3, SE = "RNAtest", transformMethod = "none")  
-  MAE3 <- RunNormalization(MAE3, SE = "RNAtest", NormMethod = "TMM")
+  MAE3 <- runTransformData(MAE3, SE = "RNAtest", transformMethod = "none")  
+  MAE3 <- runNormalization(MAE3, SE = "RNAtest", normMethod = "TMM")
 
-  MAE3[["RNAtest"]] <- RFLOMICS:::checkTransNorm(MAE3[["RNAtest"]])
+  MAE3[["RNAtest"]] <- RFLOMICS:::.checkTransNorm(MAE3[["RNAtest"]])
 
   expect_identical(SummarizedExperiment::assay(MAE2[["RNAtest"]]), 
                    SummarizedExperiment::assay(MAE3[["RNAtest"]]))  
@@ -380,13 +380,13 @@ test_that("RNAseq - correct behaviour of checkTransNorm",  {
 # 
 test_that("RNAseq - no arguments - methods", {
   
-  MAE2 <- TransformData(MAE, SE = "RNAtest", modify_assay = FALSE)
+  MAE2 <- runTransformData(MAE, SE = "RNAtest", modifyAssay = FALSE)
   
   # Message if argument method is forgotten
-  expect_message(TransformData(MAE, SE = "RNAtest"))
+  expect_message(runTransformData(MAE, SE = "RNAtest"))
 
   # Default transformation must be "none" for RNAseq data when no transformation is asked.
-  expect(getTransSetting(MAE2[["RNAtest"]])$method == "none", 
+  expect(getTransSettings(MAE2[["RNAtest"]])$method == "none", 
          failure_message = "The transformation is not 'none' by default.")
   
 }) 

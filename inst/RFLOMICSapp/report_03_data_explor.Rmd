@@ -37,24 +37,25 @@ check$plot
 
 Filtering and normalization strategies were adapted from DiCoExpress @Lambert2020ta
 
-* By default, *unexpressed genes* were filtered-out (`r length(dataset.raw.SE@metadata$rowSums.zero)` genes).
-* Then, *genes* with a `r getFilterSetting(dataset.SE)$method` lower to `r getFilterSetting(dataset.SE)$cpmCutoff` in at least "`r getFilterSetting(dataset.SE)$filterStrategy`" were filtered out ( `r length(getFilteredFeatures(dataset.SE))` transcripts).
+* By default, *unexpressed genes* were filtered-out (`r length(dataset.raw.SE@metadata$DataProcessing$rowSumsZero)` genes).
+
+* Then, *genes* with a `r getFilterSettings(dataset.SE)$method` lower to `r getFilterSettings(dataset.SE)$cpmCutoff` in at least "`r getFilterSettings(dataset.SE)$filterStrategy`" were filtered out ( `r length(getFilteredFeatures(dataset.SE))` genes).
 
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
 
-`r if(getNormSetting(dataset.SE)$method == "none") {"\\begin{comment}"}`
+`r if(getNormSettings(dataset.SE)$method == "none") {"\\begin{comment}"}`
 
-* The `r getNormSetting(dataset.SE)$method` normalization method was applied. 
+* The `r getNormSettings(dataset.SE)$method` normalization method was applied. 
 
-`r if(getNormSetting(dataset.SE)$method == "none") {"\\end{comment}"}`
+`r if(getNormSettings(dataset.SE)$method == "none") {"\\end{comment}"}`
 
 <!-- proteomics or metabolomics data cas -->
 
-`r if(getTransSetting(dataset.SE)$method == "none") {"\\begin{comment}"}`
+`r if(getTransSettings(dataset.SE)$method == "none") {"\\begin{comment}"}`
 
-* The data were transformed using `r getTransSetting(dataset.SE)$method`.
+* The data were transformed using `r getTransSettings(dataset.SE)$method`.
 
-`r if(getTransSetting(dataset.SE)$method == "none") {"\\end{comment}"}`
+`r if(getTransSettings(dataset.SE)$method == "none") {"\\end{comment}"}`
 
 
 
@@ -77,8 +78,8 @@ DT::datatable(filt.summary, options = list(colnames=FALSE, rownames = FALSE, pag
 
 ```{r Library_size_barplot, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE, eval=(dataset.raw.SE@metadata$omicType == "RNAseq")}
 
-Library_size_barplot.plot(dataset.raw.SE, raw = TRUE)
-Library_size_barplot.plot(dataset.SE)
+plotLibrarySize(dataset.raw.SE, raw = TRUE)
+plotLibrarySize(dataset.SE)
 
 ```
 
@@ -90,41 +91,41 @@ Library_size_barplot.plot(dataset.SE)
 
 ```{r boxplot, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE, fig.cap=""}
 
-Data_Distribution_plot(dataset.raw.SE, plot = "boxplot", raw = TRUE)
-Data_Distribution_plot(dataset.SE, plot = "boxplot", raw = FALSE)
+plotDataDistribution(dataset.raw.SE, plot = "boxplot", raw = TRUE)
+plotDataDistribution(dataset.SE, plot = "boxplot", raw = FALSE)
 
 ```
 
 ### Feature counts (density)
 
 ```{r density-plot, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
-Data_Distribution_plot(dataset.raw.SE, plot = "density", raw = TRUE)
-Data_Distribution_plot(dataset.SE, plot = "density", raw = FALSE)
+plotDataDistribution(dataset.raw.SE, plot = "density", raw = TRUE)
+plotDataDistribution(dataset.SE, plot = "density", raw = FALSE)
 ```
 
 ### PCA
 
 ```{r PCA_1_2, echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE, out.width = "50%"}
 
-RFLOMICS::plotPCA(dataset.raw.SE, PCA="raw", PCs=c(1, 2), condition="groups")
-RFLOMICS::plotPCA(dataset.SE, PCA="norm", PCs=c(1, 2), condition="groups")
+RFLOMICS::plotPCA(dataset.raw.SE, raw="raw", axes=c(1, 2), groupColor="groups")
+RFLOMICS::plotPCA(dataset.SE, raw="norm", axes=c(1, 2), groupColor="groups")
 ```
 
 ```{r PCA_1_3, echo=FALSE , fig.show="hold", message=FALSE, warning=FALSE, out.width = "50%"}
 
-RFLOMICS::plotPCA(dataset.raw.SE, PCA="raw", PCs=c(1, 3), condition="groups")
-RFLOMICS::plotPCA(dataset.SE, PCA="norm", PCs=c(1, 3), condition="groups")
+RFLOMICS::plotPCA(dataset.raw.SE, raw="raw", axes=c(1, 3), groupColor="groups")
+RFLOMICS::plotPCA(dataset.SE, raw="norm", axes=c(1, 3), groupColor="groups")
 ```
 
 
 
 ```{r export,echo = FALSE}
 
-write.table(dataset.SE@metadata$rowSums.zero,
+write.table(dataset.SE@metadata$DataProcessing$rowSumsZero,
              file = paste0(explorDir,"Table_of_non_expressed_", RFLOMICS:::omicsDic(dataset.SE)[["variableName"]],".txt"),
              sep ="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
 
-write.table(dataset.SE@metadata$FilteredFeatures,
+write.table(getFilteredFeatures(dataset.SE),
              file = paste0(explorDir,"Table_of_low_expressed_", RFLOMICS:::omicsDic(dataset.SE)[["variableName"]],".txt"),
              sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
  

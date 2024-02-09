@@ -32,9 +32,6 @@
   if(clustermq && parallel) parallel <- FALSE 
   if(!parallel) nworkers <- 1
   
-  # model_matrix <- model_matrix[match(colnames(count_matrix), rownames(model_matrix)),]
-  # if (!identical(colnames(count_matrix), rownames(model_matrix), attrib.as.set = FALSE)) 
-  #   stop("MisMatch in samples names orders.")
   
   # Construct the DGE obect
   dge <- edgeR::DGEList(counts       = count_matrix,
@@ -84,11 +81,6 @@
   }
   else{
     if(cmd) print("[cmd] apply model to each contrast")
-    # ResGlm <-  BiocParallel::bplapply(Contrasts.Sel$contrast, function(x){
-    #   #print(unlist(Contrasts.Coeff[x,]))
-    #   try_rflomics(edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,])))
-    #   
-    # }, BPOPTIONS = bpoptions(workers = nworkers))
     ResGlm <-  parallel::mclapply(Contrasts.Sel$contrast, function(x){
       #print(unlist(Contrasts.Coeff[x,]))
       .tryRflomics(edgeR::glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,])))
@@ -280,8 +272,8 @@ sumDiffExp <- function(object, SE.name = NULL) {
     }
   }
   
-  pcut <- getDiffSetting(object)$p.adj.cutoff
-  lcut <- getDiffSetting(object)$abs.logFC.cutoff
+  pcut <- getDiffSettings(object)$p.adj.cutoff
+  lcut <- getDiffSettings(object)$abs.logFC.cutoff
   # n_entities <- nrow(assay(object))
   # n_samples <- ncol(assay(object))
   

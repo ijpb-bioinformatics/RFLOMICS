@@ -398,13 +398,13 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                              
                                              # 230317 :
                                              newDataset.SE <- dataset.SE[, which(colnames(dataset.SE) %in% dataset.SE@metadata$Groups$samples)]
-                                             newDataset.SE <-  RunPCA(newDataset.SE[row.names(newDataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]])]) 
+                                             newDataset.SE <-  runOmicsPCA(newDataset.SE[row.names(newDataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]])],ncomp = 5, raw = FALSE) 
                                              
                                              PC1.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Firstaxis")]][1])
                                              PC2.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Secondaxis")]][1])
                                              condGroup <- input[[paste0(vect["contrastName"],"-pca.DE.condColorSelect")]][1]
                                              
-                                             RFLOMICS::plotPCA(newDataset.SE,  PCA = "norm", PCs = c(PC1.value, PC2.value), condition = condGroup)
+                                             RFLOMICS::plotPCA(newDataset.SE,  raw = "norm", axes = c(PC1.value, PC2.value), groupColor = condGroup)
                                            })
                                     )
                                   ),
@@ -424,18 +424,12 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                          tabPanel("boxplot DE",
                                   fluidRow(
                                     column(width = 3,
-                                           # selectInput(
-                                           #   inputId = session$ns(paste0(vect["contrastName"], "-DE")), label = "Select DE:",
-                                           #   choices = rownames(dplyr::arrange(dataset.SE@metadata$DiffExpAnal$TopDEF[[vect["contrastName"]]], Adj.pvalue)),
-                                           #   multiple = FALSE, selectize = FALSE,
-                                           #   size = 5 ),
-                                           
+                            
                                            selectizeInput(
                                              inputId = session$ns(paste0(vect["contrastName"], "-DE")), label = "Select DE:",
                                              choices = rownames(dplyr::arrange(dataset.SE@metadata$DiffExpAnal$TopDEF[[vect["contrastName"]]], Adj.pvalue)),
                                              multiple = FALSE),
-                                           
-                                           #RadioButtonsConditionUI(session$ns(paste0(vect["contrastName"],"-DEcondition")))
+                                        
                                            radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-DEcondition")),
                                                         label = 'Levels:',
                                                         choices = c("groups",factors.bio),
@@ -496,10 +490,10 @@ check_run_diff_execution <- function(object.SE, param.list = NULL){
   # filtering setting
   if(is.null(object.SE@metadata[["DiffExpAnal"]]) || object.SE@metadata[["DiffExpAnal"]]$results != TRUE) return(TRUE)
   
-  if(param.list$method             != getDiffSetting(object.SE)$method)            return(TRUE)
-  if(param.list$p.adj.method  != getDiffSetting(object.SE)$p.adj.method) return(TRUE)
-  if(param.list$p.adj.cutoff  != getDiffSetting(object.SE)$p.adj.cutoff) return(TRUE)
-  if(param.list$abs.logFC.cutoff   != getDiffSetting(object.SE)$abs.logFC.cutoff)  return(TRUE)
+  if(param.list$method             != getDiffSettings(object.SE)$method)            return(TRUE)
+  if(param.list$p.adj.method  != getDiffSettings(object.SE)$p.adj.method) return(TRUE)
+  if(param.list$p.adj.cutoff  != getDiffSettings(object.SE)$p.adj.cutoff) return(TRUE)
+  if(param.list$abs.logFC.cutoff   != getDiffSettings(object.SE)$abs.logFC.cutoff)  return(TRUE)
   
   return(FALSE)
 }

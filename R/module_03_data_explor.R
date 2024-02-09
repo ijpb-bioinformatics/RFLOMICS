@@ -75,7 +75,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
         column(12, h5("Low count Filtering (CPM):")),
         column(8,
                selectInput(inputId  = session$ns("Filter_Strategy"),
-                           label    = "Stategy",
+                           label    = "Strategy",
                            choices  = c("NbConditions" = "NbConditions",  "NbReplicates" = "NbReplicates"),
                            selected = "NbReplicates")
         ),
@@ -220,10 +220,10 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   #---- QC plot for raw/processed data----
   # library size plot only for RNAseq data
   output$LibSizeUI <- renderUI({
-    plot <- renderPlot(Library_size_barplot.plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], raw = TRUE))
+    plot <- renderPlot(plotLibrarySize(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], raw = TRUE))
     
     if(rea.values[[dataset]]$process != FALSE){
-      plot <- list(renderPlot(Library_size_barplot.plot(session$userData$FlomicsMultiAssay[[dataset]])), plot)
+      plot <- list(renderPlot(plotLibrarySize(session$userData$FlomicsMultiAssay[[dataset]])), plot)
     }
     
     return(plot)
@@ -231,20 +231,20 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   
   # value (count/intensity) distribution (boxplot/density)
   output$boxplotUI <- renderUI({
-    plot <- renderPlot(Data_Distribution_plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], plot = "boxplot", raw = TRUE))
+    plot <- renderPlot(plotDataDistribution(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], plot = "boxplot", raw = TRUE))
     
     if(rea.values[[dataset]]$process != FALSE){
-      plot <- list(renderPlot(Data_Distribution_plot(session$userData$FlomicsMultiAssay[[dataset]], plot = "boxplot", raw = FALSE)), plot)
+      plot <- list(renderPlot(plotDataDistribution(session$userData$FlomicsMultiAssay[[dataset]], plot = "boxplot", raw = FALSE)), plot)
     }
     
     return(plot)
   }) 
   
   output$CountDistUI <- renderUI({
-    plot <- renderPlot(Data_Distribution_plot(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], plot = "density", raw = TRUE))
+    plot <- renderPlot(plotDataDistribution(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], plot = "density", raw = TRUE))
     
     if(rea.values[[dataset]]$process != FALSE){
-      plot <- list(renderPlot(Data_Distribution_plot(session$userData$FlomicsMultiAssay[[dataset]], plot = "density", raw = FALSE)), plot)
+      plot <- list(renderPlot(plotDataDistribution(session$userData$FlomicsMultiAssay[[dataset]], plot = "density", raw = FALSE)), plot)
     }
     
     return(plot)
@@ -283,7 +283,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     PC2.value <- as.numeric(input$`factors-Secondaxis`[1])
     condGroup <- input$PCA.factor.condition
     
-    RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], PCA="raw", PCs=c(PC1.value, PC2.value), condition=condGroup)
+    RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], raw="raw", axes=c(PC1.value, PC2.value), groupColor=condGroup)
     
   })
   output$norm.PCAcoord <- renderPlot({
@@ -293,7 +293,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     PC2.value <- as.numeric(input$`factors-Secondaxis`[1])
     condGroup <- input$PCA.factor.condition
     
-    RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[dataset]], PCA = "norm", PCs=c(PC1.value, PC2.value), condition=condGroup)
+    RFLOMICS::plotPCA(session$userData$FlomicsMultiAssay[[dataset]], raw = "norm", axes=c(PC1.value, PC2.value), groupColor=condGroup)
     
   })
   
@@ -349,10 +349,11 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(session$userData$FlomicsMultiAssay, results = c("IntegrationAnalysis"))
     
     print(paste0("# 3  => Data processing: ", dataset))
+   
     session$userData$FlomicsMultiAssay <- 
       runDataProcessing(object = session$userData$FlomicsMultiAssay, SE.name = dataset, samples = input$selectSamples,  
                         lowCountFiltering_strategy=param.list[["Filter_Strategy"]], lowCountFiltering_CPM_Cutoff=param.list[["CPM_Cutoff"]], 
-                        normalisation_method=param.list[["NormMethod"]], transformation_method=param.list[["transform_method"]])
+                        normMethod=param.list[["NormMethod"]], transformMethod=param.list[["transform_method"]])
     
     rea.values[[dataset]]$process <- TRUE
     
@@ -379,21 +380,21 @@ check_run_process_execution <- function(object.MAE, dataset, param.list = NULL){
   switch( getOmicsTypes(object.MAE[[dataset]]),
           "RNAseq" = {
             # filtering setting
-            if(param.list$Filter_Strategy != getFilterSetting(SE)$filterStrategy) return(TRUE)
-            if(param.list$CPM_Cutoff      != getFilterSetting(SE)$cpmCutoff)      return(TRUE)
+            if(param.list$Filter_Strategy != getFilterSettings(SE)$filterStrategy) return(TRUE)
+            if(param.list$CPM_Cutoff      != getFilterSettings(SE)$cpmCutoff)      return(TRUE)
             
             # normalisation setting
-            if(param.list$NormMethod      != getNormSetting(SE)$method) return(TRUE)
+            if(param.list$NormMethod      != getNormSettings(SE)$method) return(TRUE)
           },
           "proteomics" = {
             
-            if(param.list$transform_method != getTransSetting(SE)$method) return(TRUE)
-            if(param.list$NormMethod       != getNormSetting(SE)$method) return(TRUE)
+            if(param.list$transform_method != getTransSettings(SE)$method) return(TRUE)
+            if(param.list$NormMethod       != getNormSettings(SE)$method) return(TRUE)
           },
           "metabolomics" = {
             
-            if(param.list$transform_method != getTransSetting(SE)$method) return(TRUE)
-            if(param.list$NormMethod       != getNormSetting(SE)$method) return(TRUE)
+            if(param.list$transform_method != getTransSettings(SE)$method) return(TRUE)
+            if(param.list$NormMethod       != getNormSettings(SE)$method) return(TRUE)
           }
   )
   

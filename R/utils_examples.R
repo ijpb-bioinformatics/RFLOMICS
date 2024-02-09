@@ -117,29 +117,29 @@ generateExample <- function(processing   = TRUE,
   
   if (processing) {
     MAE <- MAE |>
-      TransformData(     SE.name = "metatest",  transformMethod = "log2") |>
-      RunNormalization(  SE.name = "metatest",  NormMethod = "totalSum")  |>
-      RunNormalization(  SE.name = "RNAtest",   NormMethod = "TMM")       |>
-      RunNormalization(  SE.name = "protetest", NormMethod = "median")    |>
-      FilterLowAbundance(SE.name = "RNAtest")                                    
+      runTransformData(     SE.name = "metatest",  transformMethod = "log2") |>
+      runNormalization(  SE.name = "metatest",  normMethod = "totalSum")  |>
+      runNormalization(  SE.name = "RNAtest",   normMethod = "TMM")       |>
+      runNormalization(  SE.name = "protetest", normMethod = "median")    |>
+      filterLowAbundance(SE.name = "RNAtest")                                    
   }
   
   if (diffanalysis) {
     MAE <- MAE |>
-      RunDiffAnalysis(SE.name = "metatest",  
-                      DiffAnalysisMethod = "limmalmFit", 
+      runDiffAnalysis(SE.name = "metatest",  
+                      method = "limmalmFit", 
                       contrastList = contrastList, 
                       modelFormula = formulae[[1]])  |>
-      RunDiffAnalysis(SE.name = "protetest", 
-                      DiffAnalysisMethod = "limmalmFit", 
+      runDiffAnalysis(SE.name = "protetest", 
+                      method = "limmalmFit", 
                       contrastList = contrastList, 
                       modelFormula = formulae[[1]])  |>
-      RunDiffAnalysis(SE.name = "RNAtest",   
-                      DiffAnalysisMethod = "edgeRglmfit", 
+      runDiffAnalysis(SE.name = "RNAtest",   
+                      method = "edgeRglmfit", 
                       contrastList = contrastList, 
                       modelFormula = formulae[[1]])  |>
-      FilterDiffAnalysis(SE.name = "RNAtest",   
-                         Adj.pvalue.cutoff = 0.05, 
+      filterDiffAnalysis(SE.name = "RNAtest",   
+                         p.adj.cutoff = 0.05, 
                          logFC.cutoff = 1.5)
   }
   

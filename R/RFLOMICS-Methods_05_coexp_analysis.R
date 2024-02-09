@@ -109,7 +109,7 @@ methods::setMethod(f = "runCoExpression",
                               
                             },
                             "proteomics" = {
-                              object <- checkTransNorm(object)
+                              object <- .checkTransNorm(object)
                               counts <- SummarizedExperiment::assay(object)[geneList,]
                               
                               # Print the selected GaussianModel
@@ -124,7 +124,7 @@ methods::setMethod(f = "runCoExpression",
                               param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Bk", GaussianModel)
                             },
                             "metabolomics" = {
-                              object <- checkTransNorm(object)
+                              object <- .checkTransNorm(object)
                               counts <- SummarizedExperiment::assay(object)[geneList,]
                               
                               # Print the selected GaussianModel
@@ -304,7 +304,6 @@ methods::setMethod(f          = "plotCoExpression",
 #' @param cluster cluster number
 #' @param condition 
 #' @param features
-#' @export
 #' @exportMethod plotCoExpressionProfile
 #' @importFrom dplyr filter mutate rename full_join arrange group_by summarise
 #' @importFrom reshape2 melt 

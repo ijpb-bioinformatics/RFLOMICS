@@ -137,7 +137,7 @@
   
   omicsDat <- object[[SEname]]
   omicsDat@metadata[["correction_batch"]]             <- correctBatch
-  omicsDat@metadata[["transform_method_integration"]] <- getTransSetting(omicsDat)$method
+  omicsDat@metadata[["transform_method_integration"]] <- getTransSettings(omicsDat)$method
   
   if (correctBatch) omicsDat <- .rbeFunction(object, omicsDat)
   omicsDat <- omicsDat[variableNames,]

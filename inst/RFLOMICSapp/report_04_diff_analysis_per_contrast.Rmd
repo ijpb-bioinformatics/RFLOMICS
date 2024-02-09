@@ -57,14 +57,14 @@ plotHeatmapDesign(object = dataset.SE, contrastName = contrast)
 
 resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[contrast]]
 newDataset.SE <- dataset.SE[rownames(dataset.SE) %in% row.names(resTable)]
-newDataset.SE <- RFLOMICS::RunPCA(newDataset.SE)  
+newDataset.SE <- RFLOMICS::runOmicsPCA(newDataset.SE)  
 
 RFLOMICS::plotPCA(newDataset.SE,
-                  PCA = "norm",
-                  PCs=c(1, 2), condition="groups")
+                  raw = "norm",
+                  axes=c(1, 2), groupColor="groups")
 RFLOMICS::plotPCA(newDataset.SE,
-                  PCA = "norm",
-                  PCs=c(1, 3), condition="groups")
+                  raw = "norm",
+                  axes=c(1, 3), groupColor="groups")
 ```
 
 

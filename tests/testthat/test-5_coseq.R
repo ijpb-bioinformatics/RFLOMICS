@@ -57,11 +57,11 @@ test_that("Two runs, same results - seed is working - RNAseq", {
   
   res1 <- runCoExpression(object = MAE, SE.name = "RNAtest", K = 2:10, replicates = 5, merge = "union", 
                                model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin", 
-                               normFactors = "TMM", nameList = c("H1", "H2"))
+                               normFactors = "TMM", contrastNames = c("H1", "H2"))
   
   res2 <- runCoExpression(object = MAE, SE.name = "RNAtest", K = 2:10, replicates = 5, merge = "union",
                                model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin",
-                               normFactors = "TMM", nameList = c("H1", "H2"))
+                               normFactors = "TMM", contrastNames = c("H1", "H2"))
   
   expect_identical(coseq::clusters(res1[["RNAtest"]]@metadata$CoExpAnal$coseqResults),
                    coseq::clusters(res2[["RNAtest"]]@metadata$CoExpAnal$coseqResults))
@@ -292,7 +292,7 @@ test_that("Coseq on Proteomics equivalence", {
   
   # RFLOMICS function:
   MAE <- runCoExpression(object = MAE, SE.name = "protetest", 
-                         K = K, replicates = replicates, merge = merge, 
+                         K = K, replicates = replicates, contrastNames = NULL, merge = merge, 
                          model = param.list$model, 
                          GaussianModel = param.list$GaussianModel, 
                          transformation = param.list$transformation, 

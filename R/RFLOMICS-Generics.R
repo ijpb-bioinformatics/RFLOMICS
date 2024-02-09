@@ -48,34 +48,35 @@ methods::setGeneric(
 
 methods::setGeneric(
   name = "plotPCA",
-  def  = function(object, PCA, PCs = c(1,2), condition = "groups", ... ){standardGeneric("plotPCA")}
+  def  = function(object, raw=c("raw","norm"), axes = c(1,2), groupColor = "groups", ... ){standardGeneric("plotPCA")}
 )
 
 methods::setGeneric(
-  name = "RunPCA",
-  def  = function(object, nbcp = 5, raw = FALSE, ... ){standardGeneric("RunPCA")}
+  name = "runOmicsPCA",
+  def  = function(object, ncomp = 5, raw = FALSE , ... ){standardGeneric("runOmicsPCA")}
 )
 
 
 # ---- Transformation and normalization: ----
 
 methods::setGeneric(
-  name = "RunNormalization",
-  def  = function(object, NormMethod = NULL, ... ){standardGeneric("RunNormalization")}
+  name = "runNormalization",
+  def  = function(object, normMethod = NULL, modifyAssay = FALSE, ... ){standardGeneric("runNormalization")}
 )
 
 methods::setGeneric(
-  name = "TransformData",
+  name = "runTransformData",
   def  = function(object, 
                   transformMethod = NULL, 
-                  modify_assay = FALSE, ...){standardGeneric("TransformData")}
+                  modifyAssay = FALSE, ...){standardGeneric("runTransformData")}
 )
 
 methods::setGeneric(
-  name = "FilterLowAbundance",
+  name = "filterLowAbundance",
   def  = function(object, 
-                  Filter_Strategy = "NbConditions", 
-                  CPM_Cutoff = 5, ... ){standardGeneric("FilterLowAbundance")}
+                  filterMethod= "CPM",
+                  filterStrategy = "NbConditions", 
+                  cpmCutoff = 5, ... ){standardGeneric("filterLowAbundance")}
 )
 
 
@@ -87,7 +88,54 @@ methods::setGeneric(
 
 methods::setGeneric(
   name = "runSampleFiltering",
-  def  = function(object, ... ){standardGeneric("runSampleFiltering")}
+  def  = function(object, samples=NULL, ... ){standardGeneric("runSampleFiltering")}
+)
+
+methods::setGeneric(
+  name = "getTransSettings",
+  def  = function(object, ... ){standardGeneric("getTransSettings")}
+)
+
+methods::setGeneric(
+  name = "getTransSettings",
+  def  = function(object, ... ){standardGeneric("getTransSettings")}
+)
+
+methods::setGeneric(
+  name = "setTrans",
+  def  = function(object, ... ){standardGeneric("setTrans")}
+)
+
+methods::setGeneric(
+  name = "getNormSettings",
+  def  = function(object, ... ){standardGeneric("getNormSettings")}
+)
+
+methods::setGeneric(
+  name = "setNorm",
+  def  = function(object, ... ){standardGeneric("setNorm")}
+)
+
+methods::setGeneric(
+  name = "getFilterSettings",
+  def  = function(object, ... ){standardGeneric("getFilterSettings")}
+)
+
+
+methods::setGeneric(
+  name = "getFilteredFeatures",
+  def  = function(object, ... ){standardGeneric("getFilteredFeatures")}
+)
+
+
+methods::setGeneric(
+  name = "getCoeffNorm",
+  def  = function(object, ... ){standardGeneric("getCoeffNorm")}
+)
+
+methods::setGeneric(
+  name = "setCoeffNorm",
+  def  = function(object, ... ){standardGeneric("setCoeffNorm")}
 )
 
 
@@ -99,8 +147,8 @@ methods::setGeneric(
                   design = NULL,
                   p.adj.method="BH",
                   contrastList = NULL, 
-                  DiffAnalysisMethod = NULL, 
-                  Adj.pvalue.cutoff = 0.05, 
+                  method = NULL, 
+                  p.adj.cutoff = 0.05, 
                   logFC.cutoff = 0, 
                   clustermq=FALSE, 
                   parallel = FALSE, 
@@ -110,7 +158,7 @@ methods::setGeneric(
 methods::setGeneric(
   name = "filterDiffAnalysis",
   def  = function(object, 
-                  Adj.pvalue.cutoff = NULL, 
+                  p.adj.cutoff = NULL, 
                   logFC.cutoff = NULL, ... ){standardGeneric("filterDiffAnalysis")}
 )
 
@@ -127,8 +175,8 @@ methods::setGeneric(
 )
 
 methods::setGeneric(
-  name = "getDiffSetting",
-  def  = function(object, ... ){standardGeneric("getDiffSetting")}
+  name = "getDiffSettings",
+  def  = function(object, ... ){standardGeneric("getDiffSettings")}
 )
 
 
@@ -143,15 +191,16 @@ methods::setGeneric(
 methods::setGeneric(
   name = "plotHeatmapDesign",
   def  = function(object, 
-                  hypothesis, 
-                  condition="none", 
+                  contrastName, 
+                  splitFactor="none", 
                   title = "", 
-                  annot_to_show = NULL, 
-                  subset_list = NULL, 
-                  draw_args = list(), 
-                  heatmap_args = list(),
+                  annotNames = NULL, 
+                  modalities = NULL, 
+                  drawArgs = list(), 
+                  heatmapArgs = list(),
                   ...){standardGeneric("plotHeatmapDesign")}
 )
+
 
 methods::setGeneric(
   name = "plotBoxplotDE",
@@ -163,19 +212,19 @@ methods::setGeneric(
 
 methods::setGeneric(
   name = "runCoExpression",
-  def  = function(object, 
+  def  = function(object,
                   K=2:20, 
                   replicates=5, 
-                  nameList = NULL, 
-                  merge = "union",
-                  model = "Normal", 
-                  GaussianModel = NULL,
+                  contrastNames = NULL, 
+                  merge="union",
+                  model = "Normal",
+                  GaussianModel = NULL, 
                   transformation = NULL, 
                   normFactors = NULL, 
                   clustermq = FALSE,
                   meanFilterCutoff = NULL, 
                   scale = NULL,
-                  silent = TRUE,
+                  silent = TRUE, 
                   cmd = FALSE,  ... ){standardGeneric("runCoExpression")}
 )
 
@@ -218,13 +267,13 @@ methods::setGeneric(
 
 
 methods::setGeneric(
-  name = "Data_Distribution_plot",
-  def  = function(object, plot = "boxplot", raw = FALSE, ... ){standardGeneric("Data_Distribution_plot")}
+  name = "plotDataDistribution",
+  def  = function(object, plot = "boxplot", raw = FALSE, ... ){standardGeneric("plotDataDistribution")}
 )
 
 methods::setGeneric(
-  name = "Library_size_barplot.plot",
-  def  = function(object, raw = FALSE, ... ){standardGeneric("Library_size_barplot.plot")}
+  name = "plotLibrarySize",
+  def  = function(object, raw = FALSE, ... ){standardGeneric("plotLibrarySize")}
 )
 
 

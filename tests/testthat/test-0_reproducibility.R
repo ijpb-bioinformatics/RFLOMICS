@@ -62,19 +62,22 @@ selcetedContrasts <- rbind(Contrasts.List$simple[1:3,],
 
 ## data processing
 sampleToKeep <- colnames(MAE[["RNAtest.raw"]])[-1]
-MAE <- MAE |> RFLOMICS::runDataProcessing(SE.name = "RNAtest"  , samples=sampleToKeep, lowCountFiltering_strategy="NbReplicates", lowCountFiltering_CPM_Cutoff=1, normalisation_method="TMM") |>
-  RFLOMICS::runDataProcessing(SE.name = "protetest", samples=NULL, normalisation_method="none", transformation_method="none") |>
-  RFLOMICS::runDataProcessing(SE.name = "metatest" , samples=NULL, normalisation_method=NULL, transformation_method="log2")
+MAE <- MAE |> RFLOMICS::runDataProcessing(SE.name = "RNAtest"  , samples=sampleToKeep, lowCountFiltering_strategy="NbReplicates", lowCountFiltering_CPM_Cutoff=1, normMethod="TMM",transformMethod = "none") |>
+  RFLOMICS::runDataProcessing(SE.name = "protetest", samples=NULL, normMethod="none", transformMethod="none") |>
+  RFLOMICS::runDataProcessing(SE.name = "metatest" , samples=NULL, normMethod=NULL, transformMethod="log2")
 
 ## diff analysis
-MAE <- MAE |> RFLOMICS::RunDiffAnalysis(SE.name = "RNAtest",   modelFormula = formulae[[1]], contrastList = selcetedContrasts, Adj.pvalue.method="BH", DiffAnalysisMethod = "edgeRglmfit", Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0) |>
-  RFLOMICS::runDiffAnalysis(SE.name = "protetest", modelFormula = formulae[[1]], contrastList = selcetedContrasts, Adj.pvalue.method="BH", DiffAnalysisMethod = "limmalmFit",  Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0) |>
-  RFLOMICS::runDiffAnalysis(SE.name = "metatest",  modelFormula = formulae[[1]], contrastList = selcetedContrasts, Adj.pvalue.method="BH", DiffAnalysisMethod = "limmalmFit",  Adj.pvalue.cutoff = 0.05, logFC.cutoff = 0)
+MAE <- MAE |> RFLOMICS::runDiffAnalysis(SE.name = "RNAtest",   modelFormula = formulae[[1]], contrastList = selcetedContrasts, p.adj.method="BH", method = "edgeRglmfit", p.adj.cutoff = 0.05, logFC.cutoff = 0) |>
+  RFLOMICS::runDiffAnalysis(SE.name = "protetest", modelFormula = formulae[[1]], contrastList = selcetedContrasts, p.adj.method="BH", method = "limmalmFit",  p.adj.cutoff = 0.05, logFC.cutoff = 0) |>
+  RFLOMICS::runDiffAnalysis(SE.name = "metatest",  modelFormula = formulae[[1]], contrastList = selcetedContrasts, p.adj.method="BH", method = "limmalmFit",  p.adj.cutoff = 0.05, logFC.cutoff = 0)
+
+  
 
 ## co expression
-MAE <- MAE |> RFLOMICS::runCoExpression(SE.name = "RNAtest",   nameList = "H1" , K = 2:10, replicates = 5, merge = "union", model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin", normFactors = "TMM") |>
-  RFLOMICS::runCoExpression(SE.name = "protetest", nameList = "H1" , K = 2:10, replicates = 5, merge = "union", model = "normal") |>
-  RFLOMICS::runCoExpression(SE.name = "metatest",  nameList = "H1" , K = 2:10, replicates = 5, merge = "union", model = "normal")
+MAE <- MAE |> RFLOMICS::runCoExpression(SE.name = "RNAtest",   contrastNames = "H1" , K = 2:10, replicates = 5, merge = "union", model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin", normFactors = "TMM") |>
+  RFLOMICS::runCoExpression(SE.name = "protetest", contrastNames = "H1" , K = 2:10, replicates = 5, merge = "union", model = "normal") |>
+  RFLOMICS::runCoExpression(SE.name = "metatest",  contrastNames = "H1" , K = 2:10, replicates = 5, merge = "union", model = "normal")
+
 
 ## Enrichment
 MAE <- MAE |> RFLOMICS::runAnnotationEnrichment(nameList = "H1", SE.name = "RNAtest", ontology = "GO", domain = c("BP", "MF", "CC"), list_args = list(OrgDb = "org.At.tair.db", keyType = "TAIR", pvalueCutoff = 0.05))
