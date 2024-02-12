@@ -45,6 +45,7 @@ rflomicsServer <- function(input, output, session) {
     tagList(
       sidebarMenu(id="tabs",
                   menuItem(text = "Welcome", tabName = "coverPage", icon = icon('dna'), selected = TRUE),
+                  menuItem(text = "Glossary page", tabName = "GlossaryPage", icon = icon("address-book")),
                   menuItem(text = "Load Data", tabName = "importData", icon = icon('download')),
                   menuItemOutput(outputId = "SetUpModelMenu"),
                   menuItemOutput(outputId = "omics"),
@@ -146,7 +147,12 @@ rflomicsServer <- function(input, output, session) {
                 coverPageUI()
                 
         ),
-        
+        #### Cover Page        ####
+        ###########################
+        tabItem(tabName = "GlossaryPage",
+                GlossaryPageUI()
+                
+        ),
         #### Import data       ####
         ###########################
         tabItem(tabName = "importData",
@@ -158,7 +164,7 @@ rflomicsServer <- function(input, output, session) {
         ###############################################
         tabItem(tabName = "SetUpModel",
                 
-                GLM_modelUI("model")
+                .modGLMmodelUI("model")
         )
       ),
       #### omics analysis ####
@@ -379,7 +385,7 @@ rflomicsServer <- function(input, output, session) {
   # set GLM model
   # and select list of contrast to test
   {
-    inputModel <- callModule(GLM_model, "model", rea.values)
+    inputModel <- callModule(.modGLMmodel, "model", rea.values)
   }
   
   
@@ -460,18 +466,17 @@ rflomicsServer <- function(input, output, session) {
   
   output$report <- downloadHandler(
     # For PDF output, change this to "report.pdf"
-    
+
     filename = function(){
       projectName <- session$userData$FlomicsMultiAssay@metadata$projectName
       paste0(projectName, "_", format(Sys.time(), "%Y_%m_%d_%H_%M"), ".html")
     },
     content = function(file) {
-      print(paste0("# ??- Create html report... ", file))
-      
+
       projectName  <- session$userData$FlomicsMultiAssay@metadata$projectName
       outDir <- file.path(tempdir(),
                           paste0(format(Sys.time(),"%Y_%m_%d"),"_",projectName))
-      
+
       generateReport(session$userData$FlomicsMultiAssay,
                      projectName = projectName,
                      outDir = outDir,
@@ -480,25 +485,25 @@ rflomicsServer <- function(input, output, session) {
 
       rea.values$outdir <- dirname(file)
       rea.values$report <- TRUE
-      
+
       print(dirname(file))
-      
+
     }
   )
   
   ##########################################
   # Part9 : Download results as an archive
   ##########################################
-  
+
   output$download <- downloadHandler(
     # For PDF output, change this to "report.pdf"
-    
+
     filename = function(){
       outDir <- paste0(format(Sys.time(),"%Y_%m_%d"),"_", session$userData$FlomicsMultiAssay@metadata$projectName)
       paste0(outDir,".tar.gz")
     },
     content = function(file) {
-      
+
       # linux
       system(paste0("tar -C",
                     tempdir(),

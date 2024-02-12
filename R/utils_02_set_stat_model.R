@@ -1,20 +1,224 @@
-##### Global import ####
+### ============================================================================
+### [02_set_stat_model] function and internal function
+### ----------------------------------------------------------------------------
 
-#' @importFrom ggplot2 ggplot geom_col theme_classic aes
-#' theme element_text element_blank ylab xlab ggtitle
-#' scale_fill_gradientn geom_tile theme_bw guides scale_fill_gradient2
-#' guide_colourbar labs
+#' @importFrom stringr str_replace_all
+#' @importFrom dplyr filter select mutate mutate_at
 
 # @export
 #' @importFrom magrittr "%>%" 
 magrittr::`%>%`
 
+# ---- .generateModelFormulae ----
+#' generateModelFormulae
+#'
+#' From a vector of character giving the name of the factors of an omics experiment,
+#' and their type of effect: biological or batch, it returns all models formulae
+#' that can be formulated in association with this factors. Batch effect factors do
+#' not appear in interaction terms with biological factor. Model formulae stop in
+#' second order interaction.
+#'
+#' @param FacBio a vector of character giving the name of the bio factors.
+#' @param FacBatch a vector of character giving the name of the batch factors.
+#'
+#' @return a named list of object of class formula
+#' @export
+#' @noRd
+#' @examples
+#'
+#' .generateModelFormulae(FacBio=c("Genotype","Temperature","Environment"), FacBatch=c("Replicat"))
+#' .generateModelFormulae(FacBio=c("Genotype","Temperature"), FacBatch=c("Replicat"))
+#' .generateModelFormulae(FacBio=c("Genotype"), FacBatch=c("Replicat"))
+#'
+#' .generateModelFormulae(FacBio=c("Genotype","Temperature"), FacBatch=c("Replicat", "laboratory"))
+#' 
+.generateModelFormulae <- function(FacBio=NULL, FacBatch=NULL){
+  
+  # Initialize
+  formulae <- list()
+  
+  # Verify that nbr of bio factors are between 1 and 3.
+  if(!length(FacBio) %in% 1:3) stop(".... !")
+  
+  # Verify that nbr of batch factors are between 1 and 2.
+  if(!length(FacBatch) %in% 1:2) stop(".... !")
+  
+  nFac <- length(FacBio)
+  
+  # get formulae without interation
+  formulae[[1]] <- update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+",paste(FacBio,collapse="+"))),new=~.)
+  
+  # get formulae with interation if nbr of FacBio > 1
+  if(nFac !=1)
+    formulae[[2]] <- update(as.formula(paste(paste("~ ",FacBatch,collapse ="+"),"+","(",paste(FacBio,collapse="+"),")^2")),new=~.)
+  
+  formulae <- unlist(formulae)
+  names(formulae) <- unlist(as.character(formulae))
+  
+  # Sort formulae
+  
+  formulae <- formulae[order(unlist(lapply(names(formulae),nchar)),decreasing=TRUE)]
+  
+  return(formulae)
+}
 
+# ---- contrastName2contrastDir ----
 
+## contrastName to name of contrast directory
+# Exemple:
+# contrastName
+# "(temperatureMedium - temperatureElevated) in imbibitionEI - (temperatureMedium - temperatureElevated) in imbibitionDS"
+# contrastDir
+# "temperatureMedium-temperatureElevated_in_imbibitionEI_vs_temperatureMedium-temperatureElevated_in_imbibitionDS"
 
+#' Title
+#'
+#' @param a string: contrastName
+#'
+#' @return a string: contrastDir
+#' @importFrom stringr str_replace_all str_remove_all
+#' @export
+#' @noRd
+contrastName2contrastDir <- function(contrastName){
+  # remplacement des comparaisons centrales
+  tmp <- str_replace_all(contrastName,"[:blank:]-[:blank:]\\(","_vs_")
+  # remplacement des comparaisons dans les parenthèses
+  tmp <- str_replace_all(tmp,"[:blank:]-[:blank:]","-")
+  # suppression des parenthèses
+  tmp <- stringr::str_remove_all(tmp,c("\\(|\\)"))
+  # remplcement des espaces par des _
+  tmp <- str_replace_all(tmp,"[:blank:]","_")
+  return(tmp)
+}
 
+# ---- getPossibleContrasts !!!!!!!!!!!!!!!!!!!!!! ----
+#' @title Get selected contrasts for the differential analysis
+#'
+#' @param object a MAE object (produced by Flomics) or a summarized experiment produced by Flomics after a differential analysis.
+#' @param formula The formula used to compute all possible contrasts. Default is the formula found in the object. 
+#' @param typeContrast the type of contrast from which the possible contrasts are extracted. Default is all contrasts types.
+#' @param modalities specific levels for the contrast selection
+#' @param returnTable return a dataTable with all contrasts information
+#' @return a character vector or a dataTable
+#' @rdname ContrastsSelection
+#' @export
+#' @importFrom data.table rbindlist
+#'
+getPossibleContrasts <- function(object, 
+                                 formula = object@metadata$design$Model.formula,
+                                 typeContrast = c("simple", "averaged", "interaction"),
+                                 modalities = NULL, returnTable = FALSE) {
+  if (is(object, "RflomicsSE") || is(object, "RflomicsMAE")) {
+    if (is.null(typeContrast)) typeContrast <- c("simple", "averaged", "interaction")
+    
+    allContrasts <- getExpressionContrast(object = object, modelFormula = formula)
+    allContrasts <- allContrasts[which(names(allContrasts) %in% typeContrast)]
+    allContrastsdt <- rbindlist(allContrasts, fill = TRUE)
+    
+    if (!is.null(modalities)) {
+      allVarMod <- lapply(getDesignMat(object), 
+                          FUN = function(vect) levels(factor(vect))[levels(factor(vect)) %in% modalities])
+      allVarMod <- Filter(length, allVarMod)
+      
+      allVarMod <- paste0(rep(names(allVarMod), times = lengths(allVarMod)), unlist(allVarMod))
+      
+      allContrastsdt <- allContrastsdt[grep(paste(allVarMod, collapse = "|"), allContrastsdt$contrastName), ]
+    }
+    
+    if (returnTable) {
+      return(allContrastsdt)
+    } else {
+      return(allContrastsdt$contrast)
+    }
+  } 
+  # else if (is(object, "RflomicsSE")) {
+  #   # expects to find a diff analysis slot
+  #   allContrasts <- metadata(object)$DiffExpAnal$contrasts
+  #   
+  #   if (returnTable) {
+  #     return(allContrasts)
+  #   } else {
+  #     return(allContrasts$contrast)
+  #   }
+  
+  else {
+    stop("object is not a RflomicsMAE or a RflomicsSE.")
+  }
+}
 
-######################################## get contrast ##################################################
+# ---- .getExpressionContrast : function generating contrast expression devlopped by CPL ----
+
+#' get contrast expression
+#'
+#' @param ExpDesign data.frame with only bio factors
+#' @param factorBio vector of bio factors
+#' @param modelFormula formula
+#' @return a list of dataframe with all contrasts per type
+#' @export
+#' @noRd
+.getExpressionContrastF <- function(ExpDesign, factorBio=NULL, modelFormula=NULL){
+  
+  # ExpDesign
+  if(is.null(ExpDesign) || nrow(ExpDesign) == 0) stop("ExpDesign arg is mandatory.")
+  
+  # model formula
+  if (is.null(modelFormula)) stop("modelFormula arg is mandatory.")
+  if (is(modelFormula, "formula")) modelFormula <- paste(as.character(modelFormula), collapse = " ")
+  modelFormula <- formula(modelFormula) 
+  
+  # factorBio
+  if (is.null(factorBio)) stop("factorBio arg is mandatory.")
+  if (length(intersect(factorBio, names(ExpDesign))) == 0) stop("factorBio and names(ExpDesign) don't cover!")
+  
+  # bio factor list in formulat
+  labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
+  
+  FactorBioInDesign <- intersect(labelsIntoDesign, factorBio)
+  if (length(FactorBioInDesign) == 0) stop("factorBio and attr of modelFormula don't cover!")
+  
+  treatmentFactorsList <- lapply(FactorBioInDesign, function(x){(paste(x, levels(ExpDesign[[x]]), sep=""))})
+  names(treatmentFactorsList) <- FactorBioInDesign
+  
+  interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
+  
+  listOfContrastsDF <- list()
+  # define all simple contrasts pairwise comparisons
+  
+  allSimpleContrast_df <- .defineAllSimpleContrasts(treatmentFactorsList)
+  # if 1 factor or more than 1 + interaction
+  if(length(treatmentFactorsList) == 1 || !isFALSE(interactionPresent)){
+    
+    listOfContrastsDF[["simple"]] <- dplyr::select(allSimpleContrast_df, contrast, contrastName, groupComparison, type)
+  }
+  
+  # define all simples contrast means
+  # exists("allSimpleContrast_df", inherits = FALSE)
+  if(length(treatmentFactorsList) != 1){
+    allAveragedContrasts_df <- .define_averaged_contrasts (allSimpleContrast_df)
+    listOfContrastsDF[["averaged"]] <-  dplyr::select(allAveragedContrasts_df, contrast, contrastName, groupComparison, type)
+  }
+  
+  # define all interaction contrasts
+  if(length(treatmentFactorsList) != 1){
+    if(interactionPresent){
+      labelsIntoDesign            <- attr(terms.formula(modelFormula),"term.labels")
+      labelOrder                  <- attr(terms.formula(modelFormula), "order")
+      twoWayInteractionInDesign   <- labelsIntoDesign[which(labelOrder == 2)]
+      groupInteractionToKeep      <- gsub(":", " vs ", twoWayInteractionInDesign)
+      allInteractionsContrasts_df <- .defineAllInteractionContrasts(treatmentFactorsList, groupInteractionToKeep)
+      
+      listOfContrastsDF[["interaction"]] <- dplyr::select(allInteractionsContrasts_df, contrast, contrastName, groupComparison, type)
+    }
+    #allInteractionsContrasts_df <- .defineAllInteractionContrasts(treatmentFactorsList)
+    #listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
+  }
+  # choose the contrasts and rbind data frames of contrasts
+  #selectedContrasts <- returnSelectedContrasts(listOfContrastsDF)
+  
+  return(listOfContrastsDF)
+  
+}
+
 
 # it is possible to define contrast combinations that are specifically suited to a particular experimental design and set of research questions
 
@@ -48,7 +252,7 @@ magrittr::`%>%`
 #' @importFrom tidyselect all_of
 #' @noRd
 #' @author Christine Paysant-Le Roux
-define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
+.define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
   
   contrastPart <- fixFactor <- NULL
   
@@ -96,7 +300,7 @@ define_partOfSimpleContrast_df <- function (treatmentFactorsList, i, j) {
 #' @export
 #' @importFrom dplyr all_of
 #' @author Christine Paysant-Le Roux
-simpleContrastForOneFactor <- function (treatmentFactorsList, i){
+.simpleContrastForOneFactor <- function (treatmentFactorsList, i){
   
   fixFactor <- groupComparison <- NULL
   
@@ -105,11 +309,11 @@ simpleContrastForOneFactor <- function (treatmentFactorsList, i){
   fixPart1 <- fixPart3 <- fixFactor1 <- fixFactor3 <- NULL
   comparisonPart3 <- comparisonPart4 <- NULL
   
-  df_FirstComparisonPart <- define_partOfSimpleContrast_df(treatmentFactorsList,i,2)
+  df_FirstComparisonPart <- .define_partOfSimpleContrast_df(treatmentFactorsList,i,2)
   #df_FirstComparisonPart[,fixFactor := NULL]
   df_FirstComparisonPart <- df_FirstComparisonPart %>% dplyr::select(-fixFactor)
   
-  df_SecondComparisonPart <- define_partOfSimpleContrast_df(treatmentFactorsList,i,1)
+  df_SecondComparisonPart <- .define_partOfSimpleContrast_df(treatmentFactorsList,i,1)
   df_simpleContrasts_factor <- cbind(df_FirstComparisonPart, df_SecondComparisonPart)
   
   #df_simpleContrasts_factor[, contrast := paste0("(", contrastPart2, " - ", contrastPart1, ")")]
@@ -153,13 +357,13 @@ simpleContrastForOneFactor <- function (treatmentFactorsList, i){
 #' @export
 #' @noRd
 #' @author Christine Paysant-Le Roux
-defineAllSimpleContrasts <- function(treatmentFactorsList){
+.defineAllSimpleContrasts <- function(treatmentFactorsList){
   # create a data table with 5 columns
   # empty data table
   allSimpleContrast_df <- data.table::data.table(contrast = character(), groupComparison = factor(), contrastName = character(), type = character(), fixFactor = factor())
   # create each data frame and rbind it to the allSimpleContrast_df
   for(i in seq_along(treatmentFactorsList)){
-    dataTableToCreate <- simpleContrastForOneFactor(treatmentFactorsList, i)
+    dataTableToCreate <- .simpleContrastForOneFactor(treatmentFactorsList, i)
     allSimpleContrast_df <- rbind(allSimpleContrast_df, dataTableToCreate)
   }
   #allSimpleContrast_df[,contrastCoeff := sapply(contrast, function(x) defineCoefficient(x, colnamesGLMdesign))]
@@ -176,7 +380,7 @@ defineAllSimpleContrasts <- function(treatmentFactorsList){
 #' @importFrom dplyr add_tally group_by mutate select 
 #' @importFrom data.table data.table
 #' @author Christine Paysant-Le Roux
-define_averaged_contrasts <- function(allSimpleContrast_df){
+.define_averaged_contrasts <- function(allSimpleContrast_df){
   
   groupComparison <- contrast <- n <- fixFactor <- contrastName <- NULL
   
@@ -212,7 +416,7 @@ define_averaged_contrasts <- function(allSimpleContrast_df){
 #' @importFrom data.table setDT
 #' @noRd
 #' @author Christine Paysant-Le Roux
-define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, row_i, row_j) {
+.define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, row_i, row_j) {
   
   contrastPart_bis <- outsideGroup_bis <- fixFactor_bis <- NULL
   
@@ -282,16 +486,16 @@ define_partOfInteractionContrast_df <- function (treatmentFactorsList, i, j, k, 
 #' @export
 #' @noRd
 #' @author Christine Paysant-Le Roux
-defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i, j){
+.defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i, j){
   
   contrastPart1 <- contrastPart2 <- contrastPart3 <- contrastPart4 <- NULL
   comparisonPart1 <- comparisonPart2 <- comparisonPart3 <- comparisonPart4 <- NULL
   fixPart1 <- fixPart3 <- fixFactor1 <- fixFactor3 <- NULL
   
-  df_part1 <-  define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 1, 2, 2)
-  df_part2 <-  define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 2, 1, 2)
-  df_part3 <-  define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 3, 2, 1)
-  df_part4 <-  define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 4, 1, 1)
+  df_part1 <-  .define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 1, 2, 2)
+  df_part2 <-  .define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 2, 1, 2)
+  df_part3 <-  .define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 3, 2, 1)
+  df_part4 <-  .define_partOfInteractionContrast_df (treatmentFactorsList, i, j, 4, 1, 1)
   df_interactionContrasts <- cbind(df_part1, df_part2, df_part3, df_part4)
   #df_interactionContrasts[, contrast := paste0("(", "(", contrastPart1, " - ", contrastPart2, ")"," - ", "(", contrastPart3, " - ", contrastPart4, ")", ")")]
   #df_interactionContrasts[, groupComparison := paste0("(", comparisonPart1, " - ", comparisonPart2, ")", " vs ", "(", fixPart1, " - ", fixPart3, ")")]
@@ -344,7 +548,7 @@ defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList, i,
 #' @export
 #' @noRd
 #' @author Christine Paysant-Le Roux
-defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteractionToKeep = NULL){
+.defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteractionToKeep = NULL){
   
   groupInteraction <- NULL
   
@@ -360,7 +564,7 @@ defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteraction
     j <- vecForj[k]
     #print(paste("i:",i))
     #print(paste("j:",j))
-    dataTableToCreate <-  defineInteractionConstrastForPairsOfFactors(treatmentFactorsList, i, j)
+    dataTableToCreate <-  .defineInteractionConstrastForPairsOfFactors(treatmentFactorsList, i, j)
     allInteractionsContrasts_df <- rbind(allInteractionsContrasts_df, dataTableToCreate)
   }
   if(!missing(groupInteractionToKeep)){
@@ -370,112 +574,7 @@ defineAllInteractionContrasts <- function(treatmentFactorsList, groupInteraction
 }
 
 
-
-#' @title getExpressionContrast
-#' @description This function allows, from a model formulae, to give the expression contrast data frames.
-#' Three types of contrasts are expressed:
-#' \itemize{
-#' \item{pairwise comparison}
-#' \item{averaged expression}
-#' \item{interaction expression}
-#' }
-#' @param An object of class [\code{\link{RflomicsSE-class}}] or class [\code{\link{RflomicsMAE-class}}]
-#' @param modelFormula a model formula (characters or formula)
-#' @return list of 1 or 3 data.frames of contrast expression
-#' @export getExpressionContrast
-#' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
-#' @noRd
-#' 
-getExpressionContrast <- function(object, modelFormula=NULL){
-  
-  # check
-  #if (!is.null(getModelFormula(object))) warning("model.formula exist in object... getModelFormula(object)")
-  if (is.null(modelFormula)) stop("Model.formula arg is mandatory.")
-  if (is(modelFormula, "formula")) modelFormula <- paste(as.character(modelFormula), collapse = " ")
-  
-  # args for getExpressionContrastF()
-  factorBio <- bioFactors(object)
-  ExpDesign <- getDesignMat(object)
-  
-  object <- setModelFormula(object, modelFormula)
-  
-  Contrasts.List  <-  getExpressionContrastF(ExpDesign, factorBio, modelFormula=modelFormula)
-  
-  return(Contrasts.List)
-}
-
-
-#' get contrast expression
-#'
-#' @param ExpDesign data.frame with only bio factors
-#' @param factorBio vector of bio factors
-#' @param modelFormula formula
-#' @return a list of dataframe with all contrasts per type
-#' @export
-#' @noRd
-getExpressionContrastF <- function(ExpDesign, factorBio=NULL, modelFormula=NULL){
-  
-  # ExpDesign
-  if(is.null(ExpDesign) || nrow(ExpDesign) == 0) stop("ExpDesign arg is mandatory.")
-  
-  # model formula
-  if (is.null(modelFormula)) stop("modelFormula arg is mandatory.")
-  if (is(modelFormula, "formula")) modelFormula <- paste(as.character(modelFormula), collapse = " ")
-  modelFormula <- formula(modelFormula) 
-  
-  # factorBio
-  if (is.null(factorBio)) stop("factorBio arg is mandatory.")
-  if (length(intersect(factorBio, names(ExpDesign))) == 0) stop("factorBio and names(ExpDesign) don't cover!")
-  
-  # bio factor list in formulat
-  labelsIntoDesign <- attr(terms.formula(modelFormula),"term.labels")
-  
-  FactorBioInDesign <- intersect(labelsIntoDesign, factorBio)
-  if (length(FactorBioInDesign) == 0) stop("factorBio and attr of modelFormula don't cover!")
-  
-  treatmentFactorsList <- lapply(FactorBioInDesign, function(x){(paste(x, levels(ExpDesign[[x]]), sep=""))})
-  names(treatmentFactorsList) <- FactorBioInDesign
-  
-  interactionPresent <- any(attr(terms.formula(modelFormula),"order") > 1)
-  
-  listOfContrastsDF <- list()
-  # define all simple contrasts pairwise comparisons
-  
-  allSimpleContrast_df <- defineAllSimpleContrasts(treatmentFactorsList)
-  # if 1 factor or more than 1 + interaction
-  if(length(treatmentFactorsList) == 1 || !isFALSE(interactionPresent)){
-    
-    listOfContrastsDF[["simple"]] <- dplyr::select(allSimpleContrast_df, contrast, contrastName, groupComparison, type)
-  }
-  
-  # define all simples contrast means
-  # exists("allSimpleContrast_df", inherits = FALSE)
-  if(length(treatmentFactorsList) != 1){
-    allAveragedContrasts_df <- define_averaged_contrasts (allSimpleContrast_df)
-    listOfContrastsDF[["averaged"]] <-  dplyr::select(allAveragedContrasts_df, contrast, contrastName, groupComparison, type)
-  }
-  
-  # define all interaction contrasts
-  if(length(treatmentFactorsList) != 1){
-    if(interactionPresent){
-      labelsIntoDesign            <- attr(terms.formula(modelFormula),"term.labels")
-      labelOrder                  <- attr(terms.formula(modelFormula), "order")
-      twoWayInteractionInDesign   <- labelsIntoDesign[which(labelOrder == 2)]
-      groupInteractionToKeep      <- gsub(":", " vs ", twoWayInteractionInDesign)
-      allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList, groupInteractionToKeep)
-      
-      listOfContrastsDF[["interaction"]] <- dplyr::select(allInteractionsContrasts_df, contrast, contrastName, groupComparison, type)
-    }
-    #allInteractionsContrasts_df <- defineAllInteractionContrasts(treatmentFactorsList)
-    #listOfContrastsDF[["interaction"]] <- allInteractionsContrasts_df
-  }
-  # choose the contrasts and rbind data frames of contrasts
-  #selectedContrasts <- returnSelectedContrasts(listOfContrastsDF)
-  
-  return(listOfContrastsDF)
-  
-}
-
+# ---- .getContrastMatrix : function generating contrast matrix devlopped by CPL ----
 
 #' get contrast matrix
 #'
@@ -486,7 +585,7 @@ getExpressionContrastF <- function(ExpDesign, factorBio=NULL, modelFormula=NULL)
 #' @return a list of dataframe with all contrast vectors
 #' @export
 #' @noRd
-getContrastMatrixF <- function(ExpDesign, factorBio, modelFormula, contrastList){
+.getContrastMatrixF <- function(ExpDesign, factorBio, modelFormula, contrastList){
   
   modelFormula <- formula(paste(modelFormula, collapse = " ")) 
   
@@ -507,7 +606,7 @@ getContrastMatrixF <- function(ExpDesign, factorBio, modelFormula, contrastList)
   colnames(modelMatrix)[colnames(modelMatrix) == "(Intercept)"] <- "Intercept"
   # assign treatment conditions(group) to boolean vectors according to the design model matrix
   #treatmentCondenv <- new.env()
-  assignVectorToGroups(treatmentFactorsList    = treatmentFactorsList,
+  .assignVectorToGroups(treatmentFactorsList    = treatmentFactorsList,
                        modelMatrix             = modelMatrix,
                        interactionPresent      = interactionPresent,
                        isThreeOrderInteraction = isThreeOrderInteraction,
@@ -516,7 +615,7 @@ getContrastMatrixF <- function(ExpDesign, factorBio, modelFormula, contrastList)
   # contrast <- allSimpleContrast_df$contrast[1]
   colnamesGLMdesign <- colnames(modelMatrix)
   
-  coefficientsMatrix <- sapply(contrastList, function(x)  returnContrastCoefficients(x, colnamesGLMdesign, treatmentCondenv = treatmentCondenv))
+  coefficientsMatrix <- sapply(contrastList, function(x)  .returnContrastCoefficients(x, colnamesGLMdesign, treatmentCondenv = treatmentCondenv))
   
   colnames(coefficientsMatrix) <- contrastList
   
@@ -525,9 +624,6 @@ getContrastMatrixF <- function(ExpDesign, factorBio, modelFormula, contrastList)
   
   return(contrastMatrix)
 }
-
-################## function for getContrastMatrix ExpDesign method  ########################
-
 
 #' compute group binary vector
 #'
@@ -541,7 +637,7 @@ getContrastMatrixF <- function(ExpDesign, factorBio, modelFormula, contrastList)
 #' @export
 #' @noRd
 #' @author Christine Paysant-Le Roux
-computeGroupVector <- function(treatmentGroups, colnamesMatrixDesign, interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction) {
+.computeGroupVector <- function(treatmentGroups, colnamesMatrixDesign, interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction) {
   vectorLength <- length(colnamesMatrixDesign)
   groupVector <- rep(0, vectorLength)
   if(interactionPresent){
@@ -581,13 +677,13 @@ computeGroupVector <- function(treatmentGroups, colnamesMatrixDesign, interactio
 #' @export
 #' @noRd
 #' @author Christine Paysant-Le Roux
-assignVectorToGroups <- function(treatmentFactorsList = treatmentFactorsList, modelMatrix = modelMatrix,  interactionPresent = interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction, treatmentCondenv = treatmentCondenv){
+.assignVectorToGroups <- function(treatmentFactorsList = treatmentFactorsList, modelMatrix = modelMatrix,  interactionPresent = interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction, treatmentCondenv = treatmentCondenv){
   # treatment conditions (group) compatible with colnames of the design model matrix
   treatmentGroups <- do.call(paste, c(expand.grid(treatmentFactorsList), sep = "_"))
   # assign binary vector to each group
   modelMatrixColnames <- colnames(modelMatrix)
   # treatmentCondenv <- new.env()
-  binaryVectorsList <- lapply(treatmentGroups, function(x)  computeGroupVector(x, modelMatrixColnames, interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction))
+  binaryVectorsList <- lapply(treatmentGroups, function(x)  .computeGroupVector(x, modelMatrixColnames, interactionPresent, isThreeOrderInteraction = isThreeOrderInteraction))
   names(binaryVectorsList) <- treatmentGroups
   groupDF <- as.data.frame(binaryVectorsList, row.names = modelMatrixColnames)
   mapply(function(x, value) assign(x, value, pos = treatmentCondenv), treatmentGroups, binaryVectorsList)
@@ -604,7 +700,7 @@ assignVectorToGroups <- function(treatmentFactorsList = treatmentFactorsList, mo
 #' @return the contrast vector
 #' @export
 #' @author Christine Paysant-Le Roux
-returnContrastCoefficients <- function(contrast, colnamesGLMdesign, treatmentCondenv){
+.returnContrastCoefficients <- function(contrast, colnamesGLMdesign, treatmentCondenv){
   expression <- NULL
   if (!is.null(contrast)) {
     expression <- as.character(contrast)
@@ -617,164 +713,8 @@ returnContrastCoefficients <- function(contrast, colnamesGLMdesign, treatmentCon
 }
 
 
-
-
-## contrastName to name of contrast directory
-# Exemple:
-# contrastName
-# "(temperatureMedium - temperatureElevated) in imbibitionEI - (temperatureMedium - temperatureElevated) in imbibitionDS"
-# contrastDir
-# "temperatureMedium-temperatureElevated_in_imbibitionEI_vs_temperatureMedium-temperatureElevated_in_imbibitionDS"
-
-#' Title
-#'
-#' @param a string: contrastName
-#'
-#' @return a string: contrastDir
-#' @importFrom stringr str_replace_all str_remove_all
-#' @export
-#' @noRd
-contrastName2contrastDir <- function(contrastName){
-  # remplacement des comparaisons centrales
-  tmp <- stringr::str_replace_all(contrastName,"[:blank:]-[:blank:]\\(","_vs_")
-  # remplacement des comparaisons dans les parenthèses
-  tmp <- stringr::str_replace_all(tmp,"[:blank:]-[:blank:]","-")
-  # suppression des parenthèses
-  tmp <- stringr::str_remove_all(tmp,c("\\(|\\)"))
-  # remplcement des espaces par des _
-  tmp <- stringr::str_replace_all(tmp,"[:blank:]","_")
-  return(tmp)
-}
-
-
-
-
-# ---- Get possible contrasts : ----
-#' @title Get selected contrasts for the differential analysis
-#'
-#' @param object a MAE object (produced by Flomics) or a summarized experiment produced by Flomics after a differential analysis.
-#' @param formula The formula used to compute all possible contrasts. Default is the formula found in the object. 
-#' @param typeContrast the type of contrast from which the possible contrasts are extracted. Default is all contrasts types.
-#' @param modalities specific levels for the contrast selection
-#' @param returnTable return a dataTable with all contrasts information
-#' @return a character vector or a dataTable
-#' @rdname ContrastsSelection
-#' @export
-#' @importFrom data.table rbindlist
-#'
-getPossibleContrasts <- function(object, 
-                                 formula = object@metadata$design$Model.formula,
-                                 typeContrast = c("simple", "averaged", "interaction"),
-                                 modalities = NULL, returnTable = FALSE) {
-  if (is(object, "RflomicsSE") || is(object, "RflomicsMAE")) {
-    if (is.null(typeContrast)) typeContrast <- c("simple", "averaged", "interaction")
-    
-    allContrasts <- getExpressionContrast(object = object, modelFormula = formula)
-    allContrasts <- allContrasts[which(names(allContrasts) %in% typeContrast)]
-    allContrastsdt <- rbindlist(allContrasts, fill = TRUE)
-    
-    if (!is.null(modalities)) {
-      allVarMod <- lapply(getDesignMat(object), 
-                          FUN = function(vect) levels(factor(vect))[levels(factor(vect)) %in% modalities])
-      allVarMod <- Filter(length, allVarMod)
-      
-      allVarMod <- paste0(rep(names(allVarMod), times = lengths(allVarMod)), unlist(allVarMod))
-      
-      allContrastsdt <- allContrastsdt[grep(paste(allVarMod, collapse = "|"), allContrastsdt$contrastName), ]
-    }
-    
-    if (returnTable) {
-      return(allContrastsdt)
-    } else {
-      return(allContrastsdt$contrast)
-    }
-  } 
-  # else if (is(object, "RflomicsSE")) {
-  #   # expects to find a diff analysis slot
-  #   allContrasts <- metadata(object)$DiffExpAnal$contrasts
-  #   
-  #   if (returnTable) {
-  #     return(allContrasts)
-  #   } else {
-  #     return(allContrasts$contrast)
-  #   }
-  
-  else {
-    stop("object is not a RflomicsMAE or a RflomicsSE.")
-  }
-}
-
-# ---- Get selected contrasts : ----
-#' @title Get selected contrasts for the differential analysis
-#'
-#' @param object a MAE object (produced by Flomics) or a SE (expect to find a diffAnalysis slot.)
-#' @return a dataTable
-#' @rdname ContrastsSelection
-#' @export
-#'
-getSelectedContrasts <- function(object) {
-  # TODO check if it exists...
-  if (is(object, "RflomicsMAE")) {
-    object@metadata$design$Contrasts.Sel
-  } else
-    if (is(object, "RflomicsSE")) {
-      object@metadata$DiffExpAnal$contrasts
-    } else {
-      stop("object is not a RflomicsMAE or a RflomicsSE.")
-    }
-}
-
-# ---- Set Valid Contrasts : (after differential analysis) ----
-#' @title Set Valid Contrasts
-#'
-#' @param object a SE object or MAE object (produced by Flomics)
-#' @param contrasts a vector of contrasts names
-#' @return a Flomics SE or MAE
-#' @rdname ContrastsSelection
-#' @export
-#'
-setValidContrasts <- function(object,
-                              contrasts) {
-  
-  if (isTagName(object, contrasts)) contrasts <- convertTagToContrast(object, contrasts)
-  
-  # TODO : check if there are DE entities for each contrasts before really validating them.
-  
-  if (is.character(contrasts)) {
-    if (is(object, "RflomicsSE")) {
-      allTab <- getPossibleContrasts(object, returnTable = TRUE)
-      object@metadata$DiffExpAnal[["Validcontrasts"]] <- allTab[allTab$contrastName %in% contrasts,]
-    } else {
-      stop("object is not a RflomicsSE.")
-    }
-  }
-  
-  return(object)
-}
-
-#' @title Get Valid Contrasts
-#'
-#' @param object a SE object or MAE object (produced by Flomics)
-#' @return a data frame or a list of data frames.
-#' @rdname ContrastsSelection
-#' @export
-#'
-getValidContrasts <- function(object) {
-  if (is(object, "RflomicsSE")) {
-    return(object@metadata$DiffExpAnal[["Validcontrasts"]])
-  } else if (is(object, "RflomicsMAE")) {
-    list_res <- lapply(names(object), FUN = function(tableName) {
-      object[[tableName]]@metadata$DiffExpAnal[["Validcontrasts"]]
-    })
-    names(list_res) <- names(object)
-    return(list_res)
-  }
-}
-
-
-
-# ----- INTERNAL - Check if character vectors are contrasts Names : -----
-
+# ---- INTERNAL FUNCTIONS ----
+# ---- isContrastName : ----
 #' @title Check if character vectors are contrasts Names
 #'
 #' @param object a MAE object or a SE object (produced by Flomics). If it's a RflomicsSE, expect to find
@@ -801,7 +741,94 @@ isContrastName <- function(object, contrastName) {
 
 
 
-# ----- INTERNAL - Check if character vectors are tags Names : -----
+
+
+# ---- convertTagToContrast - convert tag to contrastName ----
+
+#' @title Convert tags names to contrast Names
+#'
+#' @param object a MAE object or a SE object (produced by Flomics). If it's a RflomicsSE, expects to find
+#'  a slot of differential analysis.
+#' @param tagName Vector of characters, expect to be tags (in the form of H1, H2, etc.).
+#' @return character vector, contrastNames associated to tags.
+#' @noRd
+#' @keywords internal
+convertTagToContrast <- function(object, tagName) {
+  df_contrasts <- getSelectedContrasts(object)
+  
+  df_contrasts %>%
+    dplyr::filter(tag %in% tagName) %>%
+    dplyr::select(contrastName) %>%
+    unlist(use.names = FALSE)
+}
+
+# ---- convertContrastToTag - convert contrastName to tag ----
+
+#' @title Convert contrast Names names to tags
+#'
+#' @param object a MAE object or a SE object (produced by Flomics). If it's a RflomicsSE, expects to find
+#'  a slot of differential analysis.
+#' @param contrasts Vector of characters, expect to be contrast names.
+#' @return character vector, tags associated to contrast names.
+#' @noRd
+#' @keywords internal
+convertContrastToTag <- function(object, contrasts) {
+  df_contrasts <- getSelectedContrasts(object)
+  
+  df_contrasts %>%
+    dplyr::filter(contrastName %in% contrasts) %>%
+    dplyr::select(tag) %>%
+    unlist(use.names = FALSE)
+}
+
+# ---- isTagName: Check if character vectors are tags Names ----
+#' @title Check if character vectors are tags Names
+#'
+#' @param object a MAE object or a SE object (produced by Flomics). If it's a RflomicsSE, expect to find
+#'  a slot of differential analysis.
+#' @param tagName vector of characters.
+#' @return boolean. TRUE if all of tagName are indeed tags Names.
+#' @noRd
+#' @keywords internal
+isTagName <- function(object, tagName) {
+  df_contrasts <- getSelectedContrasts(object)
+  
+  search_match <- sapply(tagName, FUN = function(cn) {
+    grep(cn, df_contrasts$tag, fixed = TRUE)
+  })
+  search_success <- sapply(search_match, identical, integer(0)) # if TRUE, not a success at all.
+  
+  if (!any(search_success)) {
+    # Congratulations, it's a tag name!
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+
+# ---- .getOrigin - get origin of a particular name ----
+#
+#' @title get origin of a name given a rflomics MAE
+#'
+#' @param object a RflomicsSE, produced by rflomics
+#' @param name name of the parameter to identify. For clusters, please
+#' specify cluster.1, cluster.2, etc.
+#' @return The origin of the name, one of Contrast, Tag or CoexCluster.
+#' @noRd
+#' @keywords internal
+
+.getOrigin <- function(object, name) {
+  
+  if (isContrastName(object, name)) return("Contrast")
+  if (isTagName(object, name)) return("Tag")
+  if (isClusterName(object, name)) return("CoexCluster")
+  
+  return("NoOriginFound")
+}
+
+
+# ---- isClusterName - Check if character vectors are tags Names : -----
 
 #' @title Check if character vectors is a cluster name
 #'
@@ -838,49 +865,4 @@ isClusterName <- function(object, clusterName) {
     return(FALSE)
   }
 }
-
-
-
-
-
-
-
-# ---- INTERNAL - convert tag to contrastName ----
-
-#' @title Convert tags names to contrast Names
-#'
-#' @param object a MAE object or a SE object (produced by Flomics). If it's a RflomicsSE, expects to find
-#'  a slot of differential analysis.
-#' @param tagName Vector of characters, expect to be tags (in the form of H1, H2, etc.).
-#' @return character vector, contrastNames associated to tags.
-#' @noRd
-#' @keywords internal
-convertTagToContrast <- function(object, tagName) {
-  df_contrasts <- getSelectedContrasts(object)
-  
-  df_contrasts %>%
-    dplyr::filter(tag %in% tagName) %>%
-    dplyr::select(contrastName) %>%
-    unlist(use.names = FALSE)
-}
-
-# ---- INTERNAL - convert contrastName to tag ----
-
-#' @title Convert contrast Names names to tags
-#'
-#' @param object a MAE object or a SE object (produced by Flomics). If it's a RflomicsSE, expects to find
-#'  a slot of differential analysis.
-#' @param contrasts Vector of characters, expect to be contrast names.
-#' @return character vector, tags associated to contrast names.
-#' @noRd
-#' @keywords internal
-convertContrastToTag <- function(object, contrasts) {
-  df_contrasts <- getSelectedContrasts(object)
-  
-  df_contrasts %>%
-    dplyr::filter(contrastName %in% contrasts) %>%
-    dplyr::select(tag) %>%
-    unlist(use.names = FALSE)
-}
-
 

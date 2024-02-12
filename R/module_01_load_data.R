@@ -9,7 +9,6 @@
 #' @importFrom stringr str_subset
 #' @importFrom shinyBS bsTooltip popify
 
-
 # ---- modCreateRflomicsObject UI ----
 .modLoadOmicDataUI <- function(id){
 
@@ -59,15 +58,18 @@
         
         tabsetPanel(
           tabPanel(title = "Samples",
-                   column(width = 12,
-                          tags$br(),
-                          tags$i("Overview of the input omic data. Each color represents a distinct dataset, with their respective samples on the x-axis and the number of features on the y-axis. It illustrates the samples overlap across dataset.")),
+                   tags$br(),
+                   tags$i("Overview of the input omic data. Each color represents 
+                          a distinct dataset, with their respective samples on 
+                          the x-axis and the number of features on the y-axis. 
+                          It illustrates the samples overlap across dataset."),
                    renderPlot( isolate({  plotDataOverview(session$userData$FlomicsMultiAssay) }))
           ),
           tabPanel(title = "Conditions",
-                   column(width = 12,
-                          tags$br(),
-                          tags$i("Number of Datasets per Condition. Each axis represents a distinct biological factor, and each cell value signifies the count of datasets associated with that specific condition.")),
+                   tags$br(),
+                   tags$i("Number of Datasets per Condition. Each axis represents 
+                          a distinct biological factor, and each cell value signifies 
+                          the count of datasets associated with that specific condition."),
                    renderPlot( plotConditionsOverview(session$userData$FlomicsMultiAssay) )
           )
         )
@@ -80,21 +82,25 @@
 .modLoadDataUI <- function(id){
   
   ns <- NS(id)
-  
+
   tagList(
     
     fluidRow(
       # load exp design
       # display tab
-      box(width = 12, title = "Load experimental design", status = "warning", solidHeader = TRUE,
+      box(width = 12, title = "Load Experimental Design", status = "warning", solidHeader = TRUE,
           # ExpDesign
           fluidRow(
+            
             column(width = 12,
                    # 1- set project name
                    column(width = 4, textInput(inputId = ns("projectName"), label = "Project name")),
                    # 2- matrix count/abundance input
-                   column(width = 8, fileInput(inputId = ns("Experimental.Design.file"), label = "Experimental design (tsv)",
-                                               accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"))),
+                   column(width = 8, fileInput(inputId = ns("Experimental.Design.file"), 
+                                               label   = .addBSpopify(label   = "Experimental design (tsv) ", 
+                                                                      title   = .generateExample("design", title = TRUE),
+                                                                      content = .generateExample("design")),
+                                               accept  = c("text/csv", "text/comma-separated-values, text/plain", ".csv"))),
             )
           ),
           fluidRow(
@@ -105,11 +111,9 @@
     fluidRow( uiOutput(outputId = ns("LoadDataUI"))),
     fluidRow(
       column(width = 12,
-        actionButton(inputId = ns("loadData"),"load Data"),
-        actionButton(inputId = ns("loadEcoseedData"),"load Ecoseed Data", 
-                                                       icon = shiny::icon("file-import")),
-        actionButton(inputId = ns("loadTotoData"),"load Toto Data", 
-                                       icon = shiny::icon("file-import")))),
+        actionButton(inputId = ns("loadData"),"Load Data"),
+        actionButton(inputId = ns("loadEcoseedData"),"Load Ecoseed Data", 
+                     icon = shiny::icon("file-import")))),
     br(),
     
     fluidRow(
@@ -279,9 +283,9 @@
     if(is.null(local.rea.values$ExpDesignOrg)) return()
     
     fluidRow(
-      column(width = 12,
-             uiOutput(session$ns("ExpDesignTable"))
-      ),
+      # column(width = 12,
+      #        uiOutput(session$ns("ExpDesignTable"))
+      # ),
       column(width = 12,
              uiOutput(session$ns("dipslayFactors"))),
     )
@@ -289,8 +293,8 @@
   
   # Display tab of exp design
   output$ExpDesignTable <- renderUI({
-    box(width = 12, background = "light-blue", solidHeader = TRUE, collapsible = TRUE, 
-        collapsed = TRUE, title = span("Experimental Design Overview ", tags$small("(Scroll down)")), 
+    box(width = 12, background = "light-blue", solidHeader = TRUE, collapsible = TRUE,
+        collapsed = TRUE, title = span("Experimental Design Overview ", tags$small("(Scroll down)")),
         renderDataTable(datatable(data = local.rea.values$ExpDesignOrg,
                                   options = list( pageLength = 5, autoWidth = TRUE, dom = 'tp' )))
     )
@@ -303,8 +307,8 @@
     # Valid colors are: red, yellow, aqua, blue, light-blue, green, navy, teal, 
     # olive, lime, orange, fuchsia, purple, maroon, black.
     box(width = 12, background = "green", 
-        tags$span(tags$b("Select and order the modalities of each factor") ,
-                  .addBSpopify(" ", "It is possible to remove modalities and consequently the associated samples. Removing all modalities of a factor results in ignoring that factor.")),
+        .addBSpopify(tags$b("Select and order the modalities of each factor"), 
+                     "We can remove modalities and consequently the associated samples. Removing all modalities of a factor results in ignoring that factor.</p>"),
         fluidRow(
           lapply(names(ExpDesign), function(i) {
             
@@ -350,8 +354,8 @@
     # dispaly updated ui for selecting factors
     column(width = 12,
            # Construct the form to set the reference factor level
-           tags$span(tags$b("Set the reference and the type of each factor"),
-           .addBSpopify(" ", ".")),
+           .addBSpopify(tags$b("Set the reference and the type of each factor"), 
+                        "It is mandatory to have at least one biological factor and one batch factor. Rflomics accepts 2 batch factors and supports up to 3 biological factors. If we have more than 3 biological factors, the remainder must be defined as metadata factors."),
            fluidRow(
              lapply(names(ExpDesign), function(i){
                
@@ -378,13 +382,15 @@
           column(4,
                  # omic type
                  selectInput(inputId = session$ns('omicType1'), 
-                             label= .addBSpopify('Omic type', "Type of omic data"),
+                             label= .addBSpopify(label = 'Omic type', content = "Rflomics supports up to 3 types of omics and up to 10 datasets per omics type."),
                              choices = omicTypes, selected = "none")
           ),
           column(6,
                  # matrix count/abundance input
                  fileInput(inputId = session$ns("data1"), 
-                           label = .addBSpopify('Dataset matrix (tsv)', "matrix of omic data"),
+                           label   = .addBSpopify(label   = 'Dataset matrix (tsv) ', 
+                                                  title   = .generateExample("matrix", title = TRUE), 
+                                                  content = .generateExample("matrix")),
                            accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
           ),
           column(2,
@@ -512,8 +518,50 @@
   bsTooltip(id = id, message, placement = "right", options = list(container = "body"))
 }
 
-.addBSpopify <- function(label="", content=""){
-
-  span(label, popify(tags$a(icon("info-circle")), title="", content=content), style="color:black")
+.addBSpopify <- function(label="", content="", title="", 
+                         color="black", placement="right", trigger = "click"){
+  
+  id <- paste0("id" , paste0(sample(letters, 4, replace = TRUE), collapse = ""))
+  span(label,
+       span(
+         popify(actionLink(id, icon("question-circle")), title=title, content=content,
+                trigger = trigger, placement=placement),
+         style=paste0("color:", color)))
+  #tags$a(icon("question-circle"))
 }
-#tags$a(icon("question-circle"))
+
+
+.generateExample <- function(what=c("design", "matrix","annotation"), title = FALSE){
+
+  switch (what,
+          "design" = {
+            
+            table <- data.frame(Sample   = c("indiv1", "indiv2", "indiv3"),
+                                Genotype = c("Mutant1", "Mutant2", "Mutant1"),
+                                Repeat   = c("rep1", "rep1", "rep2"))
+            
+            res <- c(paste0("<b>", paste(names(table), collapse = "\t"), "</b>"),
+                     tidyr::unite(table, "collapse", colnames(table), sep=" \t")$collapse) |> 
+              paste(collapse = "<br>")
+            res   <- paste0("Example:","<pre>",res,"</pre>")
+            title.res <- "File contining experimental information and conditions for each sample, in tab-separated values (tsv) format."
+            #paste0("<p>Click <a href=",'http://example.com', ">here</a></p>")
+          },
+          "matrix" = {
+            
+            table <- data.frame(Genes   = c("gene1", "gene2", "gene3"),
+                                Indiv1 = c(435, 400, 500),
+                                Indiv2   = c(30, 0, 23))
+            
+            res <- c(paste0("<b>", paste(names(table), collapse = "\t"), "</b>"),
+                     tidyr::unite(table, "collapse", colnames(table), sep="\t")$collapse) |> 
+              paste(collapse = "<br>")
+            res <- paste0("Example:","<pre>",res,"</pre>")
+            title.res <- "File containing experimental measurements (read count for transcripts, and abundance for proteins and metabolites)."
+            
+          }
+  )
+  
+  if(title == TRUE) return(title.res)
+  return(res)
+}

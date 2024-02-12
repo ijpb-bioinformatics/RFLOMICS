@@ -74,9 +74,48 @@ methods::setGeneric(
   name = "getFactorModalities",
   def  = function(object, factorName, ...){standardGeneric("getFactorModalities")}
 )
-# ---- RflomicsSE getteurs ----
+# ---- 02 ----
 
-
+methods::setGeneric(
+  name = "generateModelFormulae",
+  def  = function(object, ... ){standardGeneric("generateModelFormulae")}
+)
+methods::setGeneric(
+  name = "setModelFormula",
+  def  = function(object, modelFormula = NULL, ... ){standardGeneric("setModelFormula")}
+)
+methods::setGeneric(
+  name = "getModelFormula",
+  def  = function(object, ... ){standardGeneric("getModelFormula")}
+)
+methods::setGeneric(
+  name = "generateExpressionContrast",
+  def  = function(object, ... ){standardGeneric("generateExpressionContrast")}
+)
+methods::setGeneric(
+  name = "generateContrastMatrix",
+  def  = function(object, ... ){standardGeneric("generateContrastMatrix")}
+)
+methods::setGeneric(
+  name = "setContrastList",
+  def  = function(object, contrastList=NULL, ... ){standardGeneric("setContrastList")}
+)
+methods::setGeneric(
+  name = "setSelectedContrasts",
+  def  = function(object, contrastList=NULL, ... ){standardGeneric("setSelectedContrasts")}
+)
+methods::setGeneric(
+  name = "getSelectedContrasts",
+  def  = function(object, contrastList=NULL, ... ){standardGeneric("getSelectedContrasts")}
+)
+methods::setGeneric(
+  name = "setValidContrasts",
+  def  = function(object, contrastList=NULL, ... ){standardGeneric("setValidContrasts")}
+)
+methods::setGeneric(
+  name = "getValidContrasts",
+  def  = function(object, contrastList=NULL, ... ){standardGeneric("getValidContrasts")}
+)
 
 methods::setGeneric(
   name = "plotConditionsOverview",

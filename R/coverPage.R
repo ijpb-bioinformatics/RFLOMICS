@@ -64,3 +64,34 @@ coverPageUI <- function(){
   )
 }
 
+GlossaryPageUI <- function(){
+  
+  GlossaryTable <- matrix(c("Dataset",     "?",
+                            "Factor",      "?",
+                            "Batch",       "?",
+                            "Bio",         "?",
+                            "Meta",        "?",
+                            "modality",    "?",
+                            "reference",   "?",
+                            "Condition",   "?",
+                            "Sample",      "?",
+                            "Feature",     "?",
+                            "Contrast",    "?",
+                            "Sample",      "?",
+                            "Average",     "?",
+                            "Interaction", "?"
+                            
+                            ), byrow = T, ncol = 2)
+  
+  colnames(GlossaryTable) <- c("Term", "Definition")
+  
+  fluidRow(
+    # load exp design
+    # display tab
+    box(width = 12, status = "warning", solidHeader = T,
+        title = (tags$i("You find on this page the definitions of the terms used in the analyses proposed by Rflomics.")), 
+        
+        renderDataTable(datatable(data = GlossaryTable))
+    )
+  )
+}

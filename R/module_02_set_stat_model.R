@@ -1,6 +1,13 @@
+### ============================================================================
+### [02_set_stat_model] shiny modules
+### ----------------------------------------------------------------------------
+
+#' @importFrom dplyr filter select
+#' @importFrom purrr reduce
+#' @importFrom shinyBS popify bsButton addPopover bsTooltip
 
 
-GLM_modelUI <- function(id){
+.modGLMmodelUI <- function(id){
 
   ns <- NS(id)
 
@@ -20,7 +27,7 @@ GLM_modelUI <- function(id){
 }
 
 
-GLM_model <- function(input, output, session, rea.values){
+.modGLMmodel <- function(input, output, session, rea.values){
 
     # reactive value for reinitialisation of UIoutput
     local.rea.values <- reactiveValues(contrast = NULL)
@@ -33,20 +40,17 @@ GLM_model <- function(input, output, session, rea.values){
       validate(
         need(rea.values$loadData != FALSE, "Please load data")
       )
-      
-      FacBio   <- bioFactors(session$userData$FlomicsMultiAssay)
-      FacBatch <- batchFactors(session$userData$FlomicsMultiAssay)
 
-      box(status = "warning", width = 12, solidHeader = TRUE, title = "Select a model formulae",
+      box(status = "warning", width = 12, solidHeader = TRUE, title = "Select a model formula",
 
-          tags$i("Models are written from the simplest one to the most complete one. Only the two orders
-          interaction terms between the biological factors will appear. Batch factor will never appear
-           in interaction terms."),
+          tags$i("The proposed models are written based on selected biological and 
+          batch factors. We provide models with and without integration(s). 
+          Only the two orders interaction terms between the biological factors are considered"),
 
           selectInput( inputId = session$ns("model.formulae"), label = "",
-                       choices = rev(names(GetModelFormulae(FacBio=FacBio, FacBatch=FacBatch))),
+                       choices = rev(names(generateModelFormulae(session$userData$FlomicsMultiAssay))),
                        selectize=FALSE,size=5),
-          actionButton(session$ns("validModelFormula"),"Valid model choice")
+          actionButton(session$ns("validModelFormula"),"Validate")
       )
     })
 
@@ -62,16 +66,14 @@ GLM_model <- function(input, output, session, rea.values){
       
       session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(object=session$userData$FlomicsMultiAssay, 
                                                                    results = c("DiffExpAnal", "CoExpAnal", "DiffExpEnrichAnal", "CoExpEnrichAnal", "IntegrationAnalysis"))
-      print("# 2- statistical setting...")
-      print(paste0("#    => Choice of model: ", input$model.formulae))
+      message("# 2- Statistical setting...")
+      message("#    => model formula: ", input$model.formulae)
 
       # => Set the model formulae
       session$userData$FlomicsMultiAssay <- setModelFormula(session$userData$FlomicsMultiAssay, input$model.formulae)
-      #session$userData$FlomicsMultiAssay@metadata$design@Model.formula <- input$model.formulae
 
       # => get list of expression contrast (hypothesis)
-      # session$userData$FlomicsMultiAssay <- getExpressionContrast(object = session$userData$FlomicsMultiAssay, model.formula = input$model.formulae)
-      local.rea.values$contrast <- getExpressionContrast(session$userData$FlomicsMultiAssay, modelFormula = input$model.formulae)
+      local.rea.values$contrast <- generateExpressionContrast(session$userData$FlomicsMultiAssay)
       
       rea.values$model <- TRUE
 
@@ -85,9 +87,12 @@ GLM_model <- function(input, output, session, rea.values){
       if (rea.values$model == FALSE) return()
 
       box(width=12, status = "warning", solidHeader = TRUE, title = "Select contrasts",
+          
+          tags$i("The proposed contracts are computed according to the selected 
+                 model. For models without interactions, all available contracts 
+                 are of the 'averaged' type. We must choose the contracts that 
+                 reflect the biological questions."),
           br(),
-          br(),
-
           column(width = 12,
                  lapply(names(local.rea.values$contrast), function(contrastType) {
 
@@ -97,7 +102,7 @@ GLM_model <- function(input, output, session, rea.values){
 
                    shinyWidgets::pickerInput(
                      inputId  = session$ns(paste0("ContrastType",contrastType)),
-                     label    = tags$span(style="color: black;", paste0("Contrast type : ", contrastType)),
+                     label    = tags$span(style="color: black;", paste0("Contrast type: ", contrastType)),
                      choices  = vect,
                      options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                      multiple = TRUE,
@@ -105,7 +110,7 @@ GLM_model <- function(input, output, session, rea.values){
                  })
           ),
           br(),
-          actionButton(session$ns("validContrasts"),"Valid contrast(s) choice(s)")
+          actionButton(session$ns("validContrasts"),"Validate")
       )
     })
 
@@ -113,8 +118,6 @@ GLM_model <- function(input, output, session, rea.values){
     # => The selected contrasts are saved
     # => The load data item appears
     observeEvent(input$validContrasts, {
-
-      print(paste0("#    => Choice of contrasts..."))
 
       rea.values$analysis    <- FALSE
       rea.values$datasetDiff <- NULL
@@ -139,10 +142,11 @@ GLM_model <- function(input, output, session, rea.values){
       
       contrast.sel.vec <- lapply(names(local.rea.values$contrast), function(contrastType) {
 
-        dplyr::filter(local.rea.values$contrast[[contrastType]], contrast %in% input[[paste0("ContrastType",contrastType)]])
+        filter(local.rea.values$contrast[[contrastType]], contrast %in% input[[paste0("ContrastType",contrastType)]])
 
-      }) %>% purrr::reduce(rbind)
+      }) %>% reduce(rbind)
       
+      message("#    => selected contrasts: ", nrow(contrast.sel.vec))
 
       # check if user has selected the contrasts to test
       if(nrow(contrast.sel.vec) == 0){
@@ -159,7 +163,7 @@ GLM_model <- function(input, output, session, rea.values){
       # # define all the coefficients of selected contrasts and return a contrast matrix with contrast sample name and associated coefficients
       # session$userData$FlomicsMultiAssay <- getContrastMatrix(object = session$userData$FlomicsMultiAssay, contrastList = contrast.sel.vec)
 
-      session$userData$FlomicsMultiAssay@metadata$design$Contrasts.Sel <- contrast.sel.vec
+      session$userData$FlomicsMultiAssay <- setSelectedContrasts(session$userData$FlomicsMultiAssay, contrastList = contrast.sel.vec)
       rea.values$Contrasts.Sel <- contrast.sel.vec
       
       rea.values$analysis <- TRUE

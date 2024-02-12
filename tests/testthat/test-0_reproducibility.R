@@ -38,21 +38,21 @@ test_that("test if RflomicsMAE / RflomicsSE", {
 })
 
 ## choice of model formulae
-formulae <- RFLOMICS::GetModelFormulae(MAE = MAE)
+formulae <- RFLOMICS::generateModelFormulae(MAE)
+
+MAE <- RFLOMICS::setModelFormula(MAE, modelFormula = formulae[[1]])
 
 ## list of all hypothesis grouped by contarst type (run on MAE or SE)
-Contrasts.List <- RFLOMICS::getExpressionContrast(MAE, modelFormula = formulae[[1]])
+Contrasts.List <- RFLOMICS::generateExpressionContrast(MAE)
 
 # utilisation en dehors de MAE ou SE
-#Contrasts.List <- RFLOMICS::getExpressionContrastF(MAE@colData, bioFactors=c("temperature", "imbibition"), model.formula = formulae[[1]])
 
 ## choice of hypothesis
-selcetedContrasts <- rbind(Contrasts.List$simple[1:3,],
+selectedContrasts <- rbind(Contrasts.List$simple[1:3,],
                            Contrasts.List$averaged[1:3,],
                            Contrasts.List$interaction[1:3,])
 
-
-
+MAE <- setSelectedContrasts(MAE, contrastList = selectedContrasts)
 
 ## data processing
 sampleToKeep <- colnames(MAE[["RNAtest.raw"]])[-1]
@@ -61,11 +61,10 @@ MAE <- MAE |> RFLOMICS::runDataProcessing(SE.name = "RNAtest"  , samples=sampleT
   RFLOMICS::runDataProcessing(SE.name = "metatest" , samples=NULL, normMethod=NULL, transformMethod="log2")
 
 ## diff analysis
+
 MAE <- MAE |> RFLOMICS::runDiffAnalysis(SE.name = "RNAtest",   modelFormula = formulae[[1]], contrastList = selcetedContrasts, p.adj.method="BH", method = "edgeRglmfit", p.adj.cutoff = 0.05, logFC.cutoff = 0) |>
   RFLOMICS::runDiffAnalysis(SE.name = "protetest", modelFormula = formulae[[1]], contrastList = selcetedContrasts, p.adj.method="BH", method = "limmalmFit",  p.adj.cutoff = 0.05, logFC.cutoff = 0) |>
   RFLOMICS::runDiffAnalysis(SE.name = "metatest",  modelFormula = formulae[[1]], contrastList = selcetedContrasts, p.adj.method="BH", method = "limmalmFit",  p.adj.cutoff = 0.05, logFC.cutoff = 0)
-
-  
 
 ## co expression
 MAE <- MAE |> RFLOMICS::runCoExpression(SE.name = "RNAtest",   contrastNames = "H1" , K = 2:10, replicates = 5, merge = "union", model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin", normFactors = "TMM") |>
