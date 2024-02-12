@@ -36,7 +36,7 @@
               https://yulab-smu.top/biomedical-knowledge-mining-book/index.html."),
             p(""),
             h4(tags$span("Parameters set up:", style = "color:orange")),
-            p("Choose the lists of genes you want to run the enrichment for.
+            p("Choose the lists of omics features you want to run the enrichment for.
               Default option selects all the available lists (contrasts or co-expression clusters)."),
             p("Then choose the ontology you want to refer to for the analysis.
               Multiple choices are not allowed. 
@@ -82,19 +82,19 @@
               you might want to increase the number of terms to consider 
               (if there is enough that passed the threshold)"),
             p("- Heatplot: for each domain, shows the 15 (default) first terms 
-              and the genes that are both part of the list and the pathway 
+              and the features that are both part of the list and the pathway 
               in the form of a heatmap. 
-            For the contrasts lists, colors indicate the log2FC of the gene 
+            For the contrasts lists, colors indicate the log2FC of the features 
             as found in the differential analysis.
             You can change the domain and search for a particular expression 
               (adjusting the number of terms to consider if you want to check 
             further on the list of terms)"),
             p("- cnetplot: for each domain, shows the 15 (default) 
-              first terms and the genes that are both part of the list and 
+              first terms and the features that are both part of the list and 
               the pathway in the form of a network. 
             As for the heatplot, only the contrasts list have colors, according 
-            to the log2FC of each genes.
-              Default only shows the terms labels, you can turn on the genes
+            to the log2FC of each features.
+              Default only shows the terms labels, you can turn on the features
             names as well (it can be unreadable). 
             You can also search for a particular expression."),
           )
@@ -234,7 +234,8 @@
     
     local.rea.values$dataPathAnnot <- NULL
     local.rea.values$dataPathAnnot <- input$annotationFileCPR$datapath
-    output$selectColumnsCustom <- .annotFileColumns(session, local.rea.values)
+    output$selectColumnsCustom <- .annotFileColumns(session, local.rea.values,
+                                                    dataset)
     
   })
   
@@ -244,7 +245,8 @@
     local.rea.values$dataPathAnnot <- NULL
     local.rea.values$dataPathAnnot <- paste0(system.file(package = "RFLOMICS"), 
                                              "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt")
-    output$selectColumnsCustom <- .annotExFileColumns(session, local.rea.values)
+    output$selectColumnsCustom <- .annotExFileColumns(session, local.rea.values,
+                                                      dataset)
     
   })
   
@@ -662,11 +664,11 @@
                   actionLink(inputId = "customAnnotFilepop",
                              label = "Annotation file"),
                   title = "Annotation File format",
-                  content = paste0("<p>File containing the annotations. </p>",
-                                   "<p>Required format:</p>",
+                  content = paste0("<p>Required format:</p>",
                                    "a tsv or csv file with at least two columns, ",
                                    "one for omic features names and one for", 
-                                   " their associated terms.")
+                                   " their associated terms."),
+                  trigger = "click"
                 ),
                 accept  = c("text/csv", 
                             "text/comma-separated-values,text/plain", 
@@ -684,7 +686,7 @@
                                 "using the example annotation file, which is an ",
                                 "extract of GO terms for Arabidopsis thaliana",
                                 " genes from plant ensembl, using TAIR ids"),
-               placement = "bottom", trigger = "hover")
+               placement = "top", trigger = "hover")
       },
       
       uiOutput(ns("selectColumnsCustom")),
@@ -699,9 +701,14 @@
 
 #' @noRd
 #' @keywords internal
-.annotFileColumns <- function(session, local.rea.values){
+.annotFileColumns <- function(session, local.rea.values, 
+                              dataset){
   
   ns <- session$ns
+  dataSE <- session$userData$FlomicsMultiAssay[[dataset]]
+  varLabel <- omicsDic(dataSE)$variableName
+  varLabel <- paste0(toupper(substr(varLabel, 1,1)),
+                     substr(varLabel, 2, nchar(varLabel)))
   
   renderUI({
     
@@ -722,7 +729,7 @@
                               "<p>- Term Name is used in case of a term name ",
                               "that is different from its id ",
                               "(eg GO:0009409 is the id, response to ",
-                              "cold is the term name.</p>",
+                              "cold is the term name).</p>",
                               "- Domain is used to differentiate databases or ",
                               "ontologies in the same file (eg: BP, CC and ",
                               "MF would be indicated in the domain column)."),
@@ -731,7 +738,7 @@
            
            # Select the right columns for the analysis
            pickerInput(inputId = ns("col_geneName"),
-                       label = "Genes ID: *",
+                       label = paste0(varLabel, " ID: *"),
                        choices = c("", colnames(annotation)),
                        selected = ""),
            pickerInput(inputId = ns("col_termID"), 
@@ -753,8 +760,13 @@
 
 #' @noRd
 #' @keywords internal
-.annotExFileColumns <- function(session, local.rea.values){
+.annotExFileColumns <- function(session, local.rea.values,
+                                dataset){
   ns <- session$ns
+  dataSE <- session$userData$FlomicsMultiAssay[[dataset]]
+  varLabel <- omicsDic(dataSE)$variableName
+  varLabel <- paste0(toupper(substr(varLabel, 1,1)),
+                     substr(varLabel, 2, nchar(varLabel)))
   
   renderUI({
     
@@ -766,16 +778,20 @@
            hr(style = "border-top: 1px solid #000000;"),
            
            # Select the right columns for the analysis
-           pickerInput(inputId = ns("col_geneName"), label = "Genes ID: *",
+           pickerInput(inputId = ns("col_geneName"), 
+                       label = paste0(varLabel, " ID: *"),
                        choices = "Gene stable ID",
                        selected = "Gene stable ID"),
-           pickerInput(inputId = ns("col_termID"), label = "Terms IDs: *",
+           pickerInput(inputId = ns("col_termID"), 
+                       label = "Terms IDs: *",
                        choices = "GO term accession",
                        selected = "GO term accession"),
-           pickerInput(inputId = ns("col_termName"), label = "Term Names:",
+           pickerInput(inputId = ns("col_termName"), 
+                       label = "Term Names:",
                        choices = "GO term name",
                        selected = "GO term name"),
-           pickerInput(inputId = ns("col_domain"), label = "Domain:",
+           pickerInput(inputId = ns("col_domain"), 
+                       label = "Domain:",
                        choices = "GO domain",
                        selected = "GO domain"),
            hr(style = "border-top: 1px solid #000000;"),
@@ -975,6 +991,8 @@
             )
           }
           
+          ### 
+ 
           # display results
           fluidRow(
             box(width = 12, solidHeader = TRUE, collapsible = TRUE,
@@ -990,7 +1008,7 @@
                   column(3,
                          # number of term
                          numericInput(ns(paste0(listname, "-top.over")),
-                                      label = "Top terms:" , value = 15 ,
+                                      label = "Top terms:", value = 15 ,
                                       min = 1, max = 10000, step = 5)), 
                   column(3,
                          # search term or gene
@@ -1018,22 +1036,22 @@
 .popoverHelp <- function(label = ""){
   
   renderUI({
-    column(2,
+    column(1,
            br(),  
            tags$style(HTML(
              "#classPop .popover {
               text-align: left;
               border-color: black;
-              background-color: LightBlue;
+              background-color: #d9edf7;
               width: 600px;
-              max-width: 600px;
+              max-width: 700px;
               color: black;
               opacity: 1;}
               "
            )),
            div(id = "classPop",
                span(label, 
-                    popify(h4("Help ", icon("question-circle")), 
+                    popify(h4(icon("question-circle"), "Help"), 
                            title = "Parameters for enrichment results plots", 
                            content = paste0("For each domain indicated ",
                                             "(typically BP, CC and MF for GO ,",
@@ -1050,7 +1068,7 @@
                                             "<ul><li> <b>||</b> for <i>or</i> statement; </li>",
                                             "<li> <b>&</b> for <i>and</i> statement;</li>",
                                             "</ul>"), trigger = "click", placement = "top"),
-                    style = "color: CornflowerBlue; border-color: CornflowerBlue;")
+                    style = "color: #337ab7; border-color: #337ab7;")
            )
     )
   })
@@ -1114,6 +1132,9 @@
                          from, plotType, database){
   
   ns <- session$ns
+  varLabel <- omicsDic(dataSE)$variableName
+  varLabel <- paste0(toupper(substr(varLabel, 1,1)),
+                     substr(varLabel, 2, nchar(varLabel)))
   
   verticalLayout(
     renderUI({
@@ -1152,7 +1173,8 @@
       
       column(2, checkboxInput(inputId = ns(paste0(listname, 
                                                   "-genesLabels_cnet")),
-                              label = "Genes Labels", value = FALSE)),
+                              label = paste0(varLabel, " Labels"), 
+                              value = FALSE)),
       column(2, checkboxInput(inputId = ns(paste0(listname, 
                                                   "-termsLabels_cnet")),
                               label = "Terms Labels", value = TRUE))
@@ -1246,7 +1268,7 @@
       fluidRow(
         box(width = 12, solidHeader = TRUE, collapsible = TRUE,
             collapsed = TRUE, status = "warning", title = title,
-            "There is no results for enrichment analysis! Check geneID"))
+            "There is no results for enrichment analysis! Check the ids."))
     } else {
       fluidRow(
         box(width = 12, solidHeader = TRUE, collapsible = TRUE,
