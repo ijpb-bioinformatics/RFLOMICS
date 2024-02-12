@@ -33,13 +33,9 @@ library(RFLOMICS)
 
 ```{r parameters, include=FALSE}
 
-# load(params$FEdata)
-# outDir <- params$outDir
-# projectName <- params$title
-
-load("~/Downloads/2024_02_12_Ecoseed/Ecoseed.MAE.RData")
-outDir <- "~/Downloads/"
-projectName <- "Ecoseed"
+load(params$FEdata)
+outDir <- params$outDir
+projectName <- params$title
 
 ```
 
