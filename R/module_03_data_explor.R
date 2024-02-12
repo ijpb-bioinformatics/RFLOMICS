@@ -42,7 +42,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     sampleList <- colnames(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]])
     pickerInput(
       inputId  = session$ns("selectSamples"),
-      label    = "Sample list:",
+      label    = .addBSpopify(label = 'Sample list:', content = "totot"),
       choices  = sampleList,
       options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
       multiple = TRUE,
@@ -75,13 +75,13 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
         column(12, h5("Low count Filtering (CPM):")),
         column(8,
                selectInput(inputId  = session$ns("Filter_Strategy"),
-                           label    = "Strategy",
+                           label    = .addBSpopify(label = 'Strategy', content = "totot"),
                            choices  = c("NbConditions" = "NbConditions",  "NbReplicates" = "NbReplicates"),
                            selected = "NbReplicates")
         ),
         column(4,
                numericInput(inputId = session$ns("FilterSeuil"),
-                            label="Cutoff:",
+                            label=.addBSpopify(label = 'Cutoff:', content = "totot"),
                             value=1, min = 1, max=10, step = 1 )
         )
       ),
@@ -89,7 +89,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
         column(12,
                h5("Gene counts normalization:"),
                selectInput(inputId  = session$ns("selectNormMethod"),
-                           label    = "method",
+                           label    = .addBSpopify(label = 'method', content = "totot"),
                            choices  =  list("TMM (edgeR)" = "TMM"),
                            selected = "TMM"))),
       fluidRow( column(12, actionButton(session$ns("run"),"Run")))
@@ -100,14 +100,14 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       
       radioButtons(
         inputId  = session$ns("dataTransform"),
-        label    = "Data transformation:",
+        label    = .addBSpopify(label = 'Data transformation:', content = "totot"),
         choices  = c("log1p" = "log1p","squareroot" = "squareroot",
                      "log2" = "log2", "log10" = "log10", "none" = "none"), 
         selected = "none"),
       hr(),
       
       radioButtons(inputId = session$ns("selectProtMetNormMethod"),
-                   label    = "Normalization method:",
+                   label    = .addBSpopify(label = 'Normalization method:', content = "totot"),
                    choices  =   c("median" = "median","totalSum" = "totalSum", "none" = "none"),
                    selected = "none"),
       

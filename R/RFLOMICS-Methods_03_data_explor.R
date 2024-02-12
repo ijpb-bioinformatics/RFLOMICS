@@ -9,8 +9,9 @@
 
 
 #' plotLibrarySize
-#'
-#' @param object An object of class \link{RflomicsSE}
+#' 
+#' @param object An object of class \link{RflomicsSE}. 
+#' @param raw a boolean 
 #' @return plot
 #' @exportMethod plotLibrarySize
 #' @importFrom ggplot2 ggplot geom_bar xlab ylab element_text ggtitle

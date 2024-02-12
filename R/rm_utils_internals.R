@@ -52,3 +52,20 @@
   return(out)
 }
 
+
+.addBSpopify <- function(label="", content="", title="", 
+                         color="black", placement="right", trigger = "click"){
+  
+  id <- paste0("id" , paste0(sample(letters, 4, replace = TRUE), collapse = ""))
+  span(label,
+       popify(actionLink(id, icon("question-circle")), title=title, content=content,
+              trigger = trigger, placement=placement),
+       style=paste0("color:", color))
+  #tags$a(icon("question-circle"))
+}
+
+
+
+
+
+
