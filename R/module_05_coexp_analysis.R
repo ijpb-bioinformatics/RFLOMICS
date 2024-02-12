@@ -115,7 +115,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                    
                    pickerInput(
                      inputId  = session$ns("select"),
-                     label    = "Validated DEG lists:",
+                     label    = .addBSpopify(label = 'Validated DEG lists:', content = "totot"),
                      choices  = ListNames.diff,
                      options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                      multiple = TRUE,
@@ -125,7 +125,8 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
           fluidRow(
             column(4,
                    
-                   radioButtons(inputId = session$ns("unionInter"), label=NULL ,
+                   radioButtons(inputId = session$ns("unionInter"), 
+                                label=NULL ,
                                 choices = c("union","intersection"),
                                 selected = "union", inline = FALSE, width = 2)),
             

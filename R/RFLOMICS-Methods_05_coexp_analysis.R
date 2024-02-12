@@ -275,9 +275,6 @@ methods::setMethod(f="plotCoExpression",
                                                                         graphs = c("profiles", "boxplots", "probapost_boxplots",
                                                                                    "probapost_barplots", "probapost_histogram"))
                                           
-                                          # CoExpAnal[["plots"]] <- plot.coseq.res
-                                          # CoExpAnal[["plots"]][["ICL"]]     <- ICL.p
-                                          # CoExpAnal[["plots"]][["logLike"]] <- logLike.p
                                           
                                           return(c(plot.coseq.res, list("ICL" = ICL.p, "logLike" = logLike.p)))
                                         })

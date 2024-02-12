@@ -90,28 +90,27 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                         ## list of contrasts to test
                         pickerInput(
                           inputId  = session$ns("contrastList"),
-                          label    = "Selected contrasts:",
+                          label    = .addBSpopify(label = 'Selected contrasts:', content = "totot"),
                           choices  = local.rea.values$selectedContrasts$contrastName),
                         
                         # method for Diff analysis
-                        selectInput(inputId  = session$ns("AnaDiffMethod"), label = "Method:",
+                        selectInput(inputId  = session$ns("AnaDiffMethod"),
+                                    label = .addBSpopify(label = 'Method:', content = "totot"),
                                     choices  = method,
                                     selected = method),
                         
                         numericInput(inputId = session$ns("p.adj.cutoff"), 
-                                     label="Adjusted pvalue cutoff:",
+                                     label=.addBSpopify(label = 'Adjusted pvalue cutoff:', content = "totot"),
                                      value=local.rea.values$p.adj.cutoff, min=0, max=1, 0.01),
                         numericInput(inputId = session$ns("abs.logFC.cutoff"),
-                                     label="|logFC| cutoff:",
+                                     label=.addBSpopify(label = '|logFC| cutoff:', content = "totot"),
                                      value=local.rea.values$abs.logFC.cutoff, min=0, max=100, 0.01),
                         
                         # use of cluster. need setting step
                         materialSwitch(inputId = session$ns("clustermq"),
-                                       label   =  popify(actionLink(inputId=session$ns("infoCluster"),label=paste0("Cluster: (?)")),
-                                                         title= "",
-                                                         content="If there is a huge number of contrasts, the calculation can be send to the cluster to be run in parrallel",
-                                                         options=list(container="body"))
-                                       , value = FALSE, status = "success"),
+                                       # label   =  popify(actionLink(inputId=session$ns("infoCluster"),label=paste0("Cluster: (?)")),
+                                       label=.addBSpopify(label = 'Cluster:', content = "If there is a huge number of contrasts, the calculation can be send to the cluster to be run in parrallel"),
+                                       value = FALSE, status = "success"),
                         
                         actionButton(session$ns("runAnaDiff"),"Run"))
         ))
