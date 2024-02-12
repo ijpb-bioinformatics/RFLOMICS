@@ -3,19 +3,19 @@ library(RFLOMICS)
 
 # These tests will allow us to see if changes in the code or package versions affect the expected results. 
 
-# ---------------- RUN RFLOMICS ---------------
+# ---- Create RflomicsMAE object ----
 
 ## construct rflomics + PCA raw + check completness
-ExpDesign <- RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
+ExpDesign <- RFLOMICS::readExpDesign(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
 factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
                         factorRef   = c("rep1",   "Low",          "DS"),
                         factorType  = c("batch",  "Bio",          "Bio"),
                         factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
 
 omicsData <- list(
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
-  RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
+  RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
+  RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
+  RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
 
 MAE <- RFLOMICS::createRflomicsMAE(projectName = "Tests",
                                    omicsData   = omicsData,
@@ -24,25 +24,18 @@ MAE <- RFLOMICS::createRflomicsMAE(projectName = "Tests",
                                    ExpDesign   = ExpDesign,
                                    factorRef   = factorRef)
 
-# ---- getExperimentNames ----
-test_that("test getExperimentNames", {
-  
-  expect_true(all(getExperimentNames(MAE) %in% c("RNAtest", "metatest", "protetest")))
-})
+SE <- getRflomicsSE(MAE, "RNAtest.raw")
 
-# ---- getExperimentTypes ----
-test_that("test getExperimentTypes", {
-  
-  df <- data.frame(names = c("RNAtest", "metatest", "protetest"), 
-                   types = c("RNAseq", "metabolomics", "proteomics"))
-  
-  df.f <- getExperimentTypes(MAE)
-  
-  expect_equal(df.f, df)
-})
+# ---- check design ----
+plotConditionsOverview(MAE)
 
-## check completness 
-p <- CheckExpDesign(MAE)
+test_that("test if RflomicsMAE / RflomicsSE", {
+  
+  check <- checkExpDesignCompleteness(SE)
+  
+  expect_false(check$error)
+  expect_equal(check$message, "The experimental design is complete and balanced.")
+})
 
 ## choice of model formulae
 formulae <- RFLOMICS::GetModelFormulae(MAE = MAE)
@@ -57,6 +50,7 @@ Contrasts.List <- RFLOMICS::getExpressionContrast(MAE, modelFormula = formulae[[
 selcetedContrasts <- rbind(Contrasts.List$simple[1:3,],
                            Contrasts.List$averaged[1:3,],
                            Contrasts.List$interaction[1:3,])
+
 
 
 
@@ -86,36 +80,150 @@ MAE <- MAE |> RFLOMICS::runAnnotationEnrichment(nameList = "H1", SE.name = "RNAt
 ## runReport
 # runReport(object=MAE, dir=..., export=TRUE)
 
-# ---------------- TESTS ---------------
+# ---- test accessors ----
+## ---- Rflomics class ----
+test_that("test if RflomicsMAE / RflomicsSE", {
+  
+  expect_true(is(MAE, "RflomicsMAE"))
+})
 
-# comparaison avec un autre objet
+## ---- getDatasetNames ----
+test_that("test getDatasetNames", {
+  
+  expect_true(all(getDatasetNames(MAE) %in% c("RNAtest", "metatest", "protetest")))
+})
+
+## ---- getOmicsTypes ----
+test_that("test getOmicsTypes", {
+  
+  exp.res <- c("RNAseq", "metabolomics", "proteomics")
+  names(exp.res) <- c("RNAtest", "metatest", "protetest")
+  expect_equal(getOmicsTypes(MAE), exp.res)
+})
+
+## ---- colData ----
 test_that("colData", {
   
-  colData <- data.frame(Repeat      = rep(c("rep1", "rep2", "rep3"), 9),
-                        temperature = c(rep("Elevated", 9), rep("Low", 9), rep("Medium", 9)),
-                        imbibition  = rep(c(rep("DS",3), rep("EI", 3), rep("LI", 3)), 3))
+  Repeat      <- factor(rep(c("rep1", "rep2", "rep3"), 9), 
+                        levels =c("rep1", "rep2", "rep3"))
+  temperature <- factor(c(rep("Elevated", 9), rep("Low", 9), rep("Medium", 9)), 
+                        levels =c("Low", "Medium", "Elevated"))
+  imbibition  <- factor(rep(c(rep("DS",3), rep("EI", 3), rep("LI", 3)), 3),  
+                        levels =c("DS", "EI", "LI"))
+  Repeat      <- relevel(as.factor(Repeat),      ref="rep1")
+  temperature <- relevel(as.factor(temperature), ref="Low")
+  imbibition  <- relevel(as.factor(imbibition),  ref="DS")
   
-  rownames(colData) <- c("Elevated_DS_1", "Elevated_DS_2", "Elevated_DS_3", 
-                         "Elevated_EI_1", "Elevated_EI_2", "Elevated_EI_3", 
-                         "Elevated_LI_1", "Elevated_LI_2", "Elevated_LI_3", 
-                         "Low_DS_1", "Low_DS_2", "Low_DS_3", 
-                         "Low_EI_1", "Low_EI_2", "Low_EI_3", 
-                         "Low_LI_1", "Low_LI_2", "Low_LI_3", 
-                         "Medium_DS_1", "Medium_DS_2", "Medium_DS_3", 
-                         "Medium_EI_1", "Medium_EI_2", "Medium_EI_3",
-                         "Medium_LI_1", "Medium_LI_2", "Medium_LI_3")
+  # groups
+  groups.level <- character(0)
+  # Boucles imbriquées pour créer les combinaisons
+  for (v1 in c("Low", "Medium", "Elevated")) {
+    for (v2 in c("DS", "EI", "LI")) {
+      groups.level <- c(groups.level, paste(v1, v2, sep = "_"))
+    }
+  }
+  groups <- factor(paste(temperature, imbibition, sep = "_"),
+                   levels =groups.level)
   
-  colData$Repeat      <- factor(colData$Repeat,      levels =c("rep1", "rep2", "rep3"))
-  colData$temperature <- factor(colData$temperature, levels =c("Low", "Medium", "Elevated"))
-  colData$imbibition  <- factor(colData$imbibition,  levels =c("DS", "EI", "LI"))
+  # samples
+  samples.level <- character(0)
+  # Boucles imbriquées pour créer les combinaisons
+  for (v1 in groups.level) {
+    for (v2 in 1:3) {
+      samples.level <- c(samples.level, paste(v1, v2, sep = "_"))
+    }
+  }
   
-  colData$Repeat      <- relevel(as.factor(colData$Repeat),      ref="rep1")
-  colData$temperature <- relevel(as.factor(colData$temperature), ref="Low")
-  colData$imbibition  <- relevel(as.factor(colData$imbibition),  ref="DS")
+  samples <- factor(paste(temperature, imbibition, sub("rep", "", Repeat), sep = "_"),
+                    levels = samples.level)
   
-  expect_equal(as.data.frame(MAE@colData[colnames(colData)]), colData)
+  
+  colData <- data.frame(Repeat      = Repeat, 
+                        groups      = groups,
+                        temperature = temperature,
+                        imbibition  = imbibition,
+                        samples     = samples)
+  
+  rownames(colData) <- samples
+  
+  expect_equal(as.data.frame(getDesignMat(MAE)), colData)
+})
+
+
+## ---- getRflomicsSE ----
+test_that("test getRflomicsSE", {
+  
+  SE <- getRflomicsSE(MAE, "RNAtest")
+  expect_true(is(SE, "RflomicsSE"))
+  
+  expect_null(getRflomicsSE(MAE))
+  expect_null(getRflomicsSE(MAE, "toto"))
+  
+  expect_equal(getDatasetNames(SE), "RNAtest")
+})
+
+
+## ---- get design factors ----
+test_that("test getFactorNames", {
+  
+  expect_equal(getFactorNames(MAE), c("Repeat", "temperature", "imbibition" ))
+  
+  SE <- getRflomicsSE(MAE, "RNAtest")
+  expect_equal(getFactorNames(SE), c("Repeat", "temperature", "imbibition" ))
+})
+
+test_that("test getFactorModalities", {
+  
+  expect_equal(getFactorModalities(MAE, "imbibition"), c("DS", "EI", "LI"))
+  expect_equal(getFactorModalities(SE, "imbibition"),  c("DS", "EI", "LI"))
+})
+
+
+
+test_that("test getFactorTypes", {
+  
+  vec <- c("batch", "Bio", "Bio")
+  names(vec) <- c("Repeat", "temperature", "imbibition" )
+  expect_equal(getFactorTypes(MAE), vec)
+  
+  SE <- getRflomicsSE(MAE, "RNAtest")
+  expect_equal(getFactorTypes(SE), vec)
+})
+
+test_that("test getBioFactors", {
+  
+  expect_equal(getBioFactors(MAE), c("temperature", "imbibition"))
+  
+  SE <- getRflomicsSE(MAE, "RNAtest")
+  expect_equal(getBioFactors(SE), c("temperature", "imbibition"))
+})
+
+test_that("test getBatchFactors", {
+  
+  expect_equal(getBatchFactors(MAE), c("Repeat"))
+  
+  SE <- getRflomicsSE(MAE, "RNAtest")
+  expect_equal(getBatchFactors(SE), c("Repeat"))
+})
+
+test_that("test getMetaFactors", {
+  
+  expect_null(getMetaFactors(MAE))
+  
+  SE <- getRflomicsSE(MAE, "RNAtest")
+  expect_null(getMetaFactors(SE))
+})
+
+## ---- sub set of RflomicsMAE ----
+test_that("test subRflomicsMAE", {
+  
+  miniMAE <- MAE[,, c("RNAtest", "metatest")]
+  miniMAE.rf <- subRflomicsMAE(MAE, c("RNAtest", "metatest"))
+  expect_equal(miniMAE.rf, miniMAE)
   
 })
+
+# ---- contrasts ----
 
 test_that("contrast", {
   
@@ -158,6 +266,7 @@ test_that("contrast", {
   
 })
 
+# ---- processing ----
 
 test_that("data processing", {
   
@@ -177,7 +286,7 @@ test_that("data processing", {
   
 })
 
-
+# ---- diff analysis ----
 test_that("diff analysis", {
   
   ## RNAtest
@@ -241,6 +350,7 @@ test_that("diff analysis", {
   expect_equal(MAE[["metatest"]]@metadata$DiffExpAnal$stats, stats.met)
 })
 
+# ---- co-expression ----
 test_that("coseq analysis", {
   
   expect_equal(MAE[["RNAtest"]]@metadata$CoExpAnal$cluster.nb[[1]],   4)
@@ -248,6 +358,7 @@ test_that("coseq analysis", {
   expect_equal(MAE[["metatest"]]@metadata$CoExpAnal$cluster.nb[[1]],  6)
 })
 
+# ---- enrichment ----
 test_that("Enrichment analysis", {
   
   expect_true(MAE[["RNAtest"]]@metadata$DiffExpEnrichAnal$GO$summary["BP"] == 1)

@@ -1,9 +1,9 @@
-####
-# LOAD data module
-####
+### ============================================================================
+### [01_Load_Data] shiny modules
+### ----------------------------------------------------------------------------
 
-LoadOmicsDataUI <- function(id){
-  
+# ---- modLoadOmicsData UI ----
+.modLoadOmicsDataUI <- function(id){
   
   ns <- NS(id)
   
@@ -19,7 +19,7 @@ LoadOmicsDataUI <- function(id){
                    # 1- set project name
                    column(width = 3, textInput(inputId = ns("projectName"), label = "Project name")),
                    # 2- matrix count/abundance input
-                   column(width = 7, fileInput(inputId = ns("Experimental.Design.file"), label = "Experimental Design (tsv)",
+                   column(width = 7, fileInput(inputId = ns("Experimental.Design.file"), label = "Experimental design (tsv)",
                                                accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"))),
                    column(width = 2, actionButton(inputId = ns("loadEx_metadata"), label = "Load Example Metadata", icon = shiny::icon("file-import"))),
             )
@@ -47,12 +47,14 @@ LoadOmicsDataUI <- function(id){
   
 }
 
+# ---- modLoadOmicsData SERVER ----
 #' @importFrom stringr str_subset
-LoadOmicsData <- function(input, output, session, rea.values){
+.modLoadOmicsData <- function(input, output, session, rea.values){
   
+  # ---- initialization ----
   local.rea.values <- reactiveValues(plots      = FALSE, 
                                      ExpDesign  = NULL, 
-                                     FactorList = NULL, 
+                                     #FactorList = NULL, 
                                      dataPath   = NULL, # chemin  
                                      omicsData  = NULL,
                                      omicsNames = NULL,
@@ -72,33 +74,27 @@ LoadOmicsData <- function(input, output, session, rea.values){
   })
   
   
-  # ---- Datapath depending on the button ----
+  # ---- Load experimental design ----
   # load user own metadata file
   observeEvent(input$Experimental.Design.file, {
-    rea.values$exampleData <- FALSE
+    rea.values$exampleData    <- FALSE
     local.rea.values$dataPath <- NULL
     local.rea.values$dataPath <- input$Experimental.Design.file$datapath
   })
   
   # load example metadata file
   observeEvent(input$loadEx_metadata, {
+    rea.values$exampleData    <- TRUE
     local.rea.values$dataPath <- NULL
     local.rea.values$dataPath <- paste0(system.file(package = "RFLOMICS"), 
                                         "/ExamplesFiles/ecoseed/condition.txt")
-    rea.values$exampleData <- TRUE
   })
-  
-  # ---- Load experimental design ----
-  ##########################################
-  # (1) load experimental design
-  ##########################################
   
   # as soon as the "design file" has been loaded
   # => check file format
   # => display content
   # => set ref for each factor
   # => set type of factors (bio, batch, meta)
-  
   observeEvent(local.rea.values$dataPath, {
     
     # reset
@@ -113,14 +109,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     session$userData$FlomicsMultiAssay      <- NULL
     
-    print("# 1- Load data ...")
-    
-    if (local.rea.values$dataPath == paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt")) {
-      print("#    => Load example experiment design...")
-    }else print("#    => Load experimental design...")
-    
     # read and check design file
-    design.tt <- tryCatch(expr =  read_exp_design(file = local.rea.values$dataPath),
+    design.tt <- tryCatch(expr =  readExpDesign(file = local.rea.values$dataPath),
                           error = function(e) e, warning = function(w) w)
     
     if (!is.null(design.tt$message)) {
@@ -204,11 +194,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     })
   })
   
-  # ---- Load Data ----
-  ##########################################
-  # (2) load data
-  ##########################################
-  
+  # ---- Load omics Data ----
   # display interface for load data
   output$LoadDataUI <- renderUI({
     
@@ -235,7 +221,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
         actionButton(inputId = session$ns("addData"),   "Add data")
     )
   })
-  
   
   # ---- observe Event add Data ----
   # as soon as the "add data" button has been clicked
@@ -270,8 +255,9 @@ LoadOmicsData <- function(input, output, session, rea.values){
   })
   
   # ---- observeEvent loadData | loadExData ----
-  
   observeEvent(input$loadExData, {
+    
+    message("# 1- Load example data ...")
     
     local.rea.values$omicsData  <- NULL
     local.rea.values$omicsNames <- NULL
@@ -290,13 +276,11 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     local.rea.values$plots <- FALSE
     
-    print("#    => Load example omics data...")
-    
     inputs <- list()
     rea.values$validate.status <- 0
     
     # RNASeq
-    data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"),
+    data.mat.tt <- tryCatch( readOmicsData(file = paste0(system.file(package = "RFLOMICS"),
                                                            "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")), 
                              error = function(e) e, warning = function(w) w)
     
@@ -305,7 +289,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     local.rea.values$omicsTypes <- c("RNAseq")
     
     # Metabolomic
-    data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+    data.mat.tt <- tryCatch( readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
                                                            "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
                              error = function(e) e, warning = function(w) w)
     
@@ -314,7 +298,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
     local.rea.values$omicsTypes <- c(local.rea.values$omicsTypes, "metabolomics")
     
     # proteomics
-    data.mat.tt <- tryCatch( read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+    data.mat.tt <- tryCatch( readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
                                                            "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")), 
                              error = function(e) e, warning = function(w) w)
     
@@ -328,6 +312,8 @@ LoadOmicsData <- function(input, output, session, rea.values){
   
   # ---- Load Data button observe ---- 
   observeEvent(input$loadData, {
+    
+    message("# 1- Load ", input$projectName ," data ...")
     
     local.rea.values$omicsData  <- NULL
     local.rea.values$omicsNames <- NULL
@@ -344,7 +330,6 @@ LoadOmicsData <- function(input, output, session, rea.values){
     
     session$userData$FlomicsMultiAssay <- NULL
     
-    print("#    => Load omics data...")
     inputs <- list()
     
     omicsData  <- list()
@@ -391,7 +376,7 @@ LoadOmicsData <- function(input, output, session, rea.values){
         
         # => read data matrix
         dataFile <- input[[paste0("data", k)]]
-        data.mat.tt <- tryCatch( read_omics_data(file = dataFile$datapath),
+        data.mat.tt <- tryCatch( readOmicsData(file = dataFile$datapath),
                                  error=function(e) e, warning=function(w) w)
         
         if(!is.null(data.mat.tt$message)){
@@ -542,11 +527,11 @@ LoadOmicsData <- function(input, output, session, rea.values){
         tabsetPanel(
           tabPanel(title = "Samples",
                    h5(" Overview of the input omic data. Each color represents a distinct dataset, with their respective samples on the x-axis and the number of features on the y-axis. It illustrates the overlap between samples across datasets."),
-                   renderPlot( isolate({  Datasets_overview_plot(session$userData$FlomicsMultiAssay) }))
+                   renderPlot( isolate({  plotDataOverview(session$userData$FlomicsMultiAssay) }))
           ),
           tabPanel(title = "Conditions",
                    h5(" Number of Datasets per Condition. Each axis represents a distinct biological factor, and each cell value signifies the count of datasets associated with that specific condition."),
-                   renderPlot( CheckExpDesign(session$userData$FlomicsMultiAssay) )
+                   renderPlot( plotConditionsOverview(session$userData$FlomicsMultiAssay) )
           )
         )
     )
@@ -556,27 +541,3 @@ LoadOmicsData <- function(input, output, session, rea.values){
 }
 
 
-######### FUNCTION ##########
-
-read_metaData <- function(input.file){
-  
-  res <-  try_rflomics(read.table(input.file, header = TRUE,row.names = 1, sep = "\t"))
-  
-  # If an error occured
-  if(!is.null(res[["error"]]))
-  {
-    showModal(modalDialog( title = "Error message", as.character(res[["error"]])))
-    return(NULL)
-  }
-  else{
-    
-    if(!is.null(res$primary) | !is.null(res$colname)){
-      
-      showModal(modalDialog( title = "Error message", "metadata file must contient at least 2 colomns named: primary (?) and colname(?)"))
-      return(NULL)
-      
-    }
-  }
-  
-  return(res$value)
-}

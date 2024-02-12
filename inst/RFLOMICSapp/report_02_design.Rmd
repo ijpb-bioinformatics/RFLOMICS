@@ -8,7 +8,7 @@
 
 ```{r Design, echo=FALSE, message=TRUE, warning=TRUE}
 
-DT::datatable(as.data.frame(rflomics.MAE@colData), 
+DT::datatable(getDesignMat(rflomics.MAE), 
               options = list(rownames = FALSE, pageLength = 6, scrollX = T, dom = 'tip'),
               class = 'cell-border stripe')
 
@@ -19,10 +19,10 @@ DT::datatable(as.data.frame(rflomics.MAE@colData),
 ```{r factors, echo=FALSE, message=TRUE, warning=TRUE}
 
 fact.types <- getFactorTypes(rflomics.MAE)
-fact.names <- names(fact.types)
+fact.names <- getFactorNames(rflomics.MAE)
 fact.ref <- vector()
 for(i in 1:length(fact.names)){
-  fact.ref[i] <- levels(getDesignMat(rflomics.MAE)[[fact.names[i]]])[1]
+  fact.ref[i] <- getFactorModalities(rflomics.MAE, fact.names[i])
 }
 
 df <- data.frame("Factor.names" = fact.names ,
@@ -38,7 +38,7 @@ DT::datatable(df , rownames = FALSE ,options = list( pageLength = 6, scrollX = F
 
 ```{r Sample table, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}
 
- Datasets_overview_plot(object = rflomics.MAE, dataset.list = paste0(getDatasetNames(rflomics.MAE), ".raw"))
+ plotDataOverview(object = rflomics.MAE, dataset.list = paste0(getDatasetNames(rflomics.MAE), ".raw"))
 
 ```
 

@@ -2,18 +2,95 @@
 #' @import SummarizedExperiment
 
 
-################# set stat #################
-
-
-
+# ---- RflomicsMAE and RflomicsSE getteurs ----
 methods::setGeneric(
-  name = "CheckExpDesign",
-  def  = function(object, sampleList=NULL, ... ){standardGeneric("CheckExpDesign")}
+  name = "subRflomicsMAE",
+  def  = function(object, omicNames = NULL, ...){standardGeneric("subRflomicsMAE")}
 )
 
 methods::setGeneric(
-  name = "CheckExpDesignCompleteness",
-  def  = function(object, sampleList=NULL, ... ){standardGeneric("CheckExpDesignCompleteness")}
+  name = "getFactorNames",
+  def  = function(object){standardGeneric("getFactorNames")}
+)
+
+methods::setGeneric(
+  name = "getFactorTypes",
+  def  = function(object){standardGeneric("getFactorTypes")}
+)
+
+methods::setGeneric(
+  name = "getBioFactors",
+  def  = function(object){standardGeneric("getBioFactors")}
+)
+
+methods::setGeneric(
+  name = "getBatchFactors",
+  def  = function(object){standardGeneric("getBatchFactors")}
+)
+
+methods::setGeneric(
+  name = "getMetaFactors",
+  def  = function(object){standardGeneric("getMetaFactors")}
+)
+
+
+methods::setGeneric(
+  name = "bioFactors",
+  def  = function(object){standardGeneric("bioFactors")}
+)
+
+methods::setGeneric(
+  name = "batchFactors",
+  def  = function(object){standardGeneric("batchFactors")}
+)
+
+methods::setGeneric(
+  name = "metaFactors",
+  def  = function(object){standardGeneric("metaFactors")}
+)
+
+methods::setGeneric(
+  name = "getDesignMat",
+  def  = function(object){standardGeneric("getDesignMat")}
+)
+
+methods::setGeneric(
+  name = "getDatasetNames",
+  def  = function(object){standardGeneric("getDatasetNames")}
+)
+
+methods::setGeneric(
+  name = "getOmicsTypes",
+  def  = function(object){standardGeneric("getOmicsTypes")}
+)
+
+methods::setGeneric(
+  name = "getRflomicsSE",
+  def  = function(object, datasetName = NULL, ...){standardGeneric("getRflomicsSE")}
+)
+
+
+methods::setGeneric(
+  name = "getFactorModalities",
+  def  = function(object, factorName, ...){standardGeneric("getFactorModalities")}
+)
+# ---- RflomicsSE getteurs ----
+
+
+
+methods::setGeneric(
+  name = "plotConditionsOverview",
+  def  = function(object, omicNames=NULL, ... ){standardGeneric("plotConditionsOverview")}
+)
+
+methods::setGeneric(
+  name = "checkExpDesignCompleteness",
+  def  = function(object, sampleList=NULL, ... ){standardGeneric("checkExpDesignCompleteness")}
+)
+
+methods::setGeneric(
+  name = "plotExpDesignCompleteness",
+  def  = function(object, sampleList=NULL, ... ){standardGeneric("plotExpDesignCompleteness")}
 )
 
 # ---- GET / SET ----
@@ -37,8 +114,8 @@ methods::setGeneric(
 # ---- plot ----
 
 methods::setGeneric(
-  name = "Datasets_overview_plot",
-  def  = function(object, ... ){standardGeneric("Datasets_overview_plot")}
+  name = "plotDataOverview",
+  def  = function(object, omicNames=NULL, realSize=FALSE, ... ){standardGeneric("plotDataOverview")}
 )
 
 

@@ -82,18 +82,17 @@ knitr::asis_output(out)
 
 <!-- single omics analysis -->
 
-```{r analysis, eval=(length(rflomics.MAE@metadata$omicList) != 0 )}
+```{r analysis, eval=(length(getOmicsTypes(rflomics.MAE)) != 0 )}
 
 out <- NULL
-for (omictype in names(rflomics.MAE@metadata$omicList)){ 
+omicsData <- getOmicsTypes(rflomics.MAE)
+for (omictype in unique(omicsData)){ 
   
-  for (data in  rflomics.MAE@metadata$omicList[[omictype]]){
+  for (data in  names(omicsData[omicsData == omictype])){
     
-    child <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_01_omics.Rmd") 
-    
-    out <- c(out, knitr::knit_child(child, quiet=TRUE))  
+    child <- paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_01_omics.Rmd") 
+    out   <- c(out, knitr::knit_child(child, quiet=TRUE))  
   }
-  
 }
 
 knitr::asis_output(out)

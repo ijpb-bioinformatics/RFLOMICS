@@ -150,7 +150,7 @@ rflomicsServer <- function(input, output, session) {
         ###########################
         tabItem(tabName = "importData",
                 
-                LoadOmicsDataUI("data")
+                .modLoadOmicsDataUI("data")
         ),
         
         #### Set Up statistical model & hypothesis ####
@@ -348,7 +348,7 @@ rflomicsServer <- function(input, output, session) {
   # set reference
   # set type of factor (bio/batch)
   # check design (complete and balanced)
-  inputData <- callModule(LoadOmicsData, "data", rea.values)
+  inputData <- callModule(.modLoadOmicsData, "data", rea.values)
   
   ##########################################
   # Part2 : Set GLM model
