@@ -491,14 +491,14 @@ methods::setMethod(f         = "checkExpDesignCompleteness",
                    signature = "RflomicsSE",
                    definition <- function(object, sampleList=NULL){
                      
-                     object <- RFLOMICS::runSampleFiltering(object, samples = sampleList)
+                     object <- runSampleFiltering(object, samples = sampleList)
                      
                      output <- list()
                      output[["error"]] <- FALSE
                      
                      # Only works with bio and batch factors for the rest of the function
                      ExpDesign <- getDesignMat(object)
-                     bio.fact <- getBioFactors(object)
+                     bio.fact  <- getBioFactors(object)
                      
                      # check presence of bio factors
                      if (!length(getBioFactors(object)) %in% 1:3){ 
@@ -514,7 +514,7 @@ methods::setMethod(f         = "checkExpDesignCompleteness",
                      }
                      
                      #remplacer le code ci-dessus par celui en bas
-                     group_count <- .countSamplesPerCondition(ExpDesign, bio.fact)
+                     group_count <-.countSamplesPerCondition(ExpDesign, bio.fact)
                      
                      # check presence of relicat / batch
                      # check if design is complete

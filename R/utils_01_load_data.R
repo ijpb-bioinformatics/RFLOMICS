@@ -547,7 +547,7 @@ check_NA <- function(object) {
 .countSamplesPerCondition <- function(expDesign, bioFactors) {
   
   #remplacer le code ci-dessus par celui en bas
-  group_count <- group_by_at(ExpDesign, bioFactors) %>% count(name = "Count")
+  group_count <- group_by_at(expDesign, bioFactors) %>% count(name = "Count")
   
   return(group_count)
 }

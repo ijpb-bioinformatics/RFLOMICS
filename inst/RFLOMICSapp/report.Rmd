@@ -33,9 +33,14 @@ library(RFLOMICS)
 
 ```{r parameters, include=FALSE}
 
-load(params$FEdata)
-outDir <- params$outDir
-projectName <- params$title
+# load(params$FEdata)
+# outDir <- params$outDir
+# projectName <- params$title
+
+load("~/Downloads/2024_02_12_Ecoseed/Ecoseed.MAE.RData")
+outDir <- "~/Downloads/"
+projectName <- "Ecoseed"
+
 ```
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE}
@@ -70,11 +75,11 @@ $('.zoomDiv').css({opacity: '0', width: '0%'});
 
 <!-- Experimental design -->
 
-```{r}
+```{r design}
 
 out <- NULL
-
-out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_02_design.Rmd"), quiet=TRUE))  
+child <- paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_02_design.Rmd")
+out <- c(out, knitr::knit_child(child, quiet=TRUE))  
 
 knitr::asis_output(out)
 

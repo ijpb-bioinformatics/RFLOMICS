@@ -1,5 +1,3 @@
-<br>
-
 # Statistical design:
 
 * Experimental design:
@@ -22,7 +20,7 @@ fact.types <- getFactorTypes(rflomics.MAE)
 fact.names <- getFactorNames(rflomics.MAE)
 fact.ref <- vector()
 for(i in 1:length(fact.names)){
-  fact.ref[i] <- getFactorModalities(rflomics.MAE, fact.names[i])
+  fact.ref[i] <- getFactorModalities(rflomics.MAE, fact.names[i])[1]
 }
 
 df <- data.frame("Factor.names" = fact.names ,
@@ -45,15 +43,13 @@ DT::datatable(df , rownames = FALSE ,options = list( pageLength = 6, scrollX = F
 
 * Statistical model
 
-```
-`r rflomics.MAE@metadata$design@Model.formula`
-```
+`r getModelFormula(rflomics.MAE)`
 
 * The selected contrast(s) is (are):
 
 ```{r contrastSel, echo=FALSE, results="asis", warning=FALSE, message=FALSE}
 
-DT::datatable(rflomics.MAE@metadata$design@Contrasts.Sel, rownames = FALSE,
+DT::datatable(getSelectedContrasts(rflomics.MAE), rownames = FALSE,
               options = list( pageLength = 6, scrollX = F, dom = 'tip'),
               class = 'cell-border stripe')
 ```
