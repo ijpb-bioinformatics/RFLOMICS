@@ -9,6 +9,7 @@
 #' @importFrom stringr str_subset
 #' @importFrom shinyBS bsTooltip popify
 
+
 # ---- modCreateRflomicsObject UI ----
 .modLoadOmicDataUI <- function(id){
 
@@ -100,7 +101,7 @@
                                                label   = .addBSpopify(label   = "Experimental design (tsv) ", 
                                                                       title   = .generateExample("design", title = TRUE),
                                                                       content = .generateExample("design")),
-                                               accept  = c("text/csv", "text/comma-separated-values, text/plain", ".csv"))),
+                                               accept  = c("text/csv", "text/comma-separated-values, text/plain", ".csv")))
             )
           ),
           fluidRow(
@@ -283,9 +284,9 @@
     if(is.null(local.rea.values$ExpDesignOrg)) return()
     
     fluidRow(
-      # column(width = 12,
-      #        uiOutput(session$ns("ExpDesignTable"))
-      # ),
+      column(width = 12,
+             uiOutput(session$ns("ExpDesignTable"))
+      ),
       column(width = 12,
              uiOutput(session$ns("dipslayFactors"))),
     )
@@ -293,6 +294,7 @@
   
   # Display tab of exp design
   output$ExpDesignTable <- renderUI({
+
     box(width = 12, background = "light-blue", solidHeader = TRUE, collapsible = TRUE,
         collapsed = TRUE, title = span("Experimental Design Overview ", tags$small("(Scroll down)")),
         renderDataTable(datatable(data = local.rea.values$ExpDesignOrg,
