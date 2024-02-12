@@ -22,11 +22,12 @@ rflomicsServer <- function(input, output, session) {
   #############################################
   # reactive value for reinitialisation of UIoutput
   rea.values <- reactiveValues(
+    validate.status = 0,
     loadData = FALSE,
     model    = FALSE,
     analysis = FALSE,
     resetAna = FALSE,
-    report = FALSE,
+    report   = FALSE,
     
     exampleData = NULL,
     
@@ -150,7 +151,7 @@ rflomicsServer <- function(input, output, session) {
         ###########################
         tabItem(tabName = "importData",
                 
-                .modLoadOmicsDataUI("data")
+                .modLoadDataUI("data")
         ),
         
         #### Set Up statistical model & hypothesis ####
@@ -348,7 +349,7 @@ rflomicsServer <- function(input, output, session) {
   # set reference
   # set type of factor (bio/batch)
   # check design (complete and balanced)
-  inputData <- callModule(.modLoadOmicsData, "data", rea.values)
+  inputData <- callModule(.modLoadData, "data", rea.values)
   
   ##########################################
   # Part2 : Set GLM model
@@ -368,7 +369,7 @@ rflomicsServer <- function(input, output, session) {
     output$SetUpModelMenu <- renderMenu({
       
       validate({
-        need(rea.values$loadData == TRUE, message = "No loaded Data")
+        need(rea.values$loadData == TRUE, message = FALSE)
       })
       menuItem(text = "Experimental Design", tabName = "SetUpModel", icon = icon('vials'))
     })

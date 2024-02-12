@@ -565,7 +565,6 @@ methods::setMethod(f         = "checkExpDesignCompleteness",
 #' (n=number of entities (genes/metabolites/proteins); k=number of samples)
 #' @param object An object of class \link{RflomicsMAE-class}
 #' @param omicNames a vector with dataset names
-#' @importFrom MultiAssayExperiment sampleMap
 #' @param realSize booleen value
 #' @exportMethod plotDataOverview
 #' @return plot
@@ -585,7 +584,7 @@ methods::setMethod(f         = "plotDataOverview",
                      names(nb_entities) <- names(object)
                      
                      data <- data.frame(nb_entities = nb_entities, assay = names(nb_entities)) %>%
-                       full_join(data.frame(sampleMap(object)), by="assay") %>%
+                       full_join(data.frame(object@sampleMap), by="assay") %>%
                        mutate(y.axis = paste0(assay, "\n", "n=", nb_entities)) %>% arrange(primary)
                      
                      data$primary <- factor(data$primary, levels = levels(Groups$samples)) 
@@ -607,7 +606,7 @@ methods::setMethod(f         = "plotDataOverview",
                                                 panel.background = element_blank(), axis.ticks = element_blank(), 
                                                 axis.text.x = element_text(angle = 90, hjust = 1), legend.position="none",
                                                 axis.text.y = element_text(hjust = 0)) +  
-                                 labs(x=paste0("Samples (k=", length(unique(sampleMap(object)$primary)), ")"), y="") +
+                                 labs(x=paste0("Samples (k=", length(unique(object@sampleMap$primary)), ")"), y="") +
                                  scale_y_continuous(breaks = (breaks), labels = nb_entities_ord$y.axis)
                                
                              },
@@ -617,7 +616,7 @@ methods::setMethod(f         = "plotDataOverview",
                                  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
                                                 panel.background = element_blank(), axis.ticks = element_blank(), legend.position="none",
                                                 axis.text.x = element_text(angle = 90, hjust = 1)) +
-                                 labs(x=paste0("Samples (k=", length(unique(sampleMap(object)$primary)), ")"), y="")
+                                 labs(x=paste0("Samples (k=", length(unique(object@sampleMap$primary)), ")"), y="")
                              }
                      )
                      return(p)
@@ -631,7 +630,6 @@ methods::setMethod(f         = "plotDataOverview",
 #'  A complete design and at least one biological and one batch factors are required for using RFLOMICS workflow.
 #' @param An object of class \link{RflomicsMAE-class}
 #' @param omicNames a vector with list of dataset names
-#' @importFrom MultiAssayExperiment sampleMap
 #' @return a gg plot object
 #' \itemize{
 #'  \item{"plot:"}{ plot of count data.frame.}
@@ -654,7 +652,7 @@ methods::setMethod(f         = "plotConditionsOverview",
                      coldata <- getDesignMat(object) %>%
                        mutate(samples=rownames(.))
                      #coldata <- tibble::as_tibble(coldata)
-                     coldata <- sampleMap(object) %>% as.data.frame() %>% 
+                     coldata <- object@sampleMap %>% as.data.frame() %>% 
                        left_join(coldata, by = c("primary" = "samples"))
                      
                      all_combin_cond <- lapply(BioFact, function(x){ 

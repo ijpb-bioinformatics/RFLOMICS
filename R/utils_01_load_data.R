@@ -618,3 +618,32 @@ check_NA <- function(object) {
 
 
 
+
+
+## ---- generateExampleData ----
+.generateEcoseedExampleData <- function(){
+  
+  ExpDesign <- readExpDesign(file = paste0(system.file(package = "RFLOMICS"), 
+                                    "/ExamplesFiles/ecoseed/condition.txt"))
+  ExpDesign[["imbibition"]]  <- factor(ExpDesign[["imbibition"]],  levels = c("DS","EI", "LI"))
+  ExpDesign[["temperature"]] <- factor(ExpDesign[["temperature"]], levels = c("Low","Medium", "Elevated"))
+  ExpDesign[["Repeat"]]      <- factor(ExpDesign[["Repeat"]],      levels = c("rep1","rep2", "rep3"))
+  
+  exampleData <- list(
+    projectName   = "Ecoseed",
+    ExpDesign     = ExpDesign,
+    dF.List.ref   = c("Repeat" = "rep1",  "temperature" = "Low", "imbibition" = "DS"),
+    dF.Type.dFac  = c("Repeat" = "batch", "temperature" = "Bio", "imbibition" = "Bio"),
+    omicsNames    = c("RNAseq.set1", "metabolomics.set2", "proteomics.set3"),
+    omicsTypes    = c("RNAseq.set1" = "RNAseq", "metabolomics.set2"= "metabolomics", "proteomics.set3" = "proteomics"),
+    omicsData     = 
+      list("RNAseq.set1"       = readOmicsData(file = paste0(system.file(package = "RFLOMICS"),
+                                                             "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
+           "metabolomics.set2" = readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
+                                                             "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")),
+           "proteomics.set3"   = readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
+                                                             "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
+  )
+  
+  return(exampleData)
+}
