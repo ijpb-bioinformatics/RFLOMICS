@@ -62,9 +62,9 @@ MAE <- MAE |> RFLOMICS::runDataProcessing(SE.name = "RNAtest"  , samples=sampleT
 
 ## diff analysis
 
-MAE <- MAE |> RFLOMICS::runDiffAnalysis(SE.name = "RNAtest",   modelFormula = formulae[[1]], contrastList = selcetedContrasts, p.adj.method="BH", method = "edgeRglmfit", p.adj.cutoff = 0.05, logFC.cutoff = 0) |>
-  RFLOMICS::runDiffAnalysis(SE.name = "protetest", modelFormula = formulae[[1]], contrastList = selcetedContrasts, p.adj.method="BH", method = "limmalmFit",  p.adj.cutoff = 0.05, logFC.cutoff = 0) |>
-  RFLOMICS::runDiffAnalysis(SE.name = "metatest",  modelFormula = formulae[[1]], contrastList = selcetedContrasts, p.adj.method="BH", method = "limmalmFit",  p.adj.cutoff = 0.05, logFC.cutoff = 0)
+MAE <- MAE |> RFLOMICS::runDiffAnalysis(SE.name = "RNAtest", contrastList = selectedContrasts, p.adj.method="BH", method = "edgeRglmfit", p.adj.cutoff = 0.05, logFC.cutoff = 0) |>
+  RFLOMICS::runDiffAnalysis(SE.name = "protetest", contrastList = selectedContrasts, p.adj.method="BH", method = "limmalmFit",  p.adj.cutoff = 0.05, logFC.cutoff = 0) |>
+  RFLOMICS::runDiffAnalysis(SE.name = "metatest", contrastList = selectedContrasts, p.adj.method="BH", method = "limmalmFit",  p.adj.cutoff = 0.05, logFC.cutoff = 0)
 
 ## co expression
 MAE <- MAE |> RFLOMICS::runCoExpression(SE.name = "RNAtest",   contrastNames = "H1" , K = 2:10, replicates = 5, merge = "union", model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin", normFactors = "TMM") |>

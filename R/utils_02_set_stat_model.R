@@ -111,7 +111,7 @@ getPossibleContrasts <- function(object,
   if (is(object, "RflomicsSE") || is(object, "RflomicsMAE")) {
     if (is.null(typeContrast)) typeContrast <- c("simple", "averaged", "interaction")
     
-    allContrasts <- getExpressionContrast(object = object, modelFormula = formula)
+    allContrasts <- generateExpressionContrast(object = object)
     allContrasts <- allContrasts[which(names(allContrasts) %in% typeContrast)]
     allContrastsdt <- rbindlist(allContrasts, fill = TRUE)
     

@@ -260,7 +260,6 @@ methods::setGeneric(
 methods::setGeneric(
   name = "runDiffAnalysis",
   def  = function(object,  
-                  design = NULL,
                   p.adj.method="BH",
                   contrastList = NULL, 
                   method = NULL, 

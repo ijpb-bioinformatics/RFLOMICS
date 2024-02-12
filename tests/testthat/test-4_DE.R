@@ -1,6 +1,9 @@
 library(testthat)
 library(RFLOMICS)
 
+#' @importFrom MultiAssayExperiment colData
+#' @importFrom SummarizedExperiment colData
+
 #### Checks results of differential expression from edgeR and limma.
 #### Using edger, limma and RFLOMICS functions to ensure everything is fine.
 
@@ -11,9 +14,10 @@ library(RFLOMICS)
 
 MAE <- initExampleMAE()
 
-formulae <- RFLOMICS::GetModelFormulae(MAE = MAE) 
+formulae <- RFLOMICS::generateModelFormulae( MAE) 
+MAE <- setModelFormula(MAE, formulae[[1]])
 
-contrastList <- RFLOMICS::getExpressionContrast(object = MAE, modelFormula = formulae[[1]]) |> purrr::reduce(rbind) |>
+contrastList <- RFLOMICS::generateExpressionContrast(object = MAE) |> purrr::reduce(rbind) |>
   dplyr::filter(contrast %in% c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
                                "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS))/3",
                                "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" ))
@@ -21,10 +25,10 @@ contrastList <- RFLOMICS::getExpressionContrast(object = MAE, modelFormula = for
 
 # ---- Construction of data tables differential analysis : ----
 
-protMat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
-rnaMat  <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
-metMat  <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"))
-condMat <- RFLOMICS::read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
+protMat <- RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
+rnaMat  <- RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
+metMat  <- RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"))
+condMat <- RFLOMICS::readExpDesign(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
 
 condMat$Repeat      <- factor(condMat$Repeat, levels = c("rep1", "rep2", "rep3"))
 condMat$imbibition  <- factor(condMat$imbibition, levels = c("DS", "EI", "LI"))
@@ -50,7 +54,7 @@ design <- model.matrix(~Repeat + temperature + imbibition + temperature:imbibiti
 # Not checking if the coefficients are ok in there.
 # taking the ones computed by RFLOMICS functions.
 
-contrastsCoeff <- RFLOMICS::getContrastMatrixF(ExpDesign = condMat, factorBio = c("temperature", "imbibition"), modelFormula = "~Repeat + temperature + imbibition + temperature:imbibition",
+contrastsCoeff <- RFLOMICS:::.getContrastMatrixF(ExpDesign = condMat, factorBio = c("temperature", "imbibition"), modelFormula = "~Repeat + temperature + imbibition + temperature:imbibition",
                                                contrastList = c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)", 
                                                                 "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS))/3",
                                                                 "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))"))
@@ -71,8 +75,7 @@ test_that("Differential analysis on RNAseq (counts) returns the same result with
   MAE <- MAE |>
     RFLOMICS::filterLowAbundance(SE.name = "RNAtest")                           |>
     RFLOMICS::runNormalization(SE.name = "RNAtest", normMethod = "TMM")         |>
-    RFLOMICS::runDiffAnalysis(SE.name = "RNAtest", contrastList = contrastList, 
-                              modelFormula = formulae[[1]],
+    RFLOMICS::runDiffAnalysis(SE.name = "RNAtest", contrastList = contrastList,
                               method = "edgeRglmfit")
   
   ########################-
@@ -129,7 +132,6 @@ test_that("Diff Analysis on metabolomics returns the same result within and outs
     RFLOMICS::runTransformData(SE.name = "metatest", transformMethod = "log2")     |>
     RFLOMICS::runNormalization(SE.name = "metatest", normMethod = "totalSum")   |>
     RFLOMICS::runDiffAnalysis(SE.name = "metatest", contrastList = contrastList, 
-                              modelFormula = formulae[[1]],
                               method = "limmalmFit")                       
   
   ########################-
@@ -177,7 +179,6 @@ test_that("Diff Analysis on proteomics returns the same result within and outsid
     MAE <- MAE |>
     RFLOMICS::runNormalization(SE.name = "protetest", normMethod = "median")    |>
     RFLOMICS::runDiffAnalysis(SE.name = "protetest", contrastList = contrastList,
-                              modelFormula = formulae[[1]],
                               method = "limmalmFit")
   
   

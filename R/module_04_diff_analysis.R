@@ -78,7 +78,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     )
     
     local.rea.values$selectedContrasts <- 
-      getExpressionContrast(session$userData$FlomicsMultiAssay[[dataset]], modelFormula = getModelFormula(session$userData$FlomicsMultiAssay)) %>% 
+      generateExpressionContrast(session$userData$FlomicsMultiAssay[[dataset]]) %>% 
       purrr::reduce(rbind) %>% dplyr::filter(contrast %in% rea.values$Contrasts.Sel$contrast)
     
     
@@ -197,8 +197,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       
       # run diff analysis with selected method
       dataset.SE <- runDiffAnalysis(object             = dataset.SE,
-                                    design             = session$userData$FlomicsMultiAssay@metadata$design,
-                                    modelFormula       = session$userData$FlomicsMultiAssay@metadata$design$Model.formula,
                                     contrastList       = rea.values$Contrasts.Sel,
                                     p.adj.method  = "BH",
                                     method = input$AnaDiffMethod,

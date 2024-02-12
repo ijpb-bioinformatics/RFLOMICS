@@ -7,8 +7,8 @@ library(RFLOMICS)
 
 MAE <- initExampleMAE()
 
-protMat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
-rnaMat <- RFLOMICS::read_omics_data(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
+protMat <- RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
+rnaMat <- RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
 
 rnaMat <- rnaMat[, match(colnames(SummarizedExperiment::assay(MAE[["RNAtest"]])), colnames(rnaMat))]
 protMat <- protMat[, match(colnames(SummarizedExperiment::assay(MAE[["protetest"]])), colnames(protMat))]
@@ -322,7 +322,7 @@ test_that("RNAseq - correct behaviour of normalization and transformation",  {
   MAE2 <- runTransformData(MAE2, SE = "RNAtest")
   expect(getTransSettings(MAE2[["RNAtest"]])$method == "none", 
          failure_message = "TransformData does not put 'none' as default for RNAseq data")
-  expect(!.isTransformed(MAE2[["RNAtest"]]), 
+  expect(!RFLOMICS:::.isTransformed(MAE2[["RNAtest"]]), 
          failure_message = "TransformData transformed the data when not asked to")
 
   MAE2 <- runNormalization(MAE2, SE = "RNAtest")
@@ -336,7 +336,7 @@ test_that("RNAseq - correct behaviour of normalization and transformation",  {
   
   expect(getTransSettings(MAE2[["RNAtest"]])$method == "none",
          failure_message = "TransformData did not replace by 'none' for RNAseq data ")
-  expect(!.isTransformed(MAE2[["RNAtest"]]), 
+  expect(!RFLOMICS:::.isTransformed(MAE2[["RNAtest"]]), 
          failure_message = "TransformData transformed the data when not asked to")
   
   expect(getNormSettings(MAE2[["RNAtest"]])$method == "TMM", 

@@ -6,7 +6,7 @@
 #' @rdname Example-functions
 initExampleMAE <- function(){
   
-  ExpDesign <- read_exp_design(file = paste0(system.file(package = "RFLOMICS"), 
+  ExpDesign <- readExpDesign(file = paste0(system.file(package = "RFLOMICS"), 
                                              "/ExamplesFiles/ecoseed/condition.txt"))
   factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
                           factorRef   = c("rep1",   "Low",          "DS"),
@@ -16,11 +16,11 @@ initExampleMAE <- function(){
                                           "DS,EI,LI"))
   
   omicsData <- list(
-    read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+    readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
                                   "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-    read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+    readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
                                   "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
-    read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+    readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
                                   "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
   
   RMAE <- createRflomicsMAE(projectName = "Tests", 
@@ -47,7 +47,7 @@ singleOmicsExample <- function(omicType = "RNAseq"){
   
   if (missing(omicType)) stop("Please provide an omic type.")
   
-  ExpDesign <- read_exp_design(file = paste0(system.file(package = "RFLOMICS"), 
+  ExpDesign <- readExpDesign(file = paste0(system.file(package = "RFLOMICS"), 
                                              "/ExamplesFiles/ecoseed/condition.txt"))
   
   design <- c("Repeat" = "batch",
@@ -57,15 +57,15 @@ singleOmicsExample <- function(omicType = "RNAseq"){
   omicsData <- 
     switch(toupper(omicType),
            "RNASEQ" = { 
-             read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+             readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
                                            "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
            },
            "PROTEOMICS" = {
-             read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+             readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
                                            "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"))
            },
            "METABOLOMICS" = { 
-             read_omics_data(file = paste0(system.file(package = "RFLOMICS"), 
+             readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
                                            "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
            }
     )
@@ -101,7 +101,9 @@ generateExample <- function(processing   = TRUE,
   
   MAE <- initExampleMAE()
   
-  formulae <- GetModelFormulae(MAE = MAE) 
+  formulae <- generateModelFormulae( MAE) 
+  MAE <- setModelFormula(MAE, formulae[[1]])
+  
   contrastList <- rbind(getPossibleContrasts(MAE, 
                                              formula = formulae[[1]], 
                                              typeContrast = "simple",
@@ -117,7 +119,7 @@ generateExample <- function(processing   = TRUE,
   
   if (processing) {
     MAE <- MAE |>
-      runTransformData(     SE.name = "metatest",  transformMethod = "log2") |>
+      runTransformData(  SE.name = "metatest",  transformMethod = "log2") |>
       runNormalization(  SE.name = "metatest",  normMethod = "totalSum")  |>
       runNormalization(  SE.name = "RNAtest",   normMethod = "TMM")       |>
       runNormalization(  SE.name = "protetest", normMethod = "median")    |>
@@ -128,16 +130,13 @@ generateExample <- function(processing   = TRUE,
     MAE <- MAE |>
       runDiffAnalysis(SE.name = "metatest",  
                       method = "limmalmFit", 
-                      contrastList = contrastList, 
-                      modelFormula = formulae[[1]])  |>
+                      contrastList = contrastList)  |>
       runDiffAnalysis(SE.name = "protetest", 
                       method = "limmalmFit", 
-                      contrastList = contrastList, 
-                      modelFormula = formulae[[1]])  |>
+                      contrastList = contrastList)  |>
       runDiffAnalysis(SE.name = "RNAtest",   
                       method = "edgeRglmfit", 
-                      contrastList = contrastList, 
-                      modelFormula = formulae[[1]])  |>
+                      contrastList = contrastList)  |>
       filterDiffAnalysis(SE.name = "RNAtest",   
                          p.adj.cutoff = 0.05, 
                          logFC.cutoff = 1.5)

@@ -50,9 +50,11 @@
 #' 
 methods::setMethod(f         = "runDiffAnalysis",
                    signature = "RflomicsSE",
-                   definition = function(object, design, p.adj.method="BH", contrastList = NULL, method = NULL, 
+                   definition = function(object, p.adj.method="BH", contrastList = NULL, method = NULL, 
                                           p.adj.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, parallel = FALSE, nworkers = 1,
-                                          cmd = FALSE, modelFormula=NULL){
+                                          cmd = FALSE){
+                     
+                     modelFormula <- getModelFormula(object)
                      
                      # check args
                      if(is.null(contrastList) || nrow(contrastList) == 0) stop("contrastList arg is mandatory.")
@@ -66,20 +68,20 @@ methods::setMethod(f         = "runDiffAnalysis",
                      }
                      
                      ## check completness
-                     Completeness <- CheckExpDesignCompleteness(object)
+                     Completeness <- checkExpDesignCompleteness(object)
                      if(isTRUE(Completeness[["error"]])) stop(Completeness[["messages"]])
                      
                      ## getcontrast
-                     contrastList <- RFLOMICS::getExpressionContrast(object, modelFormula = modelFormula) %>% purrr::reduce(rbind) %>% 
+                     contrastList <- RFLOMICS::generateExpressionContrast(object) %>% purrr::reduce(rbind) %>% 
                        dplyr::filter(contrast %in% contrastList$contrast)
                      
-                     object <- getContrastMatrix(object, modelFormula = modelFormula, contrastList = contrastList)
-                     object@metadata$design$Contrasts.Sel <- dplyr::mutate(contrastList, tag=paste0("H", 1:nrow(contrastList)))
-                     
-                     #Contrasts.Sel <- dplyr::filter(design@Contrasts.Sel, contrastName %in% contrastList)
-                     
+                     object <- generateContrastMatrix(object, contrastList = contrastList)
+                     #object@metadata$design$Contrasts.Sel <- dplyr::mutate(contrastList, tag=paste0("H", 1:nrow(contrastList)))
+                     Contrasts.Sel <- dplyr::mutate(contrastList, tag=paste0("H", 1:nrow(contrastList)))
+                     object <- setSelectedContrasts(object, Contrasts.Sel)
+                                          
                      object@metadata$DiffExpAnal <- list()
-                     object@metadata$DiffExpAnal[["contrasts"]] <- object@metadata$design$Contrasts.Sel
+                     object@metadata$DiffExpAnal[["contrasts"]] <- Contrasts.Sel
                      
                      # remplacera à terme les lignes ci-dessus
                      object@metadata$DiffExpAnal[["setting"]][["method"]]            <- method
@@ -107,7 +109,7 @@ methods::setMethod(f         = "runDiffAnalysis",
                                                                                   group           = getCoeffNorm(object)$group,
                                                                                   lib.size        = getCoeffNorm(object)$lib.size,
                                                                                   norm.factors    = getCoeffNorm(object)$norm.factors,
-                                                                                  Contrasts.Sel   = object@metadata$design$Contrasts.Sel,
+                                                                                  Contrasts.Sel   = Contrasts.Sel,
                                                                                   Contrasts.Coeff = object@metadata$design$Contrasts.Coeff,
                                                                                   FDR             = 1,
                                                                                   clustermq       = clustermq,
@@ -116,7 +118,7 @@ methods::setMethod(f         = "runDiffAnalysis",
                                                                                   cmd             = cmd)),
                                        "limmalmFit" = .tryRflomics(.limmaAnaDiff(count_matrix    = SummarizedExperiment::assay(object2),
                                                                                  model_matrix      = model_matrix[colnames(object2),],
-                                                                                 Contrasts.Sel     = object@metadata$design$Contrasts.Sel,
+                                                                                 Contrasts.Sel     = Contrasts.Sel,
                                                                                  Contrasts.Coeff   = object@metadata$design$Contrasts.Coeff,
                                                                                  p.adj.cutoff = 1,
                                                                                  p.adj.method = p.adj.method,
@@ -156,13 +158,11 @@ methods::setMethod(f          = "runDiffAnalysis",
                    definition = function(object, SE.name, p.adj.method="BH",
                                          contrastList = NULL, method = NULL,
                                          p.adj.cutoff=0.05, logFC.cutoff=0, clustermq=FALSE, 
-                                         parallel = FALSE, nworkers = 1, cmd = FALSE, modelFormula=NULL){
+                                         parallel = FALSE, nworkers = 1, cmd = FALSE){
                      
                      # all verifications are done in this method
                      object[[SE.name]] <-  runDiffAnalysis(object = object[[SE.name]],
-                                                           design = object@metadata$design,
                                                            p.adj.method = p.adj.method,
-                                                           modelFormula = modelFormula,
                                                            contrastList = contrastList,
                                                            method = method,
                                                            p.adj.cutoff = p.adj.cutoff,
