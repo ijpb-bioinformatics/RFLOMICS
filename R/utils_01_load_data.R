@@ -547,9 +547,17 @@ check_NA <- function(object) {
 .countSamplesPerCondition <- function(expDesign, bioFactors) {
   
   #remplacer le code ci-dessus par celui en bas
-  group_count <- group_by_at(expDesign, bioFactors) %>% count(name = "Count")
+  group_count <- group_by_at(expDesign, bioFactors) %>% 
+    count(name = "Count")
   
-  return(group_count)
+  mod.fact <- lapply(names(group_count)[-ncol(group_count)], function(factor){
+    unique(group_count[[factor]])
+  }) 
+  names(mod.fact) <- names(group_count)[-ncol(group_count)]
+  
+  full_join(expand.grid(mod.fact), group_count, by=bioFactors) %>% 
+    mutate_at(.vars = "Count", .funs = function(x){ if_else(is.na(x), 0, x) }) %>%
+    return()
 }
 
 # ---- PLOTS

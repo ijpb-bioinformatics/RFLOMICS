@@ -711,7 +711,7 @@ methods::setMethod(f          = "runDataProcessing",
                    {
                      
                      # keep selected samples
-                     print("#    => select samples...")
+                     message("#    => select samples...")
                      object <- runSampleFiltering(object, samples)
                      
                      if(nrow(getDesignMat(object)) == 0) stop("no samples in object!")
@@ -727,7 +727,7 @@ methods::setMethod(f          = "runDataProcessing",
                             "RNAseq" = {
                               
                               # Filter low abundance
-                              print("#    => Low counts Filtering...")
+                              message("#    => Low counts Filtering...")
                               if(is.null(lowCountFiltering_strategy)   || !lowCountFiltering_strategy %in% lowCountFiltering_strategy.sup) 
                                 stop("the low count filtering strategy : ", lowCountFiltering_strategy, " isn't supported by rflomics package. Supported values : ",  paste(lowCountFiltering_strategy.sup, collapse = ", "))
                               
@@ -737,7 +737,7 @@ methods::setMethod(f          = "runDataProcessing",
                               SE.processed <- filterLowAbundance(object = object, filterMethod= "CPM", filterStrategy = lowCountFiltering_strategy, cpmCutoff = lowCountFiltering_CPM_Cutoff)
                               
                               # Run Normalisation 
-                              print("#    => Counts normalization...")
+                              message("#    => Counts normalization...")
                               if(is.null(normMethod) || normMethod != "TMM"){
                                 normMethod <- "TMM"
                                 warning("only ", normalisation_method.count.sup, " method is supported for ", object@metadata$omicType, " normalisation.")
@@ -746,13 +746,13 @@ methods::setMethod(f          = "runDataProcessing",
                               SE.processed <- runNormalization(SE.processed, normMethod = normMethod)
                             },
                             {
-                              print("#    => transformation data...")
+                              message("#    => transformation data...")
                               if(is.null(transformMethod)) transformMethod <- "none"
                               if(! transformMethod %in% transformation_method.sup) 
                                 stop("the transformation method ", transformMethod," is not support in rflomics package.Supported values : ", paste(transformation_method.sup, collapse = ", "))
                               SE.processed <- runTransformData(object, transformMethod = transformMethod)
                               
-                              print("#    => Run normalization...")
+                              message("#    => Run normalization...")
                               if(is.null(normMethod)) normMethod <- "none"
                               if(! normMethod %in% normalisation_method.abundance.sup) 
                                 stop("the normalisation method ", normMethod," is not support in rflomics package. Supported values : ", paste(normalisation_method.abundance.sup, collapse = ", "))
@@ -761,7 +761,7 @@ methods::setMethod(f          = "runDataProcessing",
                      )
                      
                      #### Run PCA for filtred & normalized data ####
-                     print("#    => Compute PCA ")
+                     message("#    => Compute PCA ")
                  
                      SE.processed <- runOmicsPCA(SE.processed,ncomp = 5, raw = FALSE)  
                      

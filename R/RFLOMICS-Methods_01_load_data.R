@@ -723,7 +723,7 @@ methods::setMethod(f         = "plotExpDesignCompleteness",
                      
                      check <- checkExpDesignCompleteness(object)
                      
-                     if(isTRUE(check$error)) return(NULL)
+                     #if(isTRUE(check$error)) return(NULL)
                      
                      # Only works with bio and batch factors for the rest of the function
                      ExpDesign <- getDesignMat(object)

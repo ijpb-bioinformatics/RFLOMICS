@@ -17,7 +17,7 @@ QCNormalizationTabUI <- function(id){
       column(4,
              box(width = 14, title = span(tagList(icon("sliders-h"), "  ", "Setting")), status = "warning",
                  uiOutput(ns("selectSamplesUI")),
-                 uiOutput(ns("completenessUI")),
+                 plotOutput(ns("completenessUI")),
                  hr(),
                  uiOutput(ns("paramUI"))),
              fluidRow(
@@ -34,8 +34,6 @@ QCNormalizationTabUI <- function(id){
 ### server
 QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   
-  local.rea.values <- reactiveValues(message = NULL)
-  
   #---- sample list----
   output$selectSamplesUI <- renderUI({
     
@@ -51,18 +49,10 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
   
   
   #---- Completeness----
-  output$completenessUI <- renderUI({
+  output$completenessUI <- renderPlot({
     
-    local.rea.values$message <- NULL
-    completeCheckRes <- CheckExpDesignCompleteness(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], input$selectSamples)
-    
-    if(isTRUE(completeCheckRes[["error"]])){
-      
-      local.rea.values$message <- completeCheckRes[["messages"]]
-    }
-    # plot of count per condition
-    if(!is.null(completeCheckRes[["plot"]])) {list(renderPlot(completeCheckRes[["plot"]]))}
-    
+      plotExpDesignCompleteness(object = session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], 
+                                sampleList = input$selectSamples)
   })
   
   #---- adapted parameters for each omics type ----
@@ -307,10 +297,12 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     validate({ need(!is.null(input$selectSamples), message="please select samples.") })
     
     # check completeness for curent dataset
-    if(!is.null(local.rea.values$message)){
-      showModal(modalDialog(title = "Error message", local.rea.values$message))
+    completeCheckRes <- checkExpDesignCompleteness(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]], input$selectSamples)
+    
+    if(isTRUE(completeCheckRes[["error"]])){
+      showModal(modalDialog(title = "Error message", completeCheckRes[["messages"]]))
     }
-    validate({ need(is.null(local.rea.values$message), message=local.rea.values$message) })
+    validate({ need(!isTRUE(completeCheckRes[["error"]]), message=completeCheckRes[["messages"]]) })
     
     # get parameters 
     switch( getOmicsTypes(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]]),
@@ -348,7 +340,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     # remove integration analysis
     session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(session$userData$FlomicsMultiAssay, results = c("IntegrationAnalysis"))
     
-    print(paste0("# 3  => Data processing: ", dataset))
+    message("# 3  => Data processing: ", dataset)
    
     session$userData$FlomicsMultiAssay <- 
       runDataProcessing(object = session$userData$FlomicsMultiAssay, SE.name = dataset, samples = input$selectSamples,  
