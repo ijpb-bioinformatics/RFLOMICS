@@ -100,7 +100,7 @@ methods::setMethod(f = "runCoExpression",
                      switch(object@metadata$omicType,
                             
                             "RNAseq" = {
-                              counts <- SummarizedExperiment::assay(object)[geneList,]
+                              counts <- assay(object)[geneList,]
                               
                               param.list[["transformation"]]   <- ifelse(is.null(transformation), "arcsin", transformation)
                               param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "TMM", normFactors)
@@ -109,8 +109,8 @@ methods::setMethod(f = "runCoExpression",
                               
                             },
                             "proteomics" = {
-                              object <- .checkTransNorm(object)
-                              counts <- SummarizedExperiment::assay(object)[geneList,]
+                              object2 <- .checkTransNorm(object)
+                              counts <- assay(object2)[geneList,]
                               
                               # Print the selected GaussianModel
                               if (cmd) print(paste("Use ", GaussianModel, sep = ""))
@@ -124,8 +124,8 @@ methods::setMethod(f = "runCoExpression",
                               param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Bk", GaussianModel)
                             },
                             "metabolomics" = {
-                              object <- .checkTransNorm(object)
-                              counts <- SummarizedExperiment::assay(object)[geneList,]
+                              object2 <- .checkTransNorm(object)
+                              counts <-  assay(object2)[geneList,]
                               
                               # Print the selected GaussianModel
                               if (cmd) print(paste("Use ", GaussianModel, sep= ""))
