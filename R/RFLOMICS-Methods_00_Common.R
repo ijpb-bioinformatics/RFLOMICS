@@ -1,5 +1,82 @@
 
+# ---- generateReport ----
+#' @title Generate RFLOMICS rmarkdown report
+#' @description
+#' This function is used to generate a html report from a RFLOMICS
+#' \link{RflomicsMAE}.
+#' @param object a \link{RflomicsMAE} produced by RFLOMICS.
+#' @param fileName Name of the html document.
+#' @param archiveName name of result archive
+#' @param export boolean value (default: FALSE)
+#' @param tmpDir temporary dir (default: getwd()) 
+#' @importFrom rmarkdown render
+#' @exportMethod generateReport
+#'
+methods::setMethod(f          = "generateReport",
+                   signature  = "RflomicsMAE",
+                   definition = function(object, fileName = NULL, archiveName = NULL, 
+                                         export = FALSE, tmpDir = getwd(), ...){
+  
+  # Copy the report file to a temporary directory before processing it, in
+  # case we don't have write permissions to the current working dir (which
+  # can happen when deployed).
+  tempReport <-  file.path(path.package("RFLOMICS"), "/RFLOMICSapp/report.Rmd")
+  
+  # Check if the object is properly filled.
+  ## function
+  
+  # project name
+  projectName <- getProjectName(object)
+  RDataName   <- paste0(projectName, ".MAE.RData")
+  
+  # tmp dir
+  if(file.access(tmpDir, 2) != 0) stop("No writing access in ", tmpDir)
+  tmpDir <- file.path(tmpDir, paste0(projectName, "_report"))
+  dir.create(tmpDir, showWarnings=FALSE)
+  
+  # html name
+  if(is.null(fileName)) fileName <- file.path(tmpDir, paste0(projectName, "_report.html"))
+  
+  # save FE rflomics.MAE in .Rdata and load it during report execution
+  rflomics.MAE <- object
+  save(rflomics.MAE, file = file.path(tmpDir, RDataName))
+  
+  # Set up parameters to pass to Rmd document
+  param.list <- list(FEdata = file.path(tmpDir, RDataName),
+                     title  = paste0(projectName, " project"),
+                     outDir = tmpDir)
+  
+  # Knit the document, passing in the `params` list, and eval it in a
+  # child of the global environment (this isolates the code in the document
+  # from the code in this app).
+  render(input             = tempReport, 
+        output_file       = fileName,
+        params            = param.list,
+        knit_root_dir     = tmpDir,
+        intermediates_dir = tmpDir,
+        envir = new.env(parent = globalenv()), ...)
+  
+  #Export results
+  if(isTRUE(export)){
+    
+    if(is.null(archiveName)) 
+      archiveName <- file.path(dirname(tmpDir), 
+                               paste0(projectName, "_archive.tar.gz"))
+    
+    # cp html in tmpDir
+    file.copy(from = fileName, to = tmpDir)
+    cmd <- paste0("tar -C ", dirname(tmpDir), " -czf ", archiveName, " ", basename(tmpDir))
+    system(cmd)
+    print(cmd)
+    
+  }else{
+    file.copy(from = fileName, to = dirname(tmpDir))
+  }
+  unlink(tmpDir, recursive = TRUE)
+  
+})
 
+# ---- runOmicsPCA ----
 #' @title runOmicsPCA
 #' @description This function performs a principal component analysis on omic data stored in an object of class \link{RflomicsSE-class}
 #' Results are stored in the metadata slot of the same object. If a "Normalization" slot is present in the metadata slot, then data are normalized before running the PCA according to the indicated transform method.
@@ -47,6 +124,7 @@ methods::setMethod(f          = "runOmicsPCA",
 #   return(object)
 # } 
 
+# ---- plotPCA ----
 #' @title plotPCA
 #' @description This function plot the factorial map from a PCA object stored
 #' in a \link{RflomicsSE-class} object. By default, samples are
@@ -134,10 +212,7 @@ methods::setMethod(f          = "plotPCA",
                      
                    })
 
-
-
-##### RESETTING ####
-
+# ---- resetFlomicsMultiAssay ----
 #' resetFlomicsMultiAssay
 #'
 #' @param object An object of class \link{RflomicsMAE}

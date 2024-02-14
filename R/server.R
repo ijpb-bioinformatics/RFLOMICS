@@ -55,7 +55,10 @@ rflomicsServer <- function(input, output, session) {
       tags$br(),
       tags$br(),
       uiOutput("runReport"),
+      tags$br(),
+      tags$br(),
       uiOutput("downloadResults")
+      
     )
   })
   
@@ -106,17 +109,16 @@ rflomicsServer <- function(input, output, session) {
   })
   
   #### Item for report #####
-  output$runReport <- renderUI({
-    if(rea.values$analysis == FALSE) return()
-    
-    downloadButton(outputId = "report", label = "Generate report")
+  output$runReport <- renderUI({ 
+    if(is.null(rea.values$datasetProcess)) return()
+    column(width = 12, downloadButton(outputId = "report", label = "Generate report"))
   })
   
   #### Item to download Results #####
   output$downloadResults <- renderUI({
-    if(rea.values$report == FALSE) return()
+    if(is.null(rea.values$datasetProcess)) return()
     
-    downloadButton(outputId = "download", label = "Download results")
+    column(width = 12, downloadButton(outputId = "download", label = "Download results"))
   })
   
   
@@ -455,7 +457,6 @@ rflomicsServer <- function(input, output, session) {
   })
   
   callModule(module = omics_data_analysis_summary, id = "omics", rea.values = rea.values)
-  
   callModule(module = .modIntegrationAnalysis, id = "mixomicsSetting", rea.values = rea.values, method = "mixOmics")
   callModule(module = .modIntegrationAnalysis, id = "mofaSetting",     rea.values = rea.values, method = "MOFA")
  
@@ -468,26 +469,17 @@ rflomicsServer <- function(input, output, session) {
     # For PDF output, change this to "report.pdf"
 
     filename = function(){
-      projectName <- session$userData$FlomicsMultiAssay@metadata$projectName
-      paste0(projectName, "_", format(Sys.time(), "%Y_%m_%d_%H_%M"), ".html")
+      projectName  <- getProjectName(session$userData$FlomicsMultiAssay)
+      paste0(format(Sys.time(), "%Y_%m_%d"), "_", projectName, ".html")
     },
     content = function(file) {
 
-      projectName  <- session$userData$FlomicsMultiAssay@metadata$projectName
-      outDir <- file.path(tempdir(),
-                          paste0(format(Sys.time(),"%Y_%m_%d"),"_",projectName))
-
-      generateReport(session$userData$FlomicsMultiAssay,
-                     projectName = projectName,
-                     outDir = outDir,
-                     RDataName =  paste0(projectName, ".MAE.RData"),
-                     output_file = paste0(outDir, projectName, "_report.html"))
-
-      rea.values$outdir <- dirname(file)
-      rea.values$report <- TRUE
-
-      print(dirname(file))
-
+      projectName  <- getProjectName(session$userData$FlomicsMultiAssay)
+      outDir <- file.path(tempdir(), paste0(format(Sys.time(),"%Y_%m_%d"),"_", projectName))
+      dir.create(path = outDir, showWarnings=FALSE)
+      
+      generateReport(object = session$userData$FlomicsMultiAssay,
+                     tmpDir = outDir, fileName = file)
     }
   )
   
@@ -499,18 +491,18 @@ rflomicsServer <- function(input, output, session) {
     # For PDF output, change this to "report.pdf"
 
     filename = function(){
-      outDir <- paste0(format(Sys.time(),"%Y_%m_%d"),"_", session$userData$FlomicsMultiAssay@metadata$projectName)
-      paste0(outDir,".tar.gz")
+      projectName  <- getProjectName(session$userData$FlomicsMultiAssay)
+      paste0(format(Sys.time(),"%Y_%m_%d"),"_", projectName, ".tar.gz")
     },
     content = function(file) {
 
-      # linux
-      system(paste0("tar -C",
-                    tempdir(),
-                    " -czvf ",
-                    file,
-                    " ",
-                    paste0(format(Sys.time(),"%Y_%m_%d"),"_",session$userData$FlomicsMultiAssay@metadata$projectName)))
+      projectName  <- getProjectName(session$userData$FlomicsMultiAssay)
+      outDir <- file.path(tempdir(), paste0(format(Sys.time(),"%Y_%m_%d"),"_", projectName))
+      dir.create(path = outDir, showWarnings=FALSE)
+      
+      generateReport(object = session$userData$FlomicsMultiAssay,
+                     tmpDir = outDir, archiveName = file, export = TRUE)
+      
     })
   # # Automatically bookmark every time an input changes
   # observe({

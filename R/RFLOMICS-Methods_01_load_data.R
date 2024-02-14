@@ -10,6 +10,23 @@
 #' @importFrom purrr reduce
 
 # ---- ACCESSORS ----
+# ---- getProjectName ----
+# ---- getDesignMat:    get colData ----
+#' @title Get project name
+#' @description
+#' A short description...
+#' 
+#' @param object An object of class \link{RflomicsMAE-class}
+#' @return a name of project
+#' @exportMethod getProjectName
+methods::setMethod(f          = "getProjectName",
+                   signature  = "RflomicsMAE",
+                   definition <- function(object){
+                     
+                     return(object@metadata$projectName)
+                   })
+
+
 # ---- getDesignMat:    get colData ----
 #' @title Get design matrix / colData
 #' @description

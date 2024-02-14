@@ -2,7 +2,18 @@
 #' @import SummarizedExperiment
 
 
+methods::setGeneric(
+  name = "generateReport",
+  def  = function(object, fileName = NULL, archiveName = NULL, 
+                  export = FALSE, tmpDir = getwd(), ...){standardGeneric("generateReport")}
+)
+
 # ---- RflomicsMAE and RflomicsSE getteurs ----
+
+methods::setGeneric(
+  name = "getProjectName",
+  def  = function(object, omicNames = NULL, ...){standardGeneric("getProjectName")}
+)
 methods::setGeneric(
   name = "subRflomicsMAE",
   def  = function(object, omicNames = NULL, ...){standardGeneric("subRflomicsMAE")}
