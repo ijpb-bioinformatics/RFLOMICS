@@ -957,7 +957,16 @@
                          pvalue <- getEnrichPvalue(dataSE,
                                                    from = listSource, 
                                                    database = database)
-                         datatable(dataPlot@result[dataPlot@result$p.adjust <  pvalue,],
+                         datPlot <- dataPlot@result[dataPlot@result$p.adjust <  pvalue,]
+                         datPlot$pvalue <- round(datPlot$pvalue, 3)
+                         datPlot$p.adjust <- round(datPlot$p.adjust, 3)
+                         datPlot$qvalue <- round(datPlot$qvalue, 3)
+                         datPlot$geneID <- unlist(lapply(datPlot$geneID, 
+                                                         FUN = function(longString){
+                           return(gsub("/", ", ", longString))
+                         }))
+                         
+                         datatable(datPlot,
                                    rownames = FALSE,
                                    options = list(pageLength = 5,
                                                   lengthMenu = c(5, 10, 15, 20),
@@ -1064,7 +1073,8 @@
                                             "adjusted pvalue.</p>",
                                             "<p> Search expression will allow you ",
                                             "to display only the top terms containing ",
-                                            "the regular expression of interest. </p>",
+                                            "the regular expression of interest. ",
+                                            "You can use regular expression patterns:",
                                             "<ul><li> <b>||</b> for <i>or</i> statement; </li>",
                                             "<li> <b>&</b> for <i>and</i> statement;</li>",
                                             "</ul>"), trigger = "click", placement = "top"),
