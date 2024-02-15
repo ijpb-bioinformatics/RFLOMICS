@@ -435,7 +435,6 @@ methods::setGeneric(
                   species = "ath",
                   gene_idtype = "kegg",
                   from = "DiffExpAnal",
-                  pvalueCutoff = object@metadata$DiffExpEnrichAnal[["KEGG"]]$list_args$pvalueCutoff,
                   ...){standardGeneric("plotKEGG")}
 )
 

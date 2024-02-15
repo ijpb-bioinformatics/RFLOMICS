@@ -285,7 +285,6 @@ methods::setMethod(
                         species = "ath",
                         gene_idtype = "kegg",
                         from = "DiffExp",
-                        pvalueCutoff = metadata(object)[["DiffExpEnrichAnal"]][["KEGG"]]$list_args$pvalueCutoff,
                         ...) {
     
     
@@ -347,6 +346,7 @@ methods::setMethod(
 #' @return A plot.
 #' @export
 #' @importFrom enrichplot cnetplot heatplot dotplot
+#' @importFrom ggplot2 scale_fill_gradient2 guide_colourbar
 #' @importFrom ggrepel geom_label_repel
 #' @exportMethod plotClusterProfiler
 methods::setMethod(
@@ -361,7 +361,7 @@ methods::setMethod(
                         showCategory = 15,
                         searchExpr = "",
                         nodeLabel = "all",
-                        pvalueCutoff = object@metadata$DiffExpEnrichAnal[[database]]$list_args$pvalueCutoff,
+                        p.adj.cutoff = object@metadata$DiffExpEnrichAnal[[database]]$list_args$pvalueCutoff,
                         ...) {
     
     # if (isTagName(contrastName)) contrastName <- convertTagTocontrastName(object, contrastName)
@@ -411,7 +411,7 @@ methods::setMethod(
     }
     
     # Select categories to show
-    dataTab <- dataPlot@result[dataPlot@result$p.adjust < pvalueCutoff, ]
+    dataTab <- dataPlot@result[dataPlot@result$p.adjust < p.adj.cutoff, ]
     Categories <- dataTab$Description
     if (searchExpr != ""){
       Categories <- Categories[grep(toupper(searchExpr), toupper(Categories))]
@@ -652,8 +652,6 @@ methods::setMethod(
               cluster_rows = hcPlot, 
               row_names_side = "left", 
               column_names_rot = 30,
-              # column_names_rot = 0, 
-              # column_names_centered = TRUE, 
               rect_gp = gpar(col = "gray50", lwd = 0.5),
               width =  ncol(dat)*5,
               height = nrow(dat)*5,
