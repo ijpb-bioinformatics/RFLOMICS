@@ -634,7 +634,7 @@
     )
     
     tagList(
-      column(width = 6,
+      column(width = 4,
              pickerInput(
                inputId  = ns("listToAnnot"),
                label    = "Select lists:",
@@ -648,7 +648,8 @@
       column(width = 6, 
              br(),
              actionButton(inputId = ns("run"), 
-                          label = "Run over-representation analysis"))
+                          label = "Run over-representation analysis",
+                          class = "btn-success"))
     )
   })
 }
@@ -677,7 +678,7 @@
                                    "one for omic features names and ",
                                    "the other for", 
                                    " their associated terms."),
-                  trigger = "click"
+                  trigger = "click", placement = "top"
                 ),
                 accept  = c("text/csv", 
                             "text/comma-separated-values,text/plain", 
@@ -691,7 +692,7 @@
                    type = "action"),
           title = "Use example file for ecoseed data",
           content = paste0("<p> You are conducting an analysis using the ",
-                           "example dataset ecossed. You can ",
+                           "example dataset ecoseed. You can ",
                            "run an annotation enrichment ",
                            "using the example annotation file, ",
                            "which is an ",
@@ -909,10 +910,36 @@
   
   ns <- session$ns
   
+  # UI for all results
   renderUI({
     
     dataSE <- session$userData$FlomicsMultiAssay[[dataset]]
     
+    varLabel0 <- omicsDic(dataSE)$variableName
+    
+    # Explanation message for result table
+    expMessage <- paste0("This table present the results of the enrichment for",
+                         " the ", varLabel0, " list. ",
+                         "<b>Description</b> gives the full name of ",
+                         " the term corresponding to the <b>ID</b> (if ",
+                         " available). <b>GeneRatio</b> gives the number ",
+                         " of ", varLabel0, " in the list that were also ",
+                         " found in the term list. <b>BgRatio</b> stands ",
+                         " for background ratio and gives the number of ",
+                         varLabel0, " of the term that were in the universe ",
+                         " (number of annotated ", varLabel0, ").", 
+                         " Pvalues, qvalues and adjusted pvalues were rounded",
+                         " to 3 digits.")
+    
+    # for KEGG database, 2 more columns:
+    if (database == "KEGG") {
+      expMessage <- paste0(expMessage,
+                           " <b>Category</b> and <b>subcategory</b> columns", 
+                           " are given only for KEGG results. They are linked",
+                           " to this ontology.")
+    }
+    
+    # Results:
     if (rea.values[[dataset]][[fromAnnot]] == FALSE ||
         is.null(sumORA(dataSE, from = listSource, database = database))) { 
       return()
@@ -958,7 +985,16 @@
             tabPanel("Result Table",
                      br(),
                      verticalLayout(
-                       br(),
+                       tags$style(
+                         ".explain-p {
+                                  color: Gray;
+                                  text-justify: inter-word;
+                                  font-style: italic;
+                                }"),
+                       div(class = "explain-p", 
+                           HTML(expMessage)),
+                       hr(),
+                       
                        renderDataTable({
                          
                          dataPlot <- getEnrichRes(
@@ -991,9 +1027,9 @@
                                                   scrollX = TRUE))
                          
                          
-                       })
+                       }) # renderdatatable
                      )
-            )
+            ) # vertical layout
             
           )# TabsetPanel
           
@@ -1046,8 +1082,8 @@
                          pvalue <- getEnrichPvalue(dataSE,
                                                    from = listSource, 
                                                    database = database)
-                         datPlot <- dataPlot@result[dataPlot@result$p.adjust <  
-                                                      pvalue,]
+                         datPlot <- dataPlot@result[
+                           dataPlot@result$p.adjust < pvalue,]
                          max_terms <- nrow(datPlot) 
                          
                          numericInput(ns(paste0(listname, "-top.over")),
@@ -1417,6 +1453,19 @@
 ){
   
   ns <- session$ns
+  
+  varLabel0 <- omicsDic(dataSE)$variableName
+  pathviewExplain <- paste0("<p>The map showed in this panel is generated",
+                            " using the pathvew R-package, which is a GPLv3",
+                            " software. If any of the map is used in a", 
+                            " publication or products, please",
+                            " cite the package.</p>",
+                            " It lays the ", varLabel0, " in the",
+                            " list on the map, using the log2FC values if ",
+                            " the list is a result of a differential analysis",
+                            " or just an antiquewhite color for a co-",
+                            "expression cluster list.")
+  
   tabPanel("Pathview results",
            br(),
            fluidRow(
@@ -1430,7 +1479,7 @@
                     ),
              ),
              column(9,
-                    h5("Link to interactive map online"),
+                    h5("Link to interactive map online:"),
                     renderPrint({
                       link_to_map <- paste0(
                         "http://www.kegg.jp/kegg-bin/show_pathway?",
@@ -1438,6 +1487,14 @@
                         data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
                       paste0(link_to_map)
                     }),
+                    
+                    tags$style(
+                      ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"),
+                  div(class = "explain-p", HTML(pathviewExplain)),
              )
            ),
            fluidRow(
