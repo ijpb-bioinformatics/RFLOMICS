@@ -54,42 +54,45 @@ methods::setMethod(
     
     from <- .determineFrom(from)
     
-    switch(from, 
-           "DiffExp" = { 
-             
-             contrasts <- NULL
-             
-             if (is.null(getValidContrasts(object))) {
-               contrasts <- getSelectedContrasts(object)$contrastName
-             } else contrasts <- getValidContrasts(object)$contrastName                 
-             
-             if (!is.null(nameList)) {
-               if (isTagName(object, nameList)) 
-                 nameList <- convertTagToContrast(object, nameList)
-               
-               contrasts <- intersect(contrasts, nameList)
-             }
-             
-             geneLists <- lapply(contrasts, function(contrastName) {
-               row.names(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]])
-             })
-             names(geneLists) <- contrasts
-             
-           },
-           "CoExp" = { 
-             namesClust <- names(object@metadata[["CoExpAnal"]][["clusters"]])
-             if (!is.null(nameList)) namesClust <- intersect(namesClust, nameList)
-             
-             geneLists <- lapply(namesClust, function(namClust) {
-               object@metadata[["CoExpAnal"]][["clusters"]][[namClust]]
-             })
-             names(geneLists) <- namesClust
-           },
-           {
-             message("Argument from is detected to be neither DiffExp nor CoExp, 
+    switch(
+      from, 
+      "DiffExp" = { 
+        
+        contrasts <- NULL
+        
+        if (is.null(getValidContrasts(object))) {
+          contrasts <- getSelectedContrasts(object)$contrastName
+        } else {
+          contrasts <- getValidContrasts(object)$contrastName
+        }                 
+        
+        if (!is.null(nameList)) {
+          if (isTagName(object, nameList)) 
+            nameList <- convertTagToContrast(object, nameList)
+          
+          contrasts <- intersect(contrasts, nameList)
+        }
+        
+        geneLists <- lapply(contrasts, function(contrastName) {
+          row.names(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]])
+        })
+        names(geneLists) <- contrasts
+        
+      },
+      "CoExp" = { 
+        namesClust <- names(object@metadata[["CoExpAnal"]][["clusters"]])
+        if (!is.null(nameList)) namesClust <- intersect(namesClust, nameList)
+        
+        geneLists <- lapply(namesClust, function(namClust) {
+          object@metadata[["CoExpAnal"]][["clusters"]][[namClust]]
+        })
+        names(geneLists) <- namesClust
+      },
+      {
+        message("Argument from is detected to be neither DiffExp nor CoExp, 
                      taking DiffExp results.")
-             from <- "DiffExp"
-           })
+        from <- "DiffExp"
+      })
     
     # Domain 
     if (is.null(domain)) domain <- "no-domain"
@@ -101,11 +104,14 @@ methods::setMethod(
     if (database == "custom") {
       if (is.null(annot)) {
         stop("You need an annotation file for a custom enrichment")
-      }else if (length(intersect(c(col_term, col_gene), colnames(annot))) != 2) {
-        stop("The name of columns for gene and term names don't match the ones of the annotation files")
+      }else if (length(intersect(c(col_term, col_gene), colnames(annot))) != 2) 
+      {
+        stop("The name of columns for gene and term names don't 
+             match the ones of the annotation files")
       }
       if (!is.null(col_domain) && is.null(annot[[col_domain]])) {
-        stop("The column you indicated for the domain in your annotation file doesn't seem to exist.")
+        stop("The column you indicated for the domain in your annotation 
+             file doesn't seem to exist.")
       } else if (!is.null(col_domain)) {
         domain <- unique(annot[[col_domain]])
         domain <- domain[!is.na(domain)]
@@ -148,7 +154,8 @@ methods::setMethod(
                  }
                }
         )
-        do.call(getFromNamespace(func_to_use, ns = "clusterProfiler"), list_args)
+        do.call(getFromNamespace(func_to_use, ns = "clusterProfiler"),
+                list_args)
       })
       names(results_ont) <- domain
       return(results_ont)
@@ -265,7 +272,8 @@ methods::setMethod(
 #' For Co expression analysis, 
 #' it is expected to be one of "cluster.1", "cluster.2", etc.
 #' @param databasethe database (GO, KEGG or custom)
-#' @param domain if the database is GO, expect one of BP, MF or CC. Default is NULL.
+#' @param domain if the database is GO, expect one of BP, MF or CC. 
+#' Default is NULL.
 #' @param from what type of analysis to consider? 
 #' One of 'DiffExpAnal' or 'CoExpAnal'
 #' @param type type of plot. Define the function used inside.
@@ -342,11 +350,11 @@ methods::setMethod(
 #' @param contrastName the name of the contrast to consider. 
 #' For Co expression analysis, it is expected to be one of
 #' "cluster.1", "cluster.2", etc.
-#' @param databasethe database (GO, KEGG or custom)
+#' @param database the database (GO, KEGG or custom)
 #' @param domain if the database is GO, expect one of BP, MF or CC. 
 #' Default is NULL.
 #' @param from what type of analysis to consider? 
-#' One of 'DiffExpAnal' or 'CoExpAnal'
+#' One of 'DiffExp' or 'CoExp'
 #' @param type type of plot. Define the function used inside. 
 #' One of dotplot, heatplot or cnetplot.
 #' @param showCategory max number of terms to show.
@@ -355,7 +363,8 @@ methods::setMethod(
 # the labels on the graph. One of "all", "category" or "gene". Default is 'all'.
 #' @param pvalueCutoff pvalueCutoff to define the enrichment threshold. 
 # Default is the one find in the clusterprofiler results in object.
-#' @param ... additionnal parameters for cnetplot, heatplot or enrichplot functions.
+#' @param ... additionnal parameters for cnetplot, heatplot or 
+#' enrichplot functions.
 #'
 #' @return A plot.
 #' @export
@@ -378,7 +387,8 @@ methods::setMethod(
                         p.adj.cutoff = NULL,
                         ...) {
     
-    # if (isTagName(contrastName)) contrastName <- convertTagTocontrastName(object, contrastName)
+    # if (isTagName(contrastName)){ 
+    # contrastName <- convertTagTocontrastName(object, contrastName)}
     
     from <- .determineFromEnrich(from)
     
@@ -387,14 +397,14 @@ methods::setMethod(
            "DiffExpEnrichAnal" = { 
              dataPlot <- getEnrichRes(object, contrastName = contrastName,
                                       database = database, from = from)
-             log2FC_vect <- metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]][["logFC"]]
-             names(log2FC_vect) <- rownames(metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]])
+             inter <- metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]]
+             log2FC_vect <- inter[["logFC"]]
+             names(log2FC_vect) <- rownames(inter)
              
              if (is.null(p.adj.cutoff)) {
                p.adj.cutoff <- getEnrichPvalue(object, from = from, 
                                                database = database)
              }
-             
            },
            "CoExpEnrichAnal" = { 
              dataPlot <- getEnrichRes(object, contrastName = contrastName,
@@ -405,13 +415,14 @@ methods::setMethod(
              }
            },
            {
-             message("Argument from is detected to be neither DiffExp nor CoExp, 
-                     taking DiffExp results.")
+             message("Argument from is detected to be neither DiffExp 
+                     nor CoExp, taking DiffExp results.")
              from <- "DiffExpEnrichAnal"
              dataPlot <- getEnrichRes(object, contrastName = contrastName,
                                       database = database, from = from)
-             log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]][["logFC"]]  
-             names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]])
+             inter <- metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]]
+             log2FC_vect <- inter[["logFC"]]
+             names(log2FC_vect) <- rownames(inter)
              
              if (is.null(p.adj.cutoff)) {
                p.adj.cutoff <- getEnrichPvalue(object, from = from, 
@@ -454,28 +465,31 @@ methods::setMethod(
     plotType <- tolower(plotType)
     returnplot <- NULL
     
-    returnplot <-  switch(plotType, 
-                          "cnetplot" = {
-                            cnetplot(dataPlot, showCategory = Categories,
-                                     color.params = list(foldChange = log2FC_vect), 
-                                     node_label = nodeLabel, ...) +
-                              guides(colour = guide_colourbar(title = "log2FC")) +
-                              scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) 
-                          },
-                          "heatplot" = { 
-                            heatplot(dataPlot, 
-                                     showCategory = Categories, 
-                                     foldChange = log2FC_vect, ...) +
-                              labs(fill = "log2FC") +
-                              scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-                              theme(axis.text.y = element_text(size = 10))},
-                          {
-                            tryCatch(dotplot(dataPlot, 
-                                             showCategory = Categories, 
-                                             ...),
-                                     error = function(e) e,
-                                     warnings = function(w) w)
-                          })
+    returnplot <-  switch(
+      plotType, 
+      "cnetplot" = {
+        cnetplot(dataPlot, showCategory = Categories,
+                 color.params = list(foldChange = log2FC_vect), 
+                 node_label = nodeLabel, ...) +
+          guides(colour = guide_colourbar(title = "log2FC")) +
+          scale_fill_gradient2(low = "blue", mid = "white", 
+                               high = "red", midpoint = 0) 
+      },
+      "heatplot" = { 
+        heatplot(dataPlot, 
+                 showCategory = Categories, 
+                 foldChange = log2FC_vect, ...) +
+          labs(fill = "log2FC") +
+          scale_fill_gradient2(low = "blue", mid = "white", 
+                               high = "red", midpoint = 0) +
+          theme(axis.text.y = element_text(size = 10))},
+      {
+        tryCatch(dotplot(dataPlot, 
+                         showCategory = Categories, 
+                         ...),
+                 error = function(e) e,
+                 warnings = function(w) w)
+      })
     
     return(returnplot)
   }
@@ -485,13 +499,21 @@ methods::setMethod(
 
 #' @title plotEnrichComp
 #' @description TODO
-#' @param object An object of class \link{RflomicsSE}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
-#' @param from indicates if the enrichment results are taken from differential analysis results (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
+#' @param object An object of class \link{RflomicsSE}. 
+#' It is expected the SE object is produced by rflomics previous analyses, 
+#' as it relies on their results.
+#' @param from indicates if the enrichment results are taken from differential 
+#' analysis results (DiffExpAnal) or from the co-expression analysis results
+#'  (CoExpAnal)
 #' @param database is it a custom annotation, GO or KEGG annotations
-#' @param domain domain from the database (eg GO has three domains, BP, CC and MF)
-#' @param matrixType Heatmap matrix to plot, one of GeneRatio, p.adjust or presence.
-#' @param nClust number of separate cluster to plot on the heatmap, based on the clustering. 
-#' @param decorate one of stars or GeneRatio. Decoration of the heatmap. Default is NULL, no decoration.
+#' @param domain domain from the database (eg GO has three domains, 
+#' BP, CC and MF)
+#' @param matrixType Heatmap matrix to plot, one of GeneRatio, p.adjust or 
+#' presence.
+#' @param nClust number of separate cluster to plot on the heatmap, based o
+#' n the clustering. 
+#' @param decorate one of stars or GeneRatio. Decoration of the heatmap. 
+#' Default is NULL, no decoration.
 #' @param ... more arguments for ComplexHeatmap::Heatmap. 
 #' @return A ggplot object
 #' @export
@@ -515,14 +537,17 @@ methods::setMethod(
     
     from <- .determineFromEnrich(from)
     
-    allData <- switch(toupper(from), 
-                      "DIFFEXPENRICHANAL" = { object@metadata$DiffExpEnrichAnal[[database]]$enrichResult },
-                      "COEXPENRICHANAL"   = { object@metadata$CoExpEnrichAnal[[database]]$enrichResult   },
-                      {
-                        message("Argument from is detected to be neither DiffExp nor CoExp, 
+    allData <- switch(
+      toupper(from), 
+      "DIFFEXPENRICHANAL" = { 
+        object@metadata$DiffExpEnrichAnal[[database]]$enrichResult},
+      "COEXPENRICHANAL"   = { 
+        object@metadata$CoExpEnrichAnal[[database]]$enrichResult},
+      {
+        message("Argument from is detected to be neither DiffExp nor CoExp, 
                      taking DiffExp results.")
-                        allData <- object@metadata$DiffExpEnrichAnal[[database]]$enrichResult
-                      })
+        allData <- object@metadata$DiffExpEnrichAnal[[database]]$enrichResult
+      })
     
     if (length(allData) == 0) {
       stop("The selected database ", database, 
@@ -557,118 +582,135 @@ methods::setMethod(
     extract <- extract[extract$ID %in% toKeep,]
     
     # handling description and ID
-    extract$Description <- switch(database, 
-                                  "KEGG" = {
-                                    gsub(" - .*", "", extract$Description)
-                                  },
-                                  { 
-                                    # if there is duplication in description 
-                                    # not necessarily duplicated in the ID
-                                    # should not be grouped in the heatmap
-                                    if (sum(duplicated(extract$Description)) > 0) {
-                                      if (!identical(extract$Description,
-                                                     extract$ID)) {
-                                        posDup <- 
-                                          unique(which(duplicated(extract$Description),
-                                                       duplicated(extract$Description, fromLast = TRUE)
-                                          ))
-                                        extract$Description[posDup] <- 
-                                          paste0("(", extract$ID[posDup], ")", 
-                                                 "\n",
-                                                 extract$Description[posDup])
-                                        extract$Description
-                                      }else{
-                                        extract$Description
-                                      }
-                                      
-                                    } else {
-                                      extract$Description
-                                    }
-                                  })
+    extract$Description <- switch(
+      database, 
+      "KEGG" = {
+        gsub(" - .*", "", extract$Description)
+      },
+      { 
+        # if there is duplication in description 
+        # not necessarily duplicated in the ID
+        # should not be grouped in the heatmap
+        if (sum(duplicated(extract$Description)) > 0) {
+          if (!identical(extract$Description,
+                         extract$ID)) {
+            posDup <- 
+              unique(which(duplicated(extract$Description),
+                           duplicated(extract$Description, fromLast = TRUE)
+              ))
+            extract$Description[posDup] <- 
+              paste0("(", extract$ID[posDup], ")", 
+                     "\n",
+                     extract$Description[posDup])
+            extract$Description
+          }else{
+            extract$Description
+          }
+          
+        } else {
+          extract$Description
+        }
+      })
     
     extract$Description <- str_wrap(extract$Description, width = 20)
     extract$contrastName <- str_wrap(extract$contrastName, width = 30)
     
-    extract$GeneRatio <- as.numeric(vapply(extract$GeneRatio, 
-                                           FUN = function(x) eval(parse(text = x)),
-                                           FUN.VALUE = 1))
-    extract$BgRatio <- as.numeric(vapply(extract$BgRatio, 
-                                         FUN = function(x) eval(parse(text = x)),
-                                         FUN.VALUE = 1))
+    extract$GeneRatio <- as.numeric(
+      vapply(extract$GeneRatio, 
+             FUN = function(x) eval(parse(text = x)),
+             FUN.VALUE = 1))
+    extract$BgRatio <- as.numeric(
+      vapply(extract$BgRatio, 
+             FUN = function(x) eval(parse(text = x)),
+             FUN.VALUE = 1))
     extract$FC <- extract$GeneRatio/extract$BgRatio
     
-    dat <- switch(matrixType, 
-                  "GeneRatio" = {
-                    inter <- recast(extract[, c("Description", "contrastName", "GeneRatio")], 
-                                    Description ~ contrastName, 
-                                    measure.var = "GeneRatio")
-                    rownames(inter) <- inter$Description
-                    inter <- inter[, colnames(inter) != "ID"]
-                    inter[is.na(inter)] <- 0
-                    inter
-                  }, 
-                  "p.adjust" = {
-                    inter <- recast(extract[, c("Description", "contrastName", "p.adjust")], 
-                                    Description ~ contrastName, 
-                                    measure.var = "p.adjust")
-                    rownames(inter) <- inter$Description
-                    inter <- inter[, colnames(inter) != "Description"]
-                    inter[is.na(inter)] <- 1
-                    inter
-                  },
-                  "presence" = {
-                    inter <- recast(extract[, c("Description", "contrastName", "p.adjust")], 
-                                    Description ~ contrastName, 
-                                    measure.var = "p.adjust")
-                    rownames(inter) <- inter$Description
-                    inter <- inter <- inter[, colnames(inter) != "Description"]
-                    inter[!is.na(inter)] <- 1
-                    inter[is.na(inter)]  <- 0
-                    inter
-                  },
-                  "FC" = {
-                    inter <- recast(extract[, c("Description", "contrastName", "FC")], 
-                                    Description ~ contrastName, 
-                                    measure.var = "FC")
-                    rownames(inter) <- inter$Description
-                    inter <- inter[, colnames(inter) != "Description"]
-                    inter[is.na(inter)] <- 0
-                    inter
-                  },
-                  "log2FC" = {
-                    inter <- recast(extract[, c("Description", "contrastName", "FC")], 
-                                    Description ~ contrastName, 
-                                    measure.var = "FC")
-                    rownames(inter) <- inter$Description
-                    inter <- inter[, colnames(inter) != "Description"]
-                    inter <- log2(inter)
-                    inter[is.infinite(as.matrix(inter))] <- 0
-                    # means FC is 0, shouldn't happen much...
-                    inter[is.na(inter)] <- 0
-                    # means it's not significant and not in the matrix. 
-                    inter
-                  })
+    dat <- switch(
+      matrixType, 
+      "GeneRatio" = {
+        inter <- recast(
+          extract[, c("Description", "contrastName", "GeneRatio")], 
+          Description ~ contrastName, 
+          measure.var = "GeneRatio")
+        rownames(inter) <- inter$Description
+        inter <- inter[, colnames(inter) != "ID"]
+        inter[is.na(inter)] <- 0
+        inter
+      }, 
+      "p.adjust" = {
+        inter <- recast(
+          extract[, c("Description", "contrastName", "p.adjust")], 
+          Description ~ contrastName, 
+          measure.var = "p.adjust")
+        rownames(inter) <- inter$Description
+        inter <- inter[, colnames(inter) != "Description"]
+        inter[is.na(inter)] <- 1
+        inter
+      },
+      "presence" = {
+        inter <- recast(
+          extract[, c("Description", "contrastName", "p.adjust")], 
+          Description ~ contrastName, 
+          measure.var = "p.adjust")
+        rownames(inter) <- inter$Description
+        inter <- inter <- inter[, colnames(inter) != "Description"]
+        inter[!is.na(inter)] <- 1
+        inter[is.na(inter)]  <- 0
+        inter
+      },
+      "FC" = {
+        inter <- recast(
+          extract[, c("Description", "contrastName", "FC")], 
+          Description ~ contrastName, 
+          measure.var = "FC")
+        rownames(inter) <- inter$Description
+        inter <- inter[, colnames(inter) != "Description"]
+        inter[is.na(inter)] <- 0
+        inter
+      },
+      "log2FC" = {
+        inter <- recast(
+          extract[, c("Description", "contrastName", "FC")], 
+          Description ~ contrastName, 
+          measure.var = "FC")
+        rownames(inter) <- inter$Description
+        inter <- inter[, colnames(inter) != "Description"]
+        inter <- log2(inter)
+        inter[is.infinite(as.matrix(inter))] <- 0
+        # means FC is 0, shouldn't happen much...
+        inter[is.na(inter)] <- 0
+        # means it's not significant and not in the matrix. 
+        inter
+      })
     
     if (nrow(dat) > 1) {
-      switch(matrixType, 
-             "presence" = { 
-               hcPlot <- hclust(dist(dat, method = "binary"), method = "complete") 
-               hcCol <- hclust(dist(t(dat), method = "binary"), method = "complete")
-             },
-             { 
-               hcPlot <- hclust(dist(inter, method = "euclidean"), method = "complete")
-               hcCol <- hclust(dist(t(inter), method = "euclidean"), method = "complete")
-             })
+      switch(
+        matrixType, 
+        "presence" = { 
+          hcPlot <- hclust(dist(dat, method = "binary"), 
+                           method = "complete") 
+          hcCol <- hclust(dist(t(dat), method = "binary"), 
+                          method = "complete")
+        },
+        { 
+          hcPlot <- hclust(dist(inter, method = "euclidean"), 
+                           method = "complete")
+          hcCol <- hclust(dist(t(inter), method = "euclidean"), 
+                          method = "complete")
+        })
     } else {
       hcPlot <- FALSE
     }
     
-    colors <- switch(matrixType,
-                     "presence"   = {structure(c("white", "firebrick"), names = c("0", "1"))},
-                     "GeneRatio"  = {colorRamp2(c(0, max(dat)), c("white", "firebrick"))},
-                     "p.adjust"   = {colorRamp2(c(0, pvalThresh, 1), c("firebrick", "white", "white"))},
-                     "FC"         = {colorRamp2(c(0, max(dat)), c("white", "firebrick"))},
-                     "log2FC"     = {colorRamp2(c(-max(abs(dat)), 0, max(abs(dat))), c("blue", "white", "firebrick"))})
+    colors <- switch(
+      matrixType,
+      "presence"   = {structure(c("white", "firebrick"), names = c("0", "1"))},
+      "GeneRatio"  = {colorRamp2(c(0, max(dat)), c("white", "firebrick"))},
+      "p.adjust"   = {colorRamp2(c(0, pvalThresh, 1), 
+                                 c("firebrick", "white", "white"))},
+      "FC"         = {colorRamp2(c(0, max(dat)), c("white", "firebrick"))},
+      "log2FC"     = {colorRamp2(c(-max(abs(dat)), 0, max(abs(dat))), 
+                                 c("blue", "white", "firebrick"))})
     
     ht_opt(DENDROGRAM_PADDING = unit(0.1, "cm"))
     
@@ -795,14 +837,15 @@ methods::setMethod(
       }
       return(toReturn)
     } else {
-      list_res <- lapply(names(object@metadata[[from]]), 
-                         FUN = function(ontres) {
-                           interRes <- object@metadata[[from]][[ontres]]$summary
-                           if (!is.null(contrastName)) {
-                             interRes <- interRes[which(interRes$contrastName == contrastName), ]
-                           }
-                           interRes
-                         })
+      list_res <- lapply(
+        names(object@metadata[[from]]), 
+        FUN = function(ontres) {
+          interRes <- object@metadata[[from]][[ontres]]$summary
+          if (!is.null(contrastName)) {
+            interRes <- interRes[which(interRes$contrastName == contrastName), ]
+          }
+          interRes
+        })
       names(list_res) <- names(object@metadata[[from]])
       return(list_res)
     }
