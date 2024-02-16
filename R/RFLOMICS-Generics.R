@@ -377,8 +377,8 @@ methods::setGeneric(
 
 
 methods::setGeneric(
-  name = "getCoexpSetting",
-  def  = function(object, ... ){standardGeneric("getCoexpSetting")}
+  name = "getCoexpSettings",
+  def  = function(object, ... ){standardGeneric("getCoexpSettings")}
 )
 
 methods::setGeneric(

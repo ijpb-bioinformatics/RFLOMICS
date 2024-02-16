@@ -49,7 +49,7 @@ methods::setMethod(f          = "generateReport",
   # Knit the document, passing in the `params` list, and eval it in a
   # child of the global environment (this isolates the code in the document
   # from the code in this app).
-  render(input             = tempReport, 
+  rmarkdown::render(input             = tempReport, 
         output_file       = fileName,
         params            = param.list,
         knit_root_dir     = tmpDir,

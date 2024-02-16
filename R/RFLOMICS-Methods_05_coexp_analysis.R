@@ -377,7 +377,7 @@ methods::setMethod(f = "plotCoseqContrasts",
                      function(object){
                        
                        # Get Selected contrasts for coexpression
-                       H <- getCoexpSetting(object)$gene.list.names
+                       H <- getCoexpSettings(object)$gene.list.names
                        
                        # Gene's repartition by clusters
                        coseq.res  <-
@@ -457,26 +457,26 @@ methods::setMethod(f          = "plotCoseqContrasts",
 #'
 #' @param object of class RflomicsSE
 #' @return List of differential analysis setting parametres.
-#' @exportMethod getCoexpSetting
-#' @rdname getCoexpSetting
+#' @exportMethod getCoexpSettings
+#' @rdname getCoexpSettingss
 #'
 
-methods::setMethod(f          = "getCoexpSetting",
+methods::setMethod(f          = "getCoexpSettings",
                    signature  = "RflomicsSE",
                    
                    definition = function(object){
                      return(object@metadata$CoExpAnal$setting)   
                    })
 
-#' @rdname getCoexpSetting
-#' @title getCoexpSetting
+#' @rdname getCoexpSettings
+#' @title getCoexpSettings
 #' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
-#' @exportMethod getCoexpSetting
+#' @exportMethod getCoexpSettings
 
-methods::setMethod(f          = "getCoexpSetting",
+methods::setMethod(f          = "getCoexpSettings",
                    signature  = "RflomicsMAE",
                    definition = function(object, SE.name){
-                     getCoexpSetting(object = object[[SE.name]])
+                     getCoexpSettings(object = object[[SE.name]])
                    })
 
 

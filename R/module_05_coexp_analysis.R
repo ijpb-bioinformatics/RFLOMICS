@@ -465,15 +465,15 @@ check_run_coseq_execution <- function(object.SE, param.list = NULL){
   # filtering setting
   if(is.null(object.SE@metadata[["CoExpAnal"]]) || object.SE@metadata[["CoExpAnal"]]$results != TRUE) return(TRUE)
   
-  if(isFALSE(dplyr::setequal(param.list$gene.list.names, getCoexpSetting(object.SE)$gene.list.names))) return(TRUE)
-  if(param.list$model          != getCoexpSetting(object.SE)$model)                       return(TRUE)
-  if(param.list$merge.type     != getCoexpSetting(object.SE)$merge.type)                  return(TRUE)
-  if(isFALSE(dplyr::setequal(param.list$K.range, getCoexpSetting(object.SE)$K.range)))    return(TRUE)
-  if(param.list$replicates.nb  != getCoexpSetting(object.SE)$replicates.nb)               return(TRUE)
-  if(param.list$transformation != getCoexpSetting(object.SE)$transformation)              return(TRUE)
-  if(param.list$normFactors    != getCoexpSetting(object.SE)$normFactors)                 return(TRUE)
-  if(param.list$GaussianModel  != getCoexpSetting(object.SE)$GaussianModel)               return(TRUE)
-  if(param.list$scale          != getCoexpSetting(object.SE)$scale)                       return(TRUE)
+  if(isFALSE(dplyr::setequal(param.list$gene.list.names, getCoexpSettings(object.SE)$gene.list.names))) return(TRUE)
+  if(param.list$model          != getCoexpSettings(object.SE)$model)                       return(TRUE)
+  if(param.list$merge.type     != getCoexpSettings(object.SE)$merge.type)                  return(TRUE)
+  if(isFALSE(dplyr::setequal(param.list$K.range, getCoexpSettings(object.SE)$K.range)))    return(TRUE)
+  if(param.list$replicates.nb  != getCoexpSettings(object.SE)$replicates.nb)               return(TRUE)
+  if(param.list$transformation != getCoexpSettings(object.SE)$transformation)              return(TRUE)
+  if(param.list$normFactors    != getCoexpSettings(object.SE)$normFactors)                 return(TRUE)
+  if(param.list$GaussianModel  != getCoexpSettings(object.SE)$GaussianModel)               return(TRUE)
+  if(param.list$scale          != getCoexpSettings(object.SE)$scale)                       return(TRUE)
   
   return(FALSE)
 }
