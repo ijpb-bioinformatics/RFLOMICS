@@ -466,9 +466,12 @@
     
     # ---- Annotation on diff results: ----
     # run analysis
+    messList <- switch(listSource, 
+                       "DiffExpEnrichAnal" = "differential expression",
+                       "CoExpEnrichAnal" = "co-expression clusters")
     message("# 11- ", database, 
-            " Enrichment Analysis of ", listSource ,
-            " lists... ", dataset)
+            " Enrichment Analysis of ", messList ,
+            " lists from ", dataset)
     
     #---- progress bar ----#
     progress$inc(5/10, detail = paste("Run analyses ", 50, "%", sep = ""))
