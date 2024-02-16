@@ -17,13 +17,32 @@
 #' @param from indicates if ListNames are from differential analysis results
 #' (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
 #' @param database is it a custom annotation, GO or KEGG annotations
-#' @return A list of results from clusterprofiler.
-#' @export
+#' @return A RflomicsMAE or a RflomicsS, depending on the class of object 
+#' parameter. The enrichment results are added to the metadata slot, either
+#' in DiffExpEnrichAnal or CoExpEnrichAnal. 
 #' @importFrom dplyr filter select mutate relocate
 #' @importFrom tidyselect all_of
 #' @importFrom clusterProfiler enrichKEGG enrichGO enricher
 #' @exportMethod runAnnotationEnrichment
 #' @rdname runAnnotationEnrichment
+#' @examples
+#' # Generate RflomicsMAE for example
+#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
+#' # Run GO annotation (enrichGO)
+#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]], 
+#'                         list_args = list(OrgDb = "org.At.tair.db", 
+#'                                          keyType = "TAIR", 
+#'                                          pvalueCutoff = 0.05), 
+#'                         from = "DiffExp", database = "GO",
+#'                         domain = "CC")
+#' getEnrichRes(MAEtest[["protetest"]])
+#' # Run KEGG annotation (enrichKEGG)
+#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]], 
+#'                         list_args = list(organism = "ath", 
+#'                                          keyType = "kegg", 
+#'                                          pvalueCutoff = 0.05), 
+#'                         from = "DiffExp", database = "KEGG")
+#' sumORA(MAEtest[["protetest"]], from = "DiffExp", database = "KEGG")
 methods::setMethod(
   f = "runAnnotationEnrichment",
   signature = "RflomicsSE",
@@ -233,8 +252,7 @@ methods::setMethod(
                         list_args = list(
                           pvalueCutoff = 0.05,
                           qvalueCutoff = 1,
-                          # minGSSize = 10,
-                          minGSSize = 3,
+                          minGSSize = 10,
                           maxGSSize = 500,
                           universe = names(object)
                         ),
@@ -264,7 +282,9 @@ methods::setMethod(
 
 
 #' @title plotKEGG
-#' @description TODO
+#' @description Plot the KEGG pathway using the pathview package. It overlays
+#' the result of the differential analysis or the clusters entity on the
+#' image. 
 #' @param object An object of class \link{RflomicsSE}. 
 #' It is expected the SE object is produced by rflomics previous analyses, 
 #' as it relies on their results.
@@ -287,9 +307,28 @@ methods::setMethod(
 #' Default is the one find in the clusterprofiler results in object.
 #' @param ... Not in use at the moment
 #'
-#' @return A plot.
-#' @export
+#' @return Only displays the KEGG pathway, it does not return any object.
 #' @exportMethod plotKEGG
+#' @examples
+#' # Generate RflomicsMAE for example
+#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
+#' # Run KEGG annotation on differential analysis results
+#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]], 
+#'                         list_args = list(organism = "ath", 
+#'                                          keyType = "kegg", 
+#'                                          pvalueCutoff = 0.05), 
+#'                         from = "DiffExp", database = "KEGG")
+#'plotKEGG(MAEtest[["protetest"]], pathway_id = "ath00380", species = "ath", 
+#'         contrastName = "(temperatureElevated - temperatureMedium) in mean")
+#' # On co expression clustering results :
+#'MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]], 
+#'                        list_args = list(organism = "ath", 
+#'                        keyType = "kegg", 
+#'                        pvalueCutoff = 0.05), 
+#'                        from = "CoExp", database = "KEGG")
+#' plotKEGG(MAEtest[["protetest"]], pathway_id = "ath00710", species = "ath", 
+#'           contrastName = "cluster.4", from = "Coexp")
+#'          
 methods::setMethod(
   f = "plotKEGG",
   signature = "RflomicsSE",
@@ -343,7 +382,8 @@ methods::setMethod(
   })
 
 #' @title plotClusterProfiler
-#' @description TODO
+#' @description Plot a dotplot, a cnetplot or an heatplot, using enrichplot 
+#' package. It is a wrapper method destined for the RflomicsSE class.
 #' @param object An object of class \link{RflomicsSE}. 
 #' It is expected the SE object is produced by rflomics previous analyses, 
 #' as it relies on their results.
@@ -366,19 +406,37 @@ methods::setMethod(
 #' @param ... additionnal parameters for cnetplot, heatplot or 
 #' enrichplot functions.
 #'
-#' @return A plot.
-#' @export
+#' @return A ggplot object.
 #' @importFrom enrichplot cnetplot heatplot dotplot
 #' @importFrom ggplot2 scale_fill_gradient2 guide_colourbar
 #' @importFrom ggrepel geom_label_repel
 #' @exportMethod plotClusterProfiler
+#' @examples
+#' # Generate RflomicsMAE for example
+#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
+#' # Run KEGG annotation on differential analysis results
+#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]], 
+#'                         list_args = list(organism = "ath", 
+#'                                          keyType = "kegg", 
+#'                                          pvalueCutoff = 0.05), 
+#'                         from = "DiffExp", database = "KEGG")
+#'
+#' plotClusterProfiler(MAEtest[["protetest"]], 
+#'         contrastName = "(temperatureElevated - temperatureMedium) in mean", 
+#'         database = "KEGG", from = "DiffExp",
+#'         plotType = "heatplot", p.adj.cutoff = 0.05, domain = "no-domain")                         
+#' plotClusterProfiler(MAEtest[["protetest"]], 
+#'         contrastName = "(temperatureElevated - temperatureMedium) in mean", 
+#'         database = "KEGG", from = "coexp",
+#'         plotType = "heatplot",  domain = "no-domain") 
+#'
 methods::setMethod(
   f = "plotClusterProfiler",
   signature = "RflomicsSE",
   definition = function(object,
                         contrastName,
                         database,
-                        domain = NULL,
+                        domain = "no-domain",
                         from = "DiffExp",
                         plotType = "dotplot",
                         showCategory = 15,
@@ -498,7 +556,9 @@ methods::setMethod(
 
 
 #' @title plotEnrichComp
-#' @description TODO
+#' @description Plot an heatmap of all the enriched term found for a given
+#' database and a given source (differential analysis or coexpression clusters).
+#' Allow for the comparison of several enrichment results.
 #' @param object An object of class \link{RflomicsSE}. 
 #' It is expected the SE object is produced by rflomics previous analyses, 
 #' as it relies on their results.
@@ -515,14 +575,27 @@ methods::setMethod(
 #' @param decorate one of stars or GeneRatio. Decoration of the heatmap. 
 #' Default is NULL, no decoration.
 #' @param ... more arguments for ComplexHeatmap::Heatmap. 
-#' @return A ggplot object
-#' @export
+#' @return A complexHeatmap object.
+#' 
 #' @importFrom reshape2 recast
 #' @importFrom circlize colorRamp2
 #' @importFrom ComplexHeatmap Heatmap ht_opt
 #' @importFrom stringr str_wrap
 #' @exportMethod plotEnrichComp
 #' @rdname plotEnrichComp
+#' @examples
+#' # Generate RflomicsMAE for example
+#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
+#' # Run KEGG annotation on differential analysis results
+#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]], 
+#'                         list_args = list(organism = "ath", 
+#'                                          keyType = "kegg", 
+#'                                          pvalueCutoff = 0.1), 
+#'                         from = "DiffExp", database = "KEGG")
+#'                         
+#' plotEnrichComp(MAEtest[["protetest"]], from = "DiffExp", 
+#'                database = "KEGG", matrixType = "FC")
+#' 
 methods::setMethod(
   f = "plotEnrichComp",
   signature = "RflomicsSE",
@@ -530,7 +603,7 @@ methods::setMethod(
                         from = "DiffExp", 
                         database = NULL, 
                         domain = "no-domain",
-                        matrixType = "GeneRatio",
+                        matrixType = "FC",
                         nClust = NULL,
                         ...){
     
@@ -739,14 +812,34 @@ methods::setMethod(
 #
 #' @title Get a particular enrichment result
 #'
-#' @param object a SE object or a MAE object (produced by Flomics).
-#' @param contrastName description
-#' @param experiment description
-#' @param from description
-#' @param database description
-#' @param domain description
-#' @return enrichment result.
+#' @param object a RflomicsSE object or a RflomicsMAE object. Should have at 
+#' least results from an enrichment, on differential analysis or co expression
+#' clusters.
+#' @param contrastName the contrast or cluster name on which the enrichment
+#' was perform.
+#' @param experiment if the object is a RflomicsMAE, then experiment is the 
+#' name of the RflomicsSE to look for. 
+#' @param from either diffexp or coexp, indicates where to search for the 
+#' results
+#' @param database the database used for the enrichment (GO, KEGG or custom)
+#' @param domain the subonology or subdomain for the database (eg CC, MF or
+#' BP for GO.)
+#' @return enrichment results given in the form of lists of clusterprofiler
+#' results.
 #' @exportMethod getEnrichRes
+#' @rdname getEnrichRes
+#' @examples
+#' # Generate RflomicsMAE for example
+#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
+#' # Run KEGG annotation on differential analysis results
+#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]], 
+#'                         list_args = list(organism = "ath", 
+#'                                          keyType = "kegg", 
+#'                                          pvalueCutoff = 0.1), 
+#'                         from = "DiffExp", database = "KEGG")
+#' # Get all results from KEGG on differential expression lists:
+#' getEnrichRes(MAEtest[["protetest"]], 
+#'               from = "diffexp", database = "KEGG")
 methods::setMethod(
   f = "getEnrichRes",
   signature = "RflomicsSE",
@@ -756,11 +849,12 @@ methods::setMethod(
                         database = "GO",
                         domain = NULL) {
     
+    from <- .determineFromEnrich(from)
+    
     res_return <- .getEnrichResIntSE(object, 
                                      contrastName = contrastName, 
                                      from = from,
-                                     database = database, 
-                                     domain = domain)
+                                     database = database)
     
     if (!is.null(domain) && !is.null(contrastName)) {
       return(res_return[[domain]])
@@ -769,6 +863,7 @@ methods::setMethod(
     }
   })
 
+#' @rdname getEnrichRes
 #' @exportMethod getEnrichRes
 methods::setMethod(
   f = "getEnrichRes",
@@ -785,11 +880,12 @@ methods::setMethod(
            the enrichment results.")
     }
     
+    from <- .determineFromEnrich(from)
+    
     res_return <- .getEnrichResIntSE(object[[experiment]], 
                                      contrastName = contrastName, 
                                      from = from,
-                                     database = database, 
-                                     domain = domain)
+                                     database = database)
     
     if (!is.null(domain) && !is.null(contrastName)) {
       return(res_return[[domain]])
@@ -809,6 +905,18 @@ methods::setMethod(
 #' @param from either DiffExpEnrichAnal or CoExpAnal.
 #' @return a list of tables or a table
 #' @exportMethod sumORA
+#' @examples
+#' # Generate RflomicsMAE for example
+#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
+#' # Run KEGG annotation on differential analysis results
+#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]], 
+#'                         list_args = list(organism = "ath", 
+#'                                          keyType = "kegg", 
+#'                                          pvalueCutoff = 0.1), 
+#'                         from = "DiffExp", database = "KEGG")
+#' # Search for the pvalue cutoff:
+#' sumORA(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
+#' 
 methods::setMethod(
   f = "sumORA",
   signature = "RflomicsSE",
@@ -855,31 +963,85 @@ methods::setMethod(
 
 # ---- Get a pvalue threshold used in enrichment analysis ----
 #
-#' @title Get a pvalue threshold used in enrichment analysis
+#' @title Get the pvalue threshold used in enrichment analysis
 #'
-#' @param object a SE object
-#' @param from results
+#' @param object a RflomicsSE object
+#' @param from where to search for the results (either coexp or diffExp)
 #' @param database which database (GO, KEGG, custom...)
-#' @return pvalue
+#' @return the pvalue cutoff used for the analysis.
 #' @exportMethod getEnrichPvalue
+#' @examples
+#' # Generate RflomicsMAE for example
+#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
+#' # Run KEGG annotation on differential analysis results
+#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]], 
+#'                         list_args = list(organism = "ath", 
+#'                                          keyType = "kegg", 
+#'                                          pvalueCutoff = 0.1), 
+#'                         from = "DiffExp", database = "KEGG")
+#' # Search for the pvalue cutoff:
+#' getEnrichPvalue(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
+#' 
 methods::setMethod(
   f = "getEnrichPvalue",
   signature = "RflomicsSE",
   definition = function(object,
                         from = "DiffExpEnrichAnal",
                         database = "GO") {
-    
-    
     from <- .determineFromEnrich(from)
     
     if (!database  %in% c("GO", "KEGG", "custom")) {
-      stop(from, " not a valid value. Choose one of GO, KEGG or custom.")
+      stop(database, " is not a valid value. 
+           Choose one of GO, KEGG or custom.")
     }
     pvalCutoff <- metadata(object)[[from]][[database]]$list_args$pvalueCutoff
     if (is.null(pvalCutoff)) {
-      stop("P-value not found")
+      stop("P-value not found (returns NULL)")
     } 
     
     return(pvalCutoff)
+    
+  })
+
+
+
+# ---- Reset enrichment results ----
+#
+#' @title Set enrichment results to null
+#' Users should not have to use this method. It is mainly planned for the
+#' interface code.
+#' @param object a RflomicsSE object
+#' @param from where to search for the results (either coexp or diffExp)
+#' @param database which database (GO, KEGG, custom...)
+#' @return an RflomicsSE object with NULL value in the 
+#' enrichment results.
+#' @exportMethod setEnrichNull
+#' @examples
+#' # Generate RflomicsMAE for example
+#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
+#' # Run KEGG annotation on differential analysis results
+#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]], 
+#'                         list_args = list(organism = "ath", 
+#'                                          keyType = "kegg", 
+#'                                          pvalueCutoff = 0.1), 
+#'                         from = "DiffExp", database = "KEGG")
+#' # Search for the pvalue cutoff:
+#' setEnrichNull(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
+#' 
+methods::setMethod(
+  f = "setEnrichNull",
+  signature = "RflomicsSE",
+  definition = function(object,
+                        from = "DiffExp",
+                        database = NULL) {
+    from <- .determineFromEnrich(from)
+    
+    if (is.null(database)) {
+      metadata(object)[[from]] <- NULL
+    } else {
+      metadata(object)[[from]][[database]] <- NULL
+    }
+    
+    return(object)
     
   })

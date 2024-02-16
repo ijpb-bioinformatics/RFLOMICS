@@ -443,7 +443,7 @@ methods::setGeneric(
   def  = function(object,
                   contrastName,
                   database,
-                  domain = NULL,
+                  domain = "no-domain",
                   from = "DiffExp",
                   plotType = "dotplot",
                   showCategory = 15,
@@ -460,7 +460,7 @@ methods::setGeneric(
                  from = "DiffExp", 
                  database = NULL, 
                  domain = "no-domain",
-                 matrixType = "GeneRatio",
+                 matrixType = "FC",
                  nClust = NULL,
                  ...
   ){standardGeneric("plotEnrichComp")}
@@ -489,6 +489,13 @@ methods::setGeneric(
                   from = "DiffExpEnrichAnal", 
                   database = NULL, 
                   contrastName = NULL){standardGeneric("sumORA")}
+)
+
+methods::setGeneric(
+  name = "setEnrichNull",
+  def = function(object,
+                 from = "DiffExp",
+                 database = NULL) {standardGeneric("setEnrichNull")}
 )
 
 ################# INTEGRATION #################
