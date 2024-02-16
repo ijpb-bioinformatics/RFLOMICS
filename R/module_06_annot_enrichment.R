@@ -830,7 +830,20 @@
       
       # select database
       pickerInput(
-        inputId = ns("db.select"), label = "Select Data Base:",
+        inputId = ns("db.select"), 
+        label = span(
+          "Select Data Base:", 
+          popify(
+            actionLink(
+              ns("dbSel"), icon("question-circle")),
+            title = "",
+            content = paste0("The databases are automatically ",
+                             "retrieved from your R library, ",
+                             "searching for all package in the for of ",
+                             "org.*db. If none is found, ",
+                             "please install the corresponding ",
+                             "database using Bioconductor install manager."),
+            trigger = "click", placement = "top")), 
         choices = c("", dir(.libPaths())[grep("org.*db", dir(.libPaths()))]),
         selected = "",
         options = list(`actions-box` = TRUE, size = 10, 
