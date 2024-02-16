@@ -100,8 +100,6 @@ methods::setMethod(f         = "runDiffAnalysis",
                      
                      # move in ExpDesign Constructor
                      model_matrix <- model.matrix(as.formula(paste(modelFormula, collapse = " ")), data = getDesignMat(object))
-                     # model_matrix <- model.matrix(as.formula(paste(design@Model.formula, collapse = " ")), data = as.data.frame(design@ExpDesign))
-                     # rownames(model_matrix) <- rownames(design@ExpDesign)
                      
                      ListRes <- switch(method,
                                        "edgeRglmfit" = .tryRflomics(.edgeRAnaDiff(count_matrix  = SummarizedExperiment::assay(object),

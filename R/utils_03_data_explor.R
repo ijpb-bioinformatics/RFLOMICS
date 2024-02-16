@@ -72,10 +72,10 @@
            assay(object) <- log1p(assayTransform)
          },
          "log2" = {
-           assay(object) <- log2(assayTransform + 1)
+           assay(object) <- log2(assayTransform + 10^-10)
          },
          "log10" = {
-           assay(object) <- log10(assayTransform + 1)
+           assay(object) <- log10(assayTransform + 10^-10)
          },
          "squareroot" = {
            assay(object) <- sqrt(assayTransform)

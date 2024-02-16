@@ -66,24 +66,27 @@ coverPageUI <- function(){
 
 GlossaryPageUI <- function(){
   
-  GlossaryTable <- matrix(c("Dataset",     "?",
-                            "Factor",      "?",
-                            "Batch",       "?",
-                            "Bio",         "?",
-                            "Meta",        "?",
-                            "modality",    "?",
-                            "reference",   "?",
-                            "Condition",   "?",
-                            "Sample",      "?",
-                            "Feature",     "?",
-                            "Contrast",    "?",
-                            "Sample",      "?",
-                            "Average",     "?",
-                            "Interaction", "?"
-                            
-                            ), byrow = T, ncol = 2)
+  GlossaryTable <- matrix(c("Dataset",     "?", "",
+                            "Factor",      "?", "",
+                            "Batch",       "or technical factor: technical impact on the experience (Replicate, scientist...), not related to the biological question behind the experiment", "",
+                            "Bio",         "Biological factor: all the conditions that samples were subject to for the experiment (stress, temperature changes, genotype, time...)" , "",
+                            "Meta",        "?",  "",
+                            "Balanced design", "a balanced design is a an experimental design where all experimental group have the an equal number of subject observations",  "STATO_0000003",
+                            "Complete Design","every combination of levels between the factors is present in the design","",
+                             "modality",    "?",  "",
+                            "reference",   "?",  "",
+                            "Condition",   "?",  "",
+                            "Sample",      "?",  "",
+                            "Feature",     "?",  "",
+                            "Contrast",    "?",  "",
+                            "CPM","Count Per Million of mapped reads","",
+                            "TMM","Trimmed Mean of M-values: is the weighted mean of log ratios between a sample and a reference, after excluding the most expressed genes and the genes with the largest log ratios","edgeR",
+                            "Sample",      "?",  "",
+                            "Average",     "?",  "",
+                            "Interaction", "a model interaction effect term is a model term which accounts for variation explained by the combined effects of the factor levels of more than one (usually 2) independent variables","(STATO_0000469)"
+                              ), byrow = T, ncol = 3)
   
-  colnames(GlossaryTable) <- c("Term", "Definition")
+  colnames(GlossaryTable) <- c("Term", "Definition","Source")
   
   fluidRow(
     # load exp design

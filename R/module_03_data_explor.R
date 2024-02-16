@@ -10,8 +10,28 @@ QCNormalizationTabUI <- function(id){
   ns <- NS(id)
   tagList(
     fluidRow(
-      box(title = span(tagList(icon("filter"), "     Data Filtering and Normalization ", tags$small("(Scroll down for instructions)"))),
-          width = 12, status = "warning", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE)
+      box(title = span(tagList(icon("filter"), "     Data exploration and pre-processing ", tags$small("(Scroll down for instructions)"))),
+          width = 12, status = "warning", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE,
+          p("Very important and non trivial step which are crucial for single-omics analysis and also for the integration of different omics data. Default settings have been expertized"),
+          h4(tags$span("Explore:", style = "color:orange")),
+          p("Identify the noise and the source of technical and biological variability thanks to the",tags$b("PCA"),""),
+          h4(tags$span("Filter:", style = "color:orange")),
+          p("Remove outliers samples so as low expressed entities which introduce noise in the data"),
+          h4(tags$span("Transform and normalize:", style = "color:orange")),
+          p("Transform data to linearize and make it more Gaussian-like and Normalize to identify and correct technical biases and make the data comparable across samples. Depending on the omics type, the pre-processing steps will be different: "),
+          h5(tags$span("RNAseq data:", style = "color:blue")),
+          p("",tags$b("Details on filtering step:"),""),
+          p("By default, non expressed/non detected genes are removed"),
+          p("By default, low expressed genes are removed according to their CPM. By default, genes with a cpm >= 1 in at least n Samples = min(NbReplicates) samples are kept."),
+          p("NB: you can choose the other strategy which is to remove genes according to a cpm >= 1 in at least n Samples = NbConditions cpm threshold could be changed"),
+          p("",tags$b("Details on normalization:"),""),
+          p("TMM from edgeR is the default method. It was found to be the best methods (Dillies et al., 2013)"),
+          h5(tags$span("Proteomic and metabolomic data", style = "color:blue")),
+          p("",tags$b("Details on transformation:"),""),
+          p("Log2 is the default method for proteomic and metabolomic data transformation (Efstathiou et al, 2017)"),
+          p("",tags$b("Normalization:"),""),
+          p("Median is the the default method for proteomic and metabolomic data normalization")
+          )
     ),
     fluidRow(
       column(4,
@@ -40,7 +60,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     sampleList <- colnames(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]])
     pickerInput(
       inputId  = session$ns("selectSamples"),
-      label    = .addBSpopify(label = 'Sample list:', content = "totot"),
+      label    = .addBSpopify(label = 'Sample list:', content = "Select samples to include in further analyses"),
       choices  = sampleList,
       options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
       multiple = TRUE,
@@ -62,16 +82,16 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     paramRNAseq.list <- list(
       
       fluidRow(
-        column(12, h5("Low count Filtering (CPM):")),
-        column(8,
+        column(12, h5(.addBSpopify(label = 'Low count Filtering (CPM):', content = "Genes with low counts will be removed based on count per million (cpm), accounting for the library size"))),
+        column(12,
                selectInput(inputId  = session$ns("Filter_Strategy"),
-                           label    = .addBSpopify(label = 'Strategy', content = "totot"),
+                           label    = .addBSpopify(label = 'Strategy', content = "Choose the strategy to filter genes based on count per million (cpm). keep gene if the NbOfsample_over_cpm >= Strategy."),
                            choices  = c("NbConditions" = "NbConditions",  "NbReplicates" = "NbReplicates"),
                            selected = "NbReplicates")
         ),
-        column(4,
+        column(12,
                numericInput(inputId = session$ns("FilterSeuil"),
-                            label=.addBSpopify(label = 'Cutoff:', content = "totot"),
+                            label=.addBSpopify(label = 'CPM cut-off:', content = "Choose the cpm cut-off"),
                             value=1, min = 1, max=10, step = 1 )
         )
       ),
@@ -79,7 +99,7 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
         column(12,
                h5("Gene counts normalization:"),
                selectInput(inputId  = session$ns("selectNormMethod"),
-                           label    = .addBSpopify(label = 'method', content = "totot"),
+                           label    = .addBSpopify(label = 'method', content = "Normalization method"),
                            choices  =  list("TMM (edgeR)" = "TMM"),
                            selected = "TMM"))),
       fluidRow( column(12, actionButton(session$ns("run"),"Run")))
@@ -90,14 +110,13 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
       
       radioButtons(
         inputId  = session$ns("dataTransform"),
-        label    = .addBSpopify(label = 'Data transformation:', content = "totot"),
-        choices  = c("log1p" = "log1p","squareroot" = "squareroot",
-                     "log2" = "log2", "log10" = "log10", "none" = "none"), 
+        label    = .addBSpopify(label = 'Data transformation:', content = "Choose log2 transformation"),
+        choices  = c("log2" = "log2", "none" = "none"), 
         selected = "none"),
       hr(),
       
       radioButtons(inputId = session$ns("selectProtMetNormMethod"),
-                   label    = .addBSpopify(label = 'Normalization method:', content = "totot"),
+                   label    = .addBSpopify(label = 'Normalization method:', content = "Choose median normalization"),
                    choices  =   c("median" = "median","totalSum" = "totalSum", "none" = "none"),
                    selected = "none"),
       
@@ -167,31 +186,44 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     SE.data <- MAE.data[[paste0(dataset, ".raw")]]
     
     tabPanel.default.list <- list(
-      
-      tabPanel("Distribution (density)",
-               tags$br(),
-               uiOutput(session$ns("CountDistUI"))
-      ),
       tabPanel("Distribution (boxplot)",
-               tags$br(),
+               tags$br(),tags$br(),
+               tags$i("Expect aligned medians after running the pre-processing step. Samples with shifted median may be outliers."),
+               tags$br(),tags$hr(),tags$br(),
                uiOutput(session$ns("boxplotUI"))
       ),
+      tabPanel("Distribution (density)",
+               tags$br(),tags$br(),
+               tags$i("Expect a gaussian density distribution after running the pre-processing step. 
+                      If a second peak is observed at the beginning of the curve, 
+                      this could indicate that the low, uninformative
+                      values, have not been correctly filtered. You may increase the filtering threshold."),
+               tags$br(),tags$hr(),tags$br(),
+               uiOutput(session$ns("CountDistUI"))
+      ), 
       tabPanel("Principal component analysis",
-               tags$br(),
+               tags$br(),tags$br(),
+               tags$i("You may have a look to the percentage of variability associated to each biological factor. 
+               To do this, you can change the colour of samples according to experimental factor's modalities (Levels radio buttons). 
+               It will help you to interpret the PCA axes. You may identify outliers samples that drives the variability. 
+                Biological replicates have to group together with superposed ellipse. If not, it may indicate batch effect."),
+               tags$br(),tags$hr(),tags$br(),
                uiOutput(session$ns("PCAcoordUI"))
       )
     )
     
     tabPanel.list <- list()
+    
     switch(getOmicsTypes(SE.data),
            "RNAseq" = {
-             tabPanel.list <- c(
-               list(
-                 tabPanel("Library size",
-                          tags$br(),
-                          uiOutput(session$ns("LibSizeUI")))
-               ),
-               tabPanel.default.list)
+             tabPanel.list <- c(tabPanel.default.list,list(
+                                tabPanel("Library size",
+                                      tags$br(),tags$br(),
+                                      tags$i("Expect equal library size after running the 
+                                             pre-processing step"),
+                                       tags$br(),tags$hr(),tags$br(),
+                                       uiOutput(session$ns("LibSizeUI")))))
+                                
            },
            "proteomics" = {
              tabPanel.list <- tabPanel.default.list

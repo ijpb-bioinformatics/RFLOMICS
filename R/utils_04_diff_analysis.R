@@ -318,7 +318,7 @@ sumDiffExp <- function(object, SE.name = NULL) {
   PValue <- NULL
   
   p <- ggplot2::ggplot(data=data) +
-    ggplot2::geom_histogram(aes(x=pvalue), bins = 200) +
+    ggplot2::geom_histogram(aes(x=pvalue), bins = 100) +
     ggplot2::labs(x = expression(p - value), y = "count", title = contrastName )+
     ggplot2::theme_bw(base_size = 10)
   
@@ -342,7 +342,7 @@ sumDiffExp <- function(object, SE.name = NULL) {
 
 .plotMA <- function(data, p.adj.cutoff, logFC.cutoff, contrastName=contrastName){
   
-  #Abundance <- logFC <- Adj.pvalue <- NULL
+  Abundance <- logFC <- Adj.pvalue <- NULL
   
   tmp <-dplyr::select(data,"Abundance","logFC","Adj.pvalue") %>% 
     dplyr::rename(., baseMeanLog2=Abundance, log2FoldChange=logFC, padj=Adj.pvalue)
@@ -355,6 +355,7 @@ sumDiffExp <- function(object, SE.name = NULL) {
                         select.top.method=c("padj","fc"),
                         legend = "bottom", top = 20,
                         font.label = c("plain", 7),
+                        label.rectangle = TRUE,
                         font.legend = c(11, "plain", "black"),
                         font.main = c(11, "bold", "black"),
                         caption = paste("logFC cutoff=",logFC.cutoff, " and " ,"FDR cutoff=",p.adj.cutoff,sep=""),
@@ -413,7 +414,7 @@ sumDiffExp <- function(object, SE.name = NULL) {
                                         FCcutoff = logFC.cutoff,
                                         axisLabSize=10,
                                         pointSize = 1.5,
-                                        labSize = 2,
+                                        labSize = 2.5,
                                         title = contrastName,
                                         titleLabSize=11,
                                         subtitle = "",
@@ -425,8 +426,9 @@ sumDiffExp <- function(object, SE.name = NULL) {
                                         captionLabSize=10,
                                         col = c('grey30', 'forestgreen', 'royalblue', 'red2'),
                                         colAlpha = 0.5,
-                                        drawConnectors = TRUE,
-                                        widthConnectors = 0.5)
+                                        drawConnectors = FALSE,
+                                        widthConnectors = 0.5,
+                                        max.overlaps = 15)
   
   return(p)
 }

@@ -115,7 +115,9 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                    
                    pickerInput(
                      inputId  = session$ns("select"),
-                     label    = .addBSpopify(label = 'Validated DEG lists:', content = "totot"),
+                     label    = .addBSpopify(label = 'Validated DEG lists:', 
+                                             content = paste0("Choose between the union or intersection",
+                                             "of your contrasts lists according to your biological question.")),
                      choices  = ListNames.diff,
                      options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
                      multiple = TRUE,
@@ -137,10 +139,10 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
             
             column(12,
                    selectInput(inputId = session$ns("scale"),
-                               label    = shinyBS::popify(shiny::actionLink("infoScale",paste0("Scale by ", name , ": (help)")),
-                                                 title="",
-                                                 content="By default for proteomics or metabolomics data, coseq is done onto Z-scores (data scaled by proteins or metabolites) to group them according to their expression profile rather than abundance",
-                                                 options=list(container="body")),
+                               label = .addBSpopify(label = 'Scale by:', 
+                                                    content = paste0("By default for proteomics or metabolomics data,", 
+                                                    "coseq is done onto Z-scores (data scaled by proteins or metabolites) to group them",
+                                                    "according to their expression profile rather than abundance")),
                                choices  = Scale ,
                                selected = Scale[1])
             )
@@ -166,26 +168,24 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
           fluidRow(
             column(12,
                    selectInput(inputId = session$ns("GaussianModel"),
-                               
-                               label    = shinyBS::popify(
-                                  shiny::actionLink("infoGaussianModel", paste0("Gaussian Model:", warning,"")),
-                                  title= "",
-                                  content="For proteomics or metabolomics data, coseq analysis may fail with default GaussianModel parameter. In this case, an error message will indicate to switch the other option: Gaussian_pk_Lk_Bk",
-                                                 options=list(container="body")),
-                               choices  = Gaussian,
-                               selected = Gaussian[1]))
+                              label = .addBSpopify(label = 'Gaussian Model:', 
+                                                   content = paste0("For proteomics or metabolomics data, coseq analysis may fail", 
+                                                   "with default GaussianModel parameter.",
+                                                   "In this case, an error message will indicate to switch the other option: Gaussian_pk_Lk_Bk")),
+                              choices  = Gaussian,
+                              selected = Gaussian[1]))
           ),
           fluidRow(
             column(8,
-                   sliderInput(session$ns("K.values"), label = "Number of clusters:", min=2, max=30, value=c(2,7), step=1)),
+                   sliderInput(session$ns("K.values"), label = .addBSpopify(label = 'K ranges:', content = "K=number of clusters"), min=2, max=30, value=c(2,7), step=1)),
             column(4,
-                   numericInput(inputId = session$ns("iter"), label="Iteration:", value=5, min = 5, max=20, step = 5))
+                   numericInput(inputId = session$ns("iter"), label=.addBSpopify(label = 'Iteration:', content = "Number of replicates"), value=5, min = 5, max=20, step = 5))
           ),
           hr(),
           fluidRow(
             
             column(8,
-                   materialSwitch(inputId = session$ns("clustermqCoseq"), label = "use remote cluster", value = FALSE, status = "success")
+                   materialSwitch(inputId = session$ns("clustermqCoseq"), label = .addBSpopify(label = 'use remote cluster', content = "send calculation to the cluster"), value = FALSE, status = "success")
             ),
             column(4, actionButton(session$ns("runCoSeq"),"Run")))
       ))
@@ -346,44 +346,81 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
         
         tabBox( id = "runClustering", width = 12,
                 
-                tabPanel("ICL",      
-                         renderText("Integrated Completed Likelihood (ICL) plotted versus number of clusters"),
-                         hr(),
+                tabPanel("ICL",  
+                         br(),br(),
+                         tags$i("Integrated Completed Likelihood (ICL) plotted versus number of clusters. 
+                                The ICL is the criterion used to select the number of clusters. 
+                                The number of clusters (K) that minmizes the ICL is the best number of clusters."),
+                         br(),hr(),br(),
                          renderPlot({ plot.coseq.res$ICL })),
-                tabPanel("probapost_barplots", 
-                         renderText("number of observations with a maximum conditional probability greater than threshold (0.8) per cluster"),
+                tabPanel("probapost_barplots",
+                         br(),
+                         br(),
+                         tags$i(
+                           paste0(
+                             "Barplots giving a quality control of each cluster.",
+                             " In green: number of " ,
+                             .omicsDic(dataset.SE)$variableName,
+                             " that are member of a cluster with a high confidance (Max Conditional Probability  > 0.8).",
+                             " In purple:  number of ",
+                             .omicsDic(dataset.SE)$variableName,
+                             " that are member of a cluster with a low confidance (Max Conditional Probability < 0.8).",
+                             " A high proportion of green observations may indicate that the clustering is not reliable and can't be exploited."
+                           )
+                         ),
+                         br(),
                          hr(),
-                         renderPlot({ plot.coseq.res$probapost_barplots })),
-                tabPanel("profiles",
-                         renderPlot({ plot.coseq.res$boxplots + theme(axis.text.x = element_text(angle = 90, hjust = 1)) })),
+                         br(),
+                         renderPlot({
+                           plot.coseq.res$probapost_barplots
+                         })),
+                tabPanel(
+                  "profiles",
+                  br(),
+                  br(),
+                  tags$i(
+                    "Overview of cluster's expression profiles. Boxplot are colored acording to  biological  factors"
+                  ),
+                  br(),
+                  hr(),
+                  br(),
+                  renderPlot({
+                    plot.coseq.res$boxplots + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+                  })
+                ),
                 tabPanel("profiles per cluster",
                          fluidRow(
                            column(3, 
+                                  br(),br(),br(),
                                   ## select cluster to plot
                                   box(width = 14, background = "light-blue", title = NULL,
                                       radioButtons(inputId = session$ns("selectCluster"), label = "Select cluster:",
                                                    choices  = 1:nb_cluster, selected = 1),
                                       radioButtons(inputId = session$ns("profile.condition"), label = "Condition:",
                                                    choices  = c("groups", factors.bio), selected = "groups"),
-                                      # selectInput(inputId = session$ns("observations"), label = "Observations(prob)",
-                                      #             choices = cluster.comp[[input$selectCluster]], multiple = FALSE, selectize = FALSE, size = 5))
                                       uiOutput(session$ns("observationsUI"))
                                   )
                            ),
                            column(9, 
+                                  br(),br(),
+                                  tags$i(tags$p("boxplots of expression/abundance profiles in each cluster colored by experimental factor's modality.")),
+                                  tags$i(tags$p("red line join the median of the expression/abundance profiles of each factor's modality")),
+                                  br(), hr(),br(),
                                   renderPlot({ 
-                                    plotCoExpressionProfile(dataset.SE, input$selectCluster, condition=input$profile.condition, features=input$observations) }))
+                                  plotCoExpressionProfile(dataset.SE, input$selectCluster, condition=input$profile.condition, features=input$observations) }))
                          )),
-                tabPanel("cluster composition",
+                
+                   tabPanel("cluster composition",
                          fluidRow(
-                           renderText(paste0("Cluster's composition according to ",RFLOMICS:::omicsDic(dataset.SE)$variableName,"'s contrasts appartenance")),
+                           br(),br(),
+                           tags$i(paste0("Cluster's composition according to the ",RFLOMICS:::omicsDic(dataset.SE)$variableName,"'s contrast belonging")),
+                           br(), hr(),br(),
                            renderPlot({ 
                              tag <- session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["Validcontrasts"]]$tag
                              
-                             if(length(tag) > 1){
-                               #UpSetR::upset(topDEF, sets = tag, order.by = "freq") 
+                         if(length(tag) > 1){
                                plotCoseqContrasts(dataset.SE)
-                             }
+                            }
                            })
                          ))
         )
@@ -440,3 +477,5 @@ check_run_coseq_execution <- function(object.SE, param.list = NULL){
   
   return(FALSE)
 }
+
+

@@ -50,14 +50,15 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     box(title = span(tagList(icon("cogs"), "  ",  a(names(method), href="https://bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf"), tags$small("(Scroll down for instructions)")  )),
         solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
         p("Differential expression analysis is performed for each contrast. 
-          There are two options to set (the adjusted-pvalue cut-off and the |logFC| cut-off).
-          The results will appear in blocks (one per contrast) with several outputs:"),
-        p("- Distribution of pvalue's which has to be validate to trust results", a("(some help to identify the good shapes)", href="/www/Pvalue_distrib.pdf"),""),
-        p("- MA plot"),
-        p("- Volcano plot"),
-        p("- Dataframe with statistical results"),
-        p("- Heatmap"),
-        p("- PCA")
+          There are just two options to set (the adjusted-pvalue cut-off and the |logFC| cut-off).
+          The results will appear in blocks with the contrast's name and statistics (one per contrast), each block offering a tab panel with several outputs:"),
+        p("- The graph of Pvalue's distribution: Distribution of pvalue's which has to be check to validate results. The most desirable shape is a pick of p-values at 0 following by a uniform distribution. ", a("(some help to identify the good shapes)", href="/www/Pvalue_distrib.pdf"),""),
+        p("- The MA plot which gives the logFC across the mean of the expression/abundance"),
+        p("- The Volcano plot: implemented in the EnhancedVolcano R-package (Blighe K, Rana S, Lewis M (2022). “EnhancedVolcano: Publication-ready volcano plots with enhanced colouring and labeling.” R package version 1.12.0.))"),
+        p("- A dataframe with the statistical results of the differential analysis per DE entities"),
+        p("- A Heatmap plot: implemented in the ComplexHeatmap package (Gu Z (2022). “Complex Heatmap Visualization.” iMeta. doi:10.1002/imt2.43.)"),
+        p("- A PCA on DE entities"),
+        p("- Boxplot of DE : boxplot showing the expression/abundance profile of a selected DE entity across experimental factors"),
     )
   })
   
@@ -90,26 +91,25 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                         ## list of contrasts to test
                         pickerInput(
                           inputId  = session$ns("contrastList"),
-                          label    = .addBSpopify(label = 'Selected contrasts:', content = "totot"),
+                          label    = .addBSpopify(label = 'Selected contrasts:', content = "Contrasts to run diff analysis. If you want to test all contrasts, select 'All'"),
                           choices  = local.rea.values$selectedContrasts$contrastName),
                         
                         # method for Diff analysis
                         selectInput(inputId  = session$ns("AnaDiffMethod"),
-                                    label = .addBSpopify(label = 'Method:', content = "totot"),
+                                    label = .addBSpopify(label = 'Method:', content = "Differential analysis  method"),
                                     choices  = method,
                                     selected = method),
                         
                         numericInput(inputId = session$ns("p.adj.cutoff"), 
-                                     label=.addBSpopify(label = 'Adjusted pvalue cutoff:', content = "totot"),
+                                     label=.addBSpopify(label = 'Adjusted pvalue cutoff:', content = "The adjusted p-value cut-off"),
                                      value=local.rea.values$p.adj.cutoff, min=0, max=1, 0.01),
                         numericInput(inputId = session$ns("abs.logFC.cutoff"),
-                                     label=.addBSpopify(label = '|logFC| cutoff:', content = "totot"),
+                                     label=.addBSpopify(label = '|logFC| cutoff:', content = "the absolute log FC cut-off"),
                                      value=local.rea.values$abs.logFC.cutoff, min=0, max=100, 0.01),
                         
                         # use of cluster. need setting step
                         materialSwitch(inputId = session$ns("clustermq"),
-                                       # label   =  popify(actionLink(inputId=session$ns("infoCluster"),label=paste0("Cluster: (?)")),
-                                       label=.addBSpopify(label = 'Cluster:', content = "If there is a huge number of contrasts, the calculation can be send to the cluster to be run in parrallel"),
+                                       label=.addBSpopify(label = 'use remote Cluster:', content = "send calculation to the cluster"),
                                        value = FALSE, status = "success"),
                         
                         actionButton(session$ns("runAnaDiff"),"Run"))
@@ -317,37 +317,89 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
           fluidRow(
             column(10,
                    box(width=14, solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, status = "success",
-                       title = tags$h5(paste0(vect["tag"], ": ", vect["contrastName"],"  [#DE: ", stats[["All"]]," ; Up: ", stats[["Up"]]," (",round(stats[["Up"]]/stats[["All"]],2)*100," %)"," ; ", "Down: ", stats[["Down"]]," (",round(stats[["Down"]]/stats[["All"]],2)*100,"%)")),
+                       title = tags$h5(paste0(vect["tag"], ": ", vect["contrastName"],
+                                              "  [#DE: ", stats[["All"]], " ; ",
+                                              "Up: ",stats[["Up"]]," (",round(stats[["Up"]]/stats[["All"]],2)*100," %)"," ; ",
+                                              "Down: ", stats[["Down"]]," (",round(stats[["Down"]]/stats[["All"]],2)*100,"%)]")),
                        
                        tabsetPanel(
                          
                          ### pvalue plot ###
-                         tabPanel("Pvalue's distribution", renderPlot({ diff.plots$Pvalue.hist })),
+                         tabPanel("Pvalue's distribution", 
+                                  tags$br(),
+                                  tags$i("You must have a look at to the distribution of non-adjusted p-values to validate
+                                         your analysis. The most desirable shape is a peak of p-values at 0 following by a uniform 
+                                         distribution"),
+                                  tags$br(),tags$hr(),tags$br(),
+                                  renderPlot({ diff.plots$Pvalue.hist })),
                          
                          ### MAplot
-                         tabPanel("MA plot", renderPlot({ suppressMessages(diff.plots$MA.plot) })),
+                         tabPanel("MA plot", 
+                                  tags$br(),
+                                  tags$i(paste0("Expect a majority of ", .omicsDic(dataset.SE)$variableName," around 0.",
+                                                " The red points are the ", .omicsDic(dataset.SE)$variableName,
+                                                " significantly over-expressed in the left factor's modality in the contrast expression whereas ",
+                                                "blue points are ", .omicsDic(dataset.SE)$variableName, 
+                                                " significantly under-expressed in the rigth factor's modality in the contrast expression.
+                                                Only the top 20 ", .omicsDic(dataset.SE)$variableName, " DE are labeled.")),
+                                                tags$br(),tags$hr(),tags$br(),
+                                  renderPlot({ suppressMessages(diff.plots$MA.plot) })),
                          
                          ### MAplot
-                         tabPanel("Volcano plot", renderPlot({ suppressMessages(diff.plots$Volcano.plot) }, height = 600)),
+                         tabPanel("Volcano plot", 
+                                  tags$br(),
+                                  tags$i(paste0(" Red points are ",.omicsDic(dataset.SE)$variableName," of interest: ",
+                                    "displaying both large magnitude log-fold-changes (x axis) and high statistical significance (y axis)",
+                                    "Only the top 20 ", .omicsDic(dataset.SE)$variableName, " DE are labeled.")),
+                                  tags$br(), tags$hr(), tags$br(),
+                                  renderPlot({ suppressMessages(diff.plots$Volcano.plot) }, height = 600)),
                          
                          ### DEF result table ###
                          tabPanel("Table",
+                                  tags$br(),
+                                  tags$i("Table of results of the differential expression/abundance statistical analysis:"),
+                                  tags$ul(
+                                     tags$li(tags$i(paste0("row names: ",omicsDic(dataset.SE)$variableName," ID"))),
+                                     tags$li(tags$i("logFC: log2 fold change")),
+                                     tags$li(tags$i("Abundance: mean expression/abundance for the factor's modality")),
+                                     tags$li(tags$i("t: t-statistic (limma-lmFit, prot/metabo)")),
+                                     tags$li(tags$i("pvalue: p-values")),
+                                     tags$li(tags$i("Adj.value: adjusted p-value (BH)")),
+                                     tags$li(tags$i("LR: likelihood ratio test (edgeR-glmLRT, RNAseq)")),
+                                     tags$li(tags$i("B: log-odds that the prot/metabo is differentially expressed (limma-topTable)")),
+                                     tags$li(tags$i("Regulation = Up (green) or Down (red) regulated"))
+                                     ),
+                                  tags$hr(), tags$br(),
                                   ### DEF result table ###
                                   DT::renderDataTable({
                                     resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
-                                    resTable %>% DT::datatable(extensions = 'Buttons',
-                                                               options = list(dom = 'lfrtipB',
-                                                                              rownames = FALSE,
-                                                                              pageLength = 10,
-                                                                              buttons = c('csv', 'excel'),
-                                                                              lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All")))) %>%
-                                      formatStyle('logFC',
-                                                  backgroundColor = styleInterval(c(0, 0.01), c('royalblue', 'white', 'red2')),
+                                    resTable$Regulation <- ifelse(resTable$logFC > 0, "Up", "Down")
+                                    resTable %>% DT::datatable(
+                                      extensions = 'Buttons',
+                                      options = list(dom = 'lfrtipB',
+                                                     rownames = FALSE,
+                                                     pageLength = 10,
+                                                     buttons = c('csv', 'excel'),
+                                                     lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All")))) %>%
+                                      formatStyle('Regulation',
+                                                  backgroundColor = DT::styleEqual(c("Up", "Down"), 
+                                                                               c("#C7DCA7", c("#FFC5C5"))),
                                                   fontWeight = 'bold') %>% formatSignif(columns = 1:dim(resTable)[2], digits = 3)
                                   }, server = FALSE)),
                          
                          ### Heatmap ###
                          tabPanel("Heatmap",
+                                  tags$br(),
+                                  tags$i(tags$p(paste0("Heatmap is performed on DE ",.omicsDic(dataset.SE)$variableName,
+                                                " expression data table which has been",
+                                                " transformed by: ",getTransSettings(dataset.SE)$method, " method", 
+                                                " and normalized by: ", getNormSettings(dataset.SE)$method ,"  method."))),
+                                  tags$i(tags$p(paste0("Clustering is independently performed on samples (row) and centered ",
+                                                .omicsDic(dataset.SE)$variableName,
+                                                " (column) using euclidian distance and complete aggregation method."))),
+                                  tags$i(tags$p(" You may separate the heatmap by modality of factor of interest (Levels radio buttons). You may
+                                         also add annotations to the heatmap by selecting biological/batch factors to display.")),
+                                  tags$br(), tags$hr(), tags$br(),
                                   renderPlot({
                                     annot_arg <- c(input[[paste0(vect["contrastName"], "-annotBio")]],
                                                    input[[paste0(vect["contrastName"], "-annotBatch")]])
@@ -360,7 +412,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                                 splitFactor  = input[[paste0(vect["contrastName"],"-heat.condColorSelect")]],
                                                 annotNames =  annot_arg)
                                   }),
-                                  renderText("Clustering method = ward.D2, center = TRUE, scale = FALSE"),
                                   ## select cluster to plot
                                   column(6, radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-heat.condColorSelect")),
                                                          label = 'Levels:',
@@ -388,7 +439,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                          
                          ### PCA ###
                          tabPanel("PCA on DE",
-                                  
+                                  tags$br(),
+                                  tags$i("PCA plot of the DE entities"),
+                                  tags$br(), tags$hr(), tags$br(),
                                   fluidRow(
                                     column(width = 12,
                                            renderPlot({
@@ -419,11 +472,15 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                          
                          ### boxplot DE ###
                          tabPanel("boxplot DE",
+                                  tags$br(),
+                                  tags$i(paste0("Boxplot showing the expression/abundance profile of a selected DE ",.omicsDic(dataset.SE)$variableName),
+                                         " colored by experimental factor's modality (see Levels radio buttons)."),
+                                  tags$br(), tags$hr(), tags$br(),
                                   fluidRow(
                                     column(width = 3,
                             
                                            selectizeInput(
-                                             inputId = session$ns(paste0(vect["contrastName"], "-DE")), label = "Select DE:",
+                                             inputId = session$ns(paste0(vect["contrastName"], "-DE")), label = paste0("Select DE ",.omicsDic(dataset.SE)$variableName,":"),
                                              choices = rownames(dplyr::arrange(dataset.SE@metadata$DiffExpAnal$TopDEF[[vect["contrastName"]]], Adj.pvalue)),
                                              multiple = FALSE),
                                         
