@@ -52,13 +52,11 @@ methods::setMethod(
            analysis before running enrichment")
     }
     
-    searchFrom <- as.character(c(1,2)[c(grepl("DIFFEXP", toupper(from)), 
-                                        grepl("COEXP", toupper(from)))])
-    if (length(searchFrom) < 1) searchFrom <- 3
+    from <- .determineFrom(from)
     
-    switch(searchFrom, 
-           "1" = { 
-             from <- "DiffExp"
+    switch(from, 
+           "DiffExp" = { 
+             
              contrasts <- NULL
              
              if (is.null(getValidContrasts(object))) {
@@ -78,8 +76,7 @@ methods::setMethod(
              names(geneLists) <- contrasts
              
            },
-           "2" = { 
-             from <- "CoExp"   
+           "CoExp" = { 
              namesClust <- names(object@metadata[["CoExpAnal"]][["clusters"]])
              if (!is.null(nameList)) namesClust <- intersect(namesClust, nameList)
              
@@ -94,8 +91,13 @@ methods::setMethod(
              from <- "DiffExp"
            })
     
+    # Domain 
     if (is.null(domain)) domain <- "no-domain"
+    if (database == "GO" && "ALL" %in% toupper(domain)) {
+      domain <- c("MF", "BP", "CC")
+    }
     
+    # If custom, make sure the annotation file matches the requirements
     if (database == "custom") {
       if (is.null(annot)) {
         stop("You need an annotation file for a custom enrichment")
@@ -108,9 +110,7 @@ methods::setMethod(
         domain <- unique(annot[[col_domain]])
         domain <- domain[!is.na(domain)]
       }
-      
       annotation <- annot
-      
     } 
     
     geneLists <- geneLists[lengths(geneLists) > 0]
@@ -137,12 +137,14 @@ methods::setMethod(
                    annotation2 <- filter(annotation, get(col_domain) == dom)
                  }
                  
-                 list_args$TERM2GENE <- list("term" = annotation2[[col_term]], "gene" = annotation2[[col_gene]])
+                 list_args$TERM2GENE <- list("term" = annotation2[[col_term]], 
+                                             "gene" = annotation2[[col_gene]])
                  
                  if (!is.null(annotation2[[col_name]])) {
                    tmp <- select(annotation2, all_of(c(col_term, col_name))) %>%
                      unique()
-                   list_args$TERM2NAME <- list("term" = tmp[[col_term]], "name" = tmp[[col_name]])
+                   list_args$TERM2NAME <- list("term" = tmp[[col_term]], 
+                                               "name" = tmp[[col_name]])
                  }
                }
         )
@@ -191,8 +193,12 @@ methods::setMethod(
       }
     }
     
-    EnrichAnal[["list_args"]] <- list_args[names(list_args) %in% c("universe", "keyType", "pvalueCutoff", "qvalueCutoff", "OrgDb", "organism")]
-    EnrichAnal[["list_args"]] <- c(EnrichAnal[["list_args"]], list("domain" = domain))
+    EnrichAnal[["list_args"]] <- list_args[names(list_args) %in% 
+                                             c("universe", "keyType", 
+                                               "pvalueCutoff", "qvalueCutoff", 
+                                               "OrgDb", "organism")]
+    EnrichAnal[["list_args"]] <- c(EnrichAnal[["list_args"]],
+                                   list("domain" = domain))
     EnrichAnal[["enrichResult"]] <- results_list
     
     switch(from, 
@@ -287,54 +293,46 @@ methods::setMethod(
                         from = "DiffExp",
                         ...) {
     
-    
-    searchFrom <- as.character(c(1,2)[c(grepl("DIFFEXP", toupper(from)), 
-                                        grepl("COEXP", toupper(from)))])
-    if (length(searchFrom) < 1) searchFrom <- 3
-    
-    # if (isTagName(object, contrastName))
-    #   contrastName <- convertTagToContrast(object, contrastName)
+    from <- .determineFromEnrich(from)
     
     log2FC_vect <- NULL
-    if (searchFrom == 1) {
-      obj <- object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]]
-      log2FC_vect <- obj[["logFC"]]
-      names(log2FC_vect) <- rownames(obj)
-      
-      .see_pathview(
-        gene.data = log2FC_vect,
-        pathway.id = pathway_id,
-        species = species,
-        gene.idtype = gene_idtype,
-        map.symbol = FALSE,
-        same.layer = FALSE,
-        low = list(gene = "blue"),
-        mid = list(gene = "gray"),
-        high = list(gene = "red"),
-        na.col = "transparent"
-        # cex = 1 # too much
-      )
-      
-    } else if (searchFrom == 2) {
-      entities <- getClusterEntities(object, contrastName)
-      log2FC_vect <- rep(1, length(entities))
-      names(log2FC_vect) <- entities
-      
-      .see_pathview(
-        gene.data = log2FC_vect,
-        pathway.id = pathway_id,
-        species = species,
-        gene.idtype = gene_idtype,
-        plot.col.key = FALSE,
-        map.symbol = FALSE,
-        same.layer = FALSE,
-        high = list(gene = "antiquewhite3"),
-        na.col = "transparent"
-      )
-    }
+    switch(from, 
+           "DiffExpEnrichAnal" = {
+             obj <- metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]]
+             log2FC_vect <- obj[["logFC"]]
+             names(log2FC_vect) <- rownames(obj)
+             
+             .see_pathview(
+               gene.data = log2FC_vect,
+               pathway.id = pathway_id,
+               species = species,
+               gene.idtype = gene_idtype,
+               map.symbol = FALSE,
+               same.layer = FALSE,
+               low = list(gene = "blue"),
+               mid = list(gene = "gray"),
+               high = list(gene = "red"),
+               na.col = "transparent")
+           }, 
+           "CoExpEnrichAnal" = {
+             entities <- getClusterEntities(object, contrastName)
+             log2FC_vect <- rep(1, length(entities))
+             names(log2FC_vect) <- entities
+             
+             .see_pathview(
+               gene.data = log2FC_vect,
+               pathway.id = pathway_id,
+               species = species,
+               gene.idtype = gene_idtype,
+               plot.col.key = FALSE,
+               map.symbol = FALSE,
+               same.layer = FALSE,
+               high = list(gene = "antiquewhite3"),
+               na.col = "transparent"
+             )
+           }) # end switch
     return()
-  }
-)
+  })
 
 #' @title plotClusterProfiler
 #' @description TODO
@@ -377,34 +375,49 @@ methods::setMethod(
                         showCategory = 15,
                         searchExpr = "",
                         nodeLabel = "all",
-                        p.adj.cutoff = object@metadata$DiffExpEnrichAnal[[database]]$list_args$pvalueCutoff,
+                        p.adj.cutoff = NULL,
                         ...) {
     
     # if (isTagName(contrastName)) contrastName <- convertTagTocontrastName(object, contrastName)
     
-    searchFrom <- as.character(c(1,2)[c(grepl("DIFFEXP", toupper(from)), 
-                                        grepl("COEXP", toupper(from)))])
-    if (length(searchFrom) < 1) searchFrom <- 3
+    from <- .determineFromEnrich(from)
     
     log2FC_vect <- NULL
-    switch(searchFrom, 
-           "1" = { 
-             from <- "DiffExp"
-             dataPlot <- object@metadata$DiffExpEnrichAnal[[database]]$enrichResult[[contrastName]]
-             log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]][["logFC"]]
-             names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]])
+    switch(from, 
+           "DiffExpEnrichAnal" = { 
+             dataPlot <- getEnrichRes(object, contrastName = contrastName,
+                                      database = database, from = from)
+             log2FC_vect <- metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]][["logFC"]]
+             names(log2FC_vect) <- rownames(metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]])
+             
+             if (is.null(p.adj.cutoff)) {
+               p.adj.cutoff <- getEnrichPvalue(object, from = from, 
+                                               database = database)
+             }
+             
            },
-           "2" = { 
-             from <- "CoExp"   
-             dataPlot <- object@metadata$CoExpEnrichAnal[[database]]$enrichResult[[contrastName]]
+           "CoExpEnrichAnal" = { 
+             dataPlot <- getEnrichRes(object, contrastName = contrastName,
+                                      database = database, from = from)
+             if (is.null(p.adj.cutoff)) {
+               p.adj.cutoff <- getEnrichPvalue(object, from = from, 
+                                               database = database)
+             }
            },
            {
              message("Argument from is detected to be neither DiffExp nor CoExp, 
                      taking DiffExp results.")
-             from <- "DiffExp"
-             dataPlot <- object@metadata$DiffExpEnrichAnal[[database]]$enrichResult[[contrastName]]  
+             from <- "DiffExpEnrichAnal"
+             dataPlot <- getEnrichRes(object, contrastName = contrastName,
+                                      database = database, from = from)
              log2FC_vect <- object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]][["logFC"]]  
              names(log2FC_vect) <- rownames(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]])
+             
+             if (is.null(p.adj.cutoff)) {
+               p.adj.cutoff <- getEnrichPvalue(object, from = from, 
+                                               database = database)
+             }
+             
            })
     
     if (database == "GO") {
@@ -413,7 +426,7 @@ methods::setMethod(
       } else {
         dataPlot <- dataPlot[[domain]]
       }
-    } else if (database== "custom" || database == "KEGG") {
+    } else if (database == "custom" || database == "KEGG") {
       if (is.null(domain)) {
         domain <- "no-domain"
       }
@@ -427,9 +440,9 @@ methods::setMethod(
     }
     
     # Select categories to show
-    dataTab <- dataPlot@result[dataPlot@result$p.adjust < p.adj.cutoff, ]
+    dataTab <- dataPlot@result[which(dataPlot@result$p.adjust < p.adj.cutoff), ]
     Categories <- dataTab$Description
-    if (searchExpr != ""){
+    if (searchExpr != "") {
       Categories <- Categories[grep(toupper(searchExpr), toupper(Categories))]
     }
     NbtoPlot <- min(length(Categories), showCategory)
@@ -499,12 +512,11 @@ methods::setMethod(
                         nClust = NULL,
                         ...){
     
+    
+    from <- .determineFromEnrich(from)
+    
     allData <- switch(toupper(from), 
-                      "DIFFEXP"           = { object@metadata$DiffExpEnrichAnal[[database]]$enrichResult },
-                      "DIFFEXPANAL"       = { object@metadata$DiffExpEnrichAnal[[database]]$enrichResult },
                       "DIFFEXPENRICHANAL" = { object@metadata$DiffExpEnrichAnal[[database]]$enrichResult },
-                      "COEXP"             = { object@metadata$CoExpEnrichAnal[[database]]$enrichResult   },
-                      "COEXPANAL"         = { object@metadata$CoExpEnrichAnal[[database]]$enrichResult   },
                       "COEXPENRICHANAL"   = { object@metadata$CoExpEnrichAnal[[database]]$enrichResult   },
                       {
                         message("Argument from is detected to be neither DiffExp nor CoExp, 
@@ -513,7 +525,8 @@ methods::setMethod(
                       })
     
     if (length(allData) == 0) {
-      stop("The selected database ", database, " does not seem to exist in the object.")
+      stop("The selected database ", database, 
+           " does not seem to exist in the object.")
     }
     
     allData <- allData[lengths(allData) > 0]
@@ -762,11 +775,7 @@ methods::setMethod(
                         database = NULL, 
                         contrastName = NULL) {
     
-    if (toupper(from) %in% c("DIFFEXPANAL", "DIFFEXPENRICHANAL")){
-      from <- "DiffExpEnrichAnal"
-    } else if (toupper(from) %in% c("COEXPANAL", "COEXPENRICHANAL")){
-      from <- "CoExpEnrichAnal"
-    } 
+    from <- .determineFromEnrich(from)
     
     # cat("|From: ", from, "\n")
     
@@ -817,9 +826,9 @@ methods::setMethod(
                         from = "DiffExpEnrichAnal",
                         database = "GO") {
     
-    if (!from %in% c("DiffExpEnrichAnal", "CoExpEnrichAnal")) {
-      stop(from, " doesn't exist")
-    }
+    
+    from <- .determineFromEnrich(from)
+    
     if (!database  %in% c("GO", "KEGG", "custom")) {
       stop(from, " not a valid value. Choose one of GO, KEGG or custom.")
     }

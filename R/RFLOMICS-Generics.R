@@ -444,12 +444,12 @@ methods::setGeneric(
                   contrastName,
                   database,
                   domain = NULL,
-                  from = "DiffExpAnal",
+                  from = "DiffExp",
                   plotType = "dotplot",
                   showCategory = 15,
                   searchExpr = "",
                   nodeLabel = "all",
-                  pvalueCutoff = object@metadata$DiffExpEnrichAnal[[database]]$list_args$pvalueCutoff,
+                  p.adj.cutoff = NULL,
                   ...){standardGeneric("plotClusterProfiler")}
 )
 

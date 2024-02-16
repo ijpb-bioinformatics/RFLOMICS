@@ -50,12 +50,7 @@
     database,  
     domain
 ){
-  if (toupper(from) %in% c("DIFFEXP", "DIFFEXPANAL", "DIFFEXPENRICHANAL")) {
-    from <- "DiffExpEnrichAnal"
-  }
-  if (toupper(from) %in% c("COEXP", "COEXPANAL", "COEXPENRICHANAL")) {
-    from <- "CoExpEnrichAnal"
-  }
+  
   
   if (is.null(contrastName)) {
     res_return <- object@metadata[[from]][[database]][["enrichResult"]]
@@ -68,4 +63,52 @@
   
 }
 
+#' @title Determine the origin of from argument
+#' @description
+#' Called inside several enrichment methods
+#' 
+#' @param from a character string, usually containing either diffexp or coexp
+#' @return from of the right form
+#' @noRd
+#' @keywords internal
+#' 
+.determineFrom <- function(from){
+  searchFrom <- as.character(c(1,2)[c(grepl("DIFFEXP", toupper(from)), 
+                                      grepl("COEXP", toupper(from)))])
+  if (length(searchFrom) < 1) stop(from, " doesn't exist")
+  
+  from <- switch(searchFrom, 
+                 "1" = {"DiffExp"},
+                 "2" = {"CoExp"},
+                 {message("Argument from is detected to be neither 
+                          DiffExp nor CoExp, taking DiffExp results.")
+                   "DiffExp"
+                 })
+  
+  return(from)
+}
 
+#' @title Get a particular enrichment result
+#' @description
+#' Called inside several enrichment methods
+#' 
+#' @param from a character string, usually containing either diffexp or coexp
+#' @return from of the right form
+#' @noRd
+#' @keywords internal
+#' 
+.determineFromEnrich  <- function(from){
+  searchFrom <- as.character(c(1,2)[c(grepl("DIFFEXP", toupper(from)), 
+                                      grepl("COEXP", toupper(from)))])
+  if (length(searchFrom) < 1) stop(from, " doesn't exist")
+  
+  from <- switch(searchFrom, 
+                 "1" = {"DiffExpEnrichAnal"},
+                 "2" = {"CoExpEnrichAnal"},
+                 {message("Argument from is detected to be neither 
+                          DiffExp nor CoExp, taking DiffExp results.")
+                   "DiffExpEnrichAnal"
+                 })
+  
+  return(from)
+}
