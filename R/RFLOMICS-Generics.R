@@ -424,7 +424,8 @@ methods::setGeneric(
                   col_gene = "gene",
                   col_name = "name",
                   col_domain = NULL,
-                  annot = NULL, ... ){standardGeneric("runAnnotationEnrichment")}
+                  annot = NULL, ... ){
+    standardGeneric("runAnnotationEnrichment")}
 )
 
 methods::setGeneric(

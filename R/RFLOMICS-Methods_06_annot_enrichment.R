@@ -420,11 +420,15 @@ methods::setMethod(
 #'                                          keyType = "kegg", 
 #'                                          pvalueCutoff = 0.05), 
 #'                         from = "DiffExp", database = "KEGG")
-#'
+#'                         
+#' # From differential analysis proteins lists: 
 #' plotClusterProfiler(MAEtest[["protetest"]], 
 #'         contrastName = "(temperatureElevated - temperatureMedium) in mean", 
 #'         database = "KEGG", from = "DiffExp",
-#'         plotType = "heatplot", p.adj.cutoff = 0.05, domain = "no-domain")                         
+#'         plotType = "heatplot", p.adj.cutoff = 0.05, 
+#'         domain = "no-domain")   
+#'         
+#' # From co expression proteins clusters:                             
 #' plotClusterProfiler(MAEtest[["protetest"]], 
 #'         contrastName = "(temperatureElevated - temperatureMedium) in mean", 
 #'         database = "KEGG", from = "coexp",

@@ -1036,15 +1036,18 @@
                 column(3,
                        renderUI({
                          # number of terms
-                         dataPlot <- getEnrichRes(object = dataSE,
-                                                  from = listSource,
-                                                  contrastName = listname,
-                                                  database = database,
-                                                  domain = input[[paste0(listname, "-domain")]])
+                         dataPlot <- getEnrichRes(
+                           object = dataSE,
+                           from = listSource,
+                           contrastName = listname,
+                           database = database,
+                           domain = input[[paste0(listname, "-domain")]]
+                         )
                          pvalue <- getEnrichPvalue(dataSE,
                                                    from = listSource, 
                                                    database = database)
-                         datPlot <- dataPlot@result[dataPlot@result$p.adjust <  pvalue,]
+                         datPlot <- dataPlot@result[dataPlot@result$p.adjust <  
+                                                      pvalue,]
                          max_terms <- nrow(datPlot) 
                          
                          numericInput(ns(paste0(listname, "-top.over")),
@@ -1190,7 +1193,7 @@
              hr(),
              renderPlot({
                warnOpt <- getOption("warn")
-               options(warn = -1) # avoid ggrepel warnings, or at least trying to
+               options(warn = -1)
                suppressMessages(suppressWarnings(
                  print(outplot + 
                          labs(title = listname, 
@@ -1277,7 +1280,7 @@
              
              renderPlot({
                warnOpt <- getOption("warn")
-               options(warn = -1) # avoid ggrepel warnings, or at least trying to
+               options(warn = -1) 
                suppressMessages(suppressWarnings(
                  print(outdot + 
                          labs(title = listname, 
@@ -1376,7 +1379,7 @@
                
                renderPlot({
                  warnOpt <- getOption("warn")
-                 options(warn = -1) # avoid ggrepel warnings, or at least trying to
+                 options(warn = -1) 
                  suppressMessages(suppressWarnings(
                    print(outcnet + 
                            labs(title = listname, 
