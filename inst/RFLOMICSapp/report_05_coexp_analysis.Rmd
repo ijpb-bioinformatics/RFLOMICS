@@ -1,3 +1,9 @@
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
 ## Co-expression {.tabset}
 
 ```{r , echo=FALSE , message=FALSE, warning=FALSE}
@@ -15,28 +21,33 @@ isResults <- dataset.SE@metadata$CoExpAnal[["results"]]
 Co-expression analysis strategy was adapted from @Lambert2020ta
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
 
-Co-expression analysis was carried out on the `r getCoexpSetting(dataset.SE)$merge.type`
-of the following list of `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`  `r names(getCoexpSetting(dataset.SE)$gene.list.names)`. 
-`r getCoexpSetting(dataset.SE)$method` was used to cluster the `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]`. 
+Co-expression analysis was carried out on the
+`r getCoexpSettings(dataset.SE)$merge.type` of the following list of
+`r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]`
+`r names(getCoexpSettings(dataset.SE)$gene.list.names)`.
+`r getCoexpSettings(dataset.SE)$method` was used to cluster the
+`r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]`.
 
-The gaussian mixture model was run on filtered (meanFilterCutoff was set to: `r getCoexpSetting(dataset.SE)$meanFilterCutoff`), 
-normalized (normalization method was `r getCoexpSetting(dataset.SE)$normFactors`) 
-and transformed (transformation method: `r getCoexpSetting(dataset.SE)$transformation`) count data.
+The gaussian mixture model was run on filtered (meanFilterCutoff was set
+to: `r getCoexpSettings(dataset.SE)$meanFilterCutoff`), normalized
+(normalization method was `r getCoexpSettings(dataset.SE)$normFactors`)
+and transformed (transformation method:
+`r getCoexpSettings(dataset.SE)$transformation`) count data.
 
-`r getCoexpSetting(dataset.SE)$replicates.nb` technical replicates were performed for each K in `r getCoexpSetting(dataset.SE)$K.range` (K=number of clusters). 
+`r getCoexpSettings(dataset.SE)$replicates.nb` technical replicates were
+performed for each K in `r getCoexpSettings(dataset.SE)$K.range`
+(K=number of clusters).
 
-The best number of cluster (K) selected via the Integrated Completed Likelihood (ICL) criterion 
-was `r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
+The best number of cluster (K) selected via the Integrated Completed
+Likelihood (ICL) criterion was
+`r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
 
-
-`r if(isResults == TRUE) {"\\begin{comment}"}`
-No clustering results.
+`r if(isResults == TRUE) {"\\begin{comment}"}` No clustering results.
 `r if(isResults == TRUE) {"\\end{comment}"}`
 
+### ICL
 
-### ICL 
-
-**Integrated Completed Likelihood (ICL) plotted versus number of clusters**
+*Integrated Completed Likelihood (ICL) plotted versus number of clusters.The ICL is the criterion used to select the number of clusters. The number of clusters (K) that minmizes the ICL is the best number of clusters.*
 
 ```{r coseq-icl, echo=FALSE, eval=isResults}
 plot.coseq.res <- plotCoExpression(dataset.SE)
@@ -44,10 +55,9 @@ par(mar = c(4, 4, .5, .1))
 plot.coseq.res$ICL 
 ```
 
+### probapost_boxplots
 
-### probapost_boxplots 
-
-**number of observations with a maximum conditional probability greater than threshold (0.8) per cluster**
+*Barplots giving a quality control of each cluster. In green: number of* `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` *that are member of a cluster with a high confidance (Max Conditional Probability  > 0.8). In purple:  number of* `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` *that are member of a cluster with a low confidance (Max Conditional Probability < 0.8). A high proportion of green observations may indicate that the clustering is not reliable and can't be exploited.*
 
 ```{r coseq-probapost, echo=FALSE, eval=isResults}
 par(mar = c(4, 4, .5, .1))
@@ -56,16 +66,19 @@ plot.coseq.res$probapost_barplots
 
 ### boxplots
 
+*Overview of cluster's expression profiles. Boxplot are colored acording to  biological  factors*
+
 ```{r coseq-boxplots, echo=FALSE, eval=isResults}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$boxplots + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
 ```
 
-```{r ,echo=FALSE, eval=isResults}
+### Cluster composition:
 
+```{r coseq-clusterComposition, echo=FALSE, eval=isResults}
+par(mar = c(4, 4, .5, .1))
+plotCoseqContrasts(dataset.SE)
 ```
-
-
 
 
 ```{r,echo = FALSE, eval=isResults}
@@ -79,3 +92,5 @@ write.table(tab.clusters,
              sep="\t",quote=FALSE,col.names=TRUE,row.names=FALSE)
 
 ```
+
+## {-}

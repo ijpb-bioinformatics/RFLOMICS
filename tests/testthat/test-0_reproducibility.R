@@ -73,11 +73,11 @@ MAE <- MAE |> RFLOMICS::runCoExpression(SE.name = "RNAtest",   contrastNames = "
 
 
 ## Enrichment
-MAE <- MAE |> RFLOMICS::runAnnotationEnrichment(nameList = "H1", SE.name = "RNAtest", ontology = "GO", domain = c("BP", "MF", "CC"), list_args = list(OrgDb = "org.At.tair.db", keyType = "TAIR", pvalueCutoff = 0.05))
+MAE <- MAE |> RFLOMICS::runAnnotationEnrichment(nameList = "H1", SE.name = "RNAtest", database = "GO", domain = c("BP", "MF", "CC"), list_args = list(OrgDb = "org.At.tair.db", keyType = "TAIR", pvalueCutoff = 0.05))
 # RFLOMICS::runAnnotationEnrichment(nameList = "H1", SE.name = "RNAtest", dom.select = "KEGG", list_args = list(..., pvalueCutoff = 0.05))
 
 ## runReport
-# runReport(object=MAE, dir=..., export=TRUE)
+# generateReport(object=MAE, tmpDir ="/Users/dcharif/Desktop/", fileName = "projet",export=TRUE)
 
 # ---- test accessors ----
 ## ---- Rflomics class ----

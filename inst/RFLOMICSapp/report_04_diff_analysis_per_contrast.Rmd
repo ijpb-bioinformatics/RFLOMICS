@@ -25,7 +25,10 @@ diff.plots <- plotDiffAnalysis(dataset.SE, contrastName=contrast)
 ```
 
 
+
 1- Pvalues distribution
+
+*Distribution of non-adjusted p-values. The most desirable shape is a peak of p-values at 0 following by a uniform distribution*
 
 ```{r pvDistrib-plot, echo=FALSE,out.width = "40%", warning=FALSE}
 diff.plots$Pvalue.hist
@@ -33,18 +36,26 @@ diff.plots$Pvalue.hist
 
 2- MA plot
 
+*Expect a majority of* `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` *around 0. The red points are the* `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` *significantly over-expressed in the left factor's modality in the contrast expression whereas blue points are* `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` *significantly under-expressed in the rigth factor's modality in the contrast expression. Only the top 20* `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` *DE are labeled.*
+
 ```{r MA-plot, echo=FALSE,out.width = "40%", warning=FALSE}
 diff.plots$MA.plot
 ```
 
 3- VolcanoPlot
 
+*Red points are* `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` *of interest displaying both large magnitude log-fold-changes (x axis) and high statistical significance (y axis). Only the top 20* `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` *DE are labeled.*
+
 ```{r Volcano-plot, echo=FALSE,out.width = "40%", warning=FALSE}
 diff.plots$Volcano.plot
 ```
 
 
-3- Heatmap of the euclidean distances with a link of Ward 
+3- Heatmap:
+
+*Heatmap was performed on DE* `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` *expression data table which has been transformed by:* `r getTransSettings(dataset.SE)$method` *method and normalized by:* 
+`r getNormSettings(dataset.SE)$method` *method.*
+*Clustering was independently performed on samples (row) and centered `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` (column) using euclidian distance and complete aggregation method*
 
 ```{r heatmap-plot, echo=FALSE,out.width = "40%", warning=FALSE}
 plotHeatmapDesign(object = dataset.SE, contrastName = contrast)
@@ -68,7 +79,18 @@ RFLOMICS::plotPCA(newDataset.SE,
 ```
 
 
-5- Table
+5- Table of DE
+
+* results of the differential expression/abundance statistical analysis:
+  + `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` ID
+  + logFC: log2 fold change
+  + Abundance: mean expression/abundance for the factor's modality
+  + t: t-statistic (limma-lmFit, prot/metabo)
+  + pvalue: p-values
+  + Adj.value: adjusted p-value (BH)
+  + LR: likelihood ratio test (edgeR-glmLRT, RNAseq)
+  + B: log-odds that the prot/metabo is differentially expressed (limma-topTable)
+  + Regulation: Up (green) or Down (red) regulated
 
 ```{r table, echo = FALSE, out.width = "70%" , eval = evalExport}
 
@@ -80,9 +102,9 @@ reactable::reactable(signif(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[co
             logFC = reactable::colDef(
                 style = function(value) {
                     color <- if (value >= 0) {
-                      "#008000"
+                      "#C7DCA7"
                     } else if (value < 0) {
-                      "#e00000"
+                      "#FFC5C5"
                     }
                     list(fontWeight = 600, color = color)
                 }

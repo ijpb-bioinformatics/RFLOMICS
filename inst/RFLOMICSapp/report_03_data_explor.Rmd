@@ -1,4 +1,4 @@
-## Data pre-processing: 
+## Data pre-processing: {.tabset}
 
 <br>
 
@@ -14,14 +14,15 @@ knitr::opts_chunk$set(
 
 ```
 
+* **Summary of pre-processing step**
 
-```{r check-design, echo=FALSE , message=FALSE, warning=FALSE, echo=FALSE, out.width = "50%"}
+```{r check-design, echo=FALSE , message=FALSE, warning=FALSE, echo=FALSE, out.width = "50%",fig.show = "hold"}
 
 dataset.raw.SE <- rflomics.MAE@ExperimentList[[paste0(data,".raw")]]
 dataset.SE     <- rflomics.MAE@ExperimentList[[data]]
  
 plotExpDesignCompleteness(dataset.SE, colnames(rflomics.MAE[[data]]))
-           
+plotDataOverview(rflomics.MAE[, , c(paste0(data,".raw"),data)])           
 ```
 
 `r if(length(colnames(dataset.raw.SE)) - length(colnames(dataset.SE)) == 0) {"\\begin{comment}"}`
@@ -57,18 +58,30 @@ Filtering and normalization strategies were adapted from DiCoExpress @Lambert202
 `r if(getTransSettings(dataset.SE)$method == "none") {"\\end{comment}"}`
 
 
+<br>
 
-## Quality control: {.tabset}
+<!-- Distribution of feature counts before/after pre-processing : boxplot -->
 
+### Distribution (boxplot):
 
-```{r, echo=FALSE, message=TRUE, warning=TRUE, eval=FALSE}
+*Expect aligned medians after running the pre-processing step. Samples with shifted median may be outliers.*
 
-DT::datatable(filt.summary, options = list(colnames=FALSE, rownames = FALSE, pageLength = 10, scrollX = T, dom = 'tip'),
-              class = 'cell-border stripe')
+```{r boxplot, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE, fig.cap=""}
+
+plotDataDistribution(dataset.raw.SE, plot = "boxplot", raw = TRUE)
+plotDataDistribution(dataset.SE, plot = "boxplot", raw = FALSE)
 
 ```
 
-<br>
+### Distribution (density)
+
+*Expect a gaussian density distribution after running the pre-processing step.If a second peak is observed at the beginning of the curve, this could indicate that the low, uninformative values, have not been correctly filtered. You may increase the filtering threshold.*
+
+```{r density-plot, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
+plotDataDistribution(dataset.raw.SE, plot = "density", raw = TRUE)
+plotDataDistribution(dataset.SE, plot = "density", raw = FALSE)
+```
+
 <!-- Histograms of the library size before/after pre-processing -->
 
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
@@ -83,24 +96,6 @@ plotLibrarySize(dataset.SE)
 ```
 
 `r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
-
-<!-- Distribution of feature counts before/after pre-processing : boxplot -->
-
-### Feature counts (Boxplot):
-
-```{r boxplot, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE, fig.cap=""}
-
-plotDataDistribution(dataset.raw.SE, plot = "boxplot", raw = TRUE)
-plotDataDistribution(dataset.SE, plot = "boxplot", raw = FALSE)
-
-```
-
-### Feature counts (density)
-
-```{r density-plot, echo=FALSE, fig.show = "hold", out.width = "50%", message=FALSE, warning=FALSE}
-plotDataDistribution(dataset.raw.SE, plot = "density", raw = TRUE)
-plotDataDistribution(dataset.SE, plot = "density", raw = FALSE)
-```
 
 ### PCA
 

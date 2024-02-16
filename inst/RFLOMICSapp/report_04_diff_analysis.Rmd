@@ -47,7 +47,7 @@ to the `r getDiffSettings(dataset.SE)$p.adj.method` procedure with a cutoff set 
 LogFC cut-off was set to `r getDiffSettings(dataset.SE)$abs.logFC.cutoff`
 
 
-* **Summary of differential expression analysis**
+* **Summary** 
 
 ```{r ,echo=FALSE,message=FALSE, out.width = "100%",warning=FALSE,  fig.show = "hold", eval=Diff.eval}
 
@@ -87,7 +87,7 @@ write.table(DEF_mat, file=paste0(anaDiffDir,"/","Matrice_of_DE_", RFLOMICS:::omi
 
 ```
 
-* **Results by contrast(s):**
+* **Display results by contrast(s):** 
 
 *Please click on the arrows to scroll down the results and click on the figure to zoom*
 
