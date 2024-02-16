@@ -362,7 +362,7 @@
       ## ID key
       condition <- input2$keyTypeKEGG %in% c("kegg", "ncbi-geneid",
                                              "ncib-proteinid", "uniprot")
-      messCond  <- "Please chose an appriopriate
+      messCond  <- "Please chose an appropriate
       KEGG keytype. It must be one of kegg, ncbi-geneid, 
           ncbi-proteinid or uniprot"
       
@@ -735,9 +735,6 @@
   
   renderUI({
     
-    # annotation <- fread(file = local.rea.values$dataPathAnnot, sep = "\t",
-    #  header = TRUE)
-    
     column(width = 12,
            br(),
            hr(style = "border-top: 1px solid #000000;"),
@@ -1081,14 +1078,16 @@
   varLabel0 <- omicsDic(dataSE)$variableName
   
   renderUI({
-    outplot <- .doNotSpeak(plotClusterProfiler(dataSE,
-                                               contrastName = listname,
-                                               from = from,
-                                               plotType = plotType,
-                                               database = database,
-                                               domain = input[[paste0(listname, "-domain")]],
-                                               showCategory = input[[paste0(listname, "-top.over")]],
-                                               searchExpr = input[[paste0(listname, "-grep")]]))
+    outplot <- .doNotSpeak(
+      plotClusterProfiler(dataSE,
+                          contrastName = listname,
+                          from = from,
+                          plotType = plotType,
+                          database = database,
+                          domain = input[[paste0(listname, "-domain")]],
+                          showCategory = input[[paste0(listname, "-top.over")]],
+                          searchExpr = input[[paste0(listname, "-grep")]]
+      ))
     
     plotExplain <- switch(from,
                           "DiffExpAnal" =  {
@@ -1134,9 +1133,10 @@
              renderPlot({
                warnOpt <- getOption("warn")
                options(warn = -1) # avoid ggrepel warnings, or at least trying to
-               suppressMessages(suppressWarnings(print(outplot + 
-                                                         labs(title = listname, 
-                                                              subtitle = subTitlePlot))))
+               suppressMessages(suppressWarnings(
+                 print(outplot + 
+                         labs(title = listname, 
+                              subtitle = subTitlePlot))))
                options(warn = warnOpt)
              })
       )
@@ -1218,10 +1218,11 @@
              renderPlot({
                warnOpt <- getOption("warn")
                options(warn = -1) # avoid ggrepel warnings, or at least trying to
-               suppressMessages(suppressWarnings(print(outdot + 
-                                                         labs(title = listname, 
-                                                              subtitle = subTitlePlot)
-               )))
+               suppressMessages(suppressWarnings(
+                 print(outdot + 
+                         labs(title = listname, 
+                              subtitle = subTitlePlot)
+                 )))
                options(warn = warnOpt)
              })
       )}else renderText({outdot$message})
@@ -1252,15 +1253,17 @@
         nodeLabelArg <- "category"
       }
       
-      outcnet <- .doNotSpeak(plotClusterProfiler(dataSE,
-                                                 contrastName = listname,
-                                                 from = from,
-                                                 plotType = plotType,
-                                                 database = database,
-                                                 domain = input[[paste0(listname, "-domain")]],
-                                                 showCategory = input[[paste0(listname, "-top.over")]],
-                                                 searchExpr = input[[paste0(listname, "-grep")]],
-                                                 nodeLabel = nodeLabelArg))
+      outcnet <- .doNotSpeak(
+        plotClusterProfiler(dataSE,
+                            contrastName = listname,
+                            from = from,
+                            plotType = plotType,
+                            database = database,
+                            domain = input[[paste0(listname, "-domain")]],
+                            showCategory = input[[paste0(listname, "-top.over")]],
+                            searchExpr = input[[paste0(listname, "-grep")]],
+                            nodeLabel = nodeLabelArg)
+      )
       
       plotExplain <- switch(from,
                             "DiffExpAnal" =  {
@@ -1312,10 +1315,11 @@
                renderPlot({
                  warnOpt <- getOption("warn")
                  options(warn = -1) # avoid ggrepel warnings, or at least trying to
-                 suppressMessages(suppressWarnings(print(outcnet + 
-                                                           labs(title = listname, 
-                                                                subtitle = subTitlePlot)
-                 )))
+                 suppressMessages(suppressWarnings(
+                   print(outcnet + 
+                           labs(title = listname, 
+                                subtitle = subTitlePlot)
+                   )))
                  options(warn = warnOpt)
                  
                })
