@@ -765,6 +765,9 @@ methods::setMethod(
       if (!is.null(contrastName)) {
         toReturn <- toReturn[which(toReturn$contrastName == contrastName), ]
       }
+      if (!is.null(toReturn) && from == "CoExpEnrichAnal") {
+        colnames(toReturn)[1] <- "Cluster"
+      }
       return(toReturn)
     } else {
       list_res <- lapply(names(object@metadata[[from]]), 
