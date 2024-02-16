@@ -62,41 +62,6 @@
             p("Set the adjusted pvalue threshold. 
               Only results below this threshold will be displayed."),
             
-            # h4(tags$span("Outputs:", style = "color:orange")),
-            # p("For each list, either contrast results or co-expression cluster,
-            #   multiple table and plots are displayed."),
-            # p("- Overview: shows all results for all ontology domain 
-            #   (usefull when multiple domains)
-            #   for all contrasts or all clusters. The blue line
-            #   indicates the current results"),
-            # p("- Results table: for the current list, 
-            #   all terms that passed the adjusted pvalue threshold, 
-            #   ordered by increasing adjusted pvalue. You can change the domain 
-            #   at the bottom of the table.
-            #   You can also order the table with the columns or search 
-            #   for a particular expression"),
-            # p("- Dotplot: for each domain, shows the 15 (default) 
-            #   first terms by adj. pvalue. 
-            #   You can also change the domain or search for a particular expression. 
-            #   When searching for the expression, 
-            #   you might want to increase the number of terms to consider 
-            #   (if there is enough that passed the threshold)"),
-            # p("- Heatplot: for each domain, shows the 15 (default) first terms 
-            #   and the features that are both part of the list and the pathway 
-            #   in the form of a heatmap. 
-            # For the contrasts lists, colors indicate the log2FC of the features 
-            # as found in the differential analysis.
-            # You can change the domain and search for a particular expression 
-            #   (adjusting the number of terms to consider if you want to check 
-            # further on the list of terms)"),
-            # p("- cnetplot: for each domain, shows the 15 (default) 
-            #   first terms and the features that are both part of the list and 
-            #   the pathway in the form of a network. 
-            # As for the heatplot, only the contrasts list have colors, according 
-            # to the log2FC of each features.
-            #   Default only shows the terms labels, you can turn on the features
-            # names as well (it can be unreadable). 
-            # You can also search for a particular expression."),
           )
       )
     ),
@@ -1317,7 +1282,7 @@
                                      input[[paste0(listname, "-top.over")]],
                                      "</b> terms (beige nodes), linked to their associated ", 
                                      varLabel0,
-                                     " (blue/red nodes). ",
+                                     ". ",
                                      " The size of the term node correlates with ",
                                      "the number of ", varLabel0, 
                                      " to which they are linked."))
