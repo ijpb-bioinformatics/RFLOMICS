@@ -46,21 +46,20 @@
 .getEnrichResIntSE <- function(
     object, 
     contrastName, 
-    from ,
-    database,  
-    domain
+    from,
+    database
 ){
   
-  
   if (is.null(contrastName)) {
-    res_return <- object@metadata[[from]][[database]][["enrichResult"]]
+    toret <- metadata(object)[[from]][[database]][["enrichResult"]]
   } else {
-    if (isTagName(object, contrastName))
+    if (isTagName(object, contrastName)){
       contrastName <- convertTagToContrast(object, contrastName)
-    res_return <- object@metadata[[from]][[database]]$enrichResult[[contrastName]]
+    }
+    toret <- metadata(object)[[from]][[database]]$enrichResult[[contrastName]]
   }
   
-  
+  return(toret)
 }
 
 #' @title Determine the origin of from argument
