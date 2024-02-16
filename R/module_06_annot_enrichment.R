@@ -21,48 +21,63 @@
   
   tagList(  
     fluidRow(
-      box(title = span(tagList(icon("chart-pie"), " ", 
-                               a("ClusterProfiler/", 
-                                 href = "https://bioconductor.org/packages/release/bioc/vignettes/clusterProfiler/inst/doc/clusterProfiler.html"), 
-                               a("Pathview",         
-                                 href = "https://bioconductor.org/packages/devel/bioc/vignettes/pathview/inst/doc/pathview.pdf"), 
-                               "   " , 
-                               tags$small("(Scroll down for instructions)"))),
-          solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
-          div(  
-            p("Analyses in this module are conducted using the clusterprofiler R-package. 
+      box(
+        title = span(
+          tagList(icon("chart-pie"), " ", 
+                  a("ClusterProfiler/", 
+                    href = "https://bioconductor.org/packages/release/bioc/
+                    vignettes/clusterProfiler/inst/doc/clusterProfiler.html"), 
+                  a("Pathview",         
+                    href = "https://bioconductor.org/packages/devel/bioc/
+                    vignettes/pathview/inst/doc/pathview.pdf"), 
+                  "   " , 
+                  tags$small("(Scroll down for instructions)"))),
+        solidHeader = TRUE, status = "warning", width = 12, 
+        collapsible = TRUE, collapsed = TRUE,
+        div(  
+          p(
+            "Analyses in this module are conducted using the clusterprofiler 
+            R-package. 
               If you have more questions or interest in this package,
               please check the associated paper or the online vignette at
-              https://yulab-smu.top/biomedical-knowledge-mining-book/index.html."),
-            p(""),
-            h4(tags$span("Parameters set up:", style = "color:orange")),
-            p("Choose the lists of omics features you want to run the enrichment for.
-              Default option selects all the available lists (contrasts or co-expression clusters)."),
-            p("Then choose the ontology you want to refer to for the analysis.
+              https://yulab-smu.top/biomedical-knowledge-mining-book/index.html.
+            "),
+          p(""),
+          h4(tags$span("Parameters set up:", style = "color:orange")),
+          p("Choose the lists of omics features you want to run the 
+            enrichment for.
+              Default option selects all the available lists 
+              (contrasts or co-expression clusters)."),
+          p("Then choose the ontology you want to refer to for the analysis.
               Multiple choices are not allowed. 
-            If you select custom, you'll have to enter an annotation file with at least two columns : 
-              the names of the entity (same as the rownames of your dataset) and 
-            an id for an ontology term (eg: GO:0030198). 
-              It can also contains a column for a more explicit name for the term 
-            (eg: extracellular matrix organization) 
+            If you select custom, you'll have to enter an annotation file 
+            with at least two columns : 
+              the names of the entity (same as the rownames of your dataset) 
+            and an id for an ontology term (eg: GO:0030198). 
+              It can also contains a column for a more explicit name 
+            for the term (eg: extracellular matrix organization) 
               and a column for specifying the domain (eg: MF, BP or CC). 
               An enrichment analysis will be ran on each specified domain."),
-            p("You will have to specify the names of the columns after validating the annotation file."),
-            p("If you choose GO, the three GO:BP, GO:MF and GO:CC will be analyzed. 
-              You can chose to only analyze one of them by selecting the wanted ontology domain).
-              It requires to indicate an R-package for the database, in the form of org.*db.
+          p("You will have to specify the names of the columns after 
+              validating the annotation file."),
+          p("If you choose GO, the three GO:BP, GO:MF and GO:CC will 
+              be analyzed. 
+              You can chose to only analyze one of them by selecting 
+              the wanted ontology domain).
+              It requires to indicate an R-package for the database, 
+              in the form of org.*db.
               (eg: org.At.tair.db for Arabidopsis thaliana), 
               and to specify which type of identifier is used in the data 
               (eg: TAIR for arabidopsis)."),
-            p("For KEGG analysis, only four identifiers are possible. 
+          p("For KEGG analysis, only four identifiers are possible. 
               Please check if the rownames correspond to one of them
               (eg: TAIR is also kegg identifiers)."),
-            p("KEGG analysis uses an API to search for pathways online,
+          p("KEGG analysis uses an API to search for pathways online,
               it requires to have access to an internet connection."),
-            p("Set the adjusted pvalue threshold. 
+          p("Set the adjusted pvalue threshold. 
               Only results below this threshold will be displayed."),
-            
-          )
+          
+        )
       )
     ),
     ## parameters + input data
@@ -167,17 +182,18 @@
     
     ### for diff analysis results
     tabPanel.list <- list(
-      tabPanel(title = "Enrichment from differential expression analysis", 
+      tabPanel("Enrichment from differential expression analysis", 
                br(),
-               .modRunEnrichmentUI(id = ns("DiffExpEnrichAnal")))
+               .modRunEnrichmentUI(ns("DiffExpEnrichAnal")))
     )
     
     ### for coexp analysis results if exist
     if (rea.values[[dataset]]$coExpAnal) { 
       tabPanel.list <- c(tabPanel.list,
-                         list(tabPanel(title = "Enrichment from co-expression analysis",
-                                       br(),
-                                       .modRunEnrichmentUI(id = ns("CoExpEnrichAnal")))
+                         list(
+                           tabPanel("Enrichment from co-expression analysis",
+                                    br(),
+                                    .modRunEnrichmentUI(ns("CoExpEnrichAnal")))
                          )
       )
     }
@@ -207,10 +223,13 @@
   ### use example
   observeEvent(input$useExampleFile, {
     
+    filePath <- "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt"
+    
     local.rea.values$dataPathAnnot <- NULL
     local.rea.values$dataPathAnnot <- paste0(system.file(package = "RFLOMICS"), 
-                                             "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt")
-    output$selectColumnsCustom <- .annotExFileColumns(session, local.rea.values,
+                                             filePath)
+    output$selectColumnsCustom <- .annotExFileColumns(session, 
+                                                      local.rea.values,
                                                       dataset)
     
   })
@@ -262,7 +281,8 @@
 #' @importMethodsFrom ComplexHeatmap draw
 #' @noRd
 .modRunEnrichment <- function(input, output, session, dataset, database, 
-                              listSource, rea.values, input2, local.rea.values){
+                              listSource, rea.values, input2, 
+                              local.rea.values){
   ns <- session$ns
   
   switch(listSource,
@@ -477,14 +497,19 @@
     progress$inc(5/10, detail = paste("Run analyses ", 50, "%", sep = ""))
     #----------------------#
     
-    session$userData$FlomicsMultiAssay[[dataset]]@metadata[[listSource]][[database]] <- NULL
+    session$userData$FlomicsMultiAssay[[dataset]] <- 
+      setEnrichNull(session$userData$FlomicsMultiAssay[[dataset]],
+                    from = listSource,
+                    database = database)
     rea.values[[dataset]][[fromAnnot]] <- FALSE
     
     # run annotation diff analysis
     runRes <- tryCatch({
-      paramList <- c(paramList, 
-                     list(object = session$userData$FlomicsMultiAssay[[dataset]], 
-                          from = from, nameList = input$listToAnnot))
+      paramList <- c(
+        paramList, 
+        list(object = session$userData$FlomicsMultiAssay[[dataset]], 
+             from = from, nameList = input$listToAnnot)
+      )
       
       do.call(runAnnotationEnrichment, paramList)
     },
@@ -520,45 +545,55 @@
 #' @importFrom dplyr setequal
 .checkRunORAExecution <- function(object.SE, dbType = NULL, paramList = NULL){
   
-  
   if (!is.null(paramList$diffList)) {
+    fromSource <- "DiffExpEnrichAnal"
+    dbRes <- object.SE@metadata[[fromSource]][[dbType]]
     
-    if (is.null(object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]])) return(TRUE)
-    if (isFALSE(setequal(names(object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$enrichResult), paramList$diffList)) ) return(TRUE)
+    if (is.null(dbRes)) { return(TRUE)}
+    if (!(setequal(names(dbRes$enrichResult), paramList$diffList)) ) {
+      return(TRUE)
+    }
+    
+    list_args <- dbRes$list_args
     
     # check param
-    if (isFALSE(setequal(paramList$domain, object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$domain))) return(TRUE)
-    if (paramList$pvalueCutoff != object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$pvalueCutoff) return(TRUE)
+    if (!(setequal(paramList$domain, list_args$domain))) return(TRUE)
+    if (paramList$pvalueCutoff != list_args$pvalueCutoff) return(TRUE)
     
     switch(dbType,
            "GO" = {
-             if (paramList$OrgDb    != object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$OrgDb)    return(TRUE)
-             if (paramList$keyType  != object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$keyType)  return(TRUE)
+             if (paramList$OrgDb    != list_args$OrgDb)    return(TRUE)
+             if (paramList$keyType  != list_args$keyType)  return(TRUE)
            },
            "KEGG" = {
-             if (paramList$keyType  != object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$keyType)  return(TRUE)
-             if (paramList$organism != object.SE@metadata[["DiffExpEnrichAnal"]][[dbType]]$list_args$organism) return(TRUE)
+             if (paramList$keyType  != list_args$keyType)  return(TRUE)
+             if (paramList$organism != list_args$organism) return(TRUE)
            }
     )
-    
   }
   if (!is.null(paramList$CoexpList)) {
     
-    if (is.null(object.SE@metadata[["CoExpEnrichAnal"]][[dbType]])) return(TRUE)
-    if (isFALSE(setequal(names(object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$enrichResult), paramList$CoexpList)) ) return(TRUE)
+    fromSource <- "CoExpEnrichAnal"
+    dbRes <- object.SE@metadata[[fromSource]][[dbType]]
     
+    if (is.null(dbRes)) return(TRUE)
+    if (!(setequal(names(dbRes$enrichResult), paramList$CoexpList))) {
+      return(TRUE)
+    }
     # check param
-    if (isFALSE(setequal(paramList$domain, object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$domain))) return(TRUE)
-    if (paramList$pvalueCutoff != object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$pvalueCutoff) return(TRUE)
+    list_args <- dbRes$list_args
+    
+    if (!(setequal(paramList$domain, list_args$domain))) return(TRUE)
+    if (paramList$pvalueCutoff != list_args$pvalueCutoff) return(TRUE)
     
     switch(dbType,
            "GO" = {
-             if (paramList$OrgDb    != object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$OrgDb)   return(TRUE)
-             if (paramList$keyType  != object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$keyType) return(TRUE)
+             if (paramList$OrgDb    != list_args$OrgDb)   return(TRUE)
+             if (paramList$keyType  != list_args$keyType) return(TRUE)
            },
            "KEGG" = {
-             if (paramList$keyType  != object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$keyType)  return(TRUE)
-             if (paramList$organism != object.SE@metadata[["CoExpEnrichAnal"]][[dbType]]$list_args$organism) return(TRUE)
+             if (paramList$keyType  != list_args$keyType)  return(TRUE)
+             if (paramList$organism != list_args$organism) return(TRUE)
            }
     )
     
@@ -590,9 +625,13 @@
     )
     
     ### lists
-    ListNames <- switch(listSource,
-                        "DiffExpEnrichAnal" = rea.values[[dataset]]$DiffValidContrast$contrastName,
-                        "CoExpEnrichAnal"   = rea.values[[dataset]]$CoExpClusterNames)
+    ListNames <- switch(
+      listSource,
+      "DiffExpEnrichAnal" = 
+        rea.values[[dataset]]$DiffValidContrast$contrastName,
+      "CoExpEnrichAnal"   = 
+        rea.values[[dataset]]$CoExpClusterNames
+    )
     
     tagList(
       column(width = 6,
@@ -633,8 +672,10 @@
                              label = "Annotation file"),
                   title = "Annotation File format",
                   content = paste0("<p>Required format:</p>",
-                                   "a tsv or csv file with at least two columns, ",
-                                   "one for omic features names and the other for", 
+                                   "a tsv or csv file with at least ",
+                                   "two columns, ",
+                                   "one for omic features names and ",
+                                   "the other for", 
                                    " their associated terms."),
                   trigger = "click"
                 ),
@@ -643,18 +684,20 @@
                             ".csv")), 
       
       if (rea.values$exampleData) {
-        popify(bsButton(inputId = ns("useExampleFile"),
-                        label = "Use example annotation file",
-                        style = "primary", size = "default",
-                        type = "action"),
-               title = "Use example file for ecoseed data",
-               content = paste0("<p> You are conducting an analysis using the ",
-                                "example dataset ecossed. You can ",
-                                "run an annotation enrichment ",
-                                "using the example annotation file, which is an ",
-                                "extract of GO terms for Arabidopsis thaliana",
-                                " genes from plant ensembl, using TAIR ids"),
-               placement = "top", trigger = "hover")
+        popify(
+          bsButton(inputId = ns("useExampleFile"),
+                   label = "Use example annotation file",
+                   style = "primary", size = "default",
+                   type = "action"),
+          title = "Use example file for ecoseed data",
+          content = paste0("<p> You are conducting an analysis using the ",
+                           "example dataset ecossed. You can ",
+                           "run an annotation enrichment ",
+                           "using the example annotation file, ",
+                           "which is an ",
+                           "extract of GO terms for Arabidopsis thaliana",
+                           " genes from plant ensembl, using TAIR ids"),
+          placement = "top", trigger = "hover")
       },
       
       uiOutput(ns("selectColumnsCustom")),
@@ -833,14 +876,16 @@
       
       # type organism 
       textInput(inputId = ns("organism"), 
-                label = popify(actionLink(inputId = ns("colSelAnnot"),
-                                          label = "Organism code:"),
-                               title = "KEGG Organism code",
-                               content = paste0("Three or more letters ",
-                                                "indicating the species. ",
-                                                "For example: ",
-                                                "<ul><li>hsa for <i>Homo sapiens</i>,</li> ",
-                                                "<li>ath for <i>Arabidopsis thaliana</i>.</li></ul>")
+                label = popify(
+                  actionLink(inputId = ns("colSelAnnot"),
+                             label = "Organism code:"),
+                  title = "KEGG Organism code",
+                  content = paste0("Three or more letters ",
+                                   "indicating the species. ",
+                                   "For example: ",
+                                   "<ul><li>hsa for <i>Homo sapiens</i>,</li> ",
+                                   "<li>ath for <i>Arabidopsis thaliana</i>.",
+                                   "</li></ul>")
                 ),
                 value = "", 
                 width = NULL, placeholder = NULL),
@@ -874,10 +919,15 @@
     }
     
     #foreach genes list selected (contrast)
-    lapply(names(getEnrichRes(dataSE, from = listSource, database = database)), function(listname) {
-      if (length(getEnrichRes(dataSE, from = listSource, database = database, contrastName = listname)) != 0) {
-        
-        if (sum(unlist(sumORA(dataSE, from = listSource, database = database)[-1]), na.rm = TRUE) == 0) {
+    eres1 <- getEnrichRes(dataSE, from = listSource, database = database)
+    lapply(names(eres1), function(listname) {
+      eres <- getEnrichRes(dataSE, from = listSource,
+                           database = database, 
+                           contrastName = listname)
+      if (length(eres) != 0) {
+        sORA <- sumORA(dataSE, from = listSource,
+                       database = database)
+        if (sum(unlist(sORA[-1]), na.rm = TRUE) == 0) {
           fluidRow(
             box(width = 12, 
                 title = paste0(listname, ": 0 enriched terms found."), 
@@ -885,11 +935,7 @@
           )
         }
         else{
-          
-          choices <- names(getEnrichRes(dataSE, from = listSource,
-                                        contrastName = listname,
-                                        database = database))
-          
+          choices <- names(eres)
           
           # ---- TabPanel plots ----
           tabPanel.list <- list(
@@ -915,22 +961,28 @@
                        br(),
                        renderDataTable({
                          
-                         dataPlot <- getEnrichRes(object = dataSE,
-                                                  from = listSource,
-                                                  contrastName = listname,
-                                                  database = database,
-                                                  domain = input[[paste0(listname, "-domain")]])
+                         dataPlot <- getEnrichRes(
+                           object = dataSE,
+                           from = listSource,
+                           contrastName = listname,
+                           database = database,
+                           domain = input[[paste0(listname, "-domain")]])
+                         
                          pvalue <- getEnrichPvalue(dataSE,
                                                    from = listSource, 
                                                    database = database)
-                         datPlot <- dataPlot@result[dataPlot@result$p.adjust <  pvalue,]
+                         
+                         datPlot <- dataPlot@result[
+                           dataPlot@result$p.adjust <  pvalue,]
                          datPlot$pvalue <- round(datPlot$pvalue, 3)
                          datPlot$p.adjust <- round(datPlot$p.adjust, 3)
                          datPlot$qvalue <- round(datPlot$qvalue, 3)
-                         datPlot$geneID <- unlist(lapply(datPlot$geneID, 
-                                                         FUN = function(longString){
-                                                           return(gsub("/", ", ", longString))
-                                                         }))
+                         datPlot$geneID <- unlist(
+                           lapply(datPlot$geneID, 
+                                  FUN = function(longString){
+                                    return(gsub("/", ", ", longString))
+                                  })
+                         )
                          
                          datatable(datPlot,
                                    rownames = FALSE,
@@ -970,52 +1022,53 @@
           
           # display results
           fluidRow(
-            box(width = 12, solidHeader = TRUE, collapsible = TRUE,
-                collapsed = TRUE, status = "success", title = listname,
+            box(
+              width = 12, solidHeader = TRUE, collapsible = TRUE,
+              collapsed = TRUE, status = "success", title = listname,
+              
+              fluidRow(
+                column(3,
+                       # choice of domain
+                       radioButtons(ns(paste0(listname, "-domain")),
+                                    label = "Domain",
+                                    choices = choices,
+                                    selected = choices[1])),
+                column(3,
+                       renderUI({
+                         # number of terms
+                         dataPlot <- getEnrichRes(object = dataSE,
+                                                  from = listSource,
+                                                  contrastName = listname,
+                                                  database = database,
+                                                  domain = input[[paste0(listname, "-domain")]])
+                         pvalue <- getEnrichPvalue(dataSE,
+                                                   from = listSource, 
+                                                   database = database)
+                         datPlot <- dataPlot@result[dataPlot@result$p.adjust <  pvalue,]
+                         max_terms <- nrow(datPlot) 
+                         
+                         numericInput(ns(paste0(listname, "-top.over")),
+                                      label = paste0("Top terms: (max: ",
+                                                     max_terms, ")"),
+                                      value = min(15, max_terms) ,
+                                      min = 1, max = max_terms, step = 1) 
+                       })),
                 
-                fluidRow(
-                  column(3,
-                         # choice of domain
-                         radioButtons(ns(paste0(listname, "-domain")),
-                                      label = "Domain",
-                                      choices = choices,
-                                      selected = choices[1])),
-                  column(3,
-                         renderUI({
-                           # number of terms
-                           dataPlot <- getEnrichRes(object = dataSE,
-                                                    from = listSource,
-                                                    contrastName = listname,
-                                                    database = database,
-                                                    domain = input[[paste0(listname, "-domain")]])
-                           pvalue <- getEnrichPvalue(dataSE,
-                                                     from = listSource, 
-                                                     database = database)
-                           datPlot <- dataPlot@result[dataPlot@result$p.adjust <  pvalue,]
-                           max_terms <- nrow(datPlot) 
-                           
-                           numericInput(ns(paste0(listname, "-top.over")),
-                                        label = paste0("Top terms: (max: ",
-                                                       max_terms, ")"),
-                                        value = min(15, max_terms) ,
-                                        min = 1, max = max_terms, step = 1) 
-                         })),
-                  
-                  column(3,
-                         # search term or gene
-                         textInput(ns(paste0(listname, "-grep")),
-                                   label = "Search Expression")),
-                  column(1,
-                  ),
-                  .popoverHelp(label = "")
+                column(3,
+                       # search term or gene
+                       textInput(ns(paste0(listname, "-grep")),
+                                 label = "Search Expression")),
+                column(1,
                 ),
-                fluidRow(
-                  # display all tabsets
-                  column(width = 12,
-                         do.call(what = tabsetPanel, args = tabPanel.list)
-                  )
+                .popoverHelp(label = "")
+              ),
+              fluidRow(
+                # display all tabsets
+                column(width = 12,
+                       do.call(what = tabsetPanel, args = tabPanel.list)
                 )
-                
+              )
+              
             ) # box
           ) # fluidrow
         } # else
@@ -1041,30 +1094,31 @@
               "
            )),
            div(id = "classPop",
-               span(label, 
-                    popify(h4(icon("question-circle"), "Help"), 
-                           title = "Parameters for enrichment results plots", 
-                           content = paste0(
-                             "For each domain indicated ",
-                             "(typically BP, CC and MF for GO ,",
-                             "enrichment), three graphs and the results ",
-                             "table are displayed (all pvalues are rounded ",
-                             "to 3 digits). For more ",
-                             "information on the plots, please ",
-                             "check the package vignette. ",
-                             "All entries apply to the three ",
-                             " graphs displayed. ",
-                             "<p> You can choose the number of terms ",
-                             "to be displayed, sorted by ascending order of ",
-                             "adjusted pvalue.</p>",
-                             "<p> The search expression allows you ",
-                             "to display only the first terms containing ",
-                             "the regular expression of interest. ",
-                             "You can use regular expression patterns such as:",
-                             "<ul><li> <b>||</b> for <i>or</i> statement; </li>",
-                             "<li> <b>&</b> for <i>and</i> statement;</li>",
-                             "</ul>"), trigger = "click", placement = "top"),
-                    style = "color: #337ab7; border-color: #337ab7;")
+               span(
+                 label, 
+                 popify(h4(icon("question-circle"), "Help"), 
+                        title = "Parameters for enrichment results plots", 
+                        content = paste0(
+                          "For each domain indicated ",
+                          "(typically BP, CC and MF for GO ,",
+                          "enrichment), three graphs and the results ",
+                          "table are displayed (all pvalues are rounded ",
+                          "to 3 digits). For more ",
+                          "information on the plots, please ",
+                          "check the package vignette. ",
+                          "All entries apply to the three ",
+                          " graphs displayed. ",
+                          "<p> You can choose the number of terms ",
+                          "to be displayed, sorted by ascending order of ",
+                          "adjusted pvalue.</p>",
+                          "<p> The search expression allows you ",
+                          "to display only the first terms containing ",
+                          "the regular expression of interest. ",
+                          "You can use regular expression patterns such as:",
+                          "<ul><li> <b>||</b> for <i>or</i> statement; </li>",
+                          "<li> <b>&</b> for <i>and</i> statement;</li>",
+                          "</ul>"), trigger = "click", placement = "top"),
+                 style = "color: #337ab7; border-color: #337ab7;")
            )
     )
   })
@@ -1092,24 +1146,25 @@
                           searchExpr = input[[paste0(listname, "-grep")]]
       ))
     
-    plotExplain <- switch(from,
-                          "DiffExpAnal" =  {
-                            paste0("This graph shows the top <b>",
-                                   input[[paste0(listname, "-top.over")]],
-                                   "</b> terms, arranged in alphabetical order. ",
-                                   " The tiles of <b>", varLabel0, 
-                                   "</b> present in the term are colored according to ",
-                                   "the log2 FC of the differential analysis of <b>",
-                                   listname, "</b> . White tiles indicate the ",
-                                   varLabel0, " is not present in the term.")
-                          },
-                          "CoExpAnal" = 
-                            paste0("This graph shows the top <b>",
-                                   input[[paste0(listname, "-top.over")]],
-                                   "</b> terms, arranged in alphabetical order. ",
-                                   "The color of the tile indicates the absence (white) or ",
-                                   "presence (black) of a ", varLabel0, 
-                                   " in the term."))
+    plotExplain <- switch(
+      from,
+      "DiffExpAnal" =  {
+        paste0("This graph shows the top <b>",
+               input[[paste0(listname, "-top.over")]],
+               "</b> terms, arranged in alphabetical order. ",
+               " The tiles of <b>", varLabel0, 
+               "</b> present in the term are colored according to ",
+               "the log2 FC of the differential analysis of <b>",
+               listname, "</b> . White tiles indicate the ",
+               varLabel0, " is not present in the term.")
+      },
+      "CoExpAnal" = 
+        paste0("This graph shows the top <b>",
+               input[[paste0(listname, "-top.over")]],
+               "</b> terms, arranged in alphabetical order. ",
+               "The color of the tile indicates the absence (white) or ",
+               "presence (black) of a ", varLabel0, 
+               " in the term."))
     
     if (input[[paste0(listname, "-domain")]] == "no-domain") {
       subTitlePlot <- paste0("Database: ", database, " - ", 
@@ -1154,47 +1209,49 @@
   varLabel0 <- omicsDic(dataSE)$variableName
   
   renderUI({
-    outdot <- .doNotSpeak(plotClusterProfiler(dataSE,
-                                              contrastName = listname,
-                                              from = from,
-                                              plotType = plotType,
-                                              database = database,
-                                              domain = input[[paste0(listname, "-domain")]],
-                                              showCategory = input[[paste0(listname, "-top.over")]],
-                                              searchExpr = input[[paste0(listname, "-grep")]])
+    outdot <- .doNotSpeak(
+      plotClusterProfiler(dataSE,
+                          contrastName = listname,
+                          from = from,
+                          plotType = plotType,
+                          database = database,
+                          domain = input[[paste0(listname, "-domain")]],
+                          showCategory = input[[paste0(listname, "-top.over")]],
+                          searchExpr = input[[paste0(listname, "-grep")]])
     )
     
     
-    plotExplain <- switch(from,
-                          "DiffExpAnal" =  {
-                            paste0("This graph shows the top <b>",
-                                   input[[paste0(listname, "-top.over")]],
-                                   "</b> terms, ordered by GeneRatio (number of ",
-                                   varLabel0, " found differentially expressed ",
-                                   " , also called Count, relative to the total number of ",
-                                   varLabel0, " for that term in the database). ",
-                                   "The dot color is linked to ",
-                                   "the adjusted pvalue.",
-                                   " Dot size is determined by the number of ",
-                                   "differentially expressed ", varLabel0, 
-                                   " in <b>", listname, 
-                                   "</b> and present in the term (Count).")
-                          },
-                          "CoExpAnal" = 
-                            paste0(
-                              "This graph shows the top <b>",
-                              input[[paste0(listname, "-top.over")]],
-                              "</b> terms, , ordered by GeneRatio (number of ",
-                              varLabel0, " found in the cluster ",
-                              " , also called Count, relative to the total number of ",
-                              varLabel0, " for that term in the database). ",
-                              "The dot color is linked to ",
-                              "the adjusted pvalue.",
-                              " Dot size is determined by the number of ",
-                              "differentially expressed ", varLabel0, 
-                              " in <b>", listname, 
-                              "</b> and present in the term (Count)."
-                            ))
+    plotExplain <- switch(
+      from,
+      "DiffExpAnal" =  {
+        paste0("This graph shows the top <b>",
+               input[[paste0(listname, "-top.over")]],
+               "</b> terms, ordered by GeneRatio (number of ",
+               varLabel0, " found differentially expressed ",
+               " , also called Count, relative to the total number of ",
+               varLabel0, " for that term in the database). ",
+               "The dot color is linked to ",
+               "the adjusted pvalue.",
+               " Dot size is determined by the number of ",
+               "differentially expressed ", varLabel0, 
+               " in <b>", listname, 
+               "</b> and present in the term (Count).")
+      },
+      "CoExpAnal" = 
+        paste0(
+          "This graph shows the top <b>",
+          input[[paste0(listname, "-top.over")]],
+          "</b> terms, , ordered by GeneRatio (number of ",
+          varLabel0, " found in the cluster ",
+          " , also called Count, relative to the total number of ",
+          varLabel0, " for that term in the database). ",
+          "The dot color is linked to ",
+          "the adjusted pvalue.",
+          " Dot size is determined by the number of ",
+          "differentially expressed ", varLabel0, 
+          " in <b>", listname, 
+          "</b> and present in the term (Count)."
+        ))
     
     if (input[[paste0(listname, "-domain")]] == "no-domain") {
       subTitlePlot <- paste0("Database: ", database, " - ", 
@@ -1257,41 +1314,43 @@
       }
       
       outcnet <- .doNotSpeak(
-        plotClusterProfiler(dataSE,
-                            contrastName = listname,
-                            from = from,
-                            plotType = plotType,
-                            database = database,
-                            domain = input[[paste0(listname, "-domain")]],
-                            showCategory = input[[paste0(listname, "-top.over")]],
-                            searchExpr = input[[paste0(listname, "-grep")]],
-                            nodeLabel = nodeLabelArg)
+        plotClusterProfiler(
+          dataSE,
+          contrastName = listname,
+          from = from,
+          plotType = plotType,
+          database = database,
+          domain = input[[paste0(listname, "-domain")]],
+          showCategory = input[[paste0(listname, "-top.over")]],
+          searchExpr = input[[paste0(listname, "-grep")]],
+          nodeLabel = nodeLabelArg)
       )
       
-      plotExplain <- switch(from,
-                            "DiffExpAnal" =  {
-                              paste0("This graph represents the top <b>",
-                                     input[[paste0(listname, "-top.over")]],
-                                     "</b> terms (beige nodes), linked to their associated ", 
-                                     varLabel0,
-                                     " (blue/red nodes).", varLabel0, 
-                                     " color of is determined by the log2FC derived from",
-                                     " the differential analysis of <b>",
-                                     listname, "</b> , with red indicating an up-regulated ",
-                                     varLabel0, " and blue a down-regulated one.",
-                                     " The size of the term node correlates with ",
-                                     "the number of ", varLabel0, 
-                                     " to which they are linked.")
-                            },
-                            "CoExpAnal" = 
-                              paste0("This graph represents the top <b>",
-                                     input[[paste0(listname, "-top.over")]],
-                                     "</b> terms (beige nodes), linked to their associated ", 
-                                     varLabel0,
-                                     ". ",
-                                     " The size of the term node correlates with ",
-                                     "the number of ", varLabel0, 
-                                     " to which they are linked."))
+      plotExplain <- switch(
+        from,
+        "DiffExpAnal" =  {
+          paste0("This graph represents the top <b>",
+                 input[[paste0(listname, "-top.over")]],
+                 "</b> terms (beige nodes), linked to their associated ", 
+                 varLabel0,
+                 " (blue/red nodes).", varLabel0, 
+                 " color of is determined by the log2FC derived from",
+                 " the differential analysis of <b>",
+                 listname, "</b> , with red indicating an up-regulated ",
+                 varLabel0, " and blue a down-regulated one.",
+                 " The size of the term node correlates with ",
+                 "the number of ", varLabel0, 
+                 " to which they are linked.")
+        },
+        "CoExpAnal" = 
+          paste0("This graph represents the top <b>",
+                 input[[paste0(listname, "-top.over")]],
+                 "</b> terms (beige nodes), linked to their associated ", 
+                 varLabel0,
+                 ". ",
+                 " The size of the term node correlates with ",
+                 "the number of ", varLabel0, 
+                 " to which they are linked."))
       
       if (input[[paste0(listname, "-domain")]] == "no-domain") {
         subTitlePlot <- paste0("Database: ", database, " - ", 
@@ -1370,9 +1429,10 @@
              column(9,
                     h5("Link to interactive map online"),
                     renderPrint({
-                      link_to_map <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?",
-                                            input[[paste0(listname, "-MAP.sel")]], "/",
-                                            data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
+                      link_to_map <- paste0(
+                        "http://www.kegg.jp/kegg-bin/show_pathway?",
+                        input[[paste0(listname, "-MAP.sel")]], "/",
+                        data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
                       paste0(link_to_map)
                     }),
              )
@@ -1380,20 +1440,22 @@
            fluidRow(
              column(12,
                     renderUI({
-                      link_to_map <- paste0("http://www.kegg.jp/kegg-bin/show_pathway?",
-                                            input[[paste0(listname, "-MAP.sel")]], "/",
-                                            data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
+                      link_to_map <- paste0(
+                        "http://www.kegg.jp/kegg-bin/show_pathway?",
+                        input[[paste0(listname, "-MAP.sel")]], "/",
+                        data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
                       
                       # test validity of URL
                       if (url.exists(link_to_map)) {
                         
                         renderPlot({
-                          plotKEGG(object = dataSE,
-                                   contrastName = listname,
-                                   from = listSource,
-                                   pathway_id = input[[paste0(listname, "-MAP.sel")]],
-                                   species = input2$organism,
-                                   gene_idtype = input2$keyTypeKEGG
+                          plotKEGG(
+                            object = dataSE,
+                            contrastName = listname,
+                            from = listSource,
+                            pathway_id = input[[paste0(listname, "-MAP.sel")]],
+                            species = input2$organism,
+                            gene_idtype = input2$keyTypeKEGG
                           )}, res = 300, width = 1000, height = 1000)
                       } else {
                         renderText("Please check your connection. 
@@ -1419,14 +1481,14 @@
     if (rea.values[[dataset]][[fromAnnot]] == FALSE ||
         is.null(sumORA(session$userData$FlomicsMultiAssay[[dataset]],
                        from     = listSource,
-                       database = database)))
+                       database = database))){
       return()
+    } 
     
-    results <- getEnrichRes(session$userData$FlomicsMultiAssay[[dataset]], 
-                            listSource, database)
+    sORA <- sumORA(session$userData$FlomicsMultiAssay[[dataset]], 
+                   from = listSource, database = database)
     
-    if (is.null(sumORA(session$userData$FlomicsMultiAssay[[dataset]], 
-                       listSource, database)))  {
+    if (is.null(sORA))  {
       fluidRow(
         box(width = 12, solidHeader = TRUE, collapsible = TRUE,
             collapsed = TRUE, status = "warning", title = title,
@@ -1442,8 +1504,7 @@
                        renderDataTable({
                          
                          datatable(
-                           sumORA(session$userData$FlomicsMultiAssay[[dataset]],
-                                  listSource, database),
+                           sORA,
                            rownames = FALSE,
                            options = list(pageLength = 6, dom = 'tip'))
                        })),
@@ -1454,9 +1515,7 @@
                                        dataset, from,
                                        listSource, database))
             )
-            
         )
-        
       )
     }
   })
@@ -1510,40 +1569,43 @@
                  distmeth <- switch(input[[paste0(database, "-compType")]],
                                     "presence" = "binary",
                                     "euclidean")
-                 additionalMessage <- switch(input[[paste0(database, "-compType")]],
-                                             "presence" = "Red tiles indicates the term has
-                                             been found enriched using the list, white tile
-                                             is an absent term. ",
-                                             "FC" = "Tiles are colored according to the 
-                                             fold change (FC) of the enrichment. White tiles
-                                             denote the non-significance for a term in a list.")
+                 additionalMessage <- switch(
+                   input[[paste0(database, "-compType")]],
+                   "presence" = "Red tiles indicates the term has
+                                 been found enriched using the list, white tile
+                                 is an absent term. ",
+                   "FC" = "Tiles are colored according to the 
+                           fold change (FC) of the enrichment. White tiles
+                           denote the non-significance for a term in a list.")
                  
                  
-                 plotExplain <- switch(from,
-                                       "DiffExpAnal" =  {
-                                         paste0("This graph shows all the enriched terms ",
-                                                "found with database <b> ", database, "</b>",
-                                                " with differentially expressed ", 
-                                                varLabel0, " lists.",
-                                                " Clustering of terms was computed using <b> ",
-                                                distmeth, "</b> and <b>", clustmeth, "</b>. ",
-                                                additionalMessage)
-                                       },
-                                       "CoExpAnal" = 
-                                         paste0("This graph shows all the enriched terms ",
-                                                "found with database <b>", database, "</b>",
-                                                " with the co-expression clusters ", 
-                                                varLabel0, " lists.",
-                                                " Clustering of terms was computed using <b> ",
-                                                distmeth, "</b> and <b>", clustmeth, "</b>. ",
-                                                additionalMessage))
+                 plotExplain <- switch(
+                   from,
+                   "DiffExpAnal" =  {
+                     paste0("This graph shows all the enriched terms ",
+                            "found with database <b> ", database, "</b>",
+                            " with differentially expressed ", 
+                            varLabel0, " lists.",
+                            " Clustering of terms was computed using <b> ",
+                            distmeth, "</b> and <b>", clustmeth, "</b>. ",
+                            additionalMessage)
+                   },
+                   "CoExpAnal" = 
+                     paste0("This graph shows all the enriched terms ",
+                            "found with database <b>", database, "</b>",
+                            " with the co-expression clusters ", 
+                            varLabel0, " lists.",
+                            " Clustering of terms was computed using <b> ",
+                            distmeth, "</b> and <b>", clustmeth, "</b>. ",
+                            additionalMessage))
                  
                  outHeatmap <- tryCatch({
-                   outHeatmap <-  plotEnrichComp(dataSE,
-                                                 from = from, 
-                                                 database = database, 
-                                                 domain = input[[paste0(database, "-compDomain")]],
-                                                 matrixType = input[[paste0(database, "-compType")]])
+                   outHeatmap <-  plotEnrichComp(
+                     dataSE,
+                     from = from, 
+                     database = database, 
+                     domain = input[[paste0(database, "-compDomain")]],
+                     matrixType = input[[paste0(database, "-compType")]])
                  },
                  warning = function(warn) warn,
                  error = function(err) err
