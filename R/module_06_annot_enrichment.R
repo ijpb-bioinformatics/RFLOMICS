@@ -62,41 +62,41 @@
             p("Set the adjusted pvalue threshold. 
               Only results below this threshold will be displayed."),
             
-            h4(tags$span("Outputs:", style = "color:orange")),
-            p("For each list, either contrast results or co-expression cluster,
-              multiple table and plots are displayed."),
-            p("- Overview: shows all results for all ontology domain 
-              (usefull when multiple domains)
-              for all contrasts or all clusters. The blue line
-              indicates the current results"),
-            p("- Results table: for the current list, 
-              all terms that passed the adjusted pvalue threshold, 
-              ordered by increasing adjusted pvalue. You can change the domain 
-              at the bottom of the table.
-              You can also order the table with the columns or search 
-              for a particular expression"),
-            p("- Dotplot: for each domain, shows the 15 (default) 
-              first terms by adj. pvalue. 
-              You can also change the domain or search for a particular expression. 
-              When searching for the expression, 
-              you might want to increase the number of terms to consider 
-              (if there is enough that passed the threshold)"),
-            p("- Heatplot: for each domain, shows the 15 (default) first terms 
-              and the features that are both part of the list and the pathway 
-              in the form of a heatmap. 
-            For the contrasts lists, colors indicate the log2FC of the features 
-            as found in the differential analysis.
-            You can change the domain and search for a particular expression 
-              (adjusting the number of terms to consider if you want to check 
-            further on the list of terms)"),
-            p("- cnetplot: for each domain, shows the 15 (default) 
-              first terms and the features that are both part of the list and 
-              the pathway in the form of a network. 
-            As for the heatplot, only the contrasts list have colors, according 
-            to the log2FC of each features.
-              Default only shows the terms labels, you can turn on the features
-            names as well (it can be unreadable). 
-            You can also search for a particular expression."),
+            # h4(tags$span("Outputs:", style = "color:orange")),
+            # p("For each list, either contrast results or co-expression cluster,
+            #   multiple table and plots are displayed."),
+            # p("- Overview: shows all results for all ontology domain 
+            #   (usefull when multiple domains)
+            #   for all contrasts or all clusters. The blue line
+            #   indicates the current results"),
+            # p("- Results table: for the current list, 
+            #   all terms that passed the adjusted pvalue threshold, 
+            #   ordered by increasing adjusted pvalue. You can change the domain 
+            #   at the bottom of the table.
+            #   You can also order the table with the columns or search 
+            #   for a particular expression"),
+            # p("- Dotplot: for each domain, shows the 15 (default) 
+            #   first terms by adj. pvalue. 
+            #   You can also change the domain or search for a particular expression. 
+            #   When searching for the expression, 
+            #   you might want to increase the number of terms to consider 
+            #   (if there is enough that passed the threshold)"),
+            # p("- Heatplot: for each domain, shows the 15 (default) first terms 
+            #   and the features that are both part of the list and the pathway 
+            #   in the form of a heatmap. 
+            # For the contrasts lists, colors indicate the log2FC of the features 
+            # as found in the differential analysis.
+            # You can change the domain and search for a particular expression 
+            #   (adjusting the number of terms to consider if you want to check 
+            # further on the list of terms)"),
+            # p("- cnetplot: for each domain, shows the 15 (default) 
+            #   first terms and the features that are both part of the list and 
+            #   the pathway in the form of a network. 
+            # As for the heatplot, only the contrasts list have colors, according 
+            # to the log2FC of each features.
+            #   Default only shows the terms labels, you can turn on the features
+            # names as well (it can be unreadable). 
+            # You can also search for a particular expression."),
           )
       )
     ),
@@ -503,7 +503,7 @@
     # run analysis
     message("# 11- ", database, 
             " Enrichment Analysis of ", listSource ,
-            " lists...", dataset)
+            " lists... ", dataset)
     
     #---- progress bar ----#
     progress$inc(5/10, detail = paste("Run analyses ", 50, "%", sep = ""))
@@ -666,7 +666,7 @@
                   title = "Annotation File format",
                   content = paste0("<p>Required format:</p>",
                                    "a tsv or csv file with at least two columns, ",
-                                   "one for omic features names and one for", 
+                                   "one for omic features names and the other for", 
                                    " their associated terms."),
                   trigger = "click"
                 ),
@@ -693,7 +693,7 @@
       
       ## alpha threshold
       numericInput(inputId = ns("pValue_custom"), 
-                   label = "Adjusted p-value", 
+                   label = "Adjusted p-value cutoff", 
                    value = 0.01 , min = 0, max = 1, step = 0.01)
     )
   })
@@ -911,11 +911,11 @@
     #foreach genes list selected (contrast)
     lapply(names(getEnrichRes(dataSE, from = listSource, database = database)), function(listname) {
       if (length(getEnrichRes(dataSE, from = listSource, database = database, contrastName = listname)) != 0) {
+        
         if (sum(unlist(sumORA(dataSE, from = listSource, database = database)[-1]), na.rm = TRUE) == 0) {
-          
           fluidRow(
             box(width = 12, 
-                title = paste0(listname, ": 0 enriched terms found"), 
+                title = paste0(listname, ": 0 enriched terms found."), 
                 status = "danger")
           )
         }
@@ -924,6 +924,8 @@
           choices <- names(getEnrichRes(dataSE, from = listSource,
                                         contrastName = listname,
                                         database = database))
+          
+          
           # ---- TabPanel plots ----
           tabPanel.list <- list(
             tabPanel("DotPlot",
@@ -953,7 +955,6 @@
                                                   contrastName = listname,
                                                   database = database,
                                                   domain = input[[paste0(listname, "-domain")]])
-                         
                          pvalue <- getEnrichPvalue(dataSE,
                                                    from = listSource, 
                                                    database = database)
@@ -963,8 +964,8 @@
                          datPlot$qvalue <- round(datPlot$qvalue, 3)
                          datPlot$geneID <- unlist(lapply(datPlot$geneID, 
                                                          FUN = function(longString){
-                           return(gsub("/", ", ", longString))
-                         }))
+                                                           return(gsub("/", ", ", longString))
+                                                         }))
                          
                          datatable(datPlot,
                                    rownames = FALSE,
@@ -1001,7 +1002,7 @@
           }
           
           ### 
- 
+          
           # display results
           fluidRow(
             box(width = 12, solidHeader = TRUE, collapsible = TRUE,
@@ -1015,10 +1016,26 @@
                                       choices = choices,
                                       selected = choices[1])),
                   column(3,
-                         # number of term
-                         numericInput(ns(paste0(listname, "-top.over")),
-                                      label = "Top terms:", value = 15 ,
-                                      min = 1, max = 10000, step = 5)), 
+                         renderUI({
+                           # number of terms
+                           dataPlot <- getEnrichRes(object = dataSE,
+                                                    from = listSource,
+                                                    contrastName = listname,
+                                                    database = database,
+                                                    domain = input[[paste0(listname, "-domain")]])
+                           pvalue <- getEnrichPvalue(dataSE,
+                                                     from = listSource, 
+                                                     database = database)
+                           datPlot <- dataPlot@result[dataPlot@result$p.adjust <  pvalue,]
+                           max_terms <- nrow(datPlot) 
+                           
+                           numericInput(ns(paste0(listname, "-top.over")),
+                                        label = paste0("Top terms: (max: ",
+                                                       max_terms, ")"),
+                                        value = min(15, max_terms) ,
+                                        min = 1, max = max_terms, step = 1) 
+                         })),
+                  
                   column(3,
                          # search term or gene
                          textInput(ns(paste0(listname, "-grep")),
@@ -1062,22 +1079,26 @@
                span(label, 
                     popify(h4(icon("question-circle"), "Help"), 
                            title = "Parameters for enrichment results plots", 
-                           content = paste0("For each domain indicated ",
-                                            "(typically BP, CC and MF for GO ,",
-                                            "enrichment), three plots and the result ",
-                                            "table are displayed. For more ",
-                                            "information on the plots, please ",
-                                            "check the package vignette. ",
-                                            "<p> You can chose the number of terms ",
-                                            "to display, ordered by increasing ",
-                                            "adjusted pvalue.</p>",
-                                            "<p> Search expression will allow you ",
-                                            "to display only the top terms containing ",
-                                            "the regular expression of interest. ",
-                                            "You can use regular expression patterns:",
-                                            "<ul><li> <b>||</b> for <i>or</i> statement; </li>",
-                                            "<li> <b>&</b> for <i>and</i> statement;</li>",
-                                            "</ul>"), trigger = "click", placement = "top"),
+                           content = paste0(
+                             "For each domain indicated ",
+                             "(typically BP, CC and MF for GO ,",
+                             "enrichment), three graphs and the results ",
+                             "table are displayed (all pvalues are rounded ",
+                             "to 3 digits). For more ",
+                             "information on the plots, please ",
+                             "check the package vignette. ",
+                             "All entries apply to the three ",
+                             " graphs displayed. ",
+                             "<p> You can choose the number of terms ",
+                             "to be displayed, sorted by ascending order of ",
+                             "adjusted pvalue.</p>",
+                             "<p> The search expression allows you ",
+                             "to display only the first terms containing ",
+                             "the regular expression of interest. ",
+                             "You can use regular expression patterns such as:",
+                             "<ul><li> <b>||</b> for <i>or</i> statement; </li>",
+                             "<li> <b>&</b> for <i>and</i> statement;</li>",
+                             "</ul>"), trigger = "click", placement = "top"),
                     style = "color: #337ab7; border-color: #337ab7;")
            )
     )
@@ -1091,6 +1112,9 @@
 .outHeatPlot <- function(input,
                          dataSE, 
                          listname, from, plotType, database){
+  
+  varLabel0 <- omicsDic(dataSE)$variableName
+  
   renderUI({
     outplot <- .doNotSpeak(plotClusterProfiler(dataSE,
                                                contrastName = listname,
@@ -1101,20 +1125,66 @@
                                                showCategory = input[[paste0(listname, "-top.over")]],
                                                searchExpr = input[[paste0(listname, "-grep")]]))
     
+    plotExplain <- switch(from,
+                          "DiffExpAnal" =  {
+                            paste0("This graph shows the top <b>",
+                                   input[[paste0(listname, "-top.over")]],
+                                   "</b> terms, arranged in alphabetical order. ",
+                                   " The tiles of <b>", varLabel0, 
+                                   "</b> present in the term are colored according to ",
+                                   "the log2 FC of the differential analysis of <b>",
+                                   listname, "</b> . White tiles indicate the ",
+                                   varLabel0, " is not present in the term.")
+                          },
+                          "CoExpAnal" = 
+                            paste0("This graph shows the top <b>",
+                                   input[[paste0(listname, "-top.over")]],
+                                   "</b> terms, arranged in alphabetical order. ",
+                                   "The color of the tile indicates the absence (white) or ",
+                                   "presence (black) of a ", varLabel0, 
+                                   " in the term."))
     
-    if (is(outplot, "gg")) renderPlot({
-      warnOpt <- getOption("warn")
-      options(warn = -1) # avoid ggrepel warnings, or at least trying to
-      suppressMessages(suppressWarnings(print(outplot)))
-      options(warn = warnOpt)
-    })
-    else renderText({outplot$message})
+    if (input[[paste0(listname, "-domain")]] == "no-domain") {
+      subTitlePlot <- paste0("Database: ", database, " - ", 
+                             input[[paste0(listname, "-top.over")]],
+                             " top enriched terms")
+    } else {
+      subTitlePlot <- paste0("Database: ", database, " ", 
+                             input[[paste0(listname, "-domain")]], " - ",
+                             input[[paste0(listname, "-top.over")]],
+                             " top enriched terms")
+    }
+    
+    
+    if (is(outplot, "gg")) {
+      column(width = 12,
+             tags$style(
+               ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"),
+             div(class = "explain-p", HTML(plotExplain)),
+             hr(),
+             renderPlot({
+               warnOpt <- getOption("warn")
+               options(warn = -1) # avoid ggrepel warnings, or at least trying to
+               suppressMessages(suppressWarnings(print(outplot + 
+                                                         labs(title = listname, 
+                                                              subtitle = subTitlePlot))))
+               options(warn = warnOpt)
+             })
+      )
+    } else renderText({outplot$message})
   })
 } 
 
 #' @noRd
 #' @keywords internal
 .outDotPlot <- function(input, dataSE, listname, from, plotType, database){
+  
+  varLabel0 <- omicsDic(dataSE)$variableName
+  
   renderUI({
     outdot <- .doNotSpeak(plotClusterProfiler(dataSE,
                                               contrastName = listname,
@@ -1126,13 +1196,70 @@
                                               searchExpr = input[[paste0(listname, "-grep")]])
     )
     
-    if (is(outdot, "gg")) renderPlot({
-      warnOpt <- getOption("warn")
-      options(warn = -1) # avoid ggrepel warnings, or at least trying to
-      suppressMessages(suppressWarnings(print(outdot)))
-      options(warn = warnOpt)
-    })
-    else renderText({outdot$message})
+    
+    plotExplain <- switch(from,
+                          "DiffExpAnal" =  {
+                            paste0("This graph shows the top <b>",
+                                   input[[paste0(listname, "-top.over")]],
+                                   "</b> terms, ordered by GeneRatio (number of ",
+                                   varLabel0, " found differentially expressed ",
+                                   " , also called Count, relative to the total number of ",
+                                   varLabel0, " for that term in the database). ",
+                                   "The dot color is linked to ",
+                                   "the adjusted pvalue.",
+                                   " Dot size is determined by the number of ",
+                                   "differentially expressed ", varLabel0, 
+                                   " in <b>", listname, 
+                                   "</b> and present in the term (Count).")
+                          },
+                          "CoExpAnal" = 
+                            paste0(
+                              "This graph shows the top <b>",
+                              input[[paste0(listname, "-top.over")]],
+                              "</b> terms, , ordered by GeneRatio (number of ",
+                              varLabel0, " found in the cluster ",
+                              " , also called Count, relative to the total number of ",
+                              varLabel0, " for that term in the database). ",
+                              "The dot color is linked to ",
+                              "the adjusted pvalue.",
+                              " Dot size is determined by the number of ",
+                              "differentially expressed ", varLabel0, 
+                              " in <b>", listname, 
+                              "</b> and present in the term (Count)."
+                            ))
+    
+    if (input[[paste0(listname, "-domain")]] == "no-domain") {
+      subTitlePlot <- paste0("Database: ", database, " - ", 
+                             input[[paste0(listname, "-top.over")]],
+                             " top enriched terms")
+    } else {
+      subTitlePlot <- paste0("Database: ", database, " ", 
+                             input[[paste0(listname, "-domain")]], " - ",
+                             input[[paste0(listname, "-top.over")]],
+                             " top enriched terms")
+    }
+    
+    if (is(outdot, "gg")) {
+      column(width = 12,
+             tags$style(
+               ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"),
+             div(class = "explain-p", HTML(plotExplain)),
+             hr(),
+             
+             renderPlot({
+               warnOpt <- getOption("warn")
+               options(warn = -1) # avoid ggrepel warnings, or at least trying to
+               suppressMessages(suppressWarnings(print(outdot + 
+                                                         labs(title = listname, 
+                                                              subtitle = subTitlePlot)
+               )))
+               options(warn = warnOpt)
+             })
+      )}else renderText({outdot$message})
   })
 }
 
@@ -1142,9 +1269,9 @@
                          from, plotType, database){
   
   ns <- session$ns
-  varLabel <- omicsDic(dataSE)$variableName
-  varLabel <- paste0(toupper(substr(varLabel, 1,1)),
-                     substr(varLabel, 2, nchar(varLabel)))
+  varLabel0 <- omicsDic(dataSE)$variableName
+  varLabel <- paste0(toupper(substr(varLabel0, 1,1)),
+                     substr(varLabel0, 2, nchar(varLabel0)))
   
   verticalLayout(
     renderUI({
@@ -1170,12 +1297,64 @@
                                                  searchExpr = input[[paste0(listname, "-grep")]],
                                                  nodeLabel = nodeLabelArg))
       
-      if (is(outcnet, "gg")) renderPlot({
-        warnOpt <- getOption("warn")
-        options(warn = -1) # avoid ggrepel warnings, or at least trying to
-        suppressMessages(suppressWarnings(print(outcnet)))
-        options(warn = warnOpt)
-      })
+      plotExplain <- switch(from,
+                            "DiffExpAnal" =  {
+                              paste0("This graph represents the top <b>",
+                                     input[[paste0(listname, "-top.over")]],
+                                     "</b> terms (beige nodes), linked to their associated ", 
+                                     varLabel0,
+                                     " (blue/red nodes).", varLabel0, 
+                                     " color of is determined by the log2FC derived from",
+                                     " the differential analysis of <b>",
+                                     listname, "</b> , with red indicating an up-regulated ",
+                                     varLabel0, " and blue a down-regulated one.",
+                                     " The size of the term node correlates with ",
+                                     "the number of ", varLabel0, 
+                                     " to which they are linked.")
+                            },
+                            "CoExpAnal" = 
+                              paste0("This graph represents the top <b>",
+                                     input[[paste0(listname, "-top.over")]],
+                                     "</b> terms (beige nodes), linked to their associated ", 
+                                     varLabel0,
+                                     " (blue/red nodes). ",
+                                     " The size of the term node correlates with ",
+                                     "the number of ", varLabel0, 
+                                     " to which they are linked."))
+      
+      if (input[[paste0(listname, "-domain")]] == "no-domain") {
+        subTitlePlot <- paste0("Database: ", database, " - ", 
+                               input[[paste0(listname, "-top.over")]],
+                               " top enriched terms")
+      } else {
+        subTitlePlot <- paste0("Database: ", database, " ", 
+                               input[[paste0(listname, "-domain")]], " - ",
+                               input[[paste0(listname, "-top.over")]],
+                               " top enriched terms")
+      }
+      
+      if (is(outcnet, "gg")) 
+        column(width = 12,
+               tags$style(
+                 ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"),
+               div(class = "explain-p", HTML(plotExplain)),
+               hr(),
+               
+               renderPlot({
+                 warnOpt <- getOption("warn")
+                 options(warn = -1) # avoid ggrepel warnings, or at least trying to
+                 suppressMessages(suppressWarnings(print(outcnet + 
+                                                           labs(title = listname, 
+                                                                subtitle = subTitlePlot)
+                 )))
+                 options(warn = warnOpt)
+                 
+               })
+        )
       else renderText({outcnet$message})
       
     }),
@@ -1246,7 +1425,8 @@
                           )}, res = 300, width = 1000, height = 1000)
                       } else {
                         renderText("Please check your connection. 
-                                   It seems the URL does not exist, or you're not connected.")
+                                   It seems the URL does not exist, 
+                                   or you're not connected.")
                       }
                       
                     })
@@ -1278,14 +1458,14 @@
       fluidRow(
         box(width = 12, solidHeader = TRUE, collapsible = TRUE,
             collapsed = TRUE, status = "warning", title = title,
-            "There is no results for enrichment analysis! Check the ids."))
+            "There is no result for enrichment analysis! Check the ids."))
     } else {
       fluidRow(
         box(width = 12, solidHeader = TRUE, collapsible = TRUE,
             collapsed = TRUE, status = "primary", title = title,
             
             tabsetPanel(
-              tabPanel(title = "table",
+              tabPanel(title = "Result table",
                        br(),
                        renderDataTable({
                          
@@ -1295,7 +1475,7 @@
                            rownames = FALSE,
                            options = list(pageLength = 6, dom = 'tip'))
                        })),
-              tabPanel(title = "heatmap", 
+              tabPanel(title = "Comparison of results (Heatmap)", 
                        br(),
                        .outCompResults(session, rea.values, input, 
                                        fromAnnot, 
@@ -1320,6 +1500,8 @@
   
   ns <- session$ns
   dataSE <- session$userData$FlomicsMultiAssay[[dataset]]
+  varLabel0 <- omicsDic(dataSE)$variableName
+  
   renderUI({
     
     if (rea.values[[dataset]][[fromAnnot]] == FALSE || 
@@ -1335,20 +1517,54 @@
     # display results
     verticalLayout(
       fluidRow(
-        column(4,
+        column(6,
                radioButtons(inputId = ns(paste0(database, "-compDomain")), 
                             label = "Domain",
                             choices = possDomain, selected = possDomain[1], 
                             inline = TRUE)),
-        column(4,
+        column(6,
                radioButtons(inputId = ns(paste0(database, "-compType")), 
                             label = "Matrix Type",
-                            choices = c("presence", "FC", "log2FC"), 
+                            choices = c("presence", "FC"), 
                             selected = "FC", inline = TRUE)),
       ),
       fluidRow(
         column(12,
                renderUI({
+                 
+                 clustmeth <- switch(input[[paste0(database, "-compType")]],
+                                     "presence" = "complete",
+                                     "complete")
+                 distmeth <- switch(input[[paste0(database, "-compType")]],
+                                    "presence" = "binary",
+                                    "euclidean")
+                 additionalMessage <- switch(input[[paste0(database, "-compType")]],
+                                             "presence" = "Red tiles indicates the term has
+                                             been found enriched using the list, white tile
+                                             is an absent term. ",
+                                             "FC" = "Tiles are colored according to the 
+                                             fold change (FC) of the enrichment. White tiles
+                                             denote the non-significance for a term in a list.")
+                 
+                 
+                 plotExplain <- switch(from,
+                                       "DiffExpAnal" =  {
+                                         paste0("This graph shows all the enriched terms ",
+                                                "found with database <b> ", database, "</b>",
+                                                " with differentially expressed ", 
+                                                varLabel0, " lists.",
+                                                " Clustering of terms was computed using <b> ",
+                                                distmeth, "</b> and <b>", clustmeth, "</b>. ",
+                                                additionalMessage)
+                                       },
+                                       "CoExpAnal" = 
+                                         paste0("This graph shows all the enriched terms ",
+                                                "found with database <b>", database, "</b>",
+                                                " with the co-expression clusters ", 
+                                                varLabel0, " lists.",
+                                                " Clustering of terms was computed using <b> ",
+                                                distmeth, "</b> and <b>", clustmeth, "</b>. ",
+                                                additionalMessage))
                  
                  outHeatmap <- tryCatch({
                    outHeatmap <-  plotEnrichComp(dataSE,
@@ -1362,14 +1578,25 @@
                  )
                  
                  if (is(outHeatmap, "Heatmap")) {
-                   renderPlot({
-                     draw(outHeatmap, 
-                          heatmap_legend_side = "top", 
-                          padding = unit(5, "mm"),
-                          gap = unit(2, "mm"))}, 
-                     width = "auto", 
-                     height = min(400 + nrow(outHeatmap@matrix)*50, 1000)
-                   )
+                   
+                   column(width = 12,
+                          tags$style(
+                            ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"),
+                  hr(),
+                  div(class = "explain-p", HTML(plotExplain)),
+                  hr(),
+                  renderPlot({
+                    draw(outHeatmap, 
+                         heatmap_legend_side = "top", 
+                         padding = unit(5, "mm"),
+                         gap = unit(2, "mm"))}, 
+                    width = "auto", 
+                    height = min(400 + nrow(outHeatmap@matrix)*50, 1000)
+                  ))
                  }else { renderText({outHeatmap$message}) }
                })
         ) # column
