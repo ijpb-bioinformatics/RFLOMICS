@@ -52,6 +52,8 @@ selectedContrasts <- rbind(Contrasts.List$simple[1:3,],
                            Contrasts.List$averaged[1:3,],
                            Contrasts.List$interaction[1:3,])
 
+selectedContrasts <- Contrasts.List$simple[1:4,]
+
 MAE <- setSelectedContrasts(MAE, contrastList = selectedContrasts)
 
 ## data processing
@@ -73,8 +75,9 @@ MAE <- MAE |> RFLOMICS::runCoExpression(SE.name = "RNAtest",   contrastNames = "
 
 
 ## Enrichment
-MAE <- MAE |> RFLOMICS::runAnnotationEnrichment(nameList = "H1", SE.name = "RNAtest", database = "GO", domain = c("BP", "MF", "CC"), list_args = list(OrgDb = "org.At.tair.db", keyType = "TAIR", pvalueCutoff = 0.05))
-# RFLOMICS::runAnnotationEnrichment(nameList = "H1", SE.name = "RNAtest", dom.select = "KEGG", list_args = list(..., pvalueCutoff = 0.05))
+MAE <- MAE |> RFLOMICS::runAnnotationEnrichment(SE.name = "RNAtest", database = "GO", domain = c("BP", "MF", "CC"), list_args = list(OrgDb = "org.At.tair.db", keyType = "TAIR", pvalueCutoff = 0.05)) |>
+  RFLOMICS::runAnnotationEnrichment(SE.name = "protetest", database = "GO", domain = c("BP", "MF", "CC"), list_args = list(OrgDb = "org.At.tair.db", keyType = "TAIR", pvalueCutoff = 0.05))
+ #RFLOMICS::runAnnotationEnrichment(nameList = "H1", SE.name = "RNAtest", database = "KEGG", list_args = list(..., pvalueCutoff = 0.05))
 
 ## runReport
 # generateReport(object=MAE, tmpDir ="/Users/dcharif/Desktop/", fileName = "projet",export=TRUE)

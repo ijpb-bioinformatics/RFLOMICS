@@ -16,65 +16,65 @@ methods::setMethod(f          = "generateReport",
                    signature  = "RflomicsMAE",
                    definition = function(object, fileName = NULL, archiveName = NULL, 
                                          export = FALSE, tmpDir = getwd(), ...){
-  
-  # Copy the report file to a temporary directory before processing it, in
-  # case we don't have write permissions to the current working dir (which
-  # can happen when deployed).
-  tempReport <-  file.path(path.package("RFLOMICS"), "/RFLOMICSapp/report.Rmd")
-  
-  # Check if the object is properly filled.
-  ## function
-  
-  # project name
-  projectName <- getProjectName(object)
-  RDataName   <- paste0(projectName, ".MAE.RData")
-  
-  # tmp dir
-  if(file.access(tmpDir, 2) != 0) stop("No writing access in ", tmpDir)
-  tmpDir <- file.path(tmpDir, paste0(projectName, "_report"))
-  dir.create(tmpDir, showWarnings=FALSE)
-  
-  # html name
-  if(is.null(fileName)) fileName <- file.path(tmpDir, paste0(projectName, "_report.html"))
-  
-  # save FE rflomics.MAE in .Rdata and load it during report execution
-  rflomics.MAE <- object
-  save(rflomics.MAE, file = file.path(tmpDir, RDataName))
-  
-  # Set up parameters to pass to Rmd document
-  param.list <- list(FEdata = file.path(tmpDir, RDataName),
-                     title  = paste0(projectName, " project"),
-                     outDir = tmpDir)
-  
-  # Knit the document, passing in the `params` list, and eval it in a
-  # child of the global environment (this isolates the code in the document
-  # from the code in this app).
-  rmarkdown::render(input             = tempReport, 
-        output_file       = fileName,
-        params            = param.list,
-        knit_root_dir     = tmpDir,
-        intermediates_dir = tmpDir,
-        envir = new.env(parent = globalenv()), ...)
-  
-  #Export results
-  if(isTRUE(export)){
-    
-    if(is.null(archiveName)) 
-      archiveName <- file.path(dirname(tmpDir), 
-                               paste0(projectName, "_archive.tar.gz"))
-    
-    # cp html in tmpDir
-    file.copy(from = fileName, to = tmpDir)
-    cmd <- paste0("tar -C ", dirname(tmpDir), " -czf ", archiveName, " ", basename(tmpDir))
-    system(cmd)
-    print(cmd)
-    
-  }else{
-    file.copy(from = fileName, to = dirname(tmpDir))
-  }
-  unlink(tmpDir, recursive = TRUE)
-  
-})
+                     
+                     # Copy the report file to a temporary directory before processing it, in
+                     # case we don't have write permissions to the current working dir (which
+                     # can happen when deployed).
+                     tempReport <-  file.path(path.package("RFLOMICS"), "/RFLOMICSapp/report.Rmd")
+                     
+                     # Check if the object is properly filled.
+                     ## function
+                     
+                     # project name
+                     projectName <- getProjectName(object)
+                     RDataName   <- paste0(projectName, ".MAE.RData")
+                     
+                     # tmp dir
+                     if(file.access(tmpDir, 2) != 0) stop("No writing access in ", tmpDir)
+                     tmpDir <- file.path(tmpDir, paste0(projectName, "_report"))
+                     dir.create(tmpDir, showWarnings=FALSE)
+                     
+                     # html name
+                     if(is.null(fileName)) fileName <- file.path(tmpDir, paste0(projectName, "_report.html"))
+                     
+                     # save FE rflomics.MAE in .Rdata and load it during report execution
+                     rflomics.MAE <- object
+                     save(rflomics.MAE, file = file.path(tmpDir, RDataName))
+                     
+                     # Set up parameters to pass to Rmd document
+                     param.list <- list(FEdata = file.path(tmpDir, RDataName),
+                                        title  = paste0(projectName, " project"),
+                                        outDir = tmpDir)
+                     
+                     # Knit the document, passing in the `params` list, and eval it in a
+                     # child of the global environment (this isolates the code in the document
+                     # from the code in this app).
+                     render(input             = tempReport, 
+                            output_file       = fileName,
+                            params            = param.list,
+                            knit_root_dir     = tmpDir,
+                            intermediates_dir = tmpDir,
+                            envir = new.env(parent = globalenv()), ...)
+                     
+                     #Export results
+                     if(isTRUE(export)){
+                       
+                       if(is.null(archiveName)) 
+                         archiveName <- file.path(dirname(tmpDir), 
+                                                  paste0(projectName, "_archive.tar.gz"))
+                       
+                       # cp html in tmpDir
+                       file.copy(from = fileName, to = tmpDir)
+                       cmd <- paste0("tar -C ", dirname(tmpDir), " -czf ", archiveName, " ", basename(tmpDir))
+                       system(cmd)
+                       print(cmd)
+                       
+                     }else{
+                       file.copy(from = fileName, to = dirname(tmpDir))
+                     }
+                     unlink(tmpDir, recursive = TRUE)
+                     
+                   })
 
 # ---- runOmicsPCA ----
 #' @title runOmicsPCA
@@ -96,7 +96,7 @@ methods::setMethod(f          = "runOmicsPCA",
                      if (raw) object@metadata[["PCAlist"]][["raw"]] <- FactoMineR::PCA(t(pseudo), ncp = ncomp, graph = FALSE)
                      else    object@metadata[["PCAlist"]][["norm"]] <- FactoMineR::PCA(t(pseudo), ncp = ncomp, graph = FALSE)
                      return(object)
-
+                     
                    }
 )
 
@@ -107,13 +107,13 @@ methods::setMethod(f          = "runOmicsPCA",
 methods::setMethod(f          = "runOmicsPCA",
                    signature  = "RflomicsMAE",
                    definition = function(object, SE.name, ncomp = 5, raw = FALSE){
-
+                     
                      object[[SE.name]] <-  runOmicsPCA(object[[SE.name]],
-                                                  ncomp = ncomp,
-                                                  raw  = raw)
-
+                                                       ncomp = ncomp,
+                                                       raw  = raw)
+                     
                      return(object)
-
+                     
                    })
 
 # runOmicsPCA <- function(object, ncomp = 5, raw = FALSE){
@@ -270,3 +270,282 @@ methods::setMethod(f="resetFlomicsMultiAssay", signature="RflomicsMAE",
                    })
 
 
+
+# ---- getDiffAnalysesSummary ----
+#' @title getDiffAnalysesSummary
+#' @description
+#' A short description...
+#' 
+#' @param object An object of class \link{RflomicsMAE-class}
+#' @param plot FALSE or TRUE
+#' @importFrom dplyr mutate
+#' @importFrom purrr reduce
+#' @importFrom reshape2 melt
+#' @importFrom ggplot2 ggplot aes geom_col geom_text 
+#' facet_grid scale_x_continuous labs position_stack 
+#' @exportMethod getDiffAnalysesSummary
+#' @return a data.frame with differential analyses summary 
+#' @rdname getDiffAnalysesSummary
+methods::setMethod(f          = "getDiffAnalysesSummary",
+                   signature  = "RflomicsMAE",
+                   definition = function(object, plot=FALSE){
+                     
+                     # DataProcessing
+                     df.list <- list()
+                     for(dataset in getDatasetNames(object)){
+                       if(is.null(object[[dataset]])) next
+                       if(is.null(object[[dataset]]@metadata$DiffExpAnal$Validcontrasts)) next
+                       
+                       df.list[[dataset]] <- as.data.frame(object[[dataset]]@metadata$DiffExpAnal$stats) %>% 
+                         mutate(dataset = dataset, contrasts = rownames(.))
+                     }
+                     
+                     if(length(df.list) == 0) return(NULL)
+                     
+                     df <- reduce(df.list, rbind) %>% 
+                       melt(id=c("dataset", "contrasts", "All"), value.name = "Up_Down") %>%
+                       mutate(percent=Up_Down/All*100)
+                     
+                     if(isFALSE(plot)) return(df)
+                     
+                     p <- ggplot(data = df, aes(y=contrasts, x=percent, fill=variable)) + 
+                       geom_col() +
+                       geom_text(aes(label=Up_Down), position = position_stack(vjust = 0.5)) +
+                       facet_grid(dataset~.) +
+                       scale_x_continuous(breaks = seq(0,100, 25), labels = paste0(seq(0,100, 25), "%")) + 
+                       labs(fill=NULL, x="")
+                     
+                     return(p)
+                     
+                   })
+
+# ---- getDiffAnnotAnalysesSammary ----
+#' @title getDiffAnnotAnalysesSammary
+#' @description TODO
+#' @param object An object of class \link{RflomicsMAE}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param from indicates if the enrichment results are taken from differential analysis results (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
+#' @param database is it a custom annotation, GO or KEGG annotations
+#' @param domain domain from the database (eg GO has three domains, BP, CC and MF)
+#' @param matrixType Heatmap matrix to plot, one of GeneRatio, p.adjust or presence.
+#' @param nClust number of separate cluster to plot on the heatmap, based on the clustering. 
+#' @param decorate one of stars or GeneRatio. Decoration of the heatmap. Default is NULL, no decoration.
+#' @param ... more arguments for ComplexHeatmap::Heatmap. 
+#' @return A ggplot object
+#' @export
+#' @importFrom reshape2 recast
+#' @importFrom circlize colorRamp2
+#' @importFrom ComplexHeatmap Heatmap ht_opt
+#' @importFrom stringr str_wrap
+#' @exportMethod getDiffAnnotAnalysesSammary
+#' @rdname getDiffAnnotAnalysesSammary
+methods::setMethod(
+  f = "getDiffAnnotAnalysesSammary",
+  signature = "RflomicsMAE",
+  definition = function(object, 
+                        matrixType = "presence",
+                        nClust = NULL,
+                        ...){
+    
+    from <- "DiffExpEnrichAnal"
+    
+    extract.list <- list()
+    
+    for(data in getDatasetNames(object)){
+      
+      if(is.null(object[[data]])) next
+      if(is.null(object[[data]]@metadata[[from]])) next
+      
+      # for each database
+      databases <- names(object[[data]]@metadata[[from]])
+      for(database in databases){
+        
+        if(is.null(object[[data]]@metadata[[from]][[database]]$enrichResult)) next
+        
+        clusterNames <- names(object[[data]]@metadata[[from]][[database]]$enrichResult)
+        pvalThresh   <- object[[data]]@metadata[[from]][[database]]$list_args$pvalueCutoff
+        
+        for(name in clusterNames){
+          
+          domains <- names(object[[data]]@metadata[[from]][[database]]$enrichResult[[name]])
+          
+          for(dom in domains){
+            
+            cprRes              <- object[[data]]@metadata[[from]][[database]]$enrichResult[[name]][[dom]]
+            cprRes              <- cprRes@result[cprRes@result$p.adjust < cprRes@pvalueCutoff,]
+            cprRes$contrastName <- name
+            cprRes$dataset      <- data
+            
+            extract.list[[database]][[dom]] <- rbind(extract.list[[database]][[dom]], cprRes)
+            
+          }
+        }
+      }
+    }
+    
+    
+    p.list <- list()
+    
+    for(database in names(extract.list)){
+      
+      for(dom in names(extract.list[[database]])){
+        
+        extract <- extract.list[[database]][[dom]]
+        
+        toKeep <- names(which(table(extract$ID) > 1)) 
+        if (length(toKeep) == 0) stop("There is no common terms to show.")
+        extract <- extract[extract$ID %in% toKeep,]
+        
+        
+        # handling description and ID
+        # extract$Description <- switch(database, 
+        #                               "KEGG" = {
+        #                                 gsub(" - .*", "", extract$Description)
+        #                               },
+        #                               { 
+        #                                 # if there is duplication in description 
+        #                                 # not necessarily duplicated in the ID
+        #                                 # should not be grouped in the heatmap
+        #                                 if (sum(duplicated(extract$Description)) > 0) {
+        #                                   if (!identical(extract$Description,
+        #                                                  extract$ID)) {
+        #                                     posDup <- 
+        #                                       unique(which(duplicated(extract$Description),
+        #                                                    duplicated(extract$Description, fromLast = TRUE)
+        #                                       ))
+        #                                     extract$Description[posDup] <- 
+        #                                       paste0("(", extract$ID[posDup], ")", 
+        #                                              "\n",
+        #                                              extract$Description[posDup])
+        #                                     extract$Description
+        #                                   }else{
+        #                                     extract$Description
+        #                                   }
+        #                                   
+        #                                 } else {
+        #                                   extract$Description
+        #                                 }
+        #                               })
+        # 
+        extract$Description <- str_wrap(extract$Description, width = 50)
+        extract$contrastName <- str_wrap(extract$contrastName, width = 50)
+        
+        extract$GeneRatio <- as.numeric(vapply(extract$GeneRatio, 
+                                               FUN = function(x) eval(parse(text = x)),
+                                               FUN.VALUE = 1))
+        extract$BgRatio <- as.numeric(vapply(extract$BgRatio, 
+                                             FUN = function(x) eval(parse(text = x)),
+                                             FUN.VALUE = 1))
+        extract$FC <- extract$GeneRatio/extract$BgRatio
+        
+        extract$contrastNameLabel <- extract$contrastName
+        extract$contrastName <- paste(extract$contrastName, extract$dataset, sep="\n")
+    
+        split.df <- unique(extract[c("dataset", "contrastName", "contrastNameLabel")])
+        split <- split.df$dataset
+        names(split) <- split.df$contrastName
+        
+        dat <- switch(matrixType, 
+                      "GeneRatio" = {
+                        inter <- recast(extract[, c("Description", "contrastName", "GeneRatio")], 
+                                        Description ~ contrastName, 
+                                        measure.var = "GeneRatio")
+                        rownames(inter) <- inter$Description
+                        inter <- inter[, colnames(inter) != "ID"]
+                        inter[is.na(inter)] <- 0
+                        inter
+                      }, 
+                      "p.adjust" = {
+                        inter <- recast(extract[, c("Description", "contrastName", "p.adjust")], 
+                                        Description ~ contrastName, 
+                                        measure.var = "p.adjust")
+                        rownames(inter) <- inter$Description
+                        inter <- inter[, colnames(inter) != "Description"]
+                        inter[is.na(inter)] <- 1
+                        inter
+                      },
+                      "presence" = {
+                        inter <- recast(extract[, c("Description", "contrastName", "p.adjust")], 
+                                        Description ~ contrastName, 
+                                        measure.var = "p.adjust")
+                        rownames(inter) <- inter$Description
+                        inter <- inter[, colnames(inter) != "Description"]
+                        inter[!is.na(inter)] <- 1
+                        inter[is.na(inter)]  <- 0
+                        inter
+                      },
+                      "FC" = {
+                        inter <- recast(extract[, c("Description", "contrastName", "FC")], 
+                                        Description ~ contrastName, 
+                                        measure.var = "FC")
+                        rownames(inter) <- inter$Description
+                        inter <- inter[, colnames(inter) != "Description"]
+                        inter[is.na(inter)] <- 0
+                        inter
+                      },
+                      "log2FC" = {
+                        inter <- recast(extract[, c("Description", "contrastName", "FC")], 
+                                        Description ~ contrastName, 
+                                        measure.var = "FC")
+                        rownames(inter) <- inter$Description
+                        inter <- inter[, colnames(inter) != "Description"]
+                        inter <- log2(inter)
+                        inter[is.infinite(as.matrix(inter))] <- 0
+                        # means FC is 0, shouldn't happen much...
+                        inter[is.na(inter)] <- 0
+                        # means it's not significant and not in the matrix. 
+                        inter
+                      })
+        
+        
+        # if (nrow(dat) > 1) {
+        #   switch(matrixType, 
+        #          "presence" = { 
+        #            hcPlot <- hclust(dist(dat, method = "binary"), method = "complete") 
+        #            hcCol <- hclust(dist(t(dat), method = "binary"), method = "complete")
+        #          },
+        #          { 
+        #            hcPlot <- hclust(dist(inter, method = "euclidean"), method = "complete")
+        #            hcCol <- hclust(dist(t(inter), method = "euclidean"), method = "complete")
+        #          })
+        # } else {
+        #   hcPlot <- FALSE
+        # }
+        
+        colors <- switch(matrixType,
+                         "presence"   = {structure(c("white", "firebrick"), names = c("0", "1"))},
+                         "GeneRatio"  = {colorRamp2(c(0, max(dat)), c("white", "firebrick"))},
+                         "p.adjust"   = {colorRamp2(c(0, pvalThresh, 1), c("firebrick", "white", "white"))},
+                         "FC"         = {colorRamp2(c(0, max(dat)), c("white", "firebrick"))},
+                         "log2FC"     = {colorRamp2(c(-max(abs(dat)), 0, max(abs(dat))), c("blue", "white", "firebrick"))})
+        
+        ht_opt(DENDROGRAM_PADDING = unit(0.1, "cm"))
+        
+        p.list[[database]][[dom]] <- suppressWarnings(
+          Heatmap(t(dat), 
+                  col = colors, 
+                  name = matrixType,
+                  row_split = split[names(dat)],
+                  #cluster_columns = hcCol, 
+                  #cluster_rows = hcPlot, 
+                  show_column_dend = FALSE,
+                  show_row_dend = FALSE,
+                  row_names_side = "left", 
+                  #column_names_rot = 20,
+                  row_labels = split.df[which(split.df$contrastName %in% names(dat)),]$contrastNameLabel,
+                  # column_names_rot = 0, 
+                  # column_names_centered = TRUE, 
+                  rect_gp = gpar(col = "gray80", lwd = 0.1),
+                  width =  ncol(dat)*5,
+                  height = nrow(dat)*5,
+                  heatmap_legend_param = list(direction = "horizontal"),
+                  border = TRUE,
+                  column_names_gp = gpar(fontsize = 10),
+                  row_names_gp = gpar(fontsize = 10)))
+        
+        
+      }
+    }
+    
+    return(p.list)
+  }
+)

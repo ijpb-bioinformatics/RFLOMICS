@@ -3,6 +3,18 @@
 
 
 methods::setGeneric(
+  name = "getDiffAnnotAnalysesSammary",
+  def  = function(object, 
+                  database     = NULL, 
+                  clusterNames = NULL,
+                  domain       = NULL,
+                  matrixType   = "presence", ...){standardGeneric("getDiffAnnotAnalysesSammary")}
+)
+methods::setGeneric(
+  name = "getDiffAnalysesSummary",
+  def  = function(object, plot = FALSE, ...){standardGeneric("getDiffAnalysesSummary")}
+)
+methods::setGeneric(
   name = "generateReport",
   def  = function(object, fileName = NULL, archiveName = NULL, 
                   export = FALSE, tmpDir = getwd(), ...){standardGeneric("generateReport")}

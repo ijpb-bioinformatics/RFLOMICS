@@ -88,7 +88,7 @@ rflomicsServer <- function(input, output, session) {
   output$omicsSumUI <- renderMenu({
     
     validate(
-      need(rea.values$analysis == TRUE && length(rea.values$datasetDiff) >= 2, message = "")
+      need(rea.values$analysis == TRUE && length(rea.values$datasetProcess) >= 2, message = "")
     )
     
     menuSubItem(text = "Summary of Analyses", tabName = "omicsSum" )
@@ -109,14 +109,17 @@ rflomicsServer <- function(input, output, session) {
   })
   
   #### Item for report #####
-  output$runReport <- renderUI({ 
-    if(is.null(rea.values$datasetProcess)) return()
+  output$runReport <- renderUI({
+    if(is.null(rea.values$datasetProcess) || 
+       length(rea.values$datasetProcess) != length(rea.values$datasetList)) return()
+
     column(width = 12, downloadButton(outputId = "report", label = "Generate report"))
   })
   
   #### Item to download Results #####
   output$downloadResults <- renderUI({
-    if(is.null(rea.values$datasetProcess)) return()
+    if(is.null(rea.values$datasetProcess) || 
+       length(rea.values$datasetProcess) != length(rea.values$datasetList)) return()
     
     column(width = 12, downloadButton(outputId = "download", label = "Download results"))
   })
@@ -319,7 +322,7 @@ rflomicsServer <- function(input, output, session) {
   ###############################
   output$omicsSum_UI <- renderUI({
     
-    omics_data_analysis_summaryUI("omics")
+    .modSingleOmicAnalysesSummaryUI("omics")
   })
 
   #### MOFA data integration ####
@@ -456,7 +459,7 @@ rflomicsServer <- function(input, output, session) {
     
   })
   
-  callModule(module = omics_data_analysis_summary, id = "omics", rea.values = rea.values)
+  callModule(module = .modSingleOmicAnalysesSummary, id = "omics", rea.values = rea.values)
   callModule(module = .modIntegrationAnalysis, id = "mixomicsSetting", rea.values = rea.values, method = "mixOmics")
   callModule(module = .modIntegrationAnalysis, id = "mofaSetting",     rea.values = rea.values, method = "MOFA")
  
