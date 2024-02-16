@@ -300,22 +300,38 @@ methods::setMethod(
       obj <- object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]]
       log2FC_vect <- obj[["logFC"]]
       names(log2FC_vect) <- rownames(obj)
+      
+      .see_pathview(
+        gene.data = log2FC_vect,
+        pathway.id = pathway_id,
+        species = species,
+        gene.idtype = gene_idtype,
+        map.symbol = FALSE,
+        same.layer = FALSE,
+        low = list(gene = "blue"),
+        mid = list(gene = "gray"),
+        high = list(gene = "red"),
+        na.col = "transparent"
+        # cex = 1 # too much
+      )
+      
+    } else if (searchFrom == 2) {
+      entities <- getClusterEntities(object, contrastName)
+      log2FC_vect <- rep(1, length(entities))
+      names(log2FC_vect) <- entities
+      
+      .see_pathview(
+        gene.data = log2FC_vect,
+        pathway.id = pathway_id,
+        species = species,
+        gene.idtype = gene_idtype,
+        plot.col.key = FALSE,
+        map.symbol = FALSE,
+        same.layer = FALSE,
+        high = list(gene = "antiquewhite3"),
+        na.col = "transparent"
+      )
     }
-    
-    .see_pathview(
-      gene.data = log2FC_vect,
-      pathway.id = pathway_id,
-      species = species,
-      gene.idtype = gene_idtype,
-      map.symbol = FALSE,
-      same.layer = FALSE,
-      low = list(gene = "blue"),
-      mid = list(gene = "gray"),
-      high = list(gene = "red"),
-      na.col = "transparent"
-      # cex = 1 # too much
-    )
-    
     return()
   }
 )
