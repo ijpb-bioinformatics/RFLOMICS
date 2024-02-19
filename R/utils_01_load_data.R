@@ -200,9 +200,19 @@ createRflomicsMAE <- function(projectName=NULL, omicsData=NULL, omicsNames=NULL,
 #' @rdname RflomicsMAE
 #' @export
 #'
-RflomicsMAE <- function(experiments = NULL, colData = NULL, sampleMap = NULL, metadata = NULL, ...){
+RflomicsMAE <- function(experiments = NULL, 
+                        colData = NULL, 
+                        sampleMap = NULL, 
+                        metadata = NULL, 
+                        ...){
   
-  MAE <- MultiAssayExperiment(experiments, colData, listToMap(sampleMap), metadata, ...)
+  MAE <- NULL
+  if (is(sampleMap, "DFrame") || is.data.frame(sampleMap)) {
+    MAE <- MultiAssayExperiment(experiments, colData, sampleMap, metadata, ...)
+  } else if (is.list(sampleMap)) {
+    MAE <- MultiAssayExperiment(experiments, colData, 
+                                listToMap(sampleMap), metadata, ...)
+  }
   
   rflomicsMAE <- new("RflomicsMAE")
   for(slot in slotNames(MAE)) {
