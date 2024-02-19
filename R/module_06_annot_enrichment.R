@@ -290,11 +290,13 @@
            title <- "Summary"
            fromAnnot <- "diffAnnot"
            from <- "DiffExpAnal"
+           datasetList <- "datasetDiffAnnot"
          },
          "CoExpEnrichAnal" = {
            title <- "Summary"
            fromAnnot <- "coExpAnnot"
            from <- "CoExpAnal"
+           datasetList <- "datasetCoExAnnot"
          }
   )
   
@@ -497,6 +499,11 @@
     progress$inc(5/10, detail = paste("Run analyses ", 50, "%", sep = ""))
     #----------------------#
     
+    # reset reactive values
+    rea.values[[datasetList]][[database]] <- 
+      rea.values[[datasetList]][[database]][rea.values[[datasetList]][[database]] != dataset]
+    
+    # reset MAE
     session$userData$FlomicsMultiAssay[[dataset]] <- 
       setEnrichNull(session$userData$FlomicsMultiAssay[[dataset]],
                     from = listSource,
@@ -532,6 +539,8 @@
     #---- progress bar ----#
     progress$inc(1, detail = paste("All done", 100, "%", sep = ""))
     #----------------------#
+    
+    rea.values[[datasetList]][[database]] <- unique(c(rea.values[[datasetList]][[database]], dataset))
     
   }, ignoreInit = TRUE)
   

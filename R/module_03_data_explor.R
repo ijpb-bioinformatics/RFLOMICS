@@ -362,11 +362,16 @@ QCNormalizationTab <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$diffValid <- FALSE
     
     # re-initialize list of diff analized dataset
-    if (dataset %in% rea.values$datasetDiff){
-      rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
+    rea.values$datasetProcess <- rea.values$datasetProcess[rea.values$datasetProcess != dataset]
+    rea.values$datasetDiff    <- rea.values$datasetDiff[rea.values$datasetDiff != dataset]
+    for (database in names(rea.values$datasetDiffAnnot)){
+      rea.values$datasetDiffAnnot[[database]] <- 
+        rea.values$datasetDiffAnnot[[database]][rea.values$datasetDiffAnnot[[database]] != dataset]
     }
-    if (dataset %in% rea.values$datasetProcess){
-      rea.values$datasetProcess <- rea.values$datasetProcess[-which(rea.values$datasetProcess == dataset)]
+    rea.values$datasetCoEx <- rea.values$datasetCoEx[rea.values$datasetCoEx != dataset]
+    for(database in names(rea.values$datasetCoExAnnot)){
+      rea.values$datasetCoExAnnot[[database]] <- 
+        rea.values$datasetCoExAnnot[[database]][rea.values$datasetCoExAnnot[[database]] != dataset]
     }
     
     # remove integration analysis

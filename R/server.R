@@ -34,8 +34,11 @@ rflomicsServer <- function(input, output, session) {
     datasetList   = NULL,
     contrastList  = NULL,
     Contrasts.Sel = NULL,
-    datasetDiff   = NULL,
-    datasetProcess  = NULL
+    datasetProcess  = NULL,
+    datasetDiff     = NULL, # list of dataset names with diff results
+    datasetCoEx     = NULL,
+    datasetDiffAnnot= NULL,
+    datasetCoExAnnot= NULL
   )
   
   #############################################

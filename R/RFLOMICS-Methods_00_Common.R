@@ -319,11 +319,11 @@ methods::setMethod(f          = "getDiffAnalysesSummary",
                      
                    })
 
-# ---- getDiffAnnotAnalysesSammary ----
-#' @title getDiffAnnotAnalysesSammary
+# ---- getAnnotAnalysesSummary ----
+#' @title getAnnotAnalysesSummary
 #' @description TODO
 #' @param object An object of class \link{RflomicsMAE}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
-#' @param from indicates if the enrichment results are taken from differential analysis results (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
+#' @param from indicates if the enrichment results are taken from differential analysis results (DiffExpEnrichAnal) or from the co-expression analysis results (CoExpEnrichAnal)
 #' @param database is it a custom annotation, GO or KEGG annotations
 #' @param domain domain from the database (eg GO has three domains, BP, CC and MF)
 #' @param matrixType Heatmap matrix to plot, one of GeneRatio, p.adjust or presence.
@@ -336,17 +336,15 @@ methods::setMethod(f          = "getDiffAnalysesSummary",
 #' @importFrom circlize colorRamp2
 #' @importFrom ComplexHeatmap Heatmap ht_opt
 #' @importFrom stringr str_wrap
-#' @exportMethod getDiffAnnotAnalysesSammary
-#' @rdname getDiffAnnotAnalysesSammary
+#' @exportMethod getAnnotAnalysesSummary
+#' @rdname getAnnotAnalysesSummary
 methods::setMethod(
-  f = "getDiffAnnotAnalysesSammary",
+  f = "getAnnotAnalysesSummary",
   signature = "RflomicsMAE",
   definition = function(object, 
+                        from = "DiffExpEnrichAnal",
                         matrixType = "presence",
-                        nClust = NULL,
                         ...){
-    
-    from <- "DiffExpEnrichAnal"
     
     extract.list <- list()
     
@@ -390,44 +388,9 @@ methods::setMethod(
       for(dom in names(extract.list[[database]])){
         
         extract <- extract.list[[database]][[dom]]
-        
-        toKeep <- names(which(table(extract$ID) > 1)) 
-        if (length(toKeep) == 0) stop("There is no common terms to show.")
-        extract <- extract[extract$ID %in% toKeep,]
-        
-        
-        # handling description and ID
-        # extract$Description <- switch(database, 
-        #                               "KEGG" = {
-        #                                 gsub(" - .*", "", extract$Description)
-        #                               },
-        #                               { 
-        #                                 # if there is duplication in description 
-        #                                 # not necessarily duplicated in the ID
-        #                                 # should not be grouped in the heatmap
-        #                                 if (sum(duplicated(extract$Description)) > 0) {
-        #                                   if (!identical(extract$Description,
-        #                                                  extract$ID)) {
-        #                                     posDup <- 
-        #                                       unique(which(duplicated(extract$Description),
-        #                                                    duplicated(extract$Description, fromLast = TRUE)
-        #                                       ))
-        #                                     extract$Description[posDup] <- 
-        #                                       paste0("(", extract$ID[posDup], ")", 
-        #                                              "\n",
-        #                                              extract$Description[posDup])
-        #                                     extract$Description
-        #                                   }else{
-        #                                     extract$Description
-        #                                   }
-        #                                   
-        #                                 } else {
-        #                                   extract$Description
-        #                                 }
-        #                               })
-        # 
-        extract$Description <- str_wrap(extract$Description, width = 50)
-        extract$contrastName <- str_wrap(extract$contrastName, width = 50)
+
+        extract$Description <- str_wrap(extract$Description, width = 30)
+        extract$contrastName <- str_wrap(extract$contrastName, width = 30)
         
         extract$GeneRatio <- as.numeric(vapply(extract$GeneRatio, 
                                                FUN = function(x) eval(parse(text = x)),
@@ -439,10 +402,12 @@ methods::setMethod(
         
         extract$contrastNameLabel <- extract$contrastName
         extract$contrastName <- paste(extract$contrastName, extract$dataset, sep="\n")
-    
+        
         split.df <- unique(extract[c("dataset", "contrastName", "contrastNameLabel")])
         split <- split.df$dataset
         names(split) <- split.df$contrastName
+        
+        if(nrow(extract) == 0) next
         
         dat <- switch(matrixType, 
                       "GeneRatio" = {
@@ -450,7 +415,8 @@ methods::setMethod(
                                         Description ~ contrastName, 
                                         measure.var = "GeneRatio")
                         rownames(inter) <- inter$Description
-                        inter <- inter[, colnames(inter) != "ID"]
+                        #inter <- inter[, colnames(inter) != "Description"]
+                        inter <- select(inter, -"Description")
                         inter[is.na(inter)] <- 0
                         inter
                       }, 
@@ -459,7 +425,8 @@ methods::setMethod(
                                         Description ~ contrastName, 
                                         measure.var = "p.adjust")
                         rownames(inter) <- inter$Description
-                        inter <- inter[, colnames(inter) != "Description"]
+                        #inter <- inter[, colnames(inter) != "Description"]
+                        inter <- select(inter, -"Description")
                         inter[is.na(inter)] <- 1
                         inter
                       },
@@ -468,7 +435,8 @@ methods::setMethod(
                                         Description ~ contrastName, 
                                         measure.var = "p.adjust")
                         rownames(inter) <- inter$Description
-                        inter <- inter[, colnames(inter) != "Description"]
+                        #inter <- inter[, colnames(inter) != "Description"]
+                        inter <- select(inter, -"Description")
                         inter[!is.na(inter)] <- 1
                         inter[is.na(inter)]  <- 0
                         inter
@@ -478,7 +446,8 @@ methods::setMethod(
                                         Description ~ contrastName, 
                                         measure.var = "FC")
                         rownames(inter) <- inter$Description
-                        inter <- inter[, colnames(inter) != "Description"]
+                        #inter <- inter[, colnames(inter) != "Description"]
+                        inter <- select(inter, -"Description")
                         inter[is.na(inter)] <- 0
                         inter
                       },
@@ -487,7 +456,8 @@ methods::setMethod(
                                         Description ~ contrastName, 
                                         measure.var = "FC")
                         rownames(inter) <- inter$Description
-                        inter <- inter[, colnames(inter) != "Description"]
+                        #inter <- inter[, colnames(inter) != "Description"]
+                        inter <- select(inter, -"Description")
                         inter <- log2(inter)
                         inter[is.infinite(as.matrix(inter))] <- 0
                         # means FC is 0, shouldn't happen much...
@@ -545,7 +515,78 @@ methods::setMethod(
         
       }
     }
-    
+    if(length(p.list) == 0) return(NULL)
     return(p.list)
   }
 )
+
+# ---- getCoExpAnalysesSummary ----
+#' @title getCoExpAnalysesSummary
+#' @description TODO
+#' @param object An object of class \link{RflomicsMAE}. It is expected the SE object is produced by rflomics previous analyses, as it relies on their results.
+#' @param from indicates if the enrichment results are taken from differential analysis results (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
+#' @param matrixType Heatmap matrix to plot, one of GeneRatio, p.adjust or presence.
+#' @param decorate one of stars or GeneRatio. Decoration of the heatmap. Default is NULL, no decoration.
+#' @param ... more arguments for ComplexHeatmap::Heatmap. 
+#' @return A ggplot object
+#' @export
+#' @importFrom reshape2 recast
+#' @importFrom circlize colorRamp2
+#' @importFrom ComplexHeatmap Heatmap ht_opt
+#' @importFrom stringr str_wrap
+#' @exportMethod getCoExpAnalysesSummary
+#' @rdname getCoExpAnalysesSummary
+methods::setMethod(
+  f = "getCoExpAnalysesSummary",
+  signature = "RflomicsMAE",
+  definition = function(object, omicNames = NULL,
+                        ...){
+    
+    mean.y_profiles.list <- list()
+    
+    if(is.null(omicNames)) omicNames <- getDatasetNames(object)
+    
+    for(data in omicNames){
+      
+      if(is.null(object[[data]])) next
+      if(is.null(object[[data]]@metadata$CoExpAnal)) next
+      
+      Groups     <- getDesignMat(object[[data]])
+      cluster.nb <- object[[data]]@metadata$CoExpAnal$cluster.nb
+      coseq.res  <- object[[data]]@metadata$CoExpAnal[["coseqResults"]]
+      
+      mean.y_profiles.list[[data]] <- lapply(1:cluster.nb, function(cluster){
+        
+        assays.data <- dplyr::filter(as.data.frame(coseq.res@assays@data[[1]]), get(paste0("Cluster_",cluster)) > 0.8)
+        
+        y_profiles.gg <- coseq.res@y_profiles[rownames(assays.data),] %>% 
+          data.frame() %>% 
+          dplyr::mutate(observations=rownames(.)) %>% 
+          reshape2::melt(id="observations", value.name = "y_profiles") %>%  
+          dplyr::rename(samples = variable) %>%
+          dplyr::full_join(Groups , by = "samples")
+        
+        #y_profiles.gg <- dplyr::arrange(y_profiles.gg, get("groups"))
+        #y_profiles.gg$groups <- factor(y_profiles.gg$groups, levels = unique(y_profiles.gg$groups))
+        
+        y_profiles.gg %>% dplyr::group_by(groups) %>% 
+          summarise(mean=mean(y_profiles)) %>% 
+          mutate(cluster=paste0("cluster.",cluster))
+        
+      }) %>% reduce(rbind) %>% mutate(dataset = data)
+      
+    } %>% reduce(rbind)
+    
+    mean.y_profiles.gg <- reduce(mean.y_profiles.list, rbind)
+    
+    if(nrow(mean.y_profiles.gg) == 0) return(NULL)
+    
+    p <- ggplot(data = mean.y_profiles.gg, aes(x = groups, y = mean, group=1)) +
+      geom_line(aes(color=as.factor(cluster))) + geom_point(aes(color=as.factor(cluster))) +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "none") +  
+      facet_grid(cols = vars(cluster), rows = vars(dataset)) +
+      labs(x = "Conditions", y = "Expression profiles mean") 
+    
+    return(p)
+    
+  })

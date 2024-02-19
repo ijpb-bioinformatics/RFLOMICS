@@ -72,9 +72,12 @@ RadioButtonsCondition <- function(input, output, session, typeFact){
   ns <- NS(id)
   
   tagList(
-    column(width = 12, 
-           fluidRow( uiOutput(ns("overView"))),
-           fluidRow( uiOutput(ns("DiffSummary")))
+    fluidPage(
+      column(width = 12, 
+             fluidRow( uiOutput(ns("overView"))),
+             fluidRow( uiOutput(ns("DiffSummary"))),
+             fluidRow( uiOutput(ns("CoExSummary")))
+      )
     ))
 }
 
@@ -89,6 +92,7 @@ RadioButtonsCondition <- function(input, output, session, typeFact){
     if(is.null(rea.values$datasetProcess)) return()
     
     box(title = "Dataset overview after data processing", width = 12, status = "warning", 
+        solidHeader = TRUE, collapsible = TRUE, collapsed = FALSE, 
         
         renderPlot({
           plotDataOverview(session$userData$FlomicsMultiAssay, omicNames = rea.values$datasetProcess, realSize = TRUE) 
@@ -101,7 +105,8 @@ RadioButtonsCondition <- function(input, output, session, typeFact){
     
     if(is.null(rea.values$datasetDiff)) return()
     
-    box(title = "Summary of Differential expression analysis", width = 12, status = "warning", 
+    box(title = "Summary of Differential expression analyses", width = 12, status = "warning", 
+        solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, 
         # renderPlot({ 
         #   ggplot2::ggplot(data = summaryDiff.df) + 
         #     ggplot2::geom_col(ggplot2::aes(y=hypothesis, x=percent, label=Up_Down, fill=variable)) + 
@@ -114,9 +119,11 @@ RadioButtonsCondition <- function(input, output, session, typeFact){
                        getDiffAnalysesSummary(session$userData$FlomicsMultiAssay, plot = TRUE)
                      })))
           
-          p.list <- getDiffAnnotAnalysesSammary(session$userData$FlomicsMultiAssay)
+          p.list <- getAnnotAnalysesSummary(session$userData$FlomicsMultiAssay, 
+                                            from="DiffExpEnrichAnal",
+                                            matrixType = "presence")
           
-          if(!is.null(p.list)){
+          if(!is.null(rea.values$datasetDiffAnnot)){
             
             tabPanel.list <- 
               c(tabPanel.list,
@@ -125,15 +132,15 @@ RadioButtonsCondition <- function(input, output, session, typeFact){
                   tabPanel(title = paste0("ORA results from ",database), 
                            fluidRow(
                              column(width = 12,
-                             radioButtons(inputId = session$ns(paste0(database, "-domain")), 
-                                          label = "Domain",
-                                          choices = names(p.list[[database]]), selected = names(p.list[[database]])[1], 
-                                          inline = TRUE))
+                                    radioButtons(inputId = session$ns(paste0(database, "-domain.diff")), 
+                                                 label = "Domain",
+                                                 choices = names(p.list[[database]]), selected = names(p.list[[database]])[1], 
+                                                 inline = TRUE))
                            ),
                            fluidRow(
                              column(width = 12,
-                             renderPlot({ p.list[[database]][[input[[paste0(database, "-domain")]]]] }) ))
-                           )
+                                    renderPlot({ p.list[[database]][[input[[paste0(database, "-domain.diff")]]]] }) ))
+                  )
                 })
               )
           }
@@ -143,20 +150,50 @@ RadioButtonsCondition <- function(input, output, session, typeFact){
     )
   })
   
-  output$DiffAnnotSummary <- renderUI({
+  output$CoExSummary <- renderUI({
     
-    if(is.null(rea.values$datasetDiff)) return()
+    if(is.null(rea.values$datasetCoEx)) return()
     
-    p.list <- getDiffAnnotAnalysesSammary(session$userData$FlomicsMultiAssay)
-    
-    lapply(names(p.list), function(database){
-      
-      tabPanel(title = paste0(database," ORA results"), 
-               renderPlot({
-                 p.list[[database]][[1]]
-               })
-      )
-    })
+    box(title = "Summary of Co-expression analyses", width = 12, status = "warning", 
+        solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, 
+        
+        tagList({
+          tabPanel.list <- list(
+            tabPanel(title = "CoExp results", 
+                     renderPlot({
+                       getCoExpAnalysesSummary(session$userData$FlomicsMultiAssay)
+                     })
+            ))
+          
+          p.list <- getAnnotAnalysesSummary(session$userData$FlomicsMultiAssay,
+                                            from="CoExpEnrichAnal",
+                                            matrixType = "presence")
+          
+          if(!is.null(rea.values$datasetCoExAnnot)){
+            
+            tabPanel.list <-
+              c(tabPanel.list,
+                lapply(names(p.list), function(database){
+                  
+                  tabPanel(title = paste0("ORA results from ",database),
+                           fluidRow(
+                             column(width = 12,
+                                    radioButtons(inputId = session$ns(paste0(database, "-domain.coex")),
+                                                 label = "Domain",
+                                                 choices = names(p.list[[database]]), selected = names(p.list[[database]])[1],
+                                                 inline = TRUE))
+                           ),
+                           fluidRow(
+                             column(width = 12,
+                                    renderPlot({ p.list[[database]][[input[[paste0(database, "-domain.coex")]]]] }) ))
+                  )
+                })
+              )
+          }
+          
+          do.call(what = tabsetPanel, args = tabPanel.list)
+        })
+    )
   })
   
 }

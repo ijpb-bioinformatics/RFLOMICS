@@ -3,12 +3,14 @@
 
 
 methods::setGeneric(
-  name = "getDiffAnnotAnalysesSammary",
+  name = "getCoExpAnalysesSummary",
+  def  = function(object, ...){standardGeneric("getCoExpAnalysesSummary")}
+)
+methods::setGeneric(
+  name = "getAnnotAnalysesSummary",
   def  = function(object, 
-                  database     = NULL, 
-                  clusterNames = NULL,
-                  domain       = NULL,
-                  matrixType   = "presence", ...){standardGeneric("getDiffAnnotAnalysesSammary")}
+                  from       = "DiffExpEnrichAnal", 
+                  matrixType = "presence", ...){standardGeneric("getAnnotAnalysesSummary")}
 )
 methods::setGeneric(
   name = "getDiffAnalysesSummary",

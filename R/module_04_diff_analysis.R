@@ -175,9 +175,20 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     
     session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["Validcontrasts"]] <- NULL
     
-    if (dataset %in% rea.values$datasetDiff){
-      rea.values$datasetDiff <- rea.values$datasetDiff[-which(rea.values$datasetDiff == dataset)]
+    # reset reactive values (diff)
+    rea.values$datasetDiff <- rea.values$datasetDiff[rea.values$datasetDiff != dataset]
+    for (database in names(rea.values$datasetDiffAnnot)){
+      rea.values$datasetDiffAnnot[[database]] <- 
+        rea.values$datasetDiffAnnot[[database]][rea.values$datasetDiffAnnot[[database]] != dataset]
     }
+    # reset reactive values (coexp)
+    rea.values$datasetCoEx <- rea.values$datasetCoEx[rea.values$datasetCoEx != dataset]
+    for(database in names(rea.values$datasetCoExAnnot)){
+      rea.values$datasetCoExAnnot[[database]] <- 
+        rea.values$datasetCoExAnnot[[database]][rea.values$datasetCoExAnnot[[database]] != dataset]
+    }
+    
+
     
     #---- progress bar ----#
     progress <- shiny::Progress$new()

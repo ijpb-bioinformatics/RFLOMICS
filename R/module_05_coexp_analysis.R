@@ -270,6 +270,14 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     rea.values[[dataset]]$coExpAnnot <- FALSE
     rea.values[[dataset]]$CoExpClusterNames <- NULL
     
+    rea.values$datasetCoEx <- 
+      rea.values$datasetCoEx[rea.values$datasetCoEx != dataset]
+    for(database in names(rea.values$datasetCoExAnnot)){
+      rea.values$datasetCoExAnnot[[database]] <- 
+        rea.values$datasetCoExAnnot[[database]][rea.values$datasetCoExAnnot[[database]] != dataset]
+    }
+    
+    
     # initialize MAE object
     session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpAnal       <- NULL
     session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpEnrichAnal <- NULL
@@ -318,6 +326,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     
     rea.values[[dataset]]$coExpAnal  <- TRUE
     rea.values[[dataset]]$CoExpClusterNames <- names(dataset.SE@metadata$CoExpAnal$clusters)
+    rea.values$datasetCoEx <- unique(c(rea.values$datasetCoEx, dataset))
     
   }, ignoreInit = TRUE)
   
