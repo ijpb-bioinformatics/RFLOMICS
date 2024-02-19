@@ -15,7 +15,7 @@
 #' @param rnaSeq_transfo character string, only supports 'limma (voom)' for now. 
 #' Transformation of the rnaSeq data from counts to continuous data.
 #' @param variableLists list of variables to keep per dataset.
-#' #' @param choice character. If choice is set to 'DE', 
+#' @param choice character. If choice is set to 'DE', 
 #' filters the object to take only the DE omics using differential analysis 
 #' results stored in object. 
 #' If choice is different than DE, no filtering is applied.
@@ -48,20 +48,17 @@ methods::setMethod(
                         silent = TRUE, 
                         cmd = FALSE,
                         ...) {
-    
-    
-    # TODO should do the intersection, not stopping everything !!
-    if (any(!omicsNames %in% names(object))) {
+   if (any(!omicsNames %in% names(object))) {
       stop("There are omics to integrate that are not names from the object")
     }
     
-    if (cmd) print("#     => Preparing for multi-omics analysis")
+    if (cmd) message("#     => Preparing for multi-omics analysis")
     
     objectfilt <- filterFeatures(object = object, 
                                  selOpt = selOpt, 
                                  type = type)
     
-    variableLists <- lapply(objectfilt@ExperimentList, names)
+    variableLists <- lapply(experiments(objectfilt), names)
     
     preparedObject <- prepareForIntegration(object = object,
                                             omicsNames = omicsNames,
@@ -72,7 +69,7 @@ methods::setMethod(
                                             cmd = cmd,
                                             silent = silent)
     
-    if (cmd) print("#     => run data integration")
+    if (cmd) message("#     => run data integration")
     object <- runOmicsIntegration(object = object,
                                   preparedObject = preparedObject,
                                   method = method,
@@ -115,14 +112,17 @@ methods::setMethod(
 #' @rdname prepareForIntegration
 #' @importFrom MOFA2 create_mofa
 #' @examples
-#' MAEtest <- generateExample(annotation = FALSE, coexp = FALSE, integration = FALSE)
-#' mofaObj <- prepareForIntegration(MAEtest, omicsNames = c("protetest", "metatest"), 
-#' variableLists = rownames(MAEtest),
-#' method = "MOFA")
+#' MAEtest <- generateExample(annotation = FALSE, coexp = FALSE, 
+#'                            integration = FALSE)
+#' mofaObj <- prepareForIntegration(MAEtest, 
+#'                 omicsNames = c("protetest", "metatest"), 
+#'                 variableLists = rownames(MAEtest),
+#'                 method = "MOFA")
 #'
-#' mixOmicsList <- prepareForIntegration(MAEtest, omicsNames = c("protetest", "metatest"), 
-#' variableLists = rownames(MAEtest),
-#' method = "mixOmics")
+#' mixOmicsList <- prepareForIntegration(MAEtest, 
+#'                   omicsNames = c("protetest", "metatest"), 
+#'                   variableLists = rownames(MAEtest),
+#'                   method = "mixOmics")
 #' 
 methods::setMethod(
   f = "prepareForIntegration",
@@ -156,10 +156,9 @@ methods::setMethod(
       correct_batch <- TRUE
     }
     
-    # On each selected omics, according to its type, apply transformation if demanded.
+    # On each selected omics, according to its type, 
+    # apply transformation if demanded.
     # Filter DE entities
-    # TODO : add a possibility of choice for keeping every entity (small tables)
-    # TODO change for lapply
     for (SEname in omicsNames) {
       SEobject <- object[[SEname]]
       omicsType <- getOmicsTypes(SEobject)
@@ -168,7 +167,7 @@ methods::setMethod(
         object = object,
         SEname = SEname, 
         correctBatch = correct_batch,
-        variableNames = variableLists[[SEname]], # variableLists[[SEname]]
+        variableNames = variableLists[[SEname]], 
         cmd = cmd
       )
       
@@ -184,16 +183,22 @@ methods::setMethod(
     
     # Check for duplicated features names across tables
     # MOFA add the entire view name if it's the case, MixOmics do not care. 
-    # For visualization purpose and coherence, add .index at the end of duplicated variables.
+    # For visualization purpose and coherence, 
+    # add .index at the end of duplicated variables.
     commonVarNames <- sum(duplicated(unlist(rownames(object))))
     if (commonVarNames > 0) {
-      if (cmd) cat("#   => Duplicated features names across tables, changing names for integration\n")
+      if (cmd) { 
+        message("#   => Duplicated features names across tables, 
+                changing names for integration\n")
+      }
       
-      dupTab <- data.frame("dataTable" = rep(names(object), time = vapply(object@ExperimentList, nrow, c(1))), 
-                           "rownames" = unlist(rownames(object)), 
-                           "dup" = duplicated(unlist(rownames(object))) + 
-                             duplicated(unlist(rownames(object)), fromLast = TRUE))
-      dupTab <- dupTab[dupTab$dup == 1,]
+      dupTab <- data.frame(
+        "dataTable" = rep(names(object), 
+                          time = vapply(experiments(object), nrow, c(1))), 
+        "rownames" = unlist(rownames(object)), 
+        "dup" = duplicated(unlist(rownames(object))) + 
+          duplicated(unlist(rownames(object)), fromLast = TRUE))
+      dupTab <- dupTab[which(dupTab$dup == 1),]
       omicstochange <- unique(dupTab$dataTable)
       
       res <- lapply(seq_len(length(object)), FUN = function(i){
@@ -206,15 +211,16 @@ methods::setMethod(
       names(res) <- names(object)
       
       object <- RflomicsMAE(experiments = res, 
-                            colData = colData(object), 
+                            colData   = colData(object), 
                             sampleMap = sampleMap(object), 
-                            metadata = metadata(object))
+                            metadata  = metadata(object))
     }
     
-    # keep only columns corresponding to design factors (remove samples and groups)
-    object@colData <- object@colData[c(bioFactors(object), 
-                                       batchFactors(object),
-                                       metaFactors(object))]
+    # keep only columns corresponding to design factors 
+    # (remove samples and groups)
+    colData(object) <- colData(object)[c(bioFactors(object), 
+                                         batchFactors(object),
+                                         metaFactors(object))]
     
     if (method == "MOFA") {    
       if (silent) {
@@ -236,17 +242,23 @@ methods::setMethod(
       object <- intersectColumns(object)
       
       if (nsamp != nrow(colData(object))) {
-        warning("Removing ", nsamp - nrow(colData(object)), " samples not present in every experiment.")
+        warning("Removing ", 
+                nsamp - nrow(colData(object)), 
+                " samples not present in every experiment.")
       }
       
       MixOmicsObject <- list(
-        blocks   = lapply(object@ExperimentList, FUN = function(SE) t(assay(SE))),
-        metadata = object@colData
+        blocks   = lapply(experiments(object), 
+                          FUN = function(SE) {t(assay(SE))}),
+        metadata = colData(object)
       )
       
-      MixOmicsObject$blocks <- lapply(MixOmicsObject$blocks, 
-                                      FUN = function(mat) 
-                                        mat[match(rownames(mat), rownames(MixOmicsObject$metadata)), ])
+      MixOmicsObject$blocks <- lapply(
+        MixOmicsObject$blocks, 
+        FUN = function(mat) {
+          mat[match(rownames(mat), rownames(MixOmicsObject$metadata)), ]
+        })
+      
       
       return(MixOmicsObject)
     }
@@ -331,7 +343,7 @@ methods::setMethod(
                "Contrast" = {
                  #getDE(object = SE.object, contrast = listSel)$DEF}, 
                  getDEList(object = SE.object, contrasts = listSel)
-                 },
+               },
                "Tag" = {
                  #getDE(object = SE.object, contrast = listSel)$DEF 
                  getDEList(object = SE.object, contrasts = listSel)
@@ -395,9 +407,9 @@ methods::setMethod(
 #' 
 #' # Create the appropriate object using prepareForIntegration:
 #' mofaObj <- prepareForIntegration(MAEtest, 
-#' omicsNames = c("protetest", "metatest"), 
-#' variableLists = rownames(MAEtest),
-#' method = "MOFA")
+#'             omicsNames = c("protetest", "metatest"), 
+#'             variableLists = rownames(MAEtest),
+#'             method = "MOFA")
 #' 
 #' # Perform integration:
 #' MAEtest <- runOmicsIntegration(MAEtest, mofaObj, method = "MOFA")
@@ -430,9 +442,10 @@ methods::setMethod(
     )
     
     if (toupper(method) == "MOFA") {
-      object@metadata[["MOFA"]] <- NULL
+      # object@metadata[["MOFA"]] <- NULL
+      object <- setMOFA(object, NULL)
       
-      if (cmd) print("#     => Running MOFA analysis")
+      if (cmd) message("#     => Running MOFA analysis")
       
       MOFA_run <- runMOFAAnalysis(
         object = preparedObject,  
@@ -442,19 +455,21 @@ methods::setMethod(
         silent = silent
       )
       
-      object <- setMOFA(object, 
-                        list("MOFA_results" = MOFA_run$MOFAObject.trained,
-                             "MOFA_untrained" = MOFA_run$MOFAObject.untrained,
-                             "settings" = list(scale_views = scale_views,
-                                               maxiter     = maxiter,
-                                               num_factors = num_factors,
-                                               selectData  = names(preparedObject@data))))
+      object <- setMOFA(
+        object, 
+        list("MOFA_results" = MOFA_run$MOFAObject.trained,
+             "MOFA_untrained" = MOFA_run$MOFAObject.untrained,
+             "settings" = list(scale_views = scale_views,
+                               maxiter     = maxiter,
+                               num_factors = num_factors,
+                               selectData  = names(preparedObject@data))))
       
     } else if (toupper(method) == "MIXOMICS") {
       
-      object@metadata[["mixOmics"]] <- NULL
+      # metadata(object)[["mixOmics"]] <- NULL
+      object <- setMixOmics(object, NULL)
       
-      if (cmd) print("#     => Running mixOmics analysis")
+      if (cmd) message("#     => Running mixOmics analysis")
       
       if (is.null(selectedResponse)) selectedResponse <- bioFactors(object)
       
@@ -619,8 +634,6 @@ methods::setMethod(
 
 #' @exportMethod getMixOmicsSettings
 #' @rdname methods-for-integration
-
-
 methods::setMethod(
   f = "getMixOmicsSettings",
   signature = "RflomicsMAE",
@@ -670,15 +683,16 @@ methods::setMethod(
   f = "sumMixOmics",
   signature = "RflomicsMAE",
   definition =  function(object, selectedResponse = NULL) {
-    if (is.null(object@metadata$mixOmics)){
+    if (is.null(metadata(object)$mixOmics)) {
       stop("It seems this object has no mixOmics results.")
     }
     
     if (is.null(selectedResponse)) {
-      res <- lapply(names(object@metadata$mixOmics), FUN = function(selResponse) {
-        .getOneMORes(object, selectedResponse = selResponse)
-      })
-      names(res) <- names(object@metadata$mixOmics)
+      res <- lapply(names(metadata(object)$mixOmics), 
+                    FUN = function(selResponse) {
+                      .getOneMORes(object, selectedResponse = selResponse)
+                    })
+      names(res) <- names(metadata(object)$mixOmics)
       return(res)
     } else {
       .getOneMORes(object, selectedResponse = selectedResponse)
@@ -686,7 +700,8 @@ methods::setMethod(
   })
 
 #' @title get one MixOmics result
-#' @description Get an overview of MixOmics integration results for a specific response variable.
+#' @description Get an overview of MixOmics integration results for 
+#' a specific response variable.
 #' @param object a MAE object (produced by Flomics).
 #' @param selectedResponse a character string.
 #' @return A data frame.
