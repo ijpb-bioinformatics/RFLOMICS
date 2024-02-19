@@ -26,7 +26,6 @@
     ##
     fluidRow(
       tabsetPanel(
-        # ---- Tab panel Overview ----
         tabPanel("dataset and variable selection",
                  br(),
                  box(title = "Prepare data for integration", width = 12,
@@ -439,8 +438,7 @@
                                       Response, Data_res)),     
               tabPanel("Loadings",
                        .outMOLoadings(session, input, settings, 
-                                      Response, Data_res)),     
-              # ---- Tab panel Network ----
+                                      Response, Data_res)),  
               tabPanel("Networks",
                        .outMONetwork(session, input, settings,
                                      Response, Data_res)),
