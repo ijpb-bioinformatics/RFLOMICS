@@ -21,9 +21,9 @@
   colBatch <- batchFactors(SEobject)
   
   if (cmd) {
-    print(paste0("#     =>Correction for Batch: ", 
+    message("#     =>Correction for Batch: ", 
                  paste(colBatch, collapse = " "), 
-                 " in ", SEobject@metadata$omicType))
+                 " in ", SEobject@metadata$omicType)
   }
   
   newFormula <- gsub(pattern = paste(paste(colBatch, "[+]"),  collapse = "|"), "", getModelFormula(SEobject))
@@ -41,7 +41,7 @@
                                  batch2 = colData[,colBatch[2]],
                                  design = designToPreserve)
   }
-  if (length(colBatch) > 2) print("sorry, only 2 batches effect for now!") 
+  if (length(colBatch) > 2) message("sorry, only 2 batches effect for now!") 
   
   SEobject@metadata[["correction_batch_method"]] <- "limma (removeBatchEffect)"
   
@@ -384,11 +384,11 @@ MOFA_cor_network <- function(resMOFA,
                 nrow = 1, ncol = 2, widths = c(3, 1))
       
     }else{
-      print("There is nothing to plot. Please try to lower the absolute weight, 
+      message("There is nothing to plot. Please try to lower the absolute weight, 
             the correlation threshold or change the factor.")
     }
   }else{
-    print("There is nothing to plot. Please try to lower the absolute weight, 
+    message("There is nothing to plot. Please try to lower the absolute weight, 
           the correlation threshold or change the factor.")
   }
 }
@@ -451,8 +451,7 @@ runMOFAAnalysis <- function(object,
     )
   }
   
-  if (silent && require(reticulate)) {
-    
+  if (silent) {
     pycapt <- py_capture_output(
       {
         MOFAObject.trained <- suppressWarnings(suppressMessages( 
