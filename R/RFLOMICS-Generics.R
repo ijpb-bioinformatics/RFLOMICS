@@ -625,6 +625,13 @@ methods::setGeneric(
   def  = function(object){standardGeneric("getMixOmicsSettings")}
 )
 
+methods::setGeneric(
+  name = "plotMOVarExp",
+  def  = function(object, 
+                  selectedResponse, 
+                  mode = NULL){standardGeneric("plotMOVarExp")}
+)
+
 # ---- RESET ----
 
 methods::setGeneric(

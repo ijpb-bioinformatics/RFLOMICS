@@ -22,11 +22,12 @@
   
   if (cmd) {
     message("#     =>Correction for Batch: ", 
-                 paste(colBatch, collapse = " "), 
-                 " in ", SEobject@metadata$omicType)
+            paste(colBatch, collapse = " "), 
+            " in ", SEobject@metadata$omicType)
   }
   
-  newFormula <- gsub(pattern = paste(paste(colBatch, "[+]"),  collapse = "|"), "", getModelFormula(SEobject))
+  newFormula <- gsub(pattern = paste(paste(colBatch, "[+]"),  collapse = "|"), 
+                     "", getModelFormula(SEobject))
   newFormula <- gsub(pattern = "~ [+] ", "~ ", newFormula) # use ?
   colData <- getDesignMat(SEobject)
   designToPreserve <- model.matrix(as.formula(newFormula), data = colData)
@@ -84,8 +85,10 @@
   rnaDat <- object[[SEname]] 
   assayTransform <- assay(rnaDat)
   
-  if (!is.integer(assayTransform) && !identical(assayTransform, floor(assayTransform))) {
-    message("You indicated RNASeq data for ", SEname, "but it is not recognized as count data") 
+  if (!is.integer(assayTransform) && 
+      !identical(assayTransform, floor(assayTransform))) {
+    message("You indicated RNASeq data for ", SEname, 
+            "but it is not recognized as count data") 
   }
   
   DMat      <- getDesignMat(rnaDat)
@@ -136,8 +139,9 @@
                           cmd = FALSE){
   
   omicsDat <- object[[SEname]]
-  omicsDat@metadata[["correction_batch"]]             <- correctBatch
-  omicsDat@metadata[["transform_method_integration"]] <- getTransSettings(omicsDat)$method
+  metadata(omicsDat)[["correction_batch"]]             <- correctBatch
+  metadata(omicsDat)[["transform_method_integration"]] <- 
+    getTransSettings(omicsDat)$method
   
   if (correctBatch) omicsDat <- .rbeFunction(object, omicsDat)
   omicsDat <- omicsDat[variableNames,]
@@ -145,47 +149,6 @@
   object[[SEname]] <- omicsDat
   
   return(object)
-}
-
-# ----- MixOmics: plot variance explained ----
-
-#' @title plotMOVarExp
-#'
-#' @param object An object of class \link{RflomicsMAE}
-#' @param selectedResponse a character string of the response variable to consider
-#' @param mode Can be NULL (default), "cumulative" or "comp". 
-#' Defines the type of graph to return
-#' @return An object of class \link{RflomicsMAE}
-#' @importFrom ggpubr ggarrange
-#' @export
-#'
-
-plotMOVarExp <- function(object, selectedResponse, mode = NULL){
-  
-  if (!is(object, "RflomicsMAE")) stop("Object is not a RflomicsMAE.")
-  if (is.null(object@metadata$IntegrationAnalysis$mixOmics)) {
-    stop("It seems this object has no mixOmics results.")
-  }
-  if (is.null(object@metadata$IntegrationAnalysis$mixOmics[[selectedResponse]])) {
-    stop("It seems you didn't run MixOmics on this particular variable.")
-  }
-  
-  Data_res <- object@metadata$IntegrationAnalysis$mixOmics[[selectedResponse]]$MixOmics_results
-  gg_return <- NULL
-  
-  if (is.null(mode)) {
-    gg_return <- ggarrange(.plot_MO_1(Data_res),
-                           .plot_MO_2(Data_res), 
-                           ncol = 2)
-  }
-  else if (tolower(mode) == "cumulative") {
-    gg_return <- .plot_MO_1(Data_res)
-  }
-  else if (tolower(mode) == "comp") {
-    gg_return <- .plot_MO_2(Data_res)
-  }
-  
-  return(gg_return)
 }
 
 #' @title Plot cumulative Explained variance for mixOmics results
@@ -200,7 +163,8 @@ plotMOVarExp <- function(object, selectedResponse, mode = NULL){
 
 .plot_MO_1 <- function(Data_res){
   dat_explained <- melt(do.call("rbind", Data_res$prop_expl_var))
-  colnames(dat_explained) <- c("Dataset", "Component", "% of explained variance")
+  colnames(dat_explained) <- c("Dataset", "Component", 
+                               "% of explained variance")
   dat_explained$`% of explained variance` <- dat_explained$`% of explained variance`*100
   
   dat_comb <- dat_explained %>% 
@@ -211,7 +175,8 @@ plotMOVarExp <- function(object, selectedResponse, mode = NULL){
     dat_comb <- dat_comb %>% filter(Dataset != "Y")
   }
   
-  gg1 <- ggplot(dat_comb, aes(x = Dataset, y = `Cumulative Explained Variance`)) +
+  gg1 <- ggplot(dat_comb, aes(x = Dataset, 
+                              y = `Cumulative Explained Variance`)) +
     geom_col(fill = "darkblue") + 
     theme_classic() +
     theme(
@@ -233,8 +198,11 @@ plotMOVarExp <- function(object, selectedResponse, mode = NULL){
 #' @noRd
 .plot_MO_2 <- function(Data_res){
   dat_explained <- melt(do.call("rbind", Data_res$prop_expl_var))
-  colnames(dat_explained) <- c("Dataset", "Component", "% of explained variance")
-  dat_explained$`% of explained variance` <- dat_explained$`% of explained variance`*100
+  colnames(dat_explained) <- c("Dataset", "Component", 
+                               "% of explained variance")
+  
+  dat_explained$`% of explained variance` <- 
+    dat_explained$`% of explained variance`*100
   
   if (is(Data_res, "block.splsda") || is(Data_res, "block.plsda")) {
     dat_explained <- dat_explained %>% filter(Dataset != "Y")
@@ -250,9 +218,10 @@ plotMOVarExp <- function(object, selectedResponse, mode = NULL){
       axis.ticks = element_blank(),
       strip.text = element_text(size = 12),
     ) +  ylab("") +  
-    scale_fill_gradientn(colors = c("gray97","darkblue"), guide = "colorbar", 
-                         limits = c(min(dat_explained$`% of explained variance`),
-                                    max(dat_explained$`% of explained variance`))) + 
+    scale_fill_gradientn(
+      colors = c("gray97","darkblue"), guide = "colorbar", 
+      limits = c(min(dat_explained$`% of explained variance`),
+                 max(dat_explained$`% of explained variance`))) + 
     ggtitle("Percentage of explained variance \n per component per block")
   
   return(gg2)
@@ -283,14 +252,14 @@ plotMOVarExp <- function(object, selectedResponse, mode = NULL){
 #' @return A ggplot2 graph
 #' @export
 #' 
-MOFA_cor_network <- function(resMOFA,
-                             factor_choice = 1,
-                             abs_weight_network = 0.5,
-                             abs_min_cor_network = 0.5,
-                             network_layout = "Circle + omics",
-                             omics_colors = NULL,
-                             posCol = "red",
-                             negCol = "blue"
+MOFACorNetwork <- function(resMOFA,
+                           factor_choice = 1,
+                           abs_weight_network = 0.5,
+                           abs_min_cor_network = 0.5,
+                           network_layout = "Circle + omics",
+                           omics_colors = NULL,
+                           posCol = "red",
+                           negCol = "blue"
 ){
   
   if (!is(resMOFA, "MOFA")) {
@@ -304,12 +273,15 @@ MOFA_cor_network <- function(resMOFA,
   cor_mat <- cor(data_reconst)
   
   
-  features_metadata <- do.call(rbind, lapply(seq_len(length(get_weights(resMOFA))), 
-                                             FUN = function(i){
-                                               mat_weights <- data.frame(get_weights(resMOFA, scale = TRUE)[[i]])
-                                               mat_weights$Table <- names(get_weights(resMOFA))[i]
-                                               return(mat_weights)
-                                             }))
+  features_metadata <- lapply(
+    seq_len(length(get_weights(resMOFA))), 
+    FUN = function(i){
+      mat_weights <- data.frame(get_weights(resMOFA, scale = TRUE)[[i]])
+      mat_weights$Table <- names(get_weights(resMOFA))[i]
+      return(mat_weights)
+    })
+  
+  features_metadata <- do.call(rbind, features_metadata)
   
   factor_selected <- paste0("Factor", factor_choice)
   
@@ -322,19 +294,23 @@ MOFA_cor_network <- function(resMOFA,
   
   if (nrow(feature_filtered) > 0) {
     
-    if(is.null(omics_colors)){
-      omics_colors <- as.list(rownames(brewer.pal.info)[seq_len(length(unique(feature_filtered$Table)))]) 
+    if (is.null(omics_colors)) {
+      omics_colors <- as.list(
+        rownames(brewer.pal.info)[seq_len(length(unique(feature_filtered$Table)))]
+      ) 
       names(omics_colors) <- unique(feature_filtered$Table)
     }
     
-    omics_colors <- lapply(unique(feature_filtered$Table), FUN = function(omicTable){
-      brewer.pal(name = omics_colors[[omicTable]], n = 5)
-    })
+    omics_colors <- lapply(unique(feature_filtered$Table), 
+                           FUN = function(omicTable){
+                             brewer.pal(name = omics_colors[[omicTable]], n = 5)
+                           })
     names(omics_colors) <- unique(feature_filtered$Table)
     
     feature_filtered <- feature_filtered %>% 
       group_by(Table) %>%
       mutate(Color = cut(F_selected, breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)))
+    
     feature_filtered$Color2 <- unlist(lapply(
       seq_len(nrow(feature_filtered)), 
       FUN = function(i){
@@ -352,21 +328,25 @@ MOFA_cor_network <- function(resMOFA,
                            colnames(cor_mat) %in% feature_filtered$EntityName]
     
     if (any(abs(cor_display[upper.tri(cor_display)]) >= abs_min_cor_network)) {
-      qgraph_plot <- qgraph(cor_display, minimum = abs_min_cor_network, 
-                            cut = 0,
-                            shape = "rectangle", labels = rownames(cor_display), vsize2 = 2, 
-                            vsize = vapply(rownames(cor_display), nchar, c(1))*1.1,  
-                            layout = layout_arg,
-                            esize = 2,
-                            groups = features_metadata$Table[match(rownames(cor_display), rownames(features_metadata))],
-                            posCol = posCol, negCol = negCol, 
-                            details = FALSE,  legend = FALSE,
-                            color = feature_filtered$Color2[match(rownames(cor_display), feature_filtered$EntityName)])
+      qgraph_plot <- qgraph(
+        cor_display, minimum = abs_min_cor_network, 
+        cut = 0,
+        shape = "rectangle", labels = rownames(cor_display), vsize2 = 2, 
+        vsize = vapply(rownames(cor_display), nchar, c(1))*1.1,  
+        layout = layout_arg,
+        esize = 2,
+        groups = features_metadata$Table[match(rownames(cor_display), 
+                                               rownames(features_metadata))],
+        posCol = posCol, negCol = negCol, 
+        details = FALSE,  legend = FALSE,
+        color = feature_filtered$Color2[match(rownames(cor_display), 
+                                              feature_filtered$EntityName)])
       qgraph_plot <- recordPlot()
       
       # Legend
       legend_matrix <- do.call("rbind", omics_colors)
-      colnames(legend_matrix) <- c("(0,0.2]", "(0.2,0.4]", "(0.4,0.6]", "(0.6,0.8]", "(0.8, 1]")
+      colnames(legend_matrix) <- c("(0,0.2]", "(0.2,0.4]", "(0.4,0.6]", 
+                                   "(0.6,0.8]", "(0.8, 1]")
       legend.reshape <- melt(legend_matrix)
       
       gg.legend <-  ggplot(legend.reshape, aes(x = Var2, y = Var1)) + 
@@ -375,7 +355,9 @@ MOFA_cor_network <- function(resMOFA,
                            panel.grid.minor = element_blank(), 
                            panel.border = element_blank(), 
                            axis.ticks.y = element_blank(),
-                           axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+                           axis.text.x = element_text(angle = 90, 
+                                                      vjust = 0.5, 
+                                                      hjust = 1))
       
       gg.legend <- ggarrange(gg.legend, nrow = 3, ncol = 1) 
       
@@ -384,11 +366,13 @@ MOFA_cor_network <- function(resMOFA,
                 nrow = 1, ncol = 2, widths = c(3, 1))
       
     }else{
-      message("There is nothing to plot. Please try to lower the absolute weight, 
+      message("There is nothing to plot. 
+              Please try to lower the absolute weight, 
             the correlation threshold or change the factor.")
     }
   }else{
-    message("There is nothing to plot. Please try to lower the absolute weight, 
+    message("There is nothing to plot. 
+            Please try to lower the absolute weight, 
           the correlation threshold or change the factor.")
   }
 }
@@ -414,12 +398,12 @@ MOFA_cor_network <- function(resMOFA,
 #' @importFrom reticulate py_capture_output
 #' @keywords internal
 #' 
-runMOFAAnalysis <- function(object,
-                            scale_views = FALSE,
-                            maxiter = 1000,
-                            num_factors = 10,
-                            silent = TRUE,
-                            ...) {
+.runMOFAAnalysis <- function(object,
+                             scale_views = FALSE,
+                             maxiter = 1000,
+                             num_factors = 10,
+                             silent = TRUE,
+                             ...) {
   
   if (!is(object, "MOFA")) {
     stop("object has to be a MOFA results")
@@ -455,7 +439,8 @@ runMOFAAnalysis <- function(object,
     pycapt <- py_capture_output(
       {
         MOFAObject.trained <- suppressWarnings(suppressMessages( 
-          run_mofa(MOFAObject.untrained, use_basilisk = FALSE, save_data = TRUE)
+          run_mofa(MOFAObject.untrained, use_basilisk = FALSE, 
+                   save_data = TRUE)
         ))
       }
     )
@@ -506,15 +491,15 @@ runMOFAAnalysis <- function(object,
 #' tune.splsda unmap
 #' @keywords internal 
 
-runMixOmicsAnalysis <- function(object,
-                                scale_views = FALSE,
-                                selectedResponse = NULL,
-                                ncomp = 2,
-                                link_datasets = 1,
-                                link_response = 1,
-                                sparsity = FALSE,
-                                cases_to_try = 5,
-                                ...) {
+.runMixOmicsAnalysis <- function(object,
+                                 scale_views = FALSE,
+                                 selectedResponse = NULL,
+                                 ncomp = 2,
+                                 link_datasets = 1,
+                                 link_response = 1,
+                                 sparsity = FALSE,
+                                 cases_to_try = 5,
+                                 ...) {
   
   list_res <- list()
   dis_anal <- FALSE # is this a discriminant analysis
@@ -564,11 +549,6 @@ runMixOmicsAnalysis <- function(object,
   
   # Model Tuning (if required, for sparsity)
   if (sparsity && dis_anal && functionName != "block.spls") {
-    # no tune.block.spls so far, there is one for spls
-    # It is a bit weird to consider tuning with folds when there is very few samples per condition
-    # Add a warning or something when it's the case?
-    # Also consider adding a warning when the number of feature is still very 
-    # high even after differential analysis
     
     tune_function <- paste0("tune.", functionName)
     
@@ -587,7 +567,8 @@ runMixOmicsAnalysis <- function(object,
     )
     if (length(object$blocks) > 1) list_tuning_args$design <- Design_mat
     
-    list_res$tuning_res <- do.call(getFromNamespace(tune_function, ns = "mixOmics"), list_tuning_args)
+    list_res$tuning_res <- do.call(
+      getFromNamespace(tune_function, ns = "mixOmics"), list_tuning_args)
   }
   
   # Model fitting
@@ -607,8 +588,10 @@ runMixOmicsAnalysis <- function(object,
     list_args$keepX <- list_res$tuning_res$choice.keepX
   }
   
-  list_res$analysis_res <- do.call(getFromNamespace(functionName, ns = "mixOmics"), 
-                                   list_args)
+  list_res$analysis_res <- do.call(
+    getFromNamespace(functionName, ns = "mixOmics"), 
+    list_args
+  )
   
   return(list_res)
 }

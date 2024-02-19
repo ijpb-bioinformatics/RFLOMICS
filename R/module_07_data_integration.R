@@ -525,61 +525,58 @@
 #' @noRd
 #' @keywords internal
 .integrationMethodsParam <- function(session, local.rea.values, method){
-  
+  ns <- session$ns
+  bioFacts <- bioFactors(session$userData$FlomicsMultiAssay)
   renderUI({
     
     if (is.null(local.rea.values$preparedObject)) return()
     
     box(title = span(tagList(icon("sliders"), "  ", "Settings")), 
         width = 12, status = "warning",
-        switch(method,
-               "mixOmics" = {
-                 
-                 # set param in interface
-                 list(
-                   
-                   column(12, checkboxInput(inputId = session$ns("scale_views"), 
-                                            label = "Scale Datasets",
-                                            value = TRUE, width = NULL)),
-                   column(12, checkboxInput(inputId = session$ns("MO_sparsity"), 
-                                            label = "Sparse analysis", 
-                                            value = FALSE, width = NULL)),
-                   column(12, numericInput(inputId = session$ns("MO_ncomp"), 
-                                           label = "Components", 
-                                           value = 5, min = 1, max = 20)),
-                   column(12, numericInput(inputId = session$ns("MO_cases_to_try"), 
-                                           label = "Tuning cases",
-                                           value = 5, min = 1, max = 100)),
-                   column(12,
-                          checkboxGroupInput(
-                            inputId  = session$ns("MO_selectedResponse"),
-                            label    = "Select response variables",
-                            choices  = bioFactors(session$userData$FlomicsMultiAssay),
-                            selected = bioFactors(session$userData$FlomicsMultiAssay)))
-                   
-                 )
-               },
-               "MOFA" = {
-                 
-                 list(
-                   column(12,
-                          selectInput(session$ns("scale_views"),
-                                      label    = "Scale views",
-                                      choices  = c(FALSE, TRUE),
-                                      selected = TRUE)),
-                   column(12,
-                          numericInput(inputId = session$ns("MOFA_numfactor"), 
-                                       label = "Num factors:", 
-                                       value = 10, min = 5, max = 15)),
-                   
-                   column(12,
-                          numericInput(inputId = session$ns("MOFA_maxiter"), 
-                                       label = "Max iteration:", 
-                                       value = 1000, min = 1000, max = 1000))
-                 )
-               }
+        switch(
+          method,
+          "mixOmics" = {
+            list(
+              column(12, checkboxInput(inputId = ns("scale_views"), 
+                                       label = "Scale Datasets",
+                                       value = TRUE, width = NULL)),
+              column(12, checkboxInput(inputId = ns("MO_sparsity"), 
+                                       label = "Sparse analysis", 
+                                       value = FALSE, width = NULL)),
+              column(12, numericInput(inputId = ns("MO_ncomp"), 
+                                      label = "Components", 
+                                      value = 5, min = 1, max = 20)),
+              column(12, numericInput(inputId = ns("MO_cases_to_try"), 
+                                      label = "Tuning cases",
+                                      value = 5, min = 1, max = 100)),
+              column(12,
+                     checkboxGroupInput(
+                       inputId  = ns("MO_selectedResponse"),
+                       label    = "Select response variables",
+                       choices  = bioFacts,
+                       selected = bioFacts
+                     ))
+            )
+          },
+          "MOFA" = {
+            list(
+              column(12,
+                     selectInput(ns("scale_views"),
+                                 label    = "Scale views",
+                                 choices  = c(FALSE, TRUE),
+                                 selected = TRUE)),
+              column(12,
+                     numericInput(inputId = ns("MOFA_numfactor"), 
+                                  label = "Num factors:", 
+                                  value = 10, min = 5, max = 15)),
+              column(12,
+                     numericInput(inputId = ns("MOFA_maxiter"), 
+                                  label = "Max iteration:", 
+                                  value = 1000, min = 1000, max = 1000))
+            )
+          }
         ),
-        column(12, actionButton(session$ns("run_integration"), "Run Analysis"))
+        column(12, actionButton(ns("run_integration"), "Run Analysis"))
     )
   })
 }
@@ -587,35 +584,40 @@
 #' @noRd
 #' @keywords internal
 .integrationPrepareParamUI <- function(session, input){
+  ns <- session$ns
+  
   renderUI({
     
     # for each dataset select 
     lapply(input$selectData, function(set){
       
-      ValidContrasts        <- getValidContrasts(session$userData$FlomicsMultiAssay[[set]])
-      ListNames.diff        <- ValidContrasts$tag
+      ValidContrasts <- getValidContrasts(
+        session$userData$FlomicsMultiAssay[[set]])
+      ListNames.diff <- ValidContrasts$tag
       names(ListNames.diff) <- ValidContrasts$contrastName
       SelectTypeChoices        <- c('none', 'diff')
       names(SelectTypeChoices) <- c('none', 'from diff analysis')
       
-      if (is.null(ValidContrasts)) SelectTypeChoices <- SelectTypeChoices[c(1)]
+      if (is.null(ValidContrasts)) {
+        SelectTypeChoices <- SelectTypeChoices[c(1)]
+      }
       
       box(title = set, width = 4, background = "green",
+          
           # choose the method to select variable : none, diff, other?
-          radioButtons(inputId = session$ns(paste0("selectmethode", set)), 
+          radioButtons(inputId = ns(paste0("selectmethode", set)), 
                        label   = 'Select type of variable selection', 
                        choices = SelectTypeChoices, 
                        selected = 'none', inline = FALSE),
           
           # if methode == diff -> dispay list of contrasts
           conditionalPanel(
-            
             condition = paste0("input[\'", 
-                               session$ns(paste0("selectmethode", set)), 
+                               ns(paste0("selectmethode", set)), 
                                "\'] == \'diff\'"),
             
             pickerInput(
-              inputId  = session$ns(paste0("selectContrast", set)),
+              inputId  = ns(paste0("selectContrast", set)),
               label    = "Select contrasts",
               choices  = ListNames.diff,
               options  = list(`actions-box` = TRUE, size = 10, 
@@ -623,14 +625,14 @@
               multiple = TRUE,
               selected = ListNames.diff),
             
-            radioButtons(inputId = session$ns(paste0("unionORintersect", set)), 
+            radioButtons(inputId = ns(paste0("unionORintersect", set)), 
                          label = NULL, 
                          choiceNames = c("union", "intersection"), 
                          choiceValues = c(TRUE, FALSE),
                          selected = TRUE, inline = TRUE)
           ),
-          if (getOmicsTypes(session$userData$FlomicsMultiAssay[[set]]) == "RNAseq") {
-            selectInput(inputId  = session$ns("RNAseqTransfo"),
+          if (getOmicsTypes(userData$FlomicsMultiAssay[[set]]) == "RNAseq") {
+            selectInput(inputId  = ns("RNAseqTransfo"),
                         label    = "RNAseq transformation",
                         choices  = c("limma (voom)"),
                         selected = "limma (voom)")
@@ -656,9 +658,10 @@
       switch(
         input[[paste0("selectmethode", set)]],
         "diff" = {
-          variable.to.keep <- getDEList(object = session$userData$FlomicsMultiAssay[[set]], 
-                                        contrasts = input[[paste0("selectContrast", set)]], 
-                                        operation = input[[paste0("unionORintersect", set)]])
+          variable.to.keep <- getDEList(
+            object = session$userData$FlomicsMultiAssay[[set]], 
+            contrasts = input[[paste0("selectContrast", set)]], 
+            operation = input[[paste0("unionORintersect", set)]])
           session$userData$FlomicsMultiAssay[[set]][variable.to.keep]
         },
         {
@@ -730,31 +733,35 @@
 #' @keywords internal
 .outMOIndividuals <- function(session, input, settings, Response,
                               Data_res){
-  
+  ns <- session$ns
   renderUI({
     fluidRow(
       column(1,
-             checkboxInput(inputId = session$ns(paste0(Response, "ellipse_choice")), 
-                           label = "Ellipses", value = FALSE, width = NULL),
-             numericInput(inputId = session$ns(paste0(Response, "ind_comp_choice_1")),
-                          label = "Comp x:",
-                          min = 1,
-                          max =  settings$ncomp,
-                          value = 1, step = 1),
-             numericInput(inputId = session$ns(paste0(Response, "ind_comp_choice_2")),
-                          label = "Comp y:",
-                          min = 1,
-                          max =  settings$ncomp,
-                          value = 2, step = 1)
+             checkboxInput(
+               inputId = ns(paste0(Response, "ellipse_choice")), 
+               label = "Ellipses", value = FALSE, width = NULL),
+             numericInput(
+               inputId = ns(paste0(Response, "ind_comp_choice_1")),
+               label = "Comp x:",
+               min = 1,
+               max =  settings$ncomp,
+               value = 1, step = 1),
+             numericInput(
+               inputId = ns(paste0(Response, "ind_comp_choice_2")),
+               label = "Comp y:",
+               min = 1,
+               max =  settings$ncomp,
+               value = 2, step = 1)
       ),
       column(11 , 
              renderPlot(
                suppressWarnings(
-                 plotIndiv(Data_res, 
-                           comp = c(input[[paste0(Response, "ind_comp_choice_1")]], 
-                                    input[[paste0(Response, "ind_comp_choice_2")]]),
-                           ellipse = input[[paste0(Response, "ellipse_choice")]],
-                           legend = TRUE))))
+                 plotIndiv(
+                   Data_res, 
+                   comp = c(input[[paste0(Response, "ind_comp_choice_1")]], 
+                            input[[paste0(Response, "ind_comp_choice_2")]]),
+                   ellipse = input[[paste0(Response, "ellipse_choice")]],
+                   legend = TRUE))))
     )})
   
 }
@@ -763,70 +770,81 @@
 #' @keywords internal
 .outMOFeatures <- function(session, input, settings, Response, 
                            Data_res){
-  
+  ns <- session$ns
   fluidRow(
     column(1,
-           checkboxInput(inputId = session$ns("overlap"), 
-                         label = "Overlap", value = FALSE, width = NULL),
-           numericInput(inputId = session$ns(paste0(Response, "var_comp_choice_1")),
-                        label = "Comp x:",
-                        min = 1,
-                        max =  settings$ncomp,
-                        value = 1, step = 1),
-           numericInput(inputId = session$ns(paste0(Response, "var_comp_choice_2")),
-                        label = "Comp y:",
-                        min = 1,
-                        max =  settings$ncomp,
-                        value = 2, step = 1)
+           checkboxInput(
+             inputId = ns("overlap"), 
+             label = "Overlap", value = FALSE, width = NULL),
+           numericInput(
+             inputId = ns(paste0(Response, "var_comp_choice_1")),
+             label = "Comp x:",
+             min = 1,
+             max =  settings$ncomp,
+             value = 1, step = 1),
+           numericInput(
+             inputId = ns(paste0(Response, "var_comp_choice_2")),
+             label = "Comp y:",
+             min = 1,
+             max =  settings$ncomp,
+             value = 2, step = 1)
     ),
     column(11 , renderPlot(
-      plotVar(Data_res, 
-              comp = c(input[[paste0(Response, "var_comp_choice_1")]], 
-                       input[[paste0(Response, "var_comp_choice_2")]]),
-              overlap = input$overlap,
-              legend = TRUE)))
+      plotVar(
+        Data_res, 
+        comp = c(input[[paste0(Response, "var_comp_choice_1")]], 
+                 input[[paste0(Response, "var_comp_choice_2")]]),
+        overlap = input$overlap,
+        legend = TRUE)))
   )
 }
 
 #' @noRd
 #' @keywords internal
 .outMOLoadings <- function(session, input, settings, Response, Data_res){
+  ns <- session$ns
   fluidRow(
     column(1,
-           numericInput(inputId = session$ns(paste0(Response, "Load_comp_choice")),
-                        label = "Component:",
-                        min = 1,
-                        max =  settings$ncomp,
-                        value = 1, step = 1),
-           numericInput(inputId = session$ns(paste0(Response, "Load_ndisplay")),
-                        label = "Number of features to display:",
-                        min = 1,
-                        max =  ifelse(is.list(Data_res$X), 
-                                      max(vapply(Data_res$X, ncol, c(1))), 
-                                      ncol(Data_res$X)),
-                        value = 25, step = 1),
+           numericInput(
+             inputId = ns(paste0(Response, "Load_comp_choice")),
+             label = "Component:",
+             min = 1,
+             max =  settings$ncomp,
+             value = 1, step = 1),
+           numericInput(
+             inputId = ns(paste0(Response, "Load_ndisplay")),
+             label = "Number of features to display:",
+             min = 1,
+             max =  ifelse(is.list(Data_res$X), 
+                           max(vapply(Data_res$X, ncol, c(1))), 
+                           ncol(Data_res$X)),
+             value = 25, step = 1),
     ),
-    column(11 , renderPlot(plotLoadings(Data_res, 
-                                        comp = input[[paste0(Response, "Load_comp_choice")]],
-                                        ndisplay = input[[paste0(Response, "Load_ndisplay")]])))
+    column(11 , renderPlot(
+      plotLoadings(Data_res, 
+                   comp = input[[paste0(Response, "Load_comp_choice")]],
+                   ndisplay = input[[paste0(Response, "Load_ndisplay")]])))
   )
 }
 
 #' @noRd
 #' @keywords internal
 .outMONetwork <- function(session, input, settings, Response, Data_res){
+  ns <- session$ns
+  
   fluidRow(
-    column(1, numericInput(inputId = session$ns(paste0(Response, "Network_cutoff")),
+    column(1, numericInput(inputId = ns(paste0(Response, "Network_cutoff")),
                            label = "Cutoff:",
                            min = 0,
                            max =  1,
                            value = 0.9, step = 0.05)),
     column(11 ,
            renderUI({
-             outN <- .doNotPlot(mixOmics::network(mat = Data_res,
-                                                  blocks = seq_len(length(settings$selectData)),
-                                                  cutoff = input[[paste0(Response, "Network_cutoff")]],
-                                                  shape.node = rep("rectangle", length(settings$selectData))))
+             outN <- .doNotPlot(
+               mixOmics::network(mat = Data_res,
+                                 blocks = seq_len(length(settings$selectData)),
+                                 cutoff = input[[paste0(Response, "Network_cutoff")]],
+                                 shape.node = rep("rectangle", length(settings$selectData))))
              
              if (is(outN, "simpleError")){
                renderText({outN$message})
@@ -850,23 +868,27 @@
 #' @keywords internal
 .outMOCimPlot <- function(session, input, settings, 
                           Response, Data_res){
+  ns <- session$ns
   if (is(Data_res, "block.splsda")) {
     fluidRow(
       column(1,
-             numericInput(inputId = session$ns(paste0(Response, "cimComp")),
+             numericInput(inputId = ns(paste0(Response, "cimComp")),
                           label = "Comp",
                           min = 1,
                           max = settings$ncomp,
                           value = 1, step = 1)),
       column(12, 
-             
-             renderPlot(cimDiablo(Data_res, 
-                                  legend.position = "bottomleft",
-                                  size.legend = 0.8,
-                                  comp = input[[paste0(Response, "cimComp")]])))
+             renderPlot(
+               cimDiablo(Data_res, 
+                         legend.position = "bottomleft",
+                         size.legend = 0.8,
+                         comp = input[[paste0(Response, "cimComp")]])))
     )
   }else{
-    renderText({print("This plot is only available for sparse multi-block discriminant analysis results.")})
+    renderText({
+      "This plot is only available for sparse multi-block discriminant 
+      analysis results."
+    })
   }
 }
 
@@ -896,21 +918,25 @@
     verticalLayout(
       
       fluidRow(
-        column(3, sliderInput(inputId = session$ns("WeightsPlot_Factors_select"),
-                              label = 'Factors:',
-                              min = 1, 
-                              max = resMOFA@dimensions$K, 
-                              value = c(1,2), step = 1)
+        column(3, 
+               sliderInput(inputId = ns("WeightsPlot_Factors_select"),
+                           label = 'Factors:',
+                           min = 1, 
+                           max = resMOFA@dimensions$K, 
+                           value = c(1,2), step = 1)
         ),
-        column(2, numericInput(inputId = session$ns("nfeat_choice_WeightsPlot"),
-                               label = "Features:",
-                               min = 1,
-                               max = 500,
-                               value = 10, # default in MOFA function.
-        )),
+        column(2, 
+               numericInput(inputId = ns("nfeat_choice_WeightsPlot"),
+                            label = "Features:",
+                            min = 1,
+                            max = 500,
+                            value = 10, # default in MOFA function.
+               )),
         column(1,
-               checkboxInput(inputId = session$ns("scale_choice_WeightsPlot"), 
-                             label = "Scale Weights", value = FALSE, width = NULL)
+               checkboxInput(inputId = ns("scale_choice_WeightsPlot"), 
+                             label = "Scale Weights", 
+                             value = FALSE, 
+                             width = NULL)
         ),
       ),
       fluidRow(
@@ -926,13 +952,17 @@
                      res_inter <- list()
                      res_inter <- lapply(views_names(resMOFA), FUN = function(vname) {
                        
-                       res_inter[[length(res_inter) + 1]] <- plot_weights(resMOFA,
-                                                                          view = vname,
-                                                                          factors = i,
-                                                                          nfeatures = input$nfeat_choice_WeightsPlot,
-                                                                          scale = input$scale_choice_WeightsPlot) 
-                       res_inter[[length(res_inter)]] <- res_inter[[length(res_inter)]] + 
-                         ggtitle(paste0(vname, " - Factor ", i))
+                       res_inter[[length(res_inter) + 1]] <- 
+                         plot_weights(resMOFA,
+                                      view = vname,
+                                      factors = i,
+                                      nfeatures = input$nfeat_choice_WeightsPlot,
+                                      scale = input$scale_choice_WeightsPlot) + 
+                         ggtitle(paste0(vname, " - Factor ", i)) 
+                       
+                       # res_inter[[length(res_inter)]] <- 
+                       #   res_inter[[length(res_inter)]] + 
+                       #   ggtitle(paste0(vname, " - Factor ", i))
                        
                        return(res_inter)
                      })
@@ -953,10 +983,11 @@
 #' @noRd
 #' @keywords internal
 .outMOFAWeightTable <- function(session, resMOFA, input){
+  ns <- session$ns
   
   verticalLayout(
     fluidRow(
-      column(11, sliderInput(inputId = session$ns("Factors_select_MOFA"),
+      column(11, sliderInput(inputId = ns("Factors_select_MOFA"),
                              label = 'Factors:',
                              min = 1, 
                              max = resMOFA@dimensions$K,  
@@ -989,39 +1020,44 @@
 #' @keywords internal
 .outMOFAFactorsPlot <- function(session, resMOFA, input){
   
+  ns <- session$ns
+  
   moreChoices <- colnames(resMOFA@samples_metadata %>% 
                             select(!c(sample, group)))
   
   renderUI({
     verticalLayout(
       fluidRow(
-        column(2, sliderInput(inputId = session$ns("factors_choices_MOFA"),
+        column(2, sliderInput(inputId = ns("factors_choices_MOFA"),
                               label = 'Factors:',
                               min = 1, 
                               max = resMOFA@dimensions$K, 
                               value = c(1,2), step = 1)),
-        column(2, radioButtons(inputId = session$ns("color_by_MOFA"),
+        column(2, radioButtons(inputId = ns("color_by_MOFA"),
                                label = "Color:",
                                choices = c('none', moreChoices),
                                selected = "none")
         ),                           
-        column(2, radioButtons(inputId = session$ns("shape_by_MOFA"),
+        column(2, radioButtons(inputId = ns("shape_by_MOFA"),
                                label = "Shape:",
                                choices = c('none', moreChoices),
                                selected = "none")
         ),                                  
-        column(2, radioButtons(inputId = session$ns("group_by_MOFA"),
+        column(2, radioButtons(inputId = ns("group_by_MOFA"),
                                label = "Group by:",
                                choices = c('none', moreChoices),
                                selected = "none")
         ),                           
         column(1,
-               fluidRow(checkboxInput(inputId = session$ns("add_violin_MOFA"), 
-                                      label = "Violin", value = FALSE, width = NULL)),
-               fluidRow(checkboxInput(inputId = session$ns("add_boxplot_MOFA"), 
-                                      label = "Boxplot", value = FALSE, width = NULL)),
-               fluidRow(checkboxInput(inputId = session$ns("scale_scatter_MOFA"), 
-                                      label = "Scale factors", value = FALSE, width = NULL))
+               fluidRow(checkboxInput(inputId = ns("add_violin_MOFA"), 
+                                      label = "Violin", 
+                                      value = FALSE, width = NULL)),
+               fluidRow(checkboxInput(inputId = ns("add_boxplot_MOFA"), 
+                                      label = "Boxplot", 
+                                      value = FALSE, width = NULL)),
+               fluidRow(checkboxInput(inputId = ns("scale_scatter_MOFA"), 
+                                      label = "Scale factors", 
+                                      value = FALSE, width = NULL))
         )),            
       fluidRow(
         column(11, 
@@ -1034,7 +1070,9 @@
                  if (input$group_by_MOFA == "none") group_by_par <- "group"
                  if (input$shape_by_MOFA == "none") shape_by_par <- NULL
                  dodge_par <- FALSE
-                 if (any(input$add_violin_MOFA, input$add_boxplot_MOFA)) dodge_par <- TRUE
+                 if (any(input$add_violin_MOFA, input$add_boxplot_MOFA)) {
+                   dodge_par <- TRUE
+                 }
                  
                  plot_factor(resMOFA,
                              factors = seq(min(input$factors_choices_MOFA),
@@ -1067,39 +1105,43 @@
       
       fluidRow(# buttons - choices for heatmap
         
-        column(1, numericInput(inputId = session$ns("factor_choice_heatmap_MOFA"),
-                               label = "Factor:",
-                               min = 1,
-                               max =  resMOFA@dimensions$K,
-                               value = 1, step = 1)),
+        column(1, 
+               numericInput(inputId = ns("factor_choice_heatmap_MOFA"),
+                            label = "Factor:",
+                            min = 1,
+                            max =  resMOFA@dimensions$K,
+                            value = 1, step = 1)),
         column(1,),
-        column(2, radioButtons(inputId = session$ns("view_choice_heatmap_MOFA"),
-                               label = "Data:",
-                               choices = views_names(resMOFA),
-                               selected = views_names(resMOFA)[1]
-        )),
+        column(2, 
+               radioButtons(inputId = ns("view_heatmap_MOFA"),
+                            label = "Data:",
+                            choices = views_names(resMOFA),
+                            selected = views_names(resMOFA)[1]
+               )),
         column(1,),
-        column(2, numericInput(inputId = session$ns("nfeat_choice_heatmap_MOFA"),
-                               label = "Features:",
-                               min = 1,
-                               max = 500,
-                               value = 50, # default in MOFA function.
-        )),
+        column(2, 
+               numericInput(inputId = ns("nfeat_choice_heatmap_MOFA"),
+                            label = "Features:",
+                            min = 1,
+                            max = 500,
+                            value = 50, # default in MOFA function.
+               )),
         column(1,
-               checkboxInput(inputId = session$ns("denoise_choice_heatmap_MOFA"), 
+               checkboxInput(inputId = ns("denoise_heatmap_MOFA"), 
                              label = "Denoise", value = FALSE, width = NULL)
         ),
         column(1,),
-        column(2, radioButtons(inputId = session$ns("annot_samples_MOFA"),
-                               label = "Annotation:",
-                               choices = c('none', 
-                                           colnames(resMOFA@samples_metadata %>% 
-                                                      select(!c(sample, group)))),
-                               selected = "none"))
+        column(2, 
+               radioButtons(inputId = ns("annot_samples_MOFA"),
+                            label = "Annotation:",
+                            choices = c('none', 
+                                        colnames(resMOFA@samples_metadata %>% 
+                                                   select(!c(sample, group))
+                                        )),
+                            selected = "none"))
         
       ),
       fluidRow(
-        
         column(12, # heatmap is too large with just renderPlot. 
                renderPlot({
                  annot_samples_values <- input$annot_samples_MOFA
@@ -1107,9 +1149,9 @@
                    annot_samples_values <- NULL
                  }
                  
-                 maxSlider <- get_dimensions(resMOFA)$D[input$view_choice_heatmap_MOFA][[1]]
+                 maxSlider <- get_dimensions(resMOFA)$D[input$view_heatmap_MOFA][[1]]
                  
-                 observeEvent(input$view_choice_heatmap_MOFA, {
+                 observeEvent(input$view_heatmap_MOFA, {
                    updateSliderInput(session, 
                                      inputId = "nfeat_choice_heatmap_MOFA", 
                                      max = maxSlider)
@@ -1120,7 +1162,7 @@
                    factor = input$factor_choice_heatmap_MOFA, 
                    view = input$view_choice_heatmap_MOFA, 
                    features = input$nfeat_choice_heatmap_MOFA,
-                   denoise = input$denoise_choice_heatmap_MOFA,
+                   denoise = input$denoise_heatmap_MOFA,
                    annotation_samples = annot_samples_values)
                  
                  grid.draw(res_heatmap)
@@ -1137,45 +1179,49 @@
   ns <- session$ns
   colorPal_choices <- c("Greens", "Purples", "Oranges", 
                         "Reds", "Greys", "Blues")
-  
   renderUI({
     verticalLayout(
       fluidRow(# buttons - choices for network
-        
-        column(1, numericInput(inputId = session$ns("factor_choice_network"),
-                               label = "Factor:",
-                               min = 1,
-                               max =  resMOFA@dimensions$K,
-                               value = 1, step = 1)),
-        column(2, numericInput(inputId = session$ns("abs_weight_network"),
-                               label = "Absolute Weight:",
-                               min = 0.05,
-                               max = 1,
-                               value = 0.8, 
-                               step = 0.05
-        )),                   
-        column(2, numericInput(inputId = session$ns("abs_min_cor_network"),
-                               label = "Minimum absolute \n correlation to display:",
-                               min = 0.05,
-                               max = 1,
-                               value = 0.75, 
-                               step = 0.05
-        )),
-        column(2, radioButtons(inputId = session$ns("network_layout"),
-                               label = "Layout:",
-                               choices = c("Spring", "Circle", "Circle + omics"),
-                               selected = "Circle + omics"
-        )),
-        column(1,  fluidRow(colourInput(inputId = session$ns("posCol"),
-                                        label = "Positive Edges Color:",
-                                        value = "red",
-                                        showColour = c("background"),
-                                        palette = c("square"),
-                                        allowedCols = NULL,
-                                        allowTransparent = FALSE,
-                                        returnName = FALSE,
-                                        closeOnClick = FALSE)),
-               fluidRow(colourInput(inputId = session$ns("negCol"),
+        column(1, 
+               numericInput(inputId = ns("factor_choice_network"),
+                            label = "Factor:",
+                            min = 1,
+                            max =  resMOFA@dimensions$K,
+                            value = 1, step = 1)),
+        column(2, 
+               numericInput(inputId = ns("abs_weight_network"),
+                            label = "Absolute Weight:",
+                            min = 0.05,
+                            max = 1,
+                            value = 0.8, 
+                            step = 0.05
+               )),                   
+        column(2, 
+               numericInput(inputId = ns("abs_min_cor_network"),
+                            label = "Minimum absolute \n correlation to display:",
+                            min = 0.05,
+                            max = 1,
+                            value = 0.75, 
+                            step = 0.05
+               )),
+        column(2, 
+               radioButtons(inputId = ns("network_layout"),
+                            label = "Layout:",
+                            choices = c("Spring", "Circle", 
+                                        "Circle + omics"),
+                            selected = "Circle + omics"
+               )),
+        column(1,  
+               fluidRow(colourInput(inputId = ns("posCol"),
+                                    label = "Positive Edges Color:",
+                                    value = "red",
+                                    showColour = c("background"),
+                                    palette = c("square"),
+                                    allowedCols = NULL,
+                                    allowTransparent = FALSE,
+                                    returnName = FALSE,
+                                    closeOnClick = FALSE)),
+               fluidRow(colourInput(inputId = ns("negCol"),
                                     label = "Negative Edges Color:",
                                     value = "green",
                                     showColour = c("background"),
@@ -1186,7 +1232,7 @@
                                     closeOnClick = FALSE)),
         ),
         column(2,  lapply(seq_len(length(views_names(resMOFA))), function(i) {
-          selectInput(inputId = session$ns(paste0("colors_", views_names(resMOFA)[i])),
+          selectInput(inputId = ns(paste0("colors_", views_names(resMOFA)[i])),
                       label = views_names(resMOFA)[i],
                       choices = colorPal_choices,
                       multiple = FALSE, 
@@ -1197,18 +1243,19 @@
       fluidRow(
         column(12,
                renderPlot({
-                 
                  colors_list <- lapply(views_names(resMOFA), 
-                                       FUN = function(nam) input[[paste0("colors_", nam)]])
+                                       FUN = function(nam) {
+                                         input[[paste0("colors_", nam)]]}
+                 )
                  names(colors_list) <- views_names(resMOFA)
                  
-                 MOFA_cor_network(resMOFA = resMOFA, 
-                                  factor_choice = input$factor_choice_network,
-                                  abs_weight_network = input$abs_weight_network, 
-                                  network_layout = input$network_layout,
-                                  omics_colors = colors_list,
-                                  posCol = input$posCol,
-                                  negCol = input$negCol
+                 MOFACorNetwork(resMOFA = resMOFA, 
+                                factor_choice = input$factor_choice_network,
+                                abs_weight_network = input$abs_weight_network, 
+                                network_layout = input$network_layout,
+                                omics_colors = colors_list,
+                                posCol = input$posCol,
+                                negCol = input$negCol
                  )
                  
                }) # renderplot
@@ -1230,7 +1277,9 @@
     
     res_aov <- lapply(seq_len(ncol(ExpDesign)), FUN = function(i){
       aov1 <- aov(factors$group1  ~ ExpDesign[,i])
-      unlist(lapply(summary(aov1), FUN = function(list_res) list_res[["Pr(>F)"]][[1]]))
+      unlist(lapply(summary(aov1), FUN = function(list_res){
+        list_res[["Pr(>F)"]][[1]]
+      }))
     })
     names(res_aov) <- colnames(ExpDesign)
     

@@ -12,7 +12,8 @@
 #' as it relies on their results.
 #' @param omicsNames vector of characters strings, 
 #' referring to the names of the filtered table in 'object@ExperimentList'.
-#' @param rnaSeq_transfo character string, only supports 'limma (voom)' for now. 
+#' @param rnaSeq_transfo character string, only supports 'limma (voom)' 
+#' for now. 
 #' Transformation of the rnaSeq data from counts to continuous data.
 #' @param variableLists list of variables to keep per dataset.
 #' @param choice character. If choice is set to 'DE', 
@@ -48,7 +49,7 @@ methods::setMethod(
                         silent = TRUE, 
                         cmd = FALSE,
                         ...) {
-   if (any(!omicsNames %in% names(object))) {
+    if (any(!omicsNames %in% names(object))) {
       stop("There are omics to integrate that are not names from the object")
     }
     
@@ -102,7 +103,8 @@ methods::setMethod(
 #' as it relies on their results.
 #' @param omicsNames vector of characters strings, 
 #' referring to the names of the filtered table in 'object@ExperimentList'.
-#' @param rnaSeq_transfo character string, only supports 'limma (voom)' for now. 
+#' @param rnaSeq_transfo character string, only supports 'limma (voom)' 
+#' for now. 
 #' Transformation of the rnaSeq data from counts to continuous data.
 #' @param variableLists list of variables to keep per dataset.
 #' @param type one of union or intersection.
@@ -280,12 +282,12 @@ methods::setMethod(
 #' @param object An object of class \link{RflomicsMAE}. 
 #' It is expected the MAE object is produced by rflomics previous analyses, 
 #' as it relies on their results.
-#' @param selOpt list of vectors. Preferred named list with names corresponding to 
-#' the names of the experimentList in the object. For each Experiment, gives
+#' @param selOpt list of vectors. Prefered named list with names corresponding  
+#' to the names of the experimentList in the object. For each Experiment, gives
 #' the option for the filtering: either 'all', 'DE', 'none', 
 #' or a specific name of a 
-#' contrast or cluster (if coexpression results are available). Default is taking
-#' all features for all experiment list. If the vector is named and an
+#' contrast or cluster (if coexpression results are available). Default is 
+#' taking all features for all experiment list. If the vector is named and an
 #' Experiment is missing, no feature will be selected from it. 
 #' If the vector is not named, the selection will be applied in order of the
 #' Experiments in the object. 
@@ -451,7 +453,7 @@ methods::setMethod(
       
       if (cmd) message("#     => Running MOFA analysis")
       
-      MOFA_run <- runMOFAAnalysis(
+      MOFA_run <- .runMOFAAnalysis(
         object = preparedObject,  
         scale_views = scale_views,
         maxiter = maxiter,
@@ -479,50 +481,53 @@ methods::setMethod(
       
       if (silent) {
         co <- capture.output({ 
-          MixOmics_res <- lapply(selectedResponse,
-                                 FUN = function(response_var) {
-                                   res_mixOmics <- suppressWarnings(runMixOmicsAnalysis(
-                                     object = preparedObject,
-                                     selectedResponse = response_var,
-                                     scale_views = scale_views,
-                                     ncomp = ncomp,
-                                     link_datasets = link_datasets,
-                                     link_response = link_response,
-                                     sparsity = sparsity,
-                                     cases_to_try = cases_to_try
-                                   ))
-                                   
-                                   return(
-                                     list(
-                                       "MixOmics_tuning_results" = res_mixOmics$tuning_res,
-                                       "MixOmics_results"        = res_mixOmics$analysis_res
-                                     )
-                                   )
-                                 }
+          MixOmics_res <- lapply(
+            selectedResponse,
+            FUN = function(response_var) {
+              res_mixOmics <- suppressWarnings(
+                .runMixOmicsAnalysis(
+                  object = preparedObject,
+                  selectedResponse = response_var,
+                  scale_views = scale_views,
+                  ncomp = ncomp,
+                  link_datasets = link_datasets,
+                  link_response = link_response,
+                  sparsity = sparsity,
+                  cases_to_try = cases_to_try
+                ))
+              
+              return(
+                list(
+                  "MixOmics_tuning_results" = res_mixOmics$tuning_res,
+                  "MixOmics_results"        = res_mixOmics$analysis_res
+                )
+              )
+            }
           )
         })
         
       } else {
-        MixOmics_res <- lapply(selectedResponse,
-                               FUN = function(response_var) {
-                                 res_mixOmics <- runMixOmicsAnalysis(
-                                   object = preparedObject,
-                                   selectedResponse = response_var,
-                                   scale_views = scale_views,
-                                   ncomp = ncomp,
-                                   link_datasets = link_datasets,
-                                   link_response = link_response,
-                                   sparsity = sparsity,
-                                   cases_to_try = cases_to_try
-                                 )
-                                 
-                                 return(
-                                   list(
-                                     "MixOmics_tuning_results" = res_mixOmics$tuning_res,
-                                     "MixOmics_results"        = res_mixOmics$analysis_res
-                                   )
-                                 )
-                               }
+        MixOmics_res <- lapply(
+          selectedResponse,
+          FUN = function(response_var) {
+            res_mixOmics <- .runMixOmicsAnalysis(
+              object = preparedObject,
+              selectedResponse = response_var,
+              scale_views = scale_views,
+              ncomp = ncomp,
+              link_datasets = link_datasets,
+              link_response = link_response,
+              sparsity = sparsity,
+              cases_to_try = cases_to_try
+            )
+            
+            return(
+              list(
+                "MixOmics_tuning_results" = res_mixOmics$tuning_res,
+                "MixOmics_results"        = res_mixOmics$analysis_res
+              )
+            )
+          }
         )
       }
       
@@ -613,7 +618,6 @@ methods::setMethod(
 
 #' @rdname methods-for-integration
 #' @exportMethod getMOFA
-
 methods::setMethod(
   f = "getMOFA",
   signature = "RflomicsMAE",
@@ -642,7 +646,9 @@ methods::setMethod(
   f = "getMixOmicsSettings",
   signature = "RflomicsMAE",
   definition = function(object) {
-    return(metadata(object)[["IntegrationAnalysis"]][["mixOmics"]][["settings"]])
+    return(
+      metadata(object)[["IntegrationAnalysis"]][["mixOmics"]][["settings"]]
+    )
   })
 
 # ---- Set Integration Results ----
@@ -731,5 +737,52 @@ methods::setMethod(
     return(df)
   })
 
+# ----- MixOmics: plot variance explained ----
 
+#' @title plotMOVarExp
+#'
+#' @param object An object of class \link{RflomicsMAE}
+#' @param selectedResponse a character string of the response variable to 
+#' consider
+#' @param mode Can be NULL (default), "cumulative" or "comp". 
+#' Defines the type of graph to return
+#' @return An object of class \link{RflomicsMAE}
+#' @importFrom ggpubr ggarrange
+#' @exportMethod plotMOVarExp
+#'
+methods::setMethod(
+  f = "plotMOVarExp",
+  signature = "RflomicsMAE",
+  definition =   function(object, selectedResponse, mode = NULL) {
+    
+    if (is.null(getMixOmics(object, 
+                            response = NULL, 
+                            onlyResults = TRUE))) {
+      stop("It seems this object has no mixOmics results.")
+    }
+    if (is.null(getMixOmics(object, 
+                            response = selectedResponse, 
+                            onlyResults = TRUE))) {
+      stop("It seems you didn't run MixOmics on this particular variable.")
+    }
+    
+    Data_res <- getMixOmics(object, 
+                            response = selectedResponse, 
+                            onlyResults = TRUE)
+    gg_return <- NULL
+    
+    if (is.null(mode)) {
+      gg_return <- ggarrange(.plot_MO_1(Data_res),
+                             .plot_MO_2(Data_res), 
+                             ncol = 2)
+    }
+    else if (tolower(mode) == "cumulative") {
+      gg_return <- .plot_MO_1(Data_res)
+    }
+    else if (tolower(mode) == "comp") {
+      gg_return <- .plot_MO_2(Data_res)
+    }
+    
+    return(gg_return)
+  })
 
