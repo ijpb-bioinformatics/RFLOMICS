@@ -189,7 +189,7 @@ methods::setMethod(
     if (commonVarNames > 0) {
       if (cmd) { 
         message("#   => Duplicated features names across tables, 
-                changing names for integration\n")
+                changing names for integration")
       }
       
       dupTab <- data.frame(
@@ -214,6 +214,10 @@ methods::setMethod(
                             colData   = colData(object), 
                             sampleMap = sampleMap(object), 
                             metadata  = metadata(object))
+      
+      if (cmd) { 
+        message("#   => Done replacing features names")
+      }
     }
     
     # keep only columns corresponding to design factors 
