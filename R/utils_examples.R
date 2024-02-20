@@ -1,34 +1,39 @@
 # ---- Create Example MAE ----
-#' @title Initializing an Example MultiAssayExperiment compatible with RFLOMICS functions.
+#' @title Initializing an Example MultiAssayExperiment compatible with RFLOMICS
+#'  functions.
 #'
 #' @return a multiAssayExperiment ready for use in RFLOMICS
 #' @export
 #' @rdname Example-functions
+#' @examples
+#' initExampleMAE()
+#' 
 initExampleMAE <- function(){
   
-  ExpDesign <- readExpDesign(file = paste0(system.file(package = "RFLOMICS"), 
-                                             "/ExamplesFiles/ecoseed/condition.txt"))
-  factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
-                          factorRef   = c("rep1",   "Low",          "DS"),
-                          factorType  = c("batch",  "Bio",          "Bio"),
-                          factorLevels= c("rep1,rep2,rep3", 
-                                          "Low,Medium,Elevated", 
-                                          "DS,EI,LI"))
+  datPath <- paste0(system.file(package = "RFLOMICS"), 
+                    "/ExamplesFiles/ecoseed/")
+  
+  ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
+  facRef <- data.frame(factorName   = c("Repeat", "temperature" , "imbibition"),
+                       factorRef    = c("rep1",   "Low",          "DS"),
+                       factorType   = c("batch",  "Bio",          "Bio"),
+                       factorLevels = c("rep1,rep2,rep3", 
+                                        "Low,Medium,Elevated", 
+                                        "DS,EI,LI"))
   
   omicsData <- list(
-    readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
-                                  "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-    readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
-                                  "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
-    readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
-                                  "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
+    readOmicsData(file = paste0(datPath, "transcriptome_ecoseed.txt")),
+    readOmicsData(file = paste0(datPath, "metabolome_ecoseed.txt")),
+    readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
   
   RMAE <- createRflomicsMAE(projectName = "Tests", 
                             omicsData   = omicsData,
-                            omicsNames  = c("RNAtest", "metatest", "protetest"),
-                            omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+                            omicsNames  = c("RNAtest", "metatest", 
+                                            "protetest"),
+                            omicsTypes  = c("RNAseq","metabolomics",
+                                            "proteomics"),
                             ExpDesign   = ExpDesign,
-                            factorRef   = factorRef)
+                            factorRef   = facRef)
   names(RMAE) <- c("RNAtest", "metatest", "protetest")
   
   return(RMAE)  
@@ -47,27 +52,27 @@ singleOmicsExample <- function(omicType = "RNAseq"){
   
   if (missing(omicType)) stop("Please provide an omic type.")
   
-  ExpDesign <- readExpDesign(file = paste0(system.file(package = "RFLOMICS"), 
-                                             "/ExamplesFiles/ecoseed/condition.txt"))
+  datPath <- paste0(system.file(package = "RFLOMICS"), 
+                    "/ExamplesFiles/ecoseed/")
+  
+  ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
   
   design <- c("Repeat" = "batch",
               "temperature" = "bio", 
               "imbibition" = "bio")
   
   omicsData <- 
-    switch(toupper(omicType),
-           "RNASEQ" = { 
-             readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
-                                           "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
-           },
-           "PROTEOMICS" = {
-             readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
-                                           "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"))
-           },
-           "METABOLOMICS" = { 
-             readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
-                                           "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
-           }
+    switch(
+      toupper(omicType),
+      "RNASEQ" = { 
+        readOmicsData(file = paste0(datPath, "transcriptome_ecoseed.txt"))
+      },
+      "PROTEOMICS" = {
+        readOmicsData(file = paste0(datPath, "metabolome_ecoseed.txt"))
+      },
+      "METABOLOMICS" = { 
+        readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt"))
+      }
     )
   
   RSE <- createRflomicsSE(omicData  = omicsData,
@@ -88,7 +93,6 @@ singleOmicsExample <- function(omicType = "RNAseq"){
 #' @importFrom purrr reduce
 #' @importFrom dplyr filter 
 #' @examples
-#' initExampleMAE()
 #' MAE <- generateExample(coexp = FALSE, integration = FALSE)
 #' 
 
@@ -150,34 +154,38 @@ generateExample <- function(processing   = TRUE,
   }
   
   if (annotation) {
-    df_custom <- vroom(file = paste0(system.file(package = "RFLOMICS"), 
-                                     "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt"))
+    
+    annotPath <- paste0(system.file(package = "RFLOMICS"), 
+                        "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt")
+    
+    df_custom <- vroom(file = annotPath)
     MAE <- MAE |> 
-      runAnnotationEnrichment(SE.name = "RNAtest", 
-                              nameList = getSelectedContrasts(MAE[["RNAtest"]])$tag,
-                              database = "custom",
-                              list_args = list(pvalueCutoff = 0.05),
-                              col_term = "GO term accession", 
-                              col_gene = "Gene stable ID",
-                              col_name = "GO term name",
-                              col_domain = "GO domain",
-                              annot = df_custom) |>
-      runAnnotationEnrichment(SE.name = "protetest", 
-                              nameList = getSelectedContrasts(MAE[["protetest"]])$tag,
-                              database = "custom",
-                              list_args = list(pvalueCutoff = 0.05),
-                              col_term = "GO term accession", 
-                              col_gene = "Gene stable ID",
-                              col_name = "GO term name",
-                              col_domain = "GO domain",
-                              annot = df_custom) 
+      runAnnotationEnrichment(
+        SE.name = "RNAtest", 
+        nameList = getSelectedContrasts(MAE[["RNAtest"]])$tag,
+        database = "custom",
+        list_args = list(pvalueCutoff = 0.05),
+        col_term = "GO term accession", 
+        col_gene = "Gene stable ID",
+        col_name = "GO term name",
+        col_domain = "GO domain",
+        annot = df_custom) |>
+      runAnnotationEnrichment(
+        SE.name = "protetest", 
+        nameList = getSelectedContrasts(MAE[["protetest"]])$tag,
+        database = "custom",
+        list_args = list(pvalueCutoff = 0.05),
+        col_term = "GO term accession", 
+        col_gene = "Gene stable ID",
+        col_name = "GO term name",
+        col_domain = "GO domain",
+        annot = df_custom) 
     
     
   }
   
   if (annotation && coexp) {
-    df_custom <- vroom(file = paste0(system.file(package = "RFLOMICS"), 
-                                     "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt"))
+    df_custom <- vroom(file = annotPath)
     MAE <- MAE |> 
       runAnnotationEnrichment(SE.name = "RNAtest", 
                               database = "custom",
@@ -203,9 +211,11 @@ generateExample <- function(processing   = TRUE,
   if (integration) {
     
     MAE <- integrationWrapper(MAE, 
-                              omicsNames = c("RNAtest", "metatest", "protetest"))
+                              omicsNames = c("RNAtest", "metatest", 
+                                             "protetest"))
     MAE <- integrationWrapper(MAE, 
-                              omicsNames = c("RNAtest", "metatest", "protetest"),
+                              omicsNames = c("RNAtest", "metatest", 
+                                             "protetest"),
                               method = "mixOmics")
   }
   
