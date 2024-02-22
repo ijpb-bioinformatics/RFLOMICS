@@ -378,16 +378,15 @@
             .annotSettings(session, rea.values, dataset, listSource)
         
         ## display results
-        output$enrichSummary <-
-            .outEnrichSummary(session,
-                              rea.values,
-                              input,
-                              fromAnnot,
-                              title,
-                              from,
-                              listSource,
-                              dataset,
-                              database)
+        output$enrichSummary <- .outEnrichSummary(session,
+                                                  rea.values,
+                                                  input,
+                                                  fromAnnot,
+                                                  title,
+                                                  from,
+                                                  listSource,
+                                                  dataset,
+                                                  database)
         output$AnnotResults <- .outAnnotResults(session,
                                                 input,
                                                 input2,
@@ -857,14 +856,13 @@
                         type = "action"
                     ),
                     title = "Use example file for ecoseed data",
-                    content = paste0(
-                        "<p> You are conducting an analysis using the ",
-                        "example dataset ecoseed. You can ",
-                        "run an annotation enrichment ",
-                        "using the example annotation file, ",
-                        "which is an ",
-                        "extract of GO terms for Arabidopsis thaliana",
-                        " genes from plant ensembl, using TAIR ids"
+                    content = paste0("<p> You are conducting an analysis using the ",
+                                     "example dataset ecoseed. You can ",
+                                     "run an annotation enrichment ",
+                                     "using the example annotation file, ",
+                                     "which is an ",
+                                     "extract of GO terms for Arabidopsis thaliana",
+                                     " genes from plant ensembl, using TAIR ids"
                     ),
                     placement = "top",
                     trigger = "hover"
@@ -914,17 +912,16 @@
                     icon = icon("question-circle")
                 ),
                 title = "Custom annotation",
-                content = paste0(
-                    "<p>Chose the appropriate columns names. ",
-                    "They are automatically derived from your file. ",
-                    "Items with a star are mandatory. </p>",
-                    "<p>- Term Name is used in case of a term name ",
-                    "that is different from its id ",
-                    "(eg GO:0009409 is the id, response to ",
-                    "cold is the term name).</p>",
-                    "- Domain is used to differentiate databases or ",
-                    "ontologies in the same file (eg: BP, CC and ",
-                    "MF would be indicated in the domain column)."
+                content = paste0("<p>Chose the appropriate columns names. ",
+                                 "They are automatically derived from your file. ",
+                                 "Items with a star are mandatory. </p>",
+                                 "<p>- Term Name is used in case of a term name ",
+                                 "that is different from its id ",
+                                 "(eg GO:0009409 is the id, response to ",
+                                 "cold is the term name).</p>",
+                                 "- Domain is used to differentiate databases or ",
+                                 "ontologies in the same file (eg: BP, CC and ",
+                                 "MF would be indicated in the domain column)."
                 ),
                 trigger = "click",
                 placement = "top"
@@ -1446,13 +1443,15 @@
     })
 }
 
+#' @noRd
+#' @keywords internal
 .popoverHelp <- function(label = "") {
     renderUI({
         column(1,
                br(),
                tags$style(
                    HTML(
-                       "#classPop .popover {
+              "#classPop .popover {
               text-align: left;
               border-color: black;
               background-color: #d9edf7;
@@ -1513,7 +1512,7 @@
     varLabel0 <- omicsDic(dataSE)$variableName
     
     renderUI({
-        outplot <- .doNotSpeak(
+        outplot <- tryCatch(
             plotClusterProfiler(
                 dataSE,
                 contrastName = listname,
@@ -1523,7 +1522,9 @@
                 domain = input[[paste0(listname, "-domain")]],
                 showCategory = input[[paste0(listname, "-top.over")]],
                 searchExpr = input[[paste0(listname, "-grep")]]
-            )
+            ),
+            error = function(e) e,
+            warning = function(w) w
         )
         
         plotExplain <- switch(
@@ -1585,20 +1586,13 @@
                 div(class = "explain-p", HTML(plotExplain)),
                 hr(),
                 renderPlot({
-                    warnOpt <- getOption("warn")
-                    options(warn = -1)
-                    suppressMessages(suppressWarnings(print(
-                        outplot +
-                            labs(title = listname,
-                                 subtitle = subTitlePlot)
-                    )))
-                    options(warn = warnOpt)
+                    outplot + labs(title = listname,
+                                   subtitle = subTitlePlot)
                 })
             )
-        } else
-            renderText({
-                outplot$message
-            })
+        } else {
+            renderText({outplot$message })
+        }
     })
 }
 
@@ -1614,7 +1608,7 @@
         varLabel0 <- omicsDic(dataSE)$variableName
         
         renderUI({
-            outdot <- .doNotSpeak(
+            outdot <- tryCatch(
                 plotClusterProfiler(
                     dataSE,
                     contrastName = listname,
@@ -1624,7 +1618,9 @@
                     domain = input[[paste0(listname, "-domain")]],
                     showCategory = input[[paste0(listname, "-top.over")]],
                     searchExpr = input[[paste0(listname, "-grep")]]
-                )
+                ),
+                error = function(e) e,
+                warning = function(w) w
             )
             
             
@@ -1636,8 +1632,8 @@
                         input[[paste0(listname, "-top.over")]],
                         "</b> terms, ordered by GeneRatio (number of ",
                         varLabel0,
-                        " found differentially expressed ",
-                        " , also called Count, relative to the total number of ",
+                        " found differentially expressed , also called Count,",
+                        "  relative to the total number of ",
                         varLabel0,
                         " for that term in the database). ",
                         "The dot color is linked to ",
@@ -1656,8 +1652,8 @@
                         input[[paste0(listname, "-top.over")]],
                         "</b> terms, , ordered by GeneRatio (number of ",
                         varLabel0,
-                        " found in the cluster ",
-                        " , also called Count, relative to the total number of ",
+                        " found in the cluster , also called Count,",
+                        "  relative to the total number of ",
                         varLabel0,
                         " for that term in the database). ",
                         "The dot color is linked to ",
@@ -1701,14 +1697,9 @@
                   hr(),
                   
                   renderPlot({
-                      warnOpt <- getOption("warn")
-                      options(warn = -1)
-                      suppressMessages(suppressWarnings(print(
-                          outdot +
-                              labs(title = listname,
-                                   subtitle = subTitlePlot)
-                      )))
-                      options(warn = warnOpt)
+                      outdot +
+                          labs(title = listname,
+                               subtitle = subTitlePlot)
                   })
                 )
             } else
@@ -1745,7 +1736,7 @@
             nodeLabelArg <- "category"
         }
         
-        outcnet <- .doNotSpeak(
+        outcnet <- tryCatch(
             plotClusterProfiler(
                 dataSE,
                 contrastName = listname,
@@ -1756,7 +1747,8 @@
                 showCategory = input[[paste0(listname, "-top.over")]],
                 searchExpr = input[[paste0(listname, "-grep")]],
                 nodeLabel = nodeLabelArg
-            )
+            ), warning = function(w) w, 
+            error = function(e) e
         )
         
         plotExplain <- switch(
@@ -1825,14 +1817,9 @@
                 hr(),
                 
                 renderPlot({
-                    warnOpt <- getOption("warn")
-                    options(warn = -1)
-                    suppressMessages(suppressWarnings(print(
-                        outcnet +
-                            labs(title = listname,
-                                 subtitle = subTitlePlot)
-                    )))
-                    options(warn = warnOpt)
+                    outcnet +
+                        labs(title = listname,
+                             subtitle = subTitlePlot)
                     
                 })
             )
@@ -2091,87 +2078,88 @@
                 inline = TRUE
             )
         ),),
-        fluidRow(column(12,
-                        renderUI({
-                            clustmeth <- switch(input[[paste0(database, "-compType")]],
-                                                "presence" = "complete",
-                                                "complete")
-                            distmeth <-
-                                switch(input[[paste0(database, "-compType")]],
-                                       "presence" = "binary",
-                                       "euclidean")
-                            additionalMessage <- switch(
-                                input[[paste0(database, "-compType")]],
-                                "presence" = "Red tiles indicates the term has
+        fluidRow(
+            column(12,
+                   renderUI({
+                       clustmeth <- switch(input[[paste0(database, "-compType")]],
+                                           "presence" = "complete",
+                                           "complete")
+                       distmeth <-
+                           switch(input[[paste0(database, "-compType")]],
+                                  "presence" = "binary",
+                                  "euclidean")
+                       additionalMessage <- switch(
+                           input[[paste0(database, "-compType")]],
+                           "presence" = "Red tiles indicates the term has
                                  been found enriched using the list, white tile
                                  is an absent term. ",
-                                "FC" = "Tiles are colored according to the
+                           "FC" = "Tiles are colored according to the
                            fold change (FC) of the enrichment. White tiles
                            denote the non-significance for a term in a list."
-                            )
-                            
-                            
-                            plotExplain <- switch(
-                                from,
-                                "DiffExpAnal" =  {
-                                    paste0(
-                                        "This graph shows all the enriched terms ",
-                                        "found with database <b> ",
-                                        database,
-                                        "</b>",
-                                        " with differentially expressed ",
-                                        varLabel0,
-                                        " lists.",
-                                        " Clustering of terms was computed using <b> ",
-                                        distmeth,
-                                        "</b> and <b>",
-                                        clustmeth,
-                                        "</b>. ",
-                                        additionalMessage
-                                    )
-                                },
-                                "CoExpAnal" =
-                                    paste0(
-                                        "This graph shows all the enriched terms ",
-                                        "found with database <b>",
-                                        database,
-                                        "</b>",
-                                        " with the co-expression clusters ",
-                                        varLabel0,
-                                        " lists.",
-                                        " Clustering of terms was computed using <b> ",
-                                        distmeth,
-                                        "</b> and <b>",
-                                        clustmeth,
-                                        "</b>. ",
-                                        additionalMessage
-                                    )
-                            )
-                            
-                            outHeatmap <- tryCatch({
-                                outHeatmap <-  plotEnrichComp(
-                                    dataSE,
-                                    from = from,
-                                    database = database,
-                                    domain = input[[paste0(database, "-compDomain")]],
-                                    matrixType = input[[paste0(database, "-compType")]]
-                                )
-                            },
-                            warning = function(warn)
-                                warn,
-                            error = function(err)
-                                err)
-                            
-                            if (is(outHeatmap, "Heatmap")) {
-                                column(
-                                    width = 12,
-                                    tags$style(
-                                        ".explain-p {
+                       )
+                       
+                       
+                       plotExplain <- switch(
+                           from,
+                           "DiffExpAnal" =  {
+                               paste0(
+                                   "This graph shows all the enriched terms ",
+                                   "found with <b> ",
+                                   database,
+                                   "</b> database",
+                                   " with differentially expressed ",
+                                   varLabel0,
+                                   " lists.",
+                                   " Clustering of terms was computed using <b> ",
+                                   distmeth,
+                                   "</b> and <b>",
+                                   clustmeth,
+                                   "</b>. ",
+                                   additionalMessage
+                               )
+                           },
+                           "CoExpAnal" =
+                               paste0(
+                                   "This graph shows all the enriched terms ",
+                                   "found with <b>",
+                                   database,
+                                   "</b> database",
+                                   " with the co-expression clusters ",
+                                   varLabel0,
+                                   " lists.",
+                                   " Clustering of terms was computed using <b> ",
+                                   distmeth,
+                                   "</b> and <b>",
+                                   clustmeth,
+                                   "</b>. ",
+                                   additionalMessage
+                               )
+                       )
+                       
+                       outHeatmap <- tryCatch({
+                           outHeatmap <-  plotEnrichComp(
+                               dataSE,
+                               from = from,
+                               database = database,
+                               domain = input[[paste0(database, "-compDomain")]],
+                               matrixType = input[[paste0(database, "-compType")]]
+                           )
+                       },
+                       warning = function(warn)
+                           warn,
+                       error = function(err)
+                           err)
+                       
+                       if (is(outHeatmap, "Heatmap")) {
+                           column(
+                               width = 12,
+                               tags$style(
+                                   ".explain-p {
                     color: Gray;
                     text-justify: inter-word;
                     font-style: italic;
                   }"
-                                    ),
+                               ),
                   hr(),
                   div(class = "explain-p", HTML(plotExplain)),
                   hr(),
@@ -2185,12 +2173,12 @@
                   },
                   width = "auto",
                   height = min(400 + nrow(outHeatmap@matrix) * 50, 1000))
-                                )
-                            } else {
-                                renderText({
-                                    outHeatmap$message
-                                })
-                            }
-                        })) ))
+                           )
+                       } else {
+                           renderText({
+                               outHeatmap$message
+                           })
+                       }
+                   })) ))
     })
 }
