@@ -9,7 +9,7 @@ Authors@R:
     person(given = "Audrey", family = "Hulot", email = "audrey.hulot@inrae.fr", role = c("aut"), comment = c(ORCID = "0000-0002-9647-6470")),
     person(given = "Gwendal", family = "Cueff", email = "gwendal.cueff@inrae.fr", role = c("aut"))
     )
-Description: R-package with shiny interface, provides a framework for the analysis of transcriptomics, proteomics and/or metabolomics data. 
+Description: R-package with shiny interface, provides a framework for the analysis of transcriptomics, proteomics and/or metabolomics data. The interface offers a guided experience for the user, from the definition of the experimental design to the integration of several omics table together. A report can be generated with all settings and analysis results.
 URL: https://forgemia.inra.fr/flomics/rflomics/
 BugReports: https://forgemia.inra.fr/flomics/rflomics/-/issues
 Depends: 
@@ -30,11 +30,9 @@ Suggests:
     org.Hs.eg.db
 VignetteBuilder: knitr
 Imports:
-    statmod,
-    shinyBS,
     vroom,
     AnnotationDbi,
-    BiocParallel,
+    circlize,
     clustermq,
     clusterProfiler,
     colourpicker,
@@ -49,26 +47,27 @@ Imports:
     FactoMineR,
     ggplot2,
     ggpubr,
+    ggrepel,
     grDevices,
-    gridExtra,
+    grid,
     htmltools,
-    kableExtra,
     limma,
     magrittr,
     methods,
     mixOmics,
     MOFA2,
     pathview,
-    pheatmap,
+    parallel,
+    png,
     purrr,
     qgraph,
     RColorBrewer,
-    reactable,
+    RCurl,
     reshape2,
     reticulate,
+    rmarkdown,
     S4Vectors,
     shiny,
-    shinyFiles,
     shinydashboard,
     shinyWidgets,
     stats,
@@ -78,5 +77,4 @@ Imports:
     tibble,
     tidyselect,
     UpSetR,
-    utils,
-    org.At.tair.db
+    utils
