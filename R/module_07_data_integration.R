@@ -112,16 +112,6 @@
         )
     })
     
-    # observeEvent(rea.values$datasetDiff, {
-    #     print("yes, I'm changing!")
-    #     local.rea.values$runintegration    <- FALSE
-    #     local.rea.values$preparedObject    <- NULL
-    #     session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(
-    #         object  = session$userData$FlomicsMultiAssay,
-    #         results = c("IntegrationAnalysis")
-    #     )
-    # })
-    
     # select datasets to integrate
     output$selectDataUI <- .integrationSelectDataUI(session, rea.values,
                                                     input)
@@ -131,7 +121,7 @@
         .integrationPrepareParamUI(session, input, rea.values)
     
     # over view of selected data after variable reduction
-    output$prepareDataUI <- .outPrepareDataUI(session, input)
+    output$prepareDataUI <- .integrationPrepareDataUI(session, input)
     
     # before MOFA integration
     observeEvent(input$run_prep, {
@@ -307,7 +297,8 @@
                                 c(
                                     list_args,
                                     list(
-                                        maxiter = input$MOFA_maxiter,
+                                        # maxiter = input$MOFA_maxiter,
+                                        maxiter = 1000,
                                         num_factors = input$MOFA_numfactor
                                     )
                                 )
@@ -391,8 +382,7 @@
                 Data_res <- getMixOmics(session$userData$FlomicsMultiAssay,
                                         response = Response)
                 fluidRow(
-                    box(
-                        width = 12,
+                    box(width = 12,
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         collapsed = TRUE,
@@ -580,7 +570,7 @@
             if (is.null(ValidContrasts)) {
                 SelectTypeChoices <- SelectTypeChoices[c(1)]
             }
-           
+            
             box(
                 title = set,
                 width = 3,
@@ -655,7 +645,8 @@
 #
 #' @noRd
 #' @keywords internal
-.outPrepareDataUI <- function(session, input) {
+.integrationPrepareDataUI <- function(session, input) {
+    
     renderUI({
         if (length(input$selectData) == 0)
             return()
@@ -691,13 +682,32 @@
             metadata    = metadata(session$userData$FlomicsMultiAssay)
         )
         
+        textExp <- "This graph represents the dataset you will use in 
+        the integration (tables and samples). 
+        Gray areas represent missing sample. "
+        
         box(
-            title = "",
+            title = "Overview",
             width = 12,
             status = "warning",
+            solidHeader = FALSE,
+            tags$style(
+                ".explain-p {
+                            color: Gray;
+                            text-justify: inter-word;
+                            font-style: italic;
+                            }"
+            ),
+            div(class = "explain-p", 
+                HTML(textExp)),
+            hr(),
             renderPlot(
                 plotDataOverview(MAE2Integrate,
-                                 omicNames = input$selectData)
+                                 omicNames = input$selectData) +
+                    theme(axis.text.y = element_text(size = 12),
+                          axis.text.x = element_text(size = 10, 
+                                                     angle = 45, 
+                                                     hjust = 1)) 
             )
         )
     })
@@ -709,99 +719,157 @@
         ns <- session$ns
         
         renderUI({
-            if (is.null(local.rea.values$preparedObject))
-                return()
+            if (is.null(local.rea.values$preparedObject)) {
+                return(renderText({
+                    "Select the data in the previous 
+                    panel to access the settings for integration."}))
+            }
             
             bioFacts <- getBioFactors(session$userData$FlomicsMultiAssay)
             box(
                 title = span(tagList(icon("sliders"), "  ", "Settings")),
                 width = 12,
                 status = "warning",
-                switch(method,
-                       "mixOmics" = {
-                           list(
-                               column(
-                                   12,
-                                   checkboxInput(
-                                       inputId = ns("scale_views"),
-                                       label = "Scale Datasets",
-                                       value = TRUE,
-                                       width = NULL
-                                   )
-                               ),
-                               column(
-                                   12,
-                                   checkboxInput(
-                                       inputId = ns("MO_sparsity"),
-                                       label = "Sparse analysis",
-                                       value = FALSE,
-                                       width = NULL
-                                   )
-                               ),
-                               column(
-                                   12,
-                                   numericInput(
-                                       inputId = ns("MO_ncomp"),
-                                       label = "Components",
-                                       value = 5,
-                                       min = 1,
-                                       max = 20
-                                   )
-                               ),
-                               column(
-                                   12,
-                                   numericInput(
-                                       inputId = ns("MO_cases_to_try"),
-                                       label = "Tuning cases",
-                                       value = 5,
-                                       min = 1,
-                                       max = 100
-                                   )
-                               ),
-                               column(
-                                   12,
-                                   checkboxGroupInput(
-                                       inputId  = ns("MO_selectedResponse"),
-                                       label    = "Select response variables",
-                                       choices  = bioFacts,
-                                       selected = bioFacts
-                                   )
-                               )
-                           )
-                       },
-                       "MOFA" = {
-                           list(
-                               column(
-                                   12,
-                                   selectInput(
-                                       ns("scale_views"),
-                                       label    = "Scale views",
-                                       choices  = c(FALSE, TRUE),
-                                       selected = TRUE
-                                   )
-                               ),
-                               column(
-                                   12,
-                                   numericInput(
-                                       inputId = ns("MOFA_numfactor"),
-                                       label = "Num factors:",
-                                       value = 10,
-                                       min = 5,
-                                       max = 15
-                                   )
-                               ),
-                               column(
-                                   12,
-                                   numericInput(
-                                       inputId = ns("MOFA_maxiter"),
-                                       label = "Max iteration:",
-                                       value = 1000,
-                                       min = 1000,
-                                       max = 1000
-                                   )
-                               )
-                           )
-                       }),
+                hr(),
+                span("Most of these settings are the defaults settings in the
+                     method. If you don't know what to set, 
+                     just run the analysis."),
+                hr(),
+                switch(
+                    method,
+                    "mixOmics" = {
+                        list(
+                            column(
+                                12,
+                                checkboxInput(
+                                    inputId = ns("scale_views"),
+                                    label = .addBSpopify(
+                                        label = "Scale Datasets",
+                                        title = "", 
+                                        content = 
+                                            paste0("If TRUE, each table will be transformed",
+                                                   " such that the global variance of the table is 1"),
+                                        trigger = "click", placement = "right"),
+                                    value = TRUE,
+                                    width = NULL
+                                )
+                            ),
+                            column(
+                                12,
+                                checkboxInput(
+                                    inputId = ns("MO_sparsity"),
+                                    label = 
+                                        .addBSpopify(
+                                            label = "Sparse analysis",
+                                            title = "", 
+                                            content = 
+                                                paste0("If TRUE, sparse version of the mixOmics functions",
+                                                       " will be used (block.splsda). The results of the",
+                                                       " analyses will have a feature selection step",
+                                                       " for each of the component and each of the tables"),
+                                            trigger = "click", placement = "right"),
+                                    value = FALSE,
+                                    width = NULL
+                                )
+                            ),
+                            column(
+                                12,
+                                numericInput(
+                                    inputId = ns("MO_ncomp"),
+                                    label = 
+                                        .addBSpopify(
+                                            label = "Components",
+                                            title = "", 
+                                            content = 
+                                                paste0("Number of components to search for.",
+                                                       " Equivalent to the components in the PCA."),
+                                            trigger = "click", placement = "right"),
+                                    value = 5,
+                                    min = 1,
+                                    max = 20
+                                )
+                            ),
+                            column(
+                                12,
+                                numericInput(
+                                    inputId = ns("MO_cases_to_try"),
+                                    label = 
+                                        .addBSpopify(
+                                            label = "Tuning cases",
+                                            title = "", 
+                                            content = paste0("The number of tuning cases will determine ",
+                                                             "the number of features selection to try ",
+                                                             "when performing a sparse analysis."), 
+                                            # determine le nombre de cas à essayer pour le tuning.
+                                            # Chaque cas ajoute un nombre de variables au précédent
+                                            # Nombre de variable ajouté : nvar table/ncasestotry
+                                            trigger = "click", placement = "right"),
+                                    value = 5,
+                                    min = 1,
+                                    max = 100
+                                )
+                            ),
+                            column(
+                                12,
+                                checkboxGroupInput(
+                                    inputId  = ns("MO_selectedResponse"),
+                                    label    = 
+                                        .addBSpopify(
+                                            label = "Select response variables",
+                                            title = "", 
+                                            content = paste0("On which feature to perform the analysis?"), 
+                                            trigger = "click", placement = "right"),
+                                    choices  = bioFacts,
+                                    selected = bioFacts
+                                )
+                            )
+                        )
+                    },
+                    "MOFA" = {
+                        list(
+                            column(
+                                12,
+                                selectInput(
+                                    ns("scale_views"),
+                                    label = .addBSpopify(
+                                        label = "Scale views",
+                                        title = "", 
+                                        content = 
+                                            paste0("If TRUE, each table will be transformed",
+                                                   " such that the global variance of the table is 1"),
+                                        trigger = "click", placement = "right"),
+                                    choices  = c(FALSE, TRUE),
+                                    selected = TRUE
+                                )
+                            ),
+                            column(
+                                12,
+                                numericInput(
+                                    inputId = ns("MOFA_numfactor"),
+                                    label = .addBSpopify(
+                                        label = "Factors:",
+                                        title = "", 
+                                        content = 
+                                            paste0("Number of components to search for.",
+                                                   " Equivalent to the components in the PCA."),
+                                        trigger = "click", placement = "right"),
+                                    value = 10,
+                                    min = 5,
+                                    max = 15
+                                )
+                            )
+                            # column(
+                            #     12,
+                            #     numericInput(
+                            #         inputId = ns("MOFA_maxiter"),
+                            #         label = "Max iteration:",
+                            #         value = 1000,
+                            #         min = 1000,
+                            #         max = 1000
+                            #     )
+                            # )
+                        )
+                    }),
                 column(12, actionButton(
                     ns("run_integration"), "Run Analysis"
                 ))
@@ -862,8 +930,27 @@
                               Response,
                               Data_res) {
     ns <- session$ns
+    textExplained <- paste0("These graphs represent the samples coordinates ",
+                            "projected onto the components found by mixOmics.",
+                            " If <b>Ellipses</b> is turned on, ellpsis are ",
+                            "added to the graphs. They put every graph on ",
+                            "the same scale. Sample are colored according to ",
+                            Response, ". It is best when the samples are ",
+                            "grouping into response modalities. If it is not",
+                            " the case, the analysis was maybe not successful."
+    )
+    
     renderUI({
         fluidRow(
+            tags$style(
+                ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
+            ),
+            div(class = "explain-p", HTML(textExplained)),
+            hr(),
             column(
                 1,
                 checkboxInput(
@@ -897,8 +984,8 @@
                                     input[[paste0(Response, "ind_comp_choice_2")]]),
                            ellipse = input[[paste0(Response, "ellipse_choice")]],
                            legend = TRUE
-                       )
-                   ))
+                       ), height = 1000)
+            )
         )
     })
     
