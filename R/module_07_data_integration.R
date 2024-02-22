@@ -14,20 +14,55 @@
 #' @title .modIntegrationAnalysisUI
 #' @keywords internal
 #' @noRd
-.modIntegrationAnalysisUI <- function(id) {
+.modIntegrationAnalysisUI <- function(id, method) {
     #name space for id
     ns <- NS(id)
+    commontext1 <- "Select the datasets to integrate then select the features
+        for each of them. In the feature selection panel, you can choose to run
+         the analysis on all features: this type of option is fine if your data
+         is not very high dimensional (<500). Otherwise, it is advised to 
+        choose to run it only with the results of differential analysis. You 
+        can refer to the overview plot below to see what you selected. Once 
+        all is set, click on the Run preparation button and go the the Data 
+        integration panel. "
+    
+    textExp <- switch(
+        method,
+        "mixOmics" = paste0(commontext1, 
+                            "<p><b> MixOmics only runs on complete cases 
+                            dataset, samples that are 
+                            not present in all tables will be removed 
+                            </b></p>"
+        ),
+        "MOFA" = paste0(commontext1, 
+                        "<p><b> It is recommanded to run MOFA with at 
+                        least 15 samples and a balanced number of features 
+                        between tables. If you have less than 15, 
+                        be cautious with the results interpretation. 
+                        </b></p>"
+        )
+    )
     
     tagList(fluidRow(uiOutput(ns("overview"))),
             ##
             fluidRow(tabsetPanel(
                 tabPanel(
-                    "dataset and variable selection",
+                    "Dataset and variable selection",
                     br(),
                     box(
                         title = "Prepare data for integration",
                         width = 12,
                         status = "warning",
+                        tags$style(
+                            ".explain-p {
+                            color: Gray;
+                            text-justify: inter-word;
+                            font-style: italic;
+                            }"
+                        ),
+                        div(class = "explain-p", 
+                            HTML(textExp)),
+                        hr(),
                         fluidRow(uiOutput(ns("selectDataUI"))),
                         fluidRow(uiOutput(ns(
                             "selectVariablesUI"
@@ -36,7 +71,7 @@
                     uiOutput(ns("prepareDataUI"))
                 ),
                 tabPanel(
-                    "data integration",
+                    "Data Integration",
                     br(),
                     column(width = 3,
                            uiOutput(ns("ParamUI"))),
@@ -67,6 +102,7 @@
     local.rea.values <- reactiveValues(runintegration = FALSE,
                                        preparedObject = NULL)
     
+    # if any preprocessing or validation of differential analysis is done
     observeEvent(rea.values$datasetProcess, {
         local.rea.values$runintegration    <- FALSE
         local.rea.values$preparedObject    <- NULL
@@ -76,28 +112,23 @@
         )
     })
     
+    # observeEvent(rea.values$datasetDiff, {
+    #     print("yes, I'm changing!")
+    #     local.rea.values$runintegration    <- FALSE
+    #     local.rea.values$preparedObject    <- NULL
+    #     session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(
+    #         object  = session$userData$FlomicsMultiAssay,
+    #         results = c("IntegrationAnalysis")
+    #     )
+    # })
+    
     # select datasets to integrate
-    output$selectDataUI <- renderUI({
-        tagList(column(
-            width = 8,
-            # select data to integrate
-            checkboxGroupInput(
-                inputId  = session$ns("selectData"),
-                label    = "Select datasets to integrate
-                                together",
-                choices  = rea.values$datasetProcess,
-                selected = rea.values$datasetProcess
-            )
-        ),
-        column(
-            width = 4,
-            actionButton(session$ns("run_prep"), label = "Run preparation")
-        ))
-    })
+    output$selectDataUI <- .integrationSelectDataUI(session, rea.values,
+                                                    input)
     
     # select method of variable reduction
     output$selectVariablesUI <-
-        .integrationPrepareParamUI(session, input)
+        .integrationPrepareParamUI(session, input, rea.values)
     
     # over view of selected data after variable reduction
     output$prepareDataUI <- .outPrepareDataUI(session, input)
@@ -484,6 +515,195 @@
 
 #' @noRd
 #' @keywords internal
+.integrationSelectDataUI <- function(session, rea.values,
+                                     input){
+    
+    ns <- session$ns
+    contentExp <- paste0("Only the pre-processed datasets will appear",
+                         " here. If any is missing, go to the corresponding",
+                         " tabset under Omics Analysis and run the",
+                         " pre-processing step.")
+    renderUI({
+        tagList(
+            column(
+                width = 8,
+                # select data to integrate
+                checkboxGroupInput(
+                    inputId  = ns("selectData"),
+                    label    = h4("Select datasets for integration",
+                                  popify(actionLink(
+                                      inputId = ns("datSel"),
+                                      label = "",
+                                      icon = icon("question-circle")
+                                  ), title = "Help",
+                                  content = contentExp,
+                                  trigger = "click", placement = "right"
+                                  )),
+                    choices  = rea.values$datasetProcess,
+                    selected = rea.values$datasetProcess, 
+                    inline = TRUE
+                ), hr()),
+            column(
+                width = 4,
+                actionButton(ns("run_prep"), 
+                             label = "Run preparation", 
+                             class = "btn-lg", 
+                             styleclass = "primary")
+            ),
+        ) 
+    })
+}
+
+#' @noRd
+#' @keywords internal
+.integrationPrepareParamUI <- function(session, input, rea.values) {
+    ns <- session$ns
+    
+    renderUI({
+        # for each dataset selected
+        lapply(input$selectData, function(set) {
+            
+            if (set %in% rea.values$datasetDiff) {
+                ValidContrasts <-
+                    getValidContrasts(session$userData$FlomicsMultiAssay[[set]])
+                ListNames.diff <- ValidContrasts$tag
+                names(ListNames.diff) <- ValidContrasts$contrastName
+                
+            }else{
+                ValidContrasts <- NULL
+                ListNames.diff <- NULL
+            }
+            
+            SelectTypeChoices        <- c('none', 'diff')
+            names(SelectTypeChoices) <- c('none', 
+                                          'from differential analysis')
+            if (is.null(ValidContrasts)) {
+                SelectTypeChoices <- SelectTypeChoices[c(1)]
+            }
+           
+            box(
+                title = set,
+                width = 3,
+                status = "primary", solidHeader = TRUE,
+                # choose the method to select variable : none, diff, other?
+                radioButtons(
+                    inputId = ns(paste0("selectmethode", set)),
+                    label   = .addBSpopify(
+                        label = "Select type of variable selection",
+                        title = "", 
+                        content = paste0("Type of selection ",
+                                         "depends on the analyses ",
+                                         "performed before. Do not forget ",
+                                         "to validate your differential ",
+                                         "analysis results!"),
+                        trigger = "click", placement = "right"),
+                    choices = SelectTypeChoices,
+                    selected = 'none',
+                    inline = FALSE
+                ),
+                
+                # if methode == diff -> dispay list of contrasts
+                conditionalPanel(
+                    condition = paste0("input[\'",
+                                       ns(paste0(
+                                           "selectmethode", set
+                                       )),
+                                       "\'] == \'diff\'"),
+                    
+                    pickerInput(
+                        inputId  = ns(paste0("selectContrast", set)),
+                        label    = "Select contrasts",
+                        choices  = ListNames.diff,
+                        options  = list(
+                            `actions-box` = TRUE,
+                            size = 10,
+                            `selected-text-format` = "count > 3"
+                        ),
+                        multiple = TRUE,
+                        selected = ListNames.diff
+                    ),
+                    
+                    radioButtons(
+                        inputId = ns(paste0("unionORintersect", set)),
+                        label = NULL,
+                        choiceNames = c("union", "intersection"),
+                        choiceValues = c(TRUE, FALSE),
+                        selected = TRUE,
+                        inline = TRUE
+                    )
+                ),
+                if (getOmicsTypes(session$userData$FlomicsMultiAssay[[set]]) == "RNAseq") {
+                    selectInput(
+                        inputId  = ns("RNAseqTransfo"),
+                        label    = .addBSpopify(
+                            label = "RNAseq transformation",
+                            title = "", 
+                            content = paste0("This parameter is fixed",
+                                             " and cannot be changed.",
+                                             " RNAseq data will automatically",
+                                             " be transformed using",
+                                             " limma::voom."),
+                            trigger = "click", placement = "right"),
+                        choices  = c("limma (voom)"),
+                        selected = "limma (voom)"
+                    )
+                }
+            )
+        })
+    })
+}
+#
+#' @noRd
+#' @keywords internal
+.outPrepareDataUI <- function(session, input) {
+    renderUI({
+        if (length(input$selectData) == 0)
+            return()
+        if (is.null(input$selectData))
+            return()
+        
+        list.SE <- lapply(input$selectData, function(set) {
+            if (is.null(input[[paste0("selectmethode", set)]]))
+                return()
+            
+            switch(input[[paste0("selectmethode", set)]],
+                   "diff" = {
+                       variable.to.keep <- getDEList(
+                           object = session$userData$FlomicsMultiAssay[[set]],
+                           contrasts = input[[paste0("selectContrast", set)]],
+                           operation = input[[paste0("unionORintersect", set)]]
+                       )
+                       session$userData$FlomicsMultiAssay[[set]][variable.to.keep]
+                   },
+                   {
+                       session$userData$FlomicsMultiAssay[[set]]
+                   })
+        })
+        names(list.SE) <- input$selectData
+        
+        if (any(is.null(list.SE)))
+            return()
+        MAE2Integrate <- NULL
+        MAE2Integrate <- RflomicsMAE(
+            experiments = lapply(list.SE, SummarizedExperiment),
+            colData     = colData(session$userData$FlomicsMultiAssay),
+            sampleMap   = sampleMap(session$userData$FlomicsMultiAssay),
+            metadata    = metadata(session$userData$FlomicsMultiAssay)
+        )
+        
+        box(
+            title = "",
+            width = 12,
+            status = "warning",
+            renderPlot(
+                plotDataOverview(MAE2Integrate,
+                                 omicNames = input$selectData)
+            )
+        )
+    })
+}
+#' @noRd
+#' @keywords internal
 .integrationMethodsParam <-
     function(session, local.rea.values, method) {
         ns <- session$ns
@@ -492,7 +712,7 @@
             if (is.null(local.rea.values$preparedObject))
                 return()
             
-            bioFacts <- bioFactors(session$userData$FlomicsMultiAssay)
+            bioFacts <- getBioFactors(session$userData$FlomicsMultiAssay)
             box(
                 title = span(tagList(icon("sliders"), "  ", "Settings")),
                 width = 12,
@@ -589,131 +809,7 @@
         })
     }
 
-#' @noRd
-#' @keywords internal
-.integrationPrepareParamUI <- function(session, input) {
-    ns <- session$ns
-    
-    renderUI({
-        # for each dataset select
-        lapply(input$selectData, function(set) {
-            ValidContrasts <-
-                getValidContrasts(session$userData$FlomicsMultiAssay[[set]])
-            ListNames.diff <- ValidContrasts$tag
-            names(ListNames.diff) <- ValidContrasts$contrastName
-            SelectTypeChoices        <- c('none', 'diff')
-            names(SelectTypeChoices) <- c('none', 'from diff analysis')
-            
-            if (is.null(ValidContrasts)) {
-                SelectTypeChoices <- SelectTypeChoices[c(1)]
-            }
-            
-            box(
-                title = set,
-                width = 4,
-                background = "green",
-                
-                # choose the method to select variable : none, diff, other?
-                radioButtons(
-                    inputId = ns(paste0("selectmethode", set)),
-                    label   = 'Select type of variable selection',
-                    choices = SelectTypeChoices,
-                    selected = 'none',
-                    inline = FALSE
-                ),
-                
-                # if methode == diff -> dispay list of contrasts
-                conditionalPanel(
-                    condition = paste0("input[\'",
-                                       ns(paste0(
-                                           "selectmethode", set
-                                       )),
-                                       "\'] == \'diff\'"),
-                    
-                    pickerInput(
-                        inputId  = ns(paste0("selectContrast", set)),
-                        label    = "Select contrasts",
-                        choices  = ListNames.diff,
-                        options  = list(
-                            `actions-box` = TRUE,
-                            size = 10,
-                            `selected-text-format` = "count > 3"
-                        ),
-                        multiple = TRUE,
-                        selected = ListNames.diff
-                    ),
-                    
-                    radioButtons(
-                        inputId = ns(paste0("unionORintersect", set)),
-                        label = NULL,
-                        choiceNames = c("union", "intersection"),
-                        choiceValues = c(TRUE, FALSE),
-                        selected = TRUE,
-                        inline = TRUE
-                    )
-                ),
-                if (getOmicsTypes(session$userData$FlomicsMultiAssay[[set]]) == "RNAseq") {
-                    selectInput(
-                        inputId  = ns("RNAseqTransfo"),
-                        label    = "RNAseq transformation",
-                        choices  = c("limma (voom)"),
-                        selected = "limma (voom)"
-                    )
-                }
-            )
-        })
-    })
-}
 
-#' @noRd
-#' @keywords internal
-.outPrepareDataUI <- function(session, input) {
-    renderUI({
-        if (length(input$selectData) == 0)
-            return()
-        if (is.null(input$selectData))
-            return()
-        
-        list.SE <- lapply(input$selectData, function(set) {
-            if (is.null(input[[paste0("selectmethode", set)]]))
-                return()
-            
-            switch(input[[paste0("selectmethode", set)]],
-                   "diff" = {
-                       variable.to.keep <- getDEList(
-                           object = session$userData$FlomicsMultiAssay[[set]],
-                           contrasts = input[[paste0("selectContrast", set)]],
-                           operation = input[[paste0("unionORintersect", set)]]
-                       )
-                       session$userData$FlomicsMultiAssay[[set]][variable.to.keep]
-                   },
-                   {
-                       session$userData$FlomicsMultiAssay[[set]]
-                   })
-        })
-        names(list.SE) <- input$selectData
-        
-        if (any(is.null(list.SE)))
-            return()
-        MAE2Integrate <- NULL
-        MAE2Integrate <- RflomicsMAE(
-            experiments = lapply(list.SE, SummarizedExperiment),
-            colData     = colData(session$userData$FlomicsMultiAssay),
-            sampleMap   = sampleMap(session$userData$FlomicsMultiAssay),
-            metadata    = metadata(session$userData$FlomicsMultiAssay)
-        )
-        
-        box(
-            title = "",
-            width = 12,
-            status = "warning",
-            renderPlot(
-                plotDataOverview(MAE2Integrate,
-                                 omicNames = input$selectData)
-            )
-        )
-    })
-}
 
 # ---- Plots MixOmics ----
 #' @noRd
@@ -931,14 +1027,14 @@
                            outN$message
                        })
                    } else {
-                       renderPlot(.doNotSpeak(
+                       renderPlot(
                            network(
                                mat = Data_res,
                                blocks = seq_len(lenData),
                                cutoff = input[[paste0(Response, "Network_cutoff")]],
                                shape.node = rep("rectangle", lenData)
                            )
-                       ))
+                       )
                    }
                    
                })))

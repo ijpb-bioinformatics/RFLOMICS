@@ -332,7 +332,7 @@ rflomicsServer <- function(input, output, session) {
   ###############################
   output$withMOFA_UI <- renderUI({
     
-    .modIntegrationAnalysisUI("mofaSetting")
+    .modIntegrationAnalysisUI("mofaSetting", method = "MOFA")
     
   })
   
@@ -340,7 +340,7 @@ rflomicsServer <- function(input, output, session) {
   ###################################
   output$withMixOmics_UI <- renderUI({
     
-    .modIntegrationAnalysisUI("mixomicsSetting")
+    .modIntegrationAnalysisUI("mixomicsSetting", method = "mixOmics")
     
   })
   
