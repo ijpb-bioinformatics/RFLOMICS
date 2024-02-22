@@ -2,6 +2,8 @@
 ### RflomicsSE object
 ### ----------------------------------------------------------------------------
 
+#' @import methods
+
 #' @title \link{RflomicsSE-class} Class
 #' @description
 #' A short description...
@@ -10,9 +12,10 @@
 #' @name RflomicsSE-class
 #' @rdname RflomicsSE-class
 #' @exportClass RflomicsSE
-methods::setClass(
-  Class    = "RflomicsSE",
-  contains = "SummarizedExperiment",
+#' @return A RflomicsSE object.
+setClass(
+    Class    = "RflomicsSE",
+    contains = "SummarizedExperiment",
 )
 
 #' @title initialize
@@ -21,20 +24,21 @@ methods::setClass(
 #' 
 #' @return An object of class \link{RflomicsSE-class}
 #' @seealso SummarizedExperiment
+#' @importFrom S4Vectors DataFrame
 #' @noRd
-methods::setMethod(
-  f          = "initialize",
-  signature  = "RflomicsSE",
-  definition = function(.Object, 
-                        assays   = NULL,
-                        colData  = S4Vectors::DataFrame(), 
-                        metadata = list()) {
-    
-    .Object <- methods::callNextMethod(.Object, assays = assays, colData = colData)
-    .Object@metadata <- metadata
-    
-    return(.Object)
-  }
+setMethod(
+    f          = "initialize",
+    signature  = "RflomicsSE",
+    definition = function(.Object, 
+                          assays   = NULL,
+                          colData  = S4Vectors::DataFrame(), 
+                          metadata = list()) {
+        
+        .Object <-  callNextMethod(.Object, assays = assays, colData = colData)
+        .Object@metadata <- metadata
+        
+        return(.Object)
+    }
 )
 
 
@@ -49,10 +53,11 @@ methods::setMethod(
 #' @seealso \link{MultiAssayExperiment}
 #' @name RflomicsMAE-class
 #' @rdname RflomicsMAE-class
+#' @return A RflomicsMAE object.
 #' @exportClass RflomicsMAE
-methods::setClass(
-  Class    = "RflomicsMAE",
-  contains = "MultiAssayExperiment",
+setClass(
+    Class    = "RflomicsMAE",
+    contains = "MultiAssayExperiment",
 )
 
 
@@ -60,22 +65,23 @@ methods::setClass(
 #' @description xxx
 #' @return An object of class \link{RflomicsMAE-class}
 #' @seealso MultiAssayExperiment
+#' @importFrom S4Vectors DataFrame
 #' @noRd
-methods::setMethod(
-  f          = "initialize",
-  signature  = "RflomicsMAE",
-  definition = function(.Object,
-                        ExperimentList = MultiAssayExperiment::ExperimentList(), 
-                        colData        = S4Vectors::DataFrame(), 
-                        sampleMap      = S4Vectors::DataFrame(assay = factor(), primary = character(), colname = character()), 
-                        metadata       = list()){
-    
-    # 
-    .Object <- methods::callNextMethod(.Object, ExperimentList = ExperimentList, colData = colData, sampleMap = sampleMap)
-    # initialization of metadata
-    .Object@metadata <- metadata
-    
-    # Retourner l'objet initialisé
-    return(.Object)
-  })
+setMethod(
+    f          = "initialize",
+    signature  = "RflomicsMAE",
+    definition = function(.Object,
+                          ExperimentList = MultiAssayExperiment::ExperimentList(), 
+                          colData        = S4Vectors::DataFrame(), 
+                          sampleMap      = S4Vectors::DataFrame(assay = factor(), primary = character(), colname = character()), 
+                          metadata       = list()){
+        
+        .Object <-  callNextMethod(.Object, ExperimentList = ExperimentList, 
+                                   colData = colData, sampleMap = sampleMap)
+        # initialization of metadata
+        .Object@metadata <- metadata
+        
+        # Retourner l'objet initialisé
+        return(.Object)
+    })
 
