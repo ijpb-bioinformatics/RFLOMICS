@@ -43,7 +43,7 @@
 #'                                          pvalueCutoff = 0.05),
 #'                         from = "DiffExp", database = "KEGG")
 #' sumORA(MAEtest[["protetest"]], from = "DiffExp", database = "KEGG")
-methods::setMethod(
+setMethod(
     f = "runAnnotationEnrichment",
     signature = "RflomicsSE",
     definition = function(object,
@@ -85,9 +85,9 @@ methods::setMethod(
                    }
                    
                    if (!is.null(nameList)) {
-                       if (isTagName(object, nameList))
+                       if (.isTagName(object, nameList))
                            nameList <-
-                               convertTagToContrast(object, nameList)
+                               .convertTagToContrast(object, nameList)
                        
                        contrasts <- intersect(contrasts, nameList)
                    }
@@ -266,7 +266,7 @@ methods::setMethod(
 #' @rdname runAnnotationEnrichment
 #' @title runAnnotationEnrichment
 #' @exportMethod runAnnotationEnrichment
-methods::setMethod(
+setMethod(
     f = "runAnnotationEnrichment",
     signature = "RflomicsMAE",
     definition = function(object,
@@ -355,7 +355,7 @@ methods::setMethod(
 #' plotKEGG(MAEtest[["protetest"]], pathway_id = "ath00710", species = "ath",
 #'           contrastName = "cluster.4", from = "Coexp")
 #'
-methods::setMethod(
+setMethod(
     f = "plotKEGG",
     signature = "RflomicsSE",
     definition = function(object,
@@ -434,7 +434,7 @@ methods::setMethod(
 #' enrichplot functions.
 #'
 #' @return A ggplot object.
-#' @importFrom enrichplot cnetplot heatplot dotplot
+#' @importFrom enrichplot cnetplot heatplot dotplot set_enrichplot_color
 #' @importFrom ggplot2 scale_fill_gradient2 guide_colourbar
 #' @importFrom ggrepel geom_label_repel
 #' @exportMethod plotClusterProfiler
@@ -461,7 +461,7 @@ methods::setMethod(
 #'         database = "KEGG", from = "coexp",
 #'         plotType = "heatplot",  domain = "no-domain")
 #'
-methods::setMethod(
+setMethod(
     f = "plotClusterProfiler",
     signature = "RflomicsSE",
     definition = function(object,
@@ -475,8 +475,6 @@ methods::setMethod(
                           nodeLabel = "all",
                           p.adj.cutoff = NULL,
                           ...) {
-        # if (isTagName(contrastName)){
-        # contrastName <- convertTagTocontrastName(object, contrastName)}
         
         from <- .determineFromEnrich(from)
         
@@ -573,49 +571,43 @@ methods::setMethod(
         plotType <- tolower(plotType)
         returnplot <- NULL
         
-        returnplot <-  switch(plotType,
-                              "cnetplot" = {
-                                  cnetplot(
-                                      dataPlot,
-                                      showCategory = Categories,
-                                      color.params = list(foldChange = log2FC_vect),
-                                      node_label = nodeLabel,
-                                      ...
-                                  ) +
-                                      guides(colour = guide_colourbar(title = "log2FC")) +
-                                      scale_fill_gradient2(
-                                          low = "blue",
-                                          mid = "white",
-                                          high = "red",
-                                          midpoint = 0
-                                      )
-                              },
-                              "heatplot" = {
-                                  heatplot(dataPlot,
-                                           showCategory = Categories,
-                                           foldChange = log2FC_vect,
-                                           ...) +
-                                      labs(fill = "log2FC") +
-                                      scale_fill_gradient2(
-                                          low = "blue",
-                                          mid = "white",
-                                          high = "red",
-                                          midpoint = 0
-                                      ) +
-                                      theme(axis.text.y = element_text(size = 10))
-                              },
-                              {
-                                  tryCatch(
-                                      dotplot(dataPlot,
-                                              showCategory = Categories,
-                                              ...),
-                                      error = function(e)
-                                          e,
-                                      warnings = function(w)
-                                          w
-                                  )
-                              })
-        
+        returnplot <-  switch(
+            plotType,
+            "cnetplot" = {
+                cnetplot(
+                    dataPlot,
+                    showCategory = Categories,
+                    color.params = list(foldChange = log2FC_vect),
+                    node_label = nodeLabel,
+                    ...) +
+                    guides(colour = guide_colourbar(title = "log2FC")) 
+            },
+            "heatplot" = {
+                outgg <- heatplot(dataPlot,
+                                  showCategory = Categories,
+                                  foldChange = log2FC_vect,
+                                  ...) 
+                outgg$scales$scales <- list()
+                outgg + labs(fill = "log2FC") +
+                    scale_fill_gradient2(
+                        low = "blue",
+                        mid = "white",
+                        high = "red",
+                        midpoint = 0
+                    ) +
+                    theme(axis.text.y = element_text(size = 10))
+            },
+            {
+                tryCatch(
+                    dotplot(dataPlot,
+                            showCategory = Categories,
+                            ...),
+                    error = function(e)
+                        e,
+                    warnings = function(w)
+                        w
+                )
+            })
         return(returnplot)
     }
 )
@@ -663,7 +655,7 @@ methods::setMethod(
 #' plotEnrichComp(MAEtest[["protetest"]], from = "DiffExp",
 #'                database = "KEGG", matrixType = "FC")
 #'
-methods::setMethod(
+setMethod(
     f = "plotEnrichComp",
     signature = "RflomicsSE",
     definition = function(object,
@@ -715,7 +707,7 @@ methods::setMethod(
         
         extract <-
             do.call("rbind", lapply(
-                1:length(allData),
+                seq_len(length(allData)),
                 FUN = function(i) {
                     if (domain %in% names(allData[[i]])) {
                         cprRes <- allData[[i]][[domain]]
@@ -939,7 +931,7 @@ methods::setMethod(
 #' # Get all results from KEGG on differential expression lists:
 #' getEnrichRes(MAEtest[["protetest"]],
 #'               from = "diffexp", database = "KEGG")
-methods::setMethod(
+setMethod(
     f = "getEnrichRes",
     signature = "RflomicsSE",
     definition = function(object,
@@ -966,7 +958,7 @@ methods::setMethod(
 
 #' @rdname getEnrichRes
 #' @exportMethod getEnrichRes
-methods::setMethod(
+setMethod(
     f = "getEnrichRes",
     signature = "RflomicsMAE",
     definition = function(object,
@@ -1020,7 +1012,7 @@ methods::setMethod(
 #' # Search for the pvalue cutoff:
 #' sumORA(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
 #'
-methods::setMethod(
+setMethod(
     f = "sumORA",
     signature = "RflomicsSE",
     definition = function(object,
@@ -1032,8 +1024,8 @@ methods::setMethod(
         # cat("|From: ", from, "\n")
         
         if (!is.null(contrastName)) {
-            if (isTagName(object, contrastName)) {
-                contrastName <- convertTagToContrast(object, contrastName)
+            if (.isTagName(object, contrastName)) {
+                contrastName <- .convertTagToContrast(object, contrastName)
             }
         }
         
@@ -1086,7 +1078,7 @@ methods::setMethod(
 #' # Search for the pvalue cutoff:
 #' getEnrichPvalue(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
 #'
-methods::setMethod(
+setMethod(
     f = "getEnrichPvalue",
     signature = "RflomicsSE",
     definition = function(object,
@@ -1135,7 +1127,7 @@ methods::setMethod(
 #' # Search for the pvalue cutoff:
 #' setEnrichNull(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
 #'
-methods::setMethod(
+setMethod(
     f = "setEnrichNull",
     signature = "RflomicsSE",
     definition = function(object,

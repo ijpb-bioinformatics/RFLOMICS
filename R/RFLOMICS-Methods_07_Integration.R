@@ -27,7 +27,7 @@
 #' settings.
 #' @rdname integrationWrapper
 #' @exportMethod integrationWrapper
-methods::setMethod(
+setMethod(
     f = "integrationWrapper",
     signature = "RflomicsMAE",
     definition = function(object,
@@ -133,7 +133,7 @@ methods::setMethod(
 #'                   variableLists = rownames(MAEtest),
 #'                   method = "mixOmics")
 #'
-methods::setMethod(
+setMethod(
     f = "prepareForIntegration",
     signature = "RflomicsMAE",
     definition = function(object,
@@ -239,9 +239,9 @@ methods::setMethod(
         
         # keep only columns corresponding to design factors
         # (remove samples and groups)
-        colData(object) <- colData(object)[c(bioFactors(object),
-                                             batchFactors(object),
-                                             metaFactors(object))]
+        colData(object) <- colData(object)[c(getBioFactors(object),
+                                             getBatchFactors(object),
+                                             getMetaFactors(object))]
         
         if (method == "MOFA") {
             if (silent) {
@@ -326,7 +326,7 @@ methods::setMethod(
 #' type = c("RNAtest" = "intersection",
 #' "protetest" = 'union'))
 #'
-methods::setMethod(
+setMethod(
     f = "filterFeatures",
     signature = "RflomicsMAE",
     definition = function(object,
@@ -375,11 +375,9 @@ methods::setMethod(
                                 getDEMatrix(object = SE.object)$DEF
                             },
                             "Contrast" = {
-                                #getDE(object = SE.object, contrast = listSel)$DEF},
                                 getDEList(object = SE.object, contrasts = listSel)
                             },
                             "Tag" = {
-                                #getDE(object = SE.object, contrast = listSel)$DEF
                                 getDEList(object = SE.object, contrasts = listSel)
                                 # TODO problem when only one selected
                             },
@@ -408,7 +406,8 @@ methods::setMethod(
                            "intersection" = Reduce(intersect, resInter))
                 }
                 if (length(filtKeep) == 0) {
-                    message("No feature to keep in ", nam, ", it will be dropped.")
+                    message("No feature to keep in ", nam,
+                            ", it will be dropped.")
                 }
                 return(SE.object[filtKeep, ])
                 
@@ -463,7 +462,7 @@ methods::setMethod(
 #' MAEtest <- runOmicsIntegration(MAEtest, mofaObj, method = "MOFA")
 #' MOFA2::plot_variance_explained(getMOFA(MAEtest))
 #'
-methods::setMethod(
+setMethod(
     f = "runOmicsIntegration",
     signature = "RflomicsMAE",
     definition = function(object,
@@ -526,7 +525,7 @@ methods::setMethod(
                 message("#     => Running mixOmics analysis")
             
             if (is.null(selectedResponse))
-                selectedResponse <- bioFactors(object)
+                selectedResponse <- getBioFactors(object)
             
             if (silent) {
                 co <- capture.output({
@@ -598,17 +597,13 @@ methods::setMethod(
     }
 )
 
-
-
-
-
 # ----  Get a particular multi-omics result ----
 #
 #' @title Get a particular multi-omics result or settings.
 #' @description
-#' These methods are used to directly access the results of multi-omics analyses
-#' or their settings, usually stored in the metadata of the \link{RflomicsMAE}
-#' object. Setters are also available.
+#' These methods are used to directly access the results of multi-omics 
+#' analyses or their settings, usually stored in the metadata of the 
+#' \link{RflomicsMAE} object. Setters are also available.
 #'
 #' @param object An object of class \link{RflomicsMAE}.
 #' It is expected the MAE object is produced by rflomics previous analyses,
@@ -644,7 +639,7 @@ methods::setMethod(
 #' getMOFASettings(MAEtest)
 #' MOFA2::plot_variance_explained(getMOFA(MAEtest))
 #'
-methods::setMethod(
+setMethod(
     f = "getMixOmics",
     signature = "RflomicsMAE",
     definition = function(object,
@@ -671,7 +666,7 @@ methods::setMethod(
 
 #' @rdname methods-for-integration
 #' @exportMethod getMOFA
-methods::setMethod(
+setMethod(
     f = "getMOFA",
     signature = "RflomicsMAE",
     definition = function(object, onlyResults = TRUE) {
@@ -687,7 +682,7 @@ methods::setMethod(
 
 #' @exportMethod getMOFASettings
 #' @rdname methods-for-integration
-methods::setMethod(
+setMethod(
     f = "getMOFASettings",
     signature = "RflomicsMAE",
     definition = function(object) {
@@ -697,7 +692,7 @@ methods::setMethod(
 
 #' @exportMethod getMixOmicsSettings
 #' @rdname methods-for-integration
-methods::setMethod(
+setMethod(
     f = "getMixOmicsSettings",
     signature = "RflomicsMAE",
     definition = function(object) {
@@ -709,7 +704,7 @@ methods::setMethod(
 
 #' @rdname methods-for-integration
 #' @exportMethod setMOFA
-methods::setMethod(
+setMethod(
     f = "setMOFA",
     signature = "RflomicsMAE",
     definition = function(object, results = NULL) {
@@ -720,7 +715,7 @@ methods::setMethod(
 
 #' @rdname methods-for-integration
 #' @exportMethod setMixOmics
-methods::setMethod(
+setMethod(
     f = "setMixOmics",
     signature = "RflomicsMAE",
     definition =  function(object, results = NULL) {
@@ -745,7 +740,7 @@ methods::setMethod(
 #' @rdname methods-for-integration
 #' @exportMethod sumMixOmics
 
-methods::setMethod(
+setMethod(
     f = "sumMixOmics",
     signature = "RflomicsMAE",
     definition =  function(object, selectedResponse = NULL) {
@@ -777,7 +772,7 @@ methods::setMethod(
 #' @keywords internal
 #' @noRd
 
-methods::setMethod(
+setMethod(
     f = ".getOneMORes",
     signature = "RflomicsMAE",
     definition =   function(object, selectedResponse) {
@@ -810,7 +805,7 @@ methods::setMethod(
 #' @importFrom ggpubr ggarrange
 #' @exportMethod plotMOVarExp
 #'
-methods::setMethod(
+setMethod(
     f = "plotMOVarExp",
     signature = "RflomicsMAE",
     definition =   function(object, selectedResponse, mode = NULL) {
