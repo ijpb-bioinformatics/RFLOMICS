@@ -17,7 +17,7 @@
 #'
 .rbeFunction <- function(object, SEobject, cmd = FALSE) {
     assayTransform <- assay(SEobject)
-    colBatch <- batchFactors(SEobject)
+    colBatch <- getBatchFactors(SEobject)
     
     if (cmd) {
         message(
@@ -273,6 +273,10 @@
 #' @importFrom reshape2 melt
 #' @importFrom qgraph qgraph
 #' @importFrom ggpubr ggarrange
+#' @examples
+#' MAEtest <- generateExample(coexp = FALSE, annotation = FALSE)
+#' MOFACorNetwork(getMOFA(MAEtest), abs_weight_network = 0.8, 
+#'                                    abs_min_cor_network = 0.8)
 #' @return A ggplot2 graph
 #' @export
 #'
@@ -452,7 +456,7 @@ MOFACorNetwork <- function(resMOFA,
 #' get_default_training_options prepare_mofa run_mofa
 #' @importFrom reticulate py_capture_output
 #' @keywords internal
-#'
+#' @noRd
 .runMOFAAnalysis <- function(object,
                              scale_views = FALSE,
                              maxiter = 1000,
@@ -552,6 +556,7 @@ MOFACorNetwork <- function(resMOFA,
 #' @importFrom mixOmics plsda splsda block.plsda block.splsda tune.block.splsda
 #' tune.splsda unmap
 #' @keywords internal
+#' @noRd
 
 .runMixOmicsAnalysis <- function(object,
                                  scale_views = FALSE,

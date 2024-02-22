@@ -51,8 +51,8 @@
     if (is.null(contrastName)) {
         toret <- metadata(object)[[from]][[database]][["enrichResult"]]
     } else {
-        if (isTagName(object, contrastName)) {
-            contrastName <- convertTagToContrast(object, contrastName)
+        if (.isTagName(object, contrastName)) {
+            contrastName <- .convertTagToContrast(object, contrastName)
         }
         toret <-
             metadata(object)[[from]][[database]]$enrichResult[[contrastName]]
