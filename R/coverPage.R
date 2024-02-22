@@ -84,14 +84,14 @@ GlossaryPageUI <- function(){
                             "Sample",      "?",  "",
                             "Average",     "?",  "",
                             "Interaction", "a model interaction effect term is a model term which accounts for variation explained by the combined effects of the factor levels of more than one (usually 2) independent variables","(STATO_0000469)"
-                              ), byrow = T, ncol = 3)
+                              ), byrow = TRUE, ncol = 3)
   
   colnames(GlossaryTable) <- c("Term", "Definition","Source")
   
   fluidRow(
     # load exp design
     # display tab
-    box(width = 12, status = "warning", solidHeader = T,
+    box(width = 12, status = "warning", solidHeader = TRUE,
         title = (tags$i("You find on this page the definitions of the terms used in the analyses proposed by Rflomics.")), 
         
         renderDataTable(datatable(data = GlossaryTable))

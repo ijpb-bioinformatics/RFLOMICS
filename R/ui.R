@@ -2,6 +2,8 @@
 #' @export
 #' @importFrom shinydashboard dashboardSidebar dashboardBody dashboardHeader dashboardPage
 #' @rawNamespace import(shiny, except = renderDataTable)
+#' @noRd
+#' @return a user interface.
 rflomicsUI <- function(){
    uiout <- dashboardPage(
       dashboardHeader(title = "RFLOMICS"),
