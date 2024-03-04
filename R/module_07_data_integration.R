@@ -356,7 +356,7 @@
     #name space for id
     ns <- NS(id)
     
-    tagList(fluidRow(uiOutput(ns("resultsUI"))))
+    tagList(uiOutput(ns("resultsUI")))
 }
 
 #' @title .modMixOmicsResultView
@@ -381,50 +381,52 @@
             lapply(settings$selectedResponse, function(Response) {
                 Data_res <- getMixOmics(session$userData$FlomicsMultiAssay,
                                         response = Response)
-                fluidRow(
-                    box(width = 12,
-                        solidHeader = TRUE,
-                        collapsible = TRUE,
-                        collapsed = TRUE,
-                        status = "success",
-                        title = Response,
-                        
-                        tabsetPanel(
-                            tabPanel("Overview", .outMOOverview(Data_res, settings)),
-                            tabPanel(
-                                "Explained Variance",
-                                .outMOexplainedVar(session, Response)
-                            ),
-                            tabPanel(
-                                "Individuals",
-                                .outMOIndividuals(session, input, settings,
-                                                  Response, Data_res)
-                            ),
-                            tabPanel(
-                                "Features",
-                                .outMOFeatures(session, input, settings,
-                                               Response, Data_res)
-                            ),
-                            tabPanel(
-                                "Loadings",
-                                .outMOLoadings(session, input, settings,
-                                               Response, Data_res)
-                            ),
-                            tabPanel(
-                                "Networks",
-                                .outMONetwork(session, input, settings,
+                
+                box(width = 14,
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    collapsed = TRUE,
+                    status = "success",
+                    title = Response,
+                    
+                    tabsetPanel(
+                        tabPanel(
+                            "Overview", 
+                            .outMOOverview(Data_res, settings)),
+                        tabPanel(
+                            "Explained Variance",
+                            .outMOexplainedVar(session, Response)
+                        ),
+                        tabPanel(
+                            "Individuals",
+                            .outMOIndividuals(session, input, settings,
                                               Response, Data_res)
-                            ),
-                            tabPanel(
-                                "CimPlot",
-                                .outMOCimPlot(session, input, settings,
-                                              Response, Data_res)
-                            ),
-                        ) # tabsetpanel
-                    ) #box
-                ) # fluidrow
+                        ),
+                        tabPanel(
+                            "Features",
+                            .outMOFeatures(session, input, settings,
+                                           Response, Data_res)
+                        ),
+                        tabPanel(
+                            "Loadings",
+                            .outMOLoadings(session, input, settings,
+                                           Response, Data_res)
+                        ),
+                        tabPanel(
+                            "Networks",
+                            .outMONetwork(session, input, settings,
+                                          Response, Data_res)
+                        ),
+                        tabPanel(
+                            "CimPlot",
+                            .outMOCimPlot(session, input, settings,
+                                          Response, Data_res)
+                        ),
+                    ) # tabsetpanel
+                ) #box
             }) # lapply
         }) #renderui
+        
     }
 
 # ---------- MOFA results ----------
@@ -435,7 +437,7 @@
     #name space for id
     ns <- NS(id)
     
-    tagList(fluidRow(uiOutput(ns("resultsUI"))))
+    tagList(uiOutput(ns("resultsUI")))
 }
 
 #' @title .modMOFAResultView
@@ -467,11 +469,9 @@
             
             tabsetPanel(
                 tabPanel("Overview",
-                         column(
-                             12,
-                             renderPlot(plot_data_overview(resMOFA) +
-                                            ggtitle("Data Overview"))
-                         )),
+                         renderPlot(plot_data_overview(resMOFA) +
+                                        ggtitle("Data Overview"))
+                ),
                 tabPanel("Factors Correlation",
                          renderPlot(plot_factor_cor(resMOFA))),
                 tabPanel("Explained Variance",
@@ -509,8 +509,8 @@
                                      input){
     
     ns <- session$ns
-    contentExp <- paste0("Only the pre-processed datasets will appear",
-                         " here. If any is missing, go to the corresponding",
+    contentExp <- paste0("Only the pre-processed datasets will appear here.",
+                         " If any is missing, go to the corresponding",
                          " tabset under Omics Analysis and run the",
                          " pre-processing step.")
     renderUI({
@@ -581,11 +581,10 @@
                     label   = .addBSpopify(
                         label = "Select type of variable selection",
                         title = "", 
-                        content = paste0("Type of selection ",
-                                         "depends on the analyses ",
-                                         "performed before. Do not forget ",
-                                         "to validate your differential ",
-                                         "analysis results!"),
+                        content = paste0("Type of selection depends on",
+                                         " the analyses performed before.",
+                                         " Do not forget to validate your",
+                                         " differential analysis results!"),
                         trigger = "click", placement = "right"),
                     choices = SelectTypeChoices,
                     selected = 'none',
@@ -684,7 +683,7 @@
         
         textExp <- "This graph represents the dataset you will use in 
         the integration (tables and samples). 
-        Gray areas represent missing sample. "
+        Gray areas represent missing samples. "
         
         box(
             title = "Overview",
@@ -712,6 +711,9 @@
         )
     })
 }
+
+# ---- Settings methods ----
+# 
 #' @noRd
 #' @keywords internal
 .integrationMethodsParam <-
@@ -721,14 +723,13 @@
         renderUI({
             if (is.null(local.rea.values$preparedObject)) {
                 return(renderText({
-                    "Select the data in the previous 
-                    panel to access the settings for integration."}))
+                    "Select the data in the previous panel to access the settings for integration."}))
             }
             
             bioFacts <- getBioFactors(session$userData$FlomicsMultiAssay)
             box(
                 title = span(tagList(icon("sliders"), "  ", "Settings")),
-                width = 12,
+                width = 14,
                 status = "warning",
                 hr(),
                 span("Most of these settings are the defaults settings in the
@@ -739,124 +740,103 @@
                     method,
                     "mixOmics" = {
                         list(
-                            column(
-                                12,
-                                checkboxInput(
-                                    inputId = ns("scale_views"),
-                                    label = .addBSpopify(
-                                        label = "Scale Datasets",
+                            checkboxInput(
+                                inputId = ns("scale_views"),
+                                label = .addBSpopify(
+                                    label = "Scale Datasets",
+                                    title = "", 
+                                    content = 
+                                        paste0("If TRUE, each table will be transformed",
+                                               " such that the global variance of the table is 1"),
+                                    trigger = "click", placement = "right"),
+                                value = TRUE,
+                                width = NULL
+                            ),
+                            checkboxInput(
+                                inputId = ns("MO_sparsity"),
+                                label = 
+                                    .addBSpopify(
+                                        label = "Sparse analysis",
                                         title = "", 
                                         content = 
-                                            paste0("If TRUE, each table will be transformed",
-                                                   " such that the global variance of the table is 1"),
+                                            paste0("If TRUE, sparse version of the mixOmics functions",
+                                                   " will be used (block.splsda). The results of the",
+                                                   " analyses will have a feature selection step",
+                                                   " for each of the component and each of the tables"),
                                         trigger = "click", placement = "right"),
-                                    value = TRUE,
-                                    width = NULL
-                                )
+                                value = FALSE,
+                                width = NULL
                             ),
-                            column(
-                                12,
-                                checkboxInput(
-                                    inputId = ns("MO_sparsity"),
-                                    label = 
-                                        .addBSpopify(
-                                            label = "Sparse analysis",
-                                            title = "", 
-                                            content = 
-                                                paste0("If TRUE, sparse version of the mixOmics functions",
-                                                       " will be used (block.splsda). The results of the",
-                                                       " analyses will have a feature selection step",
-                                                       " for each of the component and each of the tables"),
-                                            trigger = "click", placement = "right"),
-                                    value = FALSE,
-                                    width = NULL
-                                )
-                            ),
-                            column(
-                                12,
-                                numericInput(
-                                    inputId = ns("MO_ncomp"),
-                                    label = 
-                                        .addBSpopify(
-                                            label = "Components",
-                                            title = "", 
-                                            content = 
-                                                paste0("Number of components to search for.",
-                                                       " Equivalent to the components in the PCA."),
-                                            trigger = "click", placement = "right"),
-                                    value = 5,
-                                    min = 1,
-                                    max = 20
-                                )
-                            ),
-                            column(
-                                12,
-                                numericInput(
-                                    inputId = ns("MO_cases_to_try"),
-                                    label = 
-                                        .addBSpopify(
-                                            label = "Tuning cases",
-                                            title = "", 
-                                            content = paste0("The number of tuning cases will determine ",
-                                                             "the number of features selection to try ",
-                                                             "when performing a sparse analysis."), 
-                                            # determine le nombre de cas à essayer pour le tuning.
-                                            # Chaque cas ajoute un nombre de variables au précédent
-                                            # Nombre de variable ajouté : nvar table/ncasestotry
-                                            trigger = "click", placement = "right"),
-                                    value = 5,
-                                    min = 1,
-                                    max = 100
-                                )
-                            ),
-                            column(
-                                12,
-                                checkboxGroupInput(
-                                    inputId  = ns("MO_selectedResponse"),
-                                    label    = 
-                                        .addBSpopify(
-                                            label = "Select response variables",
-                                            title = "", 
-                                            content = paste0("On which feature to perform the analysis?"), 
-                                            trigger = "click", placement = "right"),
-                                    choices  = bioFacts,
-                                    selected = bioFacts
-                                )
-                            )
-                        )
-                    },
-                    "MOFA" = {
-                        list(
-                            column(
-                                12,
-                                selectInput(
-                                    ns("scale_views"),
-                                    label = .addBSpopify(
-                                        label = "Scale views",
-                                        title = "", 
-                                        content = 
-                                            paste0("If TRUE, each table will be transformed",
-                                                   " such that the global variance of the table is 1"),
-                                        trigger = "click", placement = "right"),
-                                    choices  = c(FALSE, TRUE),
-                                    selected = TRUE
-                                )
-                            ),
-                            column(
-                                12,
-                                numericInput(
-                                    inputId = ns("MOFA_numfactor"),
-                                    label = .addBSpopify(
-                                        label = "Factors:",
+                            numericInput(
+                                inputId = ns("MO_ncomp"),
+                                label = 
+                                    .addBSpopify(
+                                        label = "Components",
                                         title = "", 
                                         content = 
                                             paste0("Number of components to search for.",
                                                    " Equivalent to the components in the PCA."),
                                         trigger = "click", placement = "right"),
-                                    value = 10,
-                                    min = 5,
-                                    max = 15
-                                )
+                                value = 5,
+                                min = 1,
+                                max = 20
+                            ),
+                            numericInput(
+                                inputId = ns("MO_cases_to_try"),
+                                label = 
+                                    .addBSpopify(
+                                        label = "Tuning cases",
+                                        title = "", 
+                                        content = paste0("The number of tuning cases will determine ",
+                                                         "the number of features selection to try ",
+                                                         "when performing a sparse analysis."), 
+                                        # determine le nombre de cas à essayer pour le tuning.
+                                        # Chaque cas ajoute un nombre de variables au précédent
+                                        # Nombre de variable ajouté : nvar table/ncasestotry
+                                        trigger = "click", placement = "right"),
+                                value = 5,
+                                min = 1,
+                                max = 100
+                            ),
+                            checkboxGroupInput(
+                                inputId  = ns("MO_selectedResponse"),
+                                label    = 
+                                    .addBSpopify(
+                                        label = "Select response variables",
+                                        title = "", 
+                                        content = paste0("On which feature to perform the analysis?"), 
+                                        trigger = "click", placement = "right"),
+                                choices  = bioFacts,
+                                selected = bioFacts
+                            )
+                        )
+                    },
+                    "MOFA" = {
+                        list(
+                            selectInput(
+                                ns("scale_views"),
+                                label = .addBSpopify(
+                                    label = "Scale views",
+                                    title = "", 
+                                    content = 
+                                        paste0("If TRUE, each table will be transformed",
+                                               " such that the global variance of the table is 1"),
+                                    trigger = "click", placement = "right"),
+                                choices  = c(FALSE, TRUE),
+                                selected = TRUE
+                            ),
+                            numericInput(
+                                inputId = ns("MOFA_numfactor"),
+                                label = .addBSpopify(
+                                    label = "Factors:",
+                                    title = "", 
+                                    content = 
+                                        paste0("Number of components to search for.",
+                                               " Equivalent to the components in the PCA."),
+                                    trigger = "click", placement = "right"),
+                                value = 10,
+                                min = 5,
+                                max = 15
                             )
                             # column(
                             #     12,
@@ -870,9 +850,9 @@
                             # )
                         )
                     }),
-                column(12, actionButton(
+                actionButton(
                     ns("run_integration"), "Run Analysis"
-                ))
+                )
             )
         })
     }
@@ -941,7 +921,7 @@
     )
     
     renderUI({
-        fluidRow(
+        tagList(
             tags$style(
                 ".explain-p {
                     color: Gray;
@@ -984,7 +964,7 @@
                                     input[[paste0(Response, "ind_comp_choice_2")]]),
                            ellipse = input[[paste0(Response, "ellipse_choice")]],
                            legend = TRUE
-                       ), height = 1000)
+                       ), height = 500)
             )
         )
     })
@@ -1000,40 +980,52 @@
                            Response,
                            Data_res) {
     ns <- session$ns
-    fluidRow(column(
-        1,
-        checkboxInput(
-            inputId = ns("overlap"),
-            label = "Overlap",
-            value = FALSE,
-            width = NULL
+    moFeatText <- "Put some text here"
+    
+    tagList(
+        tags$style(
+            ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
         ),
-        numericInput(
-            inputId = ns(paste0(Response, "var_comp_choice_1")),
-            label = "Comp x:",
-            min = 1,
-            max =  settings$ncomp,
-            value = 1,
-            step = 1
+        div(class = "explain-p", HTML(moFeatText)),
+        hr(),
+        column(
+            1,
+            checkboxInput(
+                inputId = ns("overlap"),
+                label = "Overlap",
+                value = FALSE,
+                width = NULL
+            ),
+            numericInput(
+                inputId = ns(paste0(Response, "var_comp_choice_1")),
+                label = "Comp x:",
+                min = 1,
+                max =  settings$ncomp,
+                value = 1,
+                step = 1
+            ),
+            numericInput(
+                inputId = ns(paste0(Response, "var_comp_choice_2")),
+                label = "Comp y:",
+                min = 1,
+                max =  settings$ncomp,
+                value = 2,
+                step = 1
+            )
         ),
-        numericInput(
-            inputId = ns(paste0(Response, "var_comp_choice_2")),
-            label = "Comp y:",
-            min = 1,
-            max =  settings$ncomp,
-            value = 2,
-            step = 1
-        )
-    ),
-    column(11 , renderPlot(
-        plotVar(
-            Data_res,
-            comp = c(input[[paste0(Response, "var_comp_choice_1")]],
-                     input[[paste0(Response, "var_comp_choice_2")]]),
-            overlap = input$overlap,
-            legend = TRUE
-        )
-    )))
+        column(11 , renderPlot(
+            plotVar(
+                Data_res,
+                comp = c(input[[paste0(Response, "var_comp_choice_1")]],
+                         input[[paste0(Response, "var_comp_choice_2")]]),
+                overlap = input$overlap,
+                legend = TRUE
+            )
+        )))
 }
 
 #' @noRd
@@ -1046,34 +1038,47 @@
              Response,
              Data_res) {
         ns <- session$ns
-        fluidRow(column(
-            1,
-            numericInput(
-                inputId = ns(paste0(Response, "Load_comp_choice")),
-                label = "Component:",
-                min = 1,
-                max =  settings$ncomp,
-                value = 1,
-                step = 1
+        
+        moText <- "Put some text here"
+        
+        tagList(
+            tags$style(
+                ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
             ),
-            numericInput(
-                inputId = ns(paste0(Response, "Load_ndisplay")),
-                label = "Number of features to display:",
-                min = 1,
-                max =  ifelse(is.list(Data_res$X),
-                              max(vapply(
-                                  Data_res$X, ncol, c(1)
-                              )),
-                              ncol(Data_res$X)),
-                value = 25,
-                step = 1
+            div(class = "explain-p", HTML(moText)),
+            hr(),
+            column(
+                1,
+                numericInput(
+                    inputId = ns(paste0(Response, "Load_comp_choice")),
+                    label = "Component:",
+                    min = 1,
+                    max =  settings$ncomp,
+                    value = 1,
+                    step = 1
+                ),
+                numericInput(
+                    inputId = ns(paste0(Response, "Load_ndisplay")),
+                    label = "Number of features to display:",
+                    min = 1,
+                    max =  ifelse(is.list(Data_res$X),
+                                  max(vapply(
+                                      Data_res$X, ncol, c(1)
+                                  )),
+                                  ncol(Data_res$X)),
+                    value = 25,
+                    step = 1
+                ),
             ),
-        ),
-        column(11 , renderPlot(
-            plotLoadings(Data_res,
-                         comp = input[[paste0(Response, "Load_comp_choice")]],
-                         ndisplay = input[[paste0(Response, "Load_ndisplay")]])
-        )))
+            column(11 , renderPlot(
+                plotLoadings(Data_res,
+                             comp = input[[paste0(Response, "Load_comp_choice")]],
+                             ndisplay = input[[paste0(Response, "Load_ndisplay")]])
+            )))
     }
 
 #' @noRd
@@ -1085,46 +1090,59 @@
              settings,
              Response,
              Data_res) {
-        ns <- session$ns
         
-        fluidRow(column(
-            1,
-            numericInput(
-                inputId = ns(paste0(Response, "Network_cutoff")),
-                label = "Cutoff:",
-                min = 0,
-                max =  1,
-                value = 0.9,
-                step = 0.05
-            )
-        ),
-        column(11 ,
-               renderUI({
-                   lenData <- length(settings$selectData)
-                   
-                   outN <- .doNotPlot(network(
-                       mat = Data_res,
-                       blocks = seq_len(lenData),
-                       cutoff = input[[paste0(Response, "Network_cutoff")]],
-                       shape.node = rep("rectangle", lenData)
-                   ))
-                   
-                   if (is(outN, "simpleError")) {
-                       renderText({
-                           outN$message
-                       })
-                   } else {
-                       renderPlot(
-                           network(
-                               mat = Data_res,
-                               blocks = seq_len(lenData),
-                               cutoff = input[[paste0(Response, "Network_cutoff")]],
-                               shape.node = rep("rectangle", lenData)
+        ns <- session$ns
+        moText <- "Put some text here"
+        
+        tagList(
+            tags$style(
+                ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
+            ),
+            div(class = "explain-p", HTML(moText)),
+            hr(),
+            
+            column(
+                1,
+                numericInput(
+                    inputId = ns(paste0(Response, "Network_cutoff")),
+                    label = "Cutoff:",
+                    min = 0,
+                    max =  1,
+                    value = 0.9,
+                    step = 0.05
+                )
+            ),
+            column(11 ,
+                   renderUI({
+                       lenData <- length(settings$selectData)
+                       
+                       outN <- .doNotPlot(network(
+                           mat = Data_res,
+                           blocks = seq_len(lenData),
+                           cutoff = input[[paste0(Response, "Network_cutoff")]],
+                           shape.node = rep("rectangle", lenData)
+                       ))
+                       
+                       if (is(outN, "simpleError")) {
+                           renderText({
+                               outN$message
+                           })
+                       } else {
+                           renderPlot(
+                               network(
+                                   mat = Data_res,
+                                   blocks = seq_len(lenData),
+                                   cutoff = input[[paste0(Response, "Network_cutoff")]],
+                                   shape.node = rep("rectangle", lenData)
+                               )
                            )
-                       )
-                   }
-                   
-               })))
+                       }
+                       
+                   })))
     }
 
 #' @noRd
@@ -1135,31 +1153,42 @@
                           Response,
                           Data_res) {
     ns <- session$ns
+    moText <- "Put some text here"
+    
     if (is(Data_res, "block.splsda")) {
-        fluidRow(column(
-            1,
-            numericInput(
-                inputId = ns(paste0(Response, "cimComp")),
-                label = "Comp",
-                min = 1,
-                max = settings$ncomp,
-                value = 1,
-                step = 1
-            )
-        ),
-        column(12,
-               renderPlot(
-                   cimDiablo(
-                       Data_res,
-                       legend.position = "bottomleft",
-                       size.legend = 0.8,
-                       comp = input[[paste0(Response, "cimComp")]]
-                   )
-               )))
+        tagList(
+            tags$style(
+                ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
+            ),
+            div(class = "explain-p", HTML(moText)),
+            hr(),
+            column(
+                1,
+                numericInput(
+                    inputId = ns(paste0(Response, "cimComp")),
+                    label = "Comp",
+                    min = 1,
+                    max = settings$ncomp,
+                    value = 1,
+                    step = 1
+                )
+            ),
+            column(12,
+                   renderPlot(
+                       cimDiablo(
+                           Data_res,
+                           legend.position = "bottomleft",
+                           size.legend = 0.8,
+                           comp = input[[paste0(Response, "cimComp")]]
+                       )
+                   )))
     } else{
         renderText({
-            "This plot is only available for sparse multi-block discriminant
-      analysis results."
+            "This plot is only available for sparse multi-block discriminant analysis results."
         })
     }
 }
@@ -1169,24 +1198,47 @@
 #' @noRd
 #' @keywords internal
 .outMOFAexplainedVar <- function(resMOFA) {
-    fluidRow(column(6, renderPlot({
-        g1 <- plot_variance_explained(resMOFA, plot_total = TRUE)[[2]]
-        g1 + ggtitle("Total explained variance per omic data")
-    })),
-    column(6,
-           renderPlot(
-               plot_variance_explained(resMOFA, x = "view", y = "factor") +
-                   ggtitle("Explained variance by factors and omic data")
-           )))
+    mofaText <- "Put some text here"
+    
+    tagList(
+        tags$style(
+            ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
+        ),
+        div(class = "explain-p", HTML(mofaText)),
+        hr(),
+        column(6, renderPlot({
+            g1 <- plot_variance_explained(resMOFA, plot_total = TRUE)[[2]]
+            g1 + ggtitle("Total explained variance per omic data")
+        })),
+        column(6,
+               renderPlot(
+                   plot_variance_explained(resMOFA, x = "view", y = "factor") +
+                       ggtitle("Explained variance by factors and omic data")
+               )))
 }
 
 #' @noRd
 #' @keywords internal
 .outMOFAWeightPlot <- function(session, resMOFA, input) {
     ns <- session$ns
+    mofaText <- "Put some text here"
     
     renderUI({
-        verticalLayout(fluidRow(
+        tagList(
+            tags$style(
+                ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
+            ),
+            div(class = "explain-p", HTML(mofaText)),
+            hr(),
+            
             column(
                 3,
                 sliderInput(
@@ -1218,48 +1270,48 @@
                     width = NULL
                 )
             ),
-        ),
-        fluidRow(column(12,
-                        renderPlot({
-                            ggplot_list <- list()
-                            ggplot_list <- lapply(
-                                seq(
-                                    min(input$WeightsPlot_Factors),
-                                    max(input$WeightsPlot_Factors)
-                                ),
-                                FUN = function(i) {
-                                    res_inter <- list()
-                                    res_inter <- lapply(
-                                        views_names(resMOFA),
-                                        FUN = function(vname) {
-                                            res_inter[[length(res_inter) + 1]] <-
-                                                plot_weights(
-                                                    resMOFA,
-                                                    view = vname,
-                                                    factors = i,
-                                                    nfeatures = input$nfeat_WeightsPlot,
-                                                    scale = input$scale_WeightsPlot
-                                                ) +
-                                                ggtitle(paste0(vname, " - Factor ", i))
-                                            
-                                            return(res_inter)
-                                        }
-                                    )
-                                    
-                                    return(unlist(res_inter, recursive = FALSE))
-                                }
-                            )
-                            ggplot_list <-
-                                unlist(ggplot_list, recursive = FALSE)
-                            nrowC <- max(input$WeightsPlot_Factors) -
-                                min(input$WeightsPlot_Factors) + 1
-                            
-                            ggarrange(
-                                plotlist = ggplot_list,
-                                ncol = length(views_names(resMOFA)),
-                                nrow = nrowC
-                            )
-                        }, execOnResize = TRUE))))
+            
+            column(12,
+                   renderPlot({
+                       ggplot_list <- list()
+                       ggplot_list <- lapply(
+                           seq(
+                               min(input$WeightsPlot_Factors),
+                               max(input$WeightsPlot_Factors)
+                           ),
+                           FUN = function(i) {
+                               res_inter <- list()
+                               res_inter <- lapply(
+                                   views_names(resMOFA),
+                                   FUN = function(vname) {
+                                       res_inter[[length(res_inter) + 1]] <-
+                                           plot_weights(
+                                               resMOFA,
+                                               view = vname,
+                                               factors = i,
+                                               nfeatures = input$nfeat_WeightsPlot,
+                                               scale = input$scale_WeightsPlot
+                                           ) +
+                                           ggtitle(paste0(vname, " - Factor ", i))
+                                       
+                                       return(res_inter)
+                                   }
+                               )
+                               
+                               return(unlist(res_inter, recursive = FALSE))
+                           }
+                       )
+                       ggplot_list <-
+                           unlist(ggplot_list, recursive = FALSE)
+                       nrowC <- max(input$WeightsPlot_Factors) -
+                           min(input$WeightsPlot_Factors) + 1
+                       
+                       ggarrange(
+                           plotlist = ggplot_list,
+                           ncol = length(views_names(resMOFA)),
+                           nrow = nrowC
+                       )
+                   }, execOnResize = TRUE)))
     })
 }
 
@@ -1267,47 +1319,60 @@
 #' @keywords internal
 .outMOFAWeightTable <- function(session, resMOFA, input) {
     ns <- session$ns
+    mofaText <- "Put some text here"
     
-    verticalLayout(fluidRow(column(
-        11,
-        sliderInput(
-            inputId = ns("Factors_select_MOFA"),
-            label = 'Factors:',
-            min = 1,
-            max = resMOFA@dimensions$K,
-            value = c(1, 2),
-            step = 1
-        )
-    )),
-    fluidRow(column(
-        11,
-        DT::renderDataTable({
-            resTable <- get_weights(
-                object = resMOFA,
-                views = "all",
-                factors = seq(
-                    min(input$Factors_select_MOFA),
-                    max(input$Factors_select_MOFA)
-                ),
-                abs = FALSE,
-                scale = FALSE,
-                as.data.frame = TRUE
+    verticalLayout(
+        tags$style(
+            ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
+        ),
+        div(class = "explain-p", HTML(mofaText)),
+        hr(),
+        
+        
+        column(
+            12,
+            sliderInput(
+                inputId = ns("Factors_select_MOFA"),
+                label = 'Factors:',
+                min = 1,
+                max = resMOFA@dimensions$K,
+                value = c(1, 2),
+                step = 1
             )
-            
-            datatable(
-                resTable,
-                extensions = 'Buttons',
-                options = list(
-                    dom = 'lfrtipB',
-                    rownames = FALSE,
-                    pageLength = 10,
-                    buttons = c('csv', 'excel'),
-                    lengthMenu = list(c(10, 25, 50, -1),
-                                      c(10, 25, 50, "All"))
+        ),
+        column(
+            12,
+            DT::renderDataTable({
+                resTable <- get_weights(
+                    object = resMOFA,
+                    views = "all",
+                    factors = seq(
+                        min(input$Factors_select_MOFA),
+                        max(input$Factors_select_MOFA)
+                    ),
+                    abs = FALSE,
+                    scale = FALSE,
+                    as.data.frame = TRUE
                 )
-            )
-        }, server = FALSE)
-    )))
+                
+                datatable(
+                    resTable,
+                    extensions = 'Buttons',
+                    options = list(
+                        dom = 'lfrtipB',
+                        rownames = FALSE,
+                        pageLength = 10,
+                        buttons = c('csv', 'excel'),
+                        lengthMenu = list(c(10, 25, 50, -1),
+                                          c(10, 25, 50, "All"))
+                    )
+                )
+            }, server = FALSE)
+        ))
 }
 
 #' @noRd
@@ -1315,112 +1380,101 @@
 .outMOFAFactorsPlot <- function(session, resMOFA, input) {
     ns <- session$ns
     
+    mofaText <- "Put some text here"
+    
     moreChoices <- colnames(resMOFA@samples_metadata %>%
                                 select(!c(sample, group)))
     
     renderUI({
-        verticalLayout(fluidRow(
-            column(
-                2,
-                sliderInput(
+        tagList(
+            tags$style(
+                ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
+            ),
+            div(class = "explain-p", HTML(mofaText)),
+            hr(),
+            fluidRow(
+                column(2, sliderInput(
                     inputId = ns("factors_choices_MOFA"),
                     label = 'Factors:',
                     min = 1,
                     max = resMOFA@dimensions$K,
                     value = c(1, 2),
-                    step = 1
-                )
-            ),
-            column(
-                2,
-                radioButtons(
+                    step = 1)),
+                column(2, radioButtons(
                     inputId = ns("color_by_MOFA"),
                     label = "Color:",
                     choices = c('none', moreChoices),
-                    selected = "none"
-                )
-            ),
-            column(
-                2,
-                radioButtons(
+                    selected = "none")),
+                column(2, radioButtons(
                     inputId = ns("shape_by_MOFA"),
                     label = "Shape:",
                     choices = c('none', moreChoices),
-                    selected = "none"
-                )
-            ),
-            column(
-                2,
-                radioButtons(
+                    selected = "none")),
+                column(2, radioButtons(
                     inputId = ns("group_by_MOFA"),
                     label = "Group by:",
                     choices = c('none', moreChoices),
-                    selected = "none"
+                    selected = "none")),
+                column(
+                    2,
+                    verticalLayout(
+                        checkboxInput(
+                            inputId = ns("add_violin_MOFA"),
+                            label = "Violin",
+                            value = FALSE,
+                            width = NULL
+                        ),
+                        checkboxInput(
+                            inputId = ns("add_boxplot_MOFA"),
+                            label = "Boxplot",
+                            value = FALSE,
+                            width = NULL
+                        ),
+                        checkboxInput(
+                            inputId = ns("scale_scatter_MOFA"),
+                            label = "Scale factors",
+                            value = FALSE,
+                            width = NULL
+                        )
+                    ))),
+            column(12, renderPlot({
+                color_by_par <- input$color_by_MOFA
+                group_by_par <- input$group_by_MOFA
+                shape_by_par <- input$shape_by_MOFA
+                if (input$color_by_MOFA == "none")
+                    color_by_par <- "group"
+                if (input$group_by_MOFA == "none")
+                    group_by_par <- "group"
+                if (input$shape_by_MOFA == "none")
+                    shape_by_par <- NULL
+                dodge_par <- FALSE
+                if (any(input$add_violin_MOFA, input$add_boxplot_MOFA)) {
+                    dodge_par <- TRUE
+                }
+                
+                plot_factor(
+                    resMOFA,
+                    factors = seq(
+                        min(input$factors_choices_MOFA),
+                        max(input$factors_choices_MOFA)
+                    ),
+                    color_by = color_by_par,
+                    group_by = group_by_par,
+                    shape_by = shape_by_par,
+                    legend = TRUE,
+                    add_violin = input$add_violin_MOFA,
+                    violin_alpha = 0.25,
+                    add_boxplot = input$add_boxplot_MOFA,
+                    boxplot_alpha = 0.25,
+                    dodge = dodge_par,
+                    scale = input$scale_scatter_MOFA,
+                    dot_size = 3
                 )
-            ),
-            column(
-                1,
-                fluidRow(
-                    checkboxInput(
-                        inputId = ns("add_violin_MOFA"),
-                        label = "Violin",
-                        value = FALSE,
-                        width = NULL
-                    )
-                ),
-                fluidRow(
-                    checkboxInput(
-                        inputId = ns("add_boxplot_MOFA"),
-                        label = "Boxplot",
-                        value = FALSE,
-                        width = NULL
-                    )
-                ),
-                fluidRow(
-                    checkboxInput(
-                        inputId = ns("scale_scatter_MOFA"),
-                        label = "Scale factors",
-                        value = FALSE,
-                        width = NULL
-                    )
-                )
-            )
-        ),
-        fluidRow(column(11,
-                        renderPlot({
-                            color_by_par <- input$color_by_MOFA
-                            group_by_par <- input$group_by_MOFA
-                            shape_by_par <- input$shape_by_MOFA
-                            if (input$color_by_MOFA == "none")
-                                color_by_par <- "group"
-                            if (input$group_by_MOFA == "none")
-                                group_by_par <- "group"
-                            if (input$shape_by_MOFA == "none")
-                                shape_by_par <- NULL
-                            dodge_par <- FALSE
-                            if (any(input$add_violin_MOFA, input$add_boxplot_MOFA)) {
-                                dodge_par <- TRUE
-                            }
-                            
-                            plot_factor(
-                                resMOFA,
-                                factors = seq(
-                                    min(input$factors_choices_MOFA),
-                                    max(input$factors_choices_MOFA)
-                                ),
-                                color_by = color_by_par,
-                                group_by = group_by_par,
-                                shape_by = shape_by_par,
-                                legend = TRUE,
-                                add_violin = input$add_violin_MOFA,
-                                violin_alpha = 0.25,
-                                add_boxplot = input$add_boxplot_MOFA,
-                                boxplot_alpha = 0.25,
-                                dodge = dodge_par,
-                                scale = input$scale_scatter_MOFA,
-                                dot_size = 3
-                            )
-                        }))))
+            })))
     })
 }
 
@@ -1428,12 +1482,21 @@
 #' @keywords internal
 .outMOFAHeatmap <- function(session, resMOFA, input) {
     ns <- session$ns
+    mofaText <- "Put some text here"
     
     renderUI({
         verticalLayout(
+            tags$style(
+                ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
+            ),
+            div(class = "explain-p", HTML(mofaText)),
+            hr(),
             fluidRow(
                 # buttons - choices for heatmap
-                
                 column(
                     1,
                     numericInput(
