@@ -18,7 +18,46 @@
 #' ylab geom_bar
 #' @importFrom dplyr full_join arrange
 #' @rdname plotLibrarySize
-#' @noRd
+#' @examples
+#' 
+#' # Set the data path
+#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
+#' 
+#' # Load the experimental design
+#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
+#' 
+#' # Set factor name, levels, level of reference and type
+#' facRef <- data.frame( factorName   = c("Repeat", "temperature" , "imbibition"), factorRef = c("rep1", "Low", "DS"), 
+#'                      factorType = c("batch",  "Bio", "Bio"), factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
+#' 
+#' # Load the omics data
+#' omicsData <- list( 
+#' readOmicsData(file = paste0( datPath, "transcriptome_ecoseed.txt")), 
+#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
+#'  
+#' # Instantiate an object of class RflomicsMAE 
+#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
+#'                          omicsNames  = c("RNAtest", "protetest"),omicsTypes  = c("RNAseq","proteomics"),
+#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
+#' names(MAE) <- c("RNAtest", "protetest")
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- getPossibleContrasts( MAE, formula = formulae[[1]], typeContrast = "averaged", returnTable = TRUE)[c(1, 2, 3),]
+#' 
+#' # Run the data preprocessing and perform the differential analysis
+#'  MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
+#'  filterLowAbundance(SE.name = "RNAtest")                           |>    
+#'  runNormalization(SE.name = "RNAtest",   normMethod = "TMM")       |>
+#'  runNormalization(SE.name = "protetest", normMethod = "median")
+#'  
+#'  # plotLibrarySize
+#'  plotLibrarySize(MAE@ExperimentList[[1]], raw=FALSE)
+#'  plotLibrarySize(MAE@ExperimentList[[1]], raw=TRUE)
+#'  
 setMethod(f          = "plotLibrarySize",
           signature  = "RflomicsSE",
           definition = function(object, raw = FALSE){
@@ -97,7 +136,46 @@ setMethod(f          = "plotLibrarySize",
 #' @importFrom reshape2 melt
 #' @importFrom dplyr full_join arrange
 #' @rdname plotDataDistribution
-#' @noRd
+#' @examples
+#' 
+#' # Set the data path
+#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
+#' 
+#' # Load the experimental design
+#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
+#' 
+#' # Set factor name, levels, level of reference and type
+#' facRef <- data.frame( factorName   = c("Repeat", "temperature" , "imbibition"), factorRef = c("rep1", "Low", "DS"), 
+#'                      factorType = c("batch",  "Bio", "Bio"), factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
+#' 
+#' # Load the omics data
+#' omicsData <- list( 
+#' readOmicsData(file = paste0( datPath, "transcriptome_ecoseed.txt")), 
+#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
+#'  
+#' # Instantiate an object of class RflomicsMAE 
+#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
+#'                          omicsNames  = c("RNAtest", "protetest"),omicsTypes  = c("RNAseq","proteomics"),
+#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
+#' names(MAE) <- c("RNAtest", "protetest")
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- getPossibleContrasts( MAE, formula = formulae[[1]], typeContrast = "averaged", returnTable = TRUE)[c(1, 2, 3),]
+#' 
+#' # Run the data preprocessing and perform the differential analysis
+#'  MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
+#'  filterLowAbundance(SE.name = "RNAtest")                           |>    
+#'  runNormalization(SE.name = "RNAtest",   normMethod = "TMM")       |>
+#'  runNormalization(SE.name = "protetest", normMethod = "median")
+#'  
+#'  # plotLibrarySize
+#'  plotDataDistribution(MAE@ExperimentList[[1]], raw=FALSE)
+#'  plotDataDistribution(MAE@ExperimentList[[1]], raw=TRUE)
+#'  
 
 setMethod(
     f = "plotDataDistribution",
@@ -205,7 +283,41 @@ setMethod(
 #'
 #' @exportMethod runTransformData
 #' @rdname runTransformData
+#' @examples
 #' 
+#' # Set the data path
+#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
+#' 
+#' # Load the experimental design
+#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
+#' 
+#' # Set factor name, levels, level of reference and type
+#' facRef <- data.frame( factorName   = c("Repeat", "temperature" , "imbibition"), factorRef = c("rep1", "Low", "DS"), 
+#'                      factorType = c("batch",  "Bio", "Bio"), factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
+#' 
+#' # Load the omics data
+#' omicsData <- list( 
+#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
+#'  
+#' # Instantiate an object of class RflomicsMAE 
+#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
+#'                          omicsNames  = c("protetest"),omicsTypes  = c("proteomics"),
+#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
+#' names(MAE) <- c("protetest")
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- getPossibleContrasts( MAE, formula = formulae[[1]], typeContrast = "averaged", returnTable = TRUE)[c(1, 2, 3),]
+#' 
+#' # Run the data preprocessing and perform the differential analysis
+#'  MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2")
+#'  
+#'  # Get the transformation settings
+#'  getTransSettings(MAE,SE.name = "protetest")
+#'  
 setMethod(f          = "runTransformData",
           signature  = "RflomicsSE",
           definition = function(object, 
@@ -267,8 +379,7 @@ setMethod(f          = "runTransformData",
 #' @param object of class RflomicsSE
 #' @return List of transformation parametres.
 #' @exportMethod getTransSettings
-#' @rdname getTransSettings
-#'
+#' @rdname runTransformData
 
 setMethod(f          = "getTransSettings",
           signature  = "RflomicsSE",
@@ -352,6 +463,37 @@ setMethod(f          = "setTrans",
 #' @importFrom edgeR DGEList filterByExpr cpm
 #' @seealso edgeR::filterByExpr
 #' @rdname filterLowAbundance
+#' @examples
+#' 
+#' # Set the data path
+#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
+#' 
+#' # Load the experimental design
+#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
+#' 
+#' # Set factor name, levels, level of reference and type
+#' facRef <- data.frame( factorName   = c("Repeat", "temperature" , "imbibition"), factorRef = c("rep1", "Low", "DS"), 
+#'                      factorType = c("batch",  "Bio", "Bio"), factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
+#' 
+#' # Load the omics data
+#' omicsData <- list( 
+#' readOmicsData(file = paste0( datPath, "transcriptome_ecoseed.txt")))
+#'  
+#' # Instantiate an object of class RflomicsMAE 
+#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
+#'                          omicsNames  = c("RNAtest"), omicsTypes  = c("RNAseq"),
+#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
+#' names(MAE) <- c("RNAtest")
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- getPossibleContrasts( MAE, formula = formulae[[1]], typeContrast = "averaged", returnTable = TRUE)[c(1),]
+#' 
+#' # Run the data preprocessing and perform the differential analysis
+#' MAE |>  filterLowAbundance(SE.name = "RNAtest") 
 
 
 setMethod(f         = "filterLowAbundance",
@@ -504,7 +646,9 @@ setMethod(f          = "getFilteredFeatures",
 
 #' @title runNormalization
 #' @description This function applied a normalization method on an omic data sets stored in an object of
-#' class \link{RflomicsSE}.
+#' class \link{RflomicsSE} or \link{RFLomicsMAE}. In this case, the normalization method is applied to the data 
+#' set and 
+#' 
 #' \itemize{
 #' \item{For RNAseq data:}{the TMM function of edgeR is proposed by default, see the ref}
 #' \item{For Proteomic data:}{}
@@ -515,13 +659,50 @@ setMethod(f          = "getFilteredFeatures",
 #' @param modifyAssay Does the normalization have to be applied or just stored for later? Recommended it stays FALSE.
 #' @return An object of class \link{RflomicsSE}
 #' The applied normalization method and computed scaling factors (by samples) are stored as a named list
-#' ("normalization") of two elements (respectively "methode" and "coefNorm") in the metadata slot of a
+#' ("normalization") of two elements (respectively "method" and "coefNorm") in the metadata slot of a
 #' given data set, stored itself in the ExperimentList slot of a \link{RflomicsSE} object.
 #' @exportMethod runNormalization
 #' @rdname runNormalization
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool to process multifactorial RNAseq experiments from quality controls to co-expression analysis through differential analysis based on contrasts inside GLM models. Plant Methods 16, 68 (2020).
-
+#' @examples
+#' 
+#' # Set the data path
+#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
+#' 
+#' # Load the experimental design
+#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
+#' 
+#' # Set factor name, levels, level of reference and type
+#' facRef <- data.frame( factorName   = c("Repeat", "temperature" , "imbibition"), factorRef = c("rep1", "Low", "DS"), 
+#'                      factorType = c("batch",  "Bio", "Bio"), factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
+#' 
+#' # Load the omics data
+#' omicsData <- list( 
+#' readOmicsData(file = paste0( datPath, "transcriptome_ecoseed.txt")))
+#'  
+#' # Instantiate an object of class RflomicsMAE 
+#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
+#'                          omicsNames  = c("RNAtest"), omicsTypes  = c("RNAseq"),
+#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
+#' names(MAE) <- c("RNAtest")
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- getPossibleContrasts( MAE, formula = formulae[[1]], typeContrast = "averaged", returnTable = TRUE)[c(1),]
+#' 
+#' # Run the data preprocessing and perform the differential analysis
+#' MAE |>  filterLowAbundance(SE.name = "RNAtest") |>
+#' runNormalization(SE.name = "RNAtest", normMethod = "TMM") 
+#'
+#' # Get the normalization method and the scaling factors
+#' getCoeffNorm(MAE@ExperimentList[[1]])
+#' 
+#' # Get the normalization settings
+#' getNormSettings(MAE@ExperimentList[[1]])
 setMethod(f          = "runNormalization",
           signature  = "RflomicsSE",
           definition = function(object, normMethod = NULL, modifyAssay = FALSE){
@@ -728,6 +909,40 @@ setMethod(f          = "setNorm",
 #' @seealso runNormalization
 #' @seealso runTransformData
 #' @rdname runDataProcessing
+#' @examples
+#' 
+#' # Set the data path
+#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
+#' 
+#' # Load the experimental design
+#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
+#' 
+#' # Set factor name, levels, level of reference and type
+#' facRef <- data.frame( factorName   = c("Repeat", "temperature" , "imbibition"), factorRef = c("rep1", "Low", "DS"), 
+#'                      factorType = c("batch",  "Bio", "Bio"), factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
+#' 
+#' # Load the omics data
+#' omicsData <- list( 
+#' readOmicsData(file = paste0( datPath, "transcriptome_ecoseed.txt")), 
+#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
+#'  
+#' # Instantiate an object of class RflomicsMAE 
+#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
+#'                          omicsNames  = c("RNAtest.raw", "protetest.raw"),omicsTypes  = c("RNAseq","proteomics"),
+#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
+#' names(MAE) <- c("RNAtest.raw", "protetest.raw")
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- getPossibleContrasts( MAE, formula = formulae[[1]], typeContrast = "averaged", returnTable = TRUE)[c(1, 2, 3),]
+#' 
+#' # Run the data preprocessing and perform the differential analysis
+#' MAE <- runDataProcessing(MAE, SE.name = "RNAtest",  lowCountFiltering_strategy = "NbReplicates", lowCountFiltering_CPM_Cutoff = 1, normMethod = "TMM", transformMethod = "log2") 
+#' MAE <- runDataProcessing(MAE, SE.name = "protetest", normMethod = "median", transformMethod = "log2")
+
 
 setMethod(f          = "runDataProcessing",
           signature  = "RflomicsSE",
@@ -844,17 +1059,44 @@ setMethod(f          = "runDataProcessing",
 #' @title runSampleFiltering
 #' @description This function applied sample filtering on an omic data sets stored in an object of
 #' class \link{RflomicsSE}.
-#' \itemize{
-#' \item{For RNAseq data:}{}
-#' \item{For Proteomic data:}{}
-#' \item{For Metabolomic data:}{}
-#' }
 #' @param object An object of class \link{RflomicsSE}
 #' @param samples samples to keep.
 #' @return An object of class \link{RflomicsSE}
 #' @exportMethod runSampleFiltering
 #' @importFrom dplyr filter
 #' @rdname runSampleFiltering
+#' @examples
+#' #' Set the data path
+#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
+#' 
+#' # Load the experimental design
+#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
+#' 
+#' # Set factor name, levels, level of reference and type
+#' facRef <- data.frame( factorName   = c("Repeat", "temperature" , "imbibition"), factorRef = c("rep1", "Low", "DS"), 
+#'                      factorType = c("batch",  "Bio", "Bio"), factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
+#' 
+#' # Load the omics data
+#' omicsData <- list( 
+#' readOmicsData(file = paste0( datPath, "transcriptome_ecoseed.txt")), 
+#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
+#'  
+#' # Instantiate an object of class RflomicsMAE 
+#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
+#'                          omicsNames  = c("RNAtest.raw", "protetest.raw"),omicsTypes  = c("RNAseq","proteomics"),
+#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
+#' names(MAE) <- c("RNAtest.raw", "protetest.raw")
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- getPossibleContrasts( MAE, formula = formulae[[1]], typeContrast = "averaged", returnTable = TRUE)[c(1, 2, 3),]
+#' 
+#' # Run the data preprocessing and perform the differential analysis
+#' SE.RNA <- runSampleFiltering(MAE[[1]],samples=colnames(MAE[[1]])[1:6])
+#' SE.prot <- runSampleFiltering(MAE[[2]],samples=colnames(MAE[[2]])[1:6])
 
 setMethod(f          = "runSampleFiltering",
           signature  = "RflomicsSE",
@@ -882,7 +1124,7 @@ setMethod(f          = "runSampleFiltering",
               # if we remove all samples :
               if (nrow(SE.new@colData) == 0) SE.new@colData <- SE.new@colData[c("samples", "groups")]
               
-              for (factor in c(bioFactors(object), batchFactors(object))){
+              for (factor in c(getBioFactors(object), getBatchFactors(object))){
                   
                   # if only one category remains after the filter, it's will be removed
                   if (length(unique(SE.new@colData[[factor]])) <= 1 ) {
@@ -898,7 +1140,7 @@ setMethod(f          = "runSampleFiltering",
                   }
               }
               colData <- as.data.frame(SE.new@colData)
-              order_levels <- with(colData, do.call(order, colData[c(bioFactors(SE.new), batchFactors(SE.new))]))
+              order_levels <- with(colData, do.call(order, colData[c(getBioFactors(SE.new), getBatchFactors(SE.new))]))
               SE.new$samples <- factor(SE.new$samples, levels = unique(SE.new$samples[order_levels]))
               SE.new$groups  <- factor(SE.new$groups,  levels = unique(SE.new$groups[order_levels]))
               
