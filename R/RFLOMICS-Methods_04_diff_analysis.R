@@ -8,46 +8,56 @@
 
 #' @title runDiffAnalysis
 #' @description This is an interface method which run a differential 
-#' analysis method on omic datasets stored in an object of class 
-#' \link{RflomicsSE}. According to the type of omic and to a list of contrasts,
-#' a differential analysis method is applied to each contrasts.
-#' Three methods are available according to the type of object:
+#' analysis on omics datasets stored in an object of class 
+#' \link{RflomicsSE} or \link{RflomicsMAE}. According to the type 
+#' of omics and to a list of contrasts, a differential analysis  
+#' is performef for each contrasts.
+#' Two methods are available according to the type of object:
 #' \itemize{
-#' \item{For RNAseq data: }{the \code{glmFit} function of the 
-#' \code{edgeR} package}
-#' \item{For proteomic and metabolomic data: }{the \code{lmFit} 
-#' function of the \code{limma} package}
+#' \item{For RNAseq data: }{the \code{glmFit} function/model of the 
+#' \code{edgeR} package} is applied.
+#' \item{For proteomic and metabolomic data: }{the \code{\link{lmFit}} 
+#' function/model of the \code{limma} package} is applied.
 #' }
-#' Parameters used for RNAseq are those recommended in DiCoExpress 
-#' workflow (see the paper in reference)
+#' Functions and parameters used for RNAseq are those recommended in DiCoExpress 
+#' workflow (see the paper in reference).
+#' Functions and parameters used for proteomic and metabolomic data are those 
+#' recommended in the 
 #' @return
 #' All the results are stored as a named list \code{DiffExpAnal} 
-#' in the metadata slot of a
-#' given \code{RflomicsSE} object.
+#' in the metadata slot of a given \link{RflomicsSE} object.
+#' 
 #' Objects are:
 #' \itemize{
-#' \item{contrasts: }{The selected contrasts for which the differential 
-#' analysis has been conducted}
-#' \item{method: }{The method used for the differential analysis. }
-#' \item{p.adj.method: The method applied for the pvalue adjustment.}
-#' \item{p.adj.cutoff: The threshold applied for the pvalue adjustment}
-#' \item{FDR: }{The false discovery rate given in input}
+#' \item{stats:}{ data.frame giving a summary of the differential statistical analysis results by contrast:
+#'  number of DE features, number of up and down regulated features}
+#' 
+#' \item{setting: }{Parameters used for the differential analysis}
+#' \itemize{
+#' \item{method: }{ The method used for the differential analysis}
+#' \item{p.adj.method:}{ The applied p-value correction method}
+#' \item{p.adj.cutoff:}{ The cut-off applied for the adjusted p-value}
+#' \item{logFC.cutoff:}{ The absolute log FC cut-off}
+#' }
+#' 
 #' \item{RawDEFres: }{a list giving for each contrast the raw results of 
 #' the differential analysis method}
 #' \item{DEF: }{a list giving for each contrast a data.frame of non filtered 
-#' differential expressed features}
+#' differential expressed features with their statistics}
 #' \item{TopDEF: }{a list giving for each contrast a data.frame of 
-#' differential expressed features by p.adj.cutoff}
-#' \item{mergeDEF: }{A data frame indicating for each features in row, 
+#' differential expressed features ordered and filtered by p.adj.cutoff 
+#' with their statistics}
+#' \item{mergeDEF: }{a data frame of 0/1 indicating for each features in row, 
 #' if it is DE in a given contrasts in column}
+#' \item{contrasts: }{a data.table of the contrasts used for the differential 
+#' analysis}
 #' }
 #' @param object an object of class \link{RflomicsSE} or \link{RflomicsMAE} 
-#' @param SE.name the name of the data to fetch in the object if the object 
-#' is a RflomicsMAE 
+#' @param SE.name the name of the dataset to fetch if the object is 
+#' of class \link{RflomicsMAE}
 #' @param design an object of class \link{ExpDesign-class}
 #' @param method A character vector giving the name of the differential 
-#' analysis method
-#' to run. Either "edgeRglmfit" or "limmalmFit".
+#' analysis method to run. Either "edgeRglmfit" or "limmalmFit".
 #' @param contrastList data.frame of contrast from getExpressionContrastF()
 #' @param p.adj.method The method choosen to adjust pvalue. Takes the same 
 #' values as the ones of adj.p.adjust method.
@@ -63,7 +73,53 @@
 #' @exportMethod runDiffAnalysis
 #' @importFrom dplyr filter
 #' @rdname runDiffAnalysis
+#' @seealso \code{\link{filterDiffAnalysis}}
+#' @seealso \code{\link{getDEMatrix}}
+#' @seealso \code{\link{getDEList}}
+#' @examples
 #' 
+#' # Set the data path
+#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
+#' 
+#' # Load the experimental design
+#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
+#' 
+#' # Set factor name, levels, level of reference and type
+#' facRef <- data.frame( factorName   = c("Repeat", "temperature" , "imbibition"), factorRef = c("rep1", "Low", "DS"), 
+#'                      factorType = c("batch",  "Bio", "Bio"), factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
+#' 
+#' # Load the omics data
+#' omicsData <- list( 
+#' readOmicsData(file = paste0( datPath, "transcriptome_ecoseed.txt")), 
+#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
+#'  
+#' # Instantiate an object of class RflomicsMAE 
+#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
+#'                          omicsNames  = c("RNAtest", "protetest"),omicsTypes  = c("RNAseq","proteomics"),
+#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
+#' names(MAE) <- c("RNAtest", "protetest")
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- getPossibleContrasts( MAE, formula = formulae[[1]], typeContrast = "averaged", returnTable = TRUE)[c(1, 2, 3),]
+#' 
+#' # Run the data preprocessing and perform the differential analysis
+#' MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
+#'  filterLowAbundance(SE.name = "RNAtest")                           |>    
+#'  runNormalization(SE.name = "RNAtest",   normMethod = "TMM")       |>
+#'  runNormalization(SE.name = "protetest", normMethod = "median")    |>
+#'  runDiffAnalysis(SE.name = "protetest", method = "limmalmFit", contrastList = contrastList)  |>
+#'  runDiffAnalysis(SE.name = "RNAtest", method = "edgeRglmfit", contrastList = contrastList) 
+#'  
+#'  # Access to the diff analysis settings
+#'  getDiffSettings(MAE@ExperimentList[["RNAtest"]])
+#'  getDiffSettings(MAE@ExperimentList[["protetest"]])
+#' 
+#'  getDEList(MAE@ExperimentList[["RNAtest"]]) 
+
 setMethod(f         = "runDiffAnalysis",
           signature = "RflomicsSE",
           definition = function(object, p.adj.method="BH",
@@ -182,6 +238,7 @@ setMethod(f         = "runDiffAnalysis",
 #' @rdname runDiffAnalysis
 #' @title runDiffAnalysis
 #' @exportMethod runDiffAnalysis
+#' 
 setMethod(f          = "runDiffAnalysis",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name, p.adj.method="BH",
@@ -212,13 +269,12 @@ setMethod(f          = "runDiffAnalysis",
 #'
 #' @param object A RflomicsSE object
 #' @param SE.name the name of the data to fetch in the object if the object 
-#' is a RflomicsMAE
+#' is a \link{RflomicsMAE}
 #' @param p.adj.cutoff adjusted pvalue cutoff. Default is the parameter from 
 #' the differential analysis.
 #' @param logFC.cutoff cutoff for absolute value of log2FC. Default is the 
 #' parameter from the differential analysis. 
-#'
-#' @return A RflomicsSE object or a RflomicsMAE, depending on the object type, 
+#' @return A \link{RflomicsSE} object or a \link{RflomicsMAE}, depending on the object type, 
 #' where the differential analysis results have been actualized with the 
 #' new parameters.
 #' @exportMethod filterDiffAnalysis
@@ -226,7 +282,47 @@ setMethod(f          = "runDiffAnalysis",
 #' @importFrom dplyr full_join filter if_else mutate_at
 #' @importFrom data.table data.table
 #' @importFrom purrr reduce
-#'
+#' @examples
+#' 
+#' # Set the data path
+#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
+#' 
+#' # Load the experimental design
+#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
+#' 
+#' # Set factor name, levels, level of reference and type
+#' facRef <- data.frame( factorName   = c("Repeat", "temperature" , "imbibition"), factorRef = c("rep1", "Low", "DS"), 
+#'                      factorType = c("batch",  "Bio", "Bio"), factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
+#' 
+#' # Load the omics data
+#' omicsData <- list( 
+#' readOmicsData(file = paste0( datPath, "transcriptome_ecoseed.txt")), 
+#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
+#'  
+#' # Instantiate an object of class RflomicsMAE 
+#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
+#'                          omicsNames  = c("RNAtest", "protetest"),omicsTypes  = c("RNAseq","proteomics"),
+#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
+#' names(MAE) <- c("RNAtest", "protetest")
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- getPossibleContrasts( MAE, formula = formulae[[1]], typeContrast = "averaged", returnTable = TRUE)[c(1, 2, 3),]
+#' 
+#' # Run the data preprocessing and perform the differential analysis
+#' MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
+#'  filterLowAbundance(SE.name = "RNAtest")                           |>    
+#'  runNormalization(SE.name = "RNAtest",   normMethod = "TMM")       |>
+#'  runNormalization(SE.name = "protetest", normMethod = "median")    |>
+#'  runDiffAnalysis(SE.name = "protetest", method = "limmalmFit", contrastList = contrastList)  |>
+#'  runDiffAnalysis(SE.name = "RNAtest", method = "edgeRglmfit", contrastList = contrastList) |> 
+#'  filterDiffAnalysis(SE.name = "protetest", p.adj.cutoff = 0.01, logFC.cutoff = 1) |> 
+#'  filterDiffAnalysis(SE.name = "RNAtest", p.adj.cutoff = 0.01, logFC.cutoff = 1)
+
+
 setMethod(f          = "filterDiffAnalysis",
           signature  = "RflomicsSE",
           definition <- function(object, 
@@ -241,7 +337,7 @@ setMethod(f          = "filterDiffAnalysis",
                   p.adj.cutoff <- getDiffSettings(object)$p.adj.cutoff
               
               if (is.null(logFC.cutoff))
-                  logFC.cutoff <- getDiffSettings(object)$abs.logFC.cutoff
+                 logFC.cutoff <- getDiffSettings(object)$abs.logFC.cutoff
               
               # remplacera à terme les lignes ci-dessus
               object@metadata$DiffExpAnal[["setting"]][["p.adj.cutoff"]] <- p.adj.cutoff
@@ -298,7 +394,7 @@ setMethod(f          = "filterDiffAnalysis",
               
               if (is.null(p.adj.cutoff) && is.null(logFC.cutoff)) {
                   
-                  message("Parameter p.adj.cutoff and logFC.cutoff are both NULL. 
+                  message("Parameter p.adj.cutoff and |logFC.cutoff| are both NULL. 
                           Not changing anything")
                   return(object)
                   
@@ -307,8 +403,8 @@ setMethod(f          = "filterDiffAnalysis",
                   if (is.null(p.adj.cutoff)) 
                       p.adj.cutoff <- getDiffSettings(object[[SE.name]])$p.adj.cutoff
                   
-                  if (is.null(logFC.cutoff))
-                      logFC.cutoff <- getDiffSettings(object[[SE.name]])$abs.logFC.cutoff
+                  if (is.null(abs.logFC.cutoff))
+                    logFC.cutoff <- getDiffSettings(object[[SE.name]])$abs.logFC.cutoff
                   
                   object[[SE.name]] <-  filterDiffAnalysis(object = object[[SE.name]],
                                                            p.adj.cutoff = p.adj.cutoff,
@@ -385,7 +481,7 @@ setMethod(f          = "plotDiffAnalysis",
 
 #' @title plotHeatmapDesign
 #' @description
-#' This is an interface method which draw a heatmap from the results of a 
+#' This mehod draws a heatmap from the results of a 
 #' differential analysis performed on omic datasets stored in an object of 
 #' class \link{RflomicsSE}
 #' @param object An object of class \link{RflomicsSE}
@@ -411,7 +507,44 @@ setMethod(f          = "plotDiffAnalysis",
 #' @importFrom ComplexHeatmap HeatmapAnnotation
 #' @importFrom grid gpar
 #' @rdname plotHeatmapDesign
+#' @examples
 #' 
+#' # Set the data path
+#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
+#' 
+#' # Load the experimental design
+#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
+#' 
+#' # Set factor name, levels, level of reference and type
+#' facRef <- data.frame( factorName   = c("Repeat", "temperature" , "imbibition"), factorRef = c("rep1", "Low", "DS"), 
+#'                      factorType = c("batch",  "Bio", "Bio"), factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
+#' 
+#' # Load the omics data
+#' omicsData <- list( 
+#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
+#'  
+#' # Instantiate an object of class RflomicsMAE 
+#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
+#'                          omicsNames  = c("protetest"),omicsTypes  = c("proteomics"),
+#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
+#' names(MAE) <- c("protetest")
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- getPossibleContrasts( MAE, formula = formulae[[1]], typeContrast = "averaged", returnTable = TRUE)[c(1, 2, 3),]
+#' 
+#' # Run the data preprocessing and perform the differential analysis
+#'  MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
+#'  runNormalization(SE.name = "protetest", normMethod = "median")    |>
+#'  runDiffAnalysis(SE.name = "protetest", method = "limmalmFit", contrastList = contrastList)
+#'  
+#'  # plot the heatmap
+#'  plotHeatmapDesign(MAE@ExperimentList[[1]], getSelectedContrasts(MAE@ExperimentList[[1]])$contrastName[1])
+
+ 
 setMethod(f          = "plotHeatmapDesign",
           signature  = "RflomicsSE",
           definition = function(object, 
@@ -590,7 +723,43 @@ setMethod(f          = "plotHeatmapDesign",
 #' guide_legend xlab ylab theme_void ggtitle
 #' @importFrom dplyr full_join  arrange
 #' @rdname plotBoxplotDE
-#' @noRd
+#' @examples
+#' 
+#' # Set the data path
+#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
+#' 
+#' # Load the experimental design
+#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
+#' 
+#' # Set factor name, levels, level of reference and type
+#' facRef <- data.frame( factorName   = c("Repeat", "temperature" , "imbibition"), factorRef = c("rep1", "Low", "DS"), 
+#'                      factorType = c("batch",  "Bio", "Bio"), factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
+#' 
+#' # Load the omics data
+#' omicsData <- list( 
+#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
+#'  
+#' # Instantiate an object of class RflomicsMAE 
+#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
+#'                          omicsNames  = c("protetest"),omicsTypes  = c("proteomics"),
+#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
+#' names(MAE) <- c("protetest")
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- getPossibleContrasts( MAE, formula = formulae[[1]], typeContrast = "averaged", returnTable = TRUE)[c(1, 2, 3),]
+#' 
+#' # Run the data preprocessing and perform the differential analysis
+#'  MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
+#'  runNormalization(SE.name = "protetest", normMethod = "median")    |>
+#'  runDiffAnalysis(SE.name = "protetest", method = "limmalmFit", contrastList = contrastList)
+#'  
+#'  # plot the boxplot
+#'  plotBoxplotDE(MAE@ExperimentList[[1]], features = "AT1G15670", groupColor = "temperature")
+#'  plotBoxplotDE(MAE@ExperimentList[[1]], features = "AT1G15670", groupColor = "imbibition")
 
 setMethod(f          = "plotBoxplotDE",
           signature  = "RflomicsSE",
@@ -688,8 +857,7 @@ setMethod(f          = "plotBoxplotDE",
 
 #' @rdname plotBoxplotDE
 #' @title plotBoxplotDE
-#' @param SE.name the name of the data to fetch in the object if the object is 
-#' a RflomicsMAE
+#' @param SE.name the name of the \link{RflomicsSE} object to fetch if the object is of class \link{RflomicsMAE}
 #' @exportMethod plotBoxplotDE
 setMethod(f          = "plotBoxplotDE",
           signature  = "RflomicsMAE",
@@ -716,7 +884,8 @@ setMethod(f          = "plotBoxplotDE",
 
 #' @title Get DE matrix
 #'
-#' @param object a RflomicsSE object
+#' @param object of class \link{RflomicsSE} or \link{RflomicsMAE}
+#' @param SE.name the name of the data to fetch in the object if the object is  \link{RflomicsMAE}
 #' @return a matrix of results from the differential analyses.
 #' @exportMethod getDEMatrix
 #' @rdname getDEMatrix
@@ -731,10 +900,8 @@ setMethod(f          = "getDEMatrix",
               }
           })
 
-#' @rdname getDEMatrix
 #' @title getDEMatrix
-#' @param SE.name the name of the data to fetch in the object if the object is
-#'  a RflomicsMAE
+#' @rdname getDEMatrix
 #' @exportMethod getDEMatrix
 
 setMethod(f          = "getDEMatrix",
@@ -750,7 +917,7 @@ setMethod(f          = "getDEMatrix",
 #' @title Operation on differential analyses lists. Get union vector of DE 
 #' entities from list of contrasts
 #'
-#' @param object an object of class RflomicsSE. Expects to find a slot with 
+#' @param object an object of class \link{RflomicsSE}. Expects to find a slot with 
 #' differential analyses results.
 #' @param contrasts Vector of characters, expect to be contrast names. 
 #' Default is null, the operation (union) is performed
@@ -759,6 +926,8 @@ setMethod(f          = "getDEMatrix",
 #' Defines the operation to perform on the DE lists from the contrasts.
 #' @return vector of unique DE entities
 #' @rdname getDEList
+#' @seealso \code{\link{runDiffAnalysis}}
+#' @seealso \code{\link{filterDiffAnalysis}}
 #' @exportMethod getDEList
 #' @importFrom tidyselect starts_with any_of
 #' @importFrom dplyr select mutate filter
@@ -825,8 +994,8 @@ setMethod(f          = "getDEList",
 #' @param object of class RflomicsSE
 #' @return List of differential analysis setting parametres.
 #' @exportMethod getDiffSettings
-#' @rdname getDiffSettings
-#'
+#' @rdname runDiffAnalysis
+
 
 setMethod(f          = "getDiffSettings",
           signature  = "RflomicsSE",
@@ -835,10 +1004,8 @@ setMethod(f          = "getDiffSettings",
               return(metadata(object)$DiffExpAnal$setting)   
           })
 
-#' @rdname getDiffSettings
 #' @title getDiffSettings
-#' @param SE.name the name of the data to fetch in the object if the object 
-#' is a RflomicsMAE
+#' @rdname runDiffAnalysis
 #' @exportMethod getDiffSettings
 
 setMethod(f          = "getDiffSettings",

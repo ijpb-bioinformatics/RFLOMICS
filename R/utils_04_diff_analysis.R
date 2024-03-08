@@ -329,7 +329,7 @@ sumDiffExp <- function(object, SE.name = NULL) {
 #'
 #' @param data dataframe (ggplot2)
 #' @param p.adj.cutoff adjusted pvalue cutoff
-#' @param logFC.cutoff log2FC cutoff (absolute value)
+#' @param logFC.cutoff |log2FC| cutoff (absolute value)
 #' @param contrastName the contrast, useful for plot title
 #' @return MA plot
 #' @keywords internal
