@@ -12,7 +12,7 @@ output:
       collapsed: true
       smooth_scroll: true
     number_sections: true
-    theme: united
+    theme: flatly
 params: 
   outDir: NA
   FEdata: NA
@@ -67,8 +67,6 @@ $('.zoomDiv').css({opacity: '0', width: '0%'});
 });
 ```
 
-
-
 <!-- Experimental design -->
 
 ```{r design}
@@ -106,11 +104,13 @@ knitr::asis_output(out)
 
 `r if(is.null(rflomics.MAE@metadata$IntegrationAnalysis$MOFA)) {"\\begin{comment}"}`
 
+---
+
 # MOFA2 Integration
 
 `r if(is.null(rflomics.MAE@metadata$IntegrationAnalysis$MOFA)) {"\\end{comment}"}`
 
-```{r, eval = !is.null(rflomics.MAE@metadata$IntegrationAnalysis$MOFA), hide = is.null(rflomics.MAE@metadata$IntegrationAnalysis$MOFA) }
+```{r MOFA2, eval = !is.null(rflomics.MAE@metadata$IntegrationAnalysis$MOFA), hide = is.null(rflomics.MAE@metadata$IntegrationAnalysis$MOFA) }
 
 out <- NULL
 
@@ -120,20 +120,42 @@ knitr::asis_output(out)
 
 ```
 
-<!-- ## with MixOmix -->
+<!-- ## with MixOmics -->
 
-`r if(is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics)) {"\\begin{comment}"}`
+`r if(is.null(getMixOmics(rflomics.MAE))) {"\\begin{comment}"}`
+
+---
 
 # MixOmics Integration
 
-`r if(is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics)) {"\\end{comment}"}`
+`r if(is.null(getMixOmics(rflomics.MAE))) {"\\end{comment}"}`
 
-```{r, eval = !is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics), hide = is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics) }
+```{r mixOmics_settings, eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE))}
+MOres <- getMixOmicsSettings(rflomics.MAE)
+funcMixo <- ifelse (MOres$sparsity, "splsda",  "plsda")
+funcMixo <- ifelse(length(MOres$selectData) > 1, paste0("block.", funcMixo), funcMixo)
+```
+
+`r if(is.null(getMixOmics(rflomics.MAE))) {"\\begin{comment}"}`
+
+MixOmics analyses were performed on <span style="color:blue">`r paste(MOres$selectData, collapse = ", ")`</span> datatables with function  <span style="color:DarkOrchid">`r funcMixo`</span> applied on each selected response variable (<span style="color:blue">`r paste(MOres$selectedResponse, collapse = ", ")`</span>). Option <span style="color:blue"> scale views </span> was set to `r MOres$scale_views`.
+
+`r if(!MOres$sparsity) {"\\begin{comment}"}`
+
+Sparse analysis was performed on these data with <span style="color:blue">`r MOres$cases_to_try`</span> sets of features tested for each datatable.
+
+`r if(!MOres$sparsity) {"\\end{comment}"}`
+
+`r if(is.null(getMixOmics(rflomics.MAE))) {"\\end{comment}"}`
+
+```{r mixOmics, eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE)) }
 
 out <- NULL
-for (selectedResponse in names(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics)) { 
+for (selectedResponse in MOres$selectedResponse) { 
   
-  child <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_08_mixOmics_integration.Rmd") 
+  child <-  paste0(path.package("RFLOMICS"), 
+                   "/RFLOMICSapp/",
+                   "report_08_mixOmics_integration.Rmd") 
   
   out <- c(out, knitr::knit_child(child, quiet = TRUE))  
 }
@@ -147,7 +169,8 @@ knitr::asis_output(out)
 See **session_info.txt** files in the results directory.
 
 ```{r session, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE}
-writeLines(capture.output(devtools::session_info()),  paste0(outDir,"/","session_info.txt"))
+writeLines(capture.output(devtools::session_info()),  
+           paste0(outDir,"/","session_info.txt"))
 ```
 
 

@@ -66,7 +66,6 @@ knitr::asis_output(out)
 
 out <- NULL
 annot <- "DiffExpEnrichAnal"
-#annot.name <- "Enrichement analysis of the list(s) of DE"
 
 for(ontology  in names(dataset.SE@metadata[[annot]])){
 out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_CPR.Rmd"),

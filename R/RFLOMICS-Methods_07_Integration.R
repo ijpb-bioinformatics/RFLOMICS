@@ -744,18 +744,20 @@ setMethod(
     f = "sumMixOmics",
     signature = "RflomicsMAE",
     definition =  function(object, selectedResponse = NULL) {
-        if (is.null(metadata(object)$mixOmics)) {
+        if (is.null(metadata(object)$IntegrationAnalysis$mixOmics)) {
             stop("It seems this object has no mixOmics results.")
         }
         
         if (is.null(selectedResponse)) {
+            posResponse <- names(metadata(object)$IntegrationAnalysis$mixOmics)
+            posResponse <- posResponse[-which(posResponse == "settings")]
             res <- lapply(
-                names(metadata(object)$mixOmics),
+                posResponse,
                 FUN = function(selResponse) {
                     .getOneMORes(object, selectedResponse = selResponse)
                 }
             )
-            names(res) <- names(metadata(object)$mixOmics)
+            names(res) <- posResponse
             return(res)
         } else {
             .getOneMORes(object, selectedResponse = selectedResponse)
@@ -777,7 +779,8 @@ setMethod(
     signature = "RflomicsMAE",
     definition =   function(object, selectedResponse) {
         res <- getMixOmics(object, response = selectedResponse)
-        Data_res <- res$MixOmics_results
+        # Data_res <- res$MixOmics_results
+        Data_res <- res
         
         df <- t(sapply(Data_res$X, dim))
         colnames(df) <- c("Ind", "Features")
