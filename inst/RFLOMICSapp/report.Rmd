@@ -122,21 +122,21 @@ knitr::asis_output(out)
 
 <!-- ## with MixOmics -->
 
-`r if(is.null(getMixOmics(rflomics.MAE))) {"\\begin{comment}"}`
+`r if(is.null(RFLOMICS::getMixOmics(rflomics.MAE))) {"\\begin{comment}"}`
 
 ---
 
 # MixOmics Integration
 
-`r if(is.null(getMixOmics(rflomics.MAE))) {"\\end{comment}"}`
+`r if(is.null(RFLOMICS::getMixOmics(rflomics.MAE))) {"\\end{comment}"}`
 
 ```{r mixOmics_settings, eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE))}
-MOres <- getMixOmicsSettings(rflomics.MAE)
-funcMixo <- ifelse (MOres$sparsity, "splsda",  "plsda")
+MOres <- RFLOMICS::getMixOmicsSettings(rflomics.MAE)
+funcMixo <- ifelse(MOres$sparsity, "splsda",  "plsda")
 funcMixo <- ifelse(length(MOres$selectData) > 1, paste0("block.", funcMixo), funcMixo)
 ```
 
-`r if(is.null(getMixOmics(rflomics.MAE))) {"\\begin{comment}"}`
+`r if(is.null(RFLOMICS::getMixOmics(rflomics.MAE))) {"\\begin{comment}"}`
 
 MixOmics analyses were performed on <span style="color:blue">`r paste(MOres$selectData, collapse = ", ")`</span> datatables with function  <span style="color:DarkOrchid">`r funcMixo`</span> applied on each selected response variable (<span style="color:blue">`r paste(MOres$selectedResponse, collapse = ", ")`</span>). Option <span style="color:blue"> scale views </span> was set to `r MOres$scale_views`.
 
@@ -146,9 +146,9 @@ Sparse analysis was performed on these data with <span style="color:blue">`r MOr
 
 `r if(!MOres$sparsity) {"\\end{comment}"}`
 
-`r if(is.null(getMixOmics(rflomics.MAE))) {"\\end{comment}"}`
+`r if(is.null(RFLOMICS::getMixOmics(rflomics.MAE))) {"\\end{comment}"}`
 
-```{r mixOmics, eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE)) }
+```{r mixOmics, eval = !is.null(RFLOMICS::getMixOmics(rflomics.MAE)), hide = is.null(RFLOMICS::getMixOmics(rflomics.MAE)) }
 
 out <- NULL
 for (selectedResponse in MOres$selectedResponse) { 
