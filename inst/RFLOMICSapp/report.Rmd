@@ -130,25 +130,21 @@ knitr::asis_output(out)
 
 `r if(is.null(RFLOMICS::getMixOmics(rflomics.MAE))) {"\\end{comment}"}`
 
-```{r mixOmics_settings, eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE))}
+```{r, eval = !is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics), hide = is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics)}
+MOres <- NULL
+funcMixo <- NULL
 MOres <- RFLOMICS::getMixOmicsSettings(rflomics.MAE)
 funcMixo <- ifelse(MOres$sparsity, "splsda",  "plsda")
 funcMixo <- ifelse(length(MOres$selectData) > 1, paste0("block.", funcMixo), funcMixo)
 ```
 
-`r if(is.null(RFLOMICS::getMixOmics(rflomics.MAE))) {"\\begin{comment}"}`
+```{r mixOmics, eval = !is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics), hide = is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics) }
 
-MixOmics analyses were performed on <span style="color:blue">`r paste(MOres$selectData, collapse = ", ")`</span> datatables with function  <span style="color:DarkOrchid">`r funcMixo`</span> applied on each selected response variable (<span style="color:blue">`r paste(MOres$selectedResponse, collapse = ", ")`</span>). Option <span style="color:blue"> scale views </span> was set to `r MOres$scale_views`.
+htmltools::HTML(paste0("MixOmics analyses were performed on <span style=\"color:blue\">",  paste(MOres$selectData, collapse = ", "), "</span> datatables with function  <span style=\"color:DarkOrchid\">", funcMixo, "</span> applied on each selected response variable (<span style=\"color:blue\">", paste(MOres$selectedResponse, collapse = ", "), "</span>). Option <span style=\"color:blue\"> scale views </span> was set to",  MOres$scale_views, "."))
 
-`r if(!MOres$sparsity) {"\\begin{comment}"}`
-
-Sparse analysis was performed on these data with <span style="color:blue">`r MOres$cases_to_try`</span> sets of features tested for each datatable.
-
-`r if(!MOres$sparsity) {"\\end{comment}"}`
-
-`r if(is.null(RFLOMICS::getMixOmics(rflomics.MAE))) {"\\end{comment}"}`
-
-```{r mixOmics, eval = !is.null(RFLOMICS::getMixOmics(rflomics.MAE)), hide = is.null(RFLOMICS::getMixOmics(rflomics.MAE)) }
+if (MOres$sparsity) {
+    htmltools::HTML(paste0("Sparse analysis was performed on these data with <span style=\"color:blue\">",  MOres$cases_to_try, "</span> sets of features tested for each datatable."))
+}
 
 out <- NULL
 for (selectedResponse in MOres$selectedResponse) { 
@@ -163,6 +159,8 @@ for (selectedResponse in MOres$selectedResponse) {
 knitr::asis_output(out)
 
 ```
+
+---
 
 # R Session
 

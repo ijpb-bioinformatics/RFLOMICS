@@ -71,7 +71,7 @@ VarExp = MOFA2::get_variance_explained(MOFARes)$r2_per_factor$group1
 FactNum = apply(VarExp, 1, FUN = function(vect) any(vect > 5)) # Percentage
 ```
 
-```{r, fig.height = f.height, fig.width=f.width, fig.align = "center"}
+```{r, fig.height = fig_height, fig.width=fig_width, fig.align = "center"}
 ggplot_list <- list()
 for (i in which(FactNum)) {
     ggplot_sublist <- list()

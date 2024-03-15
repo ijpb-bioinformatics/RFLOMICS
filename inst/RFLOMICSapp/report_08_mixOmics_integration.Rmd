@@ -111,8 +111,6 @@ mixOmics::plotLoadings(Data_res, comp = 5, ndisplay = 10)
 
 `r if(ncompDat<5) {"\\end{comment}"}`
 
-# {.unlisted .unnumbered}
-
 ---
 
 <!-- Exports -->
