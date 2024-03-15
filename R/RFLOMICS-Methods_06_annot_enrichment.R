@@ -191,8 +191,15 @@ setMethod(
                                     }
                                 }
                             )
-                            do.call(getFromNamespace(func_to_use, ns = "clusterProfiler"),
+                           res1 <- do.call(getFromNamespace(func_to_use, 
+                                                            ns = "clusterProfiler"),
                                     list_args)
+                           # delete heavy slots
+                           slot(res1, name = "geneSets", 
+                                check = FALSE) <- list("removed")
+                           slot(res1, name = "universe", 
+                                check = FALSE) <- c("removed")
+                           return(res1)
                         }
                     )
                     names(results_ont) <- domain
