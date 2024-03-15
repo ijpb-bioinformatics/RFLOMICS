@@ -8,10 +8,12 @@ knitr::opts_chunk$set(fig.path = explorDir)
 ```
 
 ```{r}
-Data_res <- rflomics.MAE@metadata$IntegrationAnalysis$mixOmics[[selectedResponse]]$MixOmics_results
+Data_res <- set_res <- NULL
+Data_res <- RFLOMICS::getMixOmics(rflomics.MAE, response = selectedResponse)
+set_res  <- RFLOMICS::getMixOmicsSettings(rflomics.MAE)
 ncompDat <- min(Data_res$ncomp, 5)
 fig_height <- NULL
-fig_height <- ceiling(length(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics$settings$selectData)/2)*4.5
+fig_height <- ceiling(length(set_res$selectData)/2)*4.5
 fig_width <- 12
 ```
 
@@ -109,29 +111,33 @@ mixOmics::plotLoadings(Data_res, comp = 5, ndisplay = 10)
 
 `r if(ncompDat<5) {"\\end{comment}"}`
 
+# {.unlisted .unnumbered}
+
+---
 
 <!-- Exports -->
 
 ```{r mixOmics_export}
 loads <- do.call("rbind", lapply(names(Data_res$loadings), FUN = function(nam){
-  df <- data.frame(Data_res$loadings[[nam]])
-  df$Table <- nam
-  dplyr::relocate(df, Table)
-  }
+    df <- data.frame(Data_res$loadings[[nam]])
+    df$Table <- nam
+    dplyr::relocate(df, Table)
+}
 ))
 
-write.table(loads, file = paste0(explorDir, selectedResponse, "_Loading_values.txt"),
-             sep = "\t", quote = FALSE, col.names = TRUE, row.names = TRUE)
+write.table(loads, 
+            file = paste0(explorDir, selectedResponse, "_Loading_values.txt"),
+            sep = "\t", quote = FALSE, col.names = TRUE, row.names = TRUE)
 
 inds <- do.call("rbind", lapply(names(Data_res$variates), FUN = function(nam){
-  df <- data.frame(Data_res$variates[[nam]])
-  df$Table <- nam
-  dplyr::relocate(df, Table)
-  }
+    df <- data.frame(Data_res$variates[[nam]])
+    df$Table <- nam
+    dplyr::relocate(df, Table)
+}
 ))
 
 write.table(inds, file = paste0(explorDir, selectedResponse, "_Ind_coord.txt"),
-             sep = "\t", quote = FALSE, col.names = TRUE, row.names = TRUE)
+            sep = "\t", quote = FALSE, col.names = TRUE, row.names = TRUE)
 ```
 
 
