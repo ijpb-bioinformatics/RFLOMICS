@@ -1,7 +1,7 @@
 ---
 title: "`r params$title`"
 author: "Analysis were performed by the RFLOMICS package (cite)"
-date: "The `r format(Sys.time(), '%d %B, %Y')`"
+date: "`r Sys.setlocale('LC_TIME', 'C'); format(Sys.time(), '%d %B %Y - %H:%M')`"
 bibliography: bibliography.bib
 output: 
   html_document:
