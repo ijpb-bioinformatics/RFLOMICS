@@ -15,7 +15,8 @@ MOFAset <- RFLOMICS::getMOFASettings(rflomics.MAE)
 
 ```{r}
 fig_width <- 15
-fig_height <- ceiling(length(MOFA2::views_names(MOFARes))/2)*4.5
+n_lines <- ceiling(length(MOFA2::views_names(MOFARes))/2)
+fig_height <- n_lines*4.5
 ```
 
 ## Settings
@@ -44,7 +45,7 @@ mat_cor <- mat_cor - diag(mat_cor)
 ```
 
 * Number of computed factors: `r MOFARes@dimensions$K` 
-* Is there a correlation >0.5 between two factors? `r ifelse(any(mat_cor>0.5), "YES, be careful, the results are unreliable.", "No.")`
+* Is there a correlation >0.5 between two factors? `r ifelse(any(mat_cor>0.5), "YES, be careful, the results are unreliable.", "No. Results are reliable.")`
 
 ```{r MOFA2_factor_cor, fig.width=4.5, fig.height = 4, fig.align="center"}
 MOFA2::plot_factor_cor(MOFARes)
@@ -85,19 +86,19 @@ for (i in which(FactNum)) {
             ggplot2::ggtitle(paste0(j, " - Factor ", i))
     }
     ggplot_list[[length(ggplot_list) + 1]] <- ggpubr::ggarrange(plotlist = ggplot_sublist, 
-                                                        ncol = 2)
+                                                        ncol = 2, nrow = n_lines)
 }
 ```
 
 #### Factor 1
 
-```{r MOFA2_weightfactors1, fig.width = fig_width}
+```{r MOFA2_weightfactors1, fig.width = fig_width, fig.height = fig_height}
 ggplot_list[[1]]
 ```
 
 #### Factor 2
 
-```{r MOFA2_weightfactors2, fig.width = fig_width}
+```{r MOFA2_weightfactors2, fig.width = fig_width, fig.height = fig_height}
 ggplot_list[[2]]
 ```
 
@@ -105,7 +106,7 @@ ggplot_list[[2]]
 
 #### Factor 3
 
-```{r MOFA2_weightfactors3, fig.width = fig_width}
+```{r MOFA2_weightfactors3, fig.width = fig_width, fig.height = fig_height}
 ggplot_list[[3]]
 ```
 
@@ -116,7 +117,7 @@ ggplot_list[[3]]
 
 #### Factor 4
 
-```{r MOFA2_weightfactors4, fig.width = fig_width}
+```{r MOFA2_weightfactors4, fig.width = fig_width, fig.height = fig_height}
 ggplot_list[[4]]
 ```
 
@@ -126,7 +127,7 @@ ggplot_list[[4]]
 
 #### Factor 5
 
-```{r MOFA2_weightfactors5, fig.width = fig_width}
+```{r MOFA2_weightfactors5, fig.width = fig_width, fig.height = fig_height}
 ggplot_list[[5]]
 ```
 
@@ -155,20 +156,20 @@ for (fac in 1:MOFARes@dimensions$K) {
         invisible(file.remove("temp.png"))
     }
     list_arrange[[fac]] <- gridExtra::grid.arrange(grobs = lapply(list_heat_views[[fac]], FUN = function(object) object$gtable),
-                                                   ncol = 2)
+                                                   ncol = 2, nrow = n_lines)
 }
 dev.off()
 ```
 
 #### Factor 1
 
-```{r MOFA2_heatmap1, fig.width = fig_width}
+```{r MOFA2_heatmap1, fig.width = fig_width, fig.height = fig_height}
 ggpubr::as_ggplot(list_arrange[[1]])
 ```
 
 #### Factor 2
 
-```{r MOFA2_heatmap2, fig.width = fig_width}
+```{r MOFA2_heatmap2, fig.width = fig_width, fig.height = fig_height}
 ggpubr::as_ggplot(list_arrange[[2]])
 ```
 
@@ -176,7 +177,7 @@ ggpubr::as_ggplot(list_arrange[[2]])
 
 #### Factor 3
 
-```{r MOFA2_heatmap3, fig.width = fig_width}
+```{r MOFA2_heatmap3, fig.width = fig_width, fig.height = fig_height}
 ggpubr::as_ggplot(list_arrange[[3]])
 ```
 
@@ -187,7 +188,7 @@ ggpubr::as_ggplot(list_arrange[[3]])
 
 #### Factor 4
 
-```{r MOFA2_heatmap3, fig.width = fig_width}
+```{r MOFA2_heatmap3, fig.width = fig_width, fig.height = fig_height}
 ggpubr::as_ggplot(list_arrange[[4]])
 ```
 
@@ -197,7 +198,7 @@ ggpubr::as_ggplot(list_arrange[[4]])
 
 #### Factor 5
 
-```{r MOFA2_heatmap3, fig.width = fig_width}
+```{r MOFA2_heatmap3, fig.width = fig_width, fig.height = fig_height}
 ggpubr::as_ggplot(list_arrange[[5]])
 ```
 
