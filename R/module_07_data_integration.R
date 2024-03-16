@@ -468,10 +468,10 @@
             title = "MOFA results",
             
             tabsetPanel(
-                tabPanel("Overview",
-                         renderPlot(plot_data_overview(resMOFA) +
-                                        ggtitle("Data Overview"))
-                ),
+                # tabPanel("Overview",
+                #          renderPlot(plot_data_overview(resMOFA) +
+                #                         ggtitle("Data Overview"))
+                # ),
                 tabPanel("Factors Correlation",
                          renderPlot(plot_factor_cor(resMOFA))),
                 tabPanel("Explained Variance",
