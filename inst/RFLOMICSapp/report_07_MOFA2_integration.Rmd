@@ -21,9 +21,37 @@ fig_height <- n_lines*4.5
 
 ## Settings
 
-* MOFA2  R package was used to perform data unsupervised integration, on <span style="color:blue">`r paste(MOFA2::views_names(MOFARes), collapse = ", ")`</span> datatables.
-* Taking the <span style="color:blue">`r rflomics.MAE@metadata$IntegrationAnalysis[["MOFA"]]$MOFA_selected_filter`</span> of lists of DE features lead to the following analysis setting: 
+MOFA2  R package was used to perform data unsupervised integration, on <span style="color:blue">`r paste(MOFA2::views_names(MOFARes), collapse = ", ")`</span> datatables.
 
+Features selection: 
+
+```{r MOFA2_selection, results="asis"}
+listSel <- NULL
+listSel <- MOFAset$selectionMethod
+
+listSel2 <- lapply(names(listSel),  FUN = function(nam) {
+    dat <- listSel[[nam]]
+    varNam <- RFLOMICS:::.omicsDic(rflomics.MAE, SE.name = nam)$variableName
+    switch(dat[1], 
+           "diff" = {
+               paste0("Only differentially expressed ", 
+                      varNam, 
+                      " were processed in the multi-omics analysis, taking the ", 
+                      ifelse(dat[2], "union", "intersection"), " of all contrasts lists.")
+           },
+           "none" = paste0("No features selection was applied, all ",
+                           varNam,
+                           " were taken into account."))
+})
+names(listSel2) <- names(listSel)
+
+for (nam in names(listSel2)) {
+    cat("* ", nam, ": ", listSel2[[nam]], "\n")
+}
+rm(listSel, listSel2)
+```
+
+This leads to the following analysis setting: 
 ```{r MOFA2_data_overview, fig.width=6.5, fig.height = 5, fig.align="center"}
 MOFA2::plot_data_overview(MOFARes)
 ```
@@ -34,6 +62,7 @@ MOFA2::plot_data_overview(MOFARes)
   * Number of iterations: `r MOFAset$maxiter` 
 * RNASeq data were transformed using <span style="color:DarkOrchid">voom</span> transformation from limma package 
 * Batch effects `r paste(RFLOMICS::getBatchFactors(rflomics.MAE), collapse = ", ")`  were corrected using <span style="color:DarkOrchid">removebatcheffect</span> function from limma package.
+
 
 ##  Results
 
@@ -137,7 +166,7 @@ ggplot_list[[5]]
 
 For all views, these heatmap show the 10 first features in term of weights for the factors explaining at least 5\% variance in any table.
 
-```{r, fig.width = 15, fig.height = 5, fig.show = "hold", include = FALSE, fig.keep = "none"}
+```{r, fig.width = 15, fig.height = 7, fig.show = "hold", include = FALSE, fig.keep = "none"}
 list_heat_views <- list()
 list_arrange <- list()
 for (fac in 1:MOFARes@dimensions$K) {
@@ -163,13 +192,13 @@ dev.off()
 
 #### Factor 1
 
-```{r MOFA2_heatmap1, fig.width = fig_width, fig.height = fig_height}
+```{r MOFA2_heatmap1, fig.width = fig_width, fig.height = fig_height*1.5}
 ggpubr::as_ggplot(list_arrange[[1]])
 ```
 
 #### Factor 2
 
-```{r MOFA2_heatmap2, fig.width = fig_width, fig.height = fig_height}
+```{r MOFA2_heatmap2, fig.width = fig_width, fig.height = fig_height*1.5}
 ggpubr::as_ggplot(list_arrange[[2]])
 ```
 
@@ -177,7 +206,7 @@ ggpubr::as_ggplot(list_arrange[[2]])
 
 #### Factor 3
 
-```{r MOFA2_heatmap3, fig.width = fig_width, fig.height = fig_height}
+```{r MOFA2_heatmap3, fig.width = fig_width, fig.height = fig_height*1.5}
 ggpubr::as_ggplot(list_arrange[[3]])
 ```
 
@@ -188,7 +217,7 @@ ggpubr::as_ggplot(list_arrange[[3]])
 
 #### Factor 4
 
-```{r MOFA2_heatmap3, fig.width = fig_width, fig.height = fig_height}
+```{r MOFA2_heatmap3, fig.width = fig_width, fig.height = fig_height*1.5}
 ggpubr::as_ggplot(list_arrange[[4]])
 ```
 
@@ -198,7 +227,7 @@ ggpubr::as_ggplot(list_arrange[[4]])
 
 #### Factor 5
 
-```{r MOFA2_heatmap3, fig.width = fig_width, fig.height = fig_height}
+```{r MOFA2_heatmap3, fig.width = fig_width, fig.height = fig_height*1.5}
 ggpubr::as_ggplot(list_arrange[[5]])
 ```
 

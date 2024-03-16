@@ -310,6 +310,19 @@
             do.call(getFromNamespace("runOmicsIntegration", ns = "RFLOMICS"),
                     list_args)
         
+        listSelection <- list()
+        listSelection <- lapply(input$selectData, FUN = function(set) {
+            c("method" = input[[paste0("selectmethode", set)]],
+              "operation" =  switch(
+                  input[[paste0("selectmethode", set)]],
+                  "diff" = {input[[paste0("unionORintersect", set)]]},
+                  "none")
+            )
+        })
+        names(listSelection) <- input$selectData
+        metadata(session$userData$FlomicsMultiAssay)$IntegrationAnalysis[[method]]$settings$selectionMethod <-
+            listSelection
+        
         #---- progress bar ----#
         progress$inc(1, detail = paste("Finished ", 100, "%", sep = ""))
         #----------------------#

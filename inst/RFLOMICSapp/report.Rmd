@@ -138,12 +138,50 @@ funcMixo <- ifelse(MOres$sparsity, "splsda",  "plsda")
 funcMixo <- ifelse(length(MOres$selectData) > 1, paste0("block.", funcMixo), funcMixo)
 ```
 
+```{r , eval = !is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics), hide = is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics) }
+htmltools::HTML(paste0("MixOmics analyses were performed on <span style=\"color:blue\">",  
+                       paste(MOres$selectData, collapse = ", "), 
+                       "</span> datatables with function  <span style=\"color:DarkOrchid\">", 
+                       funcMixo, 
+                       "</span> applied on each selected response variable (<span style=\"color:blue\">",
+                       paste(MOres$selectedResponse, collapse = ", "), 
+                       "</span>). Option <span style=\"color:blue\"> scale views </span> was set to", 
+                       MOres$scale_views, "."))
+```
+
+```{r , eval = !is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics), hide = is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics), results="asis"}
+listSel <- NULL
+listSel <- MOres$selectionMethod
+
+listSel2 <- lapply(names(listSel),  FUN = function(nam) {
+    dat <- listSel[[nam]]
+    varNam <- RFLOMICS:::.omicsDic(rflomics.MAE, SE.name = nam)$variableName
+    switch(dat[1], 
+           "diff" = {
+               paste0("Only differentially expressed ", 
+                      varNam, 
+                      " were processed in the multi-omics analysis, taking the ", 
+                      ifelse(dat[2], "union", "intersection"), " of all contrasts lists.")
+           },
+           "none" = paste0("No features selection was applied, all ",
+                           varNam,
+                           " were taken into account."))
+})
+names(listSel2) <- names(listSel)
+
+for (nam in names(listSel2)) {
+    cat("* ", nam, ": ", listSel2[[nam]], "\n")
+}
+rm(listSel, listSel2)
+```
+
+
 ```{r mixOmics, eval = !is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics), hide = is.null(rflomics.MAE@metadata$IntegrationAnalysis$mixOmics) }
 
-htmltools::HTML(paste0("MixOmics analyses were performed on <span style=\"color:blue\">",  paste(MOres$selectData, collapse = ", "), "</span> datatables with function  <span style=\"color:DarkOrchid\">", funcMixo, "</span> applied on each selected response variable (<span style=\"color:blue\">", paste(MOres$selectedResponse, collapse = ", "), "</span>). Option <span style=\"color:blue\"> scale views </span> was set to",  MOres$scale_views, "."))
-
 if (MOres$sparsity) {
-    htmltools::HTML(paste0("Sparse analysis was performed on these data with <span style=\"color:blue\">",  MOres$cases_to_try, "</span> sets of features tested for each datatable."))
+    htmltools::HTML(paste0("Sparse analysis was performed on these data with <span style=\"color:blue\">",  
+                           MOres$cases_to_try, 
+                           "</span> sets of features tested for each datatable."))
 }
 
 out <- NULL
