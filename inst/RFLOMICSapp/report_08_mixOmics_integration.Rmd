@@ -20,8 +20,28 @@ fig_width <- 12
 ### Overview
 
 ```{r mixOmics_overview}
-df <- NULL
-df <- RFLOMICS::sumMixOmics(rflomics.MAE, selectedResponse = selectedResponse)
+if (is.list(Data_res$X)) {
+    # block.plsda or block.splsda
+    df <- t(vapply(Data_res$X, dim, c(1, 1)))
+    colnames(df) <- c("Ind", "Features")
+    
+    if (set_res$sparsity) {
+        df <- cbind(df, do.call("rbind", Data_res$keepX))
+        colnames(df)[!colnames(df) %in% c("Ind", "Features")] <-
+            paste("Comp", seq_len(length(Data_res$keepX[[1]])))
+    }
+    
+} else {
+    # plsda or splsda
+    df <-  data.frame("Ind" = nrow(Data_res$X),
+                      "Features" = ncol(Data_res$X))
+    if (set_res$sparsity) {
+        df <- cbind(df, do.call("cbind", as.list(Data_res$keepX)))
+        colnames(df)[!colnames(df) %in% c("Ind", "Features")] <-
+            paste("Comp", seq_len(length(Data_res$keepX)))
+    }
+}
+
 DT::datatable(t(df))
 ```
 
