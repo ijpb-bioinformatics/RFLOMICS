@@ -126,8 +126,8 @@
     # before MOFA integration
     observeEvent(input$run_prep, {
         # check: number of selected dataset min = 2
-        condition <- length(input$selectData) >= 1
-        messCond <- "Please select at least 1 table."
+        condition <- length(input$selectData) > 1
+        messCond <- "Please select at least 2 table."
         if (!condition) {
             showModal(modalDialog(title = "ERROR: ", messCond))
         }
