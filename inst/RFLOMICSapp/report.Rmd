@@ -67,6 +67,10 @@ $('.zoomDiv').css({opacity: '0', width: '0%'});
 });
 ```
 
+<br>
+<br>
+<br>
+
 <!-- Experimental design -->
 
 ```{r design}
@@ -78,6 +82,9 @@ out <- c(out, knitr::knit_child(child, quiet=TRUE))
 knitr::asis_output(out)
 
 ```
+
+<br>
+<br>
 
 <!-- single omics analysis -->
 
@@ -104,7 +111,8 @@ knitr::asis_output(out)
 
 `r if(is.null(rflomics.MAE@metadata$IntegrationAnalysis$MOFA)) {"\\begin{comment}"}`
 
----
+<br>
+<br>
 
 # MOFA2 Integration
 

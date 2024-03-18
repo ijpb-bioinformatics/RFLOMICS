@@ -283,7 +283,7 @@ setMethod(f = "plotOmicsPCA",
           })
 
 #' @rdname plotOmicsPCA
-#' @title plotPCA
+#' @title plotOmicsPCA
 #' @param SE.name the name of the data the normalization have to be applied to.
 #' @exportMethod plotOmicsPCA
 setMethod(

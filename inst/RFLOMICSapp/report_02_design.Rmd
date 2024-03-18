@@ -1,8 +1,10 @@
 # Experimental design
 
-User-provided experimental plan.
+<br>
 
-```{r design}
+* **User-provided experimental design file:**
+
+```{r design,out.width = "70%", fig.align='left'}
 
 bioFact   <- getBioFactors(rflomics.MAE)
 batchFact <- getBatchFactors(rflomics.MAE)
@@ -19,28 +21,35 @@ DT::datatable(getDesignMat(rflomics.MAE)[c(bioFact, batchFact, metaFact)],
               #                                   font-weight: bold;', "User-provided experimental plan"),
 ```
 
-Overview of the input omic data. Each color represents a distinct dataset, with their respective samples on the x-axis and the number of features on the y-axis. It illustrates the samples overlap across dataset.
+<br>
 
-```{r data.over.view, fig.show = "hold", out.width = "70%", fig.align='left'}
+* **Dataset(s) overview:**
+
+```{r data.over.view, fig.show = "hold", out.width = "50%", fig.cap="*fig.left: Overview of the input omic data. Each color represents a distinct dataset, with their respective samples on the x-axis and the number of features on the y-axis. It illustrates the samples overlap across dataset. fig.right: Number of Datasets per Condition. Each axis represents a distinct biological factor, and each cell value signifies the count of datasets associated with that specific condition.*", fig.align='left'}
 
 raw.rflomics.MAE <- subRflomicsMAE(rflomics.MAE, omicNames = paste0(getDatasetNames(rflomics.MAE), ".raw"))
 names(raw.rflomics.MAE) <- getDatasetNames(rflomics.MAE)
 plotDataOverview(object = raw.rflomics.MAE)
-
-```
-
-Number of Datasets per Condition. Each axis represents a distinct biological factor, and each cell value signifies the count of datasets associated with that specific condition.
-
-```{r condition.over.view, fig.show = "hold", out.width = "60%", fig.align='left'}
-
 plotConditionsOverview(object = raw.rflomics.MAE)
 
 ```
 
 
-# Statstical setting:
 
-The selected references and types of factors.
+<!-- ```{r condition.over.view, fig.show = "hold", out.width = "60%", fig.align='left'} -->
+
+<!-- plotConditionsOverview(object = raw.rflomics.MAE) -->
+
+<!-- ``` -->
+
+<br>
+<br>
+
+# Statistical settings:
+
+<br>
+
+* **Factor(s) setting summary: Types of factors and modality of reference**
 
 ```{r factors, echo=FALSE, message=TRUE, warning=TRUE}
 
@@ -65,14 +74,17 @@ DT::datatable(df , rownames = FALSE , class = 'cell-border stripe',
 #                                                 font-weight: bold;', "Factor settings")
 ```
 
+<br>
 
-<p>The selected model formula.</p>
+* **The selected model formula:**
 
 ```
 `r getModelFormula(rflomics.MAE)`
 ````
 
-<p>The selected contrasts.</p>
+<br>
+
+* **The selected contrasts:**
 
 ```{r contrastSel, results="asis"}
 
