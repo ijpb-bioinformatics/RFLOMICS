@@ -1,6 +1,4 @@
 
----
-
 ```{r , echo=FALSE , message=FALSE, warning=FALSE}
 annotDir <- paste0(dataDir,"/","04-Enrichment_analysis_CPR/")
 dir.create(path=annotDir)
@@ -22,23 +20,30 @@ This function determines the overrepresented `r ontology` terms in the gene list
 
 <!-- ### summary per ontology and per contrast -->
 
-```{r ,  message=FALSE, warning=FALSE, echo=FALSE, results="asis", out.width = "50%"}
-kableExtra::kable_styling(kableExtra::kable(dataset.SE@metadata[[annot]][[ontology]]$summary, row.names=FALSE, caption=NULL, format="html"), font_size=12)
+```{r, results="asis", out.width = "50%"}
+kableExtra::kable_styling(kableExtra::kable(RFLOMICS::sumORA(dataset.SE, 
+                                                             from = annot,
+                                                             database = ontology), 
+                                            row.names=FALSE, caption=NULL, format="html"), 
+                          font_size=12)
 ```
 
 * **Diplay results by contrast(s)**
 
 *Please click on the arrows to scroll down the results and click on the figure to zoom in*
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE}
+```{r}
 out <- NULL
-for (listname  in names(dataset.SE@metadata[[annot]][[ontology]]$enrichResult)){
-      out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_per_list_per_Domain_CPR.Rmd"), quiet=TRUE))
+for (listname  in names(RFLOMICS::getEnrichRes(dataset.SE,
+                                               from = annot,
+                                               database = ontology))){
+      out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), 
+                                             "/RFLOMICSapp/",
+                                             "report_06_annot_enrich_per_list_per_Domain_CPR.Rmd"),
+                                      quiet=TRUE))
 }
 
 knitr::asis_output(out)
 ```
 
----
-
-
+<hr>

@@ -1,7 +1,5 @@
 
-<!-- <details> -->
-
-```{r , echo=FALSE , message=FALSE, warning=FALSE}
+```{r}
 
 # create export data
 listnameDir <- paste0(annotDir, contrastName2contrastDir(listname),"/",ontology,"/")
@@ -12,58 +10,78 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r, echo=FALSE, out.width = "50%", message=FALSE, warning=FALSE}
+```{r}
 log2FC_vect <- NULL
-if(annot == 'DiffExpEnrichAnal'){
+if (annot == 'DiffExpEnrichAnal') {
   log2FC_vect <- dataset.SE@metadata$DiffExpAnal$TopDEF[[listname]]$logFC
   names(log2FC_vect) <- rownames(dataset.SE@metadata$DiffExpAnal$TopDEF[[listname]])
 }
-
-
 ```
 
-
 <details>
-<summary>`r listname`</summary>
+<summary>**`r listname`**</summary>
+
+
+```{r}
+enrichRes <- NULL
+enrichRes <- RFLOMICS::getEnrichRes(dataset.SE,
+                                      from = annot, 
+                                      database = ontology, 
+                                      contrastName = listname)
+```
 
 1- Dotplot
 
-```{r dotplot_CPR, echo=FALSE, out.width = "30%", message=FALSE, warning=FALSE, fig.width = 7, fig.height = 7,fig.show = "hold"}
-for(domain in names(dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]])){
+<br>
+
+```{r dotplot_CPR, fig.width = 15, fig.height = 7, fig.show = "hold"}
+for (domain in names(enrichRes)) {
  
-dataPlot <-  dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]][[domain]]
-if(nrow(dataPlot)>0){
+dataPlot <-  enrichRes[[domain]]
+if (nrow(dataPlot) > 0) {
 p <- enrichplot::dotplot(dataPlot, showCategory = 15) + 
-  ggplot2::ggtitle(paste0(listname, "\nEnrichment analysis result on domain ", domain, "\nFirst 15 enriched terms"))
+  ggplot2::ggtitle(paste0(listname, "\nEnrichment analysis result on domain ", 
+                          domain, "\nFirst 15 enriched terms"))
 print(p)
  }
-else{print(paste0(listname, " - in domain: ", domain, " - There was no enriched term found in this setting."))}
+else{print(paste0(listname, " - in domain: ", 
+                  domain, 
+                  " - There was no enriched term found in this setting."))
+    }
 }
 ```
 
+<br>
+
 2- Heatplot
 
-```{r Heatplot, echo=FALSE, out.width = "30%", message=FALSE, warning=FALSE, fig.width = 12, fig.height = 7,fig.show = "hold"}
-for(domain in names(dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]])){
-dataPlot <-  dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]][[domain]]
-if(nrow(dataPlot)>0){
+```{r Heatplot, fig.width = 15, fig.height = 7, fig.show = "hold"}
+for (domain in names(enrichRes)) {
+dataPlot <-  enrichRes[[domain]]
+if (nrow(dataPlot) > 0) {
 p <-  enrichplot::heatplot(dataPlot, showCategory = 15, foldChange = log2FC_vect) + 
                                    ggplot2::labs(fill="log2FC") + 
                                    ggplot2::scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
                                    ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10)) + 
-                                   ggplot2::ggtitle(paste0(listname, " - Enrichment analysis result on domain ", domain, "\nFirst 15 enriched terms"))
+                                   ggplot2::ggtitle(paste0(listname, 
+                                                           " - Enrichment analysis result on domain ", 
+                                                           domain, 
+                                                           "\nFirst 15 enriched terms"))
 suppressMessages(print(p))# delete warnings for scale fill replacement
  }
-else{print(paste0(listname, " - in domain: ", domain, " - There was no enriched term found in this setting."))}
+else{print(paste0(listname, " - in domain: ", 
+                  domain, 
+                  " - There was no enriched term found in this setting."))}
 }
 ```
 
+<br>
 
 3- Cnetplot
 
-```{r CnetPlot, echo=FALSE, out.width = "30%", message=FALSE, warning=FALSE, fig.width = 12, fig.height = 7,fig.show = "hold"}
-for(domain in names(dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]])){
-dataPlot <-  dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]][[domain]]
+```{r CnetPlot, fig.width = 15, fig.height = 7, fig.show = "hold"}
+for (domain in names(enrichRes)) {
+dataPlot <-  enrichRes[[domain]]
 if(nrow(dataPlot)>0){
 p <- enrichplot::cnetplot(dataPlot, showCategory = 15, foldChange = log2FC_vect, node_label = "category") + 
   ggplot2::guides(colour=ggplot2::guide_colourbar(title = "log2FC")) +
@@ -75,52 +93,62 @@ else{print(paste0(listname, " - in domain: ", domain, " - There was no enriched 
 }
 ```
 
+<br>
 
 4- Table
 
-```{r , echo=FALSE, out.width = "100%", message=FALSE, warning=FALSE}
-
+```{r}
 dataPlot <- list()
 
-for(domain in names(dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]])){
-  if(length(domain) != 0){
-    tmp <- dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]][[domain]]
-    tmp@result$domain <- rep(domain,dim(tmp@result)[1])
-    dataPlot[[domain]] <- tmp@result[tmp@result$p.adjust < tmp@pvalueCutoff, ] |> dplyr::select(!c("geneID", "qvalue"))
-  }
+for (domain in names(RFLOMICS::getEnrichRes(dataset.SE,
+                                      from = annot, 
+                                      database = ontology, 
+                                      contrastName = listname))) {
+    if (length(domain) != 0) {
+        tmp <- RFLOMICS::getEnrichRes(dataset.SE,
+                                      from = annot, 
+                                      database = ontology, 
+                                      contrastName = listname,
+                                      domain = domain)
+        tmp@result$domain <- rep(domain, dim(tmp@result)[1])
+        dataPlot[[domain]] <- tmp@result[tmp@result$p.adjust < tmp@pvalueCutoff, ] |> 
+            dplyr::select(!c("geneID", "qvalue"))
+    }
 }
-
-#DT::datatable(dataPlot, # sometimes it prints non significant results...
-#                    rownames = FALSE,
-#                    options = list(rownames = FALSE, pageLength = 5, lengthMenu = c(5, 10, 15, 20), scrollX = T))
-#
 
 # Bind results domain
 
-if(length(dataPlot) != 0){
-  dataPlot.rbind <- dataPlot |> purrr::reduce(rbind)
-  
-  dataPlot.rbind[,5:7]<-signif(dataPlot.rbind[,5:6],3)
-  
-  reactable::reactable(dataPlot.rbind,rownames = FALSE,
-            showSortable = TRUE,
-            bordered = TRUE,
-            defaultPageSize = 5, searchable = TRUE, paginationType = "simple")
+if (length(dataPlot) != 0) {
+    dataPlot.rbind <- purrr::reduce(dataPlot, rbind)
+    
+    colKeep <- unlist(lapply(dataPlot.rbind, is.numeric))
+    dataPlot.rbind[, colKeep] <- signif(dataPlot.rbind[, colKeep], 3)
+    
+    reactable::reactable(dataPlot.rbind,rownames = FALSE,
+                         showSortable = TRUE,
+                         bordered = TRUE,
+                         defaultPageSize = 5, searchable = TRUE, 
+                         paginationType = "simple")
 }
 
 ```
 
-```{r, , echo=FALSE, message=FALSE, warning=FALSE}
-for(domain in names(dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]])){
-  dataPlot <- dataset.SE@metadata[[annot]][[ontology]]$enrichResult[[listname]][[domain]]
-  write.table(dataPlot@result[dataPlot@result$p.adjust < dataPlot@pvalueCutoff, ],
-              file=paste0(listnameDir,"Table_of_Enriched_terms_for_",domain,"_","pval_",dataPlot@pvalueCutoff,".txt"),
-              sep="\t",quote=FALSE,col.names=TRUE,row.names=FALSE)
+```{r}
+for (domain in names(enrichRes)) {
+    dataPlot <-  enrichRes[[domain]]
+    write.table(dataPlot@result[dataPlot@result$p.adjust < dataPlot@pvalueCutoff, ],
+                file=paste0(listnameDir,"Table_of_Enriched_terms_for_", 
+                            domain,"_","pval_",
+                            dataPlot@pvalueCutoff,".txt"),
+                sep="\t",
+                quote=FALSE,
+                col.names=TRUE,
+                row.names=FALSE)
 }
 ```
 
 
 </details>
 
-
+<hr>
 
