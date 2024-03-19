@@ -22,19 +22,27 @@ experiments on the same individuals) see the figure below.
 RFLOMICS currently supports up to three types of omics: RNAseq,
 proteomics, and metabolomics.
 
-<img src="man/figures/Rflomics_features.png" align="center" width="600"/>
+<img src="www/workflow.png" align="center" width="600"/>
 
-**Aims** - Guarantee the relevance of the used methods and parameters
-(RNAseq workflow:
-[DicoExpress](https://plantmethods.biomedcentral.com/articles/10.1186/s13007-020-00611-7),
-[CATI Sysmics](https://sysmics.cati.inrae.fr/)) - Ensure the
-reproducibility of analysis
+**Specifications:**
+- Performs complete multi-omics project analysis,
+- Support multi-factorial experimental design (up to 3 biological factors), 
+- Guarantees the relevance of the used methods,
+- Reduces the analysis time on the unavoidable steps,
+- Ensure the reproducibility of omics analysis,
+- Accessible via one and simple user-friendly interface
 
-**Features** - It can deal with **multi-factorial experiments** (up to 3
-biological factors). - It can allows the remote computing for time/cpu
-consuming tasks **(clustermq package)**
+**Constraints:**
+- 3 types of omics data : RNAseq (read count), metabolomics (abundance) and proteomics (abundance)
+- less than 10 datasets per omics type.
+- 1 - 3 biological factors
+- 1 - 2 batch factors and at least 3 replicates
+- Complete (mandatory) and balanced (recommended) design 
 
-## Locally installation (single omics analysis)
+
+## Use RFLOMICS locally
+
+### Install
 
 Download from <https://forgemia.inra.fr/flomics/rflomics/-/tree/v0.1>
 
@@ -47,7 +55,7 @@ Or
 Clone from forgemia repository
 
 ```         
-git clone -branch  v0.1  https://forgemia.inra.fr/flomics/rflomics.git
+git clone -branch  v0.2  https://forgemia.inra.fr/flomics/rflomics.git
 ```
 
 ``` r
@@ -58,13 +66,15 @@ setwd("rflomics/")
 remotes::install_local(upgrade="never")
 ```
 
-## Run rflomics
+### Run rflomics
 
 ``` r
 library(RFLOMICS)
 
 RFLOMICS::runRFLOMICS()
 ```
+
+### Install via Docker
 
 ````{=html}
 <!--## Install RFLOMICS via Docker
@@ -101,22 +111,15 @@ http://0.0.0.0:3838
 
 ### [Vignettes](https://flomics.pages.mia.inra.fr/rflomics/index.html)
 
+## Licence
+blabla
+
 ## Contact and support
 
-[ijpb-bioinfo-team](mailto:ijpb-bioinfo-team@inrae.fr)
+[ijpb-bioinfo-team](mailto:ijpb-bioinfo-team@inrae.fr) (ijpb-bioinfo-team@inrae.fr)
 
 ## References
 
 -   [CATI Sysmics](https://sysmics.cati.inrae.fr/),
--   [Ilana L. et al. (2020),
-    DiCoExpress](http://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=pubmed&id=32426025&retmode=ref&cmd=prlinks)
--   [MultiAssayExperiment
-    package](https://bioconductor.org/packages/release/bioc/html/MultiAssayExperiment.html)
--   [edgeR
-    package](https://bioconductor.org/packages/release/bioc/html/edgeR.html)
--   [limma
-    package](https://bioconductor.org/packages/release/bioc/html/limma.html)
--   [coseq
-    package](https://bioconductor.org/packages/release/bioc/html/coseq.html)
--   [clustermq
-    package](https://cran.r-project.org/web/packages/clustermq/index.html)
+-   [Ilana L. et al. (2020)](http://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=pubmed&id=32426025&retmode=ref&cmd=prlinks)
+-   [Efstathiou G, et al. 2017]()
