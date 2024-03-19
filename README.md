@@ -22,7 +22,7 @@ experiments on the same individuals) see the figure below.
 RFLOMICS currently supports up to three types of omics: RNAseq,
 proteomics, and metabolomics.
 
-<img src="/www/workflow.png" align="center" width="600"/>
+<img src="inst/RFLOMICSapp/www/workflow.png" align="center" width="600"/>
 
 **Specifications:**
 - Performs complete multi-omics project analysis,
