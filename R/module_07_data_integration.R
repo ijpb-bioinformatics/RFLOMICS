@@ -306,9 +306,20 @@
         
         # Run the analysis
         message("# 8- integration Analysis with ", method)
-        session$userData$FlomicsMultiAssay <-
-            do.call(getFromNamespace("runOmicsIntegration", ns = "RFLOMICS"),
-                    list_args)
+        session$userData$FlomicsMultiAssay <- 
+            tryCatch(
+                do.call(getFromNamespace("runOmicsIntegration", ns = "RFLOMICS"),
+                        list_args), 
+                warning = function(warn) warn,
+                error   = function(err) err
+            )
+        
+        condition <- is(session$userData$FlomicsMultiAssay, "RflomicsMAE")
+        messCond <- "Something went wrong during the integration, please try again with different parameters."
+        if (!condition) {
+            showModal(modalDialog(title = "ERROR: ", messCond))
+        }
+        validate(need(condition, messCond))
         
         listSelection <- list()
         listSelection <- lapply(input$selectData, FUN = function(set) {
