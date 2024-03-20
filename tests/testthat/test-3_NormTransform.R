@@ -78,14 +78,14 @@ test_that("transformData and apply_transform yield expected results", {
   # --- apply transformation:
   
   MAE5b[["protetest"]] <- RFLOMICS:::.applyTransformation(MAE5[["protetest"]])
-  expect_identical(SummarizedExperiment::assay(MAE5b[["protetest"]]), as.matrix(log2(protMat + 1))) 
+  expect_identical(SummarizedExperiment::assay(MAE5b[["protetest"]]), as.matrix(log2(protMat + 10^-10))) 
   expect(RFLOMICS:::.isTransformed(MAE5b[["protetest"]]), failure_message = "It wasn't transformed, it should be.")
   
   ####
   # --- apply transformation directly: 
   
  MAE6 <- runTransformData(MAE, SE.name = "protetest", modifyAssay = TRUE, transformMethod = "log2")
-  expect_identical(SummarizedExperiment::assay(MAE6[["protetest"]]), as.matrix(log2(protMat + 1))) 
+  expect_identical(SummarizedExperiment::assay(MAE6[["protetest"]]), as.matrix(log2(protMat + 10^-10))) 
   expect(RFLOMICS:::.isTransformed(MAE6[["protetest"]]), failure_message = "It wasn't transformed, it should be.")
   
   
@@ -199,7 +199,7 @@ test_that("Transformation and normalisation combination - proteomics", {
   res_equal <- lapply(1:nrow(casesMat), FUN = function(i){
     
     case_vect <- casesMat[i,]
-    print(case_vect)
+    # print(case_vect)
     # matrix version
     protMattransnorm <- protMat
     
@@ -213,8 +213,8 @@ test_that("Transformation and normalisation combination - proteomics", {
     
     protMattransnorm <- switch(as.character(case_vect[[1]]),
                                "none"       = protMattransnorm,
-                               "log2"       = log2(protMattransnorm + 1),
-                               "log10"      = log10(protMattransnorm + 1),
+                               "log2"       = log2(protMattransnorm + 10^-10),
+                               "log10"      = log10(protMattransnorm + 10^-10),
                                "log1p"      = log1p(protMattransnorm),
                                "squareroot" = sqrt(protMattransnorm)
     )
@@ -264,11 +264,11 @@ test_that("Transformation - no method - modification", { #
   expect_message(runTransformData(MAE, SE = "protetest"))
   
   # Default transformation must be log2 + 1 for proteomics data
-  expect_equal(log2(SummarizedExperiment::assay(MAE[["protetest"]]) + 1), SummarizedExperiment::assay(MAE2[["protetest"]]))
+  expect_equal(log2(SummarizedExperiment::assay(MAE[["protetest"]]) + 10^-10), SummarizedExperiment::assay(MAE2[["protetest"]]))
   expect(getTransSettings(MAE2[["protetest"]])$method == "log2", failure_message = "The transformation is not log2 by default.")
   
   # Modification of the assay: expect transformed metadata to be TRUE 
-  expect(.isTransformed(MAE2[["protetest"]]), failure_message = "The assay was not transformed.")
+  expect(RFLOMICS:::.isTransformed(MAE2[["protetest"]]), failure_message = "The assay was not transformed.")
 })
 
 ######################################-
@@ -328,7 +328,7 @@ test_that("RNAseq - correct behaviour of normalization and transformation",  {
   MAE2 <- runNormalization(MAE2, SE = "RNAtest")
   expect(getNormSettings(MAE2[["RNAtest"]])$method == "TMM", 
          failure_message = "Normalization is not defaulted to TMM for RNAseq data.")
-  expect(!.isNorm(MAE2[["RNAtest"]]), 
+  expect(!RFLOMICS:::.isNorm(MAE2[["RNAtest"]]), 
          failure_message = "RunNormalization transformed the data when not asked to")
   
   MAE2 <- runTransformData(MAE2, SE = "RNAtest", transformMethod = "log2") # shouldn't be at all
@@ -341,7 +341,7 @@ test_that("RNAseq - correct behaviour of normalization and transformation",  {
   
   expect(getNormSettings(MAE2[["RNAtest"]])$method == "TMM", 
          failure_message = "Normalization did not replace by TMM for RNAseq data.")
-  expect(!.isNorm(MAE2[["RNAtest"]]),
+  expect(!RFLOMICS:::.isNorm(MAE2[["RNAtest"]]),
          failure_message = "RunNormalization transformed the data when not asked to")
 
 }) 
