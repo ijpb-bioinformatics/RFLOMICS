@@ -137,7 +137,7 @@ test_that("Diff Analysis on metabolomics returns the same result within and outs
   ########################-
   ### equivalent pipeline
   
-  metMat2  <- apply(log2(metMat + 1), 2, FUN = function(vect) vect/sum(vect^2))
+  metMat2  <- apply(log2(metMat + 10^-10), 2, FUN = function(vect) vect/sum(vect^2))
   
   fitmet <- limma::lmFit(metMat2, design)
   ResGlmMet <-  lapply(1:nrow(contrastsCoeff), function(x){
