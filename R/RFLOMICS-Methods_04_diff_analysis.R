@@ -340,8 +340,8 @@ setMethod(f          = "filterDiffAnalysis",
                  logFC.cutoff <- getDiffSettings(object)[["abs.logFC.cutoff"]]
               
               # remplacera à terme les lignes ci-dessus
-              object@metadata$DiffExpAnal[["setting"]][["p.adj.cutoff"]] <- p.adj.cutoff
-              object@metadata$DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- logFC.cutoff
+              metadata(object)$DiffExpAnal[["setting"]][["p.adj.cutoff"]] <- p.adj.cutoff
+              metadata(object)$DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- logFC.cutoff
               
               ## TopDEF: Top differential expressed features
               DEF_filtred <- lapply(seq_len(length(object@metadata$DiffExpAnal[["DEF"]])), function(x){
