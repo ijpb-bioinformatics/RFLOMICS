@@ -846,11 +846,13 @@
                 )
             ),
             
-            if (rea.values$exampleData) {
+            if (rea.values$exampleData && 
+                getOmicsTypes(session$userData$FlomicsMultiAssay[[dataset]]) != 
+                "metabolomics") {
                 popify(
                     bsButton(
                         inputId = ns("useExampleFile"),
-                        label = "Use example annotation file",
+                        label = HTML("Annotation for<br/>used example"),
                         style = "primary",
                         size = "default",
                         type = "action"
@@ -871,6 +873,7 @@
             
             uiOutput(ns("selectColumnsCustom")),
             
+            br(),
             ## alpha threshold
             numericInput(
                 inputId = ns("pValue_custom"),
@@ -903,8 +906,8 @@
         
         column(
             width = 12,
-            br(),
-            hr(style = "border-top: 1px solid #000000;"),
+            #br(),
+            #hr(style = "border-top: 1px solid #000000;"),
             popify(
                 actionLink(
                     inputId = ns(paste0("colSelAnnot")),
@@ -965,8 +968,8 @@
     renderUI({
         column(
             width = 12,
-            br(),
-            hr(style = "border-top: 1px solid #000000;"),
+            #br(),
+            #hr(style = "border-top: 1px solid #000000;"),
             
             # Select the right columns for the analysis
             pickerInput(
