@@ -116,7 +116,13 @@ rflomicsServer <- function(input, output, session) {
     if(is.null(rea.values$datasetProcess) || 
        length(rea.values$datasetProcess) != length(rea.values$datasetList)) return()
 
-    column(width = 12, downloadButton(outputId = "report", label = "Generate report"))
+    column(
+      width = 12, 
+      downloadButton(outputId = "report", 
+                     label = "Generate report", class = "butt"),
+      tags$head(
+        tags$style(".butt{background:#0073b7;} 
+                    .butt{color: white !important;}")))
   })
   
   #### Item to download Results #####
@@ -124,7 +130,13 @@ rflomicsServer <- function(input, output, session) {
     if(is.null(rea.values$datasetProcess) || 
        length(rea.values$datasetProcess) != length(rea.values$datasetList)) return()
     
-    column(width = 12, downloadButton(outputId = "download", label = "Download results"))
+    column(
+      width = 12, 
+      downloadButton(outputId = "download", 
+                     label = "Download results", class = "butt2"),
+      tags$head(
+        tags$style(".butt2{background:#0073b7;} 
+                    .butt2{color: white !important;} ")))
   })
   
   
