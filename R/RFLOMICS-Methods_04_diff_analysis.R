@@ -334,10 +334,10 @@ setMethod(f          = "filterDiffAnalysis",
               }
               
               if (is.null(p.adj.cutoff)) 
-                  p.adj.cutoff <- getDiffSettings(object)$p.adj.cutoff
+                  p.adj.cutoff <- getDiffSettings(object)[["p.adj.cutoff"]]
               
               if (is.null(logFC.cutoff))
-                 logFC.cutoff <- getDiffSettings(object)$abs.logFC.cutoff
+                 logFC.cutoff <- getDiffSettings(object)[["abs.logFC.cutoff"]]
               
               # remplacera à terme les lignes ci-dessus
               object@metadata$DiffExpAnal[["setting"]][["p.adj.cutoff"]] <- p.adj.cutoff
@@ -403,7 +403,7 @@ setMethod(f          = "filterDiffAnalysis",
                   if (is.null(p.adj.cutoff)) 
                       p.adj.cutoff <- getDiffSettings(object[[SE.name]])$p.adj.cutoff
                   
-                  if (is.null(abs.logFC.cutoff))
+                  if (is.null(logFC.cutoff))
                     logFC.cutoff <- getDiffSettings(object[[SE.name]])$abs.logFC.cutoff
                   
                   object[[SE.name]] <-  filterDiffAnalysis(object = object[[SE.name]],
