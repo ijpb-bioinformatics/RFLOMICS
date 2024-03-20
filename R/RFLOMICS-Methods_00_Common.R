@@ -98,7 +98,7 @@ setMethod(
             cmd <- paste0("tar -C ", dirname(tmpDir),
                           " -czf ", archiveName,  " ", basename(tmpDir))
             system(cmd)
-            message(cmd)
+            #message(cmd)
             
         } else{
             file.copy(from = fileName, to = dirname(tmpDir))

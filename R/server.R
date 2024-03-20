@@ -492,12 +492,25 @@ rflomicsServer <- function(input, output, session) {
     },
     content = function(file) {
 
-      projectName  <- getProjectName(session$userData$FlomicsMultiAssay)
-      outDir <- file.path(tempdir(), paste0(format(Sys.time(),"%Y_%m_%d"),"_", projectName))
-      dir.create(path = outDir, showWarnings=FALSE)
-      
-      generateReport(object = session$userData$FlomicsMultiAssay,
-                     tmpDir = outDir, fileName = file)
+      withProgress(message = 'Download in progress',
+                   detail = 'This may take a while...', value = 0, {
+                    
+        incProgress(0.2)
+        projectName  <- getProjectName(session$userData$FlomicsMultiAssay)
+        outDir <- file.path(tempdir(), 
+                            paste0(format(Sys.time(),"%Y_%m_%d"),"_", 
+                                   projectName))
+        
+        dir.create(path = outDir, showWarnings=FALSE)
+        
+        incProgress(0.3)
+        generateReport(object = session$userData$FlomicsMultiAssay,
+                       tmpDir = outDir, fileName = file)
+        
+        incProgress(0.9)
+        owd <- setwd(tempdir())
+        on.exit(setwd(owd))
+        })
     }
   )
   
@@ -513,15 +526,26 @@ rflomicsServer <- function(input, output, session) {
       paste0(format(Sys.time(),"%Y_%m_%d"),"_", projectName, ".tar.gz")
     },
     content = function(file) {
-
-      projectName  <- getProjectName(session$userData$FlomicsMultiAssay)
-      outDir <- file.path(tempdir(), paste0(format(Sys.time(),"%Y_%m_%d"),"_", projectName))
-      dir.create(path = outDir, showWarnings=FALSE)
-      
-      generateReport(object = session$userData$FlomicsMultiAssay,
-                     tmpDir = outDir, archiveName = file, export = TRUE)
-      
+      withProgress(message = 'Download in progress',
+                   detail = 'This may take a while...', value = 0, {
+                     
+        incProgress(0.2)
+        projectName  <- getProjectName(session$userData$FlomicsMultiAssay)
+        outDir <- file.path(tempdir(), paste0(format(Sys.time(),"%Y_%m_%d"),"_", projectName))
+        dir.create(path = outDir, showWarnings=FALSE)
+        
+        incProgress(0.3)
+        generateReport(object = session$userData$FlomicsMultiAssay,
+                       tmpDir = outDir, archiveName = file, export = TRUE)
+        
+        incProgress(0.9)
+        owd <- setwd(tempdir())
+        on.exit(setwd(owd))
+        
+        })
     })
+  
+  
   # # Automatically bookmark every time an input changes
   # observe({
   #   reactiveValuesToList(input)
