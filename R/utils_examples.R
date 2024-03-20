@@ -106,7 +106,7 @@ singleOmicsExample <- function(omicType = "RNAseq") {
 #' @importFrom purrr reduce
 #' @importFrom dplyr filter
 #' @examples
-#' MAE <- generateExample(coexp = FALSE, integration = FALSE)
+#' MAE <- generateExample(coexp = FALSE, annotation = FALSE, integration = FALSE)
 #'
 
 
