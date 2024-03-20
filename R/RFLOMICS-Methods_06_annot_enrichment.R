@@ -17,12 +17,23 @@
 #' @param from indicates if ListNames are from differential analysis results
 #' (DiffExpAnal) or from the co-expression analysis results (CoExpAnal)
 #' @param database is it a custom annotation, GO or KEGG annotations
+#' @param domain subcatgory for the database (eg BP for GO)
+#' @param col_term for custom annotation, column name of the file containing
+#' term names or id.
+#' @param col_gene for custom annotation, column name of the file containing
+#' entities names.
+#' @param col_name (optional) for custom annotation, column name of the 
+#' file containing term names if col_term is used for ids.
+#' @param col_domain for custom annotation, column name of the file containing
+#' the domains.
+#' @param annot for custom annotation, path of the annotation file.
 #' @return A RflomicsMAE or a RflomicsS, depending on the class of object
 #' parameter. The enrichment results are added to the metadata slot, either
 #' in DiffExpEnrichAnal or CoExpEnrichAnal.
 #' @importFrom dplyr filter select mutate relocate
 #' @importFrom tidyselect all_of
 #' @importFrom clusterProfiler enrichKEGG enrichGO enricher
+#' @importFrom utils getFromNamespace
 #' @exportMethod runAnnotationEnrichment
 #' @rdname runAnnotationEnrichment
 #' @examples
@@ -321,23 +332,14 @@ setMethod(
 #' @param object An object of class \link{RflomicsSE}.
 #' It is expected the SE object is produced by rflomics previous analyses,
 #' as it relies on their results.
-#' @param contrast the name of the contrast to consider.
+#' @param contrastName the name of the contrast to consider.
 #' For Co expression analysis,
 #' it is expected to be one of "cluster.1", "cluster.2", etc.
-#' @param databasethe database (GO, KEGG or custom)
-#' @param domain if the database is GO, expect one of BP, MF or CC.
-#' Default is NULL.
-#' @param from what type of analysis to consider?
-#' One of 'DiffExpAnal' or 'CoExpAnal'
-#' @param type type of plot. Define the function used inside.
-#'  One of dotplot, heatplot or cnetplot.
-#' @param showCategory max number of terms to show.
-#' @param searchExpr expression to search in the showCategory terms.
-#' @param nodeLabel same as in enrichplot::cnetplot function,
-#' defines the labels on the graph. One of "all", "category" or "gene".
-#'  Default is 'all'.
-#' @param pvalueCutoff pvalueCutoff to define the enrichment threshold.
-#' Default is the one find in the clusterprofiler results in object.
+#' @param pathway_id the KEGG id pathway to plot.
+#' @param species Kegg code (eg hsa or ath)
+#' @param gene_idtype idtype (kegg, uniprot,...)
+#' @param from differential analysis (diffExp) or coexpression analysis (coexp)
+#' Used to link contrastName to the right metadata.
 #' @param ... Not in use at the moment
 #'
 #' @return Only displays the KEGG pathway, it does not return any object.
@@ -429,13 +431,13 @@ setMethod(
 #' Default is NULL.
 #' @param from what type of analysis to consider?
 #' One of 'DiffExp' or 'CoExp'
-#' @param type type of plot. Define the function used inside.
+#' @param plotType type of plot. Define the function used inside.
 #' One of dotplot, heatplot or cnetplot.
 #' @param showCategory max number of terms to show.
 #' @param searchExpr expression to search in the showCategory terms.
 #' @param nodeLabel same as in enrichplot::cnetplot function, defines
 # the labels on the graph. One of "all", "category" or "gene". Default is 'all'.
-#' @param pvalueCutoff pvalueCutoff to define the enrichment threshold.
+#' @param p.adj.cutoff pvalueCutoff to define the enrichment threshold.
 # Default is the one find in the clusterprofiler results in object.
 #' @param ... additionnal parameters for cnetplot, heatplot or
 #' enrichplot functions.
@@ -638,14 +640,13 @@ setMethod(
 #' presence.
 #' @param nClust number of separate cluster to plot on the heatmap, based o
 #' n the clustering.
-#' @param decorate one of stars or GeneRatio. Decoration of the heatmap.
-#' Default is NULL, no decoration.
 #' @param ... more arguments for ComplexHeatmap::Heatmap.
 #' @return A complexHeatmap object.
 #'
 #' @importFrom reshape2 recast
 #' @importFrom circlize colorRamp2
 #' @importFrom ComplexHeatmap Heatmap ht_opt
+#' @importFrom stats hclust dist
 #' @importFrom stringr str_wrap
 #' @exportMethod plotEnrichComp
 #' @rdname plotEnrichComp
@@ -1005,6 +1006,8 @@ setMethod(
 #' @param database either NULL, GO, KEGG or custom.
 #' if NULL, all tables are returned in a list.
 #' @param from either DiffExpEnrichAnal or CoExpAnal.
+#' @param contrastName the contrastName or clusterName to retrieve 
+#' the results from. If NULL, all results are returned.
 #' @return a list of tables or a table
 #' @exportMethod sumORA
 #' @examples

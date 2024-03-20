@@ -39,7 +39,7 @@ setMethod(f          = "generateModelFormulae",
 #' Set model formula from a Flomics RflomicsMAE
 #' 
 #' @param object a RflomicsMAE 
-#' @param a formula
+#' @param modelFormula a formula
 #' @return a object RflomicsMAE
 #' @exportMethod setModelFormula
 #' @rdname setModelFormula
@@ -63,7 +63,6 @@ setMethod(f          = "setModelFormula",
 #' Set model formula from a Flomics RflomicsMAE
 #' 
 #' @param object a RflomicsSE
-#' @param a formula
 #' @return a object RflomicsSE
 #' @exportMethod setModelFormula
 #' @rdname setModelFormula

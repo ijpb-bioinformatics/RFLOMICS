@@ -19,9 +19,9 @@
 #'
 #' @param FacBio a vector of character giving the name of the bio factors.
 #' @param FacBatch a vector of character giving the name of the batch factors.
-#'
+#' @importFrom stats update
 #' @return a named list of object of class formula
-#' @export
+#' @keywords internal
 #' @noRd
 #' @examples
 #'
@@ -79,7 +79,7 @@
 #'
 #' @return a string: contrastDir
 #' @importFrom stringr str_replace_all str_remove_all
-#' @export
+#' @keywords internal
 #' @noRd
 contrastName2contrastDir <- function(contrastName){
     # remplacement des comparaisons centrales
@@ -106,7 +106,7 @@ contrastName2contrastDir <- function(contrastName){
 #' @param returnTable return a dataTable with all contrasts information
 #' @return a character vector or a dataTable
 #' @rdname ContrastsSelection
-#' @export
+#' @keywords internal
 #' @importFrom data.table rbindlist
 #'
 getPossibleContrasts <- function(
@@ -150,7 +150,7 @@ getPossibleContrasts <- function(
 #' @param factorBio vector of bio factors
 #' @param modelFormula formula
 #' @return a list of dataframe with all contrasts per type
-#' @export
+#' @keywords internal
 #' @noRd
 .getExpressionContrastF <- function(ExpDesign, factorBio=NULL, modelFormula=NULL){
     
@@ -249,7 +249,7 @@ getPossibleContrasts <- function(
 #' @param j j
 #'
 #' @return a dataframe of contrasts
-#' @export
+#' @keywords internal
 #' @importFrom utils combn
 #' @importFrom data.table setDT setnames
 #' @importFrom tidyr unite
@@ -306,7 +306,7 @@ getPossibleContrasts <- function(
 #' @param i i
 #' @noRd
 #' @return a data frame with all simple contrasts
-#' @export
+#' @keywords internal
 #' @importFrom dplyr select mutate 
 #' @importFrom tidyselect all_of
 #' @author Christine Paysant-Le Roux 
@@ -363,7 +363,7 @@ getPossibleContrasts <- function(
 #'
 #' @return a data frame with all simple contrasts
 #' @importFrom data.table data.table
-#' @export
+#' @keywords internal
 #' @noRd
 #' @author Christine Paysant-Le Roux
 .defineAllSimpleContrasts <- function(treatmentFactorsList){
@@ -389,7 +389,7 @@ getPossibleContrasts <- function(
 #'
 #' @return allAveragedContrasts_df : a data frame with all the averaged
 #'  contrasts
-#' @export
+#' @keywords internal
 #' @noRd
 #' @importFrom dplyr add_tally group_by mutate select 
 #' @importFrom data.table data.table setcolorder
@@ -428,7 +428,7 @@ getPossibleContrasts <- function(
 #' @param row_j row_j
 #'
 #' @return a dataframe with part of the interaction contrasts definition
-#' @export
+#' @keywords internal
 #' @importFrom data.table setDT setnames
 #' @importFrom tidyr unite 
 #' @importFrom dplyr mutate select 
@@ -508,7 +508,7 @@ getPossibleContrasts <- function(
 #' @importFrom dplyr mutate select add_tally group_by 
 #' @importFrom tidyselect all_of
 #' @importFrom data.table setnames
-#' @export
+#' @keywords internal
 #' @noRd
 #' @author Christine Paysant-Le Roux
 .defineInteractionConstrastForPairsOfFactors <- function(treatmentFactorsList,
@@ -570,7 +570,7 @@ getPossibleContrasts <- function(
 #'
 #' @return a dataframe with all the interaction contrasts
 #' @importFrom data.table data.table
-#' @export
+#' @keywords internal
 #' @noRd
 #' @author Christine Paysant-Le Roux
 .defineAllInteractionContrasts <- function(treatmentFactorsList, 
@@ -611,7 +611,7 @@ getPossibleContrasts <- function(
 #' @param contrastList list of contrast expression
 #' @param modelFormula formula
 #' @return a list of dataframe with all contrast vectors
-#' @export
+#' @keywords internal
 #' @noRd
 .getContrastMatrixF <- function(ExpDesign, factorBio, modelFormula, contrastList){
     
@@ -667,7 +667,7 @@ getPossibleContrasts <- function(
 #' @return a binary vector (a single vector of 0 and 1) returning 
 #' the matched group string(s) from a grepl match on the design model 
 #' matrix colnames
-#' @export
+#' @keywords internal
 #' @noRd
 #' @author Christine Paysant-Le Roux
 .computeGroupVector <- function(treatmentGroups, colnamesMatrixDesign, 
@@ -709,7 +709,7 @@ getPossibleContrasts <- function(
 #' @param treatmentCondenv: the environment to use
 #'
 #' @return binary vector
-#' @export
+#' @keywords internal
 #' @noRd
 #' @author Christine Paysant-Le Roux
 .assignVectorToGroups <- function(treatmentFactorsList = treatmentFactorsList,
@@ -741,7 +741,7 @@ getPossibleContrasts <- function(
 #' @param treatmentCondenv: the environment to use
 #' @noRd
 #' @return the contrast vector
-#' @export
+#' @keywords internal
 #' @author Christine Paysant-Le Roux
 .returnContrastCoefficients <- function(contrast, 
                                         colnamesGLMdesign,

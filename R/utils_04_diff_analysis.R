@@ -271,6 +271,7 @@
 #' @title Get summary table from diffExpAnalysis analysis
 #'
 #' @param object a SE object (produced by Flomics) or a MAE
+#' @param SE.name The name of the RflomicsSE to access if object is RflomicsMAE.
 #' @return a table
 #' @importFrom dplyr filter
 #' @export

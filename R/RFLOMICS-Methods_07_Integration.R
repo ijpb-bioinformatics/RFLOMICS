@@ -4,8 +4,9 @@
 #' @title Wrapper for integration of omics data using RFLOMICS
 #' @description This function executes all the steps to ensure data integration
 #' from a \link{RflomicsMAE} object produced by FLOMICS. It encapsulates the
-#' three other functions: \link{filterFeatures}, \link{prepareForIntegration}
-#' and \link{runOmicsIntegration} otherwise necessary
+#' three other functions: \code{\link{filterFeatures,RflomicsMAE-method}}, 
+#' \code{\link{prepareForIntegration,RflomicsMAE-method}}
+#' and \code{\link{runOmicsIntegration,RflomicsMAE-method}} otherwise necessary
 #' to complete the integration.
 #' @param object An object of class \link{RflomicsMAE}.
 #' It is expected the MAE object is produced by rflomics previous analyses,
@@ -15,13 +16,22 @@
 #' @param rnaSeq_transfo character string, only supports 'limma (voom)'
 #' for now.
 #' Transformation of the rnaSeq data from counts to continuous data.
-#' @param variableLists list of variables to keep per dataset.
-#' @param choice character. If choice is set to 'DE',
-#' filters the object to take only the DE omics using differential analysis
-#' results stored in object.
-#' If choice is different than DE, no filtering is applied.
-#' @param type one of union or intersection.
+#' @param selOpt list of selection option for each dataset: one of none, DE 
+#' or a vector of contrasts or cluster names.
+#' @param type one of union or intersection. 
 #' @param group Not implemented yet in the interface. Useful for MOFA2 run.
+#' @param method one of MOFA or mixOmics
+#' @param scale_views boolean. If TRUE, each dataset is scaled.
+#' @param maxiter MOFA2 parameter. Number of maximum iteration to use.
+#' @param num_factors MOFA2 parameter. Number of factor to compute. 
+#' @param selectedResponse vector of character. Response variables for mixOmics
+#' @param ncomp mixOmics parameter. Number of component to compute. 
+#' @param link_datasets mixOmics parameter. Link between datasets in the design.
+#' @param link_response mixOmics parameter. Link between dataset and response.
+#' @param sparsity mixOmics parameter. If TRUE, uses block.splsda.
+#' @param cases_to_try used for tuning when sparse analysis is TRUE. 
+#' @param silent silence all functions. 
+#' @param cmd used in the interface, print cmd lines.
 #' @return a RflomicsMAE object. According to the method (MOFA or mixOmics),
 #' the correct slot of metadata has been filled with the results and the
 #' settings.
@@ -99,9 +109,10 @@ setMethod(
 # ---- prepareForIntegration ----
 #' @title Preparation step for integration
 #' @description This function transforms a RflomicsMAE produced by rflomics
-#' into an untrained MOFA objects or a list to use for mixOmics.
-#' It checks for batch effect to correct them prior to the integration.
-#' It also transforms RNASeq counts data into continuous data.
+#' into an untrained MOFA object or a list to use for mixOmics.
+#' It checks for batch effects to correct them before integration.
+#' It also transforms RNASeq counts data into continuous data using 
+#' \code{\link[limma]{voom}}.
 #' This is the second step into the integration. It is usually preceded by
 #' \link{filterFeatures} to extract the correct variables,
 #'  and followed by \link{runOmicsIntegration}.
@@ -120,6 +131,8 @@ setMethod(
 #' @param transformData boolean. 
 #' Transform the data with the transform and normalization method?
 #' Default is TRUE.
+#' @param cmd used in the interface. Print cmd lines.
+#' @param silent if TRUE, silence all functions.
 #' @return An untrained MOFA object or a list of dataset
 #' @exportMethod prepareForIntegration
 #' @rdname prepareForIntegration
@@ -261,12 +274,12 @@ setMethod(
             if (silent) {
                 MOFAObject <- suppressMessages(suppressWarnings(
                     create_mofa(object,
-                                group = group,
+                                groups = group,
                                 extract_metadata = TRUE)
                 ))
             } else {
                 MOFAObject <- create_mofa(object,
-                                          group = group,
+                                          groups = group,
                                           extract_metadata = TRUE)
             }
             return(MOFAObject)
@@ -311,10 +324,10 @@ setMethod(
 #' @title Feature selection in a Rflomics MAE
 #' @description This function selects all the features to keep according to
 #' user's choices on each omic data.
-#' @param object An object of class \link{RflomicsMAE}.
+#' @param object An object of class \link{RflomicsMAE-class}.
 #' It is expected the MAE object is produced by rflomics previous analyses,
 #' as it relies on their results.
-#' @param selOpt list of vectors. Prefered named list with names corresponding
+#' @param selOpt list of vectors. Preferred named list with names corresponding
 #' to the names of the experimentList in the object. For each Experiment, gives
 #' the option for the filtering: either 'all', 'DE', 'none',
 #' or a specific name of a
@@ -396,7 +409,7 @@ setMethod(
                                 # TODO problem when only one selected
                             },
                             "CoexCluster" = {
-                                .getCluster(SE.object, clusterName = listSel)
+                                getClusterEntities(SE.object, clusterName = listSel)
                             },
                             {
                                 # Default: all
@@ -455,26 +468,60 @@ setMethod(
 #' as it relies on their results.
 #' @param preparedObject An untrained MOFA object or a list of dataset.
 #' Usually a result of \link{prepareForIntegration}.
-#' @param type one of union or intersection.
-#' @param group Not implemented yet in the interface. Useful for MOFA2 run.
+#' @param method one of MOFA or mixOmics. 
+#' Method for which the object is prepared.
+#' @param scale_views boolean. If TRUE, scale each dataset to unit variance.
+#' @param maxiter MOFA2 parameter. 
+#' Number of max iteration (otherwise stop when converged.)
+#' @param num_factors MOFA2 parameter. The number of factor to compute.
+#' @param selectedResponse character vector, used for mixOmics. 
+#' Response variables names for block.(s)plsda.
+#' @param ncomp mixOmics parameter. Number of components to compute.
+#' @param link_datasets mixOmics parameter. 
+#' Link between datasets in the computation.
+#' @param link_response mixOmics parameter. Link between dataset and response.
+#' @param sparsity boolean. Used to determine which mixOmics function to apply (either
+#' block.plsda if FALSE or block.splsda if TRUE).
+#' @param cases_to_try integer. If sparsity is set to TRUE, then cases_to_try
+#' is used to determine the number of sets of variables to test for tuning.
+#' @param silent boolean. If TRUE, silence all functions.
+#' @param cmd boolean. Used in the interface. If TRUE, print cmd in the console.
 #' @param ... not in use at the moment
 #' @return a RflomicsMAE object with the correct metadata slot filled with the
 #' results and the settings.
 #' @rdname runOmicsIntegration
 #' @exportMethod runOmicsIntegration
 #' @examples
-#' MAEtest <- generateExample(annotation = FALSE, coexp = FALSE,
-#' integration = FALSE)
+#' # Generate an Rflomics MAE:
+#' ExpDesign <- RFLOMICS::readExpDesign(file = paste0(system.file(package = "RFLOMICS"),
+#'                      "/ExamplesFiles/ecoseed/condition.txt"))
+#' factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
+#'                         factorRef   = c("rep1",   "Low",          "DS"),
+#'                         factorType  = c("batch",  "Bio",          "Bio"),
+#'                         factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
+#' 
+#' omicsData <- list(
+#'     RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
+#'                             "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
+#'     RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
+#'                             "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
+#' 
+#' MAE <- RFLOMICS::createRflomicsMAE(projectName = "Tests", 
+#'                                    omicsData   = omicsData,
+#'                                    omicsNames  = c("metatest", "protetest"),
+#'                                    omicsTypes  = c("metabolomics","proteomics"),
+#'                                    ExpDesign   = ExpDesign,
+#'                                    factorRef   = factorRef)
+#' names(MAE) <- c("metatest", "protetest")
 #'
 #' # Create the appropriate object using prepareForIntegration:
-#' mofaObj <- prepareForIntegration(MAEtest,
+#' mofaObj <- prepareForIntegration(MAE,
 #'             omicsNames = c("protetest", "metatest"),
-#'             variableLists = rownames(MAEtest),
 #'             method = "MOFA")
 #'
 #' # Perform integration:
-#' MAEtest <- runOmicsIntegration(MAEtest, mofaObj, method = "MOFA")
-#' MOFA2::plot_variance_explained(getMOFA(MAEtest))
+#' MAE <- runOmicsIntegration(MAE, mofaObj, method = "MOFA")
+#' MOFA2::plot_variance_explained(getMOFA(MAE))
 #'
 setMethod(
     f = "runOmicsIntegration",
@@ -717,6 +764,8 @@ setMethod(
 # ---- Set Integration Results ----
 
 #' @rdname methods-for-integration
+#' @param results The MOFA or mixOmics results to set in the object. 
+#' If null, set to NULL.
 #' @exportMethod setMOFA
 setMethod(
     f = "setMOFA",

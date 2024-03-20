@@ -256,7 +256,7 @@
 
 #' @title Plot correlation network between omics from MOFA2 results
 #'
-#' @param object a MOFA result
+#' @param resMOFA a MOFA result
 #' @param factor_choice chose weight from this factor
 #' @param abs_weight_network threshold of weight to select entities to print
 #' @param abs_min_cor_network correlation threshold
@@ -273,6 +273,7 @@
 #' @importFrom reshape2 melt
 #' @importFrom qgraph qgraph
 #' @importFrom ggpubr ggarrange
+#' @importFrom grDevices recordPlot
 #' @examples
 #' MAEtest <- generateExample(coexp = FALSE, annotation = FALSE)
 #' MOFACorNetwork(getMOFA(MAEtest), abs_weight_network = 0.8, 
@@ -555,6 +556,7 @@ MOFACorNetwork <- function(resMOFA,
 #' @importFrom tidyselect all_of
 #' @importFrom mixOmics plsda splsda block.plsda block.splsda tune.block.splsda
 #' tune.splsda unmap
+#' @importFrom utils getFromNamespace
 #' @keywords internal
 #' @noRd
 

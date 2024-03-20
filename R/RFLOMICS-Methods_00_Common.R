@@ -11,6 +11,7 @@
 #' (default: date()_projectName.tar.gz).
 #' @param export boolean value to create archive (default: FALSE)
 #' @param tmpDir temporary directory (default: working directory)
+#' @param ... other arguments to pass into the render function.
 #' @return An html report or archive (tar.gz)
 #' @importFrom rmarkdown render
 #' @exportMethod generateReport
@@ -171,9 +172,9 @@ setMethod(
 #' @param object An object of class \link{RflomicsSE-class}
 #' @param raw This argument indicates whether the scaled PCA has to be 
 #' performed on raw [\sQuote{raw}] or normalized [\sQuote{norm}] data.
-#' @param PCs A vector giving the two axis that have to be drawn for the 
+#' @param axes A vector giving the two axis that have to be drawn for the 
 #' factorial map
-#' @param condition All combination of level's factor
+#' @param groupColor All combination of level's factor
 #' @return PCA plot (ggplot2 object)
 #' @importFrom dplyr mutate full_join select right_join
 #' @importFrom FactoMineR coord.ellipse

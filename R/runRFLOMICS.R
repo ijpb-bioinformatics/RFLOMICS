@@ -1,6 +1,7 @@
 #' @title runRFLOMICS
 #' @description running this function will open the shiny application. 
 #' Run the shiny application
+#' @param ... More arguments to pass to shinyApp.
 #' @return shinyApp
 #' @importFrom htmltools span tagList p div a h4 h5 hr tags br HTML
 #' @importFrom shinyBS popify

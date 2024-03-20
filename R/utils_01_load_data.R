@@ -635,7 +635,6 @@ check_NA <- function(object) {
 #' the border seperating cells (0 specifies no border)
 #'
 #' @return A printable/modifiable ggplot2 object.
-#' @export
 #' @importFrom ggplot2 ggplot aes aes_string theme facet_grid labs ylab xlab
 #' facet_grid element_blank geom_text scale_fill_manual geom_tile ggtitle
 #' @keywords internal

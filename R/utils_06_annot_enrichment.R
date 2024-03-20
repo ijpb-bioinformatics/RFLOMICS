@@ -8,6 +8,7 @@
 #' @importFrom stringr str_split
 #' @importFrom pathview pathview
 #' @importFrom png readPNG
+#' @importFrom utils data
 #' @noRd
 #'
 # Code from: https://stackoverflow.com/questions/60141841/
@@ -29,6 +30,7 @@
         invisible(file.remove(paste0(nam[[1]][1], ".xml")))
         invisible(file.remove(paste0(nam[[1]][1], ".png")))
     }
+    rm(bods)
     return()
 }
 

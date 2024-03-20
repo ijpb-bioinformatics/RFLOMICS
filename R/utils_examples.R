@@ -47,59 +47,14 @@ initExampleMAE <- function() {
     return(RMAE)
 }
 
-#' @title singleOmicsExample
-#'
-#' @return a Rflomics SummarizedExperiment, result of some RFLOMICS analyses
-#' @importFrom vroom vroom
-#' @export
-#' @rdname Example-functions
-#' @examples
-#' singleOmicsExample(omicType = "RNAseq")
-#'
-singleOmicsExample <- function(omicType = "RNAseq") {
-    if (missing(omicType))
-        stop("Please provide an omic type.")
-    
-    datPath <- paste0(system.file(package = "RFLOMICS"),
-                      "/ExamplesFiles/ecoseed/")
-    
-    ExpDesign <-
-        readExpDesign(file = paste0(datPath, "condition.txt"))
-    
-    design <- c(
-        "Repeat" = "batch",
-        "temperature" = "bio",
-        "imbibition" = "bio"
-    )
-    
-    omicsData <-
-        switch(
-            toupper(omicType),
-            "RNASEQ" = {
-                readOmicsData(file = paste0(datPath, "transcriptome_ecoseed.txt"))
-            },
-            "PROTEOMICS" = {
-                readOmicsData(file = paste0(datPath, "metabolome_ecoseed.txt"))
-            },
-            "METABOLOMICS" = {
-                readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt"))
-            }
-        )
-    
-    RSE <- createRflomicsSE(
-        omicData  = omicsData,
-        omicType  = omicType,
-        ExpDesign = ExpDesign,
-        design    = design
-    )
-    
-    return(RSE)
-}
-
-
 #' @title generateExample
 #'
-#' @return a multiAssayExperiment, results of some RFLOMICS analyses
+#' @param processing  boolean. If TRUE, processing step is done.
+#' @param diffanalysis boolean. If TRUE, differential analysis step is done.
+#' @param coexp boolean. If TRUE, co-expression step is done.        
+#' @param annotation  boolean. If TRUE, enrichment analysis step is done. 
+#' @param integration  boolean. If TRUE, integration step is done.
+#' @return a RflomicsMAE object, results of some RFLOMICS analyses
 #' @importFrom vroom vroom
 #' @export
 #' @rdname Example-functions

@@ -117,6 +117,7 @@
 #' @importFrom coseq ICL likelihood clusters
 #' @importFrom dplyr group_by filter summarise mutate n
 #' @importFrom stringr str_replace
+#' @importFrom stats na.omit
 #' @keywords internal
 #' @noRd
 #'
@@ -449,13 +450,12 @@
 #' @param selectedCluster cluster num
 #' @param conds condition matrix
 #' @return boxplot profiles.
-#' @export
 #' @importFrom ggplot2 geom_boxplot facet_wrap theme element_blank aes
 #' @importFrom dplyr arrange rename full_join mutate filter
 #' @importFrom purrr reduce
 #' @importFrom reshape2 melt
 #' @noRd
-#'
+#' @keywords internal
 coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
     
     samples <- variable <- value <- cluster <- NULL
@@ -527,5 +527,8 @@ coseq.y_profile.one.plot <- function(coseq.res, selectedCluster, conds){
     )
     
 }
+
+
+
 
 
