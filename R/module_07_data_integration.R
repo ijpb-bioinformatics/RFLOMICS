@@ -417,10 +417,10 @@
                         tabPanel(
                             "Overview", 
                             .outMOOverview(Data_res, settings)),
-                        tabPanel(
-                            "Explained Variance",
-                            .outMOexplainedVar(session, Response)
-                        ),
+                        # tabPanel(
+                        #     "Explained Variance",
+                        #     .outMOexplainedVar(session, Response)
+                        # ),
                         tabPanel(
                             "Individuals",
                             .outMOIndividuals(session, input, settings,
@@ -497,7 +497,7 @@
                 #                         ggtitle("Data Overview"))
                 # ),
                 tabPanel("Factors Correlation",
-                         renderPlot(plot_factor_cor(resMOFA))),
+                         .outMOFAFactorsCor(resMOFA)),
                 tabPanel("Explained Variance",
                          .outMOFAexplainedVar(resMOFA)),
                 tabPanel(
@@ -828,7 +828,9 @@
                                     .addBSpopify(
                                         label = "Select response variables",
                                         title = "", 
-                                        content = paste0("On which feature to perform the analysis?"), 
+                                        content = paste0("On which feature to perform the analysis?", 
+                                                         " You can select as many response variables as you want, the analysis is performed on each of them separately.",
+                                                         " The same parameters are applied for all of them."), 
                                         trigger = "click", placement = "right"),
                                 choices  = bioFacts,
                                 selected = bioFacts
@@ -856,7 +858,7 @@
                                     title = "", 
                                     content = 
                                         paste0("Number of components to search for.",
-                                               " Equivalent to the components in the PCA."),
+                                               " Roughly equivalent to the components in the PCA."),
                                     trigger = "click", placement = "right"),
                                 value = 10,
                                 min = 5,
@@ -888,32 +890,45 @@
 #' @keywords internal
 #' @importFrom DT datatable
 .outMOOverview <- function(Data_res, settings) {
-    column(6 , renderDataTable({
-        if (is.list(Data_res$X)) {
-            # block.plsda or block.splsda
-            df <- t(vapply(Data_res$X, dim, c(1, 1)))
-            colnames(df) <- c("Ind", "Features")
-            
-            if (settings$sparsity) {
-                df <- cbind(df, do.call("rbind", Data_res$keepX))
-                colnames(df)[!colnames(df) %in% c("Ind", "Features")] <-
-                    paste("Comp", seq_len(length(Data_res$keepX[[1]])))
+    tagList(
+        tags$style(
+            ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
+        ),
+        br(),
+        div(class = "explain-p", 
+            HTML(paste0("This overview present the number of observations and the number of features per dataset.",
+                        " If a sparse analysis was performed, for each component and dataset, the best number of features is also printed."))),
+        hr(),
+        column(6 , renderDataTable({
+            if (is.list(Data_res$X)) {
+                # block.plsda or block.splsda
+                df <- t(vapply(Data_res$X, dim, c(1, 1)))
+                colnames(df) <- c("Ind", "Features")
+                
+                if (settings$sparsity) {
+                    df <- cbind(df, do.call("rbind", Data_res$keepX))
+                    colnames(df)[!colnames(df) %in% c("Ind", "Features")] <-
+                        paste("Comp", seq_len(length(Data_res$keepX[[1]])))
+                }
+                
+            } else {
+                # plsda or splsda
+                df <-  data.frame("Ind" = nrow(Data_res$X),
+                                  "Features" = ncol(Data_res$X))
+                if (settings$sparsity) {
+                    df <- cbind(df, do.call("cbind", as.list(Data_res$keepX)))
+                    colnames(df)[!colnames(df) %in% c("Ind", "Features")] <-
+                        paste("Comp", seq_len(length(Data_res$keepX)))
+                }
             }
             
-        } else {
-            # plsda or splsda
-            df <-  data.frame("Ind" = nrow(Data_res$X),
-                              "Features" = ncol(Data_res$X))
-            if (settings$sparsity) {
-                df <- cbind(df, do.call("cbind", as.list(Data_res$keepX)))
-                colnames(df)[!colnames(df) %in% c("Ind", "Features")] <-
-                    paste("Comp", seq_len(length(Data_res$keepX)))
-            }
-        }
-        
-        datatable(t(df))
-        
-    }))
+            datatable(t(df))
+            
+        })))
 }
 
 #' @noRd
@@ -934,14 +949,14 @@
                               Response,
                               Data_res) {
     ns <- session$ns
-    textExplained <- paste0("These graphs represent the samples coordinates ",
-                            "projected onto the components found by mixOmics.",
-                            " If <b>Ellipses</b> is turned on, ellpsis are ",
-                            "added to the graphs. They put every graph on ",
-                            "the same scale. Sample are colored according to ",
-                            Response, ". It is best when the samples are ",
-                            "grouping into response modalities. If it is not",
-                            " the case, the analysis was maybe not successful."
+    
+    textExplained <- paste0("These graphs represent the samples coordinates projected onto the components found by mixOmics.",
+                            " If <b>Ellipses</b> is turned on, ellipses are added to the graphs according to the response variable.",
+                            " When toggled, ellipses force all windows to be on the same scale. <br>", 
+                            "Samples are colored according to ",
+                            Response, 
+                            ". It is best when the samples are grouping into response modalities.",
+                            " If it is not the case, the analysis was maybe not successful."
     )
     
     renderUI({
@@ -953,6 +968,7 @@
                     font-style: italic;
                   }"
             ),
+            br(),
             div(class = "explain-p", HTML(textExplained)),
             hr(),
             column(
@@ -1004,7 +1020,11 @@
                            Response,
                            Data_res) {
     ns <- session$ns
-    moFeatText <- "Put some text here"
+    moFeatText <- paste0("For each block (datatable), these graph represent",
+                         ifelse(input$MO_sparsity, " the selected features", " all variables"),
+                         " in a correlation circle.",
+                         " The interpretation is the same as the ones from a PCA.",
+                         " Important features (high loadings) are on the edge of the circle.")
     
     tagList(
         tags$style(
@@ -1014,6 +1034,7 @@
                     font-style: italic;
                   }"
         ),
+        br(),
         div(class = "explain-p", HTML(moFeatText)),
         hr(),
         column(
@@ -1061,48 +1082,57 @@
              settings,
              Response,
              Data_res) {
+        
         ns <- session$ns
         
-        moText <- "Put some text here"
-        
-        tagList(
-            tags$style(
-                ".explain-p {
+        explanMess <-  paste0("For each block (datatable), these graphs represent the ",
+                              # input[[paste0(Response, "Load_ndisplay")]],  
+                              " first features in terms of loadings score (coefficients) for the selected component, by ascending order",
+                              # input[[paste0(Response, "Load_comp_choice")]],
+                              ". The higher (absolute) the score, the more important the variable is in the component construction. ",
+                              " This means the highest-scores features also help the most to discriminate between categories of the response variable.")
+        renderUI({
+            tagList(
+                tags$style(
+                    ".explain-p {
                     color: Gray;
                     text-justify: inter-word;
                     font-style: italic;
                   }"
-            ),
-            div(class = "explain-p", HTML(moText)),
-            hr(),
-            column(
-                1,
-                numericInput(
-                    inputId = ns(paste0(Response, "Load_comp_choice")),
-                    label = "Component:",
-                    min = 1,
-                    max =  settings$ncomp,
-                    value = 1,
-                    step = 1
                 ),
-                numericInput(
-                    inputId = ns(paste0(Response, "Load_ndisplay")),
-                    label = "Number of features to display:",
-                    min = 1,
-                    max =  ifelse(is.list(Data_res$X),
-                                  max(vapply(
-                                      Data_res$X, ncol, c(1)
-                                  )),
-                                  ncol(Data_res$X)),
-                    value = 25,
-                    step = 1
+                br(),
+                div(class = "explain-p", HTML(explanMess)),
+                hr(),
+                column(
+                    1,
+                    numericInput(
+                        inputId = ns(paste0(Response, "Load_comp_choice")),
+                        label = "Component:",
+                        min = 1,
+                        max =  settings$ncomp,
+                        value = 1,
+                        step = 1
+                    ),
+                    numericInput(
+                        inputId = ns(paste0(Response, "Load_ndisplay")),
+                        label = "Number of features to display:",
+                        min = 1,
+                        max =  ifelse(is.list(Data_res$X),
+                                      max(vapply(
+                                          Data_res$X, ncol, c(1)
+                                      )),
+                                      ncol(Data_res$X)),
+                        value = 25,
+                        step = 1
+                    ),
                 ),
-            ),
-            column(11 , renderPlot(
-                plotLoadings(Data_res,
-                             comp = input[[paste0(Response, "Load_comp_choice")]],
-                             ndisplay = input[[paste0(Response, "Load_ndisplay")]])
-            )))
+                column(11 , renderPlot(
+                    plotLoadings(Data_res,
+                                 comp = input[[paste0(Response, "Load_comp_choice")]],
+                                 ndisplay = input[[paste0(Response, "Load_ndisplay")]])
+                )))
+            
+        })
     }
 
 #' @noRd
@@ -1116,7 +1146,12 @@
              Data_res) {
         
         ns <- session$ns
-        moText <- "Put some text here"
+        moText <- paste0("This network is generated using mixOmics::network function.",
+                         " It represents the correlation between entities from different datasets,",
+                         " calculated using the components." ,
+                         " As stated by the mixOmics help: 'only pairs of variables belonging to different omics datasets are depticted'.",
+                         " You can adjust the correlation threshold to enlarge or reduce the network.",
+                         " Only links higher than the cutoff in absolute value will be displayed, with the associated entities.")
         
         tagList(
             tags$style(
@@ -1126,6 +1161,7 @@
                     font-style: italic;
                   }"
             ),
+            br(),
             div(class = "explain-p", HTML(moText)),
             hr(),
             
@@ -1161,8 +1197,13 @@
                                    mat = Data_res,
                                    blocks = seq_len(lenData),
                                    cutoff = input[[paste0(Response, "Network_cutoff")]],
-                                   shape.node = rep("rectangle", lenData)
-                               )
+                                   shape.node = rep("rectangle", lenData),
+                                   size.node = 0.05,
+                                   graph.scale = 1,
+                                   keysize = c(0.5, 0.5)
+                               ), 
+                               width = 1000, height = 800, 
+                               execOnResize = TRUE
                            )
                        }
                        
@@ -1177,7 +1218,9 @@
                           Response,
                           Data_res) {
     ns <- session$ns
-    moText <- "Put some text here"
+    moText <- paste0("This is a heatmap generated by the mixOmics::cimDiablo function.",
+                     " All datatables are mixed together in this plot and the samples and features are clustered using euclidean distance and complete agregation method.",
+                     " Features are centered but not scaled. ")
     
     if (is(Data_res, "block.splsda")) {
         tagList(
@@ -1188,6 +1231,7 @@
                     font-style: italic;
                   }"
             ),
+            br(),
             div(class = "explain-p", HTML(moText)),
             hr(),
             column(
@@ -1218,11 +1262,36 @@
 }
 
 # ---- Plots MOFA -----
+#' @noRd
+#' @keywords internal
+.outMOFAFactorsCor <- function(resMOFA){
+    mofaText <- paste0("This graph represents the correlation between calculated factors.",
+                       " Factors are supposed to be orthogonal (correlation close to 0 between them).",
+                       " You must check that no correlation outside of the diagonal is greater than 0.5 (absolute value).",
+                       " <b>If there are factors that are strongly correlated, the results are not reliable.</b>")
+    tagList(
+        tags$style(
+            ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
+        ),
+        br(),
+        div(class = "explain-p", HTML(mofaText)),
+        hr(),      
+        renderPlot(plot_factor_cor(resMOFA))
+    )
+}
+
 
 #' @noRd
 #' @keywords internal
 .outMOFAexplainedVar <- function(resMOFA) {
-    mofaText <- "Put some text here"
+    mofaText <- paste0("These two graphs represent the cumulative explained variance per dataset and its decomposition by factor and dataset.",
+                       " This is the amount of variance within the dataset that is explained by the model (factors).",
+                       " The second graph is interprated as follows: 'Factor k explains xx% of the total variance of dataset X and yy% of the total variance of dataset Y.'"
+                       )
     
     tagList(
         tags$style(
@@ -1232,6 +1301,7 @@
                     font-style: italic;
                   }"
         ),
+        br(),
         div(class = "explain-p", HTML(mofaText)),
         hr(),
         column(6, renderPlot({
@@ -1249,7 +1319,11 @@
 #' @keywords internal
 .outMOFAWeightPlot <- function(session, resMOFA, input) {
     ns <- session$ns
-    mofaText <- "Put some text here"
+    mofaText <- paste0("Weights are an indicator of the contribution of each feature to the factors.",
+                       " Features with the highest weight (absolute value) are the most related to the factor. <br>",
+                       " In this graphs, the first features (by absolute weight value) are rank and presented by factor and dataset.",
+                       " Weight scaling scales the factors so that the weights are all between -1 and 1." ,
+                       " Weights should not be compared between datasets.")
     
     renderUI({
         tagList(
@@ -1260,6 +1334,7 @@
                     font-style: italic;
                   }"
             ),
+            br(),
             div(class = "explain-p", HTML(mofaText)),
             hr(),
             
@@ -1343,7 +1418,11 @@
 #' @keywords internal
 .outMOFAWeightTable <- function(session, resMOFA, input) {
     ns <- session$ns
-    mofaText <- "Put some text here"
+    mofaText <- paste0("Weights are an indicator of the contribution of each feature to the factors.",
+                       " Features with the highest weight (absolute value) are strongly related to the factor. <br>",
+                       " This table presents all the weights for the selected factors.",
+                       " You can search for a specific feature."
+    )
     
     verticalLayout(
         tags$style(
@@ -1353,6 +1432,7 @@
                     font-style: italic;
                   }"
         ),
+        br(),
         div(class = "explain-p", HTML(mofaText)),
         hr(),
         
@@ -1404,7 +1484,12 @@
 .outMOFAFactorsPlot <- function(session, resMOFA, input) {
     ns <- session$ns
     
-    mofaText <- "Put some text here"
+    mofaText <- paste0("These graphs represent the projection of the samples/observation onto factors.",
+                       " They allow you to search for a biological interpretation of the factors. <br>",
+                       " You can adjust the <b>color</b> of the samples and their <b>shape</b> to help caracterize a factor.",
+                       " You can also group them according to a specific response variable, and add violins or box plots to the graph.",
+                       " Scaling the factors places all coordinates between -1 and 1."
+                       )
     
     moreChoices <- colnames(resMOFA@samples_metadata %>%
                                 select(!c(sample, group)))
@@ -1418,6 +1503,7 @@
                     font-style: italic;
                   }"
             ),
+            br(),
             div(class = "explain-p", HTML(mofaText)),
             hr(),
             fluidRow(
@@ -1506,7 +1592,10 @@
 #' @keywords internal
 .outMOFAHeatmap <- function(session, resMOFA, input) {
     ns <- session$ns
-    mofaText <- "Put some text here"
+    mofaText <- paste0("This heatmap represents the first features, in terms of absolute weight value, of a factor, for a specific dataset.",
+                       " Samples and features are clustered using euclidean distance and complete aggregation method. <br>",
+                       " You can add <b>annotations</b>: choosing a specific response variable will add a color bar at the top of the heatmap, colored according to the modality of each sample.",
+                       " The <b>denoise</b> options will print the weights and factors product (the model results without the unexplained part) for this factor and this dataset. ")
     
     renderUI({
         verticalLayout(
@@ -1517,6 +1606,7 @@
                     font-style: italic;
                   }"
             ),
+            br(),
             div(class = "explain-p", HTML(mofaText)),
             hr(),
             fluidRow(
@@ -1617,8 +1707,23 @@
     ns <- session$ns
     colorPal_choices <- c("Greens", "Purples", "Oranges",
                           "Reds", "Greys", "Blues")
+    
+    mofaText <- paste0("This network represent all correlations between features, computed on the denoised matrix (product of weights and factors scores), for a specific factor.",
+                       " You can adjust the absolute weight threshold and the absolute correlation threshold.",
+                       " Please note: the lower the threshold, the greater the number features represented, which may take quite some time.")
+    
     renderUI({
         verticalLayout(
+            tags$style(
+                ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
+            ),
+            br(),
+            div(class = "explain-p", HTML(mofaText)),
+            hr(),
             fluidRow(
                 # buttons - choices for network
                 column(
@@ -1670,7 +1775,7 @@
                            colourInput(
                                inputId = ns("posCol"),
                                label = "Positive Edges Color:",
-                               value = "red",
+                               value = "firebrick3",
                                showColour = c("background"),
                                palette = c("square"),
                                allowedCols = NULL,
@@ -1683,7 +1788,7 @@
                            colourInput(
                                inputId = ns("negCol"),
                                label = "Negative Edges Color:",
-                               value = "green",
+                               value = "forestgreen",
                                showColour = c("background"),
                                palette = c("square"),
                                allowedCols = NULL,
@@ -1725,7 +1830,7 @@
                                     negCol = input$negCol
                                 )
                                 
-                            }, execOnResize = TRUE)))
+                            }, execOnResize = TRUE, width = 1000, height = 800)))
         )
     })
 }
@@ -1733,32 +1838,51 @@
 #' @noRd
 #' @keywords internal
 .outMOFARelations <- function(resMOFA) {
-    renderTable({
-        factors   <- get_factors(resMOFA)
-        ExpDesign <- resMOFA@samples_metadata
-        ExpDesign$group  <- NULL
-        ExpDesign$sample <- NULL
-        
-        res_aov <- lapply(
-            seq_len(ncol(ExpDesign)),
-            FUN = function(i) {
-                aov1 <- aov(factors$group1  ~ ExpDesign[, i])
-                unlist(lapply(
-                    summary(aov1),
-                    FUN = function(list_res) {
-                        list_res[["Pr(>F)"]][[1]]
+    
+    mofaText <- paste0("Each of the cells is the pvalue result from an ANOVA between the factor and the response variable.",
+                       " <b>No correction is applied.</b>",
+                       " This table is to help you detect a biological relation between a factor and a variable that you may hae observed at the 'Factor Plots' panel. ")
+    
+    renderUI({
+        verticalLayout(
+            tags$style(
+                ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
+            ),
+            br(),
+            div(class = "explain-p", HTML(mofaText)),
+            hr(),
+            renderTable({
+                factors   <- get_factors(resMOFA)
+                ExpDesign <- resMOFA@samples_metadata
+                ExpDesign$group  <- NULL
+                ExpDesign$sample <- NULL
+                
+                res_aov <- lapply(
+                    seq_len(ncol(ExpDesign)),
+                    FUN = function(i) {
+                        aov1 <- aov(factors$group1  ~ ExpDesign[, i])
+                        unlist(lapply(
+                            summary(aov1),
+                            FUN = function(list_res) {
+                                list_res[["Pr(>F)"]][[1]]
+                            }
+                        ))
                     }
-                ))
-            }
-        )
-        names(res_aov) <- colnames(ExpDesign)
-        
-        res_res <- do.call("rbind", res_aov)
-        colnames(res_res) <- gsub("Response ", "", colnames(res_res))
-        
-        res_res
-        
-    }, striped = TRUE, rownames = TRUE)
+                )
+                names(res_aov) <- colnames(ExpDesign)
+                
+                res_res <- do.call("rbind", res_aov)
+                colnames(res_res) <- gsub("Response ", "", colnames(res_res))
+                
+                res_res
+                
+            }, striped = TRUE, rownames = TRUE)
+            
+        )})
 }
 
 # ----- Beginning text ----
@@ -1802,16 +1926,6 @@
           
           h4(tags$span("Analysis settings:", style = "color:orange")),
           p(
-              "- Scale Datasets: in each table, scale every feature to
-          unit variance"
-          ),
-          p("- Components: number of components to be computed, default is 5"),
-          p(
-              "- Sparse Analysis: if checked, function block.splsda is run,
-          a variable selection is performed for each component and each
-          response variable"
-          ),
-          p(
               "- Tuning cases: if \"sparse analysis\" is checked, to select the
           relevant features for each component, tuning has to be performed.
           Tuning cases determines the number of feature selection to try and
@@ -1819,13 +1933,6 @@
           table and component, and all combinaisions are tested (for example:
           two datatables and five tuning cases will make 5*5 cases for each
           component to test), it can be quite long."
-          ),
-          
-          h4(tags$span("Response variables:", style = "color:orange")),
-          p(
-              "You can select as many response variables as you want,
-              the analysis is performed on each of them separately.
-              The same parameters are applied for all of them."
           ),
           
           h4(tags$span("Outputs:", style = "color:orange")),
@@ -1856,21 +1963,6 @@
           dataset, by ascending order. Default is showing the first 25 entities
           for each block, on the first component."
           ),
-          p(
-              "- Networks: similarity networks computed on selected components
-          factors. It only shows the between table correlation,
-          not the intra-table correlaction!"
-          ),
-          p(
-              "- CircosPlot: only available for sparse analyses. Similarity
-          networks computed on selected components factors. It only shows the
-          between table correlation, not the intra-table correlaction!"
-          ),
-          p(
-              "- CimPlot: only available for sparse analyses.  For each component,
-          shows the heatmap of selected features for all tables."
-          ),
-          
         )
     )
 }
