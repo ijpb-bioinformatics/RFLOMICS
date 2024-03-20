@@ -707,6 +707,7 @@ setGeneric(
                     variableLists = NULL,
                     group = NULL,
                     method = "MOFA",
+                    transformData = TRUE,
                     cmd = FALSE,
                     silent = TRUE,
                     ...) {
