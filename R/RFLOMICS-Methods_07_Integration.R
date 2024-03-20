@@ -114,8 +114,12 @@ setMethod(
 #' for now.
 #' Transformation of the rnaSeq data from counts to continuous data.
 #' @param variableLists list of variables to keep per dataset.
-#' @param type one of union or intersection.
 #' @param group Not implemented yet in the interface. Useful for MOFA2 run.
+#' @param method one of MOFA or mixOmics. 
+#' Method for which the object is prepared.
+#' @param transformData boolean. 
+#' Transform the data with the transform and normalization method?
+#' Default is TRUE.
 #' @return An untrained MOFA object or a list of dataset
 #' @exportMethod prepareForIntegration
 #' @rdname prepareForIntegration
@@ -142,6 +146,7 @@ setMethod(
                           variableLists = NULL,
                           group = NULL,
                           method = "MOFA",
+                          transformData = TRUE,
                           cmd = FALSE,
                           silent = TRUE) {
         method <- switch(
@@ -164,6 +169,15 @@ setMethod(
         
         if (any(ftypes == "batch")) {
             correct_batch <- TRUE
+        }
+        
+        # Transformation before anything else, except for RNAseq data.
+        if (transformData) {
+            for (SEname in omicsNames) {
+                if (getOmicsTypes(object[[SEname]]) != "RNAseq") {
+                    object[[SEname]] <- .checkTransNorm(object[[SEname]])
+                }
+            }
         }
         
         # On each selected omics, according to its type,
