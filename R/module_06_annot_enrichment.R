@@ -915,13 +915,8 @@
                 content = paste0("<p>Chose the appropriate columns names. ",
                                  "They are automatically derived from your file. ",
                                  "Items with a star are mandatory. </p>",
-                                 "<p>- Term Name is used in case of a term name ",
-                                 "that is different from its id ",
-                                 "(eg GO:0009409 is the id, response to ",
-                                 "cold is the term name).</p>",
-                                 "- Domain is used to differentiate databases or ",
-                                 "ontologies in the same file (eg: BP, CC and ",
-                                 "MF would be indicated in the domain column)."
+                                 "<p>- Term Name is used in case of a term name that is different from its id (eg GO:0009409 is the id, response to cold is the term name).</p>",
+                                 "- Domain is used to differentiate databases or ontologies in the same file (eg: BP, CC and MF would be indicated in the domain column)."
                 ),
                 trigger = "click",
                 placement = "top"
@@ -1035,12 +1030,8 @@
                         actionLink(ns("dbSel"), icon("question-circle")),
                         title = "",
                         content = paste0(
-                            "The databases are automatically ",
-                            "retrieved from your R library, ",
-                            "searching for all package in the for of ",
-                            "org.*db. If none is found, ",
-                            "please install the corresponding ",
-                            "database using Bioconductor install manager."
+                            "The databases are automatically retrieved from your R library, searching for all package in the for of org.*db.",
+                            " If none is found, please install the corresponding database using Bioconductor install manager."
                         ),
                         trigger = "click",
                         placement = "top"
@@ -1122,8 +1113,7 @@
                                label = "Organism code:"),
                     title = "KEGG Organism code",
                     content = paste0(
-                        "Three or more letters ",
-                        "indicating the species. ",
+                        "Three or more letters indicating the species. ",
                         "For example: ",
                         "<ul><li>hsa for <i>Homo sapiens</i>,</li> ",
                         "<li>ath for <i>Arabidopsis thaliana</i>.",
@@ -1173,25 +1163,19 @@
         # Explanation message for result table
         expMessage <-
             paste0(
-                "This table present the results of the enrichment for",
-                " the ",
+                "This table present the results of the enrichment for the ",
                 varLabel0,
-                " list. ",
-                "<b>Description</b> gives the full name of ",
-                " the term corresponding to the <b>ID</b> (if ",
-                " available). <b>GeneRatio</b> gives the number ",
-                " of ",
+                " list.",
+                " <b>Description</b> gives the full name of  the term corresponding to the <b>ID</b> (if available).",
+                " <b>GeneRatio</b> gives the number of ",
                 varLabel0,
-                " in the list that were also ",
-                " found in the term list. <b>BgRatio</b> stands ",
-                " for background ratio and gives the number of ",
+                " in the list that were also found in the term list.",
+                " <b>BgRatio</b> stands for background ratio and gives the number of ",
                 varLabel0,
-                " of the term that were in the universe ",
-                " (number of annotated ",
+                " of the term that were in the universe (number of annotated ",
                 varLabel0,
                 ").",
-                " Pvalues, qvalues and adjusted pvalues were rounded",
-                " to 3 digits."
+                " Pvalues, qvalues and adjusted pvalues were rounded to 3 digits."
             )
         
         # for KEGG database, 2 more columns:
@@ -1470,21 +1454,13 @@
                           h4(icon("question-circle"), "Help"),
                           title = "Parameters for enrichment results plots",
                           content = paste0(
-                              "For each domain indicated ",
-                              "(typically BP, CC and MF for GO ,",
-                              "enrichment), three graphs and the results ",
-                              "table are displayed (all pvalues are rounded ",
-                              "to 3 digits). For more ",
-                              "information on the plots, please ",
-                              "check the package vignette. ",
-                              "All entries apply to the three ",
-                              " graphs displayed. ",
-                              "<p> You can choose the number of terms ",
-                              "to be displayed, sorted by ascending order of ",
+                              "For each domain indicated (typically BP, CC and MF for GO enrichment), three graphs and the results ",
+                              "table are displayed (all pvalues are rounded to 3 digits).",
+                              " For more information on the plots, please check the clusterprofiler package vignette. ",
+                              "All entries apply to the three graphs displayed. ",
+                              "<p> You can choose the number of terms to be displayed, sorted by ascending order of ",
                               "adjusted pvalue.</p>",
-                              "<p> The search expression allows you ",
-                              "to display only the first terms containing ",
-                              "the regular expression of interest. ",
+                              "<p> The search expression allows you to display only the first terms containing the regular expression of interest. ",
                               "You can use regular expression patterns such as:",
                               "<ul><li> <b>||</b> for <i>or</i> statement; </li>",
                               "<li> <b>&</b> for <i>and</i> statement;</li>",
@@ -1536,8 +1512,7 @@
                     "</b> terms, arranged in alphabetical order. ",
                     " The tiles of <b>",
                     varLabel0,
-                    "</b> present in the term are colored according to ",
-                    "the log2 FC of the differential analysis of <b>",
+                    "</b> present in the term are colored according to the log2 FC of the differential analysis of <b>",
                     listname,
                     "</b> . White tiles indicate the ",
                     varLabel0,
@@ -1549,8 +1524,7 @@
                     "This graph shows the top <b>",
                     input[[paste0(listname, "-top.over")]],
                     "</b> terms, arranged in alphabetical order. ",
-                    "The color of the tile indicates the absence (white) or ",
-                    "presence (black) of a ",
+                    "The color of the tile indicates the absence (white) or presence (black) of a ",
                     varLabel0,
                     " in the term."
                 )
@@ -1632,14 +1606,11 @@
                         input[[paste0(listname, "-top.over")]],
                         "</b> terms, ordered by GeneRatio (number of ",
                         varLabel0,
-                        " found differentially expressed , also called Count,",
-                        "  relative to the total number of ",
+                        " found differentially expressed, also called Count, relative to the total number of ",
                         varLabel0,
                         " for that term in the database). ",
-                        "The dot color is linked to ",
-                        "the adjusted pvalue.",
-                        " Dot size is determined by the number of ",
-                        "differentially expressed ",
+                        "The dot color is linked to the adjusted pvalue.",
+                        " Dot size is determined by the number of differentially expressed ",
                         varLabel0,
                         " in <b>",
                         listname,
@@ -1652,14 +1623,11 @@
                         input[[paste0(listname, "-top.over")]],
                         "</b> terms, , ordered by GeneRatio (number of ",
                         varLabel0,
-                        " found in the cluster , also called Count,",
-                        "  relative to the total number of ",
+                        " found in the cluster , also called Count, relative to the total number of ",
                         varLabel0,
                         " for that term in the database). ",
-                        "The dot color is linked to ",
-                        "the adjusted pvalue.",
-                        " Dot size is determined by the number of ",
-                        "differentially expressed ",
+                        "The dot color is linked to the adjusted pvalue.",
+                        " Dot size is determined by the number of differentially expressed ",
                         varLabel0,
                         " in <b>",
                         listname,
@@ -1761,14 +1729,12 @@
                     varLabel0,
                     " (blue/red nodes).",
                     varLabel0,
-                    " color of is determined by the log2FC derived from",
-                    " the differential analysis of <b>",
+                    " color of is determined by the log2FC derived from the differential analysis of <b>",
                     listname,
                     "</b> , with red indicating an up-regulated ",
                     varLabel0,
                     " and blue a down-regulated one.",
-                    " The size of the term node correlates with ",
-                    "the number of ",
+                    " The size of the term node correlates with the number of ",
                     varLabel0,
                     " to which they are linked."
                 )
@@ -1780,8 +1746,7 @@
                     "</b> terms (beige nodes), linked to their associated ",
                     varLabel0,
                     ". ",
-                    " The size of the term node correlates with ",
-                    "the number of ",
+                    " The size of the term node correlates with the number of ",
                     varLabel0,
                     " to which they are linked."
                 )
@@ -1863,18 +1828,12 @@
     varLabel0 <- omicsDic(dataSE)$variableName
     pathviewExplain <-
         paste0(
-            "<p>The map showed in this panel is generated",
-            " using the pathvew R-package, which is a GPLv3",
-            " software. If any of the map is used in a",
-            " publication or products, please",
-            " cite the package.</p>",
+            "<p>The map showed in this panel is generated using the pathvew R-package, which is a GPLv3 software.",
+            " If any of the map is used in a publication or products, please cite the pathview package.</p>",
             " It lays the ",
             varLabel0,
-            " in the",
-            " list on the map, using the log2FC values if ",
-            " the list is a result of a differential analysis",
-            " or just an antiquewhite color for a co-",
-            "expression cluster list."
+            " in the list on the map, using the log2FC values if the list is a result of a differential analysis",
+            " or just an antiquewhite color for a co-expression cluster list."
         )
     
     tabPanel("Pathview results",
@@ -2120,11 +2079,9 @@
                            },
                            "CoExpAnal" =
                                paste0(
-                                   "This graph shows all the enriched terms ",
-                                   "found with <b>",
+                                   "This graph shows all the enriched terms found with <b>",
                                    database,
-                                   "</b> database",
-                                   " with the co-expression clusters ",
+                                   "</b> database with the co-expression clusters ",
                                    varLabel0,
                                    " lists.",
                                    " Clustering of terms was computed using <b> ",
