@@ -952,14 +952,14 @@ setMethod(f          = "getDEList",
               if (length(tagsConcerned) == 0) 
                   stop("It seems there is no contrasts to select DE entities from.")
               
-              df_DE <- getDEMatrix(object) %>%
+              df_DE <- getDEMatrix(object) |>
                   select(c("DEF", any_of(tagsConcerned)))
               
               if (operation == "intersection") {
                   DETab <- df_DE %>%
                       mutate(SUMCOL = select(., starts_with("H")) %>%
                                  rowSums(na.rm = TRUE)) %>%
-                      filter(SUMCOL == length(validTags))
+                      filter(SUMCOL == length(tagsConcerned))
                   
               } else {
                   DETab <- df_DE %>%
