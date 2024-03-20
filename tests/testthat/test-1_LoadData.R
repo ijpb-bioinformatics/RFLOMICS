@@ -30,8 +30,8 @@ library(testthat)
 
 # ---- Tests read_exp_design ----
 
-expect_no_error(read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt")))
-expect_error(read_exp_design())
+expect_no_error(readExpDesign(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt")))
+expect_error(readExpDesign())
 
 # Missing values
 #condEcoseedTest <- read_exp_design(file = paste0(system.file(package = "RFLOMICS"), "/testFiles/EcoseedCondNA.txt"))
@@ -107,9 +107,9 @@ test_that("Test if samples in data matrix and rownames in design are ordered in 
 
 test_that("Test if samples in data matrix and rownames in design are orderd in same way (with levels)", {
     
-    expect_equal(as.factor(colnames(MAE[[1]])), MAE[[1]]$samples)
-    expect_equal(as.factor(colnames(MAE[[2]])), MAE[[2]]$samples)
-    expect_equal(as.factor(colnames(MAE[[3]])), MAE[[3]]$samples)
+    expect_equal(colnames(MAE[[1]]), as.vector(MAE[[1]]$samples))
+    expect_equal(colnames(MAE[[2]]), as.vector(MAE[[2]]$samples))
+    expect_equal(colnames(MAE[[3]]), as.vector(MAE[[3]]$samples))
 })
 
 # ---- Tests order of samples when samples are not all the same ----
@@ -137,10 +137,10 @@ MAE <- RFLOMICS::createRflomicsMAE(projectName = "Tests",
                                    ExpDesign   = ExpDesign,
                                    factorRef   = factorRef)
 
-test_that("Test if samples in data matrix and rownames in design are orderd in same way", {
+test_that("Test if samples in data matrix and rownames in design are orderd in same way (with levels)", {
   
-  expect_equal(as.factor(colnames(MAE[[1]])), MAE[[1]]$samples)
-  expect_equal(as.factor(colnames(MAE[[2]])), MAE[[2]]$samples)
-  expect_equal(as.factor(colnames(MAE[[3]])), MAE[[3]]$samples)
+  expect_equal(colnames(MAE[[1]]), as.vector(MAE[[1]]$samples))
+  expect_equal(colnames(MAE[[2]]), as.vector(MAE[[2]]$samples))
+  expect_equal(colnames(MAE[[3]]), as.vector(MAE[[3]]$samples))
 })
 
