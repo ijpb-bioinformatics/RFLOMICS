@@ -3,16 +3,19 @@
 # ---- generateReport ----
 #' @title Generate RFLOMICS rmarkdown report
 #' @description
-#' This function is used to generate a html report from a RFLOMICS
-#' \link{RflomicsMAE}.
+#' This function is used to generate a html report from a
+#' \link{RflomicsMAE} object or archive with results.
 #' @param object a \link{RflomicsMAE} produced by RFLOMICS.
-#' @param fileName Name of the html document.
-#' @param archiveName name of result archive
-#' @param export boolean value (default: FALSE)
-#' @param tmpDir temporary dir (default: getwd())
-#' @return An html report
+#' @param fileName Name of the html report (default: date()_projectName.html).
+#' @param archiveName name of archive with all analysis results 
+#' (default: date()_projectName.tar.gz).
+#' @param export boolean value to create archive (default: FALSE)
+#' @param tmpDir temporary directory (default: working directory)
+#' @return An html report or archive (tar.gz)
 #' @importFrom rmarkdown render
 #' @exportMethod generateReport
+#' @rdname generateReport
+#' @example inst/examples/generateReport.R
 #'
 setMethod(
     f          = "generateReport",
@@ -34,22 +37,26 @@ setMethod(
         
         # project name
         projectName <- getProjectName(object)
-        RDataName   <-
-            paste0(projectName, ".MAE.RData")
+        RDataName   <- paste0(projectName, ".MAE.RData")
         
         # tmp dir
-        if (file.access(tmpDir, 2) != 0) {
+        if (file.access(tmpDir, 2) != 0)
             stop("No writing access in ", tmpDir)
-        }
+        
         tmpDir <-
-            file.path(tmpDir, paste0(projectName, "_report"))
+            file.path(tmpDir, 
+                      paste0(format(Sys.time(),"%Y_%m_%d"),"_", projectName))
+          # file.path(tmpDir, 
+          #           paste0(projectName, "_report"))
+        
+        
         dir.create(tmpDir, showWarnings = FALSE)
         
         # html name
-        if (is.null(fileName)) {
+        if (is.null(fileName))
             fileName <- file.path(tmpDir,
-                                  paste0(projectName, "_report.html"))
-        }
+                                  paste0(format(Sys.time(), "%Y_%m_%d"), "_", 
+                                         getProjectName(object), ".html"))
         
         # save FE rflomics.MAE in .Rdata and load it during report execution
         rflomics.MAE <- object
@@ -80,7 +87,11 @@ setMethod(
         if (isTRUE(export)) {
             if (is.null(archiveName))
                 archiveName <- file.path(dirname(tmpDir),
-                                         paste0(projectName, "_archive.tar.gz"))
+                                         paste0(format(Sys.time(),"%Y_%m_%d"),
+                                                "_", getProjectName(object), 
+                                                ".tar.gz"))
+            
+            
             
             # cp html in tmpDir
             file.copy(from = fileName, to = tmpDir)
