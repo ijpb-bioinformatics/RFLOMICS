@@ -46,9 +46,9 @@
 #' factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
 #' 
 #' omicsData <- list(
-#'   RFLOMICS::readOmicsData(file = paste0(datPath, "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-#'   RFLOMICS::readOmicsData(file = paste0(datPath, "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")),
-#'   RFLOMICS::readOmicsData(file = paste0(datPath, "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
+#'   RFLOMICS::readOmicsData(file = paste0(datPath, "transcriptome_ecoseed.txt")),
+#'   RFLOMICS::readOmicsData(file = paste0(datPath, "metabolome_ecoseed.txt")),
+#'   RFLOMICS::readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
 #' 
 #' MAE <- RFLOMICS::createRflomicsMAE(projectName = "Example",
 #'                                                omicsData   = omicsData,
