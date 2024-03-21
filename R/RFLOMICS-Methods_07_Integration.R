@@ -302,8 +302,7 @@ setMethod(
                 FUN = function(SE) {
                     t(assay(SE))
                 }
-            ),
-            metadata = colData(object))
+            ), metadata = colData(object))
             
             MixOmicsObject$blocks <- lapply(
                 MixOmicsObject$blocks,
