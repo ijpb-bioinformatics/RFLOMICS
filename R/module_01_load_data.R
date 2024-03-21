@@ -156,10 +156,23 @@
         fluidRow(column(
             width = 12,
             actionButton(inputId = ns("loadData"), "Load Data"),
+            popify(
             actionButton(
-                inputId = ns("loadEcoseedData"),
-                "Load Ecoseed Data",
-                icon = icon("file-import")
+              inputId = ns("loadEcoseedData"),
+              label = "Load Ecoseed Data",
+              icon = icon("file-import")
+            ),
+              title = "Use example file for ecoseed data",
+              content = paste0("<p> This will load the example data: ",
+                               "the experimental design file and three differents",
+                               "type of omics dataset: ",
+                               "RNAseq, proteomics, and metabolomics. ",
+                               "Experimental factors settings will be defined:",
+                               "the factor name, type, and the reference modality."
+                              
+              ),
+              placement = "top",
+              trigger = "hover"
             )
         )),
         br(),

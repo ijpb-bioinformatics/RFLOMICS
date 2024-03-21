@@ -42,6 +42,7 @@ setMethod(f          = "generateModelFormulae",
 #' @param modelFormula a formula
 #' @return a object RflomicsMAE
 #' @exportMethod setModelFormula
+#' @seealso \link{RflomicsMAE-methods}
 #' @rdname setModelFormula
 setMethod(f          = "setModelFormula",
           signature  = "RflomicsMAE",
@@ -59,9 +60,6 @@ setMethod(f          = "setModelFormula",
           })
 
 #' @title setModelFormula
-#' @description
-#' Set model formula from a Flomics RflomicsMAE
-#' 
 #' @param object a RflomicsSE
 #' @return a object RflomicsSE
 #' @exportMethod setModelFormula
@@ -77,14 +75,14 @@ setMethod(f          = "setModelFormula",
           })
 
 # ---- getModelFormula : Get Model Formula : ----
-#' @title Get model formula from a Flomics RflomicsMAE
+#' @title getModelFormula
 #' @description
-#' A short description...
-#' 
+#' Get model formula from a \code{RflomicsMAE} or \code{RflomicsSE} object
 #' @param object a RflomicsMAE
 #' @return a formula
 #' @exportMethod getModelFormula
 #' @rdname getModelFormula
+#' @seealso \link{RflomicsMAE-methods}
 setMethod(f          = "getModelFormula",
           signature  = "RflomicsMAE",
           definition = function(object){
@@ -92,12 +90,8 @@ setMethod(f          = "getModelFormula",
               return(object@metadata$design$Model.formula)
           })
 
-#' @title Get model formula from a Flomics RflomicsSE
-#' @description
-#' A short description...
-#' 
+#' @title getModelFormula
 #' @param object a RflomicsSE
-#' @return a formula
 #' @exportMethod getModelFormula
 #' @rdname getModelFormula
 setMethod(f          = "getModelFormula",
