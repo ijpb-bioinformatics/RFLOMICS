@@ -309,6 +309,7 @@ setMethod(f          = "generateContrastMatrix",
 #' @description Defines contrast matrix or contrast list with contrast name 
 #' and contrast coefficients
 #' @param object An object of class \link{RflomicsMAE-class}
+#' @param SE.name the name of the \link{RflomicsSE-class} to access.
 #' @param contrastList A data.frame of contrast
 #' @return An object of class \link{RflomicsMAE-class}
 #' @seealso generateContrastMatrix

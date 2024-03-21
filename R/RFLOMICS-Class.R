@@ -26,7 +26,7 @@
 #' @seealso \link{RflomicsSE-methods}
 #' @name RflomicsSE-class
 #' @rdname RflomicsSE-class
-#' @aliases RFlomicsSE
+#' @aliases RflomicsSE
 #' @exportClass RflomicsSE
 #' @return A \code{RflomicsSE} object.
 setClass(
@@ -93,7 +93,7 @@ setMethod(
 #' @seealso \link{RflomicsMAE-methods}
 #' @name RflomicsMAE-class
 #' @rdname RflomicsMAE-class
-#' @aliases RflomicsMAE
+#' @aliases RflomicsMAE-class
 #' @return A \code{RflomicsMAE} object.
 #' @exportClass RflomicsMAE
 setClass(

@@ -127,10 +127,10 @@
 #'                  contrastList = contrastList) 
 #'  
 #'  # Access to the diff analysis settings
-#'  getDiffSettings(MAE@ExperimentList[["RNAtest"]])
-#'  getDiffSettings(MAE@ExperimentList[["protetest"]])
+#'  getDiffSettings(experiments(MAE)[["RNAtest"]])
+#'  getDiffSettings(experiments(MAE)[["protetest"]])
 #' 
-#'  getDEList(MAE@ExperimentList[["RNAtest"]]) 
+#'  getDEList(experiments(MAE)[["RNAtest"]]) 
 
 setMethod(f         = "runDiffAnalysis",
           signature = "RflomicsSE",
@@ -570,8 +570,8 @@ setMethod(f          = "plotDiffAnalysis",
 #'                   contrastList = contrastList)
 #'  
 #'  # plot the heatmap
-#'  plotHeatmapDesign(MAE@ExperimentList[[1]], 
-#'                    getSelectedContrasts(MAE@ExperimentList[[1]])$contrastName[1])
+#'  plotHeatmapDesign(experiments(MAE)[[1]], 
+#'                    getSelectedContrasts(experiments(MAE)[[1]])$contrastName[1])
 
  
 setMethod(f          = "plotHeatmapDesign",
@@ -800,8 +800,8 @@ setMethod(f          = "plotHeatmapDesign",
 #'  runDiffAnalysis(SE.name = "protetest", method = "limmalmFit", contrastList = contrastList)
 #'  
 #'  # plot the boxplot
-#'  plotBoxplotDE(MAE@ExperimentList[[1]], features = "AT1G15670", groupColor = "temperature")
-#'  plotBoxplotDE(MAE@ExperimentList[[1]], features = "AT1G15670", groupColor = "imbibition")
+#'  plotBoxplotDE(experiments(MAE)[[1]], features = "AT1G15670", groupColor = "temperature")
+#'  plotBoxplotDE(experiments(MAE)[[1]], features = "AT1G15670", groupColor = "imbibition")
 
 setMethod(f          = "plotBoxplotDE",
           signature  = "RflomicsSE",

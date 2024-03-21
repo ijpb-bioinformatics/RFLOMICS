@@ -61,8 +61,8 @@
 #'  runNormalization(SE.name = "protetest", normMethod = "median")
 #'  
 #'  # plotLibrarySize
-#'  plotLibrarySize(MAE@ExperimentList[[1]], raw=FALSE)
-#'  plotLibrarySize(MAE@ExperimentList[[1]], raw=TRUE)
+#'  plotLibrarySize(experiments(MAE)[[1]], raw=FALSE)
+#'  plotLibrarySize(experiments(MAE)[[1]], raw=TRUE)
 #'  
 setMethod(f          = "plotLibrarySize",
           signature  = "RflomicsSE",
@@ -188,8 +188,8 @@ setMethod(f          = "plotLibrarySize",
 #'  runNormalization(SE.name = "protetest", normMethod = "median")
 #'  
 #'  # plotLibrarySize
-#'  plotDataDistribution(MAE@ExperimentList[[1]], raw=FALSE)
-#'  plotDataDistribution(MAE@ExperimentList[[1]], raw=TRUE)
+#'  plotDataDistribution(experiments(MAE)[[1]], raw=FALSE)
+#'  plotDataDistribution(experiments(MAE)[[1]], raw=TRUE)
 #'  
 
 setMethod(
@@ -743,10 +743,10 @@ setMethod(f          = "getFilteredFeatures",
 #' runNormalization(SE.name = "RNAtest", normMethod = "TMM") 
 #'
 #' # Get the normalization method and the scaling factors
-#' getCoeffNorm(MAE@ExperimentList[[1]])
+#' getCoeffNorm(experiments(MAE)[[1]])
 #' 
 #' # Get the normalization settings
-#' getNormSettings(MAE@ExperimentList[[1]])
+#' getNormSettings(experiments(MAE)[[1]])
 setMethod(f          = "runNormalization",
           signature  = "RflomicsSE",
           definition = function(object, normMethod = NULL, modifyAssay = FALSE){

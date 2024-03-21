@@ -117,7 +117,7 @@ NULL
 #' \itemize{
 #'     \item setValid
 #' }
-#' @param object,x A \code{RflomicsMAE} object
+#' @param object A \code{RflomicsMAE} object
 #'
 #' @return Accessors: an object stored in the metadata slot of the \code{RflomicsSE} object
 #' @return Setters: A \code{RflomicsSE} object
@@ -446,7 +446,7 @@ setMethod(f          = "subRflomicsMAE",
 #' @description This method checks some experimental design characteristics.
 #'  A complete design (all combinations of factor modalities with at least 2 replicates for each have to be present) with
 #'  at least one biological and one batch factors are required to use the RFLOMICS workflow.
-#' @param An object of class \link{RflomicsSE-class}
+#' @param object An object of class \link{RflomicsSE-class}
 #' @param sampleList list of samples to check.
 #' @return a string with message
 #' @exportMethod checkExpDesignCompleteness
@@ -507,7 +507,7 @@ setMethod(f         = "checkExpDesignCompleteness",
           })
 
 #' @title checkExpDesignCompleteness
-#' @param SE.name the name of the data the normalization have to be applied to. 
+#' @param omicName the name of the data the normalization have to be applied to. 
 #' @exportMethod checkExpDesignCompleteness
 #' @aliases checkExpDesignCompleteness
 #' @rdname checkExpDesignCompleteness
@@ -597,7 +597,7 @@ setMethod(f         = "plotDataOverview",
 #' @description 
 #'  A complete design and at least one biological and one batch factors are 
 #' required for using RFLOMICS workflow.
-#' @param An object of class \link{RflomicsMAE-class}
+#' @param object An object of class \link{RflomicsMAE-class}
 #' @param omicNames a vector with list of dataset names
 #' @return a gg plot object
 #' \itemize{
@@ -691,7 +691,7 @@ setMethod(f         = "plotConditionsOverview",
 #' a summary of the design.
 #' A complete design (all combinations of factor modalities with at least 2 replicates for each have to be present) 
 #' with at least one biological and one batch factors are required to use the RFLOMICS workflow.
-#' @param An object of class \link{RflomicsSE-class}
+#' @param object An object of class \link{RflomicsSE-class}
 #' @param sampleList list of samples to check.
 #' @return plot
 #' @exportMethod plotExpDesignCompleteness
