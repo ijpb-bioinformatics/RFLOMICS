@@ -22,6 +22,7 @@
 #'  factor. Model formulae stop in second order interaction.
 #' 
 #' @param object a RflomicsMAE object
+#' @aliases generateModelFormulae
 #'
 #' @return a named list of object of class formula
 #' @exportMethod generateModelFormulae
@@ -43,6 +44,7 @@ setMethod(f          = "generateModelFormulae",
 #' @return a object RflomicsMAE
 #' @exportMethod setModelFormula
 #' @seealso \link{RflomicsMAE-methods}
+#' @aliases setModelFormula
 #' @rdname setModelFormula
 setMethod(f          = "setModelFormula",
           signature  = "RflomicsMAE",
@@ -63,6 +65,7 @@ setMethod(f          = "setModelFormula",
 #' @param object a RflomicsSE
 #' @return a object RflomicsSE
 #' @exportMethod setModelFormula
+#' @aliases setModelFormula
 #' @rdname setModelFormula
 setMethod(f          = "setModelFormula",
           signature  = "RflomicsSE",
@@ -82,6 +85,7 @@ setMethod(f          = "setModelFormula",
 #' @return a formula
 #' @exportMethod getModelFormula
 #' @rdname getModelFormula
+#' @aliases getModelFormula
 #' @seealso \link{RflomicsMAE-methods}
 setMethod(f          = "getModelFormula",
           signature  = "RflomicsMAE",
@@ -93,6 +97,7 @@ setMethod(f          = "getModelFormula",
 #' @title getModelFormula
 #' @param object a RflomicsSE
 #' @exportMethod getModelFormula
+#' @aliases getModelFormula
 #' @rdname getModelFormula
 setMethod(f          = "getModelFormula",
           signature  = "RflomicsSE",
@@ -118,6 +123,7 @@ setMethod(f          = "getModelFormula",
 #' @exportMethod generateExpressionContrast
 #' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
 #' @rdname generateExpressionContrast
+#' @aliases generateExpressionContrast
 setMethod(f          = "generateExpressionContrast",
           signature  = "RflomicsSE",
           definition = function(object){
@@ -156,6 +162,7 @@ setMethod(f          = "generateExpressionContrast",
 #' @exportMethod generateExpressionContrast
 #' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
 #' @rdname generateExpressionContrast
+#' @aliases generateExpressionContrast
 setMethod(f          = "generateExpressionContrast",
           signature  = "RflomicsMAE",
           definition = function(object){
@@ -189,6 +196,7 @@ setMethod(f          = "generateExpressionContrast",
 #' @param contrastList a data.frame of contrast
 #' @return a RflomicsMAE object
 #' @rdname setSelectedContrasts
+#' @aliases setSelectedContrasts
 #' @exportMethod setSelectedContrasts
 setMethod(f          = "setSelectedContrasts",
           signature  = "RflomicsMAE",
@@ -207,6 +215,7 @@ setMethod(f          = "setSelectedContrasts",
 #' @param contrastList a data.frame of contrast
 #' @return a RflomicsSE object
 #' @rdname setSelectedContrasts
+#' @aliases setSelectedContrasts
 #' @exportMethod setSelectedContrasts
 setMethod(f          = "setSelectedContrasts",
           signature  = "RflomicsSE",
@@ -224,6 +233,7 @@ setMethod(f          = "setSelectedContrasts",
 #' (expect to find a diffAnalysis slot.)
 #' @return a dataTable
 #' @rdname ContrastsSelection
+#' @aliases getSelectedContrasts
 #' @exportMethod getSelectedContrasts
 setMethod(f          = "getSelectedContrasts",
           signature  = "RflomicsMAE",
@@ -238,6 +248,7 @@ setMethod(f          = "getSelectedContrasts",
 #' @return a dataTable
 #' @rdname ContrastsSelection
 #' @exportMethod getSelectedContrasts
+#' @aliases getSelectedContrasts
 setMethod(f          = "getSelectedContrasts",
           signature  = "RflomicsSE",
           definition = function(object){
@@ -255,9 +266,9 @@ setMethod(f          = "getSelectedContrasts",
 #' @seealso generateContrastMatrix
 #' @exportMethod generateContrastMatrix
 #' @importFrom stats formula terms.formula
-#' @noRd
 #' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
 #' @rdname generateContrastMatrix
+#' @aliases generateContrastMatrix
 setMethod(f          = "generateContrastMatrix",
           signature  = "RflomicsSE",
           definition = function(object, contrastList=NULL){
@@ -303,9 +314,9 @@ setMethod(f          = "generateContrastMatrix",
 #' @seealso generateContrastMatrix
 #' @exportMethod generateContrastMatrix
 #' @importFrom stats formula terms.formula
-#' @noRd
 #' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
 #' @rdname generateContrastMatrix
+#' @aliases generateContrastMatrix
 setMethod(f          = "generateContrastMatrix",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name, contrastList=NULL){
@@ -342,6 +353,7 @@ setMethod(f          = "generateContrastMatrix",
 #' @return An object of class \link{RflomicsMAE-class}
 #' @exportMethod setValidContrasts
 #' @rdname setValidContrasts
+#' @aliases setValidContrasts
 setMethod(f          = "setValidContrasts",
           signature  = "RflomicsMAE",
           definition <- function(object, omicName, contrastList=NULL){
@@ -358,6 +370,7 @@ setMethod(f          = "setValidContrasts",
 #' @return An object of class \link{RflomicsSE-class}
 #' @exportMethod setValidContrasts
 #' @rdname setValidContrasts
+#' @aliases setValidContrasts
 setMethod(f          = "setValidContrasts",
           signature  = "RflomicsSE",
           definition = function(object, contrastList=NULL){
@@ -374,6 +387,7 @@ setMethod(f          = "setValidContrasts",
 #' @return An object of class \link{RflomicsMAE-class}
 #' @exportMethod getValidContrasts
 #' @rdname getValidContrasts
+#' @aliases getValidContrasts
 setMethod(f          = "getValidContrasts",
           signature  = "RflomicsMAE",
           definition = function(object, omicName){
@@ -389,6 +403,7 @@ setMethod(f          = "getValidContrasts",
 #' @return An object of class \link{RflomicsSE-class}
 #' @exportMethod getValidContrasts
 #' @rdname getValidContrasts
+#' @aliases getValidContrasts
 setMethod(f          = "getValidContrasts",
           signature  = "RflomicsSE",
           definition = function(object){

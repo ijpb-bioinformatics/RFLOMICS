@@ -16,6 +16,7 @@
 #' @importFrom rmarkdown render
 #' @exportMethod generateReport
 #' @rdname generateReport
+#' @aliases generateReport
 #' @example inst/examples/generateReport.R
 #'
 setMethod(
@@ -126,6 +127,7 @@ setMethod(
 #' @exportMethod runOmicsPCA
 #' @importFrom FactoMineR PCA
 #' @rdname runOmicsPCA
+#' @aliases runOmicsPCA
 #'
 setMethod(
     f          = "runOmicsPCA",
@@ -145,6 +147,7 @@ setMethod(
 )
 
 #' @rdname runOmicsPCA
+#' @aliases runOmicsPCA
 #' @title runOmicsPCA
 #' @param SE.name the name of the data the normalization have to be applied to.
 #' @exportMethod runOmicsPCA
@@ -182,6 +185,7 @@ setMethod(
 #' geom_hline geom_vline geom_vline element_text ggtitle geom_polygon
 #' @exportMethod plotOmicsPCA
 #' @rdname plotOmicsPCA
+#' @aliases plotOmicsPCA
 #'
 setMethod(f = "plotOmicsPCA",
           signature = "RflomicsSE",
@@ -295,6 +299,7 @@ setMethod(f = "plotOmicsPCA",
           })
 
 #' @rdname plotOmicsPCA
+#' @aliases plotOmicsPCA
 #' @title plotOmicsPCA
 #' @param SE.name the name of the data the normalization have to be applied to.
 #' @exportMethod plotOmicsPCA
@@ -372,6 +377,7 @@ setMethod(f = "resetFlomicsMultiAssay",
 #' @exportMethod getDiffAnalysesSummary
 #' @return a data.frame with differential analyses summary
 #' @rdname getDiffAnalysesSummary
+#' @aliases getDiffAnalysesSummary
 setMethod(
     f          = "getDiffAnalysesSummary",
     signature  = "RflomicsMAE",
@@ -432,6 +438,7 @@ setMethod(
 #' @importFrom stringr str_wrap
 #' @exportMethod getAnnotAnalysesSummary
 #' @rdname getAnnotAnalysesSummary
+#' @aliases getAnnotAnalysesSummary
 setMethod(
     f = "getAnnotAnalysesSummary",
     signature = "RflomicsMAE",
@@ -663,6 +670,7 @@ setMethod(
 #' facet_grid labs vars
 #' @exportMethod getCoExpAnalysesSummary
 #' @rdname getCoExpAnalysesSummary
+#' @aliases getCoExpAnalysesSummary
 setMethod(
     f = "getCoExpAnalysesSummary",
     signature = "RflomicsMAE",

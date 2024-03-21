@@ -35,6 +35,7 @@
 #' @return a RflomicsMAE object. According to the method (MOFA or mixOmics),
 #' the correct slot of metadata has been filled with the results and the
 #' settings.
+#' @aliases integrationWrapper
 #' @noRd
 #' @keywords internal
 setMethod(
@@ -136,6 +137,7 @@ setMethod(
 #' @return An untrained MOFA object or a list of dataset
 #' @exportMethod prepareForIntegration
 #' @rdname prepareForIntegration
+#' @aliases prepareForIntegration
 #' @importFrom MOFA2 create_mofa
 #' @examples
 #' MAEtest <- generateExample(annotation = FALSE, coexp = FALSE,
@@ -342,6 +344,7 @@ setMethod(
 #' these sets.
 #' @return a RflomicsMAE, filtered with only the corresponding features.
 #' @rdname filterFeatures
+#' @aliases filterFeatures
 #' @exportMethod filterFeatures
 #' @examples
 #' MAE <- generateExample(integration = FALSE, annotation = FALSE)
@@ -493,6 +496,7 @@ setMethod(
 #' @return a RflomicsMAE object with the correct metadata slot filled with the
 #' results and the settings.
 #' @rdname runOmicsIntegration
+#' @aliases runOmicsIntegration
 #' @exportMethod runOmicsIntegration
 #' @examples
 #' # Generate MAE for test:
@@ -671,6 +675,7 @@ setMethod(
 #' For setters: always returns a \link{RflomicsMAE} object.
 #'
 #' @exportMethod getMixOmics
+#' @aliases getMixOmics
 #' @rdname methods-for-integration
 #' @examples
 #'
@@ -713,6 +718,7 @@ setMethod(
 
 #' @rdname methods-for-integration
 #' @exportMethod getMOFA
+#' @aliases getMOFA
 setMethod(
     f = "getMOFA",
     signature = "RflomicsMAE",
@@ -729,6 +735,7 @@ setMethod(
 
 #' @exportMethod getMOFASettings
 #' @rdname methods-for-integration
+#' @aliases getMOFASettings
 setMethod(
     f = "getMOFASettings",
     signature = "RflomicsMAE",
@@ -739,6 +746,7 @@ setMethod(
 
 #' @exportMethod getMixOmicsSettings
 #' @rdname methods-for-integration
+#' @aliases getMixOmicsSettings
 setMethod(
     f = "getMixOmicsSettings",
     signature = "RflomicsMAE",
@@ -750,6 +758,7 @@ setMethod(
 # ---- Set Integration Results ----
 
 #' @rdname methods-for-integration
+#' @aliases setMOFA
 #' @param results The MOFA or mixOmics results to set in the object. 
 #' If null, set to NULL.
 #' @exportMethod setMOFA
@@ -764,6 +773,7 @@ setMethod(
 
 #' @rdname methods-for-integration
 #' @exportMethod setMixOmics
+#' @aliases setMixOmics
 setMethod(
     f = "setMixOmics",
     signature = "RflomicsMAE",
@@ -787,6 +797,7 @@ setMethod(
 #' (if selectedResponse is NULL) presenting the summary of mixOmics analyses.
 #'
 #' @rdname methods-for-integration
+#' @aliases sumMixOmics
 #' @exportMethod sumMixOmics
 
 setMethod(
@@ -855,7 +866,8 @@ setMethod(
 #' Defines the type of graph to return
 #' @return An object of class \link{RflomicsMAE}
 #' @importFrom ggpubr ggarrange
-#' @exportMethod plotMOVarExp
+#' @keywords internal
+#' @noRd
 #'
 setMethod(
     f = "plotMOVarExp",

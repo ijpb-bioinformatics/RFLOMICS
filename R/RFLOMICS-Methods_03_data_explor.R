@@ -680,7 +680,7 @@ setMethod(f          = "getFilteredFeatures",
 
 #' @title runNormalization
 #' @description This function applied a normalization method on an omic data sets stored in an object of
-#' class \link{RflomicsSE} or \link{RFLomicsMAE}. In this case, the normalization method is applied to the data 
+#' class \link{RflomicsSE} or \link{RflomicsMAE}. In this case, the normalization method is applied to the data 
 #' set and 
 #' 
 #' \itemize{

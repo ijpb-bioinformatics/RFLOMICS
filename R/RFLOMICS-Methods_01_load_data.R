@@ -129,6 +129,7 @@ NULL
 # ---- getDesignMat:    get colData ----
 #' @exportMethod getProjectName
 #' @return a character string with the project name
+#' @aliases getProjectName
 #' @rdname RflomicsMAE-methods
 setMethod(f          = "getProjectName",
           signature  = "RflomicsMAE",
@@ -141,6 +142,7 @@ setMethod(f          = "getProjectName",
 #' @return a data frame with design matrix
 #' @exportMethod getDesignMat
 #' @rdname RflomicsMAE-methods
+#' @aliases getDesignMat-RflomicsMAE
 setMethod(f          = "getDesignMat",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -153,6 +155,7 @@ setMethod(f          = "getDesignMat",
 #' @return a data frame with design matrix
 #' @exportMethod getDesignMat
 #' @rdname RflomicsSE-methods
+#' @aliases getDesignMat-RflomicsSE
 setMethod(f          = "getDesignMat",
           signature  = "RflomicsSE",
           definition <- function(object){
@@ -165,6 +168,7 @@ setMethod(f          = "getDesignMat",
 #' @return a vector with omic dataset names
 #' @exportMethod getDatasetNames
 #' @rdname RflomicsMAE-methods
+#' @aliases getDatasetNames-RflomicsMAE
 setMethod(f          = "getDatasetNames",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -179,6 +183,7 @@ setMethod(f          = "getDatasetNames",
 #' @return a vector with the omic dataset name
 #' @exportMethod getDatasetNames
 #' @rdname RflomicsSE-methods
+#' @aliases getDatasetNames-RflomicsSE
 setMethod(f          = "getDatasetNames",
           signature  = "RflomicsSE",
           definition <- function(object){
@@ -193,6 +198,7 @@ setMethod(f          = "getDatasetNames",
 #' @return names vector
 #' @exportMethod getOmicsTypes
 #' @rdname RflomicsMAE-methods
+#' @aliases getOmicsTypes-RflomicsMAE
 setMethod(f          = "getOmicsTypes",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -214,6 +220,7 @@ setMethod(f          = "getOmicsTypes",
 #' @return named vector
 #' @exportMethod getOmicsTypes
 #' @rdname RflomicsSE-methods
+#' @aliases getOmicsTypes-RflomicsSE
 setMethod(f          = "getOmicsTypes",
           signature  = "RflomicsSE",
           definition <- function(object){
@@ -226,6 +233,7 @@ setMethod(f          = "getOmicsTypes",
 #' @return a vector with the names of the design factors
 #' @exportMethod getFactorNames
 #' @rdname RflomicsMAE-methods
+#' @aliases getFactorNames-RflomicsMAE
 setMethod(f          = "getFactorNames",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -237,6 +245,7 @@ setMethod(f          = "getFactorNames",
 #' @return a vector with names of design factors
 #' @exportMethod getFactorNames
 #' @rdname RflomicsSE-methods
+#' @aliases getFactorNames-RflomicsSE
 setMethod(f          = "getFactorNames",
           signature  = "RflomicsSE",
           definition <- function(object){
@@ -248,6 +257,7 @@ setMethod(f          = "getFactorNames",
 # ---- getFactorTypes:  get Factor types ----
 #' @return a named vector
 #' @exportMethod getFactorTypes
+#' @aliases getFactorTypes
 #' @rdname RflomicsMAE-methods
 setMethod(f          = "getFactorTypes",
           signature  = "RflomicsMAE",
@@ -260,6 +270,7 @@ setMethod(f          = "getFactorTypes",
 
 #' @return a named vector
 #' @exportMethod getFactorTypes
+#' @aliases getFactorTypes-RflomicsSE
 #' @rdname RflomicsSE-methods
 setMethod(f          = "getFactorTypes",
           signature  = "RflomicsSE",
@@ -271,6 +282,7 @@ setMethod(f          = "getFactorTypes",
 # ---- getBioFactors:   get bio factor ----
 #' @return a vector with biological factors
 #' @exportMethod getBioFactors
+#' @aliases getBioFactors-RflomicsMAE
 #' @rdname RflomicsMAE-methods
 setMethod(f          = "getBioFactors",
           signature  = "RflomicsMAE",
@@ -285,6 +297,7 @@ setMethod(f          = "getBioFactors",
 
 #' @return a vector with biological factors
 #' @exportMethod getBioFactors
+#' @aliases getBioFactors-RflomicsSE
 #' @rdname RflomicsSE-methods
 setMethod(f          = "getBioFactors",
           signature  = "RflomicsSE",
@@ -301,6 +314,7 @@ setMethod(f          = "getBioFactors",
 #' @return a vector with batch factors
 #' @exportMethod getBatchFactors
 #' @rdname RflomicsMAE-methods
+#' @aliases getBatchFactors-RflomicsMAE
 setMethod(f          = "getBatchFactors",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -316,6 +330,7 @@ setMethod(f          = "getBatchFactors",
 #' @return a vector with batch factors
 #' @exportMethod getBatchFactors
 #' @rdname RflomicsSE-methods
+#' @aliases getBatchFactors-RflomicsSE
 setMethod(f          = "getBatchFactors",
           signature  = "RflomicsSE",
           definition <- function(object){
@@ -331,6 +346,7 @@ setMethod(f          = "getBatchFactors",
 #' @return a vector with batch factors
 #' @exportMethod getMetaFactors
 #' @rdname RflomicsMAE-methods
+#' @aliases getMetaFactors-RflomicsMAE
 setMethod(f          = "getMetaFactors",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -346,6 +362,7 @@ setMethod(f          = "getMetaFactors",
 #' @return a vector with batch factors
 #' @exportMethod getMetaFactors
 #' @rdname RflomicsSE-methods
+#' @aliases getMetaFactors-RflomicsSE
 setMethod(f          = "getMetaFactors",
           signature  = "RflomicsSE",
           definition <- function(object){
@@ -362,6 +379,7 @@ setMethod(f          = "getMetaFactors",
 #' @return An object of class \link{RflomicsSE-class}
 #' @exportMethod getRflomicsSE
 #' @rdname RflomicsMAE-methods
+#' @aliases getRflomicsSE
 setMethod(f          = "getRflomicsSE",
           signature  = "RflomicsMAE",
           definition <- function(object, datasetName = NULL){
@@ -376,6 +394,7 @@ setMethod(f          = "getRflomicsSE",
 #' @return a vector
 #' @exportMethod getFactorModalities
 #' @rdname RflomicsMAE-methods
+#' @aliases getFactorModalities-RflomicsMAE
 setMethod(f          = "getFactorModalities",
           signature  = "RflomicsMAE",
           definition <- function(object, factorName){
@@ -391,6 +410,7 @@ setMethod(f          = "getFactorModalities",
 #' @return a vector
 #' @exportMethod getFactorModalities
 #' @rdname RflomicsSE-methods
+#' @aliases getFactorModalities-RflomicsSE
 setMethod(f          = "getFactorModalities",
           signature  = "RflomicsSE",
           definition <- function(object, factorName){
@@ -408,6 +428,7 @@ setMethod(f          = "getFactorModalities",
 #' @return object An object of class \link{RflomicsMAE-class}
 #' @exportMethod subRflomicsMAE
 #' @rdname RflomicsMAE-methods
+#' @aliases subRflomicsMAE
 setMethod(f          = "subRflomicsMAE",
           signature  = "RflomicsMAE",
           definition <- function(object, omicNames = NULL){
@@ -430,6 +451,7 @@ setMethod(f          = "subRflomicsMAE",
 #' @return a string with message
 #' @exportMethod checkExpDesignCompleteness
 #' @rdname checkExpDesignCompleteness
+#' @aliases checkExpDesignCompleteness
 setMethod(f         = "checkExpDesignCompleteness",
           signature = "RflomicsSE",
           definition <- function(object, sampleList=NULL){
@@ -487,7 +509,8 @@ setMethod(f         = "checkExpDesignCompleteness",
 #' @title checkExpDesignCompleteness
 #' @param SE.name the name of the data the normalization have to be applied to. 
 #' @exportMethod checkExpDesignCompleteness
-#' @noRd
+#' @aliases checkExpDesignCompleteness
+#' @rdname checkExpDesignCompleteness
 setMethod(f         = "checkExpDesignCompleteness",
           signature = "RflomicsMAE",
           definition <- function(object, omicName, sampleList=NULL){
@@ -512,6 +535,7 @@ setMethod(f         = "checkExpDesignCompleteness",
 #' @exportMethod plotDataOverview
 #' @return plot
 #' @rdname plotDataOverview
+#' @aliases plotDataOverview
 setMethod(f         = "plotDataOverview",
           signature = "RflomicsMAE",
           definition <- function(object, omicNames=NULL, realSize=FALSE){
@@ -581,7 +605,7 @@ setMethod(f         = "plotDataOverview",
 #'  }
 #'  
 #' @exportMethod plotConditionsOverview
-#' @noRd
+#' @aliases plotConditionsOverview
 
 setMethod(f         = "plotConditionsOverview",
           signature = "RflomicsMAE",
@@ -672,6 +696,7 @@ setMethod(f         = "plotConditionsOverview",
 #' @return plot
 #' @exportMethod plotExpDesignCompleteness
 #' @rdname plotExpDesignCompleteness
+#' @aliases plotExpDesignCompleteness
 
 setMethod(f         = "plotExpDesignCompleteness",
           signature = "RflomicsSE",
@@ -699,7 +724,8 @@ setMethod(f         = "plotExpDesignCompleteness",
 #' @param omicName a character string with the name of the dataset
 #' @param sampleList list of samples to take into account
 #' @exportMethod plotExpDesignCompleteness
-#' @noRd
+#' @aliases plotExpDesignCompleteness
+#' @rdname plotExpDesignCompleteness
 setMethod(f         = "plotExpDesignCompleteness",
           signature = "RflomicsMAE",
           definition <- function(object, omicName, sampleList=NULL){

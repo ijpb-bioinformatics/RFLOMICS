@@ -1,5 +1,5 @@
 #' @title rflomicsUI
-#' @export
+#' @keywords internal
 #' @importFrom shinydashboard dashboardSidebar dashboardBody dashboardHeader dashboardPage
 #' @rawNamespace import(shiny, except = renderDataTable)
 #' @noRd

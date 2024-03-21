@@ -26,6 +26,7 @@
 #' @seealso \link{RflomicsSE-methods}
 #' @name RflomicsSE-class
 #' @rdname RflomicsSE-class
+#' @aliases RFlomicsSE
 #' @exportClass RflomicsSE
 #' @return A \code{RflomicsSE} object.
 setClass(
@@ -92,6 +93,7 @@ setMethod(
 #' @seealso \link{RflomicsMAE-methods}
 #' @name RflomicsMAE-class
 #' @rdname RflomicsMAE-class
+#' @aliases RflomicsMAE
 #' @return A \code{RflomicsMAE} object.
 #' @exportClass RflomicsMAE
 setClass(
@@ -105,6 +107,16 @@ setClass(
 #' @return An object of class \link{RflomicsMAE-class}
 #' @seealso MultiAssayExperiment
 #' @importFrom S4Vectors DataFrame
+#' @param ExperimentList Similar to MultiAssayExperiment, and experiment list. 
+#' @param colData Similar to MultiAssayExperiment, a data.frame or a list 
+#' containing all information about the samples
+#' @param sampleMap Similar to MultiAssayExperiment
+#' @param omicList list of omics data, each given by a dataframe-like object
+#' Expect to find sample in rows and variables in columns.
+#' @param projectName The name of the project. Is useful for report generation.
+#' @param design The experimental design. 
+#' @param IntegrationAnalysis usually empty at this point: list of results
+#' for the integration. 
 #' @noRd
 setMethod(
     f          = "initialize",

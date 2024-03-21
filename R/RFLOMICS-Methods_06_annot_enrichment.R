@@ -36,6 +36,7 @@
 #' @importFrom utils getFromNamespace
 #' @exportMethod runAnnotationEnrichment
 #' @rdname runAnnotationEnrichment
+#' @aliases runAnnotationEnrichment
 #' @examples
 #' # Generate RflomicsMAE for example
 #'  datPath <- paste0(system.file(package = "RFLOMICS"),
@@ -307,6 +308,7 @@ setMethod(
 )
 
 #' @rdname runAnnotationEnrichment
+#' @aliases runAnnotationEnrichment
 #' @title runAnnotationEnrichment
 #' @exportMethod runAnnotationEnrichment
 setMethod(
@@ -370,6 +372,7 @@ setMethod(
 #' @return Only displays the KEGG pathway, it does not return any object.
 #' @exportMethod plotKEGG
 #' @rdname plotKEGG
+#' @aliases plotKEGG
 #' @examples
 #' # Generate RflomicsMAE for example
 #'  datPath <- paste0(system.file(package = "RFLOMICS"),
@@ -492,6 +495,7 @@ setMethod(
 #' @importFrom ggrepel geom_label_repel
 #' @exportMethod plotClusterProfiler
 #' @rdname plotClusterProfiler
+#' @aliases plotClusterProfiler
 #' @examples
 #' # Generate RflomicsMAE for example
 #' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
@@ -689,6 +693,7 @@ setMethod(
 #' @importFrom stringr str_wrap
 #' @exportMethod plotEnrichComp
 #' @rdname plotEnrichComp
+#' @aliases plotEnrichComp
 #' @examples
 #' # Generate RflomicsMAE for example
 #' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
@@ -966,6 +971,7 @@ setMethod(
 #' results.
 #' @exportMethod getEnrichRes
 #' @rdname getEnrichRes
+#' @aliases getEnrichRes
 #' @examples
 #' # Generate RflomicsMAE for example
 #' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
@@ -1004,6 +1010,7 @@ setMethod(
 )
 
 #' @rdname getEnrichRes
+#' @aliases getEnrichRes
 #' @exportMethod getEnrichRes
 setMethod(
     f = "getEnrichRes",
@@ -1050,6 +1057,7 @@ setMethod(
 #' @return a list of tables or a table
 #' @exportMethod sumORA
 #' @rdname sumORA
+#' @aliases sumORA
 #' @examples
 #' # Generate RflomicsMAE for example
 #' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
@@ -1117,6 +1125,7 @@ setMethod(
 #' @return the pvalue cutoff used for the analysis.
 #' @exportMethod getEnrichPvalue
 #' @rdname getEnrichPvalue
+#' @aliases getEnrichPvalue
 #' @examples
 #' # Generate RflomicsMAE for example
 #' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
@@ -1167,6 +1176,7 @@ setMethod(
 #' enrichment results.
 #' @exportMethod setEnrichNull
 #' @rdname setEnrichNull
+#' @aliases setEnrichNull
 #' @examples
 #' # Generate RflomicsMAE for example
 #' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)

@@ -68,8 +68,9 @@
 #' to co-expression analysis through differential analysis based on contrasts 
 #' inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod runCoExpression
-#' @seealso \code{\link{coseq::coseq}}
+#' @seealso \code{\link[coseq]{coseq}}
 #' @rdname runCoExpression
+#' @aliases runCoExpression
 #' @importFrom dplyr filter
 #' @examples
 #' 
@@ -266,6 +267,7 @@ setMethod(f = "runCoExpression",
           })
 
 #' @rdname runCoExpression
+#' @aliases runCoExpression
 #' @title runCoExpression
 #' @exportMethod runCoExpression
 setMethod(f          = "runCoExpression",
@@ -310,6 +312,7 @@ setMethod(f          = "runCoExpression",
 #' @importFrom ggplot2 ggplot aes geom_text geom_boxplot ylim xlab
 #' @exportMethod plotCoExpression
 #' @rdname plotCoExpression
+#' @aliases plotCoExpression
 #' @examples
 #' # Set the data path
 #' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
@@ -406,6 +409,7 @@ setMethod(f="plotCoExpression",
           })
 
 #' @rdname plotCoExpression
+#' @aliases plotCoExpression
 #' @title plotCoExpression
 #' @param SE.name The name of the RflomicsSE to access.
 #' @exportMethod plotCoExpression
@@ -434,6 +438,7 @@ setMethod(f          = "plotCoExpression",
 #' @importFrom ggplot2 ggplot aes geom_boxplot aes_string 
 #' theme element_text xlab ylab ggtitle geom_point geom_line
 #' @rdname plotCoExpressionProfile
+#' @aliases plotCoExpressionProfile
 #' @examples
 #' 
 #' # Set the data path
@@ -531,6 +536,7 @@ setMethod(f = "plotCoExpressionProfile",
 #' @rdname plotCoExpressionProfile
 #' @title plotCoExpressionProfile
 #' @exportMethod plotCoExpressionProfile
+#' @aliases plotCoExpressionProfile
 setMethod(f          = "plotCoExpressionProfile",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name, cluster = 1, 
@@ -561,6 +567,7 @@ setMethod(f          = "plotCoExpressionProfile",
 #' @importFrom ggplot2 ggplot aes  geom_bar  coord_flip labs  
 #' scale_fill_discrete theme
 #' @rdname plotCoseqContrasts
+#' @aliases plotCoseqContrasts
 #' @examples
 #' 
 #' # Set the data path
@@ -681,6 +688,7 @@ setMethod(f = "plotCoseqContrasts",
 #' @param SE.name name of the RflomicsSE to access
 #' @title plotCoseqContrasts
 #' @exportMethod plotCoseqContrasts
+#' @aliases plotCoseqContrasts
 setMethod(f          = "plotCoseqContrasts",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name){
@@ -698,6 +706,7 @@ setMethod(f          = "plotCoseqContrasts",
 #' @return List of co-expression analysis setting parameters.
 #' @exportMethod getCoexpSettings
 #' @rdname getCoexpSettings 
+#' @aliases getCoexpSettings
 #' @return list of co-expression analysis setting parameters
 
 
@@ -709,6 +718,7 @@ setMethod(f          = "getCoexpSettings",
           })
 
 #' @rdname getCoexpSettings
+#' @aliases getCoexpSettings
 #' @title getCoexpSettings
 #' @param SE.name the name of the data to fetch in the object if the object 
 #' is a RflomicsMAE
@@ -727,6 +737,7 @@ setMethod(f          = "getCoexpSettings",
 #' @exportMethod getClusterEntities
 #' @importFrom coseq clusters
 #' @rdname getClusterEntities
+#' @aliases getClusterEntities
 #' @examples
 #' 
 #' # Set the data path
@@ -796,6 +807,7 @@ setMethod(
 #' @exportMethod getClusterEntities
 #' @importFrom coseq clusters
 #' @rdname getClusterEntities
+#' @aliases getClusterEntities
 setMethod(
     f          = "getClusterEntities",
     signature  = "RflomicsMAE",
@@ -812,6 +824,7 @@ setMethod(
 #' @exportMethod getCoseqClusters
 #' @importFrom coseq clusters
 #' @rdname getCoseqClusters
+#' @aliases getCoseqClusters
 setMethod(
     f          = "getCoseqClusters",
     signature  = "RflomicsSE",
@@ -836,6 +849,7 @@ setMethod(
 #' @exportMethod getCoseqClusters
 #' @importFrom coseq clusters
 #' @rdname getCoseqClusters
+#' @aliases getCoseqClusters
 setMethod(
     f          = "getCoseqClusters",
     signature  = "RflomicsMAE",

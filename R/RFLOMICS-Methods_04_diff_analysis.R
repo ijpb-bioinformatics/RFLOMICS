@@ -77,6 +77,7 @@
 #' @exportMethod runDiffAnalysis
 #' @importFrom dplyr filter
 #' @rdname runDiffAnalysis
+#' @aliases runDiffAnalysis
 #' @seealso \code{\link{filterDiffAnalysis}}
 #' @seealso \code{\link{getDEMatrix}}
 #' @seealso \code{\link{getDEList}}
@@ -248,6 +249,7 @@ setMethod(f         = "runDiffAnalysis",
 
 #' @rdname runDiffAnalysis
 #' @title runDiffAnalysis
+#' @aliases runDiffAnalysis
 #' @exportMethod runDiffAnalysis
 #' 
 setMethod(f          = "runDiffAnalysis",
@@ -291,10 +293,10 @@ setMethod(f          = "runDiffAnalysis",
 #' new parameters.
 #' @exportMethod filterDiffAnalysis
 #' @rdname filterDiffAnalysis
+#' @aliases filterDiffAnalysis
 #' @importFrom dplyr full_join filter if_else mutate_at
 #' @importFrom data.table data.table
 #' @importFrom purrr reduce
-#' @aliases filterDiffAnalysis
 #' @examples
 #' # Set the data path
 #' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
@@ -398,9 +400,9 @@ setMethod(f          = "filterDiffAnalysis",
           })
 
 #' @rdname filterDiffAnalysis
+#' @aliases filterDiffAnalysis
 #' @title filterDiffAnalysis
 #' @exportMethod filterDiffAnalysis
-#' @aliases filterDiffAnalysis
 setMethod(f          = "filterDiffAnalysis",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name, 
@@ -1039,7 +1041,7 @@ setMethod(f          = "getDEList",
 #' @return List of differential analysis setting parametres.
 #' @exportMethod getDiffSettings
 #' @rdname runDiffAnalysis
-#' @aliases runDiffAnalysis
+#' @aliases getDiffSettings
 
 
 setMethod(f          = "getDiffSettings",
@@ -1051,8 +1053,8 @@ setMethod(f          = "getDiffSettings",
 
 #' @title getDiffSettings
 #' @rdname runDiffAnalysis
+#' @aliases getDiffSettings
 #' @exportMethod getDiffSettings
-#' @aliases runDiffAnalysis
 
 setMethod(f          = "getDiffSettings",
           signature  = "RflomicsMAE",
