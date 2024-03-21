@@ -258,7 +258,7 @@ setMethod(
                 sampleMap = sampleMap(object),
                 omicList    = metadata(object)$omicList, 
                 projectName = getProjectName(object), 
-                design      = metadata(object)$Design
+                design      = metadata(object)$design
             )
             
             if (cmd) {
@@ -452,7 +452,7 @@ setMethod(
                 sampleMap = sampleMap(object),
                 omicList    = metadata(object)$omicList, 
                 projectName = getProjectName(object), 
-                design      = metadata(object)$Design
+                design      = metadata(object)$design
             )
         )
         
