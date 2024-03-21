@@ -18,6 +18,7 @@
 #' ylab geom_bar
 #' @importFrom dplyr full_join arrange
 #' @rdname plotLibrarySize
+#' @aliases plotLibrarySize
 #' @examples
 #' 
 #' # Set the data path
@@ -112,7 +113,7 @@ setMethod(f          = "plotLibrarySize",
           })
 
 #' @rdname plotLibrarySize
-#' @noRd
+#' @aliases plotLibrarySize
 #' @title plotLibrarySize
 #' @param SE.name the name of the data the normalization have to be applied to. 
 #' @exportMethod plotLibrarySize
@@ -142,6 +143,7 @@ setMethod(f          = "plotLibrarySize",
 #' @importFrom reshape2 melt
 #' @importFrom dplyr full_join arrange
 #' @rdname plotDataDistribution
+#' @aliases plotDataDistribution
 #' @return A ggplot object
 #' @examples
 #' 
@@ -264,7 +266,7 @@ setMethod(
 )
 
 #' @rdname plotDataDistribution
-#' @noRd
+#' @aliases plotDataDistribution
 #' @title plotDataDistribution
 #' @param SE.name the name of the data the normalization have to be applied to. 
 #' @exportMethod plotDataDistribution
@@ -296,6 +298,7 @@ setMethod(
 #'
 #' @exportMethod runTransformData
 #' @rdname runTransformData
+#' @aliases runTransformData
 #' @examples
 #' 
 #' # Set the data path
@@ -371,6 +374,7 @@ setMethod(f          = "runTransformData",
 
 #' @rdname runTransformData
 #' @title runTransformData
+#' @aliases runTransformData
 #' @param SE.name the name of the data the normalization have to be applied to. 
 #' @exportMethod runTransformData
 setMethod(f          = "runTransformData",
@@ -396,6 +400,7 @@ setMethod(f          = "runTransformData",
 #' @param object of class RflomicsSE
 #' @exportMethod getTransSettings
 #' @rdname getTransSettings
+#' @aliases getTransSettings
 #' @return List of transformation parametres.
 
 
@@ -410,6 +415,7 @@ setMethod(f          = "getTransSettings",
 #' @title getTransSettings
 #' @param SE.name the name of the data to fetch in the object if the object 
 #' is a RflomicsMAE
+#' @aliases getTransSettings
 #' @exportMethod getTransSettings
 
 setMethod(f          = "getTransSettings",
@@ -423,6 +429,7 @@ setMethod(f          = "getTransSettings",
 #' @param object of class RflomicsSE
 #' @param method the transformation method to set
 #' @rdname setTrans
+#' @aliases setTrans
 #' @return a RflomicsSE or RflomicsMAE object.
 #' @exportMethod setTrans
 setMethod(f="setTrans", 
@@ -435,6 +442,7 @@ setMethod(f="setTrans",
 #' @title set transformation  method
 #' @rdname setTrans
 #' @title setTrans
+#' @aliases setTrans
 #' @param SE.name the name of the data to fetch in the object if the object 
 #' is a RflomicsMAE
 #' @exportMethod setTrans
@@ -481,6 +489,7 @@ setMethod(f          = "setTrans",
 #' @importFrom edgeR DGEList filterByExpr cpm
 #' @seealso edgeR::filterByExpr
 #' @rdname filterLowAbundance
+#' @aliases filterLowAbundance
 #' @examples
 #' 
 #' # Set the data path
@@ -573,6 +582,7 @@ setMethod(f         = "filterLowAbundance",
 
 #' @rdname filterLowAbundance
 #' @title filterLowAbundance
+#' @aliases filterLowAbundance
 #' @param SE.name the name of the data the normalization have to be applied to. 
 #' @exportMethod filterLowAbundance
 setMethod(f          = "filterLowAbundance",
@@ -604,6 +614,7 @@ setMethod(f          = "filterLowAbundance",
 #' @param object of class RflomicsSE
 #' @return List of differential analysis setting parametres.
 #' @exportMethod getFilterSettings
+#' @aliases getFilterSettings
 #' @rdname getFilterSettings
 #'
 
@@ -619,6 +630,7 @@ setMethod(f          = "getFilterSettings",
 #' @param SE.name the name of the data to fetch in the object if the object is 
 #' a RflomicsMAE
 #' @exportMethod getFilterSettings
+#' @aliases getFilterSettings
 
 setMethod(f          = "getFilterSettings",
           signature  = "RflomicsMAE",
@@ -634,6 +646,7 @@ setMethod(f          = "getFilterSettings",
 #' @param object of class RflomicsSE
 #' @return List of differential analysis setting parametres.
 #' @exportMethod getFilteredFeatures 
+#' @aliases getFilteredFeatures
 #' @rdname getFilteredFeatures 
 #'
 
@@ -648,6 +661,7 @@ setMethod(f          = "getFilteredFeatures",
 #' @title getFilteredFeatures 
 #' @param SE.name the name of the data to fetch in the object if the 
 #' object is a RflomicsMAE
+#' @aliases getFilteredFeatures
 #' @exportMethod getFilteredFeatures 
 
 setMethod(f          = "getFilteredFeatures",
@@ -684,6 +698,7 @@ setMethod(f          = "getFilteredFeatures",
 #' @importFrom stats median
 #' @exportMethod runNormalization
 #' @rdname runNormalization
+#' @aliases runNormalization
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. 
 #' DiCoExpress: a tool to process multifactorial
@@ -792,6 +807,7 @@ setMethod(f          = "runNormalization",
 
 #' @rdname runNormalization
 #' @title runNormalization
+#' @aliases runNormalization
 #' @param SE.name the name of the data the normalization have to be applied to. 
 #' @exportMethod runNormalization
 setMethod(f          = "runNormalization",
@@ -811,6 +827,7 @@ setMethod(f          = "runNormalization",
 #' @param object of class RflomicsSE
 #' @return Coefficient of normalization
 #' @exportMethod getCoeffNorm
+#' @aliases getCoeffNorm
 #' @rdname getCoeffNorm 
 #'
 
@@ -822,6 +839,7 @@ setMethod(f          = "getCoeffNorm",
           })
 
 #' @rdname getCoeffNorm 
+#' @aliases getCoeffNorm
 #' @title getCoeffNorm 
 #' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
 #' @exportMethod getCoeffNorm 
@@ -836,6 +854,7 @@ setMethod(f          = "getCoeffNorm",
 #' @param object of class RflomicsSE
 #' @param coeff normalization coefficient
 #' @rdname setCoeffNorm
+#' @aliases setCoeffNorm
 #' @exportMethod setCoeffNorm
 #' @return object of class RflomicsSE
 setMethod(f="setCoeffNorm", 
@@ -847,6 +866,7 @@ setMethod(f="setCoeffNorm",
 
 #' @rdname setCoeffNorm
 #' @title setCoeffNorm
+#' @aliases setCoeffNorm
 #' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
 #' @exportMethod setCoeffNorm
 setMethod(f          = "setCoeffNorm",
@@ -861,6 +881,7 @@ setMethod(f          = "setCoeffNorm",
 #' @param object of class RflomicsSE
 #' @return List of differential analysis setting parametres.
 #' @exportMethod getNormSettings
+#' @aliases getNormSettings
 #' @rdname getNormSettings
 #'
 
@@ -872,6 +893,7 @@ setMethod(f          = "getNormSettings",
 
 #' @rdname getNormSettings
 #' @title getNormSettings
+#' @aliases getNormSettings
 #' @param SE.name the name of the data to fetch in the object if the object 
 #' is a RflomicsMAE
 #' @exportMethod getNormSettings
@@ -887,6 +909,7 @@ setMethod(f          = "getNormSettings",
 #' @param object of class RflomicsSE
 #' @param method the Normalization method to set
 #' @rdname setNorm
+#' @aliases setNorm
 #' @exportMethod setNorm
 #' @return object of class RflomicsSE
 setMethod(f="setNorm", 
@@ -898,6 +921,7 @@ setMethod(f="setNorm",
 
 #' @rdname setNorm
 #' @title setNorm
+#' @aliases setNorm
 #' @param SE.name the name of the data to fetch in the object if the object 
 #' is a RflomicsMAE
 #' @exportMethod setNorm
@@ -933,6 +957,7 @@ setMethod(f          = "setNorm",
 #' Default value : RNAseq = TMM.
 #' @param transformMethod method of transformation.
 #' @return An object of class \link{RflomicsSE}
+#' @aliases runDataProcessing
 #' @exportMethod runDataProcessing
 #' @seealso runSampleFiltering
 #' @seealso  filterLowAbundance
@@ -1057,6 +1082,7 @@ setMethod(f          = "runDataProcessing",
 #' @rdname runDataProcessing
 #' @title runDataProcessing
 #' @param SE.name the name of the data the normalization have to be applied to. 
+#' @aliases runDataProcessing
 #' @exportMethod runDataProcessing
 setMethod(f          = "runDataProcessing",
           signature  = "RflomicsMAE",
@@ -1106,6 +1132,7 @@ setMethod(f          = "runDataProcessing",
 #' @exportMethod runSampleFiltering
 #' @importFrom dplyr filter
 #' @rdname runSampleFiltering
+#' @aliases runSampleFiltering
 #' @examples
 #' #' Set the data path
 #' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")

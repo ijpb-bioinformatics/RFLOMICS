@@ -276,6 +276,7 @@ setMethod(f          = "runDiffAnalysis",
 
 ## METHOD to filter differential analysis
 
+#' @title filterDiffAnalysis
 #' Filter differential analysis
 #'
 #' @param object A RflomicsSE object
@@ -293,6 +294,7 @@ setMethod(f          = "runDiffAnalysis",
 #' @importFrom dplyr full_join filter if_else mutate_at
 #' @importFrom data.table data.table
 #' @importFrom purrr reduce
+#' @aliases filterDiffAnalysis
 #' @examples
 #' # Set the data path
 #' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
@@ -398,6 +400,7 @@ setMethod(f          = "filterDiffAnalysis",
 #' @rdname filterDiffAnalysis
 #' @title filterDiffAnalysis
 #' @exportMethod filterDiffAnalysis
+#' @aliases filterDiffAnalysis
 setMethod(f          = "filterDiffAnalysis",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name, 
@@ -446,6 +449,7 @@ setMethod(f          = "filterDiffAnalysis",
 #' @return plot
 #' @exportMethod plotDiffAnalysis
 #' @rdname plotDiffAnalysis
+#' @aliases plotDiffAnalysis
 #' @export
 #' 
 setMethod(f="plotDiffAnalysis",
@@ -476,6 +480,7 @@ setMethod(f="plotDiffAnalysis",
 #' @param SE.name the name of the data to fetch in the object if the object 
 #' is a RflomicsMAE
 #' @exportMethod plotDiffAnalysis
+#' @aliases plotDiffAnalysis
 setMethod(f          = "plotDiffAnalysis",
           signature  = "RflomicsMAE",
           definition = function(object,
@@ -522,6 +527,7 @@ setMethod(f          = "plotDiffAnalysis",
 #' @importFrom ComplexHeatmap HeatmapAnnotation
 #' @importFrom grid gpar
 #' @rdname plotHeatmapDesign
+#' @aliases plotHeatmapDesign
 #' @examples
 #' 
 #' # Set the data path
@@ -705,6 +711,7 @@ setMethod(f          = "plotHeatmapDesign",
 #' @param SE.name the name of the data to fetch in the object if the object 
 #' is a RflomicsMAE
 #' @exportMethod plotHeatmapDesign
+#' @aliases plotHeatmapDesign
 setMethod(f          = "plotHeatmapDesign",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name, 
@@ -747,6 +754,7 @@ setMethod(f          = "plotHeatmapDesign",
 #' guide_legend xlab ylab theme_void ggtitle
 #' @importFrom dplyr full_join  arrange
 #' @rdname plotBoxplotDE
+#' @aliases plotBoxplotDE
 #' @examples
 #' 
 #' # Set the data path
@@ -891,6 +899,7 @@ setMethod(f          = "plotBoxplotDE",
 #' @title plotBoxplotDE
 #' @param SE.name the name of the \link{RflomicsSE} object to fetch if the object is of class \link{RflomicsMAE}
 #' @exportMethod plotBoxplotDE
+#' @aliases plotBoxplotDE
 setMethod(f          = "plotBoxplotDE",
           signature  = "RflomicsMAE",
           definition = function(object, 
@@ -920,6 +929,7 @@ setMethod(f          = "plotBoxplotDE",
 #' @param SE.name the name of the data to fetch in the object if the object is  \link{RflomicsMAE}
 #' @return a matrix of results from the differential analyses.
 #' @exportMethod getDEMatrix
+#' @aliases getDEMatrix
 #' @rdname getDEMatrix
 
 setMethod(f          = "getDEMatrix",
@@ -935,6 +945,7 @@ setMethod(f          = "getDEMatrix",
 #' @title getDEMatrix
 #' @rdname getDEMatrix
 #' @exportMethod getDEMatrix
+#' @aliases getDEMatrix
 
 setMethod(f          = "getDEMatrix",
           signature  = "RflomicsMAE",
@@ -962,6 +973,7 @@ setMethod(f          = "getDEMatrix",
 #' @exportMethod getDEList
 #' @importFrom tidyselect starts_with any_of
 #' @importFrom dplyr select mutate filter
+#' @aliases getDEList
 
 setMethod(f          = "getDEList",
           signature  = "RflomicsSE",
@@ -1004,6 +1016,7 @@ setMethod(f          = "getDEList",
 
 #' @rdname getDEList
 #' @title getDEList
+#' @aliases getDEList
 #' @param SE.name the name of the data to fetch in the object if the object is 
 #' a RflomicsMAE
 #' @exportMethod getDEList
@@ -1026,6 +1039,7 @@ setMethod(f          = "getDEList",
 #' @return List of differential analysis setting parametres.
 #' @exportMethod getDiffSettings
 #' @rdname runDiffAnalysis
+#' @aliases runDiffAnalysis
 
 
 setMethod(f          = "getDiffSettings",
@@ -1038,6 +1052,7 @@ setMethod(f          = "getDiffSettings",
 #' @title getDiffSettings
 #' @rdname runDiffAnalysis
 #' @exportMethod getDiffSettings
+#' @aliases runDiffAnalysis
 
 setMethod(f          = "getDiffSettings",
           signature  = "RflomicsMAE",
