@@ -118,7 +118,7 @@ knitr::asis_output(out)
 
 `r if(is.null(getMOFA(rflomics.MAE))) {"\\end{comment}"}`
 
-```{r MOFA2, eval = !is.null(getMOFA(rflomics.MAE)), hide = is.null(is.null(getMOFA(rflomics.MAE))) }
+```{r MOFA2, eval = !is.null(getMOFA(rflomics.MAE)), hide = is.null(getMOFA(rflomics.MAE)) }
 
 out <- NULL
 

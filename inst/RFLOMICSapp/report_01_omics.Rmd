@@ -23,13 +23,13 @@ dataset.SE     <- getRflomicsSE(rflomics.MAE, data)
 
 if(!is.null(dataset.SE)){
   
-  Diff.eval      <- !is.null(dataset.SE@metadata[["DiffExpAnal"]][["Validcontrasts"]])
-  CoEx.eval      <- !is.null(dataset.SE@metadata[["CoExpAnal"]]$results)
-  Diff.ann.eval  <- !is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]]$results)
-  CoEx.ann.eval  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]]$results)
+  Diff.eval      <- !length(dataset.SE@metadata[["DiffExpAnal"]][["Validcontrasts"]]) == 0
+  CoEx.eval      <- !length(dataset.SE@metadata[["CoExpAnal"]]$results) == 0
+  Diff.ann.eval  <- !length(dataset.SE@metadata[["DiffExpEnrichAnal"]]$results) == 0
+  CoEx.ann.eval  <- !length(dataset.SE@metadata[["CoExpEnrichAnal"]]$results) == 0
   
-  Diff.ann.eval_CPR <- !is.null(dataset.SE@metadata[["DiffExpEnrichAnal"]])
-  CoEx.ann.eval_CPR  <- !is.null(dataset.SE@metadata[["CoExpEnrichAnal"]])
+  Diff.ann.eval_CPR <- !length(dataset.SE@metadata[["DiffExpEnrichAnal"]]) == 0
+  CoEx.ann.eval_CPR  <- !length(dataset.SE@metadata[["CoExpEnrichAnal"]]) == 0
 }
 
 ```
