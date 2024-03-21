@@ -57,7 +57,7 @@
 #'     \item setTrans: Set the transformation settings stored in \code{metadata} slot.
 #'     \item setNorm: Set the normalization settings stored in \code{metadata} slot.
 #' }
-#' @param object,x A \code{RflomicsMAE} object
+#' @param object A \code{RflomicsMAE} object
 #'
 #'
 #' @return Accessors: Either a \code{sampleMap}, \code{ExperimentList}, or
