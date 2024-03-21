@@ -1,0 +1,10 @@
+@unpublished{Rflomics2024,
+  title       = "Rflomics: an {R/Bioconductor} package for comprehensive multi-omics data analysis and integration",
+  author      = "Bessoltane N, Charif D, Paysant-Leroux C, Hulot A, Cueff G",
+  abstract    = "",
+  institution = "",
+  month       =  march,
+  year        =  2024,
+  url         = "https://forgemia.inra.fr/RFLOMICS/Rflomics",
+  doi         = "swiftID ?"
+}

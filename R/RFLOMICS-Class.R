@@ -6,14 +6,28 @@
 
 #' @title \link{RflomicsSE-class} Class
 #' @description
-#' RflomicsSE is a class that extends the \link{SummarizedExperiment} class. 
-#' This class impose the organization of the metadata slot.
+#' RflomicsSE is a class that extends the \link{SummarizedExperiment} class by imposing a structure
+#' to the metadata slot. This class is used by the Rflomics analysis workflow to store the 
+#' experimental design, the settings and results of a single omic analysis. 
+#' The slot metadata is structured as follows:
+#' 
+#' \itemize{
+#'   \item omicType: the type of omics dataset
+#'   \item design: experimental design
+#'   \item DataProcessing: a list of data processing settings and results 
+#'   \item PCAlist: a list of PCA settings and results
+#'   \item DiffExpAnal: a list containing the Differential Analysis settings and results
+#'   \item CoExpAnal: a list containing the Coexpression Analysis settings and results
+#'   \item DiffExpEnrichAnal: a list containing the enrichment analysis of the list of DE features settings and results
+#'   \item CoExpEnrichAnal: a list containing the enrichment analysis of the list of co-expressed features settings and results
+#'  } 
 #' 
 #' @seealso \link{SummarizedExperiment}
+#' @seealso \link{RflomicsSE-methods}
 #' @name RflomicsSE-class
 #' @rdname RflomicsSE-class
 #' @exportClass RflomicsSE
-#' @return A RflomicsSE object.
+#' @return A \code{RflomicsSE} object.
 setClass(
     Class    = "RflomicsSE",
     contains = "SummarizedExperiment",
@@ -62,12 +76,23 @@ setMethod(
 
 #' @title \link{RflomicsMAE-class} Class
 #' @description
-#' RflomicsMAE is a class that extends the \link{MultiAssayExperiment} class. 
-#' This class impose the organization of the metadata slot.
+#' RflomicsMAE is a class that extends the \link{MultiAssayExperiment}  class by imposing a structure
+#' to the metadata slot. This class is used by the Rflomics analysis workflow to store the 
+#' experimental design, the settings and results of a multi-omics integration analysis.  
+#' The slot metadata is structured as follows:
+#'  
+#'  \itemize{
+#'    \item omicList: Contains the list of omics datasets, with the type and name  
+#'    \item projectName: The project name
+#'    \item design: The experimental design 
+#'    \item IntegrationAnalysis: A list containing the multi-omics integration analysis settings and results.   
+#'  }
+#' 
 #' @seealso \link{MultiAssayExperiment}
+#' @seealso \link{RflomicsMAE-methods}
 #' @name RflomicsMAE-class
 #' @rdname RflomicsMAE-class
-#' @return A RflomicsMAE object.
+#' @return A \code{RflomicsMAE} object.
 #' @exportClass RflomicsMAE
 setClass(
     Class    = "RflomicsMAE",

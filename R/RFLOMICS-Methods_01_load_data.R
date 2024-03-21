@@ -14,48 +14,38 @@
 
 
 #' @name RflomicsMAE-methods
-#' @title Accessing and modifying information in an object of class RflomicsMAE
+#' @title Access or modify the metadata slot of an object of class RflomicsMAE
 #'
-#' @description A set of accessor and setter generic functions to modify 
-#' objects of the slot metadata of a \code{RflomicsMAE} object. 
-#' The slot metadata contains: 
-#' \itemize{
-#'    \item omicList: a list of omics  
-#'    \item projectName: the project name
-#'    \item design: design 
-#'    \item IntegrationAnalysis: A list of integration analysis results   
-#'  }    
-#'      
-#' all the 
-#' omics analysis results and settings of the object. 
-#' 
+#' @description A set of accessor and setter generic functions to access and modify 
+#' objects of the slot metadata of a \link{RflomicsMAE} object. 
+#'
 #' @section Accessors:
 #' \itemize{
-#'    \item getProjectName: Access to the project name stored in \code{metadata} slot.
-#'    \item getDesignMat: Access to the design matrix stored in \code{metadata} slot.
-#'    \item getDatasetNames: Access to the names of the omics datasets stored in \code{metadata} slot.
-#'    \item getOmicsTypes: Access to the type of omics datasets stored in \code{metadata} slot.
-#'    \item getFactorNames: Access to the experimental factor names stored in \code{metadata} slot.
-#'    \item getFactorTypes: Access to the experimental factor types ("bio", "batch" or "meta") stored in \code{metadata} slot.
-#'    \item getBioFactors: Access to the biological factors stored in \code{metadata} slot.
-#'    \item getBatchFactors: Access to the batch factors stored in \code{metadata} slot.
-#'    \item getMetaFactors: Access to the metadata factors stored in \code{metadata} slot.
-#'    \item getFactorModalities: Access to the factor modalities stored in \code{metadata} slot.
-#'    \item getRflomicsSE: Access to the RflomicsSE object stored in \code{ExperimentList} slot.
+#'    \item getProjectName: Access to the name of the omic analysis.
+#'    \item getDesignMat: Design matrix of the omic analysis.
+#'    \item getDatasetNames: Names of the analyzed omics datasets.
+#'    \item getOmicsTypes: Access to the type of omics datasets.
+#'    \item getFactorNames: Access to the experimental factor names containing in the design list of the metadata.
+#'    \item getFactorTypes: List the experimental factor types ("bio", "batch" or "meta") containing in the design list of the metadata.
+#'    \item getBioFactors: List the biological factors.
+#'    \item getBatchFactors: List the batch factors.
+#'    \item getMetaFactors: List the metadata factors
+#'    \item getFactorModalities: Access to the factor modalities 
+#'    \item getRflomicsSE: Access to a RflomicsSE object 
 #'    \item subRflomics: Extract a subset of a RflomicsMAE object.
-#'    \item getModelFormula: Access to the model formula stored in \code{metadata} slot.
-#'    \item getSelectedContrasts: Access to the selected contrasts stored in \code{metadata} slot.
-#'    \item getValidContrasts: Access to the valid contrasts stored in \code{metadata} slot.
-#'    \item getContrastMatrix: Access to the contrast matrix stored in \code{metadata} slot.
-#'    \item getTransSettings: Access to the transformation settings stored in \code{metadata} slot.
-#'    \item getFilterSettings: Access to the filtering settings stored in \code{metadata} slot.
-#'    \item getFilteredFeatures: Access to the filtered features stored in \code{metadata} slot.
-#'    \item getNormSettings: Access to the normalization settings stored in \code{metadata} slot.
-#'    \item getCoeffNorm: Access to the normalization coefficients stored in \code{metadata} slot.
-#'    \item getDiffSettings: Access to the differential expression analysis settings stored in \code{metadata} slot.
-#'    \item getCoexpSettings : Access to the co-expression analysis settings stored in \code{metadata} slot.
-#'    \item getClusterEntities: Access to the cluster entities stored in \code{metadata} slot.
-#'    \item getCoseqClusters: Access to the co-expression clusters stored in \code{metadata} slot.
+#'    \item getModelFormula: Access to the model formula of the experimental design
+#'    \item getSelectedContrasts: List the selected contrasts 
+#'    \item getValidContrasts: List the valid contrasts
+#'    \item getContrastMatrix: Get the contrast matrix 
+#'    \item getTransSettings: Access to the transformation settings of a given omic dataset.
+#'    \item getFilterSettings: Access to the filtering settings of a given omic dataset.
+#'    \item getFilteredFeatures: Access to the filtered features of a given omic dataset.
+#'    \item getNormSettings: Access to the normalization settings of a given omic dataset.
+#'    \item getCoeffNorm: Access to the normalization coefficients of a given omic dataset
+#'    \item getDiffSettings: Access to the differential expression analysis settings of a given omic dataset
+#'    \item getCoexpSettings : Access to the co-expression analysis settings of a given omic dataset
+#'    \item getClusterEntities: Access to the cluster entities of a given omic dataset
+#'    \item getCoseqClusters: Access to the co-expression clusters of a given omic dataset
 #' }
 #'
 #' @section Setters:
@@ -96,27 +86,30 @@ NULL
 #'
 #' @section Accessors:
 #' \itemize{
-#'    \item getDesignMat: Access to the design matrix stored in \code{metadata} slot.
-#'    \item getDatasetNames: Access to the names of the omics datasets stored in \code{metadata} slot.
-#'    \item getOmicsTypes: Access to the type of omics datasets stored in \code{metadata} slot.
-#'    \item getFactorNames: Access to the factor names stored in \code{metadata} slot.
-#'    \item getFactorTypes: Access to the factor types stored in \code{metadata} slot.
-#'    \item getBioFactors: Access to the biological factors stored in \code{metadata} slot.
-#'    \item getBatchFactors: Access to the batch factors stored in \code{metadata} slot.
-#'    \item getMetaFactors: Access to the metadata factors stored in \code{metadata} slot.
-#'    \item getFactorModalities: Access to the factor modalities stored in \code{metadata} slot.
-#'    \item getModelFormula: Access to the model formula stored in \code{metadata} slot.
-#'    \item getSelectedContrasts: Access to the selected contrasts stored in \code{metadata} slot.
-#'    \item getValidContrasts: Access to the valid contrasts stored in \code{metadata} slot.
-#'    \item getContrastMatrix: Access to the contrast matrix stored in \code{metadata} slot.
-#'    \item getTransSettings: Access to the transformation settings stored in \code{metadata} slot.
-#'    \item getFilterSettings: Access to the filtering settings stored in \code{metadata} slot.
-#'    \item getNormSettings: Access to the normalization settings stored in \code{metadata} slot.
-#'    \item getCoeffNorm: Access to the normalization coefficients stored in \code{metadata} slot.
-#'    \item getDiffSettings: Access to the differential expression analysis settings stored in \code{metadata} slot.
-#'    \item getCoexpSettings : Access to the co-expression analysis settings stored in \code{metadata} slot.
-#'    \item getClusterEntities: Access to the cluster entities stored in \code{metadata} slot.
-#'    \item getCoseqClusters: Access to the co-expression clusters stored in \code{metadata} slot.
+#'    \item getDesignMat: Design matrix of the omic analysis.
+#'    \item getDatasetNames: Names of the analyzed omics datasets.
+#'    \item getOmicsTypes: Access to the type of omics datasets.
+#'    \item getFactorNames: Access to the experimental factor names containing in the design list of the metadata.
+#'    \item getFactorTypes: List the experimental factor types ("bio", "batch" or "meta") containing in the design list of the metadata.
+#'    \item getBioFactors: List the biological factors.
+#'    \item getBatchFactors: List the batch factors.
+#'    \item getMetaFactors: List the metadata factors
+#'    \item getFactorModalities: Access to the factor modalities 
+#'    \item getRflomicsSE: Access to a RflomicsSE object 
+#'    \item subRflomics: Extract a subset of a RflomicsMAE object.
+#'    \item getModelFormula: Access to the model formula of the experimental design
+#'    \item getSelectedContrasts: List the selected contrasts 
+#'    \item getValidContrasts: List the valid contrasts
+#'    \item getContrastMatrix: Get the contrast matrix 
+#'    \item getTransSettings: Access to the transformation settings of a given omic dataset.
+#'    \item getFilterSettings: Access to the filtering settings of a given omic dataset.
+#'    \item getFilteredFeatures: Access to the filtered features of a given omic dataset.
+#'    \item getNormSettings: Access to the normalization settings of a given omic dataset.
+#'    \item getCoeffNorm: Access to the normalization coefficients of a given omic dataset
+#'    \item getDiffSettings: Access to the differential expression analysis settings of a given omic dataset
+#'    \item getCoexpSettings : Access to the co-expression analysis settings of a given omic dataset
+#'    \item getClusterEntities: Access to the cluster entities of a given omic dataset
+#'    \item getCoseqClusters: Access to the co-expression clusters of a given omic dataset
 #' }
 #'
 #' @section Setters:

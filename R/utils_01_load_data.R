@@ -13,10 +13,11 @@
 
 # ----  RflomicsMAE CLASS ----
 ## ---- createRflomicsMAE: create RflomicsMAE object from loaded data ----
-#' @title createRflomicsMAE is a constructor for the class \link{createRflomicsMAE-class}
-#' @description This function is a constructor for the class \link{createRflomicsMAE-class}.
-#' It initializes an object of class \link{createRflomicsMAE-class} from a list of omics datasets
-#' imported by \link{readOmicsData}, a vector of dataset names, a vector of omics types, an experimental design
+#' @title createRflomicsMAE
+#' @description This function is a constructor for the class \link{RflomicsMAE}.
+#' It initializes an object of class \link{RflomicsMAE} from a list of omics datasets
+#' imported by \link{readOmicsData}, a vector of dataset names, a vector of omics types, and 
+#' an experimental design
 #' 
 #' @param projectName Project name
 #' @param omicsData list of omics dataset.
@@ -30,8 +31,8 @@
 #' \item{factorType:}{factor type : "Bio", "batch", "Meta"}
 #' \item{factorLevels:}{levels of each factor with "," separation.}
 #' }
-#' @return An object of class \link{createRflomicsMAE-class}
-#' @seealso \link{createRflomicsMAE-class}
+#' @return An object of class \link{RflomicsMAE}
+#' @seealso \link{RflomicsMAE-class}
 #' @name createRflomicsMAE
 #' @rdname createRflomicsMAE
 #' @export
@@ -277,15 +278,14 @@ RflomicsMAE <- function(experiments = ExperimentList(),
 
 # ----  RflomicsSE CLASS ----
 ## ---- createRflomicsSE: create RflomicsSE object from loaded data ----
-#' @title createRflomicsSE is creator for the class 
-#' \link{createRflomicsSE-class}
+#' @title createRflomicsSE 
 #' @description This function initializes an object of 
-#' class \link{createRflomicsSE-class}
-#' from a list of omics data.
+#' class \link{RflomicsSE} from a list of omics data.
 #' @param omicsData omics dataset.
-#' @return An object of class \link{createRflomicsSE-class}
+#' @return An object of class \link{RflomicsSE}
 #' @name createRflomicsSE
 #' @rdname createRflomicsSE
+#' @seealso \link{RflomicsSE-class}
 #' @export
 #' @examples
 #' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
@@ -360,9 +360,10 @@ createRflomicsSE <- function(omicData, omicType, ExpDesign, design){
 #' @seealso SummarizedExperiment
 #' @importFrom SummarizedExperiment SummarizedExperiment
 #' @importFrom S4Vectors SimpleList
-#' @return An object of class \link{RflomicsSE-class}
+#' @return An object of class \link{RflomicsSE}
 #' @name RflomicsSE
 #' @rdname RflomicsSE
+#' @seealso \link{RflomicsSE-class}
 #' @export
 #' @examples
 #' RflomicsSE()
