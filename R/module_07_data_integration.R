@@ -1853,6 +1853,7 @@
 
 #' @noRd
 #' @keywords internal
+#' @importFrom stats aov
 .outMOFARelations <- function(resMOFA) {
     
     mofaText <- paste0("Each of the cells is the pvalue result from an ANOVA between the factor and the response variable.",
