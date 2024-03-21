@@ -1191,7 +1191,7 @@ setMethod(f          = "runSampleFiltering",
               SE.new$groups  <- factor(SE.new$groups,  levels = unique(SE.new$groups[order_levels]))
               
               # à retirer dès que je remplace Groups par colData
-              SE.new@metadata$Groups <- filter(SE.new@metadata$Groups, samples %in% SE.new$samples)
+              #SE.new@metadata$Groups <- filter(SE.new@metadata$Groups, samples %in% SE.new$samples)
               
               SE.new@metadata$DataProcessing$filteredSamples <- setdiff(colnames(object), samples)
               

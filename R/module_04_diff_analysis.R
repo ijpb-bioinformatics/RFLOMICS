@@ -463,7 +463,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                                     column(width = 12,
                                                            renderPlot({
                                  
-                                                               newDataset.SE <- dataset.SE[, which(colnames(dataset.SE) %in% dataset.SE@metadata$Groups$samples)]
+                                                               newDataset.SE <- dataset.SE[, which(colnames(dataset.SE) %in% dataset.SE$samples)]
                                                                newDataset.SE <-  runOmicsPCA(newDataset.SE[row.names(newDataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]])],ncomp = 5, raw = FALSE) 
                                                                
                                                                PC1.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Firstaxis")]][1])
