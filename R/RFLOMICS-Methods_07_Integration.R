@@ -256,7 +256,9 @@ setMethod(
                 experiments = res,
                 colData   = colData(object),
                 sampleMap = sampleMap(object),
-                metadata  = metadata(object)
+                omicList    = metadata(object)$omicList, 
+                projectName = getProjectName(object), 
+                design      = metadata(object)$Design
             )
             
             if (cmd) {
@@ -449,7 +451,9 @@ setMethod(
                 experiments = res,
                 colData = colData(object),
                 sampleMap = sampleMap(object),
-                metadata = metadata(object)
+                omicList    = metadata(object)$omicList, 
+                projectName = getProjectName(object), 
+                design      = metadata(object)$Design
             )
         )
         

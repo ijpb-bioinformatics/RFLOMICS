@@ -197,7 +197,7 @@ QCNormalizationTab <-
                     label    = .addBSpopify(label = 'Data transformation:', 
                                             content = "Choose log2 transformation"),
                     choices  = c("log2" = "log2", "none" = "none"),
-                    selected = "none"
+                    selected = "log2"
                 ),
                 hr(),
                 
@@ -210,7 +210,7 @@ QCNormalizationTab <-
                         "totalSum" = "totalSum",
                         "none" = "none"
                     ),
-                    selected = "none"
+                    selected = "median"
                 ),
                 
                 

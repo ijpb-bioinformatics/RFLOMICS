@@ -693,36 +693,31 @@
   renderUI({
     if (length(input$selectData) == 0) return()
     if (is.null(input$selectData)) return()
+    #if (is.null(input[[paste0("selectmethode", input$selectData[1])]])) return()
     
-    list.SE <- lapply(input$selectData, function(set) {
-      if (is.null(input[[paste0("selectmethode", set)]]))
-        return()
+    MAE2Integrate <- subRflomicsMAE(session$userData$FlomicsMultiAssay, input$selectData)
+    
+    for(set in input$selectData){
       
-      switch(input[[paste0("selectmethode", set)]],
-             "diff" = {
-               variable.to.keep <- getDEList(
-                 object = session$userData$FlomicsMultiAssay[[set]],
-                 contrasts = input[[paste0("selectContrast", set)]],
-                 operation = input[[paste0("unionORintersect", set)]]
-               )
-               session$userData$FlomicsMultiAssay[[set]][variable.to.keep]
-             },
-             {
-               session$userData$FlomicsMultiAssay[[set]]
-             }
-      )
-    })
-    names(list.SE) <- input$selectData
+      if(input[[paste0("selectmethode", set)]] == "diff"){
+        
+        variable.to.keep <- getDEList(
+          object = session$userData$FlomicsMultiAssay[[set]],
+          contrasts = input[[paste0("selectContrast", set)]],
+          operation = input[[paste0("unionORintersect", set)]]
+        )
+        
+        MAE2Integrate[[set]] <- 
+          session$userData$FlomicsMultiAssay[[set]][variable.to.keep]
+        
+      }
+      else{
+        MAE2Integrate[[set]] <- 
+          session$userData$FlomicsMultiAssay[[set]]
+      }
+    }
     
-    if (any(is.null(list.SE))) return()
-    
-    MAE2Integrate <- NULL
-    MAE2Integrate <- RflomicsMAE(
-      experiments = lapply(list.SE, SummarizedExperiment),
-      colData     = colData(session$userData$FlomicsMultiAssay),
-      sampleMap   = sampleMap(session$userData$FlomicsMultiAssay),
-      metadata    = metadata(session$userData$FlomicsMultiAssay)
-    )
+    toto <<- MAE2Integrate
     
     textExp <- "This graph represents the dataset you will use in 
         the integration (tables and samples). 

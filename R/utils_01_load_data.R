@@ -214,9 +214,9 @@ createRflomicsMAE <- function(projectName=NULL, omicsData=NULL,
     RfMAE <- RflomicsMAE(experiments = SummarizedExperimentList,
                          colData     = ExpDesign,
                          sampleMap   = listmap,
-                         metadata    = list(omicList    = omicList, 
-                                            projectName = projectName, 
-                                            design      = Design))
+                         omicList    = omicList, 
+                         projectName = projectName, 
+                         design      = Design)
     
     # tag as raw data (le temps de trouver une solution pour 
     # ne pas faire co-exister les raw et les process)
@@ -240,24 +240,36 @@ createRflomicsMAE <- function(projectName=NULL, omicsData=NULL,
 #' 
 #' rflomicsMAE <- RflomicsMAE()
 
-RflomicsMAE <- function(experiments = NULL, 
-                        colData = NULL, 
-                        sampleMap = NULL, 
-                        metadata = NULL, 
-                        ...){
+RflomicsMAE <- function(experiments = ExperimentList(), 
+                        colData     = S4Vectors::DataFrame(), 
+                        sampleMap   = S4Vectors::DataFrame(
+                          assay = factor(), 
+                          primary = character(), 
+                          colname = character()),
+                        omicList       = list(),
+                        projectName    = NULL,
+                        design         = list(),
+                        IntegrationAnalysis = list()){
     
     MAE <- NULL
     if (is(sampleMap, "DFrame") || is.data.frame(sampleMap)) {
-        MAE <- MultiAssayExperiment(experiments, colData, sampleMap, metadata, ...)
+        MAE <- MultiAssayExperiment(experiments, colData, sampleMap)
     } else if (is.list(sampleMap)) {
         MAE <- MultiAssayExperiment(experiments, colData, 
-                                    listToMap(sampleMap), metadata, ...)
+                                    listToMap(sampleMap))
+    } else{
+      MAE <- MultiAssayExperiment(experiments, colData, sampleMap)
     }
     
     rflomicsMAE <- new("RflomicsMAE")
-    for(slot in slotNames(MAE)) {
+    for(slot in c("ExperimentList", "colData", "sampleMap", "drops")) {
         slot(rflomicsMAE, slot) <- slot(MAE, slot)
     }
+    rflomicsMAE@metadata <- 
+      list("omicList"            = omicList,
+           "projectName"         = projectName,
+           "design"              = design,
+           "IntegrationAnalysis" = IntegrationAnalysis)
     
     return(rflomicsMAE)
 }
@@ -318,16 +330,23 @@ createRflomicsSE <- function(omicData, omicType, ExpDesign, design){
     colData$samples <- factor(colData$samples, levels = unique(colData$samples[order_levels]))
     colData$groups  <- factor(colData$groups,  levels = unique(colData$groups[order_levels]))
     
-    metadata <- list(omicType = omicType, Groups = colData, 
-                     design = list(factorType = design[intersect(names(design), names(colData))]), 
-                     DataProcessing = list(rowSumsZero = genes_flt0,
-                                           Filtering = NULL, 
-                                           Normalization =  list(setting = list(method = "none"), results = NULL,  normalized = FALSE), 
-                                           Transformation = list(setting = list(method = "none"), results = NULL,  transformed = FALSE)
-                     ))
+    # metadata <- list(omicType = omicType,
+    #                  design = list(factorType = design[intersect(names(design), names(colData))]), 
+    #                  DataProcessing = list(rowSumsZero = genes_flt0,
+    #                                        Filtering = NULL, 
+    #                                        Normalization =  list(setting = list(method = "none"), results = NULL,  normalized = FALSE), 
+    #                                        Transformation = list(setting = list(method = "none"), results = NULL,  transformed = FALSE)
+    #                  ))
     
-    rflomicsSE <- RflomicsSE(assays = matrix.filt, colData = DataFrame(colData), 
-                             metadata = metadata)
+    rflomicsSE <- RflomicsSE(assays = matrix.filt, 
+                             colData = DataFrame(colData), 
+                             omicType = omicType,
+                             design = list(factorType = design[intersect(names(design), names(colData))]),
+                             DataProcessing = list(rowSumsZero = genes_flt0,
+                                                   Filtering = NULL, 
+                                                   Normalization =  list(setting = list(method = "none"), results = NULL,  normalized = FALSE), 
+                                                   Transformation = list(setting = list(method = "none"), results = NULL,  transformed = FALSE))
+                             )
     return(rflomicsSE)
 }
 
@@ -345,16 +364,38 @@ createRflomicsSE <- function(omicData, omicType, ExpDesign, design){
 #' @export
 #' @examples
 #' RflomicsSE()
-RflomicsSE <- function(assays = NULL, colData = NULL,  metadata = NULL, ...){
+#' 
+RflomicsSE <- function(assays = NULL, colData = NULL, 
+                       omicType = NULL,
+                       design   = list() , 
+                       DataProcessing = list() , 
+                       PCAlist        = list() , 
+                       DiffExpAnal    = list() ,      
+                       CoExpAnal      = list() , 
+                       DiffExpEnrichAnal = list() ,  
+                       CoExpEnrichAnal   = list()){
     
-    SE <- SummarizedExperiment(
-        assays  = SimpleList(abundance = as.matrix(assays)), 
-        colData = colData, metadata = metadata)
+  
+    if(!is.null(assays))
+      assays <- SimpleList(abundance = as.matrix(assays))
+      
+    SE <- SummarizedExperiment( assays  = assays, 
+                                colData = colData)
     
     rflomicsSE <- new("RflomicsSE")
-    for(slot in slotNames(SE)) {
+    for(slot in c("colData","assays","NAMES","elementMetadata")) {
         slot(rflomicsSE, slot) <- slot(SE, slot)
     }
+    
+    rflomicsSE@metadata <- 
+      list("omicType" = omicType , 
+         "design"   = design , 
+         "DataProcessing" = DataProcessing , 
+         "PCAlist"        = PCAlist , 
+         "DiffExpAnal"    = DiffExpAnal ,      
+         "CoExpAnal"      = CoExpAnal , 
+         "DiffExpEnrichAnal" = DiffExpEnrichAnal ,  
+         "CoExpEnrichAnal"   = CoExpEnrichAnal)
     
     return(rflomicsSE)
 }
@@ -741,3 +782,6 @@ check_NA <- function(object) {
     
     return(exampleData)
 }
+
+
+

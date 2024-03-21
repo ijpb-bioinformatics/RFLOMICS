@@ -346,12 +346,12 @@ setMethod(f = "resetFlomicsMultiAssay",
                   for (data in datasets) {
                       if (!is.null(object[[data]])) {
                           if (!is.null(object[[data]]@metadata[[res]])) {
-                              object[[data]]@metadata[[res]] <- NULL
+                              object[[data]]@metadata[[res]] <- list()
                           }
                       }
                   }
                   
-                  object@metadata[[res]] <- NULL
+                  object@metadata[[res]] <- list()
               }
               return(object)
           })
@@ -445,7 +445,7 @@ setMethod(
         for (data in getDatasetNames(object)) {
             if (is.null(object[[data]]))
                 next
-            if (is.null(object[[data]]@metadata[[from]]))
+            if (length(object[[data]]@metadata[[from]]) == 0)
                 next
             
             # for each database
@@ -677,7 +677,7 @@ setMethod(
         for (data in omicNames) {
             if (is.null(object[[data]]))
                 next
-            if (is.null(object[[data]]@metadata$CoExpAnal))
+            if (length(object[[data]]@metadata$CoExpAnal) == 0)
                 next
             
             Groups     <- getDesignMat(object[[data]])

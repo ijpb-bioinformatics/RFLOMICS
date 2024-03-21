@@ -172,9 +172,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         rea.values[[dataset]]$coExpAnnot <- FALSE
         rea.values[[dataset]]$DiffValidContrast <- NULL
         
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpEnrichAnal <- NULL
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpAnal         <- NULL
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpEnrichAnal   <- NULL
+        session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpEnrichAnal <- list()
+        session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpAnal         <- list()
+        session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpEnrichAnal   <- list()
         
         session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["Validcontrasts"]] <- NULL
         
@@ -202,9 +202,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         
         dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
         
-        if(is.null(dataset.SE@metadata$DiffExpAnal)){
-            
-            dataset.SE@metadata$DiffExpAnal <- list()
+        if(length(dataset.SE@metadata$DiffExpAnal) == 0){
             
             message("# 4- Diff Analysis... ", dataset)
             message("#    => Filter Diff Analysis...")
@@ -559,7 +557,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 check_run_diff_execution <- function(object.SE, param.list = NULL){
     
     # filtering setting
-    if (is.null(object.SE@metadata[["DiffExpAnal"]]) || object.SE@metadata[["DiffExpAnal"]]$results != TRUE) return(TRUE)
+    if (length(object.SE@metadata[["DiffExpAnal"]]) == 0 || object.SE@metadata[["DiffExpAnal"]]$results != TRUE) return(TRUE)
     
     if(param.list$method != getDiffSettings(object.SE)$method) return(TRUE)
     if(param.list$p.adj.method  != getDiffSettings(object.SE)$p.adj.method) return(TRUE)

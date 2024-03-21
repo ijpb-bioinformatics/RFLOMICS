@@ -302,8 +302,8 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
         
         
         # initialize MAE object
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpAnal       <- NULL
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpEnrichAnal <- NULL
+        session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpAnal       <- list()
+        session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpEnrichAnal <- list()
         
         #---- progress bar ----#
         progress <- shiny::Progress$new()
@@ -501,7 +501,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
 check_run_coseq_execution <- function(object.SE, param.list = NULL){
     
     # filtering setting
-    if(is.null(object.SE@metadata[["CoExpAnal"]]) || object.SE@metadata[["CoExpAnal"]]$results != TRUE) return(TRUE)
+    if(length(object.SE@metadata[["CoExpAnal"]]) == 0 || object.SE@metadata[["CoExpAnal"]]$results != TRUE) return(TRUE)
     
     if(isFALSE(dplyr::setequal(param.list$gene.list.names, getCoexpSettings(object.SE)$gene.list.names))) return(TRUE)
     if(param.list$model          != getCoexpSettings(object.SE)$model)                       return(TRUE)
