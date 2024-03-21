@@ -59,7 +59,7 @@
         
         # update rea values
         rea.values$datasetList <-
-            session$userData$FlomicsMultiAssay@metadata$omicList
+          metadata(session$userData$FlomicsMultiAssay)$omicList
         rea.values$loadData    <- TRUE
         local.rea.values$plots <- TRUE
         

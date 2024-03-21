@@ -446,28 +446,34 @@ rflomicsServer <- function(input, output, session) {
         ##########################################
         # Part3 : Data Exploratory
         ##########################################
-        inputNorm <- callModule(module  = QCNormalizationTab, id = paste0(omics,i),
-                                dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]],
-                                rea.values = rea.values)
+        inputNorm <- callModule(
+          module  = QCNormalizationTab, id = paste0(omics,i),
+          dataset = metadata(session$userData$FlomicsMultiAssay)$omicList[[omics]][[i]],
+          rea.values = rea.values)
         
         ##########################################
         # Part5 :  Diff Analysis
         ##########################################
-        inputDiff <- callModule(module  = DiffExpAnalysis, id = paste0(omics, i),
-                                dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]],
-                                rea.values = rea.values)
+        inputDiff <- callModule(
+          module  = DiffExpAnalysis, id = paste0(omics, i),
+          dataset = metadata(session$userData$FlomicsMultiAssay)$omicList[[omics]][[i]],
+          rea.values = rea.values)
         
         ##########################################
         # Part6 : Co-Expression Analysis
         ##########################################
-        callModule(module  = CoSeqAnalysis, id = paste0(omics, i),
-                   dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
+        callModule(
+          module  = CoSeqAnalysis, id = paste0(omics, i),
+          dataset = metadata(session$userData$FlomicsMultiAssay)$omicList[[omics]][[i]],
+          rea.values = rea.values)
         
         ##########################################
         # Part7 : Enrichment Analysis CPR
         ##########################################
-        callModule(module  = .modEnrichment, id = paste0(omics, i),
-                   dataset = session$userData$FlomicsMultiAssay@metadata$omicList[[omics]][[i]], rea.values = rea.values)
+        callModule(
+          module  = .modEnrichment, id = paste0(omics, i),
+          dataset = metadata(session$userData$FlomicsMultiAssay)$omicList[[omics]][[i]],
+          rea.values = rea.values)
         
       })
     })

@@ -135,8 +135,7 @@
         })
         
         
-        #unlist(session$userData$FlomicsMultiAssay@metadata$omicList)
-        
+
         session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(object  = session$userData$FlomicsMultiAssay, 
                                                                      results = c("DiffExpAnal", "CoExpAnal", "DiffExpEnrichAnal", "CoExpEnrichAnal", "IntegrationAnalysis"))
         

@@ -302,8 +302,8 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
         
         
         # initialize MAE object
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpAnal       <- list()
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpEnrichAnal <- list()
+        metadata(session$userData$FlomicsMultiAssay[[dataset]])$CoExpAnal       <- list()
+        metadata(session$userData$FlomicsMultiAssay[[dataset]])$CoExpEnrichAnal <- list()
         
         #---- progress bar ----#
         progress <- shiny::Progress$new()
@@ -332,16 +332,16 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
         session$userData$FlomicsMultiAssay[[dataset]] <- dataset.SE
         
         # If an error occured
-        if(isFALSE(dataset.SE@metadata$CoExpAnal[["results"]])){
+        if(isFALSE(metadata(dataset.SE)$CoExpAnal[["results"]])){
             
             showModal(modalDialog( title = "Error message", 
                                    paste0("No results! ", 
-                                          as.character(dataset.SE@metadata$CoExpAnal[["error"]]))))
+                                          as.character(metadata(dataset.SE)$CoExpAnal[["error"]]))))
         }
         
         validate(
-            need(!isFALSE(dataset.SE@metadata$CoExpAnal[["results"]]), 
-                 paste0("No results!", as.character(dataset.SE@metadata$CoExpAnal[["error"]])))
+            need(!isFALSE(metadata(dataset.SE)$CoExpAnal[["results"]]), 
+                 paste0("No results!", as.character(metadata(dataset.SE)$CoExpAnal[["error"]])))
         )
         
         #---- progress bar ----#
@@ -349,7 +349,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
         #----------------------#
         
         rea.values[[dataset]]$coExpAnal  <- TRUE
-        rea.values[[dataset]]$CoExpClusterNames <- names(dataset.SE@metadata$CoExpAnal$clusters)
+        rea.values[[dataset]]$CoExpClusterNames <- names(metadata(dataset.SE)$CoExpAnal$clusters)
         rea.values$datasetCoEx <- unique(c(rea.values$datasetCoEx, dataset))
         
     }, ignoreInit = TRUE)
@@ -366,13 +366,12 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
         
         factors.bio <- getBioFactors(MAE.data)
         
-        #plot.coseq.res <- dataset.SE@metadata$CoExpAnal[["plots"]]
         plot.coseq.res <- plotCoExpression(dataset.SE)
         
-        nb_cluster     <- dataset.SE@metadata$CoExpAnal[["cluster.nb"]]
-        coseq.res      <- dataset.SE@metadata$CoExpAnal[["coseqResults"]]
-        cluster.comp   <- dataset.SE@metadata$CoExpAnal[["clusters"]]
-        topDEF         <- dataset.SE@metadata$DiffExpAnal$mergeDEF
+        nb_cluster     <- metadata(dataset.SE)$CoExpAnal[["cluster.nb"]]
+        coseq.res      <- metadata(dataset.SE)$CoExpAnal[["coseqResults"]]
+        cluster.comp   <- metadata(dataset.SE)$CoExpAnal[["clusters"]]
+        topDEF         <- metadata(dataset.SE)$DiffExpAnal$mergeDEF
         
         
         box(title = paste0("Number of clusters: ", nb_cluster), 
@@ -453,7 +452,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                                                "'s contrast belonging")),
                                  br(), hr(),br(),
                                  renderPlot({ 
-                                     tag <- session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["Validcontrasts"]]$tag
+                                     tag <- metadata(session$userData$FlomicsMultiAssay[[dataset]])$DiffExpAnal[["Validcontrasts"]]$tag
                                      
                                      if(length(tag) > 1){
                                          plotCoseqContrasts(dataset.SE)
@@ -467,7 +466,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     output$observationsUI  <- renderUI({
         
         dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
-        coseq.res  <- dataset.SE@metadata$CoExpAnal[["coseqResults"]]
+        coseq.res  <- metadata(dataset.SE)$CoExpAnal[["coseqResults"]]
         clustr_num <- paste0("Cluster_",input$selectCluster)
         assays.data <- filter(as.data.frame(coseq.res@assays@data[[1]]), 
                               get(clustr_num) > 0.8)
@@ -485,11 +484,11 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
         
         dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
         
-        if(rea.values[[dataset]]$coExpAnal == FALSE || dim(dataset.SE@metadata$CoExpAnal[["stats"]])[1] == 0) return()
+        if(rea.values[[dataset]]$coExpAnal == FALSE || dim(metadata(dataset.SE)$CoExpAnal[["stats"]])[1] == 0) return()
         
         box(title = "Failed cases", width = 14, status = "warning", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE,
             
-            DT::renderDataTable(DT::datatable(as.data.frame(dataset.SE@metadata$CoExpAnal[["stats"]]), 
+            DT::renderDataTable(DT::datatable(as.data.frame(metadata(dataset.SE)$CoExpAnal[["stats"]]), 
                                               options = list(dom = 'tip'), rownames = FALSE))
         )
     })
@@ -501,7 +500,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
 check_run_coseq_execution <- function(object.SE, param.list = NULL){
     
     # filtering setting
-    if(length(object.SE@metadata[["CoExpAnal"]]) == 0 || object.SE@metadata[["CoExpAnal"]]$results != TRUE) return(TRUE)
+    if(length(metadata(object.SE)[["CoExpAnal"]]) == 0 || metadata(object.SE)[["CoExpAnal"]]$results != TRUE) return(TRUE)
     
     if(isFALSE(dplyr::setequal(param.list$gene.list.names, getCoexpSettings(object.SE)$gene.list.names))) return(TRUE)
     if(param.list$model          != getCoexpSettings(object.SE)$model)                       return(TRUE)

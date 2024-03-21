@@ -686,7 +686,7 @@
              paramList = NULL) {
         if (!is.null(paramList$diffList)) {
             fromSource <- "DiffExpEnrichAnal"
-            dbRes <- object.SE@metadata[[fromSource]][[dbType]]
+            dbRes <- metadata(object.SE)[[fromSource]][[dbType]]
             
             if (is.null(dbRes)) {
                 return(TRUE)
@@ -719,7 +719,7 @@
         }
         if (!is.null(paramList$CoexpList)) {
             fromSource <- "CoExpEnrichAnal"
-            dbRes <- object.SE@metadata[[fromSource]][[dbType]]
+            dbRes <- metadata(object.SE)[[fromSource]][[dbType]]
             
             if (is.null(dbRes))
                 return(TRUE)
@@ -2014,7 +2014,7 @@
         
         # Possible domains of ontology:
         possDomain <-  unique(unlist(lapply(
-            dataSE@metadata[[listSource]][[database]][["enrichResult"]],
+          metadata(dataSE)[[listSource]][[database]][["enrichResult"]],
             FUN = function(x)
                 names(x)
         )))

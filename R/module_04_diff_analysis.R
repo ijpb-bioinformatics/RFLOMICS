@@ -77,7 +77,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         
         #design must be complete
         validate(
-            need(rea.values[[dataset]]$compCheck != FALSE, session$userData$FlomicsMultiAssay@metadata$completeCheck[["error"]])
+            need(rea.values[[dataset]]$compCheck != FALSE, metadata(session$userData$FlomicsMultiAssay)$completeCheck[["error"]])
         )
         
         local.rea.values$selectedContrasts <- 
@@ -172,11 +172,11 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         rea.values[[dataset]]$coExpAnnot <- FALSE
         rea.values[[dataset]]$DiffValidContrast <- NULL
         
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpEnrichAnal <- list()
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpAnal         <- list()
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpEnrichAnal   <- list()
+        metadata(session$userData$FlomicsMultiAssay[[dataset]])$DiffExpEnrichAnal <- list()
+        metadata(session$userData$FlomicsMultiAssay[[dataset]])$CoExpAnal         <- list()
+        metadata(session$userData$FlomicsMultiAssay[[dataset]])$CoExpEnrichAnal   <- list()
         
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["Validcontrasts"]] <- NULL
+        metadata(session$userData$FlomicsMultiAssay[[dataset]])$DiffExpAnal[["Validcontrasts"]] <- NULL
         
         # reset reactive values (diff)
         rea.values$datasetDiff <- rea.values$datasetDiff[rea.values$datasetDiff != dataset]
@@ -202,7 +202,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         
         dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
         
-        if(length(dataset.SE@metadata$DiffExpAnal) == 0){
+        if(length(metadata(dataset.SE)$DiffExpAnal) == 0){
             
             message("# 4- Diff Analysis... ", dataset)
             message("#    => Filter Diff Analysis...")
@@ -227,25 +227,25 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         }
         
         # error management
-        if(isFALSE(dataset.SE@metadata$DiffExpAnal[["results"]])){
+        if(isFALSE(metadata(dataset.SE)$DiffExpAnal[["results"]])){
             showModal(modalDialog( title = "Error message",
-                                   if(! is.null(dataset.SE@metadata$DiffExpAnal[["ErrorStats"]])){
-                                       DT::renderDataTable(dataset.SE@metadata$DiffExpAnal[["ErrorStats"]],rownames = FALSE)
+                                   if(! is.null(metadata(dataset.SE)$DiffExpAnal[["ErrorStats"]])){
+                                       DT::renderDataTable(metadata(dataset.SE)$DiffExpAnal[["ErrorStats"]],rownames = FALSE)
                                    }
                                    else{
-                                       as.character(dataset.SE@metadata$DiffExpAnal[["Error"]])
+                                       as.character(metadata(dataset.SE)$DiffExpAnal[["Error"]])
                                    }
             ))
         }
         
-        if(is.null(dataset.SE@metadata$DiffExpAnal[["RawDEFres"]])){
+        if(is.null(metadata(dataset.SE)$DiffExpAnal[["RawDEFres"]])){
             
             showModal(modalDialog( title = "Error message",
-                                   if(! is.null(dataset.SE@metadata$DiffExpAnal[["ErrorTab"]])){
-                                       DT::renderDataTable(dataset.SE@metadata$DiffExpAnal[["ErrorTab"]],rownames = FALSE)
+                                   if(! is.null(metadata(dataset.SE)$DiffExpAnal[["ErrorTab"]])){
+                                       DT::renderDataTable(metadata(dataset.SE)$DiffExpAnal[["ErrorTab"]],rownames = FALSE)
                                    }
                                    else{
-                                       as.character(dataset.SE@metadata$DiffExpAnal[["error"]])
+                                       as.character(metadata(dataset.SE)$DiffExpAnal[["error"]])
                                    }
             ))
         }
@@ -269,11 +269,12 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         rea.values[[dataset]]$diffAnnot  <- FALSE
         rea.values[[dataset]]$coExpAnnot <- FALSE
         
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpEnrichAnal <- NULL
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpEnrichAnal   <- NULL
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$CoExpAnal         <- NULL
+        metadata(session$userData$FlomicsMultiAssay[[dataset]])$DiffExpEnrichAnal <- NULL
+        metadata(session$userData$FlomicsMultiAssay[[dataset]])$CoExpEnrichAnal   <- NULL
+        metadata(session$userData$FlomicsMultiAssay[[dataset]])$CoExpAnal         <- NULL
         
-        session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["Validcontrasts"]] <- rea.values[[dataset]]$DiffValidContrast
+        metadata(session$userData$FlomicsMultiAssay[[dataset]])$DiffExpAnal[["Validcontrasts"]] <- 
+          rea.values[[dataset]]$DiffValidContrast
         
         rea.values[[dataset]]$diffValid <- TRUE
         rea.values$datasetDiff <- unique(c(rea.values$datasetDiff , dataset))
@@ -286,7 +287,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     output$ContrastsResults <- renderUI({
         
         if (rea.values[[dataset]]$diffAnal == FALSE ||
-            is.null(session$userData$FlomicsMultiAssay[[dataset]]@metadata$DiffExpAnal[["TopDEF"]])) return()
+            is.null(metadata(session$userData$FlomicsMultiAssay[[dataset]])$DiffExpAnal[["TopDEF"]])) return()
         
         dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
         
@@ -298,14 +299,14 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         list(
             lapply(seq_len(nrow(getSelectedContrasts(dataset.SE))), function(i) {
                 
-                vect     <- unlist(dataset.SE@metadata$design$Contrasts.Sel[i,])
-                res      <- dataset.SE@metadata$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
-                stats    <- dataset.SE@metadata$DiffExpAnal[["stats"]][vect["contrastName"],]
+                vect     <- unlist(metadata(dataset.SE)$design$Contrasts.Sel[i,])
+                res      <- metadata(dataset.SE)$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
+                stats    <- metadata(dataset.SE)$DiffExpAnal[["stats"]][vect["contrastName"],]
                 
                 diff.plots <- plotDiffAnalysis(dataset.SE, 
                                                contrastName = vect["contrastName"])
                 
-                if (dim(dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]])[1] == 0){
+                if (dim(metadata(dataset.SE)$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]])[1] == 0){
                     
                     
                     fluidRow(
@@ -386,7 +387,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                                 tags$hr(), tags$br(),
                                                 ### DEF result table ###
                                                 DT::renderDataTable({
-                                                    resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
+                                                    resTable <- metadata(dataset.SE)$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
                                                     resTable$Regulation <- ifelse(resTable$logFC > 0, "Up", "Down")
                                                     resTable %>% DT::datatable(
                                                         extensions = 'Buttons',
@@ -462,7 +463,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                                            renderPlot({
                                  
                                                                newDataset.SE <- dataset.SE[, which(colnames(dataset.SE) %in% dataset.SE$samples)]
-                                                               newDataset.SE <-  runOmicsPCA(newDataset.SE[row.names(newDataset.SE@metadata$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]])],ncomp = 5, raw = FALSE) 
+                                                               newDataset.SE <-  runOmicsPCA(newDataset.SE[row.names(newmetadata(dataset.SE)$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]])],ncomp = 5, raw = FALSE) 
                                                                
                                                                PC1.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Firstaxis")]][1])
                                                                PC2.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Secondaxis")]][1])
@@ -496,7 +497,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                                            selectizeInput(
                                                                inputId = session$ns(paste0(vect["contrastName"], "-DE")), 
                                                                label = paste0("Select DE ",.omicsDic(dataset.SE)$variableName,":"),
-                                                               choices = rownames(arrange(dataset.SE@metadata$DiffExpAnal$TopDEF[[vect["contrastName"]]], 
+                                                               choices = rownames(arrange(metadata(dataset.SE)$DiffExpAnal$TopDEF[[vect["contrastName"]]], 
                                                                                           Adj.pvalue)),
                                                                multiple = FALSE),
                                                            radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-DEcondition")),
@@ -529,15 +530,15 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
         
         if (rea.values[[dataset]]$diffAnal == FALSE ||
-            is.null(dataset.SE@metadata$DiffExpAnal[["mergeDEF"]])) return()
+            is.null(metadata(dataset.SE)$DiffExpAnal[["mergeDEF"]])) return()
         
-        DEF_mat <- as.data.frame(dataset.SE@metadata$DiffExpAnal[["mergeDEF"]])
+        DEF_mat <- as.data.frame(metadata(dataset.SE)$DiffExpAnal[["mergeDEF"]])
         
         index <- sapply(names(DEF_mat)[-1], function(x){(input[[paste0("checkbox_",x)]])}) %>% unlist()
         
         H_selected <- names(DEF_mat)[-1][index]
         
-        rea.values[[dataset]]$DiffValidContrast <- filter(dataset.SE@metadata$design$Contrasts.Sel, tag %in% H_selected)
+        rea.values[[dataset]]$DiffValidContrast <- filter(metadata(dataset.SE)$design$Contrasts.Sel, tag %in% H_selected)
         
         if (length(H_selected) > 1 && dim(DEF_mat)[1] != 0){
             
@@ -557,7 +558,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
 check_run_diff_execution <- function(object.SE, param.list = NULL){
     
     # filtering setting
-    if (length(object.SE@metadata[["DiffExpAnal"]]) == 0 || object.SE@metadata[["DiffExpAnal"]]$results != TRUE) return(TRUE)
+    if (length(metadata(object.SE)[["DiffExpAnal"]]) == 0 || 
+        metadata(object.SE)[["DiffExpAnal"]]$results != TRUE) return(TRUE)
     
     if(param.list$method != getDiffSettings(object.SE)$method) return(TRUE)
     if(param.list$p.adj.method  != getDiffSettings(object.SE)$p.adj.method) return(TRUE)
