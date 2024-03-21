@@ -491,6 +491,7 @@ setMethod(
 #' @importFrom ggplot2 scale_fill_gradient2 guide_colourbar
 #' @importFrom ggrepel geom_label_repel
 #' @exportMethod plotClusterProfiler
+#' @rdname plotClusterProfiler
 #' @examples
 #' # Generate RflomicsMAE for example
 #' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
@@ -507,12 +508,6 @@ setMethod(
 #'         database = "KEGG", from = "DiffExp",
 #'         plotType = "heatplot", p.adj.cutoff = 0.05,
 #'         domain = "no-domain")
-#'
-#' # From co expression proteins clusters:
-#' plotClusterProfiler(MAEtest[["protetest"]],
-#'         contrastName = "(temperatureElevated - temperatureMedium) in mean",
-#'         database = "KEGG", from = "coexp",
-#'         plotType = "heatplot",  domain = "no-domain")
 #'
 setMethod(
     f = "plotClusterProfiler",
@@ -1054,6 +1049,7 @@ setMethod(
 #' the results from. If NULL, all results are returned.
 #' @return a list of tables or a table
 #' @exportMethod sumORA
+#' @rdname sumORA
 #' @examples
 #' # Generate RflomicsMAE for example
 #' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
@@ -1120,6 +1116,7 @@ setMethod(
 #' @param database which database (GO, KEGG, custom...)
 #' @return the pvalue cutoff used for the analysis.
 #' @exportMethod getEnrichPvalue
+#' @rdname getEnrichPvalue
 #' @examples
 #' # Generate RflomicsMAE for example
 #' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
@@ -1169,6 +1166,7 @@ setMethod(
 #' @return an RflomicsSE object with NULL value in the
 #' enrichment results.
 #' @exportMethod setEnrichNull
+#' @rdname setEnrichNull
 #' @examples
 #' # Generate RflomicsMAE for example
 #' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
