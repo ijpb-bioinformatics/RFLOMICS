@@ -36,7 +36,8 @@
 #' @rdname createRflomicsMAE
 #' @export
 #' @examples
-#' 
+#' # Set the data path
+#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
 #' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
 #' 
 #' factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
@@ -45,9 +46,9 @@
 #' factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
 #' 
 #' omicsData <- list(
-#'   RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-#'   RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")),
-#'   RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
+#'   RFLOMICS::readOmicsData(file = paste0(datPath, "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
+#'   RFLOMICS::readOmicsData(file = paste0(datPath, "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")),
+#'   RFLOMICS::readOmicsData(file = paste0(datPath, "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
 #' 
 #' MAE <- RFLOMICS::createRflomicsMAE(projectName = "Example",
 #'                                                omicsData   = omicsData,
