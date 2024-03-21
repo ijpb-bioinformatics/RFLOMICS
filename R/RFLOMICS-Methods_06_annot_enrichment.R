@@ -38,7 +38,27 @@
 #' @rdname runAnnotationEnrichment
 #' @examples
 #' # Generate RflomicsMAE for example
-#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
+#'  datPath <- paste0(system.file(package = "RFLOMICS"),
+#'                    "/ExamplesFiles/ecoseed/")
+#'
+#'ExpDesign <-
+#'    readExpDesign(file = paste0(datPath, "condition.txt"))
+#'facRef <-
+#'    data.frame(
+#'       factorName   = c("Repeat", "temperature" , "imbibition"),
+#'       factorRef    = c("rep1",   "Low",          "DS"),
+#'       factorType   = c("batch",  "Bio",          "Bio"),
+#'       factorLevels = c("rep1,rep2,rep3",
+#'                        "Low,Medium,Elevated",
+#'                        "DS,EI,LI")
+#'   )
+#'omicsData <- list(
+#'    readOmicsData(file = paste0(
+#'        datPath, "transcriptome_ecoseed.txt"
+#'    )),
+#'    readOmicsData(file = paste0(datPath, "metabolome_ecoseed.txt"))
+#')
+#'
 #' # Run GO annotation (enrichGO)
 #' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
 #'                         list_args = list(OrgDb = "org.At.tair.db",
@@ -47,6 +67,7 @@
 #'                         from = "DiffExp", database = "GO",
 #'                         domain = "CC")
 #' getEnrichRes(MAEtest[["protetest"]])
+#' 
 #' # Run KEGG annotation (enrichKEGG)
 #' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
 #'                         list_args = list(organism = "ath",
@@ -277,6 +298,12 @@ setMethod(
                    object@metadata[["CoExpEnrichAnal"]][[database]] <- EnrichAnal
                })
         
+        if(tolower(database) == "kegg"){
+            if (exists(bods)) rm(bods)
+            if (exists(kegg_category)) rm(kegg_category)
+            if (exists(korg)) rm(korg)
+        }
+        
         return(object)
     }
 )
@@ -413,6 +440,11 @@ setMethod(
                        na.col = "transparent"
                    )
                }) # end switch
+        
+        if (exists(bods)) rm(bods)
+        if (exists(kegg_category)) rm(kegg_category)
+        if (exists(korg)) rm(korg)
+        
         return()
     }
 )
