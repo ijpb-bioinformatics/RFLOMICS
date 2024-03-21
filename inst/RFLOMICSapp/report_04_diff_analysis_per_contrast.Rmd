@@ -7,7 +7,7 @@
 
 # Create a directory to store the results by contrast
 
-contrastDir <- paste0(anaDiffDir,"/", RFLOMICS:::.convertContrastToTag(dataset.SE,contrast), "_" , contrastName2contrastDir(contrast),"/")
+contrastDir <- paste0(anaDiffDir,"/", RFLOMICS:::.convertContrastToTag(dataset.SE,contrast), "_" , RFLOMICS:::contrastName2contrastDir(contrast),"/")
                       
 dir.create(path=contrastDir)
 
@@ -66,7 +66,7 @@ plotHeatmapDesign(object = dataset.SE, contrastName = contrast)
 
 ```{r PCAonDE, echo=FALSE,out.width = "40%",fig.show = "hold", eval = evalPCA}
 
-resTable <- dataset.SE@metadata$DiffExpAnal[["TopDEF"]][[contrast]]
+resTable <- metadata(dataset.SE)$DiffExpAnal[["TopDEF"]][[contrast]]
 newDataset.SE <- dataset.SE[rownames(dataset.SE) %in% row.names(resTable)]
 newDataset.SE <- RFLOMICS::runOmicsPCA(newDataset.SE)  
 

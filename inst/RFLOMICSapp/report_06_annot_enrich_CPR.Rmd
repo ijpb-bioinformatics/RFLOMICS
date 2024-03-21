@@ -1,6 +1,6 @@
 
 ```{r , echo=FALSE , message=FALSE, warning=FALSE}
-annotDir <- paste0(dataDir,"/","04-Enrichment_analysis_CPR/")
+annotDir <- paste0(dataDir,"/","04-Enrichment_analysis_CPR/", annot)
 dir.create(path=annotDir)
 
 knitr::opts_chunk$set(

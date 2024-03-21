@@ -4,11 +4,11 @@
 
 * **User-provided experimental design file:**
 
-```{r design,out.width = "70%", fig.align='left'}
+```{r design, out.width = "70%", fig.align='left'}
 
-bioFact   <- getBioFactors(rflomics.MAE)
-batchFact <- getBatchFactors(rflomics.MAE)
-metaFact  <- getMetaFactors(rflomics.MAE)
+bioFact   <- RFLOMICS::getBioFactors(rflomics.MAE)
+batchFact <- RFLOMICS::getBatchFactors(rflomics.MAE)
+metaFact  <- RFLOMICS::getMetaFactors(rflomics.MAE)
 
 DT::datatable(getDesignMat(rflomics.MAE)[c(bioFact, batchFact, metaFact)], 
               options = list(rownames = FALSE, pageLength = 6, scrollX = T, dom = 'tip'),
@@ -34,14 +34,6 @@ plotConditionsOverview(object = raw.rflomics.MAE)
 
 ```
 
-
-
-<!-- ```{r condition.over.view, fig.show = "hold", out.width = "60%", fig.align='left'} -->
-
-<!-- plotConditionsOverview(object = raw.rflomics.MAE) -->
-
-<!-- ``` -->
-
 <br>
 <br>
 
@@ -51,7 +43,7 @@ plotConditionsOverview(object = raw.rflomics.MAE)
 
 * **Factor(s) setting summary: Types of factors and modality of reference**
 
-```{r factors, echo=FALSE, message=TRUE, warning=TRUE}
+```{r factors}
 
 fact.types <- getFactorTypes(rflomics.MAE)
 fact.names <- getFactorNames(rflomics.MAE)
@@ -79,7 +71,7 @@ DT::datatable(df , rownames = FALSE , class = 'cell-border stripe',
 * **The selected model formula:**
 
 ```
-`r getModelFormula(rflomics.MAE)`
+`r RFLOMICS::getModelFormula(rflomics.MAE)`
 ````
 
 <br>

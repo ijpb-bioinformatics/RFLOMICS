@@ -17,30 +17,30 @@ knitr::opts_chunk$set(
 isResults <- dataset.SE@metadata$CoExpAnal[["results"]]
 ```
 
-`r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
+`r if(RFLOMICS::getOmicsTypes(dataset.raw.SE) != "RNAseq") {"\\begin{comment}"}`
 Co-expression analysis strategy was adapted from @Lambert2020ta
-`r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
+`r if(RFLOMICS::getOmicsTypes(dataset.raw.SE) != "RNAseq") {"\\end{comment}"}`
 
 Co-expression analysis was carried out on the
-`r getCoexpSettings(dataset.SE)$merge.type` of the following list of
+`r RFLOMICS::getCoexpSettings(dataset.SE)$merge.type` of the following list of
 `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]`
-`r names(getCoexpSettings(dataset.SE)$gene.list.names)`.
-`r getCoexpSettings(dataset.SE)$method` was used to cluster the
+`r names(RFLOMICS::getCoexpSettings(dataset.SE)$gene.list.names)`.
+`r RFLOMICS::getCoexpSettings(dataset.SE)$method` was used to cluster the
 `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]`.
 
 The gaussian mixture model was run on filtered (meanFilterCutoff was set
-to: `r getCoexpSettings(dataset.SE)$meanFilterCutoff`), normalized
-(normalization method was `r getCoexpSettings(dataset.SE)$normFactors`)
+to: `r RFLOMICS::getCoexpSettings(dataset.SE)$meanFilterCutoff`), normalized
+(normalization method was `r RFLOMICS::getCoexpSettings(dataset.SE)$normFactors`)
 and transformed (transformation method:
-`r getCoexpSettings(dataset.SE)$transformation`) count data.
+`r RFLOMICS::getCoexpSettings(dataset.SE)$transformation`) count data.
 
-`r getCoexpSettings(dataset.SE)$replicates.nb` technical replicates were
-performed for each K in `r getCoexpSettings(dataset.SE)$K.range`
+`r RFLOMICS::getCoexpSettings(dataset.SE)$replicates.nb` technical replicates were
+performed for each K in `r RFLOMICS::getCoexpSettings(dataset.SE)$K.range`
 (K=number of clusters).
 
 The best number of cluster (K) selected via the Integrated Completed
 Likelihood (ICL) criterion was
-`r dataset.SE@metadata[["CoExpAnal"]]$cluster.nb`.
+`r metadata(dataset.SE)[["CoExpAnal"]]$cluster.nb`.
 
 `r if(isResults == TRUE) {"\\begin{comment}"}` No clustering results.
 `r if(isResults == TRUE) {"\\end{comment}"}`
@@ -83,8 +83,8 @@ plotCoseqContrasts(dataset.SE)
 
 ```{r,echo = FALSE, eval=isResults}
 
-cosRes <- dataset.SE@metadata$CoExpAnal$coseqResults@allResults
-tab.clusters <- as.data.frame(cosRes[[which(names(cosRes) == names(dataset.SE@metadata$CoExpAnal$cluster.nb))]])
+cosRes <- metadata(dataset.SE)$CoExpAnal$coseqResults@allResults
+tab.clusters <- as.data.frame(cosRes[[which(names(cosRes) == names(metadata(dataset.SE)$CoExpAnal$cluster.nb))]])
 tab.clusters <- tibble::rownames_to_column(tab.clusters, var = "DEF")
       
 write.table(tab.clusters,

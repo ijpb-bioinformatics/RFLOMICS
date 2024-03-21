@@ -14,9 +14,9 @@ knitr::opts_chunk$set(
 <!-- ## Summary table of differential expression analysis -->
 
 
-Differential expression analysis was carried out for each selected contrast thanks to the `r getDiffSettings(dataset.SE)$method` model.
+Differential expression analysis was carried out for each selected contrast thanks to the `r RFLOMICS::getDiffSettings(dataset.SE)$method` model.
 
-`r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\begin{comment}"}`
+`r if(RFLOMICS::getOmicsTypes(dataset.raw.SE) != "RNAseq") {"\\begin{comment}"}`
 
 Differential expression analysis strategy was adapted from @Lambert2020ta
 
@@ -26,30 +26,30 @@ estimateGLMCommonDisp, estimateGLMTrendedDisp, estimateGLMTagwiseDisp and glmFit
 Then, the likelihood ratio test(s) (LRT) were performed for each contrast thanks to the glmLRT 
 function.
 
-`r if(dataset.raw.SE@metadata$omicType != "RNAseq") {"\\end{comment}"}`
+`r if(RFLOMICS::getOmicsTypes(dataset.raw.SE) != "RNAseq") {"\\end{comment}"}`
 
-`r if(dataset.raw.SE@metadata$omicType != "proteomics") {"\\begin{comment}"}`
+`r if(RFLOMICS::getOmicsTypes(dataset.raw.SE) != "proteomics") {"\\begin{comment}"}`
 
 Differential expression analysis strategy was adapted from @efstathiou2017a
 
 In a first time, parameters of the linear model were estimated thanks to limma::lmFit() function of the limma package.
 In a second time, contrasts.fit was used and empirical bayes statistics were obtained thanks to the eBayes() functions of the limma r-package.
-`r if(dataset.raw.SE@metadata$omicType != "proteomics") {"\\end{comment}"}`
+`r if(RFLOMICS::getOmicsTypes(dataset.raw.SE) != "proteomics") {"\\end{comment}"}`
 
-`r if(dataset.raw.SE@metadata$omicType != "metabolomics") {"\\begin{comment}"}`
+`r if(RFLOMICS::getOmicsTypes(dataset.raw.SE) != "metabolomics") {"\\begin{comment}"}`
 In a first time, parameters of the linear model were estimated thanks to limma::lmFit() function of the limma package.
 In a second time, contrasts.fit() was used and empirical bayes statistics were obtained thanks to the eBayes() functions of the limma r-package.
-`r if(dataset.raw.SE@metadata$omicType != "metabolomics") {"\\end{comment}"}`
+`r if(RFLOMICS::getOmicsTypes(dataset.raw.SE) != "metabolomics") {"\\end{comment}"}`
 
 
 P-values of differential expressed `r RFLOMICS:::omicsDic(dataset.raw.SE)[["variableName"]]` were adjusted according 
-to the `r getDiffSettings(dataset.SE)$p.adj.method` procedure with a cutoff set to `r getDiffSettings(dataset.SE)$p.adj.cutoff`.
-LogFC cut-off was set to `r getDiffSettings(dataset.SE)$abs.logFC.cutoff`
+to the `r RFLOMICS::getDiffSettings(dataset.SE)$p.adj.method` procedure with a cutoff set to `r RFLOMICS::getDiffSettings(dataset.SE)$p.adj.cutoff`.
+LogFC cut-off was set to `r RFLOMICS::getDiffSettings(dataset.SE)$abs.logFC.cutoff`
 
 
 * **Summary** 
 
-```{r ,echo=FALSE,message=FALSE, out.width = "100%",warning=FALSE,  fig.show = "hold", eval=Diff.eval}
+```{r , out.width = "100%", fig.show = "hold", eval=Diff.eval}
 
 tmpRes <- dataset.SE@metadata[["DiffExpAnal"]]
 DE <- vector()
@@ -95,7 +95,7 @@ write.table(DEF_mat, file=paste0(anaDiffDir,"/","Matrice_of_DE_", RFLOMICS:::omi
 
 out <- NULL
 
-for (contrast  in  dataset.SE@metadata[["DiffExpAnal"]][["contrasts"]]$contrastName) {
+for (contrast  in  metadata(dataset.SE)[["DiffExpAnal"]][["contrasts"]]$contrastName) {
   out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"),"/RFLOMICSapp/","report_04_diff_analysis_per_contrast.Rmd"), quiet=TRUE))  
   #}
 }
