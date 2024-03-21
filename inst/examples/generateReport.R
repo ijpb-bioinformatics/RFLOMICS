@@ -12,8 +12,8 @@ omicsData <- list(
     file = paste0(system.file(package = "RFLOMICS"), 
                   "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
 
-omicsNames  = c("RNAtest", "metatest", "protetest")
-omicsTypes  = c("RNAseq","metabolomics","proteomics")
+omicsNames  = c("protetest")
+omicsTypes  = c("proteomics")
 MAE <- RFLOMICS::createRflomicsMAE(projectName = "Tests",
                                    omicsData   = omicsData,
                                    omicsNames  = omicsNames,
