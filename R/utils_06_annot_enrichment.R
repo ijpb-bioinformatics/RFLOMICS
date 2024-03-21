@@ -30,7 +30,6 @@
         invisible(file.remove(paste0(nam[[1]][1], ".xml")))
         invisible(file.remove(paste0(nam[[1]][1], ".png")))
     }
-    rm(bods)
     return()
 }
 
