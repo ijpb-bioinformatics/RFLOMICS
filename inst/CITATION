@@ -1,10 +1,29 @@
-@unpublished{Rflomics2024,
-  title       = "Rflomics: an {R/Bioconductor} package for comprehensive multi-omics data analysis and integration",
-  author      = "Bessoltane N, Charif D, Paysant-Leroux C, Hulot A, Cueff G",
-  abstract    = "",
-  institution = "",
-  month       =  march,
-  year        =  2024,
-  url         = "https://forgemia.inra.fr/RFLOMICS/Rflomics",
-  doi         = "swiftID ?"
+pkgVer <- function(pkg) {
+    if (!exists("meta") || is.null(meta)) meta <- packageDescription(pkg)
+    ver <- meta$Version
+    paste0('https://github.com//', pkg, ' - R package version ', ver)
 }
+
+c(
+
+    bibentry(bibtype="manual",
+        title = "",
+        author = personList(
+            as.person("")
+        ),
+        year = format(Sys.Date(), "%Y"),
+        url = "http://www.bioconductor.org/packages/RFLOMICS",
+        note = pkgVer('RFLOMICS'),
+        doi = '10.18129/B9.bioc.RFLOMICS'
+    ),
+    bibentry(bibtype="article",
+        title = "",
+        author = personList(
+            as.person("")
+        ),
+        year = format(Sys.Date(), "%Y"),
+        journal = "bioRxiv",
+        doi = "10.1101/TODO",
+        url = "https://www.biorxiv.org/content/10.1101/TODO"
+    )
+)
