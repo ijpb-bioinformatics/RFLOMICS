@@ -744,6 +744,11 @@ check_NA <- function(object) {
 
 
 ## ---- generateExampleData ----
+#' generateExampleData
+#' 
+#' @return A list
+#' @keywords internal
+#' @noRd
 .generateEcoseedExampleData <- function(){
     
     ExpDesign <- readExpDesign(file = paste0(system.file(package = "RFLOMICS"), 

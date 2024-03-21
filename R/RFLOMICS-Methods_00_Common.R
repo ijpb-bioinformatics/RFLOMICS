@@ -318,9 +318,8 @@ setMethod(
 #' @param results vector of results names
 #' @param dataset dataset name. If dataset == NULL, all datasets will be reset
 #' @return An object of class \link{RflomicsMAE}
-#' @export
-#' @exportMethod resetFlomicsMultiAssay
 #' @noRd
+#' @keywords internal
 #'
 setMethod(f = "resetFlomicsMultiAssay", 
           signature = "RflomicsMAE",

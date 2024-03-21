@@ -148,7 +148,7 @@ the number of DE genes. FDR correction can be applied.
   + If the distribution has 2 peaks one near 0 and one near 1 or just one peak near 1, it is not a good news! 
   You have to understand what's happened.
 
-![Pvalue-Distrib](Images/Pvalue_distrib.pdf){width=80%}
+![Pvalue-Distrib](Images/Pvalue_distrib.png){width=80%}
 
 - You can filter differentially expressed genes/proteins/metabolites either by fold change (**|FC|**) or 
 by False Discovery Rate (BH) cut-off. Graphs will be automatically updated.
