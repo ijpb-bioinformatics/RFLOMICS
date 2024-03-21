@@ -142,6 +142,7 @@ setMethod(f          = "plotLibrarySize",
 #' @importFrom reshape2 melt
 #' @importFrom dplyr full_join arrange
 #' @rdname plotDataDistribution
+#' @return A ggplot object
 #' @examples
 #' 
 #' # Set the data path
@@ -393,9 +394,10 @@ setMethod(f          = "runTransformData",
 #' @title get transformation  parameters
 #'
 #' @param object of class RflomicsSE
-#' @return List of transformation parametres.
 #' @exportMethod getTransSettings
 #' @rdname getTransSettings
+#' @return List of transformation parametres.
+
 
 setMethod(f          = "getTransSettings",
           signature  = "RflomicsSE",

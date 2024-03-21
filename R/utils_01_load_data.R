@@ -13,15 +13,17 @@
 
 # ----  RflomicsMAE CLASS ----
 ## ---- createRflomicsMAE: create RflomicsMAE object from loaded data ----
-#' @title createRflomicsMAE is creator for the class \link{createRflomicsMAE-class}
-#' @description This function initializes an object of class \link{createRflomicsMAE-class}
-#' from a list of omics data.
+#' @title createRflomicsMAE is a constructor for the class \link{createRflomicsMAE-class}
+#' @description This function is a constructor for the class \link{createRflomicsMAE-class}.
+#' It initializes an object of class \link{createRflomicsMAE-class} from a list of omics datasets
+#' imported by \link{readOmicsData}, a vector of dataset names, a vector of omics types, an experimental design
+#' 
 #' @param projectName Project name
 #' @param omicsData list of omics dataset.
-#' @param omicsNames vector of dataset names
-#' @param omicsTypes vector of dataset types
-#' @param ExpDesign a data.frame. Row names give the name of each sample which has been to be construct
-#' @param factorRef data.frame describing experimental factors.
+#' @param omicsNames vector of dataset names.
+#' @param omicsTypes vector of dataset types: "RNAseq", "metabolomics", "proteomics"
+#' @param ExpDesign a data.frame imported by \link{readExpDesign} which describes the experimental design.
+#' @param factorRef a data.frame describing the experimental factors.
 #' \itemize{
 #' \item{factorName:}{factor names}
 #' \item{factorRef:}{factor references}
@@ -29,7 +31,13 @@
 #' \item{factorLevels:}{levels of each factor with "," separation.}
 #' }
 #' @return An object of class \link{createRflomicsMAE-class}
+#' @seealso \link{createRflomicsMAE-class}
+#' @name createRflomicsMAE
+#' @rdname createRflomicsMAE
+#' @export
 #' @examples
+#' 
+#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
 #' 
 #' factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
 #' factorRef   = c("rep1",   "Low",          "DS"),
@@ -41,18 +49,13 @@
 #'   RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")),
 #'   RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
 #' 
-#' MAE <- RFLOMICS::createRflomicsMAE(projectName = "Tests",
+#' MAE <- RFLOMICS::createRflomicsMAE(projectName = "Example",
 #'                                                omicsData   = omicsData,
 #'                                                omicsNames  = c("RNAtest", "metatest", "protetest"),
 #'                                                omicsTypes  = c("RNAseq","metabolomics","proteomics"),
 #'                                                ExpDesign   = ExpDesign,
 #'                                                factorRef   = factorRef)
-#' 
-#'
-#' @name createRflomicsMAE
-#' @rdname createRflomicsMAE
-#' @export
-#'
+
 createRflomicsMAE <- function(projectName=NULL, omicsData=NULL, 
                               omicsNames=NULL, omicsTypes=NULL, 
                               ExpDesign=NULL, factorRef=NULL){
@@ -223,18 +226,20 @@ createRflomicsMAE <- function(projectName=NULL, omicsData=NULL,
 
 
 ## ---- RflomicsMAE: construct RflomicsMAE object ----
-#' @title RflomicsMAE is RflomicsMAE object constructor.
+#' @title RflomicsMAE 
 #' @description
-#' A short description...
-#' 
+#'  \link{RflomicsMAE} constructor.
 #' @param name description
-#' @seealso MultiAssayExperiment
+#' @seealso \link{MultiAssayExperiment}
 #' @importFrom MultiAssayExperiment MultiAssayExperiment listToMap
 #' @return An object of class \link{RflomicsMAE-class}
 #' @name RflomicsMAE
 #' @rdname RflomicsMAE
 #' @export
-#'
+#' @examples
+#' 
+#' rflomicsMAE <- RflomicsMAE()
+
 RflomicsMAE <- function(experiments = NULL, 
                         colData = NULL, 
                         sampleMap = NULL, 
@@ -269,7 +274,15 @@ RflomicsMAE <- function(experiments = NULL,
 #' @name createRflomicsSE
 #' @rdname createRflomicsSE
 #' @export
-#'
+#' @examples
+#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
+#' 
+#' design <- c("batch","bio","bio")
+#' omicData <- RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
+#'  
+#' MAE <- RFLOMICS::createRflomicsSE(omicData   = omicsData,
+#'                                  omicType  = "RNAseq",
+#'                                  ExpDesign = ExpDesign, design = design)
 createRflomicsSE <- function(omicData, omicType, ExpDesign, design){
     
     factorBio   <- names(design[design == "Bio"])
@@ -319,10 +332,9 @@ createRflomicsSE <- function(omicData, omicType, ExpDesign, design){
 }
 
 ## ---- RflomicsSE: construct RflomicsSE object ----
-#' @title RflomicsSE is RflomicsSE object constructor.
+#' @title RflomicsSE
 #' @description
-#' A short description...
-#' 
+#' A constructor for the class \link{RflomicsSE}.
 #' @param name description
 #' @seealso SummarizedExperiment
 #' @importFrom SummarizedExperiment SummarizedExperiment
@@ -331,7 +343,8 @@ createRflomicsSE <- function(omicData, omicType, ExpDesign, design){
 #' @name RflomicsSE
 #' @rdname RflomicsSE
 #' @export
-#'
+#' @examples
+#' RflomicsSE()
 RflomicsSE <- function(assays = NULL, colData = NULL,  metadata = NULL, ...){
     
     SE <- SummarizedExperiment(
@@ -355,7 +368,7 @@ RflomicsSE <- function(assays = NULL, colData = NULL,  metadata = NULL, ...){
 #' @importFrom tidyselect where
 #' @importFrom purrr reduce
 #' @examples
-#' readExpDesign(paste0(system.file(package = "RFLOMICS"), 
+#' design <- readExpDesign(paste0(system.file(package = "RFLOMICS"), 
 #'                     "/ExamplesFiles/ecoseed/condition.txt"))
 #' 
 #' @export

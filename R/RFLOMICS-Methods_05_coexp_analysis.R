@@ -690,15 +690,16 @@ setMethod(f          = "plotCoseqContrasts",
           })
 
 
-# ---- Get Coexp setting ----
+# ---- Get Co-exp setting ----
 
-#' @title Get coexpression analysis setting parameters
+#' @title Get co-expression analysis setting parameters
 #'
 #' @param object of class RflomicsSE
-#' @return List of coexpression analysis setting parametres.
+#' @return List of co-expression analysis setting parameters.
 #' @exportMethod getCoexpSettings
 #' @rdname getCoexpSettings 
-#'
+#' @return list of co-expression analysis setting parameters
+
 
 setMethod(f          = "getCoexpSettings",
           signature  = "RflomicsSE",

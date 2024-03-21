@@ -6,7 +6,8 @@
 
 #' @title \link{RflomicsSE-class} Class
 #' @description
-#' A short description...
+#' RflomicsSE is a class that extends the \link{SummarizedExperiment} class. 
+#' This class impose the organization of the metadata slot.
 #' 
 #' @seealso \link{SummarizedExperiment}
 #' @name RflomicsSE-class
@@ -20,8 +21,7 @@ setClass(
 
 #' @title initialize
 #' @description
-#' A short description...
-#' 
+#' Constructor for the RflomicsSE class.
 #' @return An object of class \link{RflomicsSE-class}
 #' @seealso SummarizedExperiment
 #' @importFrom S4Vectors DataFrame
@@ -48,8 +48,8 @@ setMethod(
 
 #' @title \link{RflomicsMAE-class} Class
 #' @description
-#' A short description...
-#' 
+#' RflomicsMAE is a class that extends the \link{MultiAssayExperiment} class. 
+#' This class impose the organization of the metadata slot.
 #' @seealso \link{MultiAssayExperiment}
 #' @name RflomicsMAE-class
 #' @rdname RflomicsMAE-class
@@ -62,7 +62,7 @@ setClass(
 
 
 #' @title initialize
-#' @description xxx
+#' @description Constructor for the RflomicsMAE class.
 #' @return An object of class \link{RflomicsMAE-class}
 #' @seealso MultiAssayExperiment
 #' @importFrom S4Vectors DataFrame
