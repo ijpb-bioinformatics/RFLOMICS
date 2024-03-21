@@ -35,8 +35,8 @@
 #' @return a RflomicsMAE object. According to the method (MOFA or mixOmics),
 #' the correct slot of metadata has been filled with the results and the
 #' settings.
-#' @rdname integrationWrapper
-#' @exportMethod integrationWrapper
+#' @noRd
+#' @keywords internal
 setMethod(
     f = "integrationWrapper",
     signature = "RflomicsMAE",
@@ -495,36 +495,19 @@ setMethod(
 #' @rdname runOmicsIntegration
 #' @exportMethod runOmicsIntegration
 #' @examples
-#' # Generate an Rflomics MAE:
-#' ExpDesign <- RFLOMICS::readExpDesign(file = paste0(system.file(package = "RFLOMICS"),
-#'                      "/ExamplesFiles/ecoseed/condition.txt"))
-#' factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
-#'                         factorRef   = c("rep1",   "Low",          "DS"),
-#'                         factorType  = c("batch",  "Bio",          "Bio"),
-#'                         factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
-#' 
-#' omicsData <- list(
-#'     RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
-#'                             "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
-#'     RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), 
-#'                             "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
-#' 
-#' MAE <- RFLOMICS::createRflomicsMAE(projectName = "Tests", 
-#'                                    omicsData   = omicsData,
-#'                                    omicsNames  = c("metatest", "protetest"),
-#'                                    omicsTypes  = c("metabolomics","proteomics"),
-#'                                    ExpDesign   = ExpDesign,
-#'                                    factorRef   = factorRef)
-#' names(MAE) <- c("metatest", "protetest")
-#'
-#' # Create the appropriate object using prepareForIntegration:
-#' mofaObj <- prepareForIntegration(MAE,
-#'             omicsNames = c("protetest", "metatest"),
-#'             method = "MOFA")
+#' # Generate MAE for test:
+#' MAEtest <- generateExample(annotation = FALSE, coexp = FALSE,
+#'                            integration = FALSE)
+#'                            
+#' # Prepare mofa object:
+#' mofaObj <- prepareForIntegration(MAEtest,
+#'                 omicsNames = c("protetest", "metatest"),
+#'                 variableLists = rownames(MAEtest),
+#'                 method = "MOFA")
 #'
 #' # Perform integration:
-#' MAE <- runOmicsIntegration(MAE, mofaObj, method = "MOFA")
-#' MOFA2::plot_variance_explained(getMOFA(MAE))
+#' MAEtest <- runOmicsIntegration(MAEtest, mofaObj, method = "MOFA")
+#' MOFA2::plot_variance_explained(getMOFA(MAEtest))
 #'
 setMethod(
     f = "runOmicsIntegration",

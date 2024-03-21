@@ -556,7 +556,7 @@ setMethod(f          = "plotDiffAnalysis",
 #'                                      returnTable = TRUE)[c(1, 2, 3),]
 #' 
 #' # Run the data preprocessing and perform the differential analysis
-#'  MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
+#' MAE <- MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
 #'  runNormalization(SE.name = "protetest", normMethod = "median")    |>
 #'  runDiffAnalysis(SE.name = "protetest", method = "limmalmFit", 
 #'                   contrastList = contrastList)
