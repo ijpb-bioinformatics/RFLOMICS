@@ -288,13 +288,14 @@ RflomicsMAE <- function(experiments = ExperimentList(),
 #' @seealso \link{RflomicsSE-class}
 #' @export
 #' @examples
+#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
 #' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
 #' 
 #' design <- c("batch","bio","bio")
-#' omicData <- RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"),
-#'                                     "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
+#' omicData <- RFLOMICS::readOmicsData(file = paste0(datPath,
+#'                                     "transcriptome_ecoseed.txt"))
 #'  
-#' MAE <- RFLOMICS::createRflomicsSE(omicData   = omicsData,
+#' MAE <- RFLOMICS::createRflomicsSE(omicData   = omicData,
 #'                                  omicType  = "RNAseq",
 #'                                  ExpDesign = ExpDesign, design = design)
 createRflomicsSE <- function(omicData, omicType, ExpDesign, design){
