@@ -2,10 +2,9 @@
 
 export(MOFACorNetwork)
 export(RflomicsMAE)
-export(RflomicsSE)
 export(createRflomicsMAE)
-export(createRflomicsSE)
 export(generateExample)
+export(getPossibleContrasts)
 export(initExampleMAE)
 export(readExpDesign)
 export(readOmicsData)

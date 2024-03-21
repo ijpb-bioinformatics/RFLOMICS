@@ -106,8 +106,8 @@ contrastName2contrastDir <- function(contrastName){
 #' @param returnTable return a dataTable with all contrasts information
 #' @return a character vector or a dataTable
 #' @rdname ContrastsSelection
-#' @keywords internal
 #' @importFrom data.table rbindlist
+#' @export
 #'
 getPossibleContrasts <- function(
         object, 

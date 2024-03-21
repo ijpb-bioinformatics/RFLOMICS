@@ -284,20 +284,9 @@ RflomicsMAE <- function(experiments = ExperimentList(),
 #' @param omicsData omics dataset.
 #' @return An object of class \link{RflomicsSE}
 #' @name createRflomicsSE
-#' @rdname createRflomicsSE
 #' @seealso \link{RflomicsSE-class}
-#' @export
-#' @examples
-#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
-#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
-#' 
-#' design <- c("batch","bio","bio")
-#' omicData <- RFLOMICS::readOmicsData(file = paste0(datPath,
-#'                                     "transcriptome_ecoseed.txt"))
-#'  
-#' MAE <- RFLOMICS::createRflomicsSE(omicData   = omicData,
-#'                                  omicType  = "RNAseq",
-#'                                  ExpDesign = ExpDesign, design = design)
+#' @keywords internal
+#' @noRd
 createRflomicsSE <- function(omicData, omicType, ExpDesign, design){
     
     factorBio   <- names(design[design == "Bio"])
@@ -363,11 +352,9 @@ createRflomicsSE <- function(omicData, omicType, ExpDesign, design){
 #' @importFrom S4Vectors SimpleList
 #' @return An object of class \link{RflomicsSE}
 #' @name RflomicsSE
-#' @rdname RflomicsSE
 #' @seealso \link{RflomicsSE-class}
-#' @export
-#' @examples
-#' RflomicsSE()
+#' @keywords internal
+#' @noRd
 #' 
 RflomicsSE <- function(assays = NULL, colData = NULL, 
                        omicType = NULL,
