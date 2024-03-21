@@ -7,16 +7,6 @@ pkgVer <- function(pkg) {
 c(
 
     bibentry(bibtype="manual",
-        title = "",
-        author = personList(
-            as.person("Nadia Bessoltane")
-        ),
-        year = format(Sys.Date(), "%Y"),
-        url = "http://www.bioconductor.org/packages/RFLOMICS",
-        note = pkgVer('RFLOMICS'),
-        doi = '10.18129/B9.bioc.RFLOMICS'
-    ),
-    bibentry(bibtype="article",
         title = "RFLOMICS: a package with a shiny interface for the analysis and integration of omics data",
         author = personList(
             as.person("Nadia Bessoltane"),
@@ -26,8 +16,9 @@ c(
             as.person("Gwendall Cueff")
         ),
         year = format(Sys.Date(), "%Y"),
-        journal = "",
-        doi = "",
-        url = ""
+        url = "http://www.bioconductor.org/packages/RFLOMICS",
+        note = pkgVer('RFLOMICS'),
+        doi = '10.18129/B9.bioc.RFLOMICS'
     )
+    
 )
