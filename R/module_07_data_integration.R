@@ -693,7 +693,7 @@
   renderUI({
     if (length(input$selectData) == 0) return()
     if (is.null(input$selectData)) return()
-    #if (is.null(input[[paste0("selectmethode", input$selectData[1])]])) return()
+    if (is.null(input[[paste0("selectmethode", input$selectData[1])]])) return()
     
     MAE2Integrate <- subRflomicsMAE(session$userData$FlomicsMultiAssay, input$selectData)
     
@@ -716,8 +716,6 @@
           session$userData$FlomicsMultiAssay[[set]]
       }
     }
-    
-    toto <<- MAE2Integrate
     
     textExp <- "This graph represents the dataset you will use in 
         the integration (tables and samples). 
