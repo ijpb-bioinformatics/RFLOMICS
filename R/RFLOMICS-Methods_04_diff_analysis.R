@@ -116,7 +116,7 @@
 #'                                      returnTable = TRUE)[c(1, 2, 3),]
 #' 
 #' # Run the data preprocessing and perform the differential analysis
-#' MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
+#' MAE <- MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
 #'  filterLowAbundance(SE.name = "RNAtest")                           |>    
 #'  runNormalization(SE.name = "RNAtest",   normMethod = "TMM")       |>
 #'  runNormalization(SE.name = "protetest", normMethod = "median")    |>
