@@ -71,7 +71,7 @@ As soon as the data are loaded the **RFlomics MultiAssayExperiment** object is c
 Thess constraints are checked and represented as graph (each square represent 1 group and each color level indicate the number of observations). 
 
 ```{r, fig.show="hold", out.width="50%", fig.align = "default", echo=FALSE}
-knitr::include_graphics(c("Images/completBalanced.png", "Images/completNonBalanced.png"))
+knitr::include_graphics(c("Images/00_completeDesign.png", "Images/00_nonBalancedDesign.png"))
 ```
 
 # Set the statistical framework
