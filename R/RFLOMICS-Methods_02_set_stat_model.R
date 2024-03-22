@@ -13,9 +13,7 @@
 # ---- generateModelFormulae ----
 #' @title generateModelFormulae
 #' @description
-#' A short description...
-#' 
-#' From a vector of character giving the name of the factors of an omics
+#'  From a vector of character giving the name of the factors of an omics
 #'  experiment, and their type of effect: biological or batch, it returns all 
 #'  models formulae that can be formulated in association with this factors. 
 #'  Batch effect factors do not appear in interaction terms with biological 

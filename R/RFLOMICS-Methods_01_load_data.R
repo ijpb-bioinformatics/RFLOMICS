@@ -3,8 +3,6 @@
 ### ----------------------------------------------------------------------------
 
 
-
-
 #' @importFrom dplyr full_join mutate arrange select group_by_at count left_join
 #' right_join mutate_at if_else 
 #' @importFrom ggplot2 ggplot aes element_blank element_text geom_col theme 
@@ -22,26 +20,26 @@
 #' @section Accessors:
 #' \itemize{
 #'    \item getProjectName: Access to the name of the omic analysis.
-#'    \item getDesignMat: Design matrix of the omic analysis.
-#'    \item getDatasetNames: Names of the analyzed omics datasets.
-#'    \item getOmicsTypes: Access to the type of omics datasets.
-#'    \item getFactorNames: Access to the experimental factor names containing in the design list of the metadata.
+#'    \item getDesignMat: Get the design matrix associated the omic analysis.
+#'    \item getDatasetNames: Names of the loaded omics datasets.
+#'    \item getOmicsTypes: Access to the type of omics datasets: "RNAseq", "Proteomics", "Metabolomics"
+#'    \item getFactorNames: List the experimental factor names.
 #'    \item getFactorTypes: List the experimental factor types ("bio", "batch" or "meta") containing in the design list of the metadata.
 #'    \item getBioFactors: List the biological factors.
 #'    \item getBatchFactors: List the batch factors.
-#'    \item getMetaFactors: List the metadata factors
+#'    \item getMetaFactors: List the metadata factors.
 #'    \item getFactorModalities: Access to the factor modalities 
-#'    \item getRflomicsSE: Access to a RflomicsSE object 
+#'    \item getRflomicsSE: Access to a particular RflomicsSE object 
 #'    \item subRflomics: Extract a subset of a RflomicsMAE object.
-#'    \item getModelFormula: Access to the model formula of the experimental design
+#'    \item getModelFormula: Access to the model formula of the statistical analysis
 #'    \item getSelectedContrasts: List the selected contrasts 
 #'    \item getValidContrasts: List the valid contrasts
-#'    \item getContrastMatrix: Get the contrast matrix 
-#'    \item getTransSettings: Access to the transformation settings of a given omic dataset.
-#'    \item getFilterSettings: Access to the filtering settings of a given omic dataset.
-#'    \item getFilteredFeatures: Access to the filtered features of a given omic dataset.
-#'    \item getNormSettings: Access to the normalization settings of a given omic dataset.
-#'    \item getCoeffNorm: Access to the normalization coefficients of a given omic dataset
+#'    \item getContrastMatrix: Get the contrasts matrix 
+#'    \item getTransSettings: Transformation settings of a given omic dataset 
+#'    \item getFilterSettings: Access to the filtering settings of a given omic dataset 
+#'    \item getFilteredFeatures: Access to the filtered features of a given omic dataset 
+#'    \item getNormSettings: Access to the normalization settings of a given omic dataset 
+#'    \item getCoeffNorm: Access to the normalization coefficients of a given omic dataset 
 #'    \item getDiffSettings: Access to the differential expression analysis settings of a given omic dataset
 #'    \item getCoexpSettings : Access to the co-expression analysis settings of a given omic dataset
 #'    \item getClusterEntities: Access to the cluster entities of a given omic dataset
@@ -86,26 +84,26 @@ NULL
 #'
 #' @section Accessors:
 #' \itemize{
-#'    \item getDesignMat: Design matrix of the omic analysis.
-#'    \item getDatasetNames: Names of the analyzed omics datasets.
-#'    \item getOmicsTypes: Access to the type of omics datasets.
-#'    \item getFactorNames: Access to the experimental factor names containing in the design list of the metadata.
+#'    \item getDesignMat: Get the design matrix associated the omic analysis.
+#'    \item getDatasetNames: Names of the loaded omics datasets.
+#'    \item getOmicsTypes: Access to the type of omics datasets: "RNAseq", "Proteomics", "Metabolomics"
+#'    \item getFactorNames: List the experimental factor names.
 #'    \item getFactorTypes: List the experimental factor types ("bio", "batch" or "meta") containing in the design list of the metadata.
 #'    \item getBioFactors: List the biological factors.
 #'    \item getBatchFactors: List the batch factors.
-#'    \item getMetaFactors: List the metadata factors
+#'    \item getMetaFactors: List the metadata factors.
 #'    \item getFactorModalities: Access to the factor modalities 
-#'    \item getRflomicsSE: Access to a RflomicsSE object 
+#'    \item getRflomicsSE: Access to a particular RflomicsSE object 
 #'    \item subRflomics: Extract a subset of a RflomicsMAE object.
-#'    \item getModelFormula: Access to the model formula of the experimental design
+#'    \item getModelFormula: Access to the model formula of the statistical analysis
 #'    \item getSelectedContrasts: List the selected contrasts 
 #'    \item getValidContrasts: List the valid contrasts
-#'    \item getContrastMatrix: Get the contrast matrix 
-#'    \item getTransSettings: Access to the transformation settings of a given omic dataset.
-#'    \item getFilterSettings: Access to the filtering settings of a given omic dataset.
-#'    \item getFilteredFeatures: Access to the filtered features of a given omic dataset.
-#'    \item getNormSettings: Access to the normalization settings of a given omic dataset.
-#'    \item getCoeffNorm: Access to the normalization coefficients of a given omic dataset
+#'    \item getContrastMatrix: Get the contrasts matrix 
+#'    \item getTransSettings: Transformation settings of a given omic dataset 
+#'    \item getFilterSettings: Access to the filtering settings of a given omic dataset 
+#'    \item getFilteredFeatures: Access to the filtered features of a given omic dataset 
+#'    \item getNormSettings: Access to the normalization settings of a given omic dataset 
+#'    \item getCoeffNorm: Access to the normalization coefficients of a given omic dataset 
 #'    \item getDiffSettings: Access to the differential expression analysis settings of a given omic dataset
 #'    \item getCoexpSettings : Access to the co-expression analysis settings of a given omic dataset
 #'    \item getClusterEntities: Access to the cluster entities of a given omic dataset

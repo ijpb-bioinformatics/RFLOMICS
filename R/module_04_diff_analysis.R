@@ -56,9 +56,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
           The results will appear in blocks with the contrast's name and statistics (one per contrast), each block offering a tab panel with several outputs:"),
           p("- The graph of Pvalue's distribution: Distribution of pvalue's which has to be check to validate results. The most desirable shape is a pick of p-values at 0 following by a uniform distribution. ", a("(some help to identify the good shapes)", href="/www/Pvalue_distrib.pdf"),""),
           p("- The MA plot which gives the logFC across the mean of the expression/abundance"),
-          p("- The Volcano plot: implemented in the EnhancedVolcano R-package (Blighe K, Rana S, Lewis M (2022). “EnhancedVolcano: Publication-ready volcano plots with enhanced colouring and labeling.” R package version 1.12.0.))"),
+          p("- The Volcano plot: implemented in the EnhancedVolcano R-package (Blighe K, Rana S, Lewis M (2022). EnhancedVolcano: Publication-ready volcano plots with enhanced colouring and labeling R package version 1.12.0.))"),
           p("- A dataframe with the statistical results of the differential analysis per DE entities"),
-          p("- A Heatmap plot: implemented in the ComplexHeatmap package (Gu Z (2022). “Complex Heatmap Visualization.” iMeta. doi:10.1002/imt2.43.)"),
+          p("- A Heatmap plot: implemented in the ComplexHeatmap package (Gu Z (2022). Complex Heatmap Visualization. iMeta. doi:10.1002/imt2.43.)"),
           p("- A PCA on DE entities"),
           p("- Boxplot of DE : boxplot showing the expression/abundance profile of a selected DE entity across experimental factors"),
         )
