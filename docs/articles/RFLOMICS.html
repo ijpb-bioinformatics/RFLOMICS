@@ -92,50 +92,44 @@
     
         <div class="abstract">
       <p class="abstract">Abstract</p>
-      <p style="text-align: justify;">
-      Here, we will walk through a multi-omics data analysis with the
-      RFLOMICS package. We will see how to set up the statistical
-      framework of the designed protocol: ie translate biological
-      condition comparisons into contrasts, perform quality controls and
-      statistical analysis of each omics dataset: ie. find
+      <p>This document will go through a multi-omics data analysis with
+      the RFLOMICS package. It will be shown how to set up the
+      statistical framework of the designed protocol: ie translate
+      biological condition comparisons into contrasts, perform quality
+      controls and statistical analysis of each omics dataset: ie. find
       differentially expressed genes/proteins/metabolites (DEF) per
       contrasts, identify clusters of co-expressed genes and perform a
       gene set enrichment analysis from lists of DEF or from clusters of
-      co-expressed genes/proteins/metabolites.
-      </p>
+      co-expressed genes/proteins/metabolites.</p>
     </div>
     
-<p><br><br></p>
 <div class="section level2">
-<h2 id="run-rflomics">1. Run RFLOMICS<a class="anchor" aria-label="anchor" href="#run-rflomics"></a>
+<h2 id="run-rflomics">Run RFLOMICS<a class="anchor" aria-label="anchor" href="#run-rflomics"></a>
 </h2>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">library</span><span class="er">(</span><span class="ex">RFLOMICS</span><span class="kw">)</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">RFLOMICS::runExample()</span></span></code></pre></div>
-<p>On the left side of interface, the different tab menu will appear as
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">library</span><span class="er">(</span><span class="ex">RFLOMICS</span><span class="kw">)</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">RFLOMICS::runRFLOMICS()</span></span></code></pre></div>
+<p>On the left side of the interface, the different tab menus appears as
 the analysis progresses to guide the user.</p>
 </div>
 <div class="section level2">
-<h2 id="load-data">2. Load Data<a class="anchor" aria-label="anchor" href="#load-data"></a>
+<h2 id="load-data">Load Data<a class="anchor" aria-label="anchor" href="#load-data"></a>
 </h2>
 <p>We start by setting a project name (it is mandatory). Then we load
 the experimental design and the different omics datasets.</p>
 <div class="section level3">
-<h3 id="dataset-example-description">2-1 Dataset example description:<a class="anchor" aria-label="anchor" href="#dataset-example-description"></a>
+<h3 id="dataset-example-description">Dataset example description:<a class="anchor" aria-label="anchor" href="#dataset-example-description"></a>
 </h3>
-<p style="text-align: justify;">
-The data used for this vignette have been provided by Pr. Loic Rajjou
-and Gwendal Cueff. They are included in the inst/ExampleFiles/ecoseed
-directory of the package. Briefly, A. thaliana’s transcriptome,
-metabolome and proteome have been obtained in the context of the study
-of seed germination and vigor. In particular, the authors were
-interested in deciphering key entities involved in response to
-environmental stresses (on the mother plant): influences of temperature
-(high, medium and low) and imbibition stage (Dry: DI, early imbibition:
-EI and late imbibition: LI). See(<a href="https://www.uibk.ac.at/botany/ecoseed/home/" class="external-link uri">https://www.uibk.ac.at/botany/ecoseed/home/</a>)
-</p>
+<p>The data used for this vignette have been provided by Pr. Loic Rajjou
+and Gwendal Cueff. It is included in the xxxx directory of the package.
+Briefly, A. thaliana’s transcriptome, metabolome and proteome have been
+obtained in the context of the study of seed germination and vigor. In
+particular, the authors were interested in deciphering key entities
+involved in response to environmental stresses (on the mother plant):
+influences of temperature (high, medium and low) and imbibition stage
+(Dry: DI, early imbibition: EI and late imbibition: LI). See(<a href="https://www.uibk.ac.at/botany/ecoseed/home/" class="external-link uri">https://www.uibk.ac.at/botany/ecoseed/home/</a>)</p>
 </div>
 <div class="section level3">
-<h3 id="load-experimental-design">2-2 Load Experimental Design<a class="anchor" aria-label="anchor" href="#load-experimental-design"></a>
+<h3 id="load-experimental-design">Load Experimental Design<a class="anchor" aria-label="anchor" href="#load-experimental-design"></a>
 </h3>
 <p>The experimental design file contains information about the readiness
 status of each sample (see link : vignette input ). As soon as this file
@@ -152,49 +146,41 @@ dataset matrix.</em></p></li>
 </ul>
 </div>
 <div class="section level3">
-<h3 id="load-omics-data">2-3 Load Omics data<a class="anchor" aria-label="anchor" href="#load-omics-data"></a>
+<h3 id="load-omics-data">Load Omics data<a class="anchor" aria-label="anchor" href="#load-omics-data"></a>
 </h3>
-<p style="text-align: justify;">
-</p>
 <p>For this tutorial we provide 3 datasets: RNAseq data (read counts),
 proteomics data (abundance of proteins), and metabolomics data
 (intensity of metabolites) (see link : vignette input). We must specify
 for each dataset its type of omics. We can give a suitable name to our
 dataset. By Default, they will be called respectively (set1, set2,
 set3).</p>
-As soon as the data are loaded the <strong>RFlomics
+<p>As soon as the data are loaded the <strong>RFlomics
 MultiAssayExperiment</strong> object is created (see link : data
 management). The upset representation provides details about sample
-intersection of different datasets.
-
+intersection of different datasets.</p>
 <p><img src="Images/Capture_Load-Data.png" style="width:80.0%"></p>
 </div>
 <div class="section level3">
-<h3 id="completeness-check">2-4 Completeness check<a class="anchor" aria-label="anchor" href="#completeness-check"></a>
+<h3 id="completeness-check">Completeness check<a class="anchor" aria-label="anchor" href="#completeness-check"></a>
 </h3>
-<p style="text-align: justify;">
-</p>
 <p>The design must be complete and as possible balanced. A
 <strong>Complete design (mandatory)</strong> mean that all possible
-combinations of biological factor’s level (called groups) are presents.
+combinations of biological factors’ levels (called groups) are presents.
 A <strong>Balanced design (recommended)</strong> has an equal number of
-observations (replicates) for all groups.</p>
-This constraint is checked and represented as graph (each square
+observations (replicates) for each group.</p>
+<p>Thess constraints are checked and represented as graph (each square
 represent 1 group and each color level indicate the number of
-observations).
-
+observations).</p>
 <p><img src="Images/completBalanced.png" width="50%"><img src="Images/completNonBalanced.png" width="50%"></p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="set-the-statistical-framework">3. Set the statistical framework<a class="anchor" aria-label="anchor" href="#set-the-statistical-framework"></a>
+<h2 id="set-the-statistical-framework">Set the statistical framework<a class="anchor" aria-label="anchor" href="#set-the-statistical-framework"></a>
 </h2>
-<p style="text-align: justify;">
-</p>
 <p>The interface provides models written from the simplest one to the
-most complete one. Only the second orders interaction terms between the
-biological factors will appear. Batch factor will never appear in
-interaction terms. In our case we choose the complete model.</p>
+most complete one. Only the second order interaction terms between the
+biological factors appear. Batch factor never appears in interaction
+terms. In this case the complete model is chosen.</p>
 <p>All ‘a priori’ hypothesis (contrast) calculated from the chosen model
 are displayed (see link vignette contrast). The user must select those
 that correspond to the biological issues.</p>
@@ -202,40 +188,40 @@ that correspond to the biological issues.</p>
 germination (transition from the state of dormancy to the state of
 germination vigor). For that we select 3 average contrasts (see
 image):</p>
-This statistical framework will be applied on all loaded datasets.
-
+<p>This statistical framework will be applied on all loaded
+datasets.</p>
 <p><img src="Images/Capture_Experimental-Design.png" style="width:80.0%"></p>
 </div>
 <div class="section level2">
-<h2 id="omics-data-analysis">4. Omics data analysis<a class="anchor" aria-label="anchor" href="#omics-data-analysis"></a>
+<h2 id="omics-data-analysis">Omics data analysis<a class="anchor" aria-label="anchor" href="#omics-data-analysis"></a>
 </h2>
 <p>Once the contrasts are chosen, 3 Item menus appear in the side bar
 menu that correspond to the 3 loaded omics types.</p>
 <p>For each dataset, different steps of data analysis are proposed as a
 tab panel. These analysis steps must be performed sequentially. It is
 possible to switch between datasets. However, you cannot perform a new
-task until the previous one is completed. A progress bar will be display
+task until the previous one is completed. A progress bar is displayed
 indicating the progress status.</p>
 <div class="section level3">
-<h3 id="data-exploratory">4-1 Data Exploratory<a class="anchor" aria-label="anchor" href="#data-exploratory"></a>
+<h3 id="data-exploratory">Data Exploratory<a class="anchor" aria-label="anchor" href="#data-exploratory"></a>
 </h3>
 <p>In this tab panel we access a data quality control screen and we
 perform the appropriate data filtering and processing according to the
 type of omics.</p>
 <p>By default, features with 0 count in all conditions are removed from
 the data.</p>
-<p>Specifically for each data we have hte possibility to exclude samples
+<p>Specifically for each data we have the possibility to exclude samples
 or to select a subset of samples to analyze, provided the completeness
 condition is met.</p>
 <p>The effect of data filtering or sample removing step can be explored
-thanks to many QC graphs. For each QC, a graph is build on each raw data
+thanks to many QC graphs. For each QC, a graph is built on each raw data
 and filtered data to allow the comparison.</p>
 <div class="section level4">
 <h4 id="rnaseq-data">RNAseq data<a class="anchor" aria-label="anchor" href="#rnaseq-data"></a>
 </h4>
-<p>For RNAseq data, low expressed genes are filtered such that only
-genes whose cpm expression is greater than <strong>“CPM cutoff”</strong>
-in x samples are kept. The value of x is given by <strong>“Filtering
+<p>For RNAseq data, low expressed genes are filtered so that only genes
+whose cpm expression is greater than <strong>“CPM cutoff”</strong> in x
+samples are kept. The value of x is given by <strong>“Filtering
 strategy”</strong> (NbOfsample_over_cpm &lt;= NbConditions). By default
 the data are filtered based on NbCondition strategy with CPM cutoff
 equal to 5. In this example, there are 9 conditions. So, the number of
@@ -264,7 +250,7 @@ method”</strong> from edgeR package.</p>
 </div>
 </div>
 <div class="section level3">
-<h3 id="differential-expression-analysis">4-2 Differential expression analysis<a class="anchor" aria-label="anchor" href="#differential-expression-analysis"></a>
+<h3 id="differential-expression-analysis">Differential expression analysis<a class="anchor" aria-label="anchor" href="#differential-expression-analysis"></a>
 </h3>
 <p>In this tab panel, we can run the differential expression analysis.
 The analysis is run by contrast.<br>
@@ -294,8 +280,8 @@ happened.</li>
 </ul>
 </li>
 </ul>
-<div class="figure">
-<embed src="Images/Pvalue_distrib.pdf" style="width:80.0%"></embed><p class="caption">Pvalue-Distrib</p>
+<div class="float">
+<embed src="Images/Pvalue_distrib.pdf" style="width:80.0%"></embed><div class="figcaption">Pvalue-Distrib</div>
 </div>
 <ul>
 <li><p>You can filter differentially expressed
@@ -309,7 +295,7 @@ co-expression analysis or to the annotation enrichment step.</p></li>
 <p><img src="Images/capture_diff_analysis.png" style="width:80.0%"></p>
 </div>
 <div class="section level3">
-<h3 id="coexpression-analysis">4-3 Coexpression analysis<a class="anchor" aria-label="anchor" href="#coexpression-analysis"></a>
+<h3 id="coexpression-analysis">Coexpression analysis<a class="anchor" aria-label="anchor" href="#coexpression-analysis"></a>
 </h3>
 <ul>
 <li><p>In this tab panel, choice is given to merge
@@ -355,21 +341,17 @@ by K.</p></li>
 <p><img src="Images/capture_coexpression.png" style="width:80.0%"></p>
 </div>
 <div class="section level3">
-<h3 id="annotation-and-enrichment-analysis">4-4 Annotation and Enrichment analysis<a class="anchor" aria-label="anchor" href="#annotation-and-enrichment-analysis"></a>
+<h3 id="annotation-and-enrichment-analysis">Annotation and Enrichment analysis<a class="anchor" aria-label="anchor" href="#annotation-and-enrichment-analysis"></a>
 </h3>
 <p>Then we select a lists of DGEs and clusters to annotate. By default
 the annotation will be done on all selected DGE lists and clusters.</p>
 <p><img src="Images/capture_annotation.png" style="width:80.0%"></p>
 </div>
 <div class="section level3">
-<h3 id="annotation-and-enrichment-analysis-using-clusterprofilr">4-5 Annotation and Enrichment analysis using clusterProfilR<a class="anchor" aria-label="anchor" href="#annotation-and-enrichment-analysis-using-clusterprofilr"></a>
+<h3 id="annotation-and-enrichment-analysis-using-clusterprofilr">Annotation and Enrichment analysis using clusterProfilR<a class="anchor" aria-label="anchor" href="#annotation-and-enrichment-analysis-using-clusterprofilr"></a>
 </h3>
-<p style="text-align: justify;">
-</p>
 <p>We select the lists of DE genes or clusters to annotate. All
 available lists are selected by default.</p>
-<p style="text-align: justify;">
-</p>
 <p>The enrichment analysis is performed using the <a href="https://www.sciencedirect.com/science/article/pii/S2666675821000667" class="external-link">clusterProfiler
 R-package</a>. For more information on the methods and the package,
 please see <a href="https://www.sciencedirect.com/science/article/pii/S2666675821000667" class="external-link">The
@@ -417,86 +399,71 @@ results or left gray if it is from coseq analysis.</li>
 </p>
 <p>For most of the results, you can adjust the number of terms to plot
 and search for an expression to retrieve specific enriched terms.</p>
-<div class="figure">
-<img src="Images/Image_clusterprof1.png" style="width:80.0%" alt=""><p class="caption">Results of the analysis for multiple lists</p>
+<div class="float">
+<img src="Images/Image_clusterprof1.png" style="width:80.0%" alt="Results of the analysis for multiple lists"><div class="figcaption">Results of the analysis for multiple lists</div>
 </div>
-<div class="figure">
-<img src="Images/Image2_clusterprof2.png" style="width:80.0%" alt=""><p class="caption">Results displayed when using a differential analysis
-list</p>
+<div class="float">
+<img src="Images/Image2_clusterprof2.png" style="width:80.0%" alt="Results displayed when using a differential analysis list"><div class="figcaption">Results displayed when using a differential
+analysis list</div>
 </div>
 </div>
 </div>
 <div class="section level2">
-<h2 id="integration">5. Integration<a class="anchor" aria-label="anchor" href="#integration"></a>
+<h2 id="integration">Integration<a class="anchor" aria-label="anchor" href="#integration"></a>
 </h2>
-<p style="text-align: justify;">
-Once at least two lists of DE genes are validated in the differential
+<p>Once at least two lists of DE genes are validated in the differential
 analysis tabs, the Integration step will appear in the side bar menu.
-Three sub menus are available.
-</p>
+Three sub menus are available.</p>
 <div class="section level3">
-<h3 id="dataset-analysis-summary">5-1 Dataset analysis summary<a class="anchor" aria-label="anchor" href="#dataset-analysis-summary"></a>
+<h3 id="dataset-analysis-summary">Dataset analysis summary<a class="anchor" aria-label="anchor" href="#dataset-analysis-summary"></a>
 </h3>
-<p style="text-align: justify;">
-This panel summarizes the effects of the filtering steps on the selected
-datasets and the results of the differential analyses. The first row
-shows how many samples and entities are left in each table. The
-integration will be performed on these datasets. The second row shows
-the number of DE entities for each selected contrast and for each table,
-with the distinction between up-regulated and down-regulated entities.
-</p>
+<p>This panel summarizes the effects of the filtering steps on the
+selected datasets and the results of the differential analyses. The
+first row shows how many samples and entities are left in each table.
+The integration will be performed on these datasets. The second row
+shows the number of DE entities for each selected contrast and for each
+table, with the distinction between up-regulated and down-regulated
+entities.</p>
 </div>
 <div class="section level3">
-<h3 id="mofa">5-2 MOFA<a class="anchor" aria-label="anchor" href="#mofa"></a>
+<h3 id="mofa">MOFA<a class="anchor" aria-label="anchor" href="#mofa"></a>
 </h3>
-<p style="text-align: justify;">
-This integration analysis is performed using the <strong>MOFA2</strong>
-R-package. It is an unsupervised method that searches for latent factors
-to decompose the variance of the data, similarly to a PCA, but applied
-to a multi-dataset situation. The interpretation of the results is also
-very similar to those of a PCA: the most interesting factors are the one
-explaining more variance, whether it’s on several dataset or just one
-table. It also gives weights to the features of each table, for each
-factor. This is interesting in case a factor can be <strong>a
-posteriori</strong> linked to a covariate (in our case, the temperature
-seems linked to the first factor, the features used to build this factor
-are to be considered very relevant in the analysis).
-</p>
-<div class="figure">
-<img src="Images/MOFA_temperaturelinked.png" style="width:80.0%" alt=""><p class="caption">MOFA results on the ecoseed datasets</p>
+<p>This integration analysis is performed using the
+<strong>MOFA2</strong> R-package. It is an unsupervised method that
+searches for latent factors to decompose the variance of the data,
+similarly to a PCA, but applied to a multi-dataset situation. The
+interpretation of the results is also very similar to those of a PCA:
+the most interesting factors are the one explaining more variance,
+whether it’s on several dataset or just one table. It also gives weights
+to the features of each table, for each factor. This is interesting in
+case a factor can be <strong>a posteriori</strong> linked to a covariate
+(in our case, the temperature seems linked to the first factor, the
+features used to build this factor are to be considered very relevant in
+the analysis).</p>
+<div class="float">
+<img src="Images/MOFA_temperaturelinked.png" style="width:80.0%" alt="MOFA results on the ecoseed datasets"><div class="figcaption">MOFA results on the ecoseed datasets</div>
 </div>
-<p style="text-align: justify;">
-MOFA allows for an unbalanced design, so it can be used even if some
-samples were deleted in the previous steps.
-</p>
-<p style="text-align: justify;">
-The user can select which tables they want to integrate, then the lists
-of contrasts they want to select the DE entities from. The union or the
-intersection of these lists can then be used for the analysis.
-</p>
-<p style="text-align: justify;">
-As of now, the function used in this step only takes gaussian data. The
-RNASeq data, given in the form of counts, have to be transformed to fit
-the process. This is done with the <strong>voom</strong> transformation
-from the <strong>limma</strong> R package.
-</p>
-<p style="text-align: justify;">
-As recommended by MOFA FAQ, batch effects are removed before applying
+<p>MOFA allows for an unbalanced design, so it can be used even if some
+samples were deleted in the previous steps.</p>
+<p>The user can select which tables they want to integrate, then the
+lists of contrasts they want to select the DE entities from. The union
+or the intersection of these lists can then be used for the
+analysis.</p>
+<p>As of now, the function used in this step only takes gaussian data.
+The RNASeq data, given in the form of counts, have to be transformed to
+fit the process. This is done with the <strong>voom</strong>
+transformation from the <strong>limma</strong> R package.</p>
+<p>As recommended by MOFA FAQ, batch effects are removed before applying
 the function, using <strong>removebatcheffect</strong> from
 <strong>limma</strong>. See <a href="https://biofam.github.io/MOFA2/faq.html" class="external-link">MOFA-FAQ</a>. For now,
-only two batch effects can be removed.
-</p>
-<p style="text-align: justify;">
-The user can chose to scale or not each tables, with the scale views
+only two batch effects can be removed.</p>
+<p>The user can chose to scale or not each tables, with the scale views
 argument, then set the number of factors to be computed and finally the
 maximum iterations for the MOFA run. We recommend that the user do not
-change the number of iterations.
-</p>
-<p style="text-align: justify;">
-Once everything is set, you can run the analysis by clicking on the run
-button. Several figure are provided by the interface once the analysis
-is done:
-</p>
+change the number of iterations.</p>
+<p>Once everything is set, you can run the analysis by clicking on the
+run button. Several figure are provided by the interface once the
+analysis is done:</p>
 <ul>
 <li>Overview: gives an overview of the data, with the number of samples
 and the number of entities selected for the analysis. This can be a good
@@ -533,9 +500,70 @@ to built a factor. Metadata can be used to annotate the heatamp.</li>
 </ul>
 </div>
 <div class="section level3">
-<h3 id="mixomics">5-3 MixOmics<a class="anchor" aria-label="anchor" href="#mixomics"></a>
+<h3 id="mixomics">MixOmics<a class="anchor" aria-label="anchor" href="#mixomics"></a>
 </h3>
-<p>Work in progress!</p>
+<p>This integration analysis is performed using the
+<strong>MixOmics</strong> R-package. It offers many possibilities of
+analyses. In RFLOMICS, we focused on the supervised analyses using the
+functions block.(s)plda from the package.</p>
+<p>MixOmics does not work on unbalanced design. Only complete cases will
+be used for the analysis.</p>
+<div class="float">
+<img src="Images/MixOmics_Settings.png" scale="80%" alt="MixOmics Settings"><div class="figcaption">MixOmics Settings</div>
+</div>
+<p>The user can chose the blocks they want to integrate. Even if the
+interface requires two validated differential analyses, using only one
+block will work. It will use either plsda or splsda functions from
+MixOmics.</p>
+<p>The user can select all biological factors as response variables. The
+meta and batch factors are not available.</p>
+<p>Using Sparse Analysis will set the “s” in the function names. It this
+case, the tuning cases argument will be considered and passed to
+tune.splsda or tune.block.splsda: it determines the number of number of
+variables to be tested: mixOmics splsda or block.splsda requires the
+argument test.keepX, which is a vector of number of variables to keep
+(eg : c(10, 50, 100)). Models using these number of features are then
+adjusted and the best model, according to the response variable, is
+selected and given to the user.</p>
+<p>In RFLOMICS, we chose to only ask for a number of cases. This number
+of cases is used to determine the keep.X, using a span of
+nfeatures/number of cases.</p>
+<p>Once everything is set, you can run the analysis by clicking on the
+run button. Several figures are provided by the interface once the
+analysis is done, for each selected response variable:</p>
+<ul>
+<li>Overview: in this panel, a description of the datatables is
+presented, with the number of individuals and features available. If
+tuning has been set, the optimal number of features for each component
+and each dataset is available in this panel.</li>
+<li>Explained variance: for each component, displays the origin of the
+explained variance and the cumulative explained variance for each
+table.</li>
+<li>Individuals: from the mixOmics::plotIndiv() function, display for
+each table the coordinates of the individuals.</li>
+<li>Features: from the mixOmics::plotVar() function, display for each
+table the coordinates of the features on the correlation circle. The
+interpretation is the same as a PCA correlation circle.</li>
+<li>Loadings: weight of each feature in the components. Allows to select
+the most important features for the selected response variable.</li>
+<li>Networks: from the mixOmics::network() function, for a specified
+absolute correlation threshold, draw the correlation network for the
+selected features. It has the advantage of being a multi-omics
+correlation network.</li>
+<li>CircosPlot: only available if sparse is activated. From the
+circosPlot function, another representation of network, all features are
+dislayed as a circos and only correlation over the absolute threshold
+are displayed.</li>
+<li>CimPlot: only available if sparse is activated. From the CimPlot
+function, heatmap of the original data for selected features, compenent
+per component.</li>
+</ul>
+<div class="float">
+<img src="Images/MixOmics_features_select.png" style="width:80.0%" alt="MixOmics Settings"><div class="figcaption">MixOmics Settings</div>
+</div>
+<div class="float">
+<img src="Images/MixOmics_loadings.png" style="width:80.0%" alt="MixOmics Settings"><div class="figcaption">MixOmics Settings</div>
+</div>
 </div>
 </div>
   </div>

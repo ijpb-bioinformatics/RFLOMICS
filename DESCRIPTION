@@ -2,73 +2,77 @@ Package: RFLOMICS
 Title: Interactive web application for Omics-data analysis
 Version: 0.0.0.9000
 Authors@R: 
-    c(person("Nadia", "Bessoltane",email = "nadia.bessoltane@inrae.fr", role = c("aut", "cre")),
-    person("Delphine", "Charif", email = "delphine.charif@inrae.fr", role = c("aut")),
-    person("Gwendal", "Cueff", email = "gwendal.cueff@inrae.fr", role = c("aut")),
-    person("Audrey", "Hulot", email = "audrey.hulot@inrae.fr", role = c("aut")),
-    person("Christine", "Paysant-Leroux", email = "christine.paysant-le-roux@inrae.fr", role = c("aut")))
-Description: What the package does (one paragraph).
+    c(
+    person(given = "Nadia", family = "Bessoltane",email = "nadia.bessoltane@inrae.fr", role = c("aut", "cre")),
+    person(given = "Delphine", family = "Charif", email = "delphine.charif@inrae.fr", role = c("aut")),
+    person(given = "Christine", family = "Paysant-Leroux", email = "christine.paysant-le-roux@inrae.fr", role = c("aut")),
+    person(given = "Audrey", family = "Hulot", email = "audrey.hulot@inrae.fr", role = c("aut"), comment = c(ORCID = "0000-0002-9647-6470")),
+    person(given = "Gwendal", family = "Cueff", email = "gwendal.cueff@inrae.fr", role = c("aut"))
+    )
+Description: R-package with shiny interface, provides a framework for the analysis of transcriptomics, proteomics and/or metabolomics data. The interface offers a guided experience for the user, from the definition of the experimental design to the integration of several omics table together. A report can be generated with all settings and analysis results.
+URL: https://forgemia.inra.fr/flomics/rflomics/
+BugReports: https://forgemia.inra.fr/flomics/rflomics/-/issues
 Depends: 
-    R (>= 3.5.0)
-biocViews:
-License: gpl-3 
+    R (>= 4.3.0),
+    SummarizedExperiment,
+    MultiAssayExperiment,
+    shinyBS
+biocViews: ShinyApps, DifferentialExpression, Metabolomics, Proteomics, Transcriptomics
+License: Artistic-2.0 
 Encoding: UTF-8
-LazyData: true
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Suggests: 
     knitr,
-    rmarkdown,
-    testthat
-VignetteBuilder: knitr
-Imports: 
-    devtools,
-    shiny,
-    statmod,
-    shinydashboard,
-    shinyFiles,
-    shinyWidgets,
-    shinyBS,
-    tidyr,
-    reactable,
-    magrittr,
-    tibble,
-    stringr,
-    purrr,
-    stats,
-    data.table,
-    methods,
-    FactoMineR,
-    dplyr,
-    RColorBrewer,
-    gridExtra,
-    DT,
-    venn,
-    clustermq,
-    ggplot2,
-    UpSetR,
-    reshape2,
-    utils,
-    kableExtra,
-    ggpubr,
-    qgraph,
-    colourpicker,
-    plotly,
-    pheatmap,
-    S4Vectors,
-    MultiAssayExperiment,
-    SummarizedExperiment,
-    edgeR,
-    coseq,
-    limma,
-    MOFA2,
-    mixOmics,
-    EnhancedVolcano,
-    ComplexHeatmap,
-    BiocParallel,
-    clusterProfiler,
-    pathview,
-    enrichplot,
-    AnnotationDbi,
+    testthat,
+    BiocStyle,
     org.At.tair.db,
-    vroom
-    
+    org.Hs.eg.db
+VignetteBuilder: knitr
+Imports:
+    vroom,
+    AnnotationDbi,
+    circlize,
+    clustermq,
+    clusterProfiler,
+    colourpicker,
+    ComplexHeatmap,
+    coseq,
+    data.table,
+    dplyr,
+    DT,
+    edgeR,
+    EnhancedVolcano,
+    enrichplot,
+    FactoMineR,
+    ggplot2,
+    ggpubr,
+    ggrepel,
+    grDevices,
+    grid,
+    htmltools,
+    limma,
+    magrittr,
+    methods,
+    mixOmics,
+    MOFA2,
+    pathview,
+    parallel,
+    png,
+    purrr,
+    qgraph,
+    RColorBrewer,
+    RCurl,
+    reshape2,
+    reticulate,
+    rmarkdown,
+    S4Vectors,
+    shiny,
+    shinydashboard,
+    shinyWidgets,
+    stats,
+    stringr,
+    tidyr,
+    tibble,
+    tidyselect,
+    UpSetR,
+    utils

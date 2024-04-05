@@ -1,0 +1,161 @@
+## `r selectedResponse` 
+
+```{r setup, include = FALSE, hide = TRUE, eval = TRUE}
+explorDir <- paste0(outDir,"/","Integration/MixOmics/", selectedResponse, "/")
+dir.create(path = explorDir)
+
+knitr::opts_chunk$set(fig.path = explorDir)
+```
+
+```{r}
+Data_res <- set_res <- NULL
+Data_res <- RFLOMICS::getMixOmics(rflomics.MAE, response = selectedResponse)
+set_res  <- RFLOMICS::getMixOmicsSettings(rflomics.MAE)
+ncompDat <- min(Data_res$ncomp, 5)
+fig_height <- NULL
+fig_height <- ceiling(length(set_res$selectData)/2)*4.5
+fig_width <- 12
+```
+
+### Overview
+
+```{r mixOmics_overview}
+if (is.list(Data_res$X)) {
+    # block.plsda or block.splsda
+    df <- t(vapply(Data_res$X, dim, c(1, 1)))
+    colnames(df) <- c("Ind", "Features")
+    
+    if (set_res$sparsity) {
+        df <- cbind(df, do.call("rbind", Data_res$keepX))
+        colnames(df)[!colnames(df) %in% c("Ind", "Features")] <-
+            paste("Comp", seq_len(length(Data_res$keepX[[1]])))
+    }
+    
+} else {
+    # plsda or splsda
+    df <-  data.frame("Ind" = nrow(Data_res$X),
+                      "Features" = ncol(Data_res$X))
+    if (set_res$sparsity) {
+        df <- cbind(df, do.call("cbind", as.list(Data_res$keepX)))
+        colnames(df)[!colnames(df) %in% c("Ind", "Features")] <-
+            paste("Comp", seq_len(length(Data_res$keepX)))
+    }
+}
+
+DT::datatable(t(df))
+```
+
+```{r mixOmics_varExp, fig.width = 12, fig.height = 5}
+RFLOMICS::plotMOVarExp(rflomics.MAE, selectedResponse = selectedResponse)
+```
+
+### Idividuals plots {.tabset}
+
+#### Comp 1 - 2
+
+```{r mixOmics_plotInd12, fig.width = fig_width, fig.height = fig_height}
+mixOmics::plotIndiv(Data_res, comp = c(1,2), ellipse = FALSE, legend = TRUE)
+```
+
+#### Comp 2 - 3
+
+```{r mixOmics_plotInd23, fig.width = fig_width, fig.height = fig_height}
+mixOmics::plotIndiv(Data_res, comp = c(2,3), ellipse = FALSE, legend = TRUE)
+```
+
+`r if(ncompDat<4) {"\\begin{comment}"}`
+
+#### Comp 3 - 4
+
+```{r mixOmics_plotInd23, fig.width = fig_width, fig.height = fig_height}
+mixOmics::plotIndiv(Data_res, comp = c(3,4), ellipse = FALSE, legend = TRUE)
+```
+
+`r if(ncompDat<4) {"\\end{comment}"}`
+
+`r if(ncompDat<5) {"\\begin{comment}"}`
+
+#### Comp 4 - 5
+
+```{r mixOmics_plotInd23, fig.width = fig_width, fig.height = fig_height}
+mixOmics::plotIndiv(Data_res, comp = c(4,5), ellipse = FALSE, legend = TRUE)
+```
+
+`r if(ncompDat<5) {"\\end{comment}"}`
+
+### Loadings {.tabset}
+
+#### Comp 1
+
+```{r mixOmics_load1, fig.height = fig_height*0.75, fig.width = fig_width}
+mixOmics::plotLoadings(Data_res, 
+                       comp = 1,
+                       ndisplay = 10)
+```
+
+#### Comp 2
+
+```{r mixOmics_load2, fig.height = fig_height*0.75, fig.width = fig_width}
+mixOmics::plotLoadings(Data_res, 
+                       comp = 2,
+                       ndisplay = 10)
+```
+
+`r if(ncompDat<3) {"\\begin{comment}"}`
+
+#### Comp 3
+
+```{r mixOmics_plotInd23, fig.width = fig_width, fig.height = fig_height*0.75}
+mixOmics::plotLoadings(Data_res, comp = 3, ndisplay = 10)
+```
+
+`r if(ncompDat<3) {"\\end{comment}"}`
+
+`r if(ncompDat<4) {"\\begin{comment}"}`
+
+#### Comp 4
+
+```{r mixOmics_plotInd23, fig.width = fig_width, fig.height = fig_height*0.75}
+mixOmics::plotLoadings(Data_res, comp = 4, ndisplay = 10)
+```
+
+`r if(ncompDat<4) {"\\end{comment}"}`
+
+`r if(ncompDat<5) {"\\begin{comment}"}`
+
+#### Comp 5
+
+```{r mixOmics_plotInd23, fig.width = fig_width, fig.height = fig_height*0.75}
+mixOmics::plotLoadings(Data_res, comp = 5, ndisplay = 10)
+```
+
+`r if(ncompDat<5) {"\\end{comment}"}`
+
+---
+
+<!-- Exports -->
+
+```{r mixOmics_export}
+loads <- do.call("rbind", lapply(names(Data_res$loadings), FUN = function(nam){
+    df <- data.frame(Data_res$loadings[[nam]])
+    df$Table <- nam
+    dplyr::relocate(df, Table)
+}
+))
+
+write.table(loads, 
+            file = paste0(explorDir, selectedResponse, "_Loading_values.txt"),
+            sep = "\t", quote = FALSE, col.names = TRUE, row.names = TRUE)
+
+inds <- do.call("rbind", lapply(names(Data_res$variates), FUN = function(nam){
+    df <- data.frame(Data_res$variates[[nam]])
+    df$Table <- nam
+    dplyr::relocate(df, Table)
+}
+))
+
+write.table(inds, file = paste0(explorDir, selectedResponse, "_Ind_coord.txt"),
+            sep = "\t", quote = FALSE, col.names = TRUE, row.names = TRUE)
+```
+
+

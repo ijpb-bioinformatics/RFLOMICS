@@ -22,49 +22,154 @@
     <loc>/index.html</loc>
   </url>
   <url>
-    <loc>/reference/Datasets_overview_plot-MultiAssayExperiment-method.html</loc>
+    <loc>/reference/ContrastsSelection.html</loc>
   </url>
   <url>
-    <loc>/reference/DiffAnal.plot-SummarizedExperiment-method.html</loc>
+    <loc>/reference/CoseqContrastsPlot.html</loc>
   </url>
   <url>
-    <loc>/reference/Enrichment.plot.html</loc>
+    <loc>/reference/Datasets_overview_plot-RflomicsMAE-method.html</loc>
   </url>
   <url>
-    <loc>/reference/FilterDiffAnalysis-SummarizedExperiment-method.html</loc>
+    <loc>/reference/DiffAnal.plot.html</loc>
   </url>
   <url>
-    <loc>/reference/FilterLowAbundance-SummarizedExperiment-method.html</loc>
+    <loc>/reference/Example-functions.html</loc>
   </url>
   <url>
-    <loc>/reference/RunDiffAnalysis-SummarizedExperiment-method.html</loc>
+    <loc>/reference/FilterDiffAnalysis.html</loc>
   </url>
   <url>
-    <loc>/reference/RunNormalization-SummarizedExperiment-method.html</loc>
+    <loc>/reference/FilterLowAbundance.html</loc>
   </url>
   <url>
-    <loc>/reference/RunPCA-SummarizedExperiment-method.html</loc>
+    <loc>/reference/MOFA_cor_network.html</loc>
   </url>
   <url>
-    <loc>/reference/TransformData-SummarizedExperiment-method.html</loc>
+    <loc>/reference/Multi-omics-access.html</loc>
+  </url>
+  <url>
+    <loc>/reference/RflomicsMAE-class.html</loc>
+  </url>
+  <url>
+    <loc>/reference/RflomicsMAE.html</loc>
+  </url>
+  <url>
+    <loc>/reference/RflomicsSE-class.html</loc>
+  </url>
+  <url>
+    <loc>/reference/RunDiffAnalysis.html</loc>
+  </url>
+  <url>
+    <loc>/reference/RunNormalization.html</loc>
+  </url>
+  <url>
+    <loc>/reference/RunPCA.html</loc>
+  </url>
+  <url>
+    <loc>/reference/TransformData.html</loc>
+  </url>
+  <url>
+    <loc>/reference/batchFactors.html</loc>
+  </url>
+  <url>
+    <loc>/reference/bioFactors.html</loc>
+  </url>
+  <url>
+    <loc>/reference/boxplot.DE.plot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/coseq.profile.plot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/createRflomicsMAE.html</loc>
+  </url>
+  <url>
+    <loc>/reference/createRflomicsSE.html</loc>
+  </url>
+  <url>
+    <loc>/reference/filterFeatures.html</loc>
+  </url>
+  <url>
+    <loc>/reference/generateReport.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getCoeffNorm.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getCoexpSetting.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getDE.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getDesignMat.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getDiffSetting.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getExperimentNames-RflomicsMAE-method.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getExperimentTypes-RflomicsMAE-method.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getFactorTypes.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getFilterSetting.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getFilteredFeatures.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getMOFASetting.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getMixOmicsSetting.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getModelFormula.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getNormSetting.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getOmicsTypes.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getTransSetting.html</loc>
+  </url>
+  <url>
+    <loc>/reference/heatmapPlot.html</loc>
   </url>
   <url>
     <loc>/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/mvQCdata.html</loc>
+    <loc>/reference/integrationWrapper.html</loc>
   </url>
   <url>
-    <loc>/reference/mvQCdesign.html</loc>
+    <loc>/reference/metaFactors.html</loc>
   </url>
   <url>
-    <loc>/reference/pipe.html</loc>
+    <loc>/reference/plotCPR-RflomicsSE-method.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plotCPRKEGG-RflomicsSE-method.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plotEnrichComp.html</loc>
   </url>
   <url>
     <loc>/reference/plotPCA.html</loc>
   </url>
   <url>
-    <loc>/reference/prepareForIntegration-MultiAssayExperiment-method.html</loc>
+    <loc>/reference/plot_MO_varExp.html</loc>
+  </url>
+  <url>
+    <loc>/reference/prepareForIntegration-RflomicsMAE-method.html</loc>
   </url>
   <url>
     <loc>/reference/read_exp_design.html</loc>
@@ -76,18 +181,39 @@
     <loc>/reference/reexports.html</loc>
   </url>
   <url>
-    <loc>/reference/runAnnotationEnrichment-SummarizedExperiment-method.html</loc>
+    <loc>/reference/rflomicsUI.html</loc>
   </url>
   <url>
-    <loc>/reference/runAnnotationEnrichment_CPR-SummarizedExperiment-method.html</loc>
+    <loc>/reference/runAnnotationEnrichment.html</loc>
   </url>
   <url>
-    <loc>/reference/runCoExpression-SummarizedExperiment-method.html</loc>
+    <loc>/reference/runCoExpression.html</loc>
   </url>
   <url>
-    <loc>/reference/run_MOFA_analysis-MOFA-method.html</loc>
+    <loc>/reference/runDataProcessing.html</loc>
   </url>
   <url>
-    <loc>/reference/run_MixOmics_analysis-list-method.html</loc>
+    <loc>/reference/runIntegration.html</loc>
+  </url>
+  <url>
+    <loc>/reference/runMOFAAnalysis.html</loc>
+  </url>
+  <url>
+    <loc>/reference/runMixOmicsAnalysis.html</loc>
+  </url>
+  <url>
+    <loc>/reference/runSampleFiltering.html</loc>
+  </url>
+  <url>
+    <loc>/reference/setModelFormula.html</loc>
+  </url>
+  <url>
+    <loc>/reference/sumDiffExp.html</loc>
+  </url>
+  <url>
+    <loc>/reference/sumMixOmics.html</loc>
+  </url>
+  <url>
+    <loc>/reference/sumORA.html</loc>
   </url>
 </urlset>

@@ -1,89 +1,90 @@
+# Experimental design
+
 <br>
 
-# Statistical design:
+* **User-provided experimental design file:**
 
-* Experimental design:
+```{r design, out.width = "70%", fig.align='left'}
 
-<!-- ## Sample sheet overview -->
+bioFact   <- RFLOMICS::getBioFactors(rflomics.MAE)
+batchFact <- RFLOMICS::getBatchFactors(rflomics.MAE)
+metaFact  <- RFLOMICS::getMetaFactors(rflomics.MAE)
 
-```{r Design, echo=FALSE, message=TRUE, warning=TRUE}
-
-DT::datatable(as.data.frame(rflomics.MAE@colData), 
+DT::datatable(getDesignMat(rflomics.MAE)[c(bioFact, batchFact, metaFact)], 
               options = list(rownames = FALSE, pageLength = 6, scrollX = T, dom = 'tip'),
               class = 'cell-border stripe')
 
+              # caption = htmltools::tags$caption(style = 'caption-side: top;
+              #                                   text-align: left;
+              #                                   color:black;
+              #                                   font-size:20px;
+              #                                   font-weight: bold;', "User-provided experimental plan"),
 ```
 
-* Factor settings:
+<br>
 
-```{r factors, echo=FALSE, message=TRUE, warning=TRUE}
+* **Dataset(s) overview:**
 
-# Bio.fact   <- rflomics.MAE@metadata$design@Factors.Type[rflomics.MAE@metadata$design@Factors.Type == "Bio"]
-# Batch.fact <- rflomics.MAE@metadata$design@Factors.Type[rflomics.MAE@metadata$design@Factors.Type == "batch"]
-fact.names <- names(rflomics.MAE@metadata$design@Factors.Type)
-fact.types <- rflomics.MAE@metadata$design@Factors.Type
+```{r data.over.view, fig.show = "hold", out.width = "50%", fig.cap="*fig.left: Overview of the input omic data. Each color represents a distinct dataset, with their respective samples on the x-axis and the number of features on the y-axis. It illustrates the samples overlap across dataset. fig.right: Number of Datasets per Condition. Each axis represents a distinct biological factor, and each cell value signifies the count of datasets associated with that specific condition.*", fig.align='left'}
+
+raw.rflomics.MAE <- subRflomicsMAE(rflomics.MAE, omicNames = paste0(getDatasetNames(rflomics.MAE), ".raw"))
+names(raw.rflomics.MAE) <- getDatasetNames(rflomics.MAE)
+plotDataOverview(object = raw.rflomics.MAE)
+plotConditionsOverview(object = raw.rflomics.MAE)
+
+```
+
+<br>
+<br>
+
+# Statistical settings:
+
+<br>
+
+* **Factor(s) setting summary: Types of factors and modality of reference**
+
+```{r factors}
+
+fact.types <- getFactorTypes(rflomics.MAE)
+fact.names <- getFactorNames(rflomics.MAE)
 fact.ref <- vector()
 for(i in 1:length(fact.names)){
-  fact.ref[i] <- levels(rflomics.MAE@metadata$design@ExpDesign[,fact.names[i]])[1]
+  fact.ref[i] <- getFactorModalities(rflomics.MAE, fact.names[i])[1]
 }
 
-df <- data.frame("Factor.names" = fact.names ,
-           "Factor.Type" = fact.types,
-           "Ref.modality" = fact.ref)
+df <- data.frame("Factor_names" = fact.names ,
+           "Factor_type" = fact.types,
+           "Factor_reference" = fact.ref)
 
-DT::datatable(df , rownames = FALSE ,options = list( pageLength = 6, scrollX = F, dom = 'tip'),
-              class = 'cell-border stripe')
+DT::datatable(df , rownames = FALSE , class = 'cell-border stripe',
+              options = list( pageLength = 6, scrollX = F, dom = 'tip'))
+
+# caption= htmltools::tags$caption(style = 'caption-side: top;
+#                                                 text-align: left;
+#                                                 color:black;
+#                                                 font-size:20px;
+#                                                 font-weight: bold;', "Factor settings")
 ```
 
+<br>
 
-* Analyzed dataset(s):
-
-```{r Sample table, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}
-
-loaded.data <- data.frame(datasets = sapply(names(rflomics.MAE@metadata$omicList), 
-                              function(x){ paste0(rflomics.MAE@metadata$omicList[[x]], collapse = ", ") }), 
-                          omics = names(rflomics.MAE@metadata$omicList)) %>% data.table::as.data.table()
-
-DT::datatable(loaded.data, rownames = FALSE,
-              options = list( pageLength = 6, scrollX = T, dom = 'tip'),
-              class = 'cell-border stripe')
-
-# kable_styling(kable(loaded.data, row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
+* **The selected model formula:**
 
 ```
+`r RFLOMICS::getModelFormula(rflomics.MAE)`
+````
 
-* This upset graph gives the number of common and specifics samples in the analyzed dataset(s).
+<br>
 
+* **The selected contrasts:**
 
-```{r upsetSamples, echo=FALSE, fig.show = "hold", out.width = "70%", message=FALSE, warning=FALSE}
+```{r contrastSel, results="asis"}
 
-
-if(length(unlist(rflomics.MAE@metadata$omicList)) > 2){
-  
-  upsetSamples(rflomics.MAE[unlist(rflomics.MAE@metadata$omicList),])
-}
-
-
-#check <- CheckExpDesignCompleteness(rflomics.MAE)
-
-#check$plot
-```
-
-* Statistical model
-
-```
-`r rflomics.MAE@metadata$design@Model.formula`
-```
-
-* The selected contrast(s) is (are):
-
-```{r contrastSel, echo=FALSE, results="asis", warning=FALSE, message=FALSE}
-
-DT::datatable(rflomics.MAE@metadata$design@Contrasts.Sel[,c(5,2:3)], rownames = FALSE,
+df <- getSelectedContrasts(rflomics.MAE)[,c("groupComparison", "contrastName", "type")]
+names(df) <- c("Comparison", "Contrasts", "Type")
+DT::datatable(df, rownames = FALSE,
               options = list( pageLength = 6, scrollX = F, dom = 'tip'),
               class = 'cell-border stripe')
-
-# kable_styling(kable(rflomics.MAE@metadata$design@Contrasts.Sel[,c(5,2:3)], 
-#                     row.names=FALSE, caption=NULL, format="html"), font_size=12,full_width = F, position = "left")
 ```
+
 

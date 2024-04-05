@@ -26,4 +26,3 @@ navbar:
       icon: fa-gitlab
       href: https://forgemia.inra.fr/flomics/rflomics
       aria-label: Gitlab
-      

@@ -1,7 +1,7 @@
 ---
 title: "`r params$title`"
-author: "Analyzis were performed by the RFLOMICS package (cite)"
-date: "The `r format(Sys.time(), '%d %B, %Y')`"
+author: "Analysis were performed by the RFLOMICS package (cite)"
+date: "`r Sys.setlocale('LC_TIME', 'C'); format(Sys.time(), '%d %B %Y - %H:%M')`"
 bibliography: bibliography.bib
 output: 
   html_document:
@@ -12,7 +12,7 @@ output:
       collapsed: true
       smooth_scroll: true
     number_sections: true
-    theme: united
+    theme: flatly
 params: 
   outDir: NA
   FEdata: NA
@@ -21,18 +21,13 @@ params:
 
 
 ```{r , include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE, error = TRUE)
 options(knitr.duplicate.label = "allow")
 ```
 
-```{r library, echo=FALSE, message=FALSE, warning=FALSE}
+```{r library}
 
 library(RFLOMICS)
-library(dplyr)
-library(ggplot2)
-library(DT)
-library(reactable)
-
 ```
 
 
@@ -41,66 +36,70 @@ library(reactable)
 load(params$FEdata)
 outDir <- params$outDir
 projectName <- params$title
+
 ```
 
 ```{r , message=FALSE, warning=FALSE, echo=FALSE}
 # Create a directory to store all the results (tables and figures) of the project in a tmpdir
 # user may download this results as an archive from the shiny interface
-dir.create(path=outDir)
+dir.create(path = outDir, showWarnings = FALSE)
 ```
 
 <!-- enable to zoom by clicking on graphs in the report -->
 
-```{css zoom-lib-src, message=FALSE, warning=FALSE, echo=FALSE}
+```{css zoom-lib-src}
 ### ZOOM 
 script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
 ```
 
-```{js zoom-jquery, message=FALSE, warning=FALSE, echo=FALSE}
- $(document).ready(function() {
-    $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
-    // onClick function for all plots (img's)
-    $('img:not(.zoomImg)').click(function() {
-      $('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
-      $('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
-    });
-    // onClick function for zoomImg
-    $('img.zoomImg').click(function() {
-      $('.zoomDiv').css({opacity: '0', width: '0%'}); 
-    });
-  });
+```{js zoom-jquery}
+$(document).ready(function() {
+$('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+// onClick function for all plots (img's)
+$('img:not(.zoomImg)').click(function() {
+$('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+$('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
+});
+// onClick function for zoomImg
+$('img.zoomImg').click(function() {
+$('.zoomDiv').css({opacity: '0', width: '0%'}); 
+});
+});
 ```
 
-
+<br>
+<br>
+<br>
 
 <!-- Experimental design -->
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE}
+```{r design}
 
-  out <- NULL
- 
-  out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_02_design.Rmd"), quiet=TRUE))  
-    
+out <- NULL
+child <- paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_02_design.Rmd")
+out <- c(out, knitr::knit_child(child, quiet=TRUE))  
+
 knitr::asis_output(out)
 
 ```
 
+<br>
+<br>
+
 <!-- single omics analysis -->
 
-```{r analysis, message=FALSE, warning=FALSE, echo=FALSE, eval=(length(rflomics.MAE@metadata$omicList) != 0 )}
+```{r analysis, eval=(length(getOmicsTypes(rflomics.MAE)) != 0 )}
 
-  out <- NULL
-  for (omictype in names(rflomics.MAE@metadata$omicList)){ 
-
-    for (data in  rflomics.MAE@metadata$omicList[[omictype]]){
-      
-      # child <- paste0("report_",omictype, ".Rmd")
-      child <-  paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_01_omics.Rmd") 
-      
-      out <- c(out, knitr::knit_child(child, quiet=TRUE))  
-    }
+out <- NULL
+omicsData <- getOmicsTypes(rflomics.MAE)
+for (omictype in unique(omicsData)){ 
+  
+  for (data in  names(omicsData[omicsData == omictype])){
     
+    child <- paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_01_omics.Rmd") 
+    out   <- c(out, knitr::knit_child(child, quiet=TRUE))  
   }
+}
 
 knitr::asis_output(out)
 
@@ -110,25 +109,113 @@ knitr::asis_output(out)
 
 <!-- ## with MOFA -->
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE, eval = !is.null(rflomics.MAE@metadata$MOFA_results), hide = is.null(rflomics.MAE@metadata$MOFA_results) }
+`r if(is.null(getMOFA(rflomics.MAE))) {"\\begin{comment}"}`
 
-  out <- NULL
-  
-  out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","MOFA2_integration.Rmd"), quiet=TRUE))
-    
+<br>
+<br>
+
+# MOFA2 Integration
+
+`r if(is.null(getMOFA(rflomics.MAE))) {"\\end{comment}"}`
+
+```{r MOFA2, eval = !is.null(getMOFA(rflomics.MAE)), hide = is.null(getMOFA(rflomics.MAE)) }
+
+out <- NULL
+
+out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), 
+                                       "/RFLOMICSapp/","report_07_MOFA2_integration.Rmd"), quiet=TRUE))
+
 knitr::asis_output(out)
 
 ```
 
-<!-- ## with MixOmix -->
+<!-- ## with MixOmics -->
 
+`r if(is.null(RFLOMICS::getMixOmics(rflomics.MAE))) {"\\begin{comment}"}`
+
+---
+
+# MixOmics Integration
+
+`r if(is.null(RFLOMICS::getMixOmics(rflomics.MAE))) {"\\end{comment}"}`
+
+```{r, eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE))}
+MOres <- NULL
+funcMixo <- NULL
+MOres <- RFLOMICS::getMixOmicsSettings(rflomics.MAE)
+funcMixo <- ifelse(MOres$sparsity, "splsda",  "plsda")
+funcMixo <- ifelse(length(MOres$selectData) > 1, paste0("block.", funcMixo), funcMixo)
+```
+
+```{r , eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE)) }
+htmltools::HTML(paste0("MixOmics analyses were performed on <span style=\"color:blue\">",  
+                       paste(MOres$selectData, collapse = ", "), 
+                       "</span> datatables with function  <span style=\"color:DarkOrchid\">", 
+                       funcMixo, 
+                       "</span> applied on each selected response variable (<span style=\"color:blue\">",
+                       paste(MOres$selectedResponse, collapse = ", "), 
+                       "</span>). Option <span style=\"color:blue\"> scale views </span> was set to", 
+                       MOres$scale_views, "."))
+```
+
+```{r , eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE)), results="asis"}
+listSel <- NULL
+listSel <- MOres$selectionMethod
+
+listSel2 <- lapply(names(listSel),  FUN = function(nam) {
+    dat <- listSel[[nam]]
+    varNam <- RFLOMICS:::.omicsDic(rflomics.MAE, SE.name = nam)$variableName
+    switch(dat[1], 
+           "diff" = {
+               paste0("Only differentially expressed ", 
+                      varNam, 
+                      " were processed in the multi-omics analysis, taking the ", 
+                      ifelse(dat[2], "union", "intersection"), " of all contrasts lists.")
+           },
+           "none" = paste0("No features selection was applied, all ",
+                           varNam,
+                           " were taken into account."))
+})
+names(listSel2) <- names(listSel)
+
+for (nam in names(listSel2)) {
+    cat("* ", nam, ": ", listSel2[[nam]], "\n")
+}
+rm(listSel, listSel2)
+```
+
+
+```{r mixOmics, eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE)) }
+
+if (MOres$sparsity) {
+    htmltools::HTML(paste0("Sparse analysis was performed on these data with <span style=\"color:blue\">",  
+                           MOres$cases_to_try, 
+                           "</span> sets of features tested for each datatable."))
+}
+
+out <- NULL
+for (selectedResponse in MOres$selectedResponse) { 
+  
+  child <-  paste0(path.package("RFLOMICS"), 
+                   "/RFLOMICSapp/",
+                   "report_08_mixOmics_integration.Rmd") 
+  
+  out <- c(out, knitr::knit_child(child, quiet = TRUE))  
+}
+
+knitr::asis_output(out)
+
+```
+
+---
 
 # R Session
 
 See **session_info.txt** files in the results directory.
 
-```{r session, message=FALSE, warning=FALSE, echo=FALSE, echo=FALSE}
-writeLines(capture.output(devtools::session_info()),  paste0(outDir,"/","session_info.txt"))
+```{r session}
+writeLines(capture.output(devtools::session_info()),  
+           paste0(outDir,"/","session_info.txt"))
 ```
 
 
