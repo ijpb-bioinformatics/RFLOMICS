@@ -55,7 +55,6 @@ Imports:
     mixOmics,
     MOFA2,
     pathview,
-    parallel,
     png,
     purrr,
     RColorBrewer,
