@@ -7,8 +7,6 @@
 #' tabItem renderMenu tabItems sidebarMenu menuSubItem
 #' @rawNamespace import(shiny, except = renderDataTable)
 #' @importFrom shinyWidgets pickerInput materialSwitch
-#' @importFrom colourpicker colourInput
-#' @importFrom magrittr "%>%"
 
 # ---- Integration module ----
 #' @title .modIntegrationAnalysisUI
@@ -461,11 +459,6 @@
                                            Response, Data_res)
                         ),
                         tabPanel(
-                            "Networks",
-                            .outMONetwork(session, input, settings,
-                                          Response, Data_res)
-                        ),
-                        tabPanel(
                             "CimPlot",
                             .outMOCimPlot(session, input, settings,
                                           Response, Data_res)
@@ -540,8 +533,6 @@
                          .outMOFARelations(resMOFA)),
                 tabPanel("Heatmap",
                          .outMOFAHeatmap(session, resMOFA, input)),
-                tabPanel("Network",
-                         .outMOFANetwork(session, resMOFA, input))
             )# tabsetpanel
         )#box
     })
@@ -1153,81 +1144,6 @@
 
 #' @noRd
 #' @keywords internal
-#' @importFrom mixOmics network
-.outMONetwork <-
-    function(session,
-             input,
-             settings,
-             Response,
-             Data_res) {
-        
-        ns <- session$ns
-        moText <- paste0("This network is generated using mixOmics::network function.",
-                         " It represents the correlation between entities from different datasets,",
-                         " calculated using the components." ,
-                         " As stated by the mixOmics help: 'only pairs of variables belonging to different omics datasets are depticted'.",
-                         " You can adjust the correlation threshold to enlarge or reduce the network.",
-                         " Only links higher than the cutoff in absolute value will be displayed, with the associated entities.")
-        
-        tagList(
-            tags$style(
-                ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-            ),
-            br(),
-            div(class = "explain-p", HTML(moText)),
-            hr(),
-            
-            column(
-                1,
-                numericInput(
-                    inputId = ns(paste0(Response, "Network_cutoff")),
-                    label = "Cutoff:",
-                    min = 0,
-                    max =  1,
-                    value = 0.9,
-                    step = 0.05
-                )
-            ),
-            column(11 ,
-                   renderUI({
-                       lenData <- length(settings$selectData)
-                       
-                       outN <- .doNotPlot(network(
-                           mat = Data_res,
-                           blocks = seq_len(lenData),
-                           cutoff = input[[paste0(Response, "Network_cutoff")]],
-                           shape.node = rep("rectangle", lenData)
-                       ))
-                       
-                       if (is(outN, "simpleError")) {
-                           renderText({
-                               outN$message
-                           })
-                       } else {
-                           renderPlot(
-                               network(
-                                   mat = Data_res,
-                                   blocks = seq_len(lenData),
-                                   cutoff = input[[paste0(Response, "Network_cutoff")]],
-                                   shape.node = rep("rectangle", lenData),
-                                   size.node = 0.05,
-                                   graph.scale = 1,
-                                   keysize = c(0.5, 0.5)
-                               ), 
-                               width = 1000, height = 800, 
-                               execOnResize = TRUE
-                           )
-                       }
-                       
-                   })))
-    }
-
-#' @noRd
-#' @keywords internal
 .outMOCimPlot <- function(session,
                           input,
                           settings,
@@ -1507,7 +1423,7 @@
                        " Scaling the factors places all coordinates between -1 and 1."
     )
     
-    moreChoices <- colnames(resMOFA@samples_metadata %>%
+    moreChoices <- colnames(resMOFA@samples_metadata |>
                                 select(!c(sample, group)))
     
     renderUI({
@@ -1677,7 +1593,7 @@
                         label = "Annotation:",
                         choices = c('none',
                                     colnames(
-                                        resMOFA@samples_metadata %>%
+                                        resMOFA@samples_metadata |>
                                             select(!c(sample, group))
                                     )),
                         selected = "none"
@@ -1717,139 +1633,6 @@
     })
 }
 
-#' @noRd
-#' @keywords internal
-.outMOFANetwork <- function(session, resMOFA, input) {
-    ns <- session$ns
-    colorPal_choices <- c("Greens", "Purples", "Oranges",
-                          "Reds", "Greys", "Blues")
-    
-    mofaText <- paste0("This network represent all correlations between features, computed on the denoised matrix (product of weights and factors scores), for a specific factor.",
-                       " You can adjust the absolute weight threshold and the absolute correlation threshold.",
-                       " Please note: the lower the threshold, the greater the number features represented, which may take quite some time.")
-    
-    renderUI({
-        verticalLayout(
-            tags$style(
-                ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-            ),
-            br(),
-            div(class = "explain-p", HTML(mofaText)),
-            hr(),
-            fluidRow(
-                # buttons - choices for network
-                column(
-                    1,
-                    numericInput(
-                        inputId = ns("factor_choice_network"),
-                        label = "Factor:",
-                        min = 1,
-                        max =  resMOFA@dimensions$K,
-                        value = 1,
-                        step = 1
-                    )
-                ),
-                column(
-                    2,
-                    numericInput(
-                        inputId = ns("abs_weight_network"),
-                        label = "Absolute Weight:",
-                        min = 0.05,
-                        max = 1,
-                        value = 0.8,
-                        step = 0.05
-                    )
-                ),
-                column(
-                    2,
-                    numericInput(
-                        inputId = ns("abs_min_cor_network"),
-                        label = "Minimum absolute \n
-                                    correlation to display:",
-                        min = 0.05,
-                        max = 1,
-                        value = 0.75,
-                        step = 0.05
-                    )
-                ),
-                column(
-                    2,
-                    radioButtons(
-                        inputId = ns("network_layout"),
-                        label = "Layout:",
-                        choices = c("Spring", "Circle",
-                                    "Circle + omics"),
-                        selected = "Circle + omics"
-                    )
-                ),
-                column(1,
-                       fluidRow(
-                           colourInput(
-                               inputId = ns("posCol"),
-                               label = "Positive Edges Color:",
-                               value = "firebrick3",
-                               showColour = c("background"),
-                               palette = c("square"),
-                               allowedCols = NULL,
-                               allowTransparent = FALSE,
-                               returnName = FALSE,
-                               closeOnClick = FALSE
-                           )
-                       ),
-                       fluidRow(
-                           colourInput(
-                               inputId = ns("negCol"),
-                               label = "Negative Edges Color:",
-                               value = "forestgreen",
-                               showColour = c("background"),
-                               palette = c("square"),
-                               allowedCols = NULL,
-                               allowTransparent = FALSE,
-                               returnName = FALSE,
-                               closeOnClick = FALSE
-                           )
-                       ), ),
-                column(2,  lapply(seq_len(
-                    length(views_names(resMOFA))
-                ), function(i) {
-                    selectInput(
-                        inputId = ns(paste0("colors_", views_names(resMOFA)[i])),
-                        label = views_names(resMOFA)[i],
-                        choices = colorPal_choices,
-                        multiple = FALSE,
-                        selected = colorPal_choices[i]
-                    )
-                }))
-            ),
-            
-            fluidRow(column(12,
-                            renderPlot({
-                                colors_list <- lapply(
-                                    views_names(resMOFA),
-                                    FUN = function(nam) {
-                                        input[[paste0("colors_", nam)]]
-                                    }
-                                )
-                                names(colors_list) <- views_names(resMOFA)
-                                
-                                MOFACorNetwork(
-                                    resMOFA = resMOFA,
-                                    factor_choice = input$factor_choice_network,
-                                    abs_weight_network = input$abs_weight_network,
-                                    network_layout = input$network_layout,
-                                    omics_colors = colors_list,
-                                    posCol = input$posCol,
-                                    negCol = input$negCol
-                                )
-                                
-                            }, execOnResize = TRUE, width = 1000, height = 800)))
-        )
-    })
-}
 
 #' @noRd
 #' @keywords internal

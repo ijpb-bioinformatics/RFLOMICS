@@ -46,7 +46,7 @@ DT::datatable(t(df))
 ```
 
 ```{r mixOmics_varExp, fig.width = 12, fig.height = 5}
-RFLOMICS::plotMOVarExp(rflomics.MAE, selectedResponse = selectedResponse)
+RFLOMICS:::plotMOVarExp(rflomics.MAE, selectedResponse = selectedResponse)
 ```
 
 ### Idividuals plots {.tabset}

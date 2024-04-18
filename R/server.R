@@ -4,7 +4,6 @@
 #' tabItem renderMenu tabItems sidebarMenu menuSubItem
 #' @rawNamespace import(shiny, except = renderDataTable)
 #' @importFrom shinyWidgets pickerInput materialSwitch
-#' @importFrom colourpicker colourInput
 #' @importFrom magrittr "%>%"
 #' @importFrom rmarkdown render
 rflomicsServer <- function(input, output, session) {
