@@ -391,8 +391,6 @@ setGeneric(
                     p.adj.cutoff = 0.05,
                     logFC.cutoff = 0,
                     clustermq = FALSE,
-                    parallel = FALSE,
-                    nworkers = 1,
                     ...) {
         standardGeneric("runDiffAnalysis")
     }

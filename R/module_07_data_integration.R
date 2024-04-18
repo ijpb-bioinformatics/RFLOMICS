@@ -326,19 +326,30 @@
         message("# 8- integration Analysis with ", method)
         tryRomics <- NULL
         tryRomics <-  tryCatch(
-            do.call(getFromNamespace("runOmicsIntegration", ns = "RFLOMICS"),
-                    list_args), 
-            warning = function(warn) warn,
+            expr    = do.call(
+                getFromNamespace("runOmicsIntegration", ns = "RFLOMICS"),
+                list_args), 
             error   = function(err) err
         )
         
-        condition <- is(tryRomics, "RflomicsMAE")
-        messCond <- "Something went wrong during the integration, please try again with different parameters."
+        #errors
+        condition <- is(tryRomics, "RflomicsMAE") || !is(tryRomics, "simpleError")
+        messCond <- "Something went wrong during the integration, 
+        please try again with different parameters."
         if (!condition) {
             showModal(modalDialog(title = "ERROR: ", 
                                   paste0(messCond, tryRomics$message)))
         }
         validate(need(condition, paste0(messCond, tryRomics$message)))
+        
+        mess <- getMOFA(tryRomics, onlyResults = FALSE)$MOFA_messages
+        condition <- length(mess) == 0
+        if (!condition) {
+            messCond <- paste(unlist(mess), collapse = "<br>")
+            messCond <- gsub("prepare_mofa(.*)", "", messCond)
+            showModal(modalDialog(title = "Warnings and messages from MOFA run: ", 
+                                  HTML(messCond)))
+        }
         
         session$userData$FlomicsMultiAssay <- tryRomics
         rm(tryRomics)

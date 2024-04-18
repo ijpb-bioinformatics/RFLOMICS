@@ -64,9 +64,6 @@
 #' @param logFC.cutoff The lof2FC cutoff
 #' @param clustermq A boolean indicating whether the constrasts have to be 
 #' computed in local or in a distant machine
-#' @param parallel boolean. If TRUE, uses mclapply function from the parallel
-#' package. 
-#' @param nworkers integers. The number of CPU to use.
 #' @param cmd boolean. Used in the interface. If TRUE, print cmd for the user.
 #' @return An object of class \link{RflomicsSE}
 #' @references
@@ -137,8 +134,7 @@ setMethod(f         = "runDiffAnalysis",
           definition = function(object, p.adj.method="BH",
                                 contrastList = NULL, method = NULL, 
                                 p.adj.cutoff=0.05, logFC.cutoff=0, 
-                                clustermq=FALSE, parallel = FALSE, 
-                                nworkers = 1,
+                                clustermq=FALSE,
                                 cmd = FALSE){
               
               modelFormula <- getModelFormula(object)
@@ -208,8 +204,6 @@ setMethod(f         = "runDiffAnalysis",
                                                              Contrasts.Coeff = object@metadata$design$Contrasts.Coeff,
                                                              FDR             = 1,
                                                              clustermq       = clustermq,
-                                                             parallel        = parallel,
-                                                             nworkers        = nworkers,
                                                              cmd             = cmd)),
                   "limmalmFit" = .tryRflomics(.limmaAnaDiff(count_matrix    = assay(object2),
                                                             model_matrix      = model_matrix[colnames(object2),],
@@ -258,7 +252,6 @@ setMethod(f          = "runDiffAnalysis",
                                 contrastList = NULL, method = NULL,
                                 p.adj.cutoff=0.05, 
                                 logFC.cutoff=0, clustermq=FALSE, 
-                                parallel = FALSE, nworkers = 1, 
                                 cmd = FALSE){
               
               # all verifications are done in this method
@@ -269,8 +262,6 @@ setMethod(f          = "runDiffAnalysis",
                                                     p.adj.cutoff = p.adj.cutoff,
                                                     logFC.cutoff = logFC.cutoff,
                                                     clustermq = clustermq,
-                                                    parallel = parallel,
-                                                    nworkers = nworkers,
                                                     cmd = cmd
               )
               return(object)

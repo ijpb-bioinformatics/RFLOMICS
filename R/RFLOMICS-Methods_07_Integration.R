@@ -550,8 +550,7 @@ setMethod(
                 object = preparedObject,
                 scale_views = scale_views,
                 maxiter = maxiter,
-                num_factors = num_factors,
-                silent = silent
+                num_factors = num_factors
             )
             
             object <- setMOFA(
@@ -559,6 +558,7 @@ setMethod(
                 list(
                     "MOFA_results" = MOFA_run$MOFAObject.trained,
                     "MOFA_untrained" = MOFA_run$MOFAObject.untrained,
+                    "MOFA_messages" = MOFA_run$MOFA.messages,
                     "settings" = list(
                         scale_views = scale_views,
                         maxiter     = maxiter,

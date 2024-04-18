@@ -16,7 +16,6 @@
 #' @importFrom edgeR DGEList estimateGLMCommonDisp estimateGLMTrendedDisp 
 #' estimateGLMTagwiseDisp glmFit glmLRT topTags
 #' @importFrom clustermq Q 
-#' @importFrom parallel mclapply
 #' @importFrom dplyr filter rename
 #' @noRd
 #'
@@ -24,16 +23,11 @@
 .edgeRAnaDiff <- function(count_matrix, model_matrix, group, 
                           lib.size, norm.factors, Contrasts.Sel, 
                           Contrasts.Coeff, FDR, clustermq = FALSE,
-                          parallel = FALSE, nworkers = 1, cmd = FALSE){
+                          cmd = FALSE){
     
     z <- y <- NULL
     
     ListRes <- list()
-    
-    # check clustermq and parallel
-    if (clustermq && parallel) parallel <- FALSE 
-    if (!parallel) nworkers <- 1
-    
     
     # Construct the DGE obect
     dge <- DGEList(counts       = count_matrix,
@@ -83,9 +77,9 @@
     }
     else{
         if(cmd) message("[cmd] apply model to each contrast")
-        ResGlm <-  mclapply(Contrasts.Sel$contrast, function(x){
+        ResGlm <-  lapply(Contrasts.Sel$contrast, function(x){
             .tryRflomics(glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,])))
-        }, mc.cores = nworkers)
+        })
         
     }
     

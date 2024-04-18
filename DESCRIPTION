@@ -61,7 +61,6 @@ Imports:
     RColorBrewer,
     RCurl,
     reshape2,
-    reticulate,
     rmarkdown,
     S4Vectors,
     shiny,

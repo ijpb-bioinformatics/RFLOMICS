@@ -9,12 +9,11 @@
 # @import shiny 
 #' @rawNamespace import(shiny, except = renderDataTable)
 #' @importFrom shinyWidgets pickerInput materialSwitch
-#' @importFrom colourpicker colourInput
 #' @importFrom magrittr "%>%"
 #' @export
 #' @examples
 #' library(RFLOMICS)
-#' runRFLOMICS()
+#' ## Not run: runRFLOMICS()
 #' 
 #'
 runRFLOMICS <- function(...) {

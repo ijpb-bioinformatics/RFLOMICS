@@ -269,14 +269,12 @@
 #' (containing all options for the run) and a trained MOFA object
 #' @importFrom MOFA2 get_default_data_options get_default_model_options
 #' get_default_training_options prepare_mofa run_mofa
-#' @importFrom reticulate py_capture_output
 #' @keywords internal
 #' @noRd
 .runMOFAAnalysis <- function(object,
                              scale_views = FALSE,
                              maxiter = 1000,
                              num_factors = 10,
-                             silent = TRUE,
                              ...) {
     if (!is(object, "MOFA")) {
         stop("object has to be a MOFA results")
@@ -290,46 +288,34 @@
     train_opts$maxiter     <- maxiter
     train_opts$verbose     <- FALSE
     model_opts$num_factors <- num_factors
-    
-    if (silent) {
-        MOFAObject.untrained <- suppressMessages(suppressWarnings(
-            prepare_mofa(
-                object           = object,
-                data_options     = data_opts,
-                model_options    = model_opts,
-                training_options = train_opts
-            )
-        ))
-    } else {
+
+    MOFA.messages <- list()
+    withCallingHandlers({
         MOFAObject.untrained <- prepare_mofa(
             object           = object,
             data_options     = data_opts,
             model_options    = model_opts,
             training_options = train_opts
         )
-    }
-    
-    if (silent) {
-        pycapt <- py_capture_output({
-            MOFAObject.trained <- suppressWarnings(suppressMessages(
-                run_mofa(
-                    MOFAObject.untrained,
-                    use_basilisk = FALSE,
-                    save_data = TRUE
-                )
-            ))
-        })
-    } else {
-        MOFAObject.trained <-
-            run_mofa(MOFAObject.untrained,
-                     use_basilisk = FALSE,
-                     save_data = TRUE)
-    }
+    }, warning = function(warn){
+        MOFA.messages[[length(MOFA.messages) + 1]] <<- warn
+    } 
+    )
+    outfile <- file.path(tempdir(), 
+                         paste0("mofa_", 
+                                format(Sys.time(), format = "%Y%m%d-%H%M%S"), 
+                                ".hdf5"))
+    MOFAObject.trained <-
+        run_mofa(MOFAObject.untrained,
+                 use_basilisk = FALSE,
+                 outfile = outfile,
+                 save_data = TRUE)
     
     return(
         list(
             "MOFAObject.untrained" = MOFAObject.untrained,
-            "MOFAObject.trained"   = MOFAObject.trained
+            "MOFAObject.trained"   = MOFAObject.trained,
+            "MOFA.messages"        = MOFA.messages
         )
     )
 }

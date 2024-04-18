@@ -7,7 +7,6 @@
 #' tabItem renderMenu tabItems sidebarMenu menuSubItem
 #' @rawNamespace import(shiny, except = renderDataTable)
 #' @importFrom shinyWidgets pickerInput materialSwitch
-#' @importFrom colourpicker colourInput
 #' @importFrom dplyr filter select arrange
 #' @importFrom purrr reduce
 #' @importFrom magrittr "%>%"
