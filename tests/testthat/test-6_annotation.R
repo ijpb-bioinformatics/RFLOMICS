@@ -10,40 +10,41 @@ MAE <- generateExample(
 # ---- Annotation test function - DiffExpEnrichment ----
 # 
 
-test_that("it's running from diffExpAnal - GO - RNASeq", {
-  
-  # Selecting only one contrast
-  expect_no_error({
-    MAE <- runAnnotationEnrichment(MAE, nameList = "H1", SE.name = "RNAtest", database = "GO",
-                                   list_args = list(OrgDb = "org.At.tair.db", 
-                                                    keyType = "TAIR", 
-                                                    pvalueCutoff = 0.05),
-                                   domain = c("BP", "MF", "CC"))
-  })
-  
-  expect({
-    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H1", database = "GO", domain = "BP")
-    nrow(obj@result) > 0
-  }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
-  
-  # All contrasts
-  expect_no_error({
-    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", database = "GO",
-                                   list_args = list(OrgDb = "org.At.tair.db", 
-                                                    keyType = "TAIR", 
-                                                    pvalueCutoff = 0.05),
-                                   domain = c("BP", "MF", "CC"))
-    
-  })
-  
-  expect({
-    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H2", database = "GO", domain = "BP")
-    nrow(obj@result) > 0
-  }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
-  
-  
-  
-})
+#### Need org.At.tair.db to run
+# test_that("it's running from diffExpAnal - GO - RNASeq", {
+#   
+#   # Selecting only one contrast
+#   expect_no_error({
+#     MAE <- runAnnotationEnrichment(MAE, nameList = "H1", SE.name = "RNAtest", database = "GO",
+#                                    list_args = list(OrgDb = "org.At.tair.db", 
+#                                                     keyType = "TAIR", 
+#                                                     pvalueCutoff = 0.05),
+#                                    domain = c("BP", "MF", "CC"))
+#   })
+#   
+#   expect({
+#     obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H1", database = "GO", domain = "BP")
+#     nrow(obj@result) > 0
+#   }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
+#   
+#   # All contrasts
+#   expect_no_error({
+#     MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", database = "GO",
+#                                    list_args = list(OrgDb = "org.At.tair.db", 
+#                                                     keyType = "TAIR", 
+#                                                     pvalueCutoff = 0.05),
+#                                    domain = c("BP", "MF", "CC"))
+#     
+#   })
+#   
+#   expect({
+#     obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H2", database = "GO", domain = "BP")
+#     nrow(obj@result) > 0
+#   }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
+#   
+#   
+#   
+# })
 
 test_that("it's running from diffExpAnal - Custom - RNASeq", {
   
@@ -77,21 +78,21 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
     nrow(obj@result) > 0
   }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
   
-  
+  #### Need org.At.tair.db to run
   # All contrasts, GO database
-  expect_no_error({
-    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", database = "GO",
-                                   list_args = list(OrgDb = "org.At.tair.db", 
-                                                    keyType = "TAIR", 
-                                                    pvalueCutoff = 0.05),
-                                   domain = c("BP", "MF", "CC"))
-    
-  })
+  # expect_no_error({
+  #   MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", database = "GO",
+  #                                  list_args = list(OrgDb = "org.At.tair.db", 
+  #                                                   keyType = "TAIR", 
+  #                                                   pvalueCutoff = 0.05),
+  #                                  domain = c("BP", "MF", "CC"))
+  #   
+  # })
   
-  expect({
-    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H2", database = "GO", domain = "BP")
-    nrow(obj@result) > 0
-  }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
+  # expect({
+  #   obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H2", database = "GO", domain = "BP")
+  #   nrow(obj@result) > 0
+  # }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
   
   # All contrasts, KEGG database
   expect_no_error({
@@ -112,37 +113,38 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
 
 # ---- Annotation test function - CoExpression enrichment ----
 
-test_that("it's running from CoExpAnal - GO - RNASeq", {
-  
-  expect_no_error({
-    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", from = "CoExpAnal", database = "GO",
-                                   list_args = list(OrgDb = "org.At.tair.db", 
-                                                    keyType = "TAIR", 
-                                                    pvalueCutoff = 0.05),
-                                   domain = c("BP", "MF", "CC"))
-    
-  })
-  
-  
-  expect({
-    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "cluster.1", database = "GO", domain = "BP", from = "CoExpAnal")
-    nrow(obj@result) > 0
-  }, failure_message = "(GO RNAseq from CoExp) - There is no result in the enrichment metadata part.")
-  
-  
-  expect_no_error({
-    MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", nameList = c("cluster.1", "cluster.2") ,
-                                   from = "CoExpAnal", database = "GO",
-                                   list_args = list(OrgDb = "org.At.tair.db", 
-                                                    keyType = "TAIR", 
-                                                    pvalueCutoff = 0.05),
-                                   domain = c("BP", "MF", "CC"))
-    
-  })
-  
-  expect({
-    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "cluster.1", database = "GO", domain = "BP", from = "CoExpAnal")
-    nrow(obj@result) > 0
-  }, failure_message = "(GO RNAseq from CoExp) - There is no result in the enrichment metadata part.")
-  
-})
+#### Need org.At.tair.db to run
+# test_that("it's running from CoExpAnal - GO - RNASeq", {
+#   
+#   expect_no_error({
+#     MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", from = "CoExpAnal", database = "GO",
+#                                    list_args = list(OrgDb = "org.At.tair.db", 
+#                                                     keyType = "TAIR", 
+#                                                     pvalueCutoff = 0.05),
+#                                    domain = c("BP", "MF", "CC"))
+#     
+#   })
+#   
+#   
+#   expect({
+#     obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "cluster.1", database = "GO", domain = "BP", from = "CoExpAnal")
+#     nrow(obj@result) > 0
+#   }, failure_message = "(GO RNAseq from CoExp) - There is no result in the enrichment metadata part.")
+#   
+#   
+#   expect_no_error({
+#     MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", nameList = c("cluster.1", "cluster.2") ,
+#                                    from = "CoExpAnal", database = "GO",
+#                                    list_args = list(OrgDb = "org.At.tair.db", 
+#                                                     keyType = "TAIR", 
+#                                                     pvalueCutoff = 0.05),
+#                                    domain = c("BP", "MF", "CC"))
+#     
+#   })
+#   
+#   expect({
+#     obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "cluster.1", database = "GO", domain = "BP", from = "CoExpAnal")
+#     nrow(obj@result) > 0
+#   }, failure_message = "(GO RNAseq from CoExp) - There is no result in the enrichment metadata part.")
+#   
+# })
