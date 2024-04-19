@@ -33,17 +33,8 @@ setMethod(f          = "generateModelFormulae",
           })
 
 # ---- setModelFormula : ----
-#' @title setModelFormula
-#' @description
-#' Set model formula from a Flomics RflomicsMAE
-#' 
-#' @param object a RflomicsMAE 
-#' @param modelFormula a formula
-#' @return a object RflomicsMAE
 #' @exportMethod setModelFormula
-#' @seealso \link{RflomicsMAE-methods}
-#' @aliases setModelFormula
-#' @rdname setModelFormula
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "setModelFormula",
           signature  = "RflomicsMAE",
           definition = function(object, modelFormula=NULL){
@@ -59,12 +50,9 @@ setMethod(f          = "setModelFormula",
               return(object)
           })
 
-#' @title setModelFormula
-#' @param object a RflomicsSE
-#' @return a object RflomicsSE
+
 #' @exportMethod setModelFormula
-#' @aliases setModelFormula
-#' @rdname setModelFormula
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "setModelFormula",
           signature  = "RflomicsSE",
           definition = function(object, modelFormula=NULL){
@@ -76,15 +64,8 @@ setMethod(f          = "setModelFormula",
           })
 
 # ---- getModelFormula : Get Model Formula : ----
-#' @title getModelFormula
-#' @description
-#' Get model formula from a \code{RflomicsMAE} or \code{RflomicsSE} object
-#' @param object a RflomicsMAE
-#' @return a formula
 #' @exportMethod getModelFormula
-#' @rdname getModelFormula
-#' @aliases getModelFormula
-#' @seealso \link{RflomicsMAE-methods}
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "getModelFormula",
           signature  = "RflomicsMAE",
           definition = function(object){
@@ -92,11 +73,8 @@ setMethod(f          = "getModelFormula",
               return(object@metadata$design$Model.formula)
           })
 
-#' @title getModelFormula
-#' @param object a RflomicsSE
 #' @exportMethod getModelFormula
-#' @aliases getModelFormula
-#' @rdname getModelFormula
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "getModelFormula",
           signature  = "RflomicsSE",
           definition = function(object){
@@ -186,15 +164,7 @@ setMethod(f          = "generateExpressionContrast",
 
 
 # ---- setSelectedContrasts ----
-#' @title setSelectedContrasts
-#' @description
-#' A short description...
-#' 
-#' @param object a RflomicsMAE 
-#' @param contrastList a data.frame of contrast
-#' @return a RflomicsMAE object
-#' @rdname setSelectedContrasts
-#' @aliases setSelectedContrasts
+#' @rdname RflomicsMAE-accessors
 #' @exportMethod setSelectedContrasts
 setMethod(f          = "setSelectedContrasts",
           signature  = "RflomicsMAE",
@@ -205,15 +175,8 @@ setMethod(f          = "setSelectedContrasts",
               return(object)
           })
 
-#' @title setSelectedContrasts
-#' @description
-#' A short description...
-#' 
-#' @param object a RflomicsSE 
-#' @param contrastList a data.frame of contrast
-#' @return a RflomicsSE object
-#' @rdname setSelectedContrasts
-#' @aliases setSelectedContrasts
+
+#' @rdname RflomicsSE-accessors
 #' @exportMethod setSelectedContrasts
 setMethod(f          = "setSelectedContrasts",
           signature  = "RflomicsSE",
@@ -225,13 +188,7 @@ setMethod(f          = "setSelectedContrasts",
           })
 
 # ---- getSelectedContrasts : ----
-#' @title Get selected contrasts for the differential analysis
-#'
-#' @param object a MAE object (produced by Flomics) or a SE 
-#' (expect to find a diffAnalysis slot.)
-#' @return a dataTable
-#' @rdname ContrastsSelection
-#' @aliases getSelectedContrasts
+#' @rdname RflomicsMAE-accessors
 #' @exportMethod getSelectedContrasts
 setMethod(f          = "getSelectedContrasts",
           signature  = "RflomicsMAE",
@@ -240,11 +197,8 @@ setMethod(f          = "getSelectedContrasts",
               return(object@metadata$design$Contrasts.Sel)
           })
 
-#' @title Get selected contrasts for the differential analysis
-#'
-#' @param object a RflomicsSE
-#' @return a dataTable
-#' @rdname ContrastsSelection
+
+#' @rdname RflomicsSE-accessors
 #' @exportMethod getSelectedContrasts
 #' @aliases getSelectedContrasts
 setMethod(f          = "getSelectedContrasts",

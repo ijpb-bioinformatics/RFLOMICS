@@ -11,16 +11,24 @@
 #' @importFrom purrr reduce
 
 
-#' @name RflomicsMAE-methods
-#' @title Access or modify the metadata slot of an object of class RflomicsMAE
+#' @name RflomicsMAE-accessors
+#' @title A group of functions to access and modify the metadata slot of an object of class 
+#' \link{RflomicsMAE}
+#'  
+#' @aliases getProjectName getDesignMat getDatasetNames getOmicsTypes getFactorNames 
+#' getFactorTypes getBioFactors getBatchFactors getMetaFactors getFactorModalities getRflomicsSE 
+#' subRflomics getModelFormula getSelectedContrasts getValidContrasts getContrastMatrix 
+#' getTransSettings getFilterSettings getFilteredFeatures getNormSettings getCoeffNorm 
+#' getDiffSettings getCoexpSettings getClusterEntities getCoseqClusters
 #'
-#' @description A set of accessor and setter generic functions to access and modify 
+#' @description A set of getters and setters generic functions to access and modify 
 #' objects of the slot metadata of a \link{RflomicsMAE} object. 
-#'
-#' @section Accessors:
+#' 
+#' Getter methods:
+#' 
 #' \itemize{
-#'    \item getProjectName: Access to the name of the omic analysis.
-#'    \item getDesignMat: Get the design matrix associated the omic analysis.
+#'    \item getProjectName: vector. Name of the project.
+#'    \item getDesignMat: matrix: Get the design matrix associated the omic analysis.
 #'    \item getDatasetNames: Names of the loaded omics datasets.
 #'    \item getOmicsTypes: Access to the type of omics datasets: "RNAseq", "Proteomics", "Metabolomics"
 #'    \item getFactorNames: List the experimental factor names.
@@ -35,89 +43,84 @@
 #'    \item getSelectedContrasts: List the selected contrasts 
 #'    \item getValidContrasts: List the valid contrasts
 #'    \item getContrastMatrix: Get the contrasts matrix 
-#'    \item getTransSettings: Transformation settings of a given omic dataset 
+#'    \item getTransSettings: List: Transformation settings of a given omic dataset 
 #'    \item getFilterSettings: Access to the filtering settings of a given omic dataset 
 #'    \item getFilteredFeatures: Access to the filtered features of a given omic dataset 
 #'    \item getNormSettings: Access to the normalization settings of a given omic dataset 
 #'    \item getCoeffNorm: Access to the normalization coefficients of a given omic dataset 
 #'    \item getDiffSettings: Access to the differential expression analysis settings of a given omic dataset
 #'    \item getCoexpSettings : Access to the co-expression analysis settings of a given omic dataset
-#'    \item getClusterEntities: Access to the cluster entities of a given omic dataset
-#'    \item getCoseqClusters: Access to the co-expression clusters of a given omic dataset
 #' }
-#'
-#' @section Setters:
-#' Setter method values (i.e., '\code{function(x) <- value}'):
+#' 
+#' Setter methods:
+#' 
 #' \itemize{
 #'     \item setModelFormula: Set the model formula stored in \code{metadata} slot.
 #'     \item setSelectedContrasts: Set the selected contrasts stored in \code{metadata} slot.
 #'     \item setValidContrasts: Set the valid contrasts stored in \code{metadata} slot.
 #'     \item setTrans: Set the transformation settings stored in \code{metadata} slot.
 #'     \item setNorm: Set the normalization settings stored in \code{metadata} slot.
+#'     \item setCoeffNorm: Set the normalization settings stored in \code{metadata} slot.
 #' }
 #' @param object A \code{RflomicsMAE} object
 #'
-#'
-#' @return Accessors: Either a \code{sampleMap}, \code{ExperimentList}, or
-#' \code{DataFrame} object
+#' @return See the itemized list in the description section for details
 #' @return Setters: A \code{RflomicsMAE}  object
 NULL
 
 
-#' @name RflomicsSE-methods
-#' @title Accessing and modifying information in RflomicsSE
+#' @name RflomicsSE-accessors
+#' @title A group of functions to access and modify the metadata slot of an object of class 
+#' \link{RflomicsSE}
+#' 
+#' @aliases omicType design DataProcessing PCAlist DiffExpAnal CoExpAnal DiffExpEnrichAnal CoExpEnrichAnal
+#' getOmicType getDesign getDesignMat getDatasetNames getOmicsTypes getFactorNames getFactorTypes 
+#' getBioFactors getBatchFactors getMetaFactors getFactorModalities getRflomicsSE subRflomics 
+#' getModelFormula getSelectedContrasts getValidContrasts getContrastMatrix getTransSettings
+#' getFilterSettings getFilteredFeatures getNormSettings getCoeffNorm getDiffSettings getCoexpSettings
+#' getCoseqClusters getClusterEntities
+#' 
+#' @description A set of getters and setters generic functions to modify 
+#' a \code{RflomicsSE} object: the metadata slot. 
 #'
-#' @description A set of accessor and setter generic functions to modify 
-#' objects from the slot metadata of a \code{RflomicsSE} object. 
-#' The slot metadata contains: 
-#'
+#' Accessor methods
+#' 
 #' \itemize{
-#'   \item omicType: the type of omics dataset
-#'   \item design: a list of design
-#'   \item DataProcessing: a list of data processing settings and results 
-#'   \item PCAlist: a list of PCA settings and results
-#'   \item DiffExpAnal: a list of DiffExpAnal settings and results
-#'   \item CoExpAnal: a list of CoExpAnal settings and results
-#'   \item DiffExpEnrichAnal: a list of DiffExpEnrichAnal settings and results
-#'   \item CoExpEnrichAnal: a list of CoExpEnrichAnal settings and results
-#'  } 
-#'
-#' @section Accessors:
-#' \itemize{
-#'    \item getDesignMat: Get the design matrix associated the omic analysis.
-#'    \item getDatasetNames: Names of the loaded omics datasets.
-#'    \item getOmicsTypes: Access to the type of omics datasets: "RNAseq", "Proteomics", "Metabolomics"
-#'    \item getFactorNames: List the experimental factor names.
-#'    \item getFactorTypes: List the experimental factor types ("bio", "batch" or "meta") containing in the design list of the metadata.
-#'    \item getBioFactors: List the biological factors.
-#'    \item getBatchFactors: List the batch factors.
-#'    \item getMetaFactors: List the metadata factors.
+#'    \item getDesignMat: data.frame: Design matrix associated to the omic analysis.
+#'    \item getDatasetNames: vector: Names of the loaded omics datasets.
+#'    \item getOmicsTypes: vector. Access to the type of omics datasets: "RNAseq", "Proteomics", "Metabolomics"
+#'    \item getFactorNames: vector: Experimental factor names.
+#'    \item getFactorTypes: named vector: Experimental factor types ("bio", "batch" or "meta") containing in the design list of the metadata.
+#'    \item getBioFactors: list: Biological factors.
+#'    \item getBatchFactors: list. Bbatch factors.
+#'    \item getMetaFactors: list. Metadata factors.
 #'    \item getFactorModalities: Access to the factor modalities 
-#'    \item getRflomicsSE: Access to a particular RflomicsSE object 
+#'    \item getRflomicsSE: Access to a particular RflomicsSE object by giving its name in argument. 
 #'    \item subRflomics: Extract a subset of a RflomicsMAE object.
 #'    \item getModelFormula: Access to the model formula of the statistical analysis
 #'    \item getSelectedContrasts: List the selected contrasts 
 #'    \item getValidContrasts: List the valid contrasts
 #'    \item getContrastMatrix: Get the contrasts matrix 
-#'    \item getTransSettings: Transformation settings of a given omic dataset 
-#'    \item getFilterSettings: Access to the filtering settings of a given omic dataset 
+#'    \item getTransSettings: List: Transformation settings of a given omic dataset 
+#'    \item getFilterSettings: List: Access to the filtering settings of a given omic dataset 
 #'    \item getFilteredFeatures: Access to the filtered features of a given omic dataset 
 #'    \item getNormSettings: Access to the normalization settings of a given omic dataset 
 #'    \item getCoeffNorm: Access to the normalization coefficients of a given omic dataset 
 #'    \item getDiffSettings: Access to the differential expression analysis settings of a given omic dataset
 #'    \item getCoexpSettings : Access to the co-expression analysis settings of a given omic dataset
-#'    \item getClusterEntities: Access to the cluster entities of a given omic dataset
-#'    \item getCoseqClusters: Access to the co-expression clusters of a given omic dataset
 #' }
-#'
-#' @section Setters:
-#' Setter method values (i.e., '\code{function(x) <- value}'):
+#' 
+#' Setter methods:
+#' 
 #' \itemize{
-#'     \item setValid
+#'     \item setTrans: Set the transformation settings stored in \code{metadata} slot.
+#'     \item setNorm: Set the normalization settings stored in \code{metadata} slot.
+#'     \item setCoeffNorm: Set the normalization settings stored in \code{metadata} slot.
 #' }
-#' @param object A \code{RflomicsMAE} object
 #'
-#' @return Accessors: an object stored in the metadata slot of the \code{RflomicsSE} object
+#' @param object A \code{RflomicsSE} object
+#'
+#' @return See the itemized list in the description section for details
 #' @return Setters: A \code{RflomicsSE} object
 NULL
 
@@ -126,9 +129,7 @@ NULL
 # ---- getProjectName ----
 # ---- getDesignMat:    get colData ----
 #' @exportMethod getProjectName
-#' @return a character string with the project name
-#' @aliases getProjectName
-#' @rdname RflomicsMAE-methods
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "getProjectName",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -137,10 +138,8 @@ setMethod(f          = "getProjectName",
 
 
 # ---- getDesignMat:    get colData ----
-#' @return a data frame with design matrix
 #' @exportMethod getDesignMat
-#' @rdname RflomicsMAE-methods
-#' @aliases getDesignMat,RflomicsMAE-method
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "getDesignMat",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -149,11 +148,9 @@ setMethod(f          = "getDesignMat",
           })
 
 
-#' @param object An object of class \link{RflomicsSE-class}
-#' @return a data frame with design matrix
+
 #' @exportMethod getDesignMat
-#' @rdname RflomicsSE-methods
-#' @aliases getDesignMat
+#' @rdname RflomicsSE-accessors
 setMethod(f          = "getDesignMat",
           signature  = "RflomicsSE",
           definition <- function(object){
@@ -163,10 +160,8 @@ setMethod(f          = "getDesignMat",
 
 # ---- getDatasetNames: get experiment names from RflomicsMAE object ----
 
-#' @return a vector with omic dataset names
 #' @exportMethod getDatasetNames
-#' @rdname RflomicsMAE-methods
-#' @aliases getDatasetNames,RflomicsMAE-method
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "getDatasetNames",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -178,10 +173,8 @@ setMethod(f          = "getDatasetNames",
           })
 
 
-#' @return a vector with the omic dataset name
 #' @exportMethod getDatasetNames
-#' @rdname RflomicsSE-methods
-#' @aliases getDatasetNames
+#' @rdname RflomicsSE-accessors
 setMethod(f          = "getDatasetNames",
           signature  = "RflomicsSE",
           definition <- function(object){
@@ -193,10 +186,8 @@ setMethod(f          = "getDatasetNames",
 
 
 #' @importFrom purrr reduce
-#' @return names vector
 #' @exportMethod getOmicsTypes
-#' @rdname RflomicsMAE-methods
-#' @aliases getOmicsTypes,RflomicsMAE-method
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "getOmicsTypes",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -215,10 +206,8 @@ setMethod(f          = "getOmicsTypes",
           })
 
 
-#' @return named vector
 #' @exportMethod getOmicsTypes
-#' @rdname RflomicsSE-methods
-#' @aliases getOmicsTypes
+#' @rdname RflomicsSE-accessors
 setMethod(f          = "getOmicsTypes",
           signature  = "RflomicsSE",
           definition <- function(object){
@@ -228,10 +217,8 @@ setMethod(f          = "getOmicsTypes",
 
 
 # ---- getFactorNames:  get Factor names ----
-#' @return a vector with the names of the design factors
 #' @exportMethod getFactorNames
-#' @rdname RflomicsMAE-methods
-#' @aliases getFactorNames,RflomicsMAE-method
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "getFactorNames",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -240,10 +227,8 @@ setMethod(f          = "getFactorNames",
           })
 
 
-#' @return a vector with names of design factors
 #' @exportMethod getFactorNames
-#' @rdname RflomicsSE-methods
-#' @aliases getFactorNames 
+#' @rdname RflomicsSE-accessors
 setMethod(f          = "getFactorNames",
           signature  = "RflomicsSE",
           definition <- function(object){
@@ -253,10 +238,8 @@ setMethod(f          = "getFactorNames",
 
 
 # ---- getFactorTypes:  get Factor types ----
-#' @return a named vector
 #' @exportMethod getFactorTypes
-#' @aliases getFactorTypes,RflomicsMAE-method
-#' @rdname RflomicsMAE-methods
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "getFactorTypes",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -266,10 +249,8 @@ setMethod(f          = "getFactorTypes",
 
 
 
-#' @return a named vector
 #' @exportMethod getFactorTypes
-#' @aliases getFactorTypes
-#' @rdname RflomicsSE-methods
+#' @rdname RflomicsSE-accessors
 setMethod(f          = "getFactorTypes",
           signature  = "RflomicsSE",
           definition <- function(object){
@@ -278,10 +259,8 @@ setMethod(f          = "getFactorTypes",
 
 
 # ---- getBioFactors:   get bio factor ----
-#' @return a vector with biological factors
 #' @exportMethod getBioFactors
-#' @aliases getBioFactors,RflomicsMAE-method
-#' @rdname RflomicsMAE-methods
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "getBioFactors",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -293,10 +272,8 @@ setMethod(f          = "getBioFactors",
               return(res)
           })
 
-#' @return a vector with biological factors
 #' @exportMethod getBioFactors
-#' @aliases getBioFactors
-#' @rdname RflomicsSE-methods
+#' @rdname RflomicsSE-accessors
 setMethod(f          = "getBioFactors",
           signature  = "RflomicsSE",
           definition <- function(object){
@@ -309,10 +286,8 @@ setMethod(f          = "getBioFactors",
           })
 
 # ---- getBatchFactors: get batch factor names ----
-#' @return a vector with batch factors
 #' @exportMethod getBatchFactors
-#' @rdname RflomicsMAE-methods
-#' @aliases getBatchFactors,RflomicsMAE-method
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "getBatchFactors",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -325,10 +300,8 @@ setMethod(f          = "getBatchFactors",
           })
 
 
-#' @return a vector with batch factors
 #' @exportMethod getBatchFactors
-#' @rdname RflomicsSE-methods
-#' @aliases getBatchFactors
+#' @rdname RflomicsSE-accessors
 setMethod(f          = "getBatchFactors",
           signature  = "RflomicsSE",
           definition <- function(object){
@@ -341,10 +314,8 @@ setMethod(f          = "getBatchFactors",
           })
 
 # ---- getMetaFactors:  get meta Factor names ----
-#' @return a vector with batch factors
 #' @exportMethod getMetaFactors
-#' @rdname RflomicsMAE-methods
-#' @aliases getMetaFactors,RflomicsMAE-method
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "getMetaFactors",
           signature  = "RflomicsMAE",
           definition <- function(object){
@@ -357,10 +328,8 @@ setMethod(f          = "getMetaFactors",
           })
 
 
-#' @return a vector with batch factors
 #' @exportMethod getMetaFactors
-#' @rdname RflomicsSE-methods
-#' @aliases getMetaFactors
+#' @rdname RflomicsSE-accessors
 setMethod(f          = "getMetaFactors",
           signature  = "RflomicsSE",
           definition <- function(object){
@@ -373,11 +342,8 @@ setMethod(f          = "getMetaFactors",
           })
 
 # ---- getRflomicsSE:   get RflomicsSE object of one omic dataset ----
-#' @param datasetName name of omic dataset
-#' @return An object of class \link{RflomicsSE-class}
 #' @exportMethod getRflomicsSE
-#' @rdname RflomicsMAE-methods
-#' @aliases getRflomicsSE
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "getRflomicsSE",
           signature  = "RflomicsMAE",
           definition <- function(object, datasetName = NULL){
@@ -388,11 +354,8 @@ setMethod(f          = "getRflomicsSE",
           })
 
 # ---- getFactorModalities: ----
-#' @param factorName a name of factor
-#' @return a vector
 #' @exportMethod getFactorModalities
-#' @rdname RflomicsMAE-methods
-#' @aliases getFactorModalities,RflomicsMAE-method
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "getFactorModalities",
           signature  = "RflomicsMAE",
           definition <- function(object, factorName){
@@ -404,11 +367,8 @@ setMethod(f          = "getFactorModalities",
           })
 
 
-#' @param factorName a name of factor
-#' @return a vector
 #' @exportMethod getFactorModalities
-#' @rdname RflomicsSE-methods
-#' @aliases getFactorModalities
+#' @rdname RflomicsSE-accessors
 setMethod(f          = "getFactorModalities",
           signature  = "RflomicsSE",
           definition <- function(object, factorName){
@@ -422,11 +382,8 @@ setMethod(f          = "getFactorModalities",
 # ---- get names of executed analysis ----
 # ---- METHODS ----
 # ---- subRflomicsMAE:  subset a RflomicsMAE from ----
-#' @param omicNames a vector with the dataset names
-#' @return object An object of class \link{RflomicsMAE-class}
 #' @exportMethod subRflomicsMAE
-#' @rdname RflomicsMAE-methods
-#' @aliases subRflomicsMAE
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "subRflomicsMAE",
           signature  = "RflomicsMAE",
           definition <- function(object, omicNames = NULL){

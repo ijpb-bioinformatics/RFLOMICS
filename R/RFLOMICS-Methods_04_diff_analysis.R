@@ -76,8 +76,8 @@
 #' @rdname runDiffAnalysis
 #' @aliases runDiffAnalysis
 #' @seealso \code{\link{filterDiffAnalysis}}
-#' @seealso \code{\link{getDEMatrix}}
-#' @seealso \code{\link{getDEList}}
+#' @seealso \code{\link{RflomicsMAE-accessors}}
+#' @seealso \code{\link{RflomicsSE-accessors}}
 #' @examples
 #' 
 #' # Set the data path
@@ -1025,16 +1025,8 @@ setMethod(f          = "getDEList",
           })
 
 # ---- Get diff setting ----
-
-#' @title Get differential analysis setting parameters
-#'
-#' @param object of class RflomicsSE
-#' @return List of differential analysis setting parametres.
 #' @exportMethod getDiffSettings
-#' @rdname runDiffAnalysis
-#' @aliases getDiffSettings
-
-
+#' @rdname RflomicsMAE-accessors
 setMethod(f          = "getDiffSettings",
           signature  = "RflomicsSE",
           
@@ -1042,11 +1034,8 @@ setMethod(f          = "getDiffSettings",
               return(metadata(object)$DiffExpAnal$setting)   
           })
 
-#' @title getDiffSettings
-#' @rdname runDiffAnalysis
-#' @aliases getDiffSettings
+#' @rdname RflomicsMAE-accessors
 #' @exportMethod getDiffSettings
-
 setMethod(f          = "getDiffSettings",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name){

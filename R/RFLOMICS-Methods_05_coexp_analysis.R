@@ -699,17 +699,8 @@ setMethod(f          = "plotCoseqContrasts",
 
 
 # ---- Get Co-exp setting ----
-
-#' @title Get co-expression analysis setting parameters
-#'
-#' @param object of class RflomicsSE
-#' @return List of co-expression analysis setting parameters.
 #' @exportMethod getCoexpSettings
-#' @rdname getCoexpSettings 
-#' @aliases getCoexpSettings
-#' @return list of co-expression analysis setting parameters
-
-
+#' @rdname RflomicsSE-accessors
 setMethod(f          = "getCoexpSettings",
           signature  = "RflomicsSE",
           
@@ -717,11 +708,7 @@ setMethod(f          = "getCoexpSettings",
               return(object@metadata$CoExpAnal$setting)   
           })
 
-#' @rdname getCoexpSettings
-#' @aliases getCoexpSettings
-#' @title getCoexpSettings
-#' @param SE.name the name of the data to fetch in the object if the object 
-#' is a RflomicsMAE
+#' @rdname RflomicsMAE-accessors
 #' @exportMethod getCoexpSettings
 setMethod(f          = "getCoexpSettings",
           signature  = "RflomicsMAE",

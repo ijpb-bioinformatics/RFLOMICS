@@ -394,16 +394,8 @@ setMethod(f          = "runTransformData",
 
 
 # ---- Get transformation parameters ----
-
-#' @title get transformation  parameters
-#'
-#' @param object of class RflomicsSE
 #' @exportMethod getTransSettings
-#' @rdname getTransSettings
-#' @aliases getTransSettings
-#' @return List of transformation parametres.
-
-
+#' @rdname RflomicsSE-accessors
 setMethod(f          = "getTransSettings",
           signature  = "RflomicsSE",
           
@@ -411,11 +403,7 @@ setMethod(f          = "getTransSettings",
               return(object@metadata$DataProcessing$Transformation$setting)   
           })
 
-#' @rdname getTransSettings
-#' @title getTransSettings
-#' @param SE.name the name of the data to fetch in the object if the object 
-#' is a RflomicsMAE
-#' @aliases getTransSettings
+#' @rdname RflomicsMAE-accessors
 #' @exportMethod getTransSettings
 
 setMethod(f          = "getTransSettings",
@@ -424,13 +412,7 @@ setMethod(f          = "getTransSettings",
               getTransSettings(object = object[[SE.name]])
           })
 
-
-#' @title set transformation  method
-#' @param object of class RflomicsSE
-#' @param method the transformation method to set
-#' @rdname setTrans
-#' @aliases setTrans
-#' @return a RflomicsSE or RflomicsMAE object.
+#' @rdname RflomicsSE-accessors
 #' @exportMethod setTrans
 setMethod(f="setTrans", 
           signature=c("RflomicsSE"),
@@ -439,12 +421,8 @@ setMethod(f="setTrans",
               return(object) 
           }) 
 
-#' @title set transformation  method
-#' @rdname setTrans
-#' @title setTrans
-#' @aliases setTrans
-#' @param SE.name the name of the data to fetch in the object if the object 
-#' is a RflomicsMAE
+
+#' @rdname RflomicsMAE-accessors
 #' @exportMethod setTrans
 
 setMethod(f          = "setTrans",
@@ -608,14 +586,8 @@ setMethod(f          = "filterLowAbundance",
 
 
 # ---- Get filtering parameters ----
-
-#' @title get Filter setting parameters
-#'
-#' @param object of class RflomicsSE
-#' @return List of differential analysis setting parametres.
 #' @exportMethod getFilterSettings
-#' @aliases getFilterSettings
-#' @rdname getFilterSettings
+#' @rdname RflomicsSE-accessors
 #'
 
 setMethod(f          = "getFilterSettings",
@@ -625,13 +597,8 @@ setMethod(f          = "getFilterSettings",
               return(object@metadata$DataProcessing$Filtering$setting)   
           })
 
-#' @rdname getFilterSettings
-#' @title getFilterSettings
-#' @param SE.name the name of the data to fetch in the object if the object is 
-#' a RflomicsMAE
+#' @rdname RflomicsMAE-accessors
 #' @exportMethod getFilterSettings
-#' @aliases getFilterSettings
-
 setMethod(f          = "getFilterSettings",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name){
@@ -642,13 +609,8 @@ setMethod(f          = "getFilterSettings",
 
 # ---- Get filtred features ----
 
-#' @title get Filtered Features 
-#' @param object of class RflomicsSE
-#' @return List of differential analysis setting parametres.
 #' @exportMethod getFilteredFeatures 
-#' @aliases getFilteredFeatures
-#' @rdname getFilteredFeatures 
-#'
+#' @rdname RflomicsSE-accessors
 
 setMethod(f          = "getFilteredFeatures",
           signature  = "RflomicsSE",
@@ -657,11 +619,7 @@ setMethod(f          = "getFilteredFeatures",
               return(object@metadata$DataProcessing$Filtering$results$filteredFeatures)   
           })
 
-#' @rdname getFilteredFeatures 
-#' @title getFilteredFeatures 
-#' @param SE.name the name of the data to fetch in the object if the 
-#' object is a RflomicsMAE
-#' @aliases getFilteredFeatures
+#' @rdname RflomicsMAE-accessors
 #' @exportMethod getFilteredFeatures 
 
 setMethod(f          = "getFilteredFeatures",
@@ -823,12 +781,8 @@ setMethod(f          = "runNormalization",
           })
 
 
-#' @title get Coeff Norm
-#' @param object of class RflomicsSE
-#' @return Coefficient of normalization
 #' @exportMethod getCoeffNorm
-#' @aliases getCoeffNorm
-#' @rdname getCoeffNorm 
+#' @rdname RflomicsSE-accessors
 #'
 
 setMethod(f          = "getCoeffNorm",
@@ -838,10 +792,7 @@ setMethod(f          = "getCoeffNorm",
               return(metadata(object)[["DataProcessing"]][["Normalization"]][["results"]][["coefNorm"]])
           })
 
-#' @rdname getCoeffNorm 
-#' @aliases getCoeffNorm
-#' @title getCoeffNorm 
-#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
+#' @rdname RflomicsMAE-accessors
 #' @exportMethod getCoeffNorm 
 
 setMethod(f          = "getCoeffNorm",
@@ -850,13 +801,9 @@ setMethod(f          = "getCoeffNorm",
               getCoeffNorm(object = object[[SE.name]])
           })
 
-#' @title set Normalization coefficient
-#' @param object of class RflomicsSE
-#' @param coeff normalization coefficient
-#' @rdname setCoeffNorm
-#' @aliases setCoeffNorm
+
+#' @rdname RflomicsSE-accessors
 #' @exportMethod setCoeffNorm
-#' @return object of class RflomicsSE
 setMethod(f="setCoeffNorm", 
           signature=c("RflomicsSE"),
           definition=function(object, coeff = NULL){ 
@@ -864,10 +811,7 @@ setMethod(f="setCoeffNorm",
               return(object) 
           }) 
 
-#' @rdname setCoeffNorm
-#' @title setCoeffNorm
-#' @aliases setCoeffNorm
-#' @param SE.name the name of the data to fetch in the object if the object is a RflomicsMAE
+#' @rdname RflomicsMAE-accessors
 #' @exportMethod setCoeffNorm
 setMethod(f          = "setCoeffNorm",
           signature  = "RflomicsMAE",
@@ -877,12 +821,9 @@ setMethod(f          = "setCoeffNorm",
 
 # ---- Get normalizationparameters ----
 
-#' @title Get normalization parameters
-#' @param object of class RflomicsSE
-#' @return List of differential analysis setting parametres.
+
 #' @exportMethod getNormSettings
-#' @aliases getNormSettings
-#' @rdname getNormSettings
+#' @rdname RflomicsSE-accessors
 #'
 
 setMethod(f          = "getNormSettings",
@@ -891,11 +832,7 @@ setMethod(f          = "getNormSettings",
               return(object@metadata$DataProcessing$Normalization$setting)
           })
 
-#' @rdname getNormSettings
-#' @title getNormSettings
-#' @aliases getNormSettings
-#' @param SE.name the name of the data to fetch in the object if the object 
-#' is a RflomicsMAE
+#' @rdname RflomicsMAE-accessors
 #' @exportMethod getNormSettings
 
 setMethod(f          = "getNormSettings",
@@ -905,13 +842,8 @@ setMethod(f          = "getNormSettings",
           })
 
 
-#' @title set Normalization  method
-#' @param object of class RflomicsSE
-#' @param method the Normalization method to set
-#' @rdname setNorm
-#' @aliases setNorm
+#' @rdname RflomicsSE-accessors
 #' @exportMethod setNorm
-#' @return object of class RflomicsSE
 setMethod(f="setNorm", 
           signature=c("RflomicsSE"),
           definition=function(object, method = "none"){ 
@@ -919,14 +851,9 @@ setMethod(f="setNorm",
               return(object) 
           }) 
 
-#' @rdname setNorm
-#' @title setNorm
-#' @aliases setNorm
-#' @param SE.name the name of the data to fetch in the object if the object 
-#' is a RflomicsMAE
+#' @rdname RflomicsMAE-accessors
 #' @exportMethod setNorm
-#' @return object of class RflomicsMAE
-
+#' 
 setMethod(f          = "setNorm",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name = NULL, method = "none"){
