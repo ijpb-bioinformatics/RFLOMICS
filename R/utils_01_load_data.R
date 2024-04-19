@@ -52,11 +52,11 @@
 #'   RFLOMICS::readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
 #' 
 #' MAE <- RFLOMICS::createRflomicsMAE(projectName = "Example",
-#'                                                omicsData   = omicsData,
-#'                                                omicsNames  = c("RNAtest", "metatest", "protetest"),
-#'                                                omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-#'                                                ExpDesign   = ExpDesign,
-#'                                                factorRef   = factorRef)
+#'                                    omicsData   = omicsData,
+#'                                    omicsNames  = c("RNAtest", "metatest", "protetest"),
+#'                                    omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+#'                                    ExpDesign   = ExpDesign,
+#'                                    factorRef   = factorRef)
 
 createRflomicsMAE <- function(projectName=NULL, omicsData=NULL, 
                               omicsNames=NULL, omicsTypes=NULL, 
@@ -231,7 +231,19 @@ createRflomicsMAE <- function(projectName=NULL, omicsData=NULL,
 #' @title RflomicsMAE 
 #' @description
 #'  \link{RflomicsMAE} constructor.
-#' @param name description
+#' @param experiments same as in MultiAssayExperiments.
+#'  A list or experimentList of all combined experiments.
+#' @param colData same as in MultiAssayExperiments. 
+#' A DataFrame or data.frame of characteristics for all biological units
+#' @param sampleMap same as in MultiAssayExperiments.
+#' 	A DataFrame or data.frame of assay names, sample identifiers, 
+#' 	and colname samples
+#' @param omicList list of omics names in experiment lists.
+#' @param projectName name of the project. This will be the name of the 
+#' generated archive and report.
+#' @param design experimental design. 
+#' @param IntegrationAnalysis a list. Integration analysis results. 
+#' Default is an empty list.
 #' @seealso \link{MultiAssayExperiment}
 #' @importFrom MultiAssayExperiment MultiAssayExperiment listToMap
 #' @return An object of class \link{RflomicsMAE-class}
