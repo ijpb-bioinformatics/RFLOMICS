@@ -99,6 +99,7 @@ RadioButtonsCondition <- function(input, output, session, typeFact) {
 #' @noRd
 .modSingleOmicAnalysesSummary <-
   function(input, output, session, rea.values) {
+    
     # over view of dataset dimensions after processing
     output$overView <- renderUI({
       if (is.null(rea.values$datasetProcess))
@@ -137,7 +138,8 @@ RadioButtonsCondition <- function(input, output, session, typeFact) {
           tabPanel.list <- list(
             tabPanel(title = "diff results",
                      renderPlot({
-                       getDiffAnalysesSummary(session$userData$FlomicsMultiAssay, plot = TRUE)
+                       getDiffAnalysesSummary(
+                         session$userData$FlomicsMultiAssay, plot = TRUE)
                      })))
           
           p.list <- getAnnotAnalysesSummary(
@@ -171,9 +173,9 @@ RadioButtonsCondition <- function(input, output, session, typeFact) {
                       })
                     ))
                   )
-                }))
+                })
+              )
           }
-          
           do.call(what = tabsetPanel, args = tabPanel.list)
         })
       )
@@ -196,7 +198,8 @@ RadioButtonsCondition <- function(input, output, session, typeFact) {
             list(
               tabPanel(title = "CoExp results",
                        renderPlot({
-                         getCoExpAnalysesSummary(session$userData$FlomicsMultiAssay)
+                         getCoExpAnalysesSummary(
+                           session$userData$FlomicsMultiAssay)
                        })
               )
             )

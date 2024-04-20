@@ -660,14 +660,14 @@ setGeneric(
     }
 )
 
-setGeneric(
-    name = "setEnrichNull",
-    def = function(object,
-                   from = "DiffExp",
-                   database = NULL) {
-        standardGeneric("setEnrichNull")
-    }
-)
+# setGeneric(
+#     name = "setEnrichNull",
+#     def = function(object,
+#                    from = "DiffExp",
+#                    database = NULL) {
+#         standardGeneric("setEnrichNull")
+#     }
+# )
 
 ################# INTEGRATION #################
 
@@ -817,8 +817,15 @@ setGeneric(
 # ---- RESET ----
 
 setGeneric(
-    name = "resetFlomicsMultiAssay",
-    def  = function(object, results, datasets = NULL, ...) {
-        standardGeneric("resetFlomicsMultiAssay")
+    name = "resetRflomicsMAE",
+    def  = function(object, analyses, datasetNames = NULL, ...) {
+        standardGeneric("resetRflomicsMAE")
     }
+)
+
+setGeneric(
+  name = "getAnalyzedDatasetNames",
+  def  = function(object, analyses = NULL, ...) {
+    standardGeneric("getAnalyzedDatasetNames")
+  }
 )

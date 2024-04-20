@@ -293,17 +293,13 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
         rea.values[[dataset]]$coExpAnnot <- FALSE
         rea.values[[dataset]]$CoExpClusterNames <- NULL
         
-        rea.values$datasetCoEx <- 
-            rea.values$datasetCoEx[rea.values$datasetCoEx != dataset]
-        for(database in names(rea.values$datasetCoExAnnot)){
-            rea.values$datasetCoExAnnot[[database]] <- 
-                rea.values$datasetCoExAnnot[[database]][rea.values$datasetCoExAnnot[[database]] != dataset]
-        }
-        
         
         # initialize MAE object
-        metadata(session$userData$FlomicsMultiAssay[[dataset]])$CoExpAnal       <- list()
-        metadata(session$userData$FlomicsMultiAssay[[dataset]])$CoExpEnrichAnal <- list()
+        session$userData$FlomicsMultiAssay <-
+          resetRflomicsMAE(session$userData$FlomicsMultiAssay,
+                           datasetNames = dataset,
+                           analyses = c("CoExpAnal",
+                                        "CoExpEnrichAnal"))
         
         #---- progress bar ----#
         progress <- shiny::Progress$new()
@@ -349,8 +345,15 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
         #----------------------#
         
         rea.values[[dataset]]$coExpAnal  <- TRUE
-        rea.values[[dataset]]$CoExpClusterNames <- names(metadata(dataset.SE)$CoExpAnal$clusters)
-        rea.values$datasetCoEx <- unique(c(rea.values$datasetCoEx, dataset))
+        rea.values[[dataset]]$CoExpClusterNames <- 
+          names(metadata(dataset.SE)$CoExpAnal$clusters)
+        
+        rea.values$datasetCoEx <-
+          getAnalyzedDatasetNames(session$userData$FlomicsMultiAssay,
+                                  analyses = "CoExpAnal")
+        rea.values$datasetCoExAnnot <-
+          getAnalyzedDatasetNames(session$userData$FlomicsMultiAssay,
+                                  analyses = "CoExpEnrichAnal")
         
     }, ignoreInit = TRUE)
     

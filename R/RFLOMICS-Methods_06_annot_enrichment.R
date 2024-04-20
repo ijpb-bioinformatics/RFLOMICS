@@ -1163,47 +1163,47 @@ setMethod(
 )
 
 
-
-# ---- Reset enrichment results ----
-#
-#' @title Set enrichment results to null
-#' Users should not have to use this method. It is mainly planned for the
-#' interface code.
-#' @param object a RflomicsSE object
-#' @param from where to search for the results (either coexp or diffExp)
-#' @param database which database (GO, KEGG, custom...)
-#' @return an RflomicsSE object with NULL value in the
-#' enrichment results.
-#' @exportMethod setEnrichNull
-#' @rdname setEnrichNull
-#' @aliases setEnrichNull
-#' @examples
-#' # Generate RflomicsMAE for example
-#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
-#' # Run KEGG annotation on differential analysis results
-#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
-#'                         list_args = list(organism = "ath",
-#'                                          keyType = "kegg",
-#'                                          pvalueCutoff = 0.1),
-#'                         from = "DiffExp", database = "KEGG")
-#' # Search for the pvalue cutoff:
-#' setEnrichNull(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
-#'
-setMethod(
-    f = "setEnrichNull",
-    signature = "RflomicsSE",
-    definition = function(object,
-                          from = "DiffExp",
-                          database = NULL) {
-        from <- .determineFromEnrich(from)
-        
-        if (is.null(database)) {
-            metadata(object)[[from]] <- NULL
-        } else {
-            metadata(object)[[from]][[database]] <- NULL
-        }
-        
-        return(object)
-        
-    }
-)
+#' 
+#' # ---- Reset enrichment results ----
+#' #
+#' #' @title Set enrichment results to null
+#' #' Users should not have to use this method. It is mainly planned for the
+#' #' interface code.
+#' #' @param object a RflomicsSE object
+#' #' @param from where to search for the results (either coexp or diffExp)
+#' #' @param database which database (GO, KEGG, custom...)
+#' #' @return an RflomicsSE object with NULL value in the
+#' #' enrichment results.
+#' #' @exportMethod setEnrichNull
+#' #' @rdname setEnrichNull
+#' #' @aliases setEnrichNull
+#' #' @examples
+#' #' # Generate RflomicsMAE for example
+#' #' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
+#' #' # Run KEGG annotation on differential analysis results
+#' #' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
+#' #'                         list_args = list(organism = "ath",
+#' #'                                          keyType = "kegg",
+#' #'                                          pvalueCutoff = 0.1),
+#' #'                         from = "DiffExp", database = "KEGG")
+#' #' # Search for the pvalue cutoff:
+#' #' setEnrichNull(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
+#' #'
+#' setMethod(
+#'     f = "setEnrichNull",
+#'     signature = "RflomicsSE",
+#'     definition = function(object,
+#'                           from = "DiffExp",
+#'                           database = NULL) {
+#'         from <- .determineFromEnrich(from)
+#'         
+#'         if (is.null(database)) {
+#'             metadata(object)[[from]] <- NULL
+#'         } else {
+#'             metadata(object)[[from]][[database]] <- NULL
+#'         }
+#'         
+#'         return(object)
+#'         
+#'     }
+#' )

@@ -106,9 +106,9 @@
     observeEvent(rea.values$datasetProcess, {
         local.rea.values$runintegration    <- FALSE
         local.rea.values$preparedObject    <- NULL
-        session$userData$FlomicsMultiAssay <- resetFlomicsMultiAssay(
+        session$userData$FlomicsMultiAssay <- resetRflomicsMAE(
             object  = session$userData$FlomicsMultiAssay,
-            results = c("IntegrationAnalysis")
+            analyses = c("IntegrationAnalysis")
         )
     })
     
