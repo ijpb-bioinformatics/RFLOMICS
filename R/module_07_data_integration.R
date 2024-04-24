@@ -1631,7 +1631,7 @@
 
 #' @noRd
 #' @keywords internal
-#' @importFrom stats aov
+#' @importFrom stats kruskal.test
 .outMOFARelations <- function(resMOFA) {
     
     mofaText <- paste0("Each of the cells is the pvalue result from a kruskal-wallis test between the factor and the response variable.",
