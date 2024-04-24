@@ -1362,6 +1362,7 @@
 }
 
 #' @noRd
+#' @importFrom DT renderDataTable datatable
 #' @keywords internal
 .outMOFAWeightTable <- function(session, resMOFA, input) {
     ns <- session$ns
@@ -1652,11 +1653,11 @@
                 res_aov <- lapply(
                     seq_len(ncol(ExpDesign)),
                     FUN = function(i) {
-                         unlist(lapply(seq_len(ncol(factors$group1)),
-                                       FUN = function(j){
-                                           kruskal.test(x = factors$group1[,j], 
-                                                        g = ExpDesign[,i])$p.value
-                                       }))
+                        unlist(lapply(seq_len(ncol(factors$group1)),
+                                      FUN = function(j){
+                                          kruskal.test(x = factors$group1[,j], 
+                                                       g = ExpDesign[,i])$p.value
+                                      }))
                     }
                 )
                 names(res_aov) <- colnames(ExpDesign)
