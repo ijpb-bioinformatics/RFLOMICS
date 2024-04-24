@@ -201,7 +201,6 @@
 
 
 #' @title .modEnrichmentDB
-#' @importFrom RCurl url.exists
 #' @importFrom DT renderDataTable datatable
 #' @importFrom data.table fread
 #' @keywords internal
@@ -340,7 +339,6 @@
 #' @keywords internal
 #' @importFrom DT renderDataTable datatable
 #' @importFrom grid unit
-#' @importFrom RCurl url.exists
 #' @importFrom AnnotationDbi keytypes
 #' @importMethodsFrom ComplexHeatmap draw
 #' @noRd
@@ -1886,7 +1884,7 @@
                                                        data[input[[paste0(listname, "-MAP.sel")]], "geneID"])
                                  
                                  # test validity of URL
-                                 if (url.exists(link_to_map)) {
+                                 if (.validUrl(link_to_map)) {
                                      renderPlot({
                                          plotKEGG(
                                              object = dataSE,

@@ -129,3 +129,28 @@
     
     return(from)
 }
+
+# ---- Valid URL ----
+# From https://stackoverflow.com/questions/52911812/check-if-url-exists-in-r
+
+#' @title Test an url 
+#' @description
+#' Called for pathview before trying to get the map.
+#'
+#' @param url the url to test
+#' @param timeout timeout for open.connection
+#' @return boolean. TRUE if accessible, FALSE if not
+#' @noRd
+#' @keywords internal
+
+.validUrl <- function(url, timeout=2){
+    con <- url(url)
+    check <- suppressWarnings(try(
+        open.connection(con, 
+                        open = "rt",
+                        timeout = timeout),
+        silent = TRUE)[1])
+    suppressWarnings(try(close.connection(con), silent = TRUE))
+    
+    return(ifelse(is.null(check), TRUE, FALSE))
+}
