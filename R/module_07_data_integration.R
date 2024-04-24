@@ -42,7 +42,9 @@
     )
     
     tagList(
-        
+        tags$head(
+            tags$link(rel = "stylesheet", type = "text/css", href = "classesStyles.css")
+        ),
         fluidRow(uiOutput(ns("overview"))),
         ##
         fluidRow(
@@ -914,13 +916,6 @@
 #' @importFrom DT datatable
 .outMOOverview <- function(Data_res, settings) {
     tagList(
-        tags$style(
-            ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-        ),
         br(),
         div(class = "explain-p", 
             HTML(paste0("This overview present the number of observations and the number of features per dataset.",
@@ -984,13 +979,6 @@
     
     renderUI({
         tagList(
-            tags$style(
-                ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-            ),
             br(),
             div(class = "explain-p", HTML(textExplained)),
             hr(),
@@ -1050,13 +1038,6 @@
                          " Important features (high loadings) are on the edge of the circle.")
     
     tagList(
-        tags$style(
-            ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-        ),
         br(),
         div(class = "explain-p", HTML(moFeatText)),
         hr(),
@@ -1116,13 +1097,6 @@
                               " This means the highest-scores features also help the most to discriminate between categories of the response variable.")
         renderUI({
             tagList(
-                tags$style(
-                    ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-                ),
                 br(),
                 div(class = "explain-p", HTML(explanMess)),
                 hr(),
@@ -1174,13 +1148,6 @@
         
         renderUI({
             verticalLayout(
-                tags$style(
-                    ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-                ),
                 br(),
                 div(class = "explain-p", HTML(explanMess)),
                 hr(),
@@ -1217,13 +1184,6 @@
     
     if (is(Data_res, "block.splsda")) {
         tagList(
-            tags$style(
-                ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-            ),
             br(),
             div(class = "explain-p", HTML(moText)),
             hr(),
@@ -1263,13 +1223,6 @@
                        " You must check that no correlation outside of the diagonal is greater than 0.5 (absolute value).",
                        " <b>If there are factors that are strongly correlated, the results are not reliable.</b>")
     tagList(
-        tags$style(
-            ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-        ),
         br(),
         div(class = "explain-p", HTML(mofaText)),
         hr(),      
@@ -1287,13 +1240,6 @@
     )
     
     tagList(
-        tags$style(
-            ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-        ),
         br(),
         div(class = "explain-p", HTML(mofaText)),
         hr(),
@@ -1320,13 +1266,6 @@
     
     renderUI({
         tagList(
-            tags$style(
-                ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-            ),
             br(),
             div(class = "explain-p", HTML(mofaText)),
             hr(),
@@ -1418,13 +1357,6 @@
     )
     
     verticalLayout(
-        tags$style(
-            ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-        ),
         br(),
         div(class = "explain-p", HTML(mofaText)),
         hr(),
@@ -1489,13 +1421,6 @@
     
     renderUI({
         tagList(
-            tags$style(
-                ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-            ),
             br(),
             div(class = "explain-p", HTML(mofaText)),
             hr(),
@@ -1592,13 +1517,6 @@
     
     renderUI({
         verticalLayout(
-            tags$style(
-                ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-            ),
             br(),
             div(class = "explain-p", HTML(mofaText)),
             hr(),
@@ -1706,13 +1624,6 @@
     
     renderUI({
         verticalLayout(
-            tags$style(
-                ".explain-p {
-                    color: Gray;
-                    text-justify: inter-word;
-                    font-style: italic;
-                  }"
-            ),
             br(),
             div(class = "explain-p", HTML(mofaText)),
             hr(),
