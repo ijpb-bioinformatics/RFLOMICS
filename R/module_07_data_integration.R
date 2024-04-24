@@ -1217,11 +1217,26 @@
 # ---- Plots MOFA -----
 #' @noRd
 #' @keywords internal
+#' @importFrom MOFA2 get_factors
 .outMOFAFactorsCor <- function(resMOFA){
+    
+    corFactor <- cor(get_factors(resMOFA)$group1)
+    diag(corFactor) <- 0
+    corProblem <- ifelse(any(corFactor > 0.5), TRUE, FALSE)
+    
     mofaText <- paste0("This graph represents the correlation between calculated factors.",
                        " Factors are supposed to be orthogonal (correlation close to 0 between them).",
                        " You must check that no correlation outside of the diagonal is greater than 0.5 (absolute value).",
                        " <b>If there are factors that are strongly correlated, the results are not reliable.</b>")
+    
+    if (corProblem) {
+        mofaText <- paste0(mofaText, 
+                           "<br> <b> You have correlation between factors greater than 0.5. </b>")
+    } else {
+        mofaText <- paste0(mofaText, 
+                           "<br> There is no correlation >0.5 between factors.")
+    }
+    
     tagList(
         br(),
         div(class = "explain-p", HTML(mofaText)),
@@ -1620,7 +1635,7 @@
     
     mofaText <- paste0("Each of the cells is the pvalue result from a kruskal-wallis test between the factor and the response variable.",
                        " <b>No correction is applied.</b>",
-                       " This table is to help you detect a biological relation between a factor and a variable that you may hae observed at the 'Factor Plots' panel. ")
+                       " This table is to help you detect a biological relation between a factor and a variable that you may have observed at the 'Factor Plots' panel. ")
     
     renderUI({
         verticalLayout(
