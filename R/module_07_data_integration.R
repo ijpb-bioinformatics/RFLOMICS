@@ -1618,7 +1618,7 @@
 #' @importFrom stats aov
 .outMOFARelations <- function(resMOFA) {
     
-    mofaText <- paste0("Each of the cells is the pvalue result from an ANOVA between the factor and the response variable.",
+    mofaText <- paste0("Each of the cells is the pvalue result from a kruskal-wallis test between the factor and the response variable.",
                        " <b>No correction is applied.</b>",
                        " This table is to help you detect a biological relation between a factor and a variable that you may hae observed at the 'Factor Plots' panel. ")
     
@@ -1642,14 +1642,6 @@
                                            kruskal.test(x = factors$group1[,j], 
                                                         g = ExpDesign[,i])$p.value
                                        }))
-                            
-                        # aov1 <- aov(factors$group1  ~ ExpDesign[, i])
-                        # unlist(lapply(
-                        #     summary(aov1),
-                        #     FUN = function(list_res) {
-                        #         list_res[["Pr(>F)"]][[1]]
-                        #     }
-                        # ))
                     }
                 )
                 names(res_aov) <- colnames(ExpDesign)
