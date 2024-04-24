@@ -1628,6 +1628,7 @@
             div(class = "explain-p", HTML(mofaText)),
             hr(),
             renderTable({
+                
                 factors   <- get_factors(resMOFA)
                 ExpDesign <- resMOFA@samples_metadata
                 ExpDesign$group  <- NULL
@@ -1636,19 +1637,26 @@
                 res_aov <- lapply(
                     seq_len(ncol(ExpDesign)),
                     FUN = function(i) {
-                        aov1 <- aov(factors$group1  ~ ExpDesign[, i])
-                        unlist(lapply(
-                            summary(aov1),
-                            FUN = function(list_res) {
-                                list_res[["Pr(>F)"]][[1]]
-                            }
-                        ))
+                         unlist(lapply(seq_len(ncol(factors$group1)),
+                                       FUN = function(j){
+                                           kruskal.test(x = factors$group1[,j], 
+                                                        g = ExpDesign[,i])$p.value
+                                       }))
+                            
+                        # aov1 <- aov(factors$group1  ~ ExpDesign[, i])
+                        # unlist(lapply(
+                        #     summary(aov1),
+                        #     FUN = function(list_res) {
+                        #         list_res[["Pr(>F)"]][[1]]
+                        #     }
+                        # ))
                     }
                 )
                 names(res_aov) <- colnames(ExpDesign)
                 
                 res_res <- do.call("rbind", res_aov)
-                colnames(res_res) <- gsub("Response ", "", colnames(res_res))
+                # colnames(res_res) <- gsub("Response ", "", colnames(res_res))
+                colnames(res_res) <- paste0("Factor ", seq_len(ncol(res_res)))
                 
                 res_res
                 
