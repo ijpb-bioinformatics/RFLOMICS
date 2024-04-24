@@ -470,6 +470,11 @@
                                            Response, Data_res)
                         ),
                         tabPanel(
+                            "Loadings-Dataframe",
+                            .outMOLoadingsTable(session, input,
+                                                Response, Data_res)
+                        ),
+                        tabPanel(
                             "CimPlot",
                             .outMOCimPlot(session, input, settings,
                                           Response, Data_res)
@@ -1148,6 +1153,51 @@
                     plotLoadings(Data_res,
                                  comp = input[[paste0(Response, "Load_comp_choice")]],
                                  ndisplay = input[[paste0(Response, "Load_ndisplay")]])
+                )))
+            
+        })
+    }
+
+#' @noRd
+#' @keywords internal
+.outMOLoadingsTable <-
+    function(session,
+             input,
+             Response,
+             Data_res) {
+        
+        ns <- session$ns
+        
+        explanMess <-  paste0("Text here")
+        choicesPos <-  names(Data_res$loadings)
+        choicesPos <- choicesPos[-which(choicesPos == "Y")]
+        
+        renderUI({
+            verticalLayout(
+                tags$style(
+                    ".explain-p {
+                    color: Gray;
+                    text-justify: inter-word;
+                    font-style: italic;
+                  }"
+                ),
+                br(),
+                div(class = "explain-p", HTML(explanMess)),
+                hr(),
+                
+                column(
+                    12,
+                    radioButtons(
+                        inputId = ns(paste0(Response, "MOTable_choice")),
+                        label = NULL,
+                        choiceNames = choicesPos,
+                        choiceValues =  choicesPos,
+                        selected = choicesPos[1],
+                        inline = TRUE
+                    ),
+                ),
+                column(12 , renderDataTable(
+                    datatable(Data_res[["loadings"]][[input[[paste0(Response, "MOTable_choice")]]]])
                 )))
             
         })
