@@ -108,7 +108,7 @@
         local.rea.values$preparedObject    <- NULL
         session$userData$FlomicsMultiAssay <- resetRflomicsMAE(
             object  = session$userData$FlomicsMultiAssay,
-            analyses = c("IntegrationAnalysis")
+            multiAnalyses = c("IntegrationAnalysis")
         )
     })
     

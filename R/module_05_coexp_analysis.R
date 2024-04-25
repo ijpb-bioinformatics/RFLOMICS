@@ -214,11 +214,11 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     
     #get list of DGE to process
     DEG_list <- reactive({
-        getDEList(object=session$userData$FlomicsMultiAssay[[dataset]] , 
+        getDEList(object = session$userData$FlomicsMultiAssay[[dataset]],
                   contrasts = input$select, operation = input$unionInter)})
     
     # display nbr of selected genes
-    output$mergeValue <- renderText({ 
+    output$mergeValue <- renderText({
         
         if(rea.values[[dataset]]$diffValid == FALSE) return()
         
@@ -286,19 +286,20 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                            clustermq      = input$clustermqCoseq,
                            scale          = input$scale)
         
-        if(check_run_coseq_execution(session$userData$FlomicsMultiAssay[[dataset]], param.list) == FALSE) return()
+        if(check_run_coseq_execution(
+          session$userData$FlomicsMultiAssay[[dataset]], 
+          param.list) == FALSE) return()
         
         # initialize reactive value
         rea.values[[dataset]]$coExpAnal  <- FALSE
         rea.values[[dataset]]$coExpAnnot <- FALSE
         rea.values[[dataset]]$CoExpClusterNames <- NULL
         
-        
         # initialize MAE object
         session$userData$FlomicsMultiAssay <-
           resetRflomicsMAE(session$userData$FlomicsMultiAssay,
                            datasetNames = dataset,
-                           analyses = c("CoExpAnal",
+                           singleAnalyses = c("CoExpAnal",
                                         "CoExpEnrichAnal"))
         
         #---- progress bar ----#

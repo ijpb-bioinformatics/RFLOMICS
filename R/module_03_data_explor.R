@@ -572,7 +572,7 @@ QCNormalizationTab <-
       # remove integration analysis
       session$userData$FlomicsMultiAssay <-
         resetRflomicsMAE(session$userData$FlomicsMultiAssay,
-                         analyses = c("IntegrationAnalysis"))
+                         multiAnalyses = c("IntegrationAnalysis"))
       
       message("# 3  => Data processing: ", dataset)
       

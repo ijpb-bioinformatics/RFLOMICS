@@ -173,11 +173,11 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     session$userData$FlomicsMultiAssay <-
       resetRflomicsMAE(session$userData$FlomicsMultiAssay,
                        datasetNames = dataset,
-                       analyses = c("DiffExpAnal",
+                       singleAnalyses = c("DiffExpAnal",
                                     "DiffExpEnrichAnal",
                                     "CoExpAnal",
-                                    "CoExpEnrichAnal",
-                                    "IntegrationAnalysis"))
+                                    "CoExpEnrichAnal"),
+                       multiAnalyses = c("IntegrationAnalysis"))
     
     # metadata(session$userData$FlomicsMultiAssay[[dataset]])$DiffExpEnrichAnal <- list()
     # metadata(session$userData$FlomicsMultiAssay[[dataset]])$CoExpAnal         <- list()
@@ -295,10 +295,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     session$userData$FlomicsMultiAssay <-
       resetRflomicsMAE(session$userData$FlomicsMultiAssay,
                        datasetNames = dataset,
-                       analyses = c("DiffExpEnrichAnal",
-                                    "CoExpAnal",
-                                    "CoExpEnrichAnal",
-                                    "IntegrationAnalysis"))
+                       singleAnalyses = c("DiffExpEnrichAnal",
+                                          "CoExpAnal",
+                                          "CoExpEnrichAnal"),
+                       multiAnalyses = c("IntegrationAnalysis"))
     
     # metadata(session$userData$FlomicsMultiAssay[[dataset]])$DiffExpEnrichAnal <- NULL
     # metadata(session$userData$FlomicsMultiAssay[[dataset]])$CoExpEnrichAnal   <- NULL

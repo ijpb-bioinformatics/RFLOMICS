@@ -320,8 +320,13 @@ setMethod(
 #' resetRflomicsMAE allows for initializing the object or initializing a selection of results.
 #'
 #' @param object An object of class \link{RflomicsMAE}
-#' @param results vector of results names
-#' @param dataset dataset name. If dataset == NULL, all datasets will be reset
+#' @param singleAnalyses vector of single omics analysis results names 
+#' (c("DataProcessing", "PCAlist", "DiffExpAnal", 
+#' "DiffExpEnrichAnal", "CoExpAnal", "CoExpEnrichAnal"))
+#' @param multiAnalyses vector of multi omics analysis results names 
+#' (c("IntegrationAnalysis"))
+#' @param datasetNames dataset name. 
+#' If dataset == NULL, all datasets will be reset
 #' @return An object of class \link{RflomicsMAE}
 #' @noRd
 #' @keywords internal
@@ -329,40 +334,58 @@ setMethod(
 setMethod(f = "resetRflomicsMAE", 
           signature = "RflomicsMAE",
           definition = function(object,
-                                analyses, 
-                                datasetNames = NULL) {
+                                singleAnalyses = NULL, 
+                                multiAnalyses  = NULL,
+                                datasetNames   = NULL) {
             
+            all.datasets <- getDatasetNames(object)
             
-            all.analyses <- c("DataProcessing", "PCAlist",
-                              "DiffExpAnal", "DiffExpEnrichAnal", 
-                              "CoExpAnal", "CoExpEnrichAnal")
-            
-            # if dataset is null we take all datasets 
-            # present in RflomicsMAE object
-            if (is.null(datasetNames)) {
-              datasetNames <- getDatasetNames(object)
+            if(!is.null(datasetNames)) {
+              datasetNames <- intersect(datasetNames, all.datasets)
+              if(length(datasetNames) == 0) stop("")
             }
             
-            for (res in analyses) {
-              # single omics analysis results
-              for (data in datasetNames) {
-                if (!data %in% getDatasetNames(object) ||
-                    is.null(object[[data]])){
-                  warning(data, " dataset is not present in RflomicsMAE object")
-                  next
-                }
+            if(is.null(datasetNames) && is.null(singleAnalyses) && is.null(multiAnalyses)) stop("")
+            
+            # if analyses is null and datasetNames not null -> remove 
+            if(is.null(singleAnalyses)){
+              
+              if(!is.null(datasetNames)){
                 
-                if(!is.null(object[[data]]@metadata[[res]])){
-                  object[[data]]@metadata[[res]] <- list()
-                  
-                }
+                index <- names(object) %in% datasetNames
+                object <- object[,, !index]
+                
+              }
+            }
+            else{
+              
+              # if dataset is null we take all datasets 
+              # present in RflomicsMAE object
+              if (is.null(datasetNames)) {
+                datasetNames <- getDatasetNames(object)
               }
               
-              # integrative analysis results
-              if(!is.null(object@metadata[[res]])){
-                object@metadata[[res]] <- list()
+              for (data in datasetNames) {
+                
+                for (analysis in singleAnalyses) {
+                  
+                  if(!is.null(object[[data]]@metadata[[analysis]])){
+                    object[[data]]@metadata[[analysis]] <- list()
+                  }
+                }
               }
             }
+            
+            if(!is.null(multiAnalyses)){
+              
+              for (analysis in multiAnalyses) {
+                
+                if(!is.null(object@metadata[[analysis]])){
+                  object@metadata[[analysis]] <- list()
+                }
+              }
+            }
+            
             return(object)
           })
 

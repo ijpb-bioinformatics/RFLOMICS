@@ -818,7 +818,10 @@ setGeneric(
 
 setGeneric(
     name = "resetRflomicsMAE",
-    def  = function(object, analyses, datasetNames = NULL, ...) {
+    def  = function(object, 
+                    singleAnalyses = NULL, 
+                    multiAnalyses = NULL, 
+                    datasetNames = NULL, ...) {
         standardGeneric("resetRflomicsMAE")
     }
 )

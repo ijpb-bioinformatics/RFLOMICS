@@ -65,10 +65,11 @@
         rea.values$datasetProcess <- NULL
         
         session$userData$FlomicsMultiAssay <- 
-          resetRflomicsMAE(object=session$userData$FlomicsMultiAssay,
-                           analyses = c("DiffExpAnal", "CoExpAnal", 
-                                       "DiffExpEnrichAnal", "CoExpEnrichAnal", 
-                                       "IntegrationAnalysis"))
+          resetRflomicsMAE(
+            object=session$userData$FlomicsMultiAssay,
+            datasetNames = getDatasetNames(session$userData$FlomicsMultiAssay),
+            multiAnalyses = c("IntegrationAnalysis"))
+        
         message("# 2- Statistical setting...")
         message("#    => model formula: ", input$model.formulae)
         
@@ -138,13 +139,11 @@
             rea.values[[dataset]]$DiffValidContrast <- NULL
         })
         
-        
-
         session$userData$FlomicsMultiAssay <- 
-          resetRflomicsMAE(object  = session$userData$FlomicsMultiAssay, 
-                           analyses = c("DiffExpAnal", "CoExpAnal", 
-                                        "DiffExpEnrichAnal", "CoExpEnrichAnal", 
-                                        "IntegrationAnalysis"))
+          resetRflomicsMAE(
+            object=session$userData$FlomicsMultiAssay,
+            datasetNames = getDatasetNames(session$userData$FlomicsMultiAssay),
+            multiAnalyses = c("IntegrationAnalysis"))
         
         #get list of selected contrast data frames with expression, name and type
         
