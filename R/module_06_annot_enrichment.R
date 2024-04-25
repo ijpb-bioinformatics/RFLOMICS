@@ -593,8 +593,8 @@
             }
             
             # prevent multiple execution
-            #if (.checkRunORAExecution(session$userData$FlomicsMultiAssay[[dataset]],
-            # database, paramList) == FALSE) return()
+            if (.checkRunORAExecution(session$userData$FlomicsMultiAssay[[dataset]],
+            database, paramList) == FALSE) return()
             
             # ---- Annotation on diff results: ----
             # run analysis
@@ -685,10 +685,17 @@
     function(object.SE,
              dbType = NULL,
              paramList = NULL) {
+        
+        if (is.null(object.SE)) return(FALSE)
+        if (!is(object.SE, "RflomicsSE")) return(FALSE)
+        
         if (!is.null(paramList$diffList)) {
             fromSource <- "DiffExpEnrichAnal"
             dbRes <- metadata(object.SE)[[fromSource]][[dbType]]
             
+            dbResExp <<- dbRes
+            paramListExp <<- paramList
+
             if (is.null(dbRes)) {
                 return(TRUE)
             }
@@ -894,6 +901,8 @@
                               dataset) {
     ns <- session$ns
     dataSE <- session$userData$FlomicsMultiAssay[[dataset]]
+    if (is.null(dataSE)) return()
+    
     varLabel <- omicsDic(dataSE)$variableName
     varLabel <- paste0(toupper(substr(varLabel, 1, 1)),
                        substr(varLabel, 2, nchar(varLabel)))
@@ -962,6 +971,10 @@
                                 dataset) {
     ns <- session$ns
     dataSE <- session$userData$FlomicsMultiAssay[[dataset]]
+    
+    if (rea.values[[dataset]][[fromAnnot]] == FALSE) return()
+    if (!is(dataSE, "RflomicsSE")) return()
+    
     varLabel <- omicsDic(dataSE)$variableName
     varLabel <- paste0(toupper(substr(varLabel, 1, 1)),
                        substr(varLabel, 2, nchar(varLabel)))
@@ -1158,9 +1171,23 @@
                              database) {
     ns <- session$ns
     
+    print("Im here!")
+    
     # UI for all results
     renderUI({
         dataSE <- session$userData$FlomicsMultiAssay[[dataset]]
+        dataSEexp <<- dataSE
+        
+        if (is.null(dataSE)) return()
+        if (rea.values[[dataset]][[fromAnnot]] == FALSE) return()
+        
+        if (is.null(
+            sumORA(
+                session$userData$FlomicsMultiAssay[[dataset]],
+                from     = listSource,
+                database = database
+            )
+        )) {return()}
         
         varLabel0 <- omicsDic(dataSE)$variableName
         
@@ -1181,6 +1208,8 @@
                 ").",
                 " Pvalues, qvalues and adjusted pvalues were rounded to 3 digits."
             )
+        
+        print("Im there !!")
         
         # for KEGG database, 2 more columns:
         if (database == "KEGG") {
@@ -1489,6 +1518,9 @@
                          from,
                          plotType,
                          database) {
+    
+    if (!is(dataSE, "RflomicsSE")) return()
+    
     varLabel0 <- omicsDic(dataSE)$variableName
     
     renderUI({
@@ -1583,6 +1615,9 @@
              from,
              plotType,
              database) {
+        
+        if (!is(dataSE, "RflomicsSE")) return()
+        
         varLabel0 <- omicsDic(dataSE)$variableName
         
         renderUI({
@@ -1691,6 +1726,9 @@
                          plotType,
                          database) {
     ns <- session$ns
+    
+    if (!is(dataSE, "RflomicsSE")) return()
+    
     varLabel0 <- omicsDic(dataSE)$variableName
     varLabel <- paste0(toupper(substr(varLabel0, 1, 1)),
                        substr(varLabel0, 2, nchar(varLabel0)))
@@ -1829,6 +1867,8 @@
                          mapChoices) {
     ns <- session$ns
     
+    if (!is(dataSE, "RflomicsSE")) return()
+    
     varLabel0 <- omicsDic(dataSE)$variableName
     pathviewExplain <-
         paste0(
@@ -1921,8 +1961,10 @@
     ns <- session$ns
     
     renderUI({
-        if (rea.values[[dataset]][[fromAnnot]] == FALSE ||
-            is.null(
+        
+        if (rea.values[[dataset]][[fromAnnot]] == FALSE) return()
+        
+        if (is.null(
                 sumORA(
                     session$userData$FlomicsMultiAssay[[dataset]],
                     from     = listSource,
@@ -2005,6 +2047,10 @@
                             database) {
     ns <- session$ns
     dataSE <- session$userData$FlomicsMultiAssay[[dataset]]
+    
+    if (rea.values[[dataset]][[fromAnnot]] == FALSE) return()
+    if (!is(dataSE, "RflomicsSE")) return()
+    
     varLabel0 <- omicsDic(dataSE)$variableName
     
     renderUI({
