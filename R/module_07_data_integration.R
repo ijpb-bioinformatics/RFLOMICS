@@ -215,6 +215,22 @@
                     contrasts = input[[paste0("selectContrast", set)]],
                     operation = input[[paste0("unionORintersect", set)]]
                 ),
+                "CV" = {
+                    transformedSE <- .checkTransNorm(session$userData$FlomicsMultiAssay[[set]], 
+                                                     raw = FALSE)
+                    transformedSE <- assay(transformedSE)
+                    
+                    cv_vect <- unlist(
+                        lapply(seq_len(nrow(transformedSE)),
+                               FUN = function(row_i){
+                                   x <- transformedSE[row_i,]
+                                   sd(x)/mean(x)
+                               }))
+                    names(cv_vect) <- rownames(transformedSE)
+                    cv_vect <- cv_vect[order(cv_vect, decreasing = TRUE)]
+                    
+                    names(cv_vect)[seq_len(input[[paste0("numberFeat", set)]])]
+                },
                 "none"  = names(MAE.red[[set]])
             )
         })
@@ -621,11 +637,12 @@
                 ListNames.diff <- NULL
             }
             
-            SelectTypeChoices        <- c('none', 'diff')
-            names(SelectTypeChoices) <- c('none', 
-                                          'from differential analysis')
+            SelectTypeChoices        <- c('none', 'CV', 'diff')
+            names(SelectTypeChoices) <- c('None',
+                                          'Coefficient of Variation', 
+                                          'From differential analysis')
             if (is.null(ValidContrasts)) {
-                SelectTypeChoices <- SelectTypeChoices[c(1)]
+                SelectTypeChoices <- SelectTypeChoices[c(1,2)]
             }
             
             box(
@@ -678,6 +695,21 @@
                         inline = TRUE
                     )
                 ),
+                # if methode == CV -> dispay number to chose
+                conditionalPanel(
+                    condition = paste0("input[\'",
+                                       ns(paste0(
+                                           "selectmethode", set
+                                       )),
+                                       "\'] == \'CV\'"),
+                    
+                    numericInput(
+                        inputId  = ns(paste0("numberFeat", set)),
+                        label    = "Number of features to keep",
+                        value  = min(500, nrow(session$userData$FlomicsMultiAssay[[set]])),
+                        min = 1, 
+                        max = nrow(session$userData$FlomicsMultiAssay[[set]]))
+                ),
                 if (getOmicsTypes(session$userData$FlomicsMultiAssay[[set]]) == "RNAseq") {
                     selectInput(
                         inputId  = ns("RNAseqTransfo"),
@@ -708,7 +740,8 @@
         if (is.null(input$selectData)) return()
         if (is.null(input[[paste0("selectmethode", input$selectData[1])]])) return()
         
-        MAE2Integrate <- subRflomicsMAE(session$userData$FlomicsMultiAssay, input$selectData)
+        MAE2Integrate <- subRflomicsMAE(session$userData$FlomicsMultiAssay, 
+                                        input$selectData)
         
         for(set in input$selectData){
             
@@ -723,6 +756,22 @@
                 MAE2Integrate[[set]] <- 
                     session$userData$FlomicsMultiAssay[[set]][variable.to.keep]
                 
+            } else if (input[[paste0("selectmethode", set)]] == "CV") {
+                transformedSE <- .checkTransNorm(session$userData$FlomicsMultiAssay[[set]], 
+                                                 raw = FALSE)
+                transformedSE <- assay(transformedSE)
+                cv_vect <- unlist(
+                    lapply(seq_len(nrow(transformedSE)),
+                           FUN = function(row_i){
+                               x <- transformedSE[row_i,]
+                               sd(x)/mean(x)
+                           }))
+                names(cv_vect) <- rownames(transformedSE)
+                cv_vect <- cv_vect[order(cv_vect, decreasing = TRUE)]
+                variable.to.keep <- names(cv_vect)[seq_len(input[[paste0("numberFeat", set)]])]
+                
+                MAE2Integrate[[set]] <- 
+                    session$userData$FlomicsMultiAssay[[set]][variable.to.keep]
             }
             else{
                 MAE2Integrate[[set]] <- 
@@ -921,7 +970,7 @@
             HTML(paste0("This overview present the number of observations and the number of features per dataset.",
                         " If a sparse analysis was performed, for each component and dataset, the best number of features is also printed."))),
         hr(),
-        column(6 , renderDataTable({
+        column(6 , renderTable({
             if (is.list(Data_res$X)) {
                 # block.plsda or block.splsda
                 df <- t(vapply(Data_res$X, dim, c(1, 1)))
