@@ -49,7 +49,7 @@ MAE <- generateExample(
 test_that("it's running from diffExpAnal - Custom - RNASeq", {
   
   df_custom <- vroom::vroom(file = paste0(system.file(package = "RFLOMICS"), 
-                                          "/ExamplesFiles/GO_annotations/Arabidopsis_thaliana_Ensembl_55.txt"),
+                                          "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt"),
                             show_col_types = FALSE)
   
   MAE <- runAnnotationEnrichment(MAE, SE.name = "RNAtest", database = "custom",
