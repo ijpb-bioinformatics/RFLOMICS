@@ -100,16 +100,20 @@ setMethod(
                           col_name = "name",
                           col_domain = NULL,
                           annot = NULL) {
-        EnrichAnal <- list()
         
-        if (is.null(object@metadata$DiffExpAnal)) {
+        if (is.null(metadata(object)$DiffExpAnal)) {
             stop(
                 "There is no differential analysis. Please run a differential
            analysis before running enrichment"
             )
         }
         
+        # Where to store results or take results
         from <- .determineFrom(from)
+        fromEnrich <- .determineFromEnrich(from)
+        
+        # make sure results slot is empty (or re-init)
+        metadata(object)[[fromEnrich]][[database]] <- EnrichAnal <- list()
         
         switch(from,
                "DiffExp" = {
@@ -131,18 +135,18 @@ setMethod(
                    
                    geneLists <-
                        lapply(contrasts, function(contrastName) {
-                           row.names(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]])
+                           row.names(metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]])
                        })
                    names(geneLists) <- contrasts
                    
                },
                "CoExp" = {
-                   namesClust <- names(object@metadata[["CoExpAnal"]][["clusters"]])
+                   namesClust <- names(metadata(object)[["CoExpAnal"]][["clusters"]])
                    if (!is.null(nameList))
                        namesClust <- intersect(namesClust, nameList)
                    
                    geneLists <- lapply(namesClust, function(namClust) {
-                       object@metadata[["CoExpAnal"]][["clusters"]][[namClust]]
+                       metadata(object)[["CoExpAnal"]][["clusters"]][[namClust]]
                    })
                    names(geneLists) <- namesClust
                },
@@ -187,6 +191,8 @@ setMethod(
         
         geneLists <- geneLists[lengths(geneLists) > 0]
         
+     
+        
         # for each list
         results_list <-
             lapply(
@@ -228,15 +234,15 @@ setMethod(
                                     }
                                 }
                             )
-                           res1 <- do.call(getFromNamespace(func_to_use, 
-                                                            ns = "clusterProfiler"),
-                                    list_args)
-                           # delete heavy slots
-                           slot(res1, name = "geneSets", 
-                                check = FALSE) <- list("removed")
-                           slot(res1, name = "universe", 
-                                check = FALSE) <- c("removed")
-                           return(res1)
+                            res1 <- do.call(getFromNamespace(func_to_use, 
+                                                             ns = "clusterProfiler"),
+                                            list_args)
+                            # delete heavy slots
+                            slot(res1, name = "geneSets", 
+                                 check = FALSE) <- list("removed")
+                            slot(res1, name = "universe", 
+                                 check = FALSE) <- c("removed")
+                            return(res1)
                         }
                     )
                     names(results_ont) <- domain
@@ -295,13 +301,8 @@ setMethod(
                                        list("domain" = domain))
         EnrichAnal[["enrichResult"]] <- results_list
         
-        switch(from,
-               "DiffExp" = {
-                   object@metadata[["DiffExpEnrichAnal"]][[database]] <- EnrichAnal
-               },
-               "CoExp" = {
-                   object@metadata[["CoExpEnrichAnal"]][[database]] <- EnrichAnal
-               })
+        # Store last results
+        metadata(object)[[fromEnrich]][[database]] <- EnrichAnal
         
         return(object)
     }
