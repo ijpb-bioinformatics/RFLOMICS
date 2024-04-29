@@ -19,8 +19,9 @@
         for each of them. In the feature selection panel, you can choose to run
          the analysis on all features: this type of option is fine if your data
          is not very high dimensional (<500). Otherwise, it is advised to 
-        choose to run it only with the results of differential analysis. You 
-        can refer to the overview plot below to see what you selected. Once 
+        choose to run it only with a subset of features, selected either using 
+    the coefficient of variation, or using the results of differential analysis.
+    You can refer to the overview plot below to see what you selected. Once 
         all is set, click on the Run preparation button and go the the Data 
         integration panel. "
     
@@ -468,10 +469,10 @@
                         tabPanel(
                             "Overview", 
                             .outMOOverview(Data_res, settings)),
-                        # tabPanel(
-                        #     "Explained Variance",
-                        #     .outMOexplainedVar(session, Response)
-                        # ),
+                        tabPanel(
+                            "Explained Variance",
+                            .outMOexplainedVar(session, Response)
+                        ),
                         tabPanel(
                             "Individuals",
                             .outMOIndividuals(session, input, settings,
@@ -970,7 +971,7 @@
             HTML(paste0("This overview present the number of observations and the number of features per dataset.",
                         " If a sparse analysis was performed, for each component and dataset, the best number of features is also printed."))),
         hr(),
-        column(6 , renderTable({
+        column(6 , renderDataTable({
             if (is.list(Data_res$X)) {
                 # block.plsda or block.splsda
                 df <- t(vapply(Data_res$X, dim, c(1, 1)))
@@ -993,7 +994,7 @@
                 }
             }
             
-            datatable(t(df))
+            datatable(t(df), options = list(dom = 't'))
             
         })))
 }
@@ -1001,10 +1002,24 @@
 #' @noRd
 #' @keywords internal
 .outMOexplainedVar <- function(session, Response) {
-    column(12, renderPlot({
-        plotMOVarExp(session$userData$FlomicsMultiAssay,
-                     selectedResponse = Response)
-    }))
+    
+    ns <- session$ns
+    
+    textExplained <- paste0("These graph represent the explained variance for each datatable. ",
+                            " The graph on the left is the total of all component explained variance,",
+                            " the graph on the right is the decomposition and is read as: component x explains y% of data D and z% of dataset M.",
+                            " Keep in mind the purpose of splsda is not the same as pca, it does not aim at capturing the most variance.")
+    renderUI({
+        tagList(
+            br(),
+            div(class = "explain-p", HTML(textExplained)),
+            hr(),
+            column(12, renderPlot({
+                plotMOVarExp(session$userData$FlomicsMultiAssay,
+                             selectedResponse = Response)
+            }))
+        )
+    })
 }
 
 #' @noRd
@@ -1191,7 +1206,9 @@
         
         ns <- session$ns
         
-        explanMess <-  paste0("Text here")
+        explanMess <-  paste0("Loadings scores for all features and data analyzed, presented per data.",
+                              " The higher the score (in absolute value), the more important the variable.",
+                              " In the context of plsda, this means the variable can be used to discriminate between modalities of the response variable.")
         choicesPos <-  names(Data_res$loadings)
         choicesPos <- choicesPos[-which(choicesPos == "Y")]
         
@@ -1746,24 +1763,27 @@
         integration of multiple datasets from the same experimental design 
         (same samples)."),
         
-        p("In RFLOMICS, as many data sets as you like, as long as the samples 
-          overlap between tables. "),
-        
-        p("Analysis is performed using the block.(s)plsda function, based on 
-          the sparsity parameter, which is a linear discriminant analysis 
-          adapted to multiple data: axes, 
-          similar to those in a PCA, are calculated according to a given
+        p("A supervised analysis is performed using the block.(s)plsda function,
+          based on the sparsity parameter, which is a linear discriminant 
+          analysis adapted to multiple data: 
+          axes, similar in interpretation to those in a PCA, 
+          are calculated according to a given
           response variable, leading to the best separation between 
-          response modalities."),
+          response modalities. 
+          The weight of features (loadings) indicates their ability to
+          seperate the groups of the response variable."),
         
         p("The use of multiple response variables in the same analysis 
           is not currently permitted. "),
         
-        p("Sparse analysis  allows you to select interesting 
+        p("Sparse analysis allows you to select interesting 
           features that discriminate between response modalities, 
           but requires tuning, i.e. running several models to 
-          find the best one. This may take some time. 
-      "),
+          find the best one. This may take some time. "),
+        
+        p("For more information, please visit the mixOmics website or 
+          github vignette."),
+        
         )
     )
 }
@@ -1787,15 +1807,15 @@
         div(
             h4(tags$span("Unsupervised integration analysis:", 
                          style = "color:orange")),
-            p("This module uses the MOFA2 package, provinding a general 
+            p("This module uses the MOFA2 package, providing a general 
               framework for the unsupervised integration analysis 
-              of multi-omics dataset."), 
+              of multi-omics datasets."), 
             
-            p("Given a set of tables, it calculates the best axes as linear 
+            p("Given a set of data, it calculates the best axes as a linear 
           combination of
          features (similar to those of a PCA). "), 
          
-         p("t is based on the assumption that each dataset X can 
+         p("It is based on the assumption that each dataset X can 
            be written as a linear model of the form: X = WF+e,
            where W is the weight matrix (different for each dataset), 
            F the factor coefficients (identical for each dataset) and 

@@ -196,14 +196,14 @@
                   aes(x = Dataset,
                       y = `Cumulative Explained Variance`)) +
         geom_col(fill = "darkblue") +
-        theme_classic() +
+        theme_bw() +
         theme(
             axis.text  = element_text(size = 12),
             axis.line  = element_blank(),
             axis.ticks = element_blank(),
             strip.text = element_text(size = 12)
         ) +
-        ylab("") +
+        ylab("") + xlab("") +
         ggtitle("Cumulative explained variance")
     
     return(gg1)
@@ -230,15 +230,18 @@
     
     # Chunk of code to be cohesive with MOFA2::plot_explained_variance
     gg2 <- ggplot(dat_explained, aes(x = Dataset, y = Component)) +
-        geom_tile(aes(fill = `% of explained variance`)) +
+        geom_tile(aes(fill = `% of explained variance`), color = "gray88") +
+        geom_text(aes(label = round(`% of explained variance`,2)), 
+                  color = "white", size = 4) +
         theme_classic() +
         theme(
-            axis.text  = element_text(size = 12),
+            axis.text  = element_text(size = 10),
             axis.line  = element_blank(),
             axis.ticks = element_blank(),
-            strip.text = element_text(size = 12),
-        ) +  ylab("") +
+            strip.text = element_text(size = 10),
+        ) +  ylab("") + xlab("") +
         scale_fill_gradientn(
+            name = "% of explained\nvariance",
             colors = c("gray97", "darkblue"),
             guide = "colorbar",
             limits = c(
