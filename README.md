@@ -40,21 +40,26 @@ proteomics, and metabolomics.
 - Complete (mandatory) and balanced (recommended) design 
 
 
-## Use RFLOMICS locally
+## Use Rflomics
 
-### Install
+### From SK8 platform
+https://rflomics.sk8.inrae.fr/
+
+### Locally 
+
+#### Install
 
 Download from <https://forgemia.inra.fr/flomics/rflomics/-/archive/master/rflomics-master.tar.gz>
 
 ``` r
+#setwd("workdir")
 install.packages("rflomics-master.tar.gz", repos = NULL, type = "source")
 ```
 
 Or
 
 Clone from forgemia repository
-
-```         
+```  
 git clone https://forgemia.inra.fr/flomics/rflomics.git
 ```
 
@@ -65,7 +70,7 @@ setwd("rflomics/")
 remotes::install_local(upgrade="never")
 ```
 
-### Run rflomics
+#### Run rflomics
 
 ``` r
 library(RFLOMICS)
@@ -79,11 +84,9 @@ RFLOMICS::runRFLOMICS()
 blabla
 
 ## Contact and support
-
 [ijpb-bioinfo-team](mailto:ijpb-bioinfo-team@inrae.fr) (ijpb-bioinfo-team@inrae.fr)
 
 ## References
-
 -   [CATI Sysmics](https://sysmics.cati.inrae.fr/),
 -   [Ilana L. et al. (2020)](http://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=pubmed&id=32426025&retmode=ref&cmd=prlinks)
 -   [Efstathiou G, et al. 2017]()
