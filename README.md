@@ -52,7 +52,8 @@ setwd("rflomics/")
 remotes::install_local(upgrade="never")
 ```
 
-**Prerequisites for using MOFA2**
+**Prerequisites for using MOFA2 (MAC OS & Windows)**
+
 Install Python:
 https://www.python.org/downloads/
 
