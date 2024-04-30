@@ -44,10 +44,10 @@ proteomics, and metabolomics.
 
 ### Install
 
-Download from <https://forgemia.inra.fr/flomics/rflomics/-/tree/v0.1>
+Download from <https://forgemia.inra.fr/flomics/rflomics/-/archive/master/rflomics-master.tar.gz>
 
 ``` r
-install.packages("rflomics.tar.gz", repos = NULL, type = "source")
+install.packages("rflomics-master.tar.gz", repos = NULL, type = "source")
 ```
 
 Or
@@ -55,14 +55,13 @@ Or
 Clone from forgemia repository
 
 ```         
-git clone -branch  v0.2  https://forgemia.inra.fr/flomics/rflomics.git
+git clone https://forgemia.inra.fr/flomics/rflomics.git
 ```
 
 ``` r
-library(remotes)
-
 setwd("rflomics/")
 
+#library(remotes)
 remotes::install_local(upgrade="never")
 ```
 
@@ -73,41 +72,6 @@ library(RFLOMICS)
 
 RFLOMICS::runRFLOMICS()
 ```
-
-### Install via Docker
-
-````{=html}
-<!--## Install RFLOMICS via Docker
-
-* install Docker
-
-https://docs.docker.com/engine/install/
-
-* Get the Dockerfile
-
-```
-https://forgemia.inra.fr/flomics/rflomics/-/blob/develop.0.1/Dockerfile
-```
-
-* Build the Docker Image
-
-```
-docker build --file=Dockerfile --tag=rflomics .
-```
-
-* Run Docker
-
-```
-docker run -it -p 3838:3838 -v ${HOME}:/root --name='rflomics' --cpus 4 rflomics
-```
-
-* Open a web navigator and paste this url:
-
-```
-http://0.0.0.0:3838
-```
--->
-````
 
 ### [Vignettes](https://flomics.pages.mia.inra.fr/rflomics/index.html)
 
