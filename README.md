@@ -52,6 +52,21 @@ setwd("rflomics/")
 remotes::install_local(upgrade="never")
 ```
 
+**Prerequisites for using MOFA2**
+Install Python:
+https://www.python.org/downloads/
+
+Install mofapy2:
+```
+pip install mofapy2
+```
+
+Setting the value of the RETICULATE_PYTHON environment variable to a Python binary:
+```
+cd
+echo "Sys.setenv(RETICULATE_PYTHON = \"path_to_python_bin\")" >> .Rprofile
+```
+
 **Run rflomics**
 
 ``` r
