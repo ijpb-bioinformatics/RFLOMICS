@@ -1,26 +1,8 @@
 # RFLOMICS : R package and Shiny interface for Integrative analysis of omics data
 
-## Presentation
+The acquisition of **multi-omics data** in the context of **complex experimental design** is a widely used practice to identify features (transcripts, proteins, metabolites,...) and decipher the biological processes they are involved in. The investigation of each omics layer is a good first step to explore and extract relevant biological variability. The statistical integration could then be restrained to pertinent omics levels and features. Such analysis of heterogeneous data remains a technical challenge with the needs of expertise methods and parameters to take into account data specificity. Furthermore, applying different statistical methods from several tools is also a technical challenge in term of data management. In this context, we developed RFLOMICS.
 
-The acquisition of **multi-omics data** in the context of **complex
-experimental design** is a widely used practice to identify genes,
-proteins, metabolites and decipher the biological processes they are
-involved in. The investigation of each omics layer is a good first step
-to explore and extract relevant biological variability. The statistical
-integration could then be restrained to pertinent omics levels and
-features. Such analysis of heterogeneous data remains a technical
-challenge with the needs of expert methods and parameters to take into
-account data specificity. Furthermore, applying different statistical
-methods from several tools is also a technical challenge in term of data
-management. In this context, we developed RFLOMICS: **R package coupled
-with a shiny application** dedicated to the management and analysis of
-multiple omics-datasets in the statistical framework of **vertical
-integration** of observations (i.e. analysis of omics data across
-experiments on the same individuals) see the figure below.
-
-
-RFLOMICS currently supports up to three types of omics: RNAseq,
-proteomics, and metabolomics.
+**RFLOMICS** is an R package and Shiny interface that offers guided, comprehensive, and reproducible analysis within a framework designed to manage multiple omics datasets. The interface provides remarkable flexibility, enabling users to seamlessly navigate between result exploration and visualization.
 
 <img src="inst/RFLOMICSapp/www/workflow.png" align="center" width="600"/>
 
@@ -47,7 +29,7 @@ https://rflomics.sk8.inrae.fr/
 
 ### Locally 
 
-#### Install
+**Install**
 
 Download from <https://forgemia.inra.fr/flomics/rflomics/-/archive/master/rflomics-master.tar.gz>
 
@@ -70,7 +52,7 @@ setwd("rflomics/")
 remotes::install_local(upgrade="never")
 ```
 
-#### Run rflomics
+**Run rflomics**
 
 ``` r
 library(RFLOMICS)
