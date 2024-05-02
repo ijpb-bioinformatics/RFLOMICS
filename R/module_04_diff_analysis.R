@@ -76,13 +76,20 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     
     #design must be complete
     validate(
-      need(rea.values[[dataset]]$compCheck != FALSE, metadata(session$userData$FlomicsMultiAssay)$completeCheck[["error"]])
+      need(rea.values[[dataset]]$compCheck != FALSE, 
+           metadata(session$userData$FlomicsMultiAssay)$completeCheck[["error"]])
     )
     
     local.rea.values$selectedContrasts <- 
-      generateExpressionContrast(session$userData$FlomicsMultiAssay[[dataset]]) %>% 
-      reduce(rbind) %>% 
-      filter(contrast %in% rea.values$Contrasts.Sel$contrast)
+      getSelectedContrasts(session$userData$FlomicsMultiAssay[[dataset]])
+      # generateExpressionContrast(session$userData$FlomicsMultiAssay[[dataset]]) %>% 
+      # reduce(rbind) %>% 
+      # filter(contrast %in% rea.values$Contrasts.Sel$contrast)
+    
+    validate(
+      need(nrow(local.rea.values$selectedContrasts) != 0, 
+           message = "no contrast matches the sample selection")
+    )
     
     
     ## getcontrast
@@ -220,7 +227,6 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       # run diff analysis with selected method
       dataset.SE <- runDiffAnalysis(
         object        = dataset.SE,
-        contrastList  = rea.values$Contrasts.Sel,
         p.adj.method  = "BH",
         method        = input$AnaDiffMethod,
         clustermq     = input$clustermq,

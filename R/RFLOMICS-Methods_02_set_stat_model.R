@@ -27,9 +27,9 @@
 setMethod(f          = "generateModelFormulae",
           signature  = "RflomicsMAE",
           definition = function(object){
-              
-              return(.generateModelFormulae(getBioFactors(object),
-                                            getBatchFactors(object)))
+            
+            return(.generateModelFormulae(getBioFactors(object),
+                                          getBatchFactors(object)))
           })
 
 # ---- setModelFormula : ----
@@ -38,16 +38,16 @@ setMethod(f          = "generateModelFormulae",
 setMethod(f          = "setModelFormula",
           signature  = "RflomicsMAE",
           definition = function(object, modelFormula=NULL){
-              
-              object@metadata$design$Model.formula <- paste(modelFormula,
-                                                            collapse = " ")
-              
-              for(name in names(object)){
-                  object[[name]] <- setModelFormula(object[[name]], 
-                                                    modelFormula)
-              }
-              
-              return(object)
+            
+            object@metadata$design$Model.formula <- paste(modelFormula,
+                                                          collapse = " ")
+            
+            for(name in names(object)){
+              object[[name]] <- setModelFormula(object[[name]], 
+                                                modelFormula)
+            }
+            
+            return(object)
           })
 
 
@@ -56,11 +56,11 @@ setMethod(f          = "setModelFormula",
 setMethod(f          = "setModelFormula",
           signature  = "RflomicsSE",
           definition = function(object, modelFormula=NULL){
-              
-              object@metadata$design$Model.formula <- paste(modelFormula,
-                                                            collapse = " ")
-              
-              return(object)
+            
+            object@metadata$design$Model.formula <- paste(modelFormula,
+                                                          collapse = " ")
+            
+            return(object)
           })
 
 # ---- getModelFormula : Get Model Formula : ----
@@ -69,8 +69,8 @@ setMethod(f          = "setModelFormula",
 setMethod(f          = "getModelFormula",
           signature  = "RflomicsMAE",
           definition = function(object){
-              
-              return(object@metadata$design$Model.formula)
+            
+            return(object@metadata$design$Model.formula)
           })
 
 #' @exportMethod getModelFormula
@@ -78,8 +78,8 @@ setMethod(f          = "getModelFormula",
 setMethod(f          = "getModelFormula",
           signature  = "RflomicsSE",
           definition = function(object){
-              
-              return(object@metadata$design$Model.formula)
+            
+            return(object@metadata$design$Model.formula)
           })
 
 
@@ -103,24 +103,24 @@ setMethod(f          = "getModelFormula",
 setMethod(f          = "generateExpressionContrast",
           signature  = "RflomicsSE",
           definition = function(object){
-              
-              modelFormula <- getModelFormula(object)
-              # check
-              if (is.null(modelFormula)) stop("model formula is mandatory.")
-              if (is(modelFormula, "formula")) {
-                  modelFormula <- paste(as.character(modelFormula), 
-                                        collapse = " ")
-              }
-              
-              # args for getExpressionContrastF()
-              factorBio <- getBioFactors(object)
-              ExpDesign <- getDesignMat(object)
-              
-              Contrasts.List  <-  .getExpressionContrastF(ExpDesign, 
-                                                          factorBio, 
-                                                          modelFormula=modelFormula)
-              
-              return(Contrasts.List)
+            
+            modelFormula <- getModelFormula(object)
+            # check
+            if (is.null(modelFormula)) stop("model formula is mandatory.")
+            if (is(modelFormula, "formula")) {
+              modelFormula <- paste(as.character(modelFormula), 
+                                    collapse = " ")
+            }
+            
+            # args for getExpressionContrastF()
+            factorBio <- getBioFactors(object)
+            ExpDesign <- getDesignMat(object)
+            
+            Contrasts.List  <-  .getExpressionContrastF(ExpDesign, 
+                                                        factorBio, 
+                                                        modelFormula=modelFormula)
+            
+            return(Contrasts.List)
           })
 
 #' @title Get model formula from a Flomics RflomicsSE
@@ -142,24 +142,65 @@ setMethod(f          = "generateExpressionContrast",
 setMethod(f          = "generateExpressionContrast",
           signature  = "RflomicsMAE",
           definition = function(object){
-              
-              modelFormula <- getModelFormula(object)
-              # check
-              if (is.null(modelFormula)) stop("model formula is mandatory.")
-              if (is(modelFormula, "formula")) {
-                  modelFormula <- paste(as.character(modelFormula), 
-                                        collapse = " ")
-              }
-              
-              # args for getExpressionContrastF()
-              factorBio <- getBioFactors(object)
-              ExpDesign <- getDesignMat(object)
-              
-              Contrasts.List  <- .getExpressionContrastF(ExpDesign, 
-                                                         factorBio, 
-                                                         modelFormula = modelFormula)
-              
-              return(Contrasts.List)
+            
+            modelFormula <- getModelFormula(object)
+            # check
+            if (is.null(modelFormula)) stop("model formula is mandatory.")
+            if (is(modelFormula, "formula")) {
+              modelFormula <- paste(as.character(modelFormula), 
+                                    collapse = " ")
+            }
+            
+            # args for getExpressionContrastF()
+            factorBio <- getBioFactors(object)
+            ExpDesign <- getDesignMat(object)
+            
+            Contrasts.List  <- .getExpressionContrastF(ExpDesign, 
+                                                       factorBio, 
+                                                       modelFormula = modelFormula)
+            
+            return(Contrasts.List)
+          })
+
+
+
+#' @title Get model formula from a Flomics RflomicsSE
+#' @description This function allows, from a model formulae, 
+#' to give the expression contrast data frames.
+#' Three types of contrasts are expressed:
+#' \itemize{
+#' \item{pairwise comparison}
+#' \item{averaged expression}
+#' \item{interaction expression}
+#' }
+#' @param object An object of class [\code{\link{RflomicsSE-class}}] 
+#' or class [\code{\link{RflomicsMAE-class}}]
+#' @return list of 1 or 3 data.frames of contrast expression
+#' @exportMethod generateExpressionContrast
+#' @author Christine Paysant-Le Roux, adapted by Nadia Bessoltane
+#' @rdname generateExpressionContrast
+#' @aliases generateExpressionContrast
+setMethod(f          = "generateExpressionContrast",
+          signature  = "RflomicsMAE",
+          definition = function(object){
+            
+            modelFormula <- getModelFormula(object)
+            # check
+            if (is.null(modelFormula)) stop("model formula is mandatory.")
+            if (is(modelFormula, "formula")) {
+              modelFormula <- paste(as.character(modelFormula), 
+                                    collapse = " ")
+            }
+            
+            # args for getExpressionContrastF()
+            factorBio <- getBioFactors(object)
+            ExpDesign <- getDesignMat(object)
+            
+            Contrasts.List  <- .getExpressionContrastF(ExpDesign, 
+                                                       factorBio, 
+                                                       modelFormula = modelFormula)
+            
+            return(Contrasts.List)
           })
 
 
@@ -169,10 +210,19 @@ setMethod(f          = "generateExpressionContrast",
 setMethod(f          = "setSelectedContrasts",
           signature  = "RflomicsMAE",
           definition = function(object, contrastList=NULL){
+            
+            # MAE
+            object@metadata$design$Contrasts.Sel <- 
+              updateSelectedContrasts(object, contrastList)
+            
+            # for each dataset
+            for(SE.name in names(object)){
               
-              object@metadata$design$Contrasts.Sel <- contrastList
-              
-              return(object)
+              object[[SE.name]] <- 
+                setSelectedContrasts(object[[SE.name]], contrastList)
+            }
+            
+            return(object)
           })
 
 
@@ -181,11 +231,13 @@ setMethod(f          = "setSelectedContrasts",
 setMethod(f          = "setSelectedContrasts",
           signature  = "RflomicsSE",
           definition = function(object, contrastList=NULL){
-              
-              object@metadata$design$Contrasts.Sel <- contrastList
-              
-              return(object)
+            
+            object@metadata$design$Contrasts.Sel <- 
+              updateSelectedContrasts(object, contrastList)
+            
+            return(object)
           })
+
 
 # ---- getSelectedContrasts : ----
 #' @rdname RflomicsMAE-accessors
@@ -193,8 +245,8 @@ setMethod(f          = "setSelectedContrasts",
 setMethod(f          = "getSelectedContrasts",
           signature  = "RflomicsMAE",
           definition = function(object){
-              
-              return(object@metadata$design$Contrasts.Sel)
+            
+            return(object@metadata$design$Contrasts.Sel)
           })
 
 
@@ -204,8 +256,8 @@ setMethod(f          = "getSelectedContrasts",
 setMethod(f          = "getSelectedContrasts",
           signature  = "RflomicsSE",
           definition = function(object){
-              
-              return(object@metadata$design$Contrasts.Sel)
+            
+            return(object@metadata$design$Contrasts.Sel)
           })
 
 # ---- generateContrastMatrix ----
@@ -224,18 +276,18 @@ setMethod(f          = "getSelectedContrasts",
 setMethod(f          = "generateContrastMatrix",
           signature  = "RflomicsSE",
           definition = function(object, contrastList=NULL){
-              
-              if(is.null(contrastList)) stop("contrastList arg is mandatory.")
-              
-              ExpDesign <- getDesignMat(object)
-              
-              factorBio <- getBioFactors(object)
-              
-              modelFormula <- getModelFormula(object)
-              object@metadata$design$Contrasts.Coeff <- .getContrastMatrixF(ExpDesign = ExpDesign, factorBio = factorBio, contrastList = contrastList$contrast, modelFormula)
-              object@metadata$design$Contrasts.Sel   <- contrastList
-              
-              return(object)
+            
+            if(is.null(contrastList)) stop("contrastList arg is mandatory.")
+            
+            ExpDesign <- getDesignMat(object)
+            
+            factorBio <- getBioFactors(object)
+            
+            modelFormula <- getModelFormula(object)
+            object@metadata$design$Contrasts.Coeff <- .getContrastMatrixF(ExpDesign = ExpDesign, factorBio = factorBio, contrastList = contrastList$contrast, modelFormula)
+            object@metadata$design$Contrasts.Sel   <- contrastList
+            
+            return(object)
           })
 
 #coefmatrices <- sapply(unique(names(coefvectors)),
@@ -273,23 +325,23 @@ setMethod(f          = "generateContrastMatrix",
 setMethod(f          = "generateContrastMatrix",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name, contrastList=NULL){
-              
-              if (is.null(object[[SE.name]])) {
-                  stop("no Experiment named ", SE.name, " in MAE object")
-              }
-              if (is.null(modelFormula)) {
-                  stop("Model.formula arg is mandatory.")
-              }
-              if (is.null(contrastList)) stop("contrastList is mandatory.")
-              if (any(!c("contrast", "contrastName", "groupComparison", "type") %in% names(contrastList))) {
-                  stop("contrastList data.frame must contain at least these colomn : contrast, contrastName, groupComparison, type")
-              }
-              
-              object <- setModelFormula(object, modelFormula)
-              
-              object[[SE.name]] <- generateContrastMatrix(object = object[[SE.name]], contrastList = contrastList)
-              
-              return(object)
+            
+            if (is.null(object[[SE.name]])) {
+              stop("no Experiment named ", SE.name, " in MAE object")
+            }
+            if (is.null(modelFormula)) {
+              stop("Model.formula arg is mandatory.")
+            }
+            if (is.null(contrastList)) stop("contrastList is mandatory.")
+            if (any(!c("contrast", "contrastName", "groupComparison", "type") %in% names(contrastList))) {
+              stop("contrastList data.frame must contain at least these colomn : contrast, contrastName, groupComparison, type")
+            }
+            
+            object <- setModelFormula(object, modelFormula)
+            
+            object[[SE.name]] <- generateContrastMatrix(object = object[[SE.name]], contrastList = contrastList)
+            
+            return(object)
           })
 
 
@@ -310,10 +362,10 @@ setMethod(f          = "generateContrastMatrix",
 setMethod(f          = "setValidContrasts",
           signature  = "RflomicsMAE",
           definition <- function(object, omicName, contrastList=NULL){
-              
-              setValidContrasts(object[[omicName]], contrastList = contrastList)
-              
-              return(object)
+            
+            setValidContrasts(object[[omicName]], contrastList = contrastList)
+            
+            return(object)
           })
 
 #' @title setValidContrasts
@@ -327,10 +379,10 @@ setMethod(f          = "setValidContrasts",
 setMethod(f          = "setValidContrasts",
           signature  = "RflomicsSE",
           definition = function(object, contrastList=NULL){
-              
-              object@metadata$DiffExpAnal[["Validcontrasts"]] <- contrastList
-              
-              return(object)
+            
+            object@metadata$DiffExpAnal[["Validcontrasts"]] <- contrastList
+            
+            return(object)
           })
 
 #' @title getValidContrasts
@@ -344,10 +396,10 @@ setMethod(f          = "setValidContrasts",
 setMethod(f          = "getValidContrasts",
           signature  = "RflomicsMAE",
           definition = function(object, omicName){
-              
-              res <- getValidContrasts(object[[omicName]])
-              
-              return(res)
+            
+            res <- getValidContrasts(object[[omicName]])
+            
+            return(res)
           })
 
 #' @title getValidContrasts
@@ -360,8 +412,8 @@ setMethod(f          = "getValidContrasts",
 setMethod(f          = "getValidContrasts",
           signature  = "RflomicsSE",
           definition = function(object){
-              
-              return(object@metadata$DiffExpAnal[["Validcontrasts"]])
+            
+            return(object@metadata$DiffExpAnal[["Validcontrasts"]])
           })
 
 

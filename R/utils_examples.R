@@ -96,6 +96,8 @@ generateExample <- function(processing   = TRUE,
         )[c(1, 2, 3),]
     )
     
+    MAE <- setSelectedContrasts(MAE, contrastList)
+    
     if (processing) {
         MAE <- MAE |>
             runTransformData(SE.name = "metatest",  transformMethod = "log2") |>
@@ -108,14 +110,11 @@ generateExample <- function(processing   = TRUE,
     if (diffanalysis) {
         MAE <- MAE |>
             runDiffAnalysis(SE.name = "metatest",
-                            method = "limmalmFit",
-                            contrastList = contrastList)  |>
+                            method = "limmalmFit")  |>
             runDiffAnalysis(SE.name = "protetest",
-                            method = "limmalmFit",
-                            contrastList = contrastList)  |>
+                            method = "limmalmFit")  |>
             runDiffAnalysis(SE.name = "RNAtest",
-                            method = "edgeRglmfit",
-                            contrastList = contrastList)  |>
+                            method = "edgeRglmfit")  |>
             filterDiffAnalysis(
                 SE.name = "RNAtest",
                 p.adj.cutoff = 0.05,

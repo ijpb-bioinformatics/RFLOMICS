@@ -162,6 +162,7 @@ setGeneric(
         standardGeneric("setSelectedContrasts")
     }
 )
+
 setGeneric(
     name = "getSelectedContrasts",
     def  = function(object, contrastList = NULL, ...) {
@@ -386,7 +387,6 @@ setGeneric(
     name = "runDiffAnalysis",
     def  = function(object,
                     p.adj.method = "BH",
-                    contrastList = NULL,
                     method = NULL,
                     p.adj.cutoff = 0.05,
                     logFC.cutoff = 0,
