@@ -91,76 +91,6 @@
     }
 }
 
-# ---- convertTagToContrast - convert tag to contrastName ----
-
-#' @title Convert tags names to contrast Names
-#'
-#' @param object a MAE object or a SE object (produced by Flomics). 
-#' If it's a RflomicsSE, expects to find
-#'  a slot of differential analysis.
-#' @param tagName Vector of characters, expect to be tags 
-#' (in the form of H1, H2, etc.).
-#' @return character vector, contrastNames associated to tags.
-#' @importFrom dplyr filter select
-#' @noRd
-#' @keywords internal
-.convertTagToContrast <- function(object, tagName) {
-    df_contrasts <- getSelectedContrasts(object)
-    
-    df_contrasts %>%
-        filter(tag %in% tagName) %>%
-        select(contrastName) %>%
-        unlist(use.names = FALSE)
-}
-
-# ---- convertContrastToTag - convert contrastName to tag ----
-
-#' @title Convert contrast Names names to tags
-#'
-#' @param object a MAE object or a SE object (produced by Flomics). 
-#' If it's a RflomicsSE, expects to find
-#'  a slot of differential analysis.
-#' @param contrasts Vector of characters, expect to be contrast names.
-#' @return character vector, tags associated to contrast names.
-#' @importFrom dplyr filter select
-#' @noRd
-#' @keywords internal
-.convertContrastToTag <- function(object, contrasts) {
-    df_contrasts <- getSelectedContrasts(object)
-    
-    df_contrasts %>%
-        filter(contrastName %in% contrasts) %>%
-        select(tag) %>%
-        unlist(use.names = FALSE)
-}
-
-# ---- isTagName: Check if character vectors are tags Names ----
-#' @title Check if character vectors are tags Names
-#'
-#' @param object a MAE object or a SE object (produced by Flomics). 
-#' If it's a RflomicsSE, expect to find
-#'  a slot of differential analysis.
-#' @param tagName vector of characters.
-#' @return boolean. TRUE if all of tagName are indeed tags Names.
-#' @noRd
-#' @keywords internal
-.isTagName <- function(object, tagName) {
-    df_contrasts <- getSelectedContrasts(object)
-    
-    search_match <- lapply(tagName, FUN = function(cn) {
-        grep(cn, df_contrasts$tag, fixed = TRUE)
-    })
-    # if TRUE, not a success at all.
-    search_success <- unlist(lapply(search_match, identical, integer(0)))
-    
-    if (!any(search_success)) {
-        # Congratulations, it's a tag name!
-        return(TRUE)
-    } else {
-        return(FALSE)
-    }
-}
-
 # ---- .getOrigin - get origin of a particular name ----
 #
 #' @title get origin of a name given a rflomics MAE
@@ -175,7 +105,6 @@
 .getOrigin <- function(object, name) {
     
     if (.isContrastName(object, name)) return("Contrast")
-    if (.isTagName(object, name)) return("Tag")
     if (.isClusterName(object, name)) return("CoexCluster")
     
     return("NoOriginFound")

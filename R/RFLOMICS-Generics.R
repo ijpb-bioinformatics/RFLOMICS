@@ -386,6 +386,7 @@ setGeneric(
 setGeneric(
     name = "runDiffAnalysis",
     def  = function(object,
+                    contrastList = NULL,
                     p.adj.method = "BH",
                     method = NULL,
                     p.adj.cutoff = 0.05,

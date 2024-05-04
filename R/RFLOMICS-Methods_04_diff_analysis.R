@@ -113,15 +113,16 @@
 #'                                      typeContrast = "averaged", 
 #'                                      returnTable = TRUE)[c(1, 2, 3),]
 #' 
+#' MAE <- setSelectedContrasts(MAE, contrastList)
+#' 
 #' # Run the data preprocessing and perform the differential analysis
-#' MAE <- MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
+#' MAE <- MAE |>  
+#'  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
 #'  filterLowAbundance(SE.name = "RNAtest")                           |>    
 #'  runNormalization(SE.name = "RNAtest",   normMethod = "TMM")       |>
 #'  runNormalization(SE.name = "protetest", normMethod = "median")    |>
-#'  runDiffAnalysis(SE.name = "protetest", method = "limmalmFit", 
-#'                  contrastList = contrastList)  |>
-#'  runDiffAnalysis(SE.name = "RNAtest", method = "edgeRglmfit", 
-#'                  contrastList = contrastList) 
+#'  runDiffAnalysis(SE.name = "protetest", method = "limmalmFit")  |>
+#'  runDiffAnalysis(SE.name = "RNAtest", method = "edgeRglmfit") 
 #'  
 #'  # Access to the diff analysis settings
 #'  getDiffSettings(experiments(MAE)[["RNAtest"]])
@@ -132,6 +133,7 @@
 setMethod(f         = "runDiffAnalysis",
           signature = "RflomicsSE",
           definition = function(object, 
+                                contrastList = NULL,
                                 p.adj.method="BH",
                                 method = NULL, 
                                 p.adj.cutoff=0.05, 
@@ -143,10 +145,18 @@ setMethod(f         = "runDiffAnalysis",
             if(length(modelFormula) == 0)
               stop("No model defined in the ", getDatasetNames(object), " object.")
             
-            contrastList <- getSelectedContrasts(object)
-            if(nrow(contrastList) == 0 || is.null(contrastList))
+            contrast.sel <- getSelectedContrasts(object)
+            if(nrow(contrast.sel) == 0 || is.null(contrast.sel))
               stop("No contrasts defined in the ", getDatasetNames(object), " object.")
             
+            if(is.null(contrastList)){
+              contrastList <- getSelectedContrasts(object)
+            }
+            else{
+              contrastList <- intersect(contrastList, contrast.sel)
+              if(length(contrastList) == 0)
+                stop("The specified contrasts do not match the selected contrasts")
+            }
             
             if (is.null(method) || isFALSE(method %in% c("edgeRglmfit", "limmalmFit"))) {
               switch(getOmicsTypes(object),
@@ -165,12 +175,7 @@ setMethod(f         = "runDiffAnalysis",
             }
             
             ## getcontrast
-            # contrastList <- generateExpressionContrast(object) %>% reduce(rbind) %>% 
-            #   filter(contrast %in% contrastList$contrast)
-            
             object <- generateContrastMatrix(object, contrastList = contrastList)
-            # Contrasts.Sel <- mutate(contrastList,  tag = paste0("H", seq_len(nrow(contrastList))))
-            # object <- setSelectedContrasts(object, Contrasts.Sel)
             
             object@metadata$DiffExpAnal <- list()
             object@metadata$DiffExpAnal[["contrasts"]] <- contrastList
@@ -349,18 +354,12 @@ setMethod(f          = "runDiffAnalysis",
 setMethod(f          = "filterDiffAnalysis",
           signature  = "RflomicsSE",
           definition <- function(object, 
-                                 p.adj.cutoff = NULL, 
-                                 logFC.cutoff = NULL){
+                                 p.adj.cutoff = 0.05, 
+                                 logFC.cutoff = 0){
             
             if (is.null(object@metadata$DiffExpAnal[["RawDEFres"]])) {
               stop("can't filter the DiffExpAnal object because it doesn't exist")
             }
-            
-            if (is.null(p.adj.cutoff)) 
-              p.adj.cutoff <- getDiffSettings(object)[["p.adj.cutoff"]]
-            
-            if (is.null(logFC.cutoff))
-              logFC.cutoff <- getDiffSettings(object)[["abs.logFC.cutoff"]]
             
             # remplacera à terme les lignes ci-dessus
             metadata(object)$DiffExpAnal[["setting"]][["p.adj.cutoff"]] <- p.adj.cutoff
@@ -384,7 +383,7 @@ setMethod(f          = "filterDiffAnalysis",
             for (x in names(object@metadata$DiffExpAnal[["TopDEF"]])){
               res <- object@metadata$DiffExpAnal[["TopDEF"]][[x]]
               tmp <- data.frame(DEF = rownames(res), bin = rep(1,length(rownames(res))))
-              colnames(tmp) <- c("DEF", filter(object@metadata$DiffExpAnal$contrasts, contrastName == x)$tag)
+              colnames(tmp) <- c("DEF", x)
               
               if(dim(tmp)[1] != 0){ DEF_list[[x]] <- tmp }
             }
@@ -397,7 +396,7 @@ setMethod(f          = "filterDiffAnalysis",
                 mutate_at(.vars = 2:(length(DEF_list)+1),
                           .funs = function(x){
                             if_else(is.na(x), 0, 1)}) %>%
-                data.table()
+                tibble()
             }
             
             return(object)
@@ -464,10 +463,6 @@ setMethod(f="plotDiffAnalysis",
                                  contrastName,
                                  typeofplots = c("MA.plot", "volcano", "histogram")){
             
-            if (.isTagName(object, contrastName)) {
-              contrastName <- .convertTagToContrast(object, contrastName)
-            }
-            
             plots <- list()
             
             resTable <- object@metadata$DiffExpAnal[["DEF"]][[contrastName]]
@@ -494,9 +489,6 @@ setMethod(f          = "plotDiffAnalysis",
                                 contrastName, 
                                 typeofplots = c("MA.plot", "volcano", "histogram")){
             
-            if (.isTagName(object, contrastName)) { 
-              contrastName <-  .convertTagToContrast(object, contrastName)
-            }
             
             return(plotDiffAnalysis(object      = object[[SE.name]],
                                     contrastName  = contrastName,
@@ -727,11 +719,6 @@ setMethod(f          = "plotHeatmapDesign",
                                 modalities = NULL, 
                                 drawArgs = list(), 
                                 heatmapArgs = list()){
-            
-            
-            if (.isTagName(object, contrastName)) {
-              contrastName <- .convertTagToContrast(object, contrastName)
-            }
             
             return(plotHeatmapDesign(object        = object[[SE.name]],
                                      contrastName    = contrastName,
@@ -985,35 +972,36 @@ setMethod(f          = "getDEList",
           signature  = "RflomicsSE",
           definition = function(object, contrasts = NULL, operation = "union"){
             
-            if (is.null(contrasts) || length(contrasts) == 0) 
-              contrasts <- getSelectedContrasts(object)[["tag"]]
-            if (.isContrastName(object, contrasts)) 
-              contrasts <- .convertContrastToTag(object, contrasts)
-            
-            if (!is.null(object@metadata$DiffExpAnal$Validcontrasts)) {
-              validTags <- .convertContrastToTag(object, getValidContrasts(object)$contrastName)
-            } else {
-              validTags <- contrasts
+            validContrasts <- getValidContrasts(object)[["contrastName"]]
+            if (is.null(validContrasts) || length(validContrasts) == 0){
+              validContrasts <- getSelectedContrasts(object)[["contrastName"]]
+              if (is.null(validContrasts) || length(validContrasts) == 0)
+                stop("No defined contrast")
             }
             
-            tagsConcerned <- intersect(contrasts, validTags)
-            
-            if (length(tagsConcerned) == 0) 
-              stop("It seems there is no contrasts to select DE entities from.")
+            if (is.null(contrasts) || length(contrasts) == 0){
+              contrasts <- validContrasts 
+            }
+            else{
+              contrasts <- intersect(contrasts, validContrasts)
+              if (is.null(contrasts) || length(contrasts) == 0)
+                stop("No defined contrast")
+            }
             
             df_DE <- getDEMatrix(object) |>
-              select(c("DEF", any_of(tagsConcerned)))
+              select(c("DEF", any_of(contrasts)))
+            
+            if (is.null(df_DE) || nrow(df_DE) == 0 || ncol(df_DE) < 2)
+              stop("")
             
             if (operation == "intersection") {
               DETab <- df_DE %>%
-                mutate(SUMCOL = select(., starts_with("H")) %>%
-                         rowSums(na.rm = TRUE)) %>%
-                filter(SUMCOL == length(tagsConcerned))
+                mutate(SUMCOL = select(., -DEF) %>% rowSums(na.rm = TRUE)) %>%
+                filter(SUMCOL == length(contrasts))
               
             } else {
               DETab <- df_DE %>%
-                mutate(SUMCOL = select(., starts_with("H")) %>%
-                         rowSums(na.rm = TRUE)) %>%
+                mutate(SUMCOL = select(., -DEF) %>% rowSums(na.rm = TRUE)) %>%
                 filter(SUMCOL >= 1)
             }
             

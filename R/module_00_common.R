@@ -115,8 +115,7 @@ RadioButtonsCondition <- function(input, output, session, typeFact) {
           renderPlot({
             plotDataOverview(
               session$userData$FlomicsMultiAssay,
-              omicNames = rea.values$datasetProcess,
-              realSize = TRUE
+              omicNames = rea.values$datasetProcess
             )
           })
       )

@@ -145,7 +145,7 @@ generateExample <- function(processing   = TRUE,
         MAE <- MAE |>
             runAnnotationEnrichment(
                 SE.name = "RNAtest",
-                nameList = getSelectedContrasts(MAE[["RNAtest"]])$tag,
+                nameList = getSelectedContrasts(MAE[["RNAtest"]])$contrastName,
                 database = "custom",
                 list_args = list(pvalueCutoff = 0.05),
                 col_term = "GO term accession",
@@ -156,7 +156,7 @@ generateExample <- function(processing   = TRUE,
             ) |>
             runAnnotationEnrichment(
                 SE.name = "protetest",
-                nameList = getSelectedContrasts(MAE[["protetest"]])$tag,
+                nameList = getSelectedContrasts(MAE[["protetest"]])$contrastName,
                 database = "custom",
                 list_args = list(pvalueCutoff = 0.05),
                 col_term = "GO term accession",

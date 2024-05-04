@@ -126,11 +126,9 @@ setMethod(
                    }
                    
                    if (!is.null(nameList)) {
-                       if (.isTagName(object, nameList))
-                           nameList <-
-                               .convertTagToContrast(object, nameList)
-                       
                        contrasts <- intersect(contrasts, nameList)
+                       if(is.null(contrasts) || length(contrasts) == 0)
+                         stop("No selected contrasts.")
                    }
                    
                    geneLists <-
@@ -1078,15 +1076,10 @@ setMethod(
                           from = "DiffExpEnrichAnal",
                           database = NULL,
                           contrastName = NULL) {
+      
         from <- .determineFromEnrich(from)
         
         # cat("|From: ", from, "\n")
-        
-        if (!is.null(contrastName)) {
-            if (.isTagName(object, contrastName)) {
-                contrastName <- .convertTagToContrast(object, contrastName)
-            }
-        }
         
         if (!is.null(database)) {
             toReturn <- object@metadata[[from]][[database]]$summary

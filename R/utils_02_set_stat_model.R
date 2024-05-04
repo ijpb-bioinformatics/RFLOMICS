@@ -778,13 +778,5 @@ updateSelectedContrasts <- function(object, contrastList=NULL){
   allcontrasts <- allcontrasts |>
     filter(contrast %in% contrastList$contrast)
   
-  if(nrow(allcontrasts) != 0){
-    allcontrasts <- 
-      mutate(allcontrasts, tag = paste0("H", seq_len(nrow(allcontrasts))))
-  }
-  else{
-    allcontrasts <- NULL
-  }
-  
   return(allcontrasts)
 }

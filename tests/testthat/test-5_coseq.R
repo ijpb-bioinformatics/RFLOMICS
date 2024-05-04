@@ -55,13 +55,15 @@ test_that("Everything works as expected", {
 
 test_that("Two runs, same results - seed is working - RNAseq", {
   
+  contrastNames <- c("(temperatureMedium - temperatureLow) in imbibitionDS",
+                     "(temperatureElevated - temperatureLow) in imbibitionDS")
   res1 <- runCoExpression(object = MAE, SE.name = "RNAtest", K = 2:10, replicates = 5, merge = "union", 
                                model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin", 
-                               normFactors = "TMM", contrastNames = c("H1", "H2"))
+                               normFactors = "TMM", contrastNames = contrastNames)
   
   res2 <- runCoExpression(object = MAE, SE.name = "RNAtest", K = 2:10, replicates = 5, merge = "union",
                                model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin",
-                               normFactors = "TMM", contrastNames = c("H1", "H2"))
+                               normFactors = "TMM", contrastNames = contrastNames)
   
   expect_identical(coseq::clusters(res1[["RNAtest"]]@metadata$CoExpAnal$coseqResults),
                    coseq::clusters(res2[["RNAtest"]]@metadata$CoExpAnal$coseqResults))

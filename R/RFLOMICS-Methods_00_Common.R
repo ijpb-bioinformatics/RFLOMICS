@@ -58,7 +58,7 @@ setMethod(
     if (is.null(fileName))
       fileName <- file.path(tmpDir,
                             paste0(format(Sys.time(), "%Y_%m_%d"), "_", 
-                                   getProjectName(object), ".html"))
+                                   projectName, ".html"))
     
     # save FE rflomics.MAE in .Rdata and load it during report execution
     rflomics.MAE <- object
@@ -90,7 +90,7 @@ setMethod(
       if (is.null(archiveName))
         archiveName <- file.path(dirname(tmpDir),
                                  paste0(format(Sys.time(),"%Y_%m_%d"),
-                                        "_", getProjectName(object), 
+                                        "_", projectName, 
                                         ".tar.gz"))
       
       
@@ -484,7 +484,7 @@ setMethod(
       
       df.list[[dataset]] <-
         as.data.frame(
-          object[[dataset]]@metadata$DiffExpAnal$stats[Validcontrasts,]) %>%
+          object[[dataset]]@metadata$DiffExpAnal$stats)[Validcontrasts,] %>%
         mutate(dataset = dataset, contrasts = rownames(.))
     }
     
@@ -508,7 +508,6 @@ setMethod(
       labs(fill = NULL, x = "")
     
     return(p)
-    
   }
 )
 

@@ -630,7 +630,7 @@
             if (set %in% rea.values$datasetDiff) {
                 ValidContrasts <-
                     getValidContrasts(session$userData$FlomicsMultiAssay[[set]])
-                ListNames.diff <- ValidContrasts$tag
+                ListNames.diff <- ValidContrasts$contrastName
                 names(ListNames.diff) <- ValidContrasts$contrastName
                 
             }else{

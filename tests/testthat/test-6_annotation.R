@@ -15,7 +15,7 @@ MAE <- generateExample(
 #   
 #   # Selecting only one contrast
 #   expect_no_error({
-#     MAE <- runAnnotationEnrichment(MAE, nameList = "H1", SE.name = "RNAtest", database = "GO",
+#     MAE <- runAnnotationEnrichment(MAE, nameList = "(temperatureMedium - temperatureLow) in imbibitionDS" , SE.name = "RNAtest", database = "GO",
 #                                    list_args = list(OrgDb = "org.At.tair.db", 
 #                                                     keyType = "TAIR", 
 #                                                     pvalueCutoff = 0.05),
@@ -23,7 +23,7 @@ MAE <- generateExample(
 #   })
 #   
 #   expect({
-#     obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H1", database = "GO", domain = "BP")
+#     obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "(temperatureMedium - temperatureLow) in imbibitionDS" , database = "GO", domain = "BP")
 #     nrow(obj@result) > 0
 #   }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
 #   
@@ -38,7 +38,7 @@ MAE <- generateExample(
 #   })
 #   
 #   expect({
-#     obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H2", database = "GO", domain = "BP")
+#     obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "(temperatureElevated - temperatureLow) in imbibitionDS", database = "GO", domain = "BP")
 #     nrow(obj@result) > 0
 #   }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
 #   
@@ -64,7 +64,7 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
   
   # Selecting only one contrast, custom file
   expect_no_error({
-    MAE <- runAnnotationEnrichment(MAE, nameList = "H1", SE.name = "RNAtest", database = "custom",
+    MAE <- runAnnotationEnrichment(MAE, nameList = "(temperatureMedium - temperatureLow) in imbibitionDS" , SE.name = "RNAtest", database = "custom",
                                    list_args = list(pvalueCutoff = 0.05),
                                    col_term = "GO term accession", 
                                    col_gene = "Gene stable ID",
@@ -74,7 +74,7 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
   })
   
   expect({
-    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H1", database = "custom", domain = "biological_process")
+    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "(temperatureMedium - temperatureLow) in imbibitionDS" , database = "custom", domain = "biological_process")
     nrow(obj@result) > 0
   }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
   
@@ -90,7 +90,7 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
   # })
   
   # expect({
-  #   obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H2", database = "GO", domain = "BP")
+  #   obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "(temperatureElevated - temperatureLow) in imbibitionDS", database = "GO", domain = "BP")
   #   nrow(obj@result) > 0
   # }, failure_message = "(GO RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
   
@@ -104,7 +104,7 @@ test_that("it's running from diffExpAnal - Custom - RNASeq", {
   })
   
   expect({
-    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "H2", database = "KEGG")[["no-domain"]]
+    obj <- RFLOMICS:::getEnrichRes(MAE[["RNAtest"]], contrast = "(temperatureElevated - temperatureLow) in imbibitionDS", database = "KEGG")[["no-domain"]]
     nrow(obj@result) > 0
   }, failure_message = "(KEGG RNAseq from DiffExp) - There is no result in the enrichment metadata part.")
   

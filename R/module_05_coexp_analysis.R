@@ -79,7 +79,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
         SE.filtered <- MAE.data[[dataset]]
         
         ##-> retrieve DEG lists and DEG valid lists
-        ListNames.diff        <- getValidContrasts(SE.filtered)$tag
+        ListNames.diff        <- getValidContrasts(SE.filtered)$contrastName
         names(ListNames.diff) <- getValidContrasts(SE.filtered)$contrastName
         
         ##-> option
@@ -223,7 +223,10 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
         if(rea.values[[dataset]]$diffValid == FALSE) return()
         
         dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
-        paste(length(DEG_list()), " ", .omicsDic(dataset.SE)$variableName)
+        paste(length(getDEList(object    = dataset.SE,
+                        contrasts = input$select, 
+                        operation = input$unionInter)), 
+              .omicsDic(dataset.SE)$variableName)
     })
     
     # update K value (min max)
@@ -456,9 +459,9 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                                                "'s contrast belonging")),
                                  br(), hr(),br(),
                                  renderPlot({ 
-                                     tag <- metadata(session$userData$FlomicsMultiAssay[[dataset]])$DiffExpAnal[["Validcontrasts"]]$tag
+                                     H <- getCoexpSettings(dataset.SE)$gene.list.names
                                      
-                                     if(length(tag) > 1){
+                                     if(length(H) > 1){
                                          plotCoseqContrasts(dataset.SE)
                                      }
                                  })

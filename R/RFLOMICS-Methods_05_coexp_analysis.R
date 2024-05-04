@@ -112,7 +112,7 @@
 #'  runDiffAnalysis(SE.name = "protetest",  
 #'                  method = "limmalmFit", contrastList = contrastList) |> 
 #'  runCoExpression(SE.name = "protetest", K = 2:5, replicates = 5, 
-#'                  contrastNames = contrastList$tag, merge = "union")
+#'                  contrastNames = contrastList$contrastName, merge = "union")
 #'  
 #'  getCoexpSettings(MAE[["protetest"]])
 #'  
@@ -134,136 +134,148 @@ setMethod(f = "runCoExpression",
                                 scale = NULL,
                                 silent = TRUE, 
                                 cmd = FALSE){
-              
-              if (is.null(getDEMatrix(object))) {
-                  stop("Please run a differential analysis. 
+            
+            if (is.null(getDEMatrix(object))) {
+              stop("Please run a differential analysis. 
                        runCoExpression uses these results.")
-              }
+            }
+            
+            validContrasts <- getValidContrasts(object)
+            if(is.null(validContrasts) || nrow(validContrasts) == 0){
+              validContrasts <- getSelectedContrasts(object)
               
+              if(is.null(validContrasts) || nrow(validContrasts) == 0)
+                stop("No defined contrasts")
+            }
               
-              if (is.null(contrastNames) && !is.null(getValidContrasts(object)[["tag"]])) 
-                  contrastNames <- getValidContrasts(object)[["tag"]]
-              else if (is.null(contrastNames) && is.null(getValidContrasts(object)[["tag"]])) 
-                  contrastNames <- colnames(getDEMatrix(object))[-1]
-              
-              Groups <- getDesignMat(object)
-              
-              CoExpAnal <- list()
-              
-              CoExpAnal[["setting"]][["method"]]           <- "coseq"
-              CoExpAnal[["setting"]][["gene.list.names"]]  <- contrastNames
-              names(CoExpAnal[["setting"]][["gene.list.names"]])  <- filter(object@metadata$DiffExpAnal$contrasts, tag %in% contrastNames)$contrastName
-              CoExpAnal[["setting"]][["merge.type"]]       <- merge
-              CoExpAnal[["setting"]][["replicates.nb"]]    <- replicates
-              CoExpAnal[["setting"]][["K.range"]]          <- K
-              CoExpAnal[["setting"]][["scale"]]            <- scale
-              
-              geneList <- getDEList(object = object, 
-                                    contrasts = contrastNames,
-                                    operation = merge)
-              
-              # set default parameters based on data type
-              param.list <- list("model" = model)
-              
-              switch(object@metadata$omicType,
+            
+            if (is.null(contrastNames)){
+              contrastNames <- validContrasts$contrastName
+            }
+            else{
+              contrastNames <- intersect(contrastNames, validContrasts$contrastName)
+              if(length(contrastNames) == 0)
+                stop("No defined contrasts")
+            }
+            
+            Groups <- getDesignMat(object)
+            
+            CoExpAnal <- list()
+            
+            CoExpAnal[["setting"]][["method"]]           <- "coseq"
+            CoExpAnal[["setting"]][["gene.list.names"]]  <- contrastNames
+            names(CoExpAnal[["setting"]][["gene.list.names"]])  <- contrastNames
+            CoExpAnal[["setting"]][["merge.type"]]       <- merge
+            CoExpAnal[["setting"]][["replicates.nb"]]    <- replicates
+            CoExpAnal[["setting"]][["K.range"]]          <- K
+            CoExpAnal[["setting"]][["scale"]]            <- scale
+            
+            geneList <- getDEList(object = object, 
+                                  contrasts = contrastNames,
+                                  operation = merge)
+            
+            # set default parameters based on data type
+            param.list <- list("model" = model)
+            
+            switch(object@metadata$omicType,
+                   
+                   "RNAseq" = {
+                     counts <- assay(object)[geneList,]
                      
-                     "RNAseq" = {
-                         counts <- assay(object)[geneList,]
-                         
-                         param.list[["transformation"]]   <- ifelse(is.null(transformation), "arcsin", transformation)
-                         param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "TMM", normFactors)
-                         param.list[["meanFilterCutoff"]] <- ifelse(is.null(meanFilterCutoff), 50, meanFilterCutoff)
-                         param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Ck", GaussianModel)
-                         
-                     },
-                     "proteomics" = {
-                         object2 <- .checkTransNorm(object)
-                         counts <- assay(object2)[geneList,]
-                         
-                         # Print the selected GaussianModel
-                         if (cmd) {
-                             message("Use ", GaussianModel)
-                             message("Scale each protein (center = TRUE, scale = TRUE)")
-                         } 
-                         CoExpAnal[["transformation.prot"]] <- "scaleProt"
-                         counts[] <- t(apply(counts,1,function(x){scale(x, center = TRUE, scale = TRUE) }))
-                         
-                         # param
-                         param.list[["transformation"]]   <- ifelse(is.null(transformation), "none", transformation)
-                         param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "none", normFactors)
-                         param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Bk", GaussianModel)
-                     },
-                     "metabolomics" = {
-                         object2 <- .checkTransNorm(object)
-                         counts <-  assay(object2)[geneList,]
-                         
-                         # Print the selected GaussianModel
-                         if (cmd) {
-                             message("Use ", GaussianModel)
-                             message("Scale each metabolite (center = TRUE, scale = TRUE)")
-                         } 
-                         CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
-                         counts[] <- t(apply(counts,1,function(x){ scale(x, center = TRUE, scale = TRUE) }))
-                         
-                         # param
-                         param.list[["transformation"]] <- ifelse(is.null(transformation), "none", transformation)
-                         param.list[["normFactors"]]    <- ifelse(is.null(normFactors), "none", normFactors)
-                         param.list[["GaussianModel"]]  <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Bk", GaussianModel)
-                     }
-              )
+                     param.list[["transformation"]]   <- ifelse(is.null(transformation), "arcsin", transformation)
+                     param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "TMM", normFactors)
+                     param.list[["meanFilterCutoff"]] <- ifelse(is.null(meanFilterCutoff), 50, meanFilterCutoff)
+                     param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Ck", GaussianModel)
+                     
+                   },
+                   "proteomics" = {
+                     object2 <- .checkTransNorm(object)
+                     counts <- assay(object2)[geneList,]
+                     
+                     # Print the selected GaussianModel
+                     if (cmd) {
+                       message("Use ", GaussianModel)
+                       message("Scale each protein (center = TRUE, scale = TRUE)")
+                     } 
+                     CoExpAnal[["transformation.prot"]] <- "scaleProt"
+                     counts[] <- t(apply(counts,1,function(x){scale(x, center = TRUE, scale = TRUE) }))
+                     
+                     # param
+                     param.list[["transformation"]]   <- ifelse(is.null(transformation), "none", transformation)
+                     param.list[["normFactors"]]      <- ifelse(is.null(normFactors), "none", normFactors)
+                     param.list[["GaussianModel"]]    <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Bk", GaussianModel)
+                   },
+                   "metabolomics" = {
+                     object2 <- .checkTransNorm(object)
+                     counts <-  assay(object2)[geneList,]
+                     
+                     # Print the selected GaussianModel
+                     if (cmd) {
+                       message("Use ", GaussianModel)
+                       message("Scale each metabolite (center = TRUE, scale = TRUE)")
+                     } 
+                     CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
+                     counts[] <- t(apply(counts,1,function(x){ scale(x, center = TRUE, scale = TRUE) }))
+                     
+                     # param
+                     param.list[["transformation"]] <- ifelse(is.null(transformation), "none", transformation)
+                     param.list[["normFactors"]]    <- ifelse(is.null(normFactors), "none", normFactors)
+                     param.list[["GaussianModel"]]  <- ifelse(is.null(GaussianModel), "Gaussian_pk_Lk_Bk", GaussianModel)
+                   }
+            )
+            
+            CoExpAnal[["setting"]] <- c(CoExpAnal[["setting"]], param.list)
+            
+            # run coseq : on local machine or remote cluster
+            
+            if (cmd) message("#     => coseq... ")
+            
+            
+            counts <- counts[, match(rownames(Groups), colnames(counts))]
+            if (!identical(colnames(counts), rownames(Groups), attrib.as.set = FALSE)) {
+              stop("colnames counts and rownames conds don't match!")
+            }
+            
+            coseq.res.list <- list()
+            
+            coseq.res.list <- switch(as.character(clustermq),
+                                     `FALSE` = {
+                                       .tryRflomics(
+                                         .runCoseqLocal(counts, 
+                                                        conds = Groups$groups,
+                                                        K = K, 
+                                                        replicates = replicates, 
+                                                        param.list = param.list,
+                                                        silent = silent,
+                                                        cmd = cmd))
+                                     },
+                                     `TRUE` = {
+                                       .tryRflomics(
+                                         .runCoseqClustermq(counts, 
+                                                            conds = Groups$groups,
+                                                            K = K, 
+                                                            replicates = replicates, 
+                                                            param.list = param.list,
+                                                            silent = silent, 
+                                                            cmd = cmd))
+                                       
+                                     })
+            
+            # If coseq could run (no problem with SSH connexion 
+            # in case of clustermq=TRUE)
+            
+            if(! is.null(coseq.res.list$value)){
               
-              CoExpAnal[["setting"]] <- c(CoExpAnal[["setting"]], param.list)
-              
-              # run coseq : on local machine or remote cluster
-              
-              if (cmd) message("#     => coseq... ")
-              
-              
-              counts <- counts[, match(rownames(Groups), colnames(counts))]
-              if (!identical(colnames(counts), rownames(Groups), attrib.as.set = FALSE)) {
-                  stop("colnames counts and rownames conds don't match!")
-              }
-              
-              coseq.res.list <- list()
-              
-              coseq.res.list <- switch(as.character(clustermq),
-                                       `FALSE` = {
-                                           .tryRflomics(
-                                               .runCoseqLocal(counts, 
-                                                              conds = Groups$groups,
-                                                              K = K, 
-                                                              replicates = replicates, 
-                                                              param.list = param.list,
-                                                              silent = silent,
-                                                              cmd = cmd))
-                                       },
-                                       `TRUE` = {
-                                           .tryRflomics(
-                                               .runCoseqClustermq(counts, 
-                                                                  conds = Groups$groups,
-                                                                  K = K, 
-                                                                  replicates = replicates, 
-                                                                  param.list = param.list,
-                                                                  silent = silent, 
-                                                                  cmd = cmd))
-                                           
-                                       })
-              
-              # If coseq could run (no problem with SSH connexion 
-              # in case of clustermq=TRUE)
-              
-              if(! is.null(coseq.res.list$value)){
-                  
-                  CoExpAnal <- c(CoExpAnal, coseq.res.list$value)
-              }
-              else{
-                  CoExpAnal[["results"]] <- FALSE
-                  CoExpAnal[["stats"]]   <- NULL
-                  CoExpAnal[["error"]]   <- coseq.res.list$error
-              }
-              
-              object@metadata$CoExpAnal <- CoExpAnal
-              return(object)
+              CoExpAnal <- c(CoExpAnal, coseq.res.list$value)
+            }
+            else{
+              CoExpAnal[["results"]] <- FALSE
+              CoExpAnal[["stats"]]   <- NULL
+              CoExpAnal[["error"]]   <- coseq.res.list$error
+            }
+            
+            object@metadata$CoExpAnal <- CoExpAnal
+            return(object)
           })
 
 #' @rdname runCoExpression
@@ -279,29 +291,29 @@ setMethod(f          = "runCoExpression",
                                 clustermq = FALSE,
                                 meanFilterCutoff = NULL, scale = NULL, 
                                 silent = TRUE, cmd = FALSE){
-              
-              
-              if (!SE.name %in% names(object)) {
-                  stop(SE.name, " is not part of ", object)
-              }
-              
-              object[[SE.name]] <- runCoExpression(object = object[[SE.name]],
-                                                   K = K,
-                                                   replicates = replicates,
-                                                   contrastNames = contrastNames, 
-                                                   merge = merge, 
-                                                   model = model,
-                                                   GaussianModel = GaussianModel,
-                                                   transformation = transformation,
-                                                   normFactors = normFactors,
-                                                   clustermq = clustermq,
-                                                   meanFilterCutoff = meanFilterCutoff,
-                                                   scale = scale,
-                                                   silent = silent,
-                                                   cmd = cmd)
-              
-              return(object)
-              
+            
+            
+            if (!SE.name %in% names(object)) {
+              stop(SE.name, " is not part of ", object)
+            }
+            
+            object[[SE.name]] <- runCoExpression(object = object[[SE.name]],
+                                                 K = K,
+                                                 replicates = replicates,
+                                                 contrastNames = contrastNames, 
+                                                 merge = merge, 
+                                                 model = model,
+                                                 GaussianModel = GaussianModel,
+                                                 transformation = transformation,
+                                                 normFactors = normFactors,
+                                                 clustermq = clustermq,
+                                                 meanFilterCutoff = meanFilterCutoff,
+                                                 scale = scale,
+                                                 silent = silent,
+                                                 cmd = cmd)
+            
+            return(object)
+            
           })
 
 #' @title plotCoExpression
@@ -350,7 +362,7 @@ setMethod(f          = "runCoExpression",
 #'  runNormalization(SE.name = "protetest", normMethod = "median")    |> 
 #'  runDiffAnalysis(SE.name = "protetest",  method = "limmalmFit", contrastList = contrastList) |> 
 #'  runCoExpression(SE.name = "protetest", K = 2:10, replicates = 5, 
-#'                  contrastNames = contrastList$tag, merge = "union") 
+#'                  contrastNames = contrastList$contrastName, merge = "union") 
 #'  
 #'  plots.coexp <- plotCoExpression(MAE[["protetest"]])
 #'  plots.coexp[[6]]
@@ -358,54 +370,54 @@ setMethod(f          = "runCoExpression",
 setMethod(f="plotCoExpression",
           signature="RflomicsSE",
           definition <- function(object){
-              
-              if(is.null(metadata(object)$CoExpAnal) || length( metadata(object)$CoExpAnal) == 0) {
-                  stop("No co-expression results!")
-              }
-              CoExpAnal <- metadata(object)$CoExpAnal
-              
-              Groups <- getDesignMat(object)
-              
-              coseq.res     <- CoExpAnal[["coseqResults"]]
-              ICL.list      <- CoExpAnal[["plots"]][["ICL"]] 
-              logLike.list  <- CoExpAnal[["plots"]][["logLike"]]
-              K             <- CoExpAnal[["K.range"]]
-              
-              #### Plots
-              ### plot ICL
-              ICL.p <- ggplot(data = ICL.list[["ICL.tab"]]) +
-                  geom_boxplot(aes(x = as.factor(K), y = ICL, group = K)) +
-                  geom_text(data = ICL.list[["ICL.n"]], 
-                            aes(x = seq_len(length(K)), 
-                                y = max(ICL.list[["ICL.vec"]], na.rm = TRUE),
-                                label = paste0("n=", n)), 
-                            col = 'red', size = 4) +
-                  ylim(min(ICL.list[["ICL.vec"]], na.rm = TRUE), 
-                       max(ICL.list[["ICL.vec"]], na.rm = TRUE)) +
-                  xlab("K")
-              
-              ### plot logLike
-              logLike.p <- ggplot(data = logLike.list[["logLike.tab"]]) +
-                  geom_boxplot(aes(x = as.factor(K), y = logLike, group = K)) +
-                  xlab("K") +
-                  geom_text(data = logLike.list[["logLike.n"]], 
-                            aes(x = seq_len(length(K)), 
-                                y = max(logLike.list[["logLike.vec"]], na.rm = TRUE),
-                                label = paste0("n=", n)), 
-                            col = 'red', size = 4)
-              
-              ### coseq plots
-              plot.coseq.res <- plot(coseq.res, 
-                                     conds = Groups$groups,
-                                     collapse_reps = "average",
-                                     graphs = c("profiles", 
-                                                "boxplots", 
-                                                "probapost_boxplots",
-                                                "probapost_barplots",
-                                                "probapost_histogram"))
-              
-              
-              return(c(plot.coseq.res, list("ICL" = ICL.p, "logLike" = logLike.p)))
+            
+            if(is.null(metadata(object)$CoExpAnal) || length( metadata(object)$CoExpAnal) == 0) {
+              stop("No co-expression results!")
+            }
+            CoExpAnal <- metadata(object)$CoExpAnal
+            
+            Groups <- getDesignMat(object)
+            
+            coseq.res     <- CoExpAnal[["coseqResults"]]
+            ICL.list      <- CoExpAnal[["plots"]][["ICL"]] 
+            logLike.list  <- CoExpAnal[["plots"]][["logLike"]]
+            K             <- CoExpAnal[["K.range"]]
+            
+            #### Plots
+            ### plot ICL
+            ICL.p <- ggplot(data = ICL.list[["ICL.tab"]]) +
+              geom_boxplot(aes(x = as.factor(K), y = ICL, group = K)) +
+              geom_text(data = ICL.list[["ICL.n"]], 
+                        aes(x = seq_len(length(K)), 
+                            y = max(ICL.list[["ICL.vec"]], na.rm = TRUE),
+                            label = paste0("n=", n)), 
+                        col = 'red', size = 4) +
+              ylim(min(ICL.list[["ICL.vec"]], na.rm = TRUE), 
+                   max(ICL.list[["ICL.vec"]], na.rm = TRUE)) +
+              xlab("K")
+            
+            ### plot logLike
+            logLike.p <- ggplot(data = logLike.list[["logLike.tab"]]) +
+              geom_boxplot(aes(x = as.factor(K), y = logLike, group = K)) +
+              xlab("K") +
+              geom_text(data = logLike.list[["logLike.n"]], 
+                        aes(x = seq_len(length(K)), 
+                            y = max(logLike.list[["logLike.vec"]], na.rm = TRUE),
+                            label = paste0("n=", n)), 
+                        col = 'red', size = 4)
+            
+            ### coseq plots
+            plot.coseq.res <- plot(coseq.res, 
+                                   conds = Groups$groups,
+                                   collapse_reps = "average",
+                                   graphs = c("profiles", 
+                                              "boxplots", 
+                                              "probapost_boxplots",
+                                              "probapost_barplots",
+                                              "probapost_histogram"))
+            
+            
+            return(c(plot.coseq.res, list("ICL" = ICL.p, "logLike" = logLike.p)))
           })
 
 #' @rdname plotCoExpression
@@ -417,8 +429,8 @@ setMethod(f="plotCoExpression",
 setMethod(f          = "plotCoExpression",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name){
-              
-              plotCoExpression(object[[SE.name]])
+            
+            plotCoExpression(object[[SE.name]])
           })
 
 
@@ -477,7 +489,7 @@ setMethod(f          = "plotCoExpression",
 #'  runNormalization(SE.name = "protetest", normMethod = "median")    |> 
 #'  runDiffAnalysis(SE.name = "protetest",  method = "limmalmFit", contrastList = contrastList) |> 
 #'  runCoExpression(SE.name = "protetest", K = 2:10, replicates = 5, 
-#'                  contrastNames = contrastList$tag, merge = "union") 
+#'                  contrastNames = contrastList$contrastName, merge = "union") 
 #'  
 #'  plotCoExpressionProfile(MAE[["protetest"]], cluster = 2)
 #'  
@@ -487,50 +499,50 @@ setMethod(f = "plotCoExpressionProfile",
           definition = function(object, cluster = 1, 
                                 condition="groups", 
                                 features=NULL){
+            
+            Groups <- getDesignMat(object)
+            
+            coseq.res  <- metadata(object)$CoExpAnal[["coseqResults"]]
+            assays.data <- filter(as.data.frame(coseq.res@assays@data[[1]]), 
+                                  get(paste0("Cluster_",cluster)) > 0.8)
+            
+            y_profiles.gg <- coseq.res@y_profiles[rownames(assays.data),] %>% 
+              data.frame() %>% 
+              mutate(observations=rownames(.)) %>% 
+              melt(id="observations", value.name = "y_profiles") %>%  
+              rename(samples = variable) %>%
+              full_join(Groups , by = "samples")
+            
+            y_profiles.gg <- arrange(y_profiles.gg, get(condition))
+            y_profiles.gg$groups <- factor(y_profiles.gg$groups, 
+                                           levels = unique(y_profiles.gg$groups))
+            
+            p <- ggplot(data = y_profiles.gg, 
+                        aes(x = groups, y = y_profiles)) +
+              geom_boxplot(aes_string(fill = condition), 
+                           outlier.size = 0.3) +
+              theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  
+              xlab("Conditions") + ylab("Expression profiles") +
+              ggtitle(paste0("Cluster: ",cluster, "; nb_observations: ",
+                             dim(assays.data)[1]))
+            
+            if(!is.null(features)){
               
-              Groups <- getDesignMat(object)
-              
-              coseq.res  <- metadata(object)$CoExpAnal[["coseqResults"]]
-              assays.data <- filter(as.data.frame(coseq.res@assays@data[[1]]), 
-                                    get(paste0("Cluster_",cluster)) > 0.8)
-              
-              y_profiles.gg <- coseq.res@y_profiles[rownames(assays.data),] %>% 
-                  data.frame() %>% 
-                  mutate(observations=rownames(.)) %>% 
-                  melt(id="observations", value.name = "y_profiles") %>%  
-                  rename(samples = variable) %>%
-                  full_join(Groups , by = "samples")
-              
-              y_profiles.gg <- arrange(y_profiles.gg, get(condition))
-              y_profiles.gg$groups <- factor(y_profiles.gg$groups, 
-                                             levels = unique(y_profiles.gg$groups))
-              
-              p <- ggplot(data = y_profiles.gg, 
-                          aes(x = groups, y = y_profiles)) +
-                  geom_boxplot(aes_string(fill = condition), 
-                               outlier.size = 0.3) +
-                  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  
-                  xlab("Conditions") + ylab("Expression profiles") +
-                  ggtitle(paste0("Cluster: ",cluster, "; nb_observations: ",
-                                 dim(assays.data)[1]))
-              
-              if(!is.null(features)){
-                  
-                  df <- filter(y_profiles.gg, observations == features) %>% 
-                      group_by(groups) %>% 
-                      summarise(mean.y_profiles=mean(y_profiles))
-                  p <- p + 
-                      geom_point(data = df, 
-                                 aes(x = groups, y = mean.y_profiles), 
-                                 color = "red", size = 2) +
-                      geom_line( data = df, 
-                                 aes(x = groups, y = mean.y_profiles), 
-                                 color = "red", group = 1) +
-                      ggtitle(paste0("Cluster: ",cluster, 
-                                     "; nb_observations  ", 
-                                     dim(assays.data)[1], "; red: ", features))
-              }                  
-                  return(p)
+              df <- filter(y_profiles.gg, observations == features) %>% 
+                group_by(groups) %>% 
+                summarise(mean.y_profiles=mean(y_profiles))
+              p <- p + 
+                geom_point(data = df, 
+                           aes(x = groups, y = mean.y_profiles), 
+                           color = "red", size = 2) +
+                geom_line( data = df, 
+                           aes(x = groups, y = mean.y_profiles), 
+                           color = "red", group = 1) +
+                ggtitle(paste0("Cluster: ",cluster, 
+                               "; nb_observations  ", 
+                               dim(assays.data)[1], "; red: ", features))
+            }                  
+            return(p)
           })
 
 #' @rdname plotCoExpressionProfile
@@ -541,12 +553,12 @@ setMethod(f          = "plotCoExpressionProfile",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name, cluster = 1, 
                                 condition="groups", features=NULL){
-              
-              plotCoExpressionProfile(object = object[[SE.name]],
-                                      cluster = cluster,
-                                      condition = condition,
-                                      features = observation)
-              
+            
+            plotCoExpressionProfile(object = object[[SE.name]],
+                                    cluster = cluster,
+                                    condition = condition,
+                                    features = observation)
+            
           })
 
 
@@ -606,7 +618,7 @@ setMethod(f          = "plotCoExpressionProfile",
 #'  runNormalization(SE.name = "protetest", normMethod = "median")    |> 
 #'  runDiffAnalysis(SE.name = "protetest",  method = "limmalmFit", contrastList = contrastList) |> 
 #'  runCoExpression(SE.name = "protetest", K = 2:10, replicates = 5, 
-#'                  contrastNames = contrastList$tag, merge = "union") 
+#'                  contrastNames = contrastList$contrastName, merge = "union") 
 #'  
 #'  plotCoseqContrasts(MAE[["protetest"]])
 
@@ -614,75 +626,78 @@ setMethod(f          = "plotCoExpressionProfile",
 setMethod(f = "plotCoseqContrasts",
           signature = "RflomicsSE",
           definition =
-              function(object){
-                  
-                  # Get Selected contrasts for coexpression
-                  H <- getCoexpSettings(object)$gene.list.names
-                  
-                  # Gene's repartition by clusters
-                  coseq.res  <-
-                      object@metadata$CoExpAnal[["coseqResults"]]
-                  genesByclusters <-
-                      as.data.frame(ifelse(coseq.res@assays@data[[1]] > 0.8, 1, 0))
-                  genesByclusters <- rownames_to_column(genesByclusters, var = "DEF") 
-                  
-                  # Gene's repartition by Contrasts
-                  genesByContrasts <-
-                      getDEMatrix(object) |>
-                      select("DEF",as.vector(H))
-                  
-                  # Pivot tab.clusters
-                  genesByclusters.piv <- pivot_longer(
-                      data = genesByclusters,
-                      cols = seq(2, (dim(genesByclusters)[2])),
-                      names_to = "C",
-                      values_to = "does.belong") |>
-                      filter(does.belong == 1) |>
-                      select(-does.belong)
-                  
-                  # Merge the table of Cluster and Contrast
-                  tab <- left_join(genesByclusters.piv, 
-                                   as.data.frame(genesByContrasts), by = "DEF") |>
-                      select(-DEF) |>
-                      group_by(C) |>
-                      mutate(sum = rowSums(across(starts_with("H"))))
-                  
-                  # Summarize repartition for specific genes
-                  tab.spe <- filter(tab, sum == 1) |>
-                      select(-sum) |>
-                      pivot_longer(starts_with("H"), names_to = "H") |>
-                      filter(value == 1) |> 
-                      group_by(C, H) |>
-                      count()
-                  
-                  # Summarize repartition for genes common to at least 
-                  # 2 contrasts
-                  tab.com <- filter(tab, sum > 1) |>
-                      select(-sum) |>
-                      pivot_longer(starts_with("H"), names_to = "H") |>
-                      filter(value == 1) |> 
-                      group_by(C, H) |> 
-                      count() |> ungroup() |>
-                      mutate(H = "common") |> distinct()
-                  
-                  # Bind table and add prop
-                  tab <- rbind(tab.com,tab.spe) |> 
-                      group_by(C) |> 
-                      mutate(prop=(n/sum(n))*100)
-                  
-                  p <-  ggplot(tab,  aes(x = C, y = prop, fill = H)) + 
-                      geom_bar(stat ="identity") +
-                      coord_flip() +
-                      labs(x = "", y = paste0("Proportion of ",
-                                              .omicsDic(object)$variableNamegenes)) +
-                      scale_fill_discrete(name = "",
-                                          breaks = c("common", as.vector(H)),
-                                          labels = c("commons to at least 2 contrasts", 
-                                                     paste0("specifics to ", names(H)))) +
-                      theme(legend.position="bottom",legend.direction = "vertical")
-                  
-                  return(p)
-              })
+            function(object){
+              
+              # Get Selected contrasts for coexpression
+              H <- getCoexpSettings(object)$gene.list.names
+              
+              if(is.null(H) || length(H) < 2)
+                return(NULL)
+              
+              # Gene's repartition by clusters
+              coseq.res  <-
+                object@metadata$CoExpAnal[["coseqResults"]]
+              genesByclusters <-
+                as.data.frame(ifelse(coseq.res@assays@data[[1]] > 0.8, 1, 0))
+              genesByclusters <- rownames_to_column(genesByclusters, var = "DEF") 
+              
+              # Gene's repartition by Contrasts
+              genesByContrasts <-
+                getDEMatrix(object) |>
+                select("DEF",as.vector(H))
+              
+              # Pivot tab.clusters
+              genesByclusters.piv <- pivot_longer(
+                data = genesByclusters,
+                cols = seq(2, (dim(genesByclusters)[2])),
+                names_to = "C",
+                values_to = "does.belong") |>
+                filter(does.belong == 1) |>
+                select(-does.belong)
+              
+              # Merge the table of Cluster and Contrast
+              tab <- left_join(genesByclusters.piv, 
+                               as.data.frame(genesByContrasts), by = "DEF") |>
+                select(-DEF) |>
+                group_by(C) |>
+                mutate(sum = rowSums(across(names(genesByContrasts)[-1])))
+              
+              # Summarize repartition for specific genes
+              tab.spe <- filter(tab, sum == 1) |>
+                select(-sum) |>
+                pivot_longer(names(genesByContrasts)[-1], names_to = "H") |>
+                filter(value == 1) |> 
+                group_by(C, H) |>
+                count()
+              
+              # Summarize repartition for genes common to at least 
+              # 2 contrasts
+              tab.com <- filter(tab, sum > 1) |>
+                select(-sum) |>
+                pivot_longer(names(genesByContrasts)[-1], names_to = "H") |>
+                filter(value == 1) |> 
+                group_by(C, H) |> 
+                count() |> ungroup() |>
+                mutate(H = "common") |> distinct()
+              
+              # Bind table and add prop
+              tab <- rbind(tab.com,tab.spe) |> 
+                group_by(C) |> 
+                mutate(prop=(n/sum(n))*100)
+              
+              p <-  ggplot(tab,  aes(x = C, y = prop, fill = H)) + 
+                geom_bar(stat ="identity") +
+                coord_flip() +
+                labs(x = "", y = paste0("Proportion of ",
+                                        .omicsDic(object)$variableNamegenes)) +
+                scale_fill_discrete(name = "",
+                                    breaks = c("common", as.vector(H)),
+                                    labels = c("commons to at least 2 contrasts", 
+                                               paste0("specifics to ", names(H)))) +
+                theme(legend.position="bottom",legend.direction = "vertical")
+              
+              return(p)
+            })
 
 #' @rdname plotCoseqContrasts
 #' @param SE.name name of the RflomicsSE to access
@@ -692,9 +707,9 @@ setMethod(f = "plotCoseqContrasts",
 setMethod(f          = "plotCoseqContrasts",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name){
-              
-              plotCoseqContrasts(object = object[[SE.name]])
-              
+            
+            plotCoseqContrasts(object = object[[SE.name]])
+            
           })
 
 
@@ -705,7 +720,7 @@ setMethod(f          = "getCoexpSettings",
           signature  = "RflomicsSE",
           
           definition = function(object){
-              return(object@metadata$CoExpAnal$setting)   
+            return(object@metadata$CoExpAnal$setting)   
           })
 
 #' @rdname RflomicsMAE-accessors
@@ -713,7 +728,7 @@ setMethod(f          = "getCoexpSettings",
 setMethod(f          = "getCoexpSettings",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name){
-              getCoexpSettings(object = object[[SE.name]])
+            getCoexpSettings(object = object[[SE.name]])
           })
 
 #' @title get members of a cluster
@@ -763,25 +778,25 @@ setMethod(f          = "getCoexpSettings",
 #'  runNormalization(SE.name = "protetest", normMethod = "median")    |> 
 #'  runDiffAnalysis(SE.name = "protetest",  method = "limmalmFit", contrastList = contrastList) |> 
 #'  runCoExpression(SE.name = "protetest", K = 2:10, replicates = 5, 
-#'                  contrastNames = contrastList$tag, merge = "union") 
+#'                  contrastNames = contrastList$contrastName, merge = "union") 
 #'  
 #'  getClusterEntities(MAE[["protetest"]], clusterName = "cluster_1")
 setMethod(
-    f          = "getClusterEntities",
-    signature  = "RflomicsSE",
-    definition = function(object, clusterName) {
-        
-        clusterName <- gsub("cluster[._]", "", clusterName)
-        res <- object@metadata$CoExpAnal$coseqResults
-        
-        if (!is.null(res)) {
-            clList <- clusters(res)
-            return(names(which(clList == clusterName)))
-        } else {
-            return(NULL)
-        }
-        
+  f          = "getClusterEntities",
+  signature  = "RflomicsSE",
+  definition = function(object, clusterName) {
+    
+    clusterName <- gsub("cluster[._]", "", clusterName)
+    res <- object@metadata$CoExpAnal$coseqResults
+    
+    if (!is.null(res)) {
+      clList <- clusters(res)
+      return(names(which(clList == clusterName)))
+    } else {
+      return(NULL)
     }
+    
+  }
 )
 
 #' @title get members of a cluster
@@ -796,12 +811,12 @@ setMethod(
 #' @rdname getClusterEntities
 #' @aliases getClusterEntities
 setMethod(
-    f          = "getClusterEntities",
-    signature  = "RflomicsMAE",
-    definition = function(object, SE.name, clusterName) {
-        getClusterEntities(object = object[[SE.name]], 
-                           clusterName = clusterName)
-    }
+  f          = "getClusterEntities",
+  signature  = "RflomicsMAE",
+  definition = function(object, SE.name, clusterName) {
+    getClusterEntities(object = object[[SE.name]], 
+                       clusterName = clusterName)
+  }
 )
 
 #' @title get cluster
@@ -813,18 +828,18 @@ setMethod(
 #' @rdname getCoseqClusters
 #' @aliases getCoseqClusters
 setMethod(
-    f          = "getCoseqClusters",
-    signature  = "RflomicsSE",
-    definition = function(object) {
-        
-        res <- object@metadata$CoExpAnal$coseqResults
-        
-        if (!is.null(res)) {
-            return(clusters(res))
-        } else {
-            return(NULL)
-        }
+  f          = "getCoseqClusters",
+  signature  = "RflomicsSE",
+  definition = function(object) {
+    
+    res <- object@metadata$CoExpAnal$coseqResults
+    
+    if (!is.null(res)) {
+      return(clusters(res))
+    } else {
+      return(NULL)
     }
+  }
 )
 
 #' @title get members of a cluster
@@ -838,11 +853,11 @@ setMethod(
 #' @rdname getCoseqClusters
 #' @aliases getCoseqClusters
 setMethod(
-    f          = "getCoseqClusters",
-    signature  = "RflomicsMAE",
-    definition = function(object, SE.name) {
-        getCoseqClusters(object = object[[SE.name]])
-    }
+  f          = "getCoseqClusters",
+  signature  = "RflomicsMAE",
+  definition = function(object, SE.name) {
+    getCoseqClusters(object = object[[SE.name]])
+  }
 )
 
 
