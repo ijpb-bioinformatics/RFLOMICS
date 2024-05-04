@@ -327,7 +327,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                                       normFactors = input$norm,
                                       GaussianModel = input$GaussianModel, 
                                       clustermq = input$clustermqCoseq, 
-                                      cmd = TRUE, silent = TRUE)
+                                      cmd = TRUE, silent = FALSE)
         
         session$userData$FlomicsMultiAssay[[dataset]] <- dataset.SE
         

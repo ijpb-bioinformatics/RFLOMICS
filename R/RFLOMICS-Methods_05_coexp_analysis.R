@@ -371,7 +371,8 @@ setMethod(f="plotCoExpression",
           signature="RflomicsSE",
           definition <- function(object){
             
-            if(is.null(metadata(object)$CoExpAnal) || length( metadata(object)$CoExpAnal) == 0) {
+            if(is.null(metadata(object)$CoExpAnal) || 
+               length( metadata(object)$CoExpAnal) == 0) {
               stop("No co-expression results!")
             }
             CoExpAnal <- metadata(object)$CoExpAnal
@@ -385,15 +386,18 @@ setMethod(f="plotCoExpression",
             
             #### Plots
             ### plot ICL
+            limits.vec <- 
+              quantile(ICL.list[["ICL.tab"]]$ICL, c(0.1, 0.9), na.rm = TRUE)
             ICL.p <- ggplot(data = ICL.list[["ICL.tab"]]) +
-              geom_boxplot(aes(x = as.factor(K), y = ICL, group = K)) +
+              geom_boxplot(aes(x = as.factor(K), y = ICL, group = K), na.rm = TRUE) +
+              scale_y_continuous(limits = limits.vec) +
               geom_text(data = ICL.list[["ICL.n"]], 
                         aes(x = seq_len(length(K)), 
-                            y = max(ICL.list[["ICL.vec"]], na.rm = TRUE),
+                            y = max(limits.vec),
                             label = paste0("n=", n)), 
                         col = 'red', size = 4) +
-              ylim(min(ICL.list[["ICL.vec"]], na.rm = TRUE), 
-                   max(ICL.list[["ICL.vec"]], na.rm = TRUE)) +
+              # ylim(min(ICL.list[["ICL.vec"]], na.rm = TRUE),
+              #      max(ICL.list[["ICL.vec"]], na.rm = TRUE)) +
               xlab("K")
             
             ### plot logLike
