@@ -411,7 +411,7 @@ setGeneric(
 
 setGeneric(
     name = "getDEList",
-    def  = function(object, ...) {
+    def  = function(object, contrasts = NULL, ...) {
         standardGeneric("getDEList")
     }
 )
