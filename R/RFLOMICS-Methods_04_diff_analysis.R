@@ -396,7 +396,7 @@ setMethod(f          = "filterDiffAnalysis",
                 mutate_at(.vars = 2:(length(DEF_list)+1),
                           .funs = function(x){
                             if_else(is.na(x), 0, 1)}) %>%
-                tibble()
+                as.data.frame()
             }
             
             return(object)

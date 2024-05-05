@@ -470,42 +470,61 @@ setMethod(
 setMethod(
   f          = "getDiffAnalysesSummary",
   signature  = "RflomicsMAE",
-  definition = function(object, plot = FALSE) {
+  definition = function(object, plot = FALSE, 
+                        ylabelLength = 30) {
     # DataProcessing
     df.list <- list()
     for (dataset in getDatasetNames(object)) {
       if (is.null(object[[dataset]]))
         next
-      if (is.null(object[[dataset]]@metadata$DiffExpAnal$Validcontrasts))
+      
+      if(is.null(object[[dataset]]@metadata$DiffExpAnal$stats))
         next
       
-      Validcontrasts <- 
-        object[[dataset]]@metadata$DiffExpAnal$Validcontrasts$contrastName
+      Validcontrasts <- getValidContrasts(object[[dataset]])$contrastName
+      
+      if (is.null(Validcontrasts) || length(Validcontrasts) == 0){
+        
+        Validcontrasts <- getSelectedContrasts(object[[dataset]])$contrastName
+        if (is.null(Validcontrasts) || length(Validcontrasts) == 0)
+            next
+      }
+      
+      p.adj <- getDiffSettings(object[[dataset]])$p.adj.cutoff
+      logFC <- getDiffSettings(object[[dataset]])$abs.logFC.cutoff
       
       df.list[[dataset]] <-
         as.data.frame(
           object[[dataset]]@metadata$DiffExpAnal$stats)[Validcontrasts,] %>%
-        mutate(dataset = dataset, contrasts = rownames(.))
+        mutate(dataset = dataset, contrasts = rownames(.), 
+               settings = paste0("(p.adj: ", p.adj, " & logFC: ", logFC, ")"))
     }
     
     if (length(df.list) == 0)
       return(NULL)
     
-    df <- reduce(df.list, rbind) %>%
-      melt(id = c("dataset", "contrasts", "All"),
-           value.name = "Up_Down") %>%
+    df <- reduce(df.list, rbind) |>
+      melt(id = c("dataset", "settings", "contrasts", "All"), value.name = "Up_Down") |>
+      filter(All != 0, !is.na(All)) |>
       mutate(percent = Up_Down / All * 100)
     
     if (isFALSE(plot))
       return(df)
     
-    p <- ggplot(data = df, aes(y = contrasts, x = percent, fill = variable)) +
+    df$tabel <- 
+      lapply(df$contrasts, function(x){
+        vec <- seq(1, stringr::str_length(x), ylabelLength)
+        stringr::str_sub(x, vec, vec+ylabelLength-1) %>% 
+          paste(., collapse = "\n")
+        }) %>% unlist()
+    
+    p <- ggplot(data = df, aes(y = tabel, x = percent, fill = variable)) +
       geom_col() +
       geom_text(aes(label = Up_Down), position = position_stack(vjust = 0.5)) +
-      facet_grid(dataset ~ .) +
+      facet_wrap(.~ dataset+settings, ncol = 4) +
       scale_x_continuous(breaks = seq(0, 100, 25),
                          labels = paste0(seq(0, 100, 25), "%")) +
-      labs(fill = NULL, x = "")
+      labs(fill = NULL, x = "", y="")
     
     return(p)
   }

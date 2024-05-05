@@ -17,6 +17,17 @@ DiffExpAnalysisUI <- function(id){
   ns <- NS(id)
   
   tagList(
+  #   tags$style(HTML("
+  #   .butt {
+  #     background: #0073b7;
+  #     color: white !important;
+  #     border: none;
+  #     padding: 10px 20px;
+  #     border-radius: 5px;
+  #     margin-right: 10px;
+  #     cursor: pointer;
+  #   }
+  # ")),
     fluidRow(
       uiOutput(ns("instruction"))),
     
@@ -25,15 +36,15 @@ DiffExpAnalysisUI <- function(id){
       column(3,
              uiOutput(ns("DiffParamUI"))),
       column(9,
-             uiOutput(ns("ContrastsResults")),
-             uiOutput(ns("validateUI")))),
-    
+             uiOutput(ns("ResultsMerge")),
+             uiOutput(ns("validateUI"))
+      )
+    ),
     fluidRow(
-      uiOutput(ns("ResultsMerge")))
+      column(12,uiOutput(ns("ContrastsResults")))
+    )
   )
 }
-
-
 
 DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
   
@@ -135,7 +146,12 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                                     content = "send calculation to the cluster"),
                  value = FALSE, status = "success"),
                
-               actionButton(session$ns("runAnaDiff"),"Run"))
+               actionButton(inputId = session$ns("runAnaDiff"),
+                            label = "Run", class = "butt")#,
+               # tags$head(
+               #   tags$style(".butt{background:#0073b7;}
+               #              .butt{color: white !important;}"))
+        )
       ))
     
   })
@@ -150,7 +166,13 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     
     fluidRow(
       column(width = 9),
-      column(width = 3, actionButton(session$ns("validContrast"),"Validate")))
+      column(width = 3, 
+             actionButton(session$ns("validContrast"),"Validate", class="butt")#,
+             # tags$head(
+             #   tags$style(".butt{background:#0073b7;}
+             #        .butt{color: white !important;}"))
+      )
+    )
   })
   
   #### PCA axis for plot
@@ -629,27 +651,58 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     if (rea.values[[dataset]]$diffAnal == FALSE ||
         is.null(metadata(dataset.SE)$DiffExpAnal[["mergeDEF"]])) return()
     
-    DEF_mat <- metadata(dataset.SE)$DiffExpAnal[["mergeDEF"]]
-    
-    index <- sapply(names(DEF_mat)[-1], function(x){(
-      input[[paste0("checkbox_",x)]])
-    }) |> unlist()
-    
-    H_selected   <- names(DEF_mat[,-1])[index]
-    DEF_selected <- DEF_mat[,H_selected]
-
-    rea.values[[dataset]]$DiffValidContrast <- 
-      filter(local.rea.values$selectedContrasts, contrastName %in% H_selected)
-    
-    if (length(H_selected) > 1){
+    box(
+      width=14,
+      status = "warning", 
+      solidHeader = FALSE,
       
-      colnames(DEF_selected) <- 
-        rea.values[[dataset]]$DiffValidContrast$tag
+      tagList({
+        subMAE <- subRflomicsMAE(session$userData$FlomicsMultiAssay, dataset)
+        
+        # 1rst panel
+        tabPanel.list <- list(
+          tabPanel(
+            title = "Summary",
+            renderPlot({
+              getDiffAnalysesSummary(subMAE, plot = TRUE)
+            })
+          ))
+        
+        # 2nd panel (upset) if 2 validated contrasts or more
+        DEF_mat <- metadata(dataset.SE)$DiffExpAnal[["mergeDEF"]]
+        
+        index <- sapply(names(DEF_mat)[-1], function(x){(
+          input[[paste0("checkbox_",x)]])
+        }) |> unlist()
+        
+        H_selected   <- names(index)[index]
+        DEF_selected <- select(DEF_mat,any_of(H_selected))
+        
+        rea.values[[dataset]]$DiffValidContrast <- 
+          filter(local.rea.values$selectedContrasts, contrastName %in% H_selected)
+        
+        colnames(DEF_selected) <- 
+          rea.values[[dataset]]$DiffValidContrast$tag
+        
+        if (length(H_selected) > 1){
+          
+          tabPanel.list <- c(list(
+            tabPanel(
+              title = "Intersection between DE lists",
+              renderPlot({
+                upset(data = DEF_selected, 
+                      sets = colnames(DEF_selected), 
+                      order.by = "degree")})
+            )
+          ), tabPanel.list)
+        }
+        
+        do.call(what = tabsetPanel, args = tabPanel.list)
+      })
       
-      box(width=12,  status = "warning",
-          renderPlot({upset(as.data.frame(DEF_selected), order.by = "freq")})
-      )
-    }
+      
+    )
+    
   })
   
   return(input)
