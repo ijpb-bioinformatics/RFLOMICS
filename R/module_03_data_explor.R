@@ -187,7 +187,7 @@ QCNormalizationTab <-
         )
       )),
       fluidRow(column(
-        12, actionButton(session$ns("run"), "Run")
+        12, actionButton(session$ns("run"), "Run", class = "butt")
       )))
       
       #---- setting for meta or RNAseq----
@@ -214,7 +214,7 @@ QCNormalizationTab <-
         ),
         
         
-        actionButton(session$ns("run"), "Run")
+        actionButton(session$ns("run"), "Run", class = "butt")
       )
       
       switch(
@@ -520,18 +520,22 @@ QCNormalizationTab <-
       
       # check completeness for curent dataset
       completeCheckRes <-
-        checkExpDesignCompleteness(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]],
-                                   input$selectSamples)
+        checkExpDesignCompleteness(
+          session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]],
+          sampleList = input$selectSamples)
       
       if (isTRUE(completeCheckRes[["error"]])) {
-        showModal(modalDialog(title = "Error message", completeCheckRes[["messages"]]))
+        showModal(
+          modalDialog(title = "Error message", completeCheckRes[["messages"]]))
       }
       validate({
-        need(!isTRUE(completeCheckRes[["error"]]), message = completeCheckRes[["messages"]])
+        need(!isTRUE(completeCheckRes[["error"]]), 
+             message = completeCheckRes[["messages"]])
       })
       
       # get parameters
-      switch(getOmicsTypes(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]]),
+      switch(
+        getOmicsTypes(session$userData$FlomicsMultiAssay[[paste0(dataset,".raw")]]),
              "RNAseq" = {
                param.list <- list(
                  Filter_Strategy = input$Filter_Strategy,
@@ -605,9 +609,6 @@ QCNormalizationTab <-
       rea.values$datasetCoExAnnot <-
         getAnalyzedDatasetNames(session$userData$FlomicsMultiAssay,
                                 analyses = "CoExpEnrichAnal")
-      
-      
-      
       
     }, ignoreInit = TRUE)
     

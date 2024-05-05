@@ -208,7 +208,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                     column(8,
                            materialSwitch(inputId = session$ns("clustermqCoseq"), label = .addBSpopify(label = 'use remote cluster', content = "send calculation to the cluster"), value = FALSE, status = "success")
                     ),
-                    column(4, actionButton(session$ns("runCoSeq"),"Run")))
+                    column(4, actionButton(session$ns("runCoSeq"),"Run", class = "butt")))
             ))
     })
     

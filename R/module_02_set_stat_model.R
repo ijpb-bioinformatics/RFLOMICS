@@ -50,7 +50,7 @@
           selectInput( inputId = session$ns("model.formulae"), label = "",
                        choices = rev(names(generateModelFormulae(session$userData$FlomicsMultiAssay))),
                        selectize=FALSE,size=5),
-          actionButton(session$ns("validModelFormula"),"Validate")
+          actionButton(session$ns("validModelFormula"),"Validate", class = "butt")
         )
     })
     
@@ -116,7 +116,7 @@
                    })
             ),
             br(),
-            actionButton(session$ns("validContrasts"),"Validate")
+            actionButton(session$ns("validContrasts"),"Validate", class = "butt")
         )
     })
     

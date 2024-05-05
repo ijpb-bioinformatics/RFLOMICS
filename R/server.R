@@ -25,14 +25,13 @@ rflomicsServer <- function(input, output, session) {
     loadData = FALSE,
     model    = FALSE,
     analysis = FALSE,
-    resetAna = FALSE,
     report   = FALSE,
     
     exampleData = NULL,
     
-    datasetList   = NULL,
-    contrastList  = NULL,
-    Contrasts.Sel = NULL,
+    datasetList     = NULL,
+    contrastList    = NULL,
+    Contrasts.Sel   = NULL,
     datasetProcess  = NULL,
     datasetDiff     = NULL, # list of dataset names with diff results
     datasetCoEx     = NULL,
@@ -114,14 +113,11 @@ rflomicsServer <- function(input, output, session) {
   output$runReport <- renderUI({
     if(is.null(rea.values$datasetProcess) || 
        length(rea.values$datasetProcess) != length(rea.values$datasetList)) return()
-
+    
     column(
       width = 12, 
       downloadButton(outputId = "report", 
-                     label = "Generate report", class = "butt"),
-      tags$head(
-        tags$style(".butt{background:#0073b7;} 
-                    .butt{color: white !important;}")))
+                     label = "Generate report", class = "butt"))
   })
   
   #### Item to download Results #####
@@ -132,10 +128,8 @@ rflomicsServer <- function(input, output, session) {
     column(
       width = 12, 
       downloadButton(outputId = "download", 
-                     label = "Download results", class = "butt2"),
-      tags$head(
-        tags$style(".butt2{background:#0073b7;} 
-                    .butt2{color: white !important;} ")))
+                     label = "Download results", class = "butt")
+      )
   })
   
   
@@ -338,7 +332,7 @@ rflomicsServer <- function(input, output, session) {
     
     .modSingleOmicAnalysesSummaryUI("omics")
   })
-
+  
   #### MOFA data integration ####
   ###############################
   output$withMOFA_UI <- renderUI({
@@ -482,7 +476,7 @@ rflomicsServer <- function(input, output, session) {
   callModule(module = .modSingleOmicAnalysesSummary, id = "omics", rea.values = rea.values)
   callModule(module = .modIntegrationAnalysis, id = "mixomicsSetting", rea.values = rea.values, method = "mixOmics")
   callModule(module = .modIntegrationAnalysis, id = "mofaSetting",     rea.values = rea.values, method = "MOFA")
- 
+  
   
   ##########################################
   # Part8 : RMD REPORT
@@ -490,42 +484,42 @@ rflomicsServer <- function(input, output, session) {
   
   output$report <- downloadHandler(
     # For PDF output, change this to "report.pdf"
-
+    
     filename = function(){
       projectName  <- getProjectName(session$userData$FlomicsMultiAssay)
       paste0(format(Sys.time(), "%Y_%m_%d"), "_", projectName, ".html")
     },
     content = function(file) {
-
+      
       withProgress(message = 'Download in progress',
                    detail = 'This may take a while...', value = 0, {
-                    
-        incProgress(0.2)
-        projectName  <- getProjectName(session$userData$FlomicsMultiAssay)
-        outDir <- file.path(tempdir(), 
-                            paste0(format(Sys.time(),"%Y_%m_%d"),"_", 
-                                   projectName))
-        
-        dir.create(path = outDir, showWarnings=FALSE)
-        
-        incProgress(0.3)
-        generateReport(object = session$userData$FlomicsMultiAssay,
-                       tmpDir = outDir, fileName = file)
-        
-        incProgress(0.9)
-        owd <- setwd(tempdir())
-        on.exit(setwd(owd))
-        })
+                     
+                     incProgress(0.2)
+                     projectName  <- getProjectName(session$userData$FlomicsMultiAssay)
+                     outDir <- file.path(tempdir(), 
+                                         paste0(format(Sys.time(),"%Y_%m_%d"),"_", 
+                                                projectName))
+                     
+                     dir.create(path = outDir, showWarnings=FALSE)
+                     
+                     incProgress(0.3)
+                     generateReport(object = session$userData$FlomicsMultiAssay,
+                                    tmpDir = outDir, fileName = file)
+                     
+                     incProgress(0.9)
+                     owd <- setwd(tempdir())
+                     on.exit(setwd(owd))
+                   })
     }
   )
   
   ##########################################
   # Part9 : Download results as an archive
   ##########################################
-
+  
   output$download <- downloadHandler(
     # For PDF output, change this to "report.pdf"
-
+    
     filename = function(){
       projectName  <- getProjectName(session$userData$FlomicsMultiAssay)
       paste0(format(Sys.time(),"%Y_%m_%d"),"_", projectName, ".tar.gz")
@@ -534,20 +528,20 @@ rflomicsServer <- function(input, output, session) {
       withProgress(message = 'Download in progress',
                    detail = 'This may take a while...', value = 0, {
                      
-        incProgress(0.2)
-        projectName  <- getProjectName(session$userData$FlomicsMultiAssay)
-        outDir <- file.path(tempdir(), paste0(format(Sys.time(),"%Y_%m_%d"),"_", projectName))
-        dir.create(path = outDir, showWarnings=FALSE)
-        
-        incProgress(0.3)
-        generateReport(object = session$userData$FlomicsMultiAssay,
-                       tmpDir = outDir, archiveName = file, export = TRUE)
-        
-        incProgress(0.9)
-        owd <- setwd(tempdir())
-        on.exit(setwd(owd))
-        
-        })
+                     incProgress(0.2)
+                     projectName  <- getProjectName(session$userData$FlomicsMultiAssay)
+                     outDir <- file.path(tempdir(), paste0(format(Sys.time(),"%Y_%m_%d"),"_", projectName))
+                     dir.create(path = outDir, showWarnings=FALSE)
+                     
+                     incProgress(0.3)
+                     generateReport(object = session$userData$FlomicsMultiAssay,
+                                    tmpDir = outDir, archiveName = file, export = TRUE)
+                     
+                     incProgress(0.9)
+                     owd <- setwd(tempdir())
+                     on.exit(setwd(owd))
+                     
+                   })
     })
   
   

@@ -1,0 +1,30 @@
+
+.box.box-solid.box-info>.box-header {
+  background:A2D9CE
+}
+
+.box.box-solid.box-info{
+  border-bottom-color:#A2D9CE;
+  border-left-color:#A2D9CE;
+  border-right-color:#A2D9CE;
+  border-top-color:#A2D9CE;
+}
+
+.main-header .logo {
+  font-family: "Georgia", Times, "Times New Roman", serif;
+  font-weight: bold;
+  font-size: 24px;
+}
+
+
+.butt{
+  background:#0073b7;
+  color: white !important;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+ 

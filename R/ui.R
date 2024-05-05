@@ -5,7 +5,18 @@
 #' @noRd
 #' @return a user interface.
 rflomicsUI <- function(){
-   uiout <- dashboardPage(
+  
+  ui <- tagList(
+    
+    tags$head(
+      tags$link(
+        rel = "stylesheet",
+        type = "text/css",
+        href = "www/style.css")
+    ),
+    
+    dashboardPage(
+      
       dashboardHeader(title = "RFLOMICS"),
       dashboardSidebar(
         
@@ -14,11 +25,10 @@ rflomicsUI <- function(){
       dashboardBody({
         
         uiOutput("mycontent")
-        
       })
-    )
-   return(uiout)
-  }
+    ))
+  return(ui)
+}
 
 # rflomicsUI()
 

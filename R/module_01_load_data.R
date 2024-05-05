@@ -155,7 +155,7 @@
         fluidRow(uiOutput(outputId = ns("LoadDataUI"))),
         fluidRow(column(
             width = 12,
-            actionButton(inputId = ns("loadData"), "Load Data"),
+            actionButton(inputId = ns("loadData"), "Load Data", class = "butt"),
             popify(
             actionButton(
               inputId = ns("loadEcoseedData"),
@@ -563,7 +563,7 @@
                 )
             ),
             uiOutput(outputId = session$ns("toAddData2")),
-            actionButton(inputId = session$ns("addData"),   "Add data")
+            actionButton(inputId = session$ns("addData"),   "Add data", class = "butt")
         )
     })
     

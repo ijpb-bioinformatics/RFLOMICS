@@ -805,8 +805,8 @@
             br(),
             actionButton(
                 inputId = ns("run"),
-                label = "Run over-representation analysis",
-                class = "btn-success"
+                label = "Run over-representation analysis", 
+                class = "butt"
             )
         ))
     })
