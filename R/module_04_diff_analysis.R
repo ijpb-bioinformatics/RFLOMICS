@@ -17,17 +17,17 @@ DiffExpAnalysisUI <- function(id){
   ns <- NS(id)
   
   tagList(
-  #   tags$style(HTML("
-  #   .butt {
-  #     background: #0073b7;
-  #     color: white !important;
-  #     border: none;
-  #     padding: 10px 20px;
-  #     border-radius: 5px;
-  #     margin-right: 10px;
-  #     cursor: pointer;
-  #   }
-  # ")),
+    #   tags$style(HTML("
+    #   .butt {
+    #     background: #0073b7;
+    #     color: white !important;
+    #     border: none;
+    #     padding: 10px 20px;
+    #     border-radius: 5px;
+    #     margin-right: 10px;
+    #     cursor: pointer;
+    #   }
+    # ")),
     fluidRow(
       uiOutput(ns("instruction"))),
     
@@ -38,9 +38,7 @@ DiffExpAnalysisUI <- function(id){
       column(9,
              uiOutput(ns("ResultsMerge")),
              uiOutput(ns("validateUI"))
-      )
-    ),
-    fluidRow(
+      ),
       column(12,uiOutput(ns("ContrastsResults")))
     )
   )
@@ -379,268 +377,261 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         res      <- metadata(dataset.SE)$DiffExpAnal[["RawDEFres"]][[vect["contrastName"]]]
         stats    <- metadata(dataset.SE)$DiffExpAnal[["stats"]][vect["contrastName"],]
         
-        diff.plots <- plotDiffAnalysis(dataset.SE, 
-                                       contrastName = vect["contrastName"])
+        diff.plots <- 
+          plotDiffAnalysis(dataset.SE, contrastName = vect["contrastName"])
         
-        if (dim(metadata(dataset.SE)$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]])[1] == 0){
-          fluidRow(
-            column(
-              10,
-              box(
-                width=14, solidHeader = TRUE, collapsible = TRUE, 
-                collapsed = TRUE, status = "danger",
-                title = tags$h5(paste0(vect["tag"], " : ", 
-                                       vect["contrastName"],"  [#DE: ", 
-                                       stats[["All"]]," ]")),
-                
-                tabsetPanel(
-                  
-                  ### pvalue plot ###
-                  tabPanel(
-                    title = "Pvalue's distribution", 
-                    renderPlot({ diff.plots$Pvalue.hist })),
-                  
-                  ### MAplot
-                  tabPanel(
-                    title = "MA plot", 
-                    renderPlot({ suppressMessages(diff.plots$MA.plot) })),
-                  
-                  ### MAplot
-                  tabPanel(
-                    title = "Volcano plot", 
-                    renderPlot({ suppressMessages(diff.plots$Volcano.plot) }, 
-                               height = 600))
-                )
-              )))
-        }
-        else{
+        stat <- paste0("[#DE: ", stats[["All"]], "]")
+        
+        # panel list
+        # defalt panels (no DE)
+        tabPanel.list <- list(
           
-          fluidRow(
-            column(10,
-                   box(
-                     width=14, solidHeader = TRUE, collapsible = TRUE, 
-                     collapsed = TRUE, status = "success",
-                     title = tags$h5(
-                       paste0(vect["tag"], ": ", 
-                              vect["contrastName"],
-                              "  [#DE: ", stats[["All"]], " ; ",
-                              "Up: ",stats[["Up"]],
-                              " (",round(stats[["Up"]]/stats[["All"]],2)*100," %)",
-                              " ; ", "Down: ", stats[["Down"]],
-                              " (",round(stats[["Down"]]/stats[["All"]],2)*100,"%)]")),
-                     
-                     tabsetPanel(
-                       
-                       ### pvalue plot ###
-                       tabPanel(
-                         title = "Pvalue's distribution", 
-                         tags$br(),
-                         tags$i("You must have a look at to the distribution of non-adjusted p-values to validate
+          ### pvalue plot ###
+          tabPanel(
+            title = "Pvalue's distribution", 
+            tags$br(),
+            tags$i("You must have a look at to the distribution of non-adjusted p-values to validate
                                          your analysis. The most desirable shape is a peak of p-values at 0 following by a uniform 
                                          distribution"),
-                         tags$br(),tags$hr(),tags$br(),
-                         renderPlot({ diff.plots$Pvalue.hist })),
-                       
-                       ### MAplot
-                       tabPanel(
-                         title = "MA plot", 
-                         tags$br(),
-                         tags$i(paste0("Expect a majority of ", .omicsDic(dataset.SE)$variableName," around 0.",
-                                       " The red points are the ", .omicsDic(dataset.SE)$variableName,
-                                       " significantly over-expressed in the left factor's modality in the contrast expression whereas ",
-                                       "blue points are ", .omicsDic(dataset.SE)$variableName, 
-                                       " significantly under-expressed in the rigth factor's modality in the contrast expression.
+            tags$br(),tags$hr(),tags$br(),
+            renderPlot({ diff.plots$Pvalue.hist })),
+          
+          ### MAplot
+          tabPanel(
+            title = "MA plot", 
+            tags$br(),
+            tags$i(paste0("Expect a majority of ", .omicsDic(dataset.SE)$variableName," around 0.",
+                          " The red points are the ", .omicsDic(dataset.SE)$variableName,
+                          " significantly over-expressed in the left factor's modality in the contrast expression whereas ",
+                          "blue points are ", .omicsDic(dataset.SE)$variableName, 
+                          " significantly under-expressed in the rigth factor's modality in the contrast expression.
                                                 Only the top 20 ", .omicsDic(dataset.SE)$variableName, " DE are labeled.")),
-                         tags$br(),tags$hr(),tags$br(),
-                         renderPlot({ diff.plots$MA.plot })),
-                       
-                       ### MAplot
-                       tabPanel(
-                         title = "Volcano plot", 
-                         tags$br(),
-                         tags$i(paste0(" Red points are ",.omicsDic(dataset.SE)$variableName," of interest: ",
-                                       "displaying both large magnitude log-fold-changes (x axis) and high statistical significance (y axis)",
-                                       "Only the top 20 ", .omicsDic(dataset.SE)$variableName, " DE are labeled.")),
-                         tags$br(), tags$hr(), tags$br(),
-                         renderPlot({ diff.plots$Volcano.plot }, height = 600)),
-                       
-                       ### DEF result table ###
-                       tabPanel(
-                         title = "Table",
-                         tags$br(),
-                         tags$i("Table of results of the differential expression/abundance statistical analysis:"),
-                         tags$ul(
-                           tags$li(tags$i(paste0("row names: ",omicsDic(dataset.SE)$variableName," ID"))),
-                           tags$li(tags$i("logFC: log2 fold change")),
-                           tags$li(tags$i("Abundance: mean expression/abundance for the factor's modality")),
-                           tags$li(tags$i("t: t-statistic (limma-lmFit, prot/metabo)")),
-                           tags$li(tags$i("pvalue: p-values")),
-                           tags$li(tags$i("Adj.value: adjusted p-value (BH)")),
-                           tags$li(tags$i("LR: likelihood ratio test (edgeR-glmLRT, RNAseq)")),
-                           tags$li(tags$i("B: log-odds that the prot/metabo is differentially expressed (limma-topTable)")),
-                           tags$li(tags$i("Regulation = Up (green) or Down (red) regulated"))
-                         ),
-                         tags$hr(), tags$br(),
-                         ### DEF result table ###
-                         DT::renderDataTable({
-                           resTable <- metadata(dataset.SE)$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
-                           resTable$Regulation <- ifelse(resTable$logFC > 0, "Up", "Down")
-                           resTable %>% DT::datatable(
-                             extensions = 'Buttons',
-                             options = list(dom = 'lfrtipB',
-                                            rownames = FALSE,
-                                            pageLength = 10,
-                                            buttons = c('csv', 'excel'),
-                                            lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All")))) %>%
-                             formatStyle('Regulation',
-                                         backgroundColor = DT::styleEqual(c("Up", "Down"), 
-                                                                          c("#C7DCA7", c("#FFC5C5"))),
-                                         fontWeight = 'bold') %>% 
-                             formatSignif(columns = seq_len(dim(resTable)[2]), digits = 3)
-                         }, server = FALSE)),
-                       
-                       ### Heatmap ###
-                       tabPanel(
-                         title = "Heatmap",
-                         tags$br(),
-                         tags$i(tags$p(paste0("Heatmap is performed on DE ",.omicsDic(dataset.SE)$variableName,
-                                              " expression data table which has been",
-                                              " transformed by: ",getTransSettings(dataset.SE)$method, " method", 
-                                              " and normalized by: ", getNormSettings(dataset.SE)$method ,"  method."))),
-                         tags$i(tags$p(paste0("Clustering is independently performed on samples (row) and centered ",
-                                              .omicsDic(dataset.SE)$variableName,
-                                              " (column) using euclidian distance and complete aggregation method."))),
-                         tags$i(tags$p(" You may separate the heatmap by modality of factor of interest (Levels radio buttons). You may
+            tags$br(),tags$hr(),tags$br(),
+            renderPlot({ diff.plots$MA.plot })),
+          
+          ### Volcano plot
+          tabPanel(
+            title = "Volcano plot", 
+            tags$br(),
+            tags$i(paste0(" Red points are ",.omicsDic(dataset.SE)$variableName," of interest: ",
+                          "displaying both large magnitude log-fold-changes (x axis) and high statistical significance (y axis)",
+                          "Only the top 20 ", .omicsDic(dataset.SE)$variableName, " DE are labeled.")),
+            tags$br(), tags$hr(), tags$br(),
+            renderPlot({ diff.plots$Volcano.plot }, height = 600))
+        )
+        # if DE
+        DEList <- getDEList(dataset.SE, contrasts = vect["contrastName"])
+        if (length(DEList) > 3)
+          tabPanel.list <- 
+          c(tabPanel.list, 
+            list(
+              ### PCA ###
+              tabPanel(
+                title = "PCA on DE",
+                tags$br(),
+                tags$i("PCA plot of the DE entities"),
+                tags$br(), tags$hr(), tags$br(),
+                fluidRow(
+                  column(
+                    width = 12,
+                    renderPlot({
+                      
+                      #newDataset.SE <- dataset.SE[, which(colnames(dataset.SE) %in% dataset.SE$samples)]
+                      DEList <- getDEList(dataset.SE, contrasts = vect["contrastName"])
+                      newDataset.SE <- runOmicsPCA(dataset.SE[DEList], ncomp = 5, raw = FALSE) 
+                      
+                      PC1.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Firstaxis")]][1])
+                      PC2.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Secondaxis")]][1])
+                      condGroup <- input[[paste0(vect["contrastName"],"-pca.DE.condColorSelect")]][1]
+                      
+                      plotOmicsPCA(newDataset.SE,  raw = "norm", axes = c(PC1.value, PC2.value), groupColor = condGroup)
+                    })
+                  )
+                ),
+                fluidRow(
+                  column(
+                    width = 6, 
+                    radioButtons(
+                      inputId = session$ns(paste0(vect["contrastName"],"-pca.DE.condColorSelect")),
+                      label = 'Levels:',
+                      choices = c("groups",factors.bio),
+                      selected = "groups")),
+                  column(
+                    width = 6, 
+                    UpdateRadioButtonsUI(
+                      session$ns(paste0(vect["contrastName"],"-diff"))))
+                )
+              )
+            )
+            
+          )
+        
+        if (length(DEList) > 0){
+          
+          tabPanel.list <- 
+            c(tabPanel.list, 
+              list(
+                
+                ### DEF result table ###
+                tabPanel(
+                  title = "Table",
+                  tags$br(),
+                  tags$i("Table of results of the differential expression/abundance statistical analysis:"),
+                  tags$ul(
+                    tags$li(tags$i(paste0("row names: ",omicsDic(dataset.SE)$variableName," ID"))),
+                    tags$li(tags$i("logFC: log2 fold change")),
+                    tags$li(tags$i("Abundance: mean expression/abundance for the factor's modality")),
+                    tags$li(tags$i("t: t-statistic (limma-lmFit, prot/metabo)")),
+                    tags$li(tags$i("pvalue: p-values")),
+                    tags$li(tags$i("Adj.value: adjusted p-value (BH)")),
+                    tags$li(tags$i("LR: likelihood ratio test (edgeR-glmLRT, RNAseq)")),
+                    tags$li(tags$i("B: log-odds that the prot/metabo is differentially expressed (limma-topTable)")),
+                    tags$li(tags$i("Regulation = Up (green) or Down (red) regulated"))
+                  ),
+                  tags$hr(), tags$br(),
+                  ### DEF result table ###
+                  DT::renderDataTable({
+                    resTable <- metadata(dataset.SE)$DiffExpAnal[["TopDEF"]][[vect["contrastName"]]]
+                    resTable$Regulation <- ifelse(resTable$logFC > 0, "Up", "Down")
+                    resTable %>% DT::datatable(
+                      extensions = 'Buttons',
+                      options = list(dom = 'lfrtipB',
+                                     rownames = FALSE,
+                                     pageLength = 10,
+                                     buttons = c('csv', 'excel'),
+                                     lengthMenu = list(c(10,25,50,-1),c(10,25,50,"All")))) %>%
+                      formatStyle('Regulation',
+                                  backgroundColor = DT::styleEqual(c("Up", "Down"), 
+                                                                   c("#C7DCA7", c("#FFC5C5"))),
+                                  fontWeight = 'bold') %>% 
+                      formatSignif(columns = seq_len(dim(resTable)[2]), digits = 3)
+                  }, server = FALSE)),
+                
+                ### Heatmap ###
+                tabPanel(
+                  title = "Heatmap",
+                  tags$br(),
+                  tags$i(tags$p(paste0("Heatmap is performed on DE ",.omicsDic(dataset.SE)$variableName,
+                                       " expression data table which has been",
+                                       " transformed by: ",getTransSettings(dataset.SE)$method, " method", 
+                                       " and normalized by: ", getNormSettings(dataset.SE)$method ,"  method."))),
+                  tags$i(tags$p(paste0("Clustering is independently performed on samples (row) and centered ",
+                                       .omicsDic(dataset.SE)$variableName,
+                                       " (column) using euclidian distance and complete aggregation method."))),
+                  tags$i(tags$p(" You may separate the heatmap by modality of factor of interest (Levels radio buttons). You may
                                          also add annotations to the heatmap by selecting biological/batch factors to display.")),
-                         tags$br(), tags$hr(), tags$br(),
-                         renderPlot({
-                           annot_arg <- c(input[[paste0(vect["contrastName"], "-annotBio")]],
-                                          input[[paste0(vect["contrastName"], "-annotBatch")]])
-                           if (length(factors.meta) > 0) {
-                             annot_arg <- c(annot_arg, input[[paste0(vect["contrastName"], "-annotMeta")]])
-                           }
-                           
-                           plotHeatmapDesign(object     = dataset.SE, 
-                                             contrastName = vect["contrastName"], 
-                                             splitFactor  = input[[paste0(vect["contrastName"],"-heat.condColorSelect")]],
-                                             annotNames =  annot_arg)
-                         }),
-                         ## select cluster to plot
-                         column(
-                           6, radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-heat.condColorSelect")),
-                                           label = 'Levels:',
-                                           choices = c("none", factors.bio),
-                                           selected = "none", inline = TRUE)),
-                         
-                         ## select annotations to show
-                         
-                         
-                         column(
-                           width = 6 ,
-                           checkboxGroupInput(
-                             inputId = session$ns(paste0(vect["contrastName"], "-annotBio")),
-                             label = "Biological factors", inline = TRUE,
-                             choices = factors.bio,
-                             selected = factors.bio)),
-                         column(
-                           width = 6, 
-                           checkboxGroupInput(
-                             inputId = session$ns(paste0(vect["contrastName"], "-annotBatch")),
-                             label = "Batch factors",  inline = TRUE,
-                             choices = factors.batch,
-                             selected = NULL)),
-                         if (length(factors.meta) > 0) {
-                           column(
-                             width = 6,
-                             checkboxGroupInput(
-                               inputId = session$ns(paste0(vect["contrastName"], "-annotMeta")),
-                               label = "Metadata factors", inline = TRUE,
-                               choices = factors.meta,
-                               selected = NULL))
-                         }
-                       ),
-                       
-                       ### PCA ###
-                       tabPanel(
-                         title = "PCA on DE",
-                         tags$br(),
-                         tags$i("PCA plot of the DE entities"),
-                         tags$br(), tags$hr(), tags$br(),
-                         fluidRow(
-                           column(
-                             width = 12,
-                             renderPlot({
-                               
-                               #newDataset.SE <- dataset.SE[, which(colnames(dataset.SE) %in% dataset.SE$samples)]
-                               DEList <- getDEList(dataset.SE, contrasts = vect["contrastName"])
-                               newDataset.SE <- runOmicsPCA(dataset.SE[DEList], ncomp = 5, raw = FALSE) 
-                               
-                               PC1.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Firstaxis")]][1])
-                               PC2.value <- as.numeric(input[[paste0(vect["contrastName"],"-diff-Secondaxis")]][1])
-                               condGroup <- input[[paste0(vect["contrastName"],"-pca.DE.condColorSelect")]][1]
-                               
-                               plotOmicsPCA(newDataset.SE,  raw = "norm", axes = c(PC1.value, PC2.value), groupColor = condGroup)
-                             })
-                           )
-                         ),
-                         fluidRow(
-                           column(
-                             width = 6, 
-                             radioButtons(
-                               inputId = session$ns(paste0(vect["contrastName"],"-pca.DE.condColorSelect")),
-                               label = 'Levels:',
-                               choices = c("groups",factors.bio),
-                               selected = "groups")),
-                           column(
-                             width = 6, 
-                             UpdateRadioButtonsUI(
-                               session$ns(paste0(vect["contrastName"],"-diff"))))
-                         )
-                       ),
-                       
-                       ### boxplot DE ###
-                       tabPanel(
-                         title = "boxplot DE",
-                         tags$br(),
-                         tags$i(paste0("Boxplot showing the expression/abundance profile of a selected DE ",.omicsDic(dataset.SE)$variableName),
-                                " colored by experimental factor's modality (see Levels radio buttons)."),
-                         tags$br(), tags$hr(), tags$br(),
-                         fluidRow(
-                           
-                           column(
-                             width = 3,
-                             selectizeInput(
-                               inputId = session$ns(paste0(vect["contrastName"], "-DE")), 
-                               label = paste0("Select DE ",.omicsDic(dataset.SE)$variableName,":"),
-                               choices = rownames(arrange(metadata(dataset.SE)$DiffExpAnal$TopDEF[[vect["contrastName"]]], 
-                                                          Adj.pvalue)),
-                               multiple = FALSE),
-                             radioButtons(
-                               inputId = session$ns(paste0(vect["contrastName"],"-DEcondition")),
-                               label = 'Levels:',
-                               choices = c("groups",factors.bio),
-                               selected = factors.bio[1])
-                           ),
-                           column(
-                             width = 9,
-                             renderPlot({
-                               plotBoxplotDE(object=dataset.SE, features=input[[paste0(vect["contrastName"], "-DE")]], 
-                                             groupColor=input[[paste0(vect["contrastName"], "-DEcondition")]]) })
-                           )
-                         )
-                       )
-                     )
-                   )
-            ),
-            column(
-              width = 2,
-              checkboxInput(
-                session$ns(paste0("checkbox_", vect[["contrastName"]])), "OK", value = TRUE)) 
+                  tags$br(), tags$hr(), tags$br(),
+                  renderPlot({
+                    annot_arg <- c(input[[paste0(vect["contrastName"], "-annotBio")]],
+                                   input[[paste0(vect["contrastName"], "-annotBatch")]])
+                    if (length(factors.meta) > 0) {
+                      annot_arg <- c(annot_arg, input[[paste0(vect["contrastName"], "-annotMeta")]])
+                    }
+                    
+                    plotHeatmapDesign(object     = dataset.SE, 
+                                      contrastName = vect["contrastName"], 
+                                      splitFactor  = input[[paste0(vect["contrastName"],"-heat.condColorSelect")]],
+                                      annotNames =  annot_arg)
+                  }),
+                  ## select cluster to plot
+                  column(
+                    6, radioButtons(inputId = session$ns(paste0(vect["contrastName"],"-heat.condColorSelect")),
+                                    label = 'Levels:',
+                                    choices = c("none", factors.bio),
+                                    selected = "none", inline = TRUE)),
+                  
+                  ## select annotations to show
+                  column(
+                    width = 6 ,
+                    checkboxGroupInput(
+                      inputId = session$ns(paste0(vect["contrastName"], "-annotBio")),
+                      label = "Biological factors", inline = TRUE,
+                      choices = factors.bio,
+                      selected = factors.bio)),
+                  column(
+                    width = 6, 
+                    checkboxGroupInput(
+                      inputId = session$ns(paste0(vect["contrastName"], "-annotBatch")),
+                      label = "Batch factors",  inline = TRUE,
+                      choices = factors.batch,
+                      selected = NULL)),
+                  if (length(factors.meta) > 0) {
+                    column(
+                      width = 6,
+                      checkboxGroupInput(
+                        inputId = session$ns(paste0(vect["contrastName"], "-annotMeta")),
+                        label = "Metadata factors", inline = TRUE,
+                        choices = factors.meta,
+                        selected = NULL))
+                  }
+                ),
+                
+                ### boxplot DE ###
+                tabPanel(
+                  title = "boxplot DE",
+                  tags$br(),
+                  tags$i(paste0("Boxplot showing the expression/abundance profile of a selected DE ",.omicsDic(dataset.SE)$variableName),
+                         " colored by experimental factor's modality (see Levels radio buttons)."),
+                  tags$br(), tags$hr(), tags$br(),
+                  fluidRow(
+                    
+                    column(
+                      width = 3,
+                      selectizeInput(
+                        inputId = session$ns(paste0(vect["contrastName"], "-DE")), 
+                        label = paste0("Select DE ",.omicsDic(dataset.SE)$variableName,":"),
+                        choices = rownames(arrange(metadata(dataset.SE)$DiffExpAnal$TopDEF[[vect["contrastName"]]], 
+                                                   Adj.pvalue)),
+                        multiple = FALSE),
+                      radioButtons(
+                        inputId = session$ns(paste0(vect["contrastName"],"-DEcondition")),
+                        label = 'Levels:',
+                        choices = c("groups",factors.bio),
+                        selected = factors.bio[1])
+                    ),
+                    column(
+                      width = 9,
+                      renderPlot({
+                        plotBoxplotDE(object=dataset.SE, features=input[[paste0(vect["contrastName"], "-DE")]], 
+                                      groupColor=input[[paste0(vect["contrastName"], "-DEcondition")]]) })
+                    )
+                  )
+                )
+                
+                
+              ))
+          
+          stat <- paste0(
+            "[#DE: ", stats[["All"]], " ; ",
+            "Up: ",stats[["Up"]],
+            " (",round(stats[["Up"]]/stats[["All"]],2)*100," %)",
+            " ; ", "Down: ", stats[["Down"]],
+            " (",round(stats[["Down"]]/stats[["All"]],2)*100,"%)]"
           )
         }
+        
+        fluidRow(
+          column(
+            width = 10,
+            box(
+              width=14, 
+              solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, 
+              status = ifelse(length(DEList) != 0, "success", "danger"),
+              title = tags$h5(
+                paste0(vect["tag"], ": ", vect["contrastName"], " ", stat)),
+              
+              do.call(what = tabsetPanel, args = tabPanel.list)
+            )
+          ),
+          column(
+            width = 2,
+            if (length(DEList) != 0){
+              checkboxInput(
+                session$ns(paste0("checkbox_", vect[["contrastName"]])), "OK", value = TRUE)}
+          ) 
+        )
       })
     )
-    
   })
   
   # merge results on upset plot
@@ -648,8 +639,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     
     dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
     
-    if (rea.values[[dataset]]$diffAnal == FALSE ||
-        is.null(metadata(dataset.SE)$DiffExpAnal[["mergeDEF"]])) return()
+    if (rea.values[[dataset]]$diffAnal == FALSE) return()
     
     box(
       width=14,
@@ -657,47 +647,55 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
       solidHeader = FALSE,
       
       tagList({
-        subMAE <- subRflomicsMAE(session$userData$FlomicsMultiAssay, dataset)
         
-        # 1rst panel
-        tabPanel.list <- list(
-          tabPanel(
-            title = "Summary",
-            renderPlot({
-              getDiffAnalysesSummary(subMAE, plot = TRUE)
-            })
-          ))
-        
-        # 2nd panel (upset) if 2 validated contrasts or more
-        DEF_mat <- metadata(dataset.SE)$DiffExpAnal[["mergeDEF"]]
-        
-        index <- sapply(names(DEF_mat)[-1], function(x){(
-          input[[paste0("checkbox_",x)]])
-        }) |> unlist()
-        
-        H_selected   <- names(index)[index]
-        DEF_selected <- select(DEF_mat,any_of(H_selected))
-        
-        rea.values[[dataset]]$DiffValidContrast <- 
-          filter(local.rea.values$selectedContrasts, contrastName %in% H_selected)
-        
-        colnames(DEF_selected) <- 
-          rea.values[[dataset]]$DiffValidContrast$tag
-        
-        if (length(H_selected) > 1){
+        if(is.null(metadata(dataset.SE)$DiffExpAnal[["mergeDEF"]])){
           
-          tabPanel.list <- c(list(
-            tabPanel(
-              title = "Intersection between DE lists",
-              renderPlot({
-                upset(data = DEF_selected, 
-                      sets = colnames(DEF_selected), 
-                      order.by = "degree")})
-            )
-          ), tabPanel.list)
+          "None of the contrasts yield results. No differentially expressed features!"
         }
-        
-        do.call(what = tabsetPanel, args = tabPanel.list)
+        else{
+          
+          subMAE <- subRflomicsMAE(session$userData$FlomicsMultiAssay, dataset)
+          
+          # 1rst panel
+          tabPanel.list <- list(
+            tabPanel(
+              title = "Summary",
+              renderPlot({
+                getDiffAnalysesSummary(subMAE, plot = TRUE)
+              })
+            ))
+          
+          # 2nd panel (upset) if 2 validated contrasts or more
+          DEF_mat <- metadata(dataset.SE)$DiffExpAnal[["mergeDEF"]]
+          
+          index <- sapply(names(DEF_mat)[-1], function(x){(
+            input[[paste0("checkbox_",x)]])
+          }) |> unlist()
+          
+          H_selected   <- names(index)[index]
+          DEF_selected <- select(DEF_mat,any_of(H_selected))
+          
+          rea.values[[dataset]]$DiffValidContrast <- 
+            filter(local.rea.values$selectedContrasts, contrastName %in% H_selected)
+          
+          colnames(DEF_selected) <- 
+            rea.values[[dataset]]$DiffValidContrast$tag
+          
+          if (length(H_selected) > 1){
+            
+            tabPanel.list <- c(list(
+              tabPanel(
+                title = "Intersection between DE lists",
+                renderPlot({
+                  upset(data = DEF_selected, 
+                        sets = colnames(DEF_selected), 
+                        order.by = "degree")})
+              )
+            ), tabPanel.list)
+          }
+          
+          do.call(what = tabsetPanel, args = tabPanel.list)
+        }
       })
       
       

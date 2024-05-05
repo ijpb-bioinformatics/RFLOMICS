@@ -928,10 +928,12 @@ setMethod(f          = "plotBoxplotDE",
 setMethod(f          = "getDEMatrix",
           signature  = "RflomicsSE",
           definition = function(object){
-            if (!is.null(metadata(object)$DiffExpAnal$mergeDEF)) {
-              metadata(object)$DiffExpAnal$mergeDEF
-            } else {
-              stop("There is no DE matrix in this object.")
+            
+            if (!is.null(metadata(object)$DiffExpAnal$mergeDEF)){
+              return(metadata(object)$DiffExpAnal$mergeDEF)
+            } 
+            else{
+              return(NULL)
             }
           })
 
@@ -974,9 +976,9 @@ setMethod(f          = "getDEList",
             
             validContrasts <- getValidContrasts(object)[["contrastName"]]
             if (is.null(validContrasts) || length(validContrasts) == 0){
-              validContrasts <- getSelectedContrasts(object)[["contrastName"]]
+              validContrasts <- names(getDEMatrix(object))[-1]
               if (is.null(validContrasts) || length(validContrasts) == 0)
-                stop("No defined contrast")
+                return(NULL)
             }
             
             if (is.null(contrasts) || length(contrasts) == 0){
@@ -985,14 +987,14 @@ setMethod(f          = "getDEList",
             else{
               contrasts <- intersect(contrasts, validContrasts)
               if (is.null(contrasts) || length(contrasts) == 0)
-                stop("No defined contrast")
+                return(NULL)
             }
             
             df_DE <- getDEMatrix(object) |>
               select(c("DEF", any_of(contrasts)))
             
-            if (is.null(df_DE) || nrow(df_DE) == 0 || ncol(df_DE) < 2)
-              stop("")
+            # if (is.null(df_DE) || nrow(df_DE) == 0 || ncol(df_DE) < 2)
+            #   stop("")
             
             if (operation == "intersection") {
               DETab <- df_DE %>%
