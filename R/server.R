@@ -111,8 +111,11 @@ rflomicsServer <- function(input, output, session) {
   
   #### Item for report #####
   output$runReport <- renderUI({
-    if(is.null(rea.values$datasetProcess) || 
-       length(rea.values$datasetProcess) != length(rea.values$datasetList)) return()
+    if(is.null(rea.values$datasetProcess)) return()
+    
+    # if(is.null(rea.values$datasetProcess) || 
+    #    length(rea.values$datasetProcess) != 
+    #    length(unlist(rea.values$datasetList))) return()
     
     column(
       width = 12, 
@@ -122,8 +125,7 @@ rflomicsServer <- function(input, output, session) {
   
   #### Item to download Results #####
   output$downloadResults <- renderUI({
-    if(is.null(rea.values$datasetProcess) || 
-       length(rea.values$datasetProcess) != length(rea.values$datasetList)) return()
+    if(is.null(rea.values$datasetProcess)) return()
     
     column(
       width = 12, 
