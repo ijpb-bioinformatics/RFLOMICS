@@ -52,6 +52,14 @@ setwd("rflomics/")
 remotes::install_local(upgrade="never")
 ```
 
+or install from github:
+
+``` r
+
+ibrary(remotes)
+remotes::install_github("https://github.com/ijpb-bioinformatics/RFLOMICS")
+```
+
 **Prerequisites for using MOFA2 (MAC OS & Windows)**
 
 Install Python:
