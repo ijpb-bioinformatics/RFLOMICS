@@ -56,7 +56,7 @@ or install from github:
 
 ``` r
 
-ibrary(remotes)
+library(remotes)
 remotes::install_github("https://github.com/ijpb-bioinformatics/RFLOMICS")
 ```
 
