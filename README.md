@@ -55,7 +55,6 @@ remotes::install_local(upgrade="never")
 or install from github:
 
 ``` r
-
 library(remotes)
 remotes::install_github("https://github.com/ijpb-bioinformatics/RFLOMICS")
 ```
