@@ -79,7 +79,8 @@ RFLOMICS::runRFLOMICS()
 ### [Vignettes](https://flomics.pages.mia.inra.fr/rflomics/index.html)
 
 ## Licence
-Artistic-2.0
+Artistic-2.0 Test
+
 
 ## Contact and support
 [ijpb-bioinfo-team](mailto:ijpb-bioinfo-team@inrae.fr) (ijpb-bioinfo-team@inrae.fr)
