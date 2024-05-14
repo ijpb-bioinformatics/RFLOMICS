@@ -826,6 +826,7 @@
             }
             
             bioFacts <- getBioFactors(session$userData$FlomicsMultiAssay)
+            nSamples <- nrow(colData(session$userData$FlomicsMultiAssay))
             box(
                 title = span(tagList(icon("sliders"), "  ", "Settings")),
                 width = 14,
@@ -935,9 +936,9 @@
                                         paste0("Number of components to search for.",
                                                " Roughly equivalent to the components in the PCA."),
                                     trigger = "click", placement = "right"),
-                                value = 10,
-                                min = 5,
-                                max = 15
+                                value = min(nSamples - 1, 10),
+                                min = 2,
+                                max = nSamples - 1
                             )
                             # column(
                             #     12,
