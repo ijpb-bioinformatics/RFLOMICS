@@ -1217,11 +1217,16 @@
             sORA <- sumORA(dataSE, from = listSource,
                            database = database, contrastName = listname)
             
-            cond <- as.numeric(unlist(sORA[-1], recursive = TRUE))
+            cond <- as.numeric(unlist(sORA[-1], recursive = TRUE)) # warnings
             cond[is.na(cond)] <- 0
             if (any(cond > 0)) {
                 
-                choices <- names(eres)
+                eres <- Filter(Negate(is.null), eres)
+                toKeep <- unlist(lapply(eres, FUN = function(enrichRes){
+                    selectterms <- enrichRes@result$p.adjust < enrichRes@pvalueCutoff
+                    return(sum(selectterms))
+                }))
+                choices <- names(eres[toKeep > 0]) 
                 
                 # ---- TabPanel plots ----
                 tabPanel.list <- list(
