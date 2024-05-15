@@ -1200,8 +1200,6 @@
             )
         }
         
-        
-        
         #foreach genes list selected (contrast)
         eres1 <-
             getEnrichRes(dataSE, from = listSource, database = database)
