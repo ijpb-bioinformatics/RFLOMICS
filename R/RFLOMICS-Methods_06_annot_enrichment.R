@@ -128,7 +128,7 @@ setMethod(
                    if (!is.null(nameList)) {
                        contrasts <- intersect(contrasts, nameList)
                        if(is.null(contrasts) || length(contrasts) == 0)
-                         stop("No selected contrasts.")
+                           stop("No selected contrasts.")
                    }
                    
                    geneLists <-
@@ -189,7 +189,7 @@ setMethod(
         
         geneLists <- geneLists[lengths(geneLists) > 0]
         
-     
+        
         
         # for each list
         results_list <-
@@ -283,7 +283,7 @@ setMethod(
                     mutate(Contrast = rownames(.)) %>%
                     relocate(Contrast)
                 
-                   EnrichAnal[["summary"]] <- dt_res
+                EnrichAnal[["summary"]] <- dt_res
             }
         }
         
@@ -718,23 +718,26 @@ setMethod(
                           matrixType = "FC",
                           nClust = NULL,
                           ...) {
-        from <- .determineFromEnrich(from)
+        
         
         allData <- switch(
             toupper(from),
             "DIFFEXPENRICHANAL" = {
-                object@metadata$DiffExpEnrichAnal[[database]]$enrichResult
+                getEnrichRes(object, from = "DiffExpEnrichAnal", 
+                             database = database)
             },
             "COEXPENRICHANAL"   = {
-                object@metadata$CoExpEnrichAnal[[database]]$enrichResult
+                
+                getEnrichRes(object, from = "CoExpEnrichAnal", 
+                             database = database)
             },
             {
                 message(
                     "Argument from is detected to be neither DiffExp nor CoExp,
                      taking DiffExp results."
                 )
-                allData <-
-                    object@metadata$DiffExpEnrichAnal[[database]]$enrichResult
+                allData <- getEnrichRes(object, from = "DiffExpEnrichAnal", 
+                                        database = database)
             }
         )
         
@@ -762,14 +765,17 @@ setMethod(
             do.call("rbind", lapply(
                 seq_len(length(allData)),
                 FUN = function(i) {
+                    allData[[i]] <- Filter(Negate(is.null), allData[[i]])
                     if (domain %in% names(allData[[i]])) {
                         cprRes <- allData[[i]][[domain]]
-                        cprRes <-
-                            cprRes@result[cprRes@result$p.adjust < cprRes@pvalueCutoff, ]
-                        cprRes$contrastName <- names(allData)[i]
-                        cprRes$domain <- domain
-                        return(cprRes)
-                    }
+                        selectterms <- cprRes@result$p.adjust < cprRes@pvalueCutoff
+                        nterms <- sum(selectterms)
+                        if (nterms > 0) {
+                            cprRes <- cprRes@result[selectterms, ]
+                            cprRes$contrastName <- names(allData)[i]
+                            cprRes$domain <- domain
+                            return(cprRes)
+                        }}
                 }
             ))
         
