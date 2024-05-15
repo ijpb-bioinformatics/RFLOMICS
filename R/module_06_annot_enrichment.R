@@ -1205,7 +1205,7 @@
         #foreach genes list selected (contrast)
         eres1 <-
             getEnrichRes(dataSE, from = listSource, database = database)
-
+        
         lapply(names(eres1), function(listname) {
             eres <- getEnrichRes(
                 dataSE,
@@ -1217,9 +1217,10 @@
             sORA <- sumORA(dataSE, from = listSource,
                            database = database, contrastName = listname)
             
-            cond <- as.numeric(unlist(sORA[-1]))
+            cond <- as.numeric(unlist(sORA[-1], recursive = TRUE))
             cond[is.na(cond)] <- 0
             if (any(cond > 0)) {
+                
                 choices <- names(eres)
                 
                 # ---- TabPanel plots ----
@@ -1351,83 +1352,82 @@
                                            )
                                        ))
                     
-                    ###
-                    
-                    # display results
-                    fluidRow(
-                        box(
-                            width = 12,
-                            solidHeader = TRUE,
-                            collapsible = TRUE,
-                            collapsed = TRUE,
-                            status = "success",
-                            title = listname,
-                            
-                            fluidRow(
-                                column(
-                                    3,
-                                    # choice of domain
-                                    radioButtons(
-                                        ns(paste0(listname, "-domain")),
-                                        label = "Domain",
-                                        choices = choices,
-                                        selected = choices[1]
-                                    )
-                                ),
-                                column(3,
-                                       renderUI({
-                                           # number of terms
-                                           dataPlot <- getEnrichRes(
-                                               object = dataSE,
-                                               from = listSource,
-                                               contrastName = listname,
-                                               database = database,
-                                               domain = input[[paste0(listname, "-domain")]]
-                                           )
-                                           pvalue <-
-                                               getEnrichPvalue(dataSE,
-                                                               from = listSource,
-                                                               database = database)
-                                           datPlot <-
-                                               dataPlot@result[dataPlot@result$p.adjust < pvalue, ]
-                                           max_terms <-
-                                               nrow(datPlot)
-                                           
-                                           numericInput(
-                                               ns(paste0(
-                                                   listname, "-top.over"
-                                               )),
-                                               label = paste0("Top terms: (max: ",
-                                                              max_terms, ")"),
-                                               value = min(15, max_terms) ,
-                                               min = 1,
-                                               max = max_terms,
-                                               step = 1
-                                           )
-                                       })),
-                                
-                                column(
-                                    3,
-                                    # search term or gene
-                                    textInput(ns(
-                                        paste0(listname, "-grep")
-                                    ),
-                                    label = "Search Expression")
-                                ),
-                                column(1,),
-                                .popoverHelp(label = "")
+                } # if database KEGG
+                
+                # display results
+                fluidRow(
+                    box(
+                        width = 12,
+                        solidHeader = TRUE,
+                        collapsible = TRUE,
+                        collapsed = TRUE,
+                        status = "success",
+                        title = listname,
+                        
+                        fluidRow(
+                            column(
+                                3,
+                                # choice of domain
+                                radioButtons(
+                                    ns(paste0(listname, "-domain")),
+                                    label = "Domain",
+                                    choices = choices,
+                                    selected = choices[1]
+                                )
                             ),
-                            fluidRow(# display all tabsets
-                                column(
-                                    width = 12,
-                                    do.call(what = tabsetPanel, args = tabPanel.list)
-                                ))
+                            column(3,
+                                   renderUI({
+                                       # number of terms
+                                       dataPlot <- getEnrichRes(
+                                           object = dataSE,
+                                           from = listSource,
+                                           contrastName = listname,
+                                           database = database,
+                                           domain = input[[paste0(listname, "-domain")]]
+                                       )
+                                       pvalue <-
+                                           getEnrichPvalue(dataSE,
+                                                           from = listSource,
+                                                           database = database)
+                                       datPlot <-
+                                           dataPlot@result[dataPlot@result$p.adjust < pvalue, ]
+                                       max_terms <- nrow(datPlot)
+                                       
+                                       numericInput(
+                                           ns(paste0(
+                                               listname, "-top.over"
+                                           )),
+                                           label = paste0("Top terms: (max: ",
+                                                          max_terms, ")"),
+                                           value = min(15, max_terms) ,
+                                           min = 1,
+                                           max = max_terms,
+                                           step = 1
+                                       )
+                                   })),
                             
-                        ) # box
-                    ) # fluidrow
-                } # else
-            } # if
-        })# lapply
+                            column(
+                                3,
+                                # search term or gene
+                                textInput(ns(
+                                    paste0(listname, "-grep")
+                                ),
+                                label = "Search Expression")
+                            ),
+                            column(1,),
+                            .popoverHelp(label = "")
+                        ),
+                        fluidRow(# display all tabsets
+                            column(
+                                width = 12,
+                                do.call(what = tabsetPanel, args = tabPanel.list)
+                            ))
+                        
+                    ) # box
+                ) # fluidrow
+            } # if any result
+            else return()
+        })# lapply contrast names
     })
 }
 

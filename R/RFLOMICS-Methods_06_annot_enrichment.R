@@ -1078,7 +1078,7 @@ setMethod(
                           from = "DiffExpEnrichAnal",
                           database = NULL,
                           contrastName = NULL) {
-      
+        
         from <- .determineFromEnrich(from)
         
         # cat("|From: ", from, "\n")
