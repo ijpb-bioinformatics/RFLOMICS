@@ -1205,14 +1205,7 @@
         #foreach genes list selected (contrast)
         eres1 <-
             getEnrichRes(dataSE, from = listSource, database = database)
-        
-        obj <<- session$userData$FlomicsMultiAssay
-        # dataSE <- obj[["proteomics.set3"]]
-        # listSource <- "Diffexp"
-        # dastabase <- "KEGG"
-        # listname <- "(temperatureElevated - temperatureMedium) in imbibitionLI - (temperatureElevated - temperatureMedium) in imbibitionEI"
-        # listname <- "(temperatureElevated - temperatureLow) in imbibitionLI - (temperatureElevated - temperatureLow) in imbibitionDS"
-        
+
         lapply(names(eres1), function(listname) {
             eres <- getEnrichRes(
                 dataSE,
@@ -1220,165 +1213,143 @@
                 database = database,
                 contrastName = listname
             )
-            # if(is.null(eres))
-            # if (length(eres) != 0) {
-                sORA <- sumORA(dataSE, from = listSource,
-                               database = database, contrastName = listname)
-                # sORA2 <- sORA
-                # sORA2[sORA2 == "error - no mapping?"] <- 0
-                # if (sum(as.numeric(unlist(sORA[-1])), na.rm = TRUE) == 0) {
-                #     fluidRow(box(
-                #         width = 12,
-                #         title = paste0(listname, ": 0 enriched terms found."),
-                #         status = "danger"
-                #     ))
-                # }
-                # else{
-                cond <- as.numeric(unlist(sORA[-1]))
-                cond[is.na(cond)] <- 0
-                if (any(cond > 0)) {
-                    choices <- names(eres)
-                    
-                    # ---- TabPanel plots ----
-                    tabPanel.list <- list(
-                        tabPanel(
-                            "DotPlot",
-                            br(),
-                            .outDotPlot(
-                                input,
-                                dataSE,
-                                listname,
-                                from,
-                                "dotplot",
-                                database
-                            )
-                        ),
-                        tabPanel(
-                            "Heatplot",
-                            br(),
-                            .outHeatPlot(
-                                input,
-                                dataSE,
-                                listname,
-                                from,
-                                "heatplot",
-                                database
-                            )
-                        ),
-                        tabPanel(
-                            "Cnetplot",
-                            br(),
-                            .outCnetPlot(
-                                session,
-                                input,
-                                dataSE,
-                                listname,
-                                from,
-                                "cnetplot",
-                                database
-                            )
-                        ),
-                        # ---- Tab Panel : Results table : ----
-                        tabPanel(
-                            "Result Table",
-                            br(),
-                            verticalLayout(
-                                tags$style(
-                                    ".explain-p {
+            
+            sORA <- sumORA(dataSE, from = listSource,
+                           database = database, contrastName = listname)
+            
+            cond <- as.numeric(unlist(sORA[-1]))
+            cond[is.na(cond)] <- 0
+            if (any(cond > 0)) {
+                choices <- names(eres)
+                
+                # ---- TabPanel plots ----
+                tabPanel.list <- list(
+                    tabPanel(
+                        "DotPlot",
+                        br(),
+                        .outDotPlot(
+                            input,
+                            dataSE,
+                            listname,
+                            from,
+                            "dotplot",
+                            database
+                        )
+                    ),
+                    tabPanel(
+                        "Heatplot",
+                        br(),
+                        .outHeatPlot(
+                            input,
+                            dataSE,
+                            listname,
+                            from,
+                            "heatplot",
+                            database
+                        )
+                    ),
+                    tabPanel(
+                        "Cnetplot",
+                        br(),
+                        .outCnetPlot(
+                            session,
+                            input,
+                            dataSE,
+                            listname,
+                            from,
+                            "cnetplot",
+                            database
+                        )
+                    ),
+                    # ---- Tab Panel : Results table : ----
+                    tabPanel(
+                        "Result Table",
+                        br(),
+                        verticalLayout(
+                            tags$style(
+                                ".explain-p {
                                   color: Gray;
                                   text-justify: inter-word;
                                   font-style: italic;
                                 }"
-                                ),
-                                div(class = "explain-p",
-                                    HTML(expMessage)),
-                                hr(),
+                            ),
+                            div(class = "explain-p",
+                                HTML(expMessage)),
+                            hr(),
+                            
+                            renderDataTable({
+                                dataPlot <- getEnrichRes(
+                                    object = dataSE,
+                                    from = listSource,
+                                    contrastName = listname,
+                                    database = database,
+                                    domain = input[[paste0(listname, "-domain")]]
+                                )
                                 
-                                renderDataTable({
-                                    dataPlot <- getEnrichRes(
-                                        object = dataSE,
-                                        from = listSource,
-                                        contrastName = listname,
-                                        database = database,
-                                        domain = input[[paste0(listname, "-domain")]]
+                                pvalue <-
+                                    getEnrichPvalue(dataSE,
+                                                    from = listSource,
+                                                    database = database)
+                                
+                                datPlot <- dataPlot@result[dataPlot@result$p.adjust <  pvalue, ]
+                                datPlot$pvalue <-
+                                    round(datPlot$pvalue, 3)
+                                datPlot$p.adjust <-
+                                    round(datPlot$p.adjust, 3)
+                                datPlot$qvalue <-
+                                    round(datPlot$qvalue, 3)
+                                datPlot$geneID <- unlist(lapply(
+                                    datPlot$geneID,
+                                    FUN = function(longString) {
+                                        return(gsub("/", ", ", longString))
+                                    }
+                                ))
+                                
+                                datatable(
+                                    datPlot,
+                                    rownames = FALSE,
+                                    options = list(
+                                        pageLength = 5,
+                                        lengthMenu = c(5, 10, 15, 20),
+                                        scrollX = TRUE
                                     )
-                                    
-                                    pvalue <-
-                                        getEnrichPvalue(dataSE,
-                                                        from = listSource,
-                                                        database = database)
-                                    
-                                    datPlot <- dataPlot@result[dataPlot@result$p.adjust <  pvalue, ]
-                                    datPlot$pvalue <-
-                                        round(datPlot$pvalue, 3)
-                                    datPlot$p.adjust <-
-                                        round(datPlot$p.adjust, 3)
-                                    datPlot$qvalue <-
-                                        round(datPlot$qvalue, 3)
-                                    datPlot$geneID <- unlist(lapply(
-                                        datPlot$geneID,
-                                        FUN = function(longString) {
-                                            return(gsub("/", ", ", longString))
-                                        }
-                                    ))
-                                    
-                                    datatable(
-                                        datPlot,
-                                        rownames = FALSE,
-                                        options = list(
-                                            pageLength = 5,
-                                            lengthMenu = c(5, 10, 15, 20),
-                                            scrollX = TRUE
-                                        )
-                                    )
-                                    
-                                    
-                                }) # renderdatatable
-                            )
-                        ) # vertical layout
-                        
-                    )# TabsetPanel
+                                )
+                                
+                                
+                            }) # renderdatatable
+                        )
+                    ) # vertical layout
                     
-                    # ---- Tab Panel : only for KEGG, pathview : ----
-                    if (database == "KEGG") {
-                        data <-   getEnrichRes(
-                            object = dataSE,
-                            contrastName = listname,
-                            from = listSource,
-                            database = "KEGG"
-                        )[["no-domain"]]@result
-                        
-                        pvalue <- getEnrichPvalue(dataSE,
-                                                  from = listSource,
-                                                  database = database)
-                        mapChoices <-
-                            sort(data$ID[data$p.adjust < pvalue])
-                        
-                        tabPanel.list <- c(tabPanel.list,
-                                           list(
-                                               .outPathview(
-                                                   session,
-                                                   input,
-                                                   input2,
-                                                   data,
-                                                   dataSE,
-                                                   listSource,
-                                                   listname,
-                                                   mapChoices
-                                               )
-                                           ))
-                    # } else {
-                    #     # sORA2 <- sORA
-                    #     # sORA2[sORA2 == "error - no mapping?"] <- 0
-                    #     # if (sum(as.numeric(unlist(sORA[-1])), na.rm = TRUE) == 0) {
-                    #         fluidRow(box(
-                    #             width = 12,
-                    #             title = paste0(listname, ": 0 enriched terms found."),
-                    #             status = "danger"
-                    #         ))
-                    #     # }
-                    #     # else{
-                    # }
+                )# TabsetPanel
+                
+                # ---- Tab Panel : only for KEGG, pathview : ----
+                if (database == "KEGG") {
+                    data <-   getEnrichRes(
+                        object = dataSE,
+                        contrastName = listname,
+                        from = listSource,
+                        database = "KEGG"
+                    )[["no-domain"]]@result
+                    
+                    pvalue <- getEnrichPvalue(dataSE,
+                                              from = listSource,
+                                              database = database)
+                    mapChoices <-
+                        sort(data$ID[data$p.adjust < pvalue])
+                    
+                    tabPanel.list <- c(tabPanel.list,
+                                       list(
+                                           .outPathview(
+                                               session,
+                                               input,
+                                               input2,
+                                               data,
+                                               dataSE,
+                                               listSource,
+                                               listname,
+                                               mapChoices
+                                           )
+                                       ))
                     
                     ###
                     

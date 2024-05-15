@@ -256,10 +256,6 @@ setMethod(
         # map_error_list <- Filter(is.null, results_list)
         # results_list <- Filter(Negate(is.null), results_list) ##
         
-        res_extract <<- results_list
-        # results_list <- res_extract
-        # list_args <- list(pvalueCutoff = 0.01)
-        
         overview_list <- list()
         # term.list <- list()
         for (listname in names(results_list)) {
@@ -272,16 +268,7 @@ setMethod(
                         nrow(res[res$p.adjust < list_args$pvalueCutoff,])
                     overview_list[[listname]][[dom]] <- res.n
                     
-                    # if (res.n == 0) {
-                    #     # results_list[[listname]][[dom]] <- NULL
-                    # } else {
-                    #     term.list[[dom]][[listname]] <- data.frame(term = row.names(res[res$p.adjust < list_args$pvalueCutoff,]),
-                    #                                                bin = rep(1, res.n))
-                    #     names(term.list[[dom]][[listname]]) <-
-                    #         c("term", listname)
-                    # }
                 } else {
-                    # results_list[[listname]][[dom]] <- NULL
                     overview_list[[listname]][[dom]] <- "null results - no mapping?"
                 }
             }
@@ -301,8 +288,6 @@ setMethod(
         }
         
         results_list <- Filter(Negate(is.null), results_list) ##
-        
-        res_final <<- results_list
         
         EnrichAnal[["list_args"]] <-
             list_args[names(list_args) %in%
@@ -1095,12 +1080,6 @@ setMethod(
                           contrastName = NULL) {
       
         from <- .determineFromEnrich(from)
-        
-        # object <- obj[["proteomics.set3"]]
-        # from <- listSource
-        # database = "KEGG"
-        # contrastName <- "(temperatureElevated - temperatureMedium) in imbibitionLI - (temperatureElevated - temperatureMedium) in imbibitionEI"
-        # from <- RFLOMICS:::.determineFromEnrich(from)
         
         # cat("|From: ", from, "\n")
         
