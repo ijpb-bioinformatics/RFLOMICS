@@ -1205,6 +1205,14 @@
         #foreach genes list selected (contrast)
         eres1 <-
             getEnrichRes(dataSE, from = listSource, database = database)
+        
+        obj <<- session$userData$FlomicsMultiAssay
+        # dataSE <- obj[["proteomics.set3"]]
+        # listSource <- "Diffexp"
+        # dastabase <- "KEGG"
+        # listname <- "(temperatureElevated - temperatureMedium) in imbibitionLI - (temperatureElevated - temperatureMedium) in imbibitionEI"
+        # listname <- "(temperatureElevated - temperatureLow) in imbibitionLI - (temperatureElevated - temperatureLow) in imbibitionDS"
+        
         lapply(names(eres1), function(listname) {
             eres <- getEnrichRes(
                 dataSE,
@@ -1212,17 +1220,23 @@
                 database = database,
                 contrastName = listname
             )
-            if (length(eres) != 0) {
+            # if(is.null(eres))
+            # if (length(eres) != 0) {
                 sORA <- sumORA(dataSE, from = listSource,
-                               database = database)
-                if (sum(unlist(sORA[-1]), na.rm = TRUE) == 0) {
-                    fluidRow(box(
-                        width = 12,
-                        title = paste0(listname, ": 0 enriched terms found."),
-                        status = "danger"
-                    ))
-                }
-                else{
+                               database = database, contrastName = listname)
+                # sORA2 <- sORA
+                # sORA2[sORA2 == "error - no mapping?"] <- 0
+                # if (sum(as.numeric(unlist(sORA[-1])), na.rm = TRUE) == 0) {
+                #     fluidRow(box(
+                #         width = 12,
+                #         title = paste0(listname, ": 0 enriched terms found."),
+                #         status = "danger"
+                #     ))
+                # }
+                # else{
+                cond <- as.numeric(unlist(sORA[-1]))
+                cond[is.na(cond)] <- 0
+                if (any(cond > 0)) {
                     choices <- names(eres)
                     
                     # ---- TabPanel plots ----
@@ -1353,7 +1367,18 @@
                                                    mapChoices
                                                )
                                            ))
-                    }
+                    # } else {
+                    #     # sORA2 <- sORA
+                    #     # sORA2[sORA2 == "error - no mapping?"] <- 0
+                    #     # if (sum(as.numeric(unlist(sORA[-1])), na.rm = TRUE) == 0) {
+                    #         fluidRow(box(
+                    #             width = 12,
+                    #             title = paste0(listname, ": 0 enriched terms found."),
+                    #             status = "danger"
+                    #         ))
+                    #     # }
+                    #     # else{
+                    # }
                     
                     ###
                     

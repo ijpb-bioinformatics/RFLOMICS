@@ -236,21 +236,32 @@ setMethod(
                                                              ns = "clusterProfiler"),
                                             list_args)
                             # delete heavy slots
-                            slot(res1, name = "geneSets", 
-                                 check = FALSE) <- list("removed")
-                            slot(res1, name = "universe", 
-                                 check = FALSE) <- c("removed")
+                            if (!is.null(res1)) {
+                                
+                                slot(res1, name = "geneSets", 
+                                     check = FALSE) <- list("removed")
+                                slot(res1, name = "universe", 
+                                     check = FALSE) <- c("removed")
+                            }
+                            
                             return(res1)
                         }
                     )
                     names(results_ont) <- domain
+                    # results_ont <- Filter(Negate(is.null), results_ont)
                     return(results_ont)
                 }
             )
         names(results_list) <- names(geneLists)
+        # map_error_list <- Filter(is.null, results_list)
+        # results_list <- Filter(Negate(is.null), results_list) ##
+        
+        res_extract <<- results_list
+        # results_list <- res_extract
+        # list_args <- list(pvalueCutoff = 0.01)
         
         overview_list <- list()
-        term.list <- list()
+        # term.list <- list()
         for (listname in names(results_list)) {
             # TODO why is it a for?!
             
@@ -261,16 +272,17 @@ setMethod(
                         nrow(res[res$p.adjust < list_args$pvalueCutoff,])
                     overview_list[[listname]][[dom]] <- res.n
                     
-                    if (res.n == 0) {
-                        results_list[[listname]][[dom]] <- NULL
-                    } else {
-                        term.list[[dom]][[listname]] <- data.frame(term = row.names(res[res$p.adjust < list_args$pvalueCutoff,]),
-                                                                   bin = rep(1, res.n))
-                        names(term.list[[dom]][[listname]]) <-
-                            c("term", listname)
-                    }
+                    # if (res.n == 0) {
+                    #     # results_list[[listname]][[dom]] <- NULL
+                    # } else {
+                    #     term.list[[dom]][[listname]] <- data.frame(term = row.names(res[res$p.adjust < list_args$pvalueCutoff,]),
+                    #                                                bin = rep(1, res.n))
+                    #     names(term.list[[dom]][[listname]]) <-
+                    #         c("term", listname)
+                    # }
                 } else {
-                    results_list[[listname]][[dom]] <- NULL
+                    # results_list[[listname]][[dom]] <- NULL
+                    overview_list[[listname]][[dom]] <- "null results - no mapping?"
                 }
             }
         }
@@ -283,9 +295,14 @@ setMethod(
                 dt_res <- dt_res %>%
                     mutate(Contrast = rownames(.)) %>%
                     relocate(Contrast)
-                EnrichAnal[["summary"]] <- dt_res
+                
+                   EnrichAnal[["summary"]] <- dt_res
             }
         }
+        
+        results_list <- Filter(Negate(is.null), results_list) ##
+        
+        res_final <<- results_list
         
         EnrichAnal[["list_args"]] <-
             list_args[names(list_args) %in%
@@ -1079,12 +1096,18 @@ setMethod(
       
         from <- .determineFromEnrich(from)
         
+        # object <- obj[["proteomics.set3"]]
+        # from <- listSource
+        # database = "KEGG"
+        # contrastName <- "(temperatureElevated - temperatureMedium) in imbibitionLI - (temperatureElevated - temperatureMedium) in imbibitionEI"
+        # from <- RFLOMICS:::.determineFromEnrich(from)
+        
         # cat("|From: ", from, "\n")
         
         if (!is.null(database)) {
-            toReturn <- object@metadata[[from]][[database]]$summary
+            toReturn <- metadata(object)[[from]][[database]]$summary
             if (!is.null(contrastName)) {
-                toReturn <- toReturn[which(toReturn$contrastName == contrastName),]
+                toReturn <- toReturn[which(toReturn$Contrast == contrastName),]
             }
             if (!is.null(toReturn) && from == "CoExpEnrichAnal") {
                 colnames(toReturn)[1] <- "Cluster"
@@ -1092,16 +1115,16 @@ setMethod(
             return(toReturn)
         } else {
             list_res <- lapply(
-                names(object@metadata[[from]]),
+                names(metadata(object)[[from]]),
                 FUN = function(ontres) {
-                    interRes <- object@metadata[[from]][[ontres]]$summary
+                    interRes <- metadata(object)[[from]][[ontres]]$summary
                     if (!is.null(contrastName)) {
-                        interRes <- interRes[which(interRes$contrastName == contrastName),]
+                        interRes <- interRes[which(interRes$Contrast == contrastName),]
                     }
                     interRes
                 }
             )
-            names(list_res) <- names(object@metadata[[from]])
+            names(list_res) <- names(metadata(object)[[from]])
             return(list_res)
         }
     }
