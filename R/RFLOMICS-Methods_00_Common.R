@@ -434,7 +434,8 @@ setMethod(
                     df.list[[analysis]] <- c(df.list[[analysis]], dataset)
                 },
                 "CoExpAnal" = {
-                  df.list[[analysis]] <- c(df.list[[analysis]], dataset)
+                  if(isTRUE(object[[dataset]]@metadata[[analysis]]$results))
+                    df.list[[analysis]] <- c(df.list[[analysis]], dataset)
                 },
                 {
                   for(db in names(object[[dataset]]@metadata[[analysis]])){
@@ -446,7 +447,7 @@ setMethod(
     }
     
     if(length(df.list) == 0) return(NULL)
-    if(length(df.list) == 1) return(df.list[[1]])
+    if(length(analyses) == 1) return(df.list[[1]])
     return(df.list)
   })
 
@@ -473,13 +474,11 @@ setMethod(
   definition = function(object, plot = FALSE, 
                         ylabelLength = 30) {
     # DataProcessing
+    
+    omicNames <- getAnalyzedDatasetNames(object, "DiffExpAnal")
+    
     df.list <- list()
-    for (dataset in getDatasetNames(object)) {
-      if (is.null(object[[dataset]]))
-        next
-      
-      if(is.null(object[[dataset]]@metadata$DiffExpAnal$stats))
-        next
+    for (dataset in omicNames) {
       
       Validcontrasts <- getValidContrasts(object[[dataset]])$contrastName
       
@@ -790,13 +789,9 @@ setMethod(
     mean.y_profiles.list <- list()
     
     if (is.null(omicNames))
-      omicNames <- getDatasetNames(object)
+      omicNames <- getAnalyzedDatasetNames(object, "CoExpAnal")
     
     for (data in omicNames) {
-      if (is.null(object[[data]]))
-        next
-      if (length(object[[data]]@metadata$CoExpAnal) == 0)
-        next
       
       Groups     <- getDesignMat(object[[data]])
       cluster.nb <-

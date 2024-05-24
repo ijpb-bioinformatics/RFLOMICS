@@ -1,0 +1,117 @@
+
+```{r}
+
+ont.title <- switch (ontology,
+                     "GO" = {"Gene Ontology database"},
+                     "KEGG" = {"KEGG database"},
+                     "custom" = {"Custom annotation"}
+)
+```
+
+### `r ont.title` {.tabset .tabset-fade .tabset-pills}
+
+```{r}
+
+MM.db <- switch (ontology,
+                 "GO" = {
+                   db <- dataset.SE@metadata[["DiffExpEnrichAnal"]][[ontology]]$list_args$OrgDb
+                   if(is.null(db))
+                     db <- dataset.SE@metadata[["CoExpEnrichAnal"]][[ontology]]$list_args$OrgDb
+                   paste0("Gene Ontology ([GO](https://geneontology.org/)). From ", db, 
+                          " annotation (", packageVersion(db),")",
+                          " **enrichGO()** function from ClusterProfilter was used.")
+                 },
+                 "KEGG" = {
+                   paste0("Kyoto Encyclopedia of Genes and Genomes ([KEGG](https://www.genome.jp/kegg/)).",
+                          " **enrichKEGG()** function from ClusterProfilter was used.")
+                 },
+                 "custom" = {
+                   paste0("Privided by user. File name: ????.",
+                          " **enricher()** function from ClusterProfilter was used.")}
+)
+
+```
+
+*`r MM.db`.*
+
+<br>
+
+```{r, results ='asis'}
+
+out <- NULL
+for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
+  
+  if(!isTRUE(annot.list[[data]][[ontology]][[annot]]))
+    next
+  
+  # tabset for each list type
+  out <- 
+    c(out, 
+      paste0("\n#### From ",
+             ifelse(annot == "DiffExpEnrichAnal", 
+                    "differentially expressed ", "co-expressed "), 
+             RFLOMICS:::omicsDic(dataset.SE)[["variableName"]], " lists\n"),
+      paste0("\n*Pvalue cut-off: ",
+             dataset.SE@metadata[[annot]][[ontology]]$list_args$pvalueCutoff, 
+             "*\n"))
+  
+  # summary
+  out <- 
+    c(out, 
+      paste0("\n* **Summary of the results for all the ",
+             ifelse(annot == "DiffExpEnrichAnal", "contrasts:", "clusters:"),
+             "**\n"))
+
+  # table
+  sumORA.ont <- RFLOMICS::sumORA(dataset.SE, from = annot, database = ontology)
+  
+  for(y in names(sumORA.ont)[-1]){
+    sumORA.ont[[y]] <- unlist(sumORA.ont[[y]])
+  }
+  
+  if("no-domain" %in% names(sumORA.ont)[-1]){
+    names(sumORA.ont) <- 
+      c(names(sumORA.ont)[1], ontology)
+  }else{
+    names(sumORA.ont) <- 
+      c(names(sumORA.ont)[1],
+        paste0(ontology, "(", names(sumORA.ont)[-1], ")"))
+  }
+  
+  annotDir <- paste0(outDir,"/06-Enrichment_analysis/", data, "/", 
+                     ontology, "/", annot, "/")
+  dir.create(path=annotDir, recursive = TRUE, showWarnings = FALSE)
+  write.table(sumORA.ont, file=paste0(annotDir,"summay_stat.txt"),
+              sep="\t", quote=FALSE, col.names=T, row.names=F)
+  
+  # sumORA.df[[x]] <- 
+  #   dplyr::filter(sumORA.df[[x]], 
+  #                 rowSums(dplyr::across(names(sumORA.df[[x]])[-1])) != 0)
+  
+  DT.child <-  
+    c("```{r}",
+    "DT::datatable(sumORA.ont, rownames = FALSE , class = 'cell-border stripe',
+                  options = list( pageLength = 6, scrollX = F, dom = 'tip'))",
+     "```")
+  
+  out <- c(out, knitr::knit_child(text = DT.child, envir = environment(), quiet=TRUE))
+  
+  # Results per list
+  out <- 
+    c(out, 
+      paste0("\n* **Results per ",
+             ifelse(annot == "DiffExpEnrichAnal", "contrast:", "cluster:"), "**\n"),
+      paste0("\n*Please click on the arrows to scroll down the results and click on the figure to zoom*\n"))
+  
+  index <- names(sumORA.ont)[stringr::str_detect(names(sumORA.ont), ontology)]
+  listnames <- dplyr::filter(sumORA.ont, rowSums(dplyr::across(index)) != 0)[[1]]
+  
+  for (listname  in listnames){
+    out <- c(out, knitr::knit_child(
+      paste0(path.package("RFLOMICS"), "/RFLOMICSapp/",
+             "report_06_enrichmentORA_per_list_CPR.Rmd"), quiet=TRUE))
+  }
+}
+knitr::asis_output(out)
+
+```

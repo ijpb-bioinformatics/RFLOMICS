@@ -7,11 +7,11 @@ output:
   html_document:
     df_print: paged
     toc: true
-    toc_depth: 3
+    toc_depth: 2
     toc_float:
       collapsed: true
       smooth_scroll: true
-    number_sections: true
+    number_sections: false
     theme: flatly
 params: 
   outDir: NA
@@ -26,7 +26,7 @@ options(knitr.duplicate.label = "allow")
 ```
 
 ```{r library}
-
+#library(knitr)
 library(RFLOMICS)
 ```
 
@@ -39,10 +39,20 @@ projectName <- params$title
 
 ```
 
-```{r , message=FALSE, warning=FALSE, echo=FALSE}
+```{r}
 # Create a directory to store all the results (tables and figures) of the project in a tmpdir
 # user may download this results as an archive from the shiny interface
 dir.create(path = outDir, showWarnings = FALSE)
+```
+
+<!-- tabset color -->
+
+```{css}
+.scroll-200 {
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: inherit;
+}
 ```
 
 <!-- enable to zoom by clicking on graphs in the report -->
@@ -67,13 +77,9 @@ $('.zoomDiv').css({opacity: '0', width: '0%'});
 });
 ```
 
-<br>
-<br>
-<br>
-
 <!-- Experimental design -->
 
-```{r design}
+```{r design, eval=(nrow(getDesignMat(rflomics.MAE)) != 0)}
 
 out <- NULL
 child <- paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_02_design.Rmd")
@@ -83,23 +89,13 @@ knitr::asis_output(out)
 
 ```
 
-<br>
-<br>
-
 <!-- single omics analysis -->
 
-```{r analysis, eval=(length(getOmicsTypes(rflomics.MAE)) != 0 )}
+```{r single_omics, eval=(length(getOmicsTypes(rflomics.MAE)) != 0 )}
 
 out <- NULL
-omicsData <- getOmicsTypes(rflomics.MAE)
-for (omictype in unique(omicsData)){ 
-  
-  for (data in  names(omicsData[omicsData == omictype])){
-    
-    child <- paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_01_omics.Rmd") 
-    out   <- c(out, knitr::knit_child(child, quiet=TRUE))  
-  }
-}
+child <- paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_01_omics.Rmd") 
+out   <- c(out, knitr::knit_child(child, quiet=TRUE))  
 
 knitr::asis_output(out)
 
@@ -114,7 +110,7 @@ knitr::asis_output(out)
 <br>
 <br>
 
-# MOFA2 Integration
+# 7.1 MOFA2 Integration
 
 `r if(is.null(getMOFA(rflomics.MAE))) {"\\end{comment}"}`
 
@@ -133,9 +129,10 @@ knitr::asis_output(out)
 
 `r if(is.null(RFLOMICS::getMixOmics(rflomics.MAE))) {"\\begin{comment}"}`
 
----
+<br>
+<br>
 
-# MixOmics Integration
+# 7.2 MixOmics Integration
 
 `r if(is.null(RFLOMICS::getMixOmics(rflomics.MAE))) {"\\end{comment}"}`
 
@@ -207,7 +204,8 @@ knitr::asis_output(out)
 
 ```
 
----
+<br>
+<br>
 
 # R Session
 
@@ -218,6 +216,8 @@ writeLines(capture.output(devtools::session_info()),
            paste0(outDir,"/","session_info.txt"))
 ```
 
+<br>
+<br>
 
 # Bibliographie
 

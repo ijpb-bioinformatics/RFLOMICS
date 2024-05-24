@@ -1,108 +1,232 @@
-# `r data` 
 
-```{r }
-# Create a directory to report each dataset results
-dataDir <- paste0(outDir,"/",data)
-dir.create(path = dataDir, showWarnings = FALSE)
+
+```{r}
+analyzedDatasetNames <- RFLOMICS::getAnalyzedDatasetNames(rflomics.MAE)
+analysisTypes <- names(analyzedDatasetNames)
+data.coExp <- unique(c(unlist(analyzedDatasetNames[["DiffExpEnrichAnal"]]),
+                       unlist(analyzedDatasetNames[["CoExpEnrichAnal"]])))
 ```
 
+<br>
+<br>
 
-```{r }
+<!-- Data pre-processing -->
+# 3 Data pre-processing
 
-dataset.raw.SE <- NULL
-dataset.SE     <- NULL
-Diff.eval      <- FALSE
-CoEx.eval      <- FALSE
-Diff.ann.eval  <- FALSE
-CoEx.ann.eval  <- FALSE
-Diff.ann.eval_CPR <- FALSE
-CoEx.ann.eval_CPR <- FALSE
+This pre-processing step aims to reduce noise and enhance statistical power. It also aims to reduce the technical variability between samples by normalizing them, and stabilizing the variance through data transformation, necessary to meet the assumptions of statistical models. The methods are adapted to the type of omics.
 
-dataset.raw.SE <- getRflomicsSE(rflomics.MAE, paste0(data,".raw")) 
-dataset.SE     <- getRflomicsSE(rflomics.MAE, data)
+Additionally, this step includes a quality check to identify batch effects or outlier samples that may need to be removed. 
 
-if(!is.null(dataset.SE)){
-  
-  Diff.eval      <- !length(dataset.SE@metadata[["DiffExpAnal"]][["Validcontrasts"]]) == 0
-  CoEx.eval      <- !length(dataset.SE@metadata[["CoExpAnal"]]$results) == 0
-  Diff.ann.eval  <- !length(dataset.SE@metadata[["DiffExpEnrichAnal"]]$results) == 0
-  CoEx.ann.eval  <- !length(dataset.SE@metadata[["CoExpEnrichAnal"]]$results) == 0
-  
-  Diff.ann.eval_CPR <- !length(dataset.SE@metadata[["DiffExpEnrichAnal"]]) == 0
-  CoEx.ann.eval_CPR  <- !length(dataset.SE@metadata[["CoExpEnrichAnal"]]) == 0
-}
+The pre-processing strategies are adapted from @Lambert2020ta for RNA-seq data and @efstathiou2017a for transcriptomics and proteomics data.
 
-```
+`r if(!"DataProcessing" %in% analysisTypes) {"<p style=\"color:orange\">Data pre-processing has not been performed on this data.</p>"}`
 
-
-```{r, eval=!is.null(dataset.SE)}
-
+```{r, eval=("DataProcessing" %in% analysisTypes)}
 out <- NULL
-
-out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_03_data_explor.Rmd"),
-                                quiet=TRUE))
-
-knitr::asis_output(out)
-
-```
-
-<!-- differential analysis -->
-
-```{r, eval=Diff.eval}
-
-out <- NULL
-
-out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_04_diff_analysis.Rmd"),
-                                quiet=TRUE))
-
-knitr::asis_output(out)
-
-```
-
-<!-- enrichement analysis on DE G/P/M lists with clusterprofiler -->
-
-```{r, eval=Diff.ann.eval_CPR}
-
-
-out <- NULL
-annot <- "DiffExpEnrichAnal"
-
-for(ontology  in names(metadata(dataset.SE)[[annot]])){
-out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_CPR.Rmd"),
-                                quiet=TRUE))
+num <- 0
+for (data in analyzedDatasetNames[["DataProcessing"]]){
+  num <- num + 1
+  out <- c(out, knitr::knit_child(
+    paste0(path.package("RFLOMICS"),"/RFLOMICSapp/",
+           "report_03_data_explor.Rmd") , quiet=TRUE))
 }
 
 knitr::asis_output(out)
+```
+
+<br>
+<br>
+
+<!-- differential expression analysis -->
+# 4 Differential expression analysis
+
+The goal of Differential Expression Analysis is to identify omics features (transcripts, proteins or metabolites) that exhibit significant differences in expression levels across various experimental conditions or groups. allowing researchers to understand the biological mechanisms underlying those differences.
+
+The strategy for differential expression analysis was adapted from @Lambert2020ta for RNA-seq data and from @efstathiou2017a for transcriptomics and proteomics data.
+
+`r if(!"DiffExpAnal" %in% analysisTypes) {"<p style=\"color:orange\">Differential analysis has not been performed on this data.</p>"}`
+
+
+```{r}
 
 ```
+
+```{r, eval=("DiffExpAnal" %in% analysisTypes)}
+# create export data
+dir.create(path = paste0(outDir,"/04-Diff_Expression_results/"), 
+           recursive = TRUE, showWarnings = FALSE)
+
+knitr::opts_chunk$set( 
+  fig.path=paste0(outDir,"/04-Diff_Expression_results/") 
+  )
+```
+
+
+```{r diffAnalysesSummary, results='asis', eval=("DiffExpAnal" %in% analysisTypes), fig.cap=paste0("<p style=\"color:grey\">","*fig: ???.*", "</p>")}
+
+cat("## 4.1 Summary\n")
+getDiffAnalysesSummary(rflomics.MAE, plot = TRUE)
+cat("\n<br>\n")
+```
+
+
+```{r, results='asis', eval=("DiffExpAnal" %in% analysisTypes)}
+out <- NULL
+num <- 1
+for (data in  analyzedDatasetNames[["DiffExpAnal"]]){
+  num <- num + 1
+  out <- c(out, knitr::knit_child(
+    paste0(path.package("RFLOMICS"),"/RFLOMICSapp/",
+           "report_04_diff_analysis.Rmd"), quiet=TRUE))  
+}
+
+knitr::asis_output(out)
+```
+
+<br>
+<br>
 
 <!-- co-expression analysis -->
+# 5 Co-expression analysis
 
-```{r, eval=CoEx.eval}
+Co-expression analysis enables the identification of gene sets with correlated expression levels, suggesting similar regulation or interactions in common biological pathways. For this step, we have adopted an approach based on mixture models. This method is implemented in the **coseq** R package (ref).
 
+The co-expression analysis strategy was adapted from @Lambert2020ta and tailored under the guidance of the coseq developer for metabolomic and proteomic data.
+
+`r if(!"CoExpAnal" %in% analysisTypes) {"<p style=\"color:orange\">Co-expression analysis has not been performed on this data.</p>"}`
+
+```{r}
+dir.create(path=paste0(outDir,"/05-Coexpression_analysis/"), 
+           recursive = TRUE, showWarnings = FALSE)
+
+knitr::opts_chunk$set(
+  fig.path=paste0(outDir,"/05-Coexpression_analysis/")
+)
+```
+
+
+```{r coExpAnalysesSummary, results='asis', eval=("CoExpAnal" %in% analysisTypes), fig.cap=paste0("<p style=\"color:grey\">","fig: ????", "</p>")}
+cat("## 5.1 Summary\n")
+getCoExpAnalysesSummary(rflomics.MAE, plot = TRUE)
+cat("\n")
+```
+
+
+```{r,  eval=("CoExpAnal" %in% analysisTypes)}
 out <- NULL
 
-
-out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_05_coexp_analysis.Rmd"),
-                                quiet=TRUE))
-
+num <- 1
+for (data in  analyzedDatasetNames[["CoExpAnal"]]){
+  num <- num + 1
+  out <- c(out, knitr::knit_child(
+    paste0(path.package("RFLOMICS"), "/RFLOMICSapp/",
+           "report_05_coexp_analysis.Rmd"), quiet=TRUE))  
+}
 
 knitr::asis_output(out)
+```
+
+<br>
+<br>
+
+<!-- enrichement analysis on DE G/P/M lists with clusterprofiler -->
+# 6 Enrichment analysis
+
+Enrichment analysis, particularly through methods like 
+**Overrepresentation Analysis (ORA)** (Boyle et al. 2004) such as 
+those used in **clusterProfiler R-package** (@wu-a2021a), is crucial 
+for identifying biological significance in omics data. ORA focuses 
+on feature sets—groups of features that share common biological functions or 
+pathways—allowing researchers to determine if these functions or pathways are 
+statistically enriched among a list of features of interest. 
+This approach facilitates the interpretation of complex genomic data.
+
+`r if(!"DiffExpEnrichAnal" %in% analysisTypes) {"<p style=\"color:orange\">Enrichment analysis has not been performed on this data.</p>"}`
+
+```{r}
+dir.create(path=paste0(outDir,"/06-Enrichment_analysis/"), 
+           recursive = TRUE, showWarnings = FALSE)
+
+knitr::opts_chunk$set(
+  fig.path=paste0(outDir,"/06-Enrichment_analysis/")
+)
+```
+
+
+```{r annotAnalysesSummary, results='asis', eval=(length(data.coExp) != 0), fig.cap="*fig......*"}
+
+annot.list <- list()
+for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
+  for(db in names(analyzedDatasetNames[[annot]])){
+    
+    for(data in analyzedDatasetNames[[annot]][[db]]){
+      
+      annot.list[[data]][[db]][[annot]] <- TRUE
+    }
+  }
+}
+
+cat("## 6.1 Summary {.tabset .tabset-fade .tabset-pills}\n")
+
+for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
+  
+  if(!annot %in% analysisTypes)
+    next
+  
+  cat("### From", 
+      ifelse(annot == "DiffExpEnrichAnal", 
+             "differentially expressed lists", "co-expressed clusters"), 
+      "{.tabset .tabset-fade .tabset-pills}\n")
+  
+  cat("\n\n")
+  
+  annot.p <- getAnnotAnalysesSummary(rflomics.MAE, from = annot)
+  
+  for (ontology in  names(annot.p)){
+    
+    ontology.title <- switch (ontology,
+      "GO" = {"Gene Ontology database"},
+      "KEGG" = {"KEGG database"},
+      "custom" = {"Custom annotation"}
+    )
+    
+    if("no-domain" %in% names(annot.p[[ontology]])){
+      cat('####', ontology.title, '\n')
+      print(annot.p[[ontology]][["no-domain"]])
+      cat("\n", "<br>", "\n\n") 
+      
+    }else if(length(names(annot.p[[ontology]])) == 1){
+      cat('####', ontology.title, '(', names(annot.p[[ontology]]), ')\n')
+      print(annot.p[[ontology]][[names(annot.p[[ontology]])]])
+      cat("\n", "<br>", "\n\n") 
+      
+    }else{
+      cat('####', ontology.title, '{.tabset .tabset-fade .tabset-pills}\n')
+      
+      for (domain in  names(annot.p[[ontology]])){
+        cat('#####', domain, '\n') 
+        print(annot.p[[ontology]][[domain]])
+        cat("\n", "<br>", "\n\n") 
+      }
+      cat("\n", "<br>", "\n\n")
+    }
+  }
+}
+cat("\n", "<br>", "\n\n") 
 
 ```
 
-<!-- enrichement analysis on cluster -->
 
-```{r , eval=CoEx.ann.eval_CPR}
-
+```{r , results ='asis', eval=(length(data.coExp) != 0)}
 
 out <- NULL
-annot <- "CoExpEnrichAnal"
-#annot.name <- "Enrichement analysis of cluster(s)"
 
-for(ontology  in names(metadata(dataset.SE)[[annot]])){
-out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_06_annot_enrich_CPR.Rmd"),
-                                quiet=TRUE))
+num <- 1
+for (data in  data.coExp){
+  num <- num + 1
+  out <- c(out, knitr::knit_child(
+    paste0(path.package("RFLOMICS"),"/RFLOMICSapp/",
+           "report_06_enrichmentORA_analysis.Rmd"), quiet=TRUE))
 }
 
 knitr::asis_output(out)

@@ -4,84 +4,136 @@ editor_options:
     wrap: 72
 ---
 
-## Co-expression {.tabset}
+<br>
 
-```{r , echo=FALSE , message=FALSE, warning=FALSE}
-coexpDir <- paste0(dataDir,"/","03-Coexpression_analysis/")
-dir.create(path=coexpDir)
+## `r paste0("5.",num, " ", data)`
+
+```{r }
+
+coexpDir <- paste0(outDir,"/05-Coexpression_analysis/",data, "/")
+dir.create(path=coexpDir, recursive = TRUE, showWarnings = FALSE)
 
 knitr::opts_chunk$set(
   fig.path=coexpDir
 )
 
+dataset.SE <- getRflomicsSE(rflomics.MAE, data)
 isResults <- dataset.SE@metadata$CoExpAnal[["results"]]
 ```
 
-`r if(RFLOMICS::getOmicsTypes(dataset.raw.SE) != "RNAseq") {"\\begin{comment}"}`
-Co-expression analysis strategy was adapted from @Lambert2020ta
-`r if(RFLOMICS::getOmicsTypes(dataset.raw.SE) != "RNAseq") {"\\end{comment}"}`
+* **M&M**
 
-Co-expression analysis was carried out on the
-`r RFLOMICS::getCoexpSettings(dataset.SE)$merge.type` of the following list of
-`r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]`
-`r names(RFLOMICS::getCoexpSettings(dataset.SE)$gene.list.names)`.
-`r RFLOMICS::getCoexpSettings(dataset.SE)$method` was used to cluster the
-`r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]`.
+The co-expression analysis was carried out using 
+**coseq R package** (version `r packageVersion("coseq")`) on 
+**`r length(RFLOMICS::getDEList(dataset.SE, RFLOMICS::getCoexpSettings(dataset.SE)$gene.list.names, RFLOMICS::getCoexpSettings(dataset.SE)$merge.type))`
+`r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]`** from
+the
+**`r RFLOMICS::getCoexpSettings(dataset.SE)$merge.type`** of the following 
+contrast lists:
 
-The gaussian mixture model was run on filtered (meanFilterCutoff was set
-to: `r RFLOMICS::getCoexpSettings(dataset.SE)$meanFilterCutoff`), normalized
-(normalization method was `r RFLOMICS::getCoexpSettings(dataset.SE)$normFactors`)
-and transformed (transformation method:
-`r RFLOMICS::getCoexpSettings(dataset.SE)$transformation`) count data.
+```{r, class.output='scroll-200'}
 
-`r RFLOMICS::getCoexpSettings(dataset.SE)$replicates.nb` technical replicates were
-performed for each K in `r RFLOMICS::getCoexpSettings(dataset.SE)$K.range`
-(K=number of clusters).
+cat(paste(RFLOMICS::getCoexpSettings(dataset.SE)$gene.list.names, collapse = "\n"))
+
+```
+
+```{r contruct_MM, results="asis"}
+
+MM <- 
+  paste0("The gaussian mixture model (model = **normal**; form = **",
+         RFLOMICS::getCoexpSettings(dataset.SE)$GaussianModel,
+         "**) was applied to the pre-processed data which was: ")
+
+MM.vec <-c(
+  ifelse(RFLOMICS::getCoexpSettings(dataset.SE)$scale == TRUE, "scaled", "not scaled"))
+  
+if(!is.null(RFLOMICS::getCoexpSettings(dataset.SE)$meanFilterCutoff))
+  MM.vec <-c(MM.vec,
+    paste0("filtered (meanFilterCutoff = **",
+           RFLOMICS::getCoexpSettings(dataset.SE)$meanFilterCutoff,"**)"))
+
+if(RFLOMICS::getCoexpSettings(dataset.SE)$normFactors != "none")
+  MM.vec <- c(
+    MM.vec, 
+    paste0("normalized by **", 
+           RFLOMICS::getCoexpSettings(dataset.SE)$normFactors, "** method"))
+
+if(RFLOMICS::getCoexpSettings(dataset.SE)$transformation != "none")
+  MM.vec <- c(
+    MM.vec, 
+    paste0("transformed by **", 
+           RFLOMICS::getCoexpSettings(dataset.SE)$transformation, "** method"))
+
+MM <- paste0(MM, paste(MM.vec, collapse = ", "), ".")
+
+MM <- sub(",([^,]*)$", " and\\1", MM)
+
+cat("\n", MM, "\n")
+
+```
+
+`r RFLOMICS::getCoexpSettings(dataset.SE)$replicates.nb` 
+technical replicates were performed for each K (number of clusters) in 
+`r RFLOMICS::getCoexpSettings(dataset.SE)$K.range`.
+
+<br>
+
+### {.tabset}
+
+* **Results:** 
 
 The best number of cluster (K) selected via the Integrated Completed
 Likelihood (ICL) criterion was
 `r metadata(dataset.SE)[["CoExpAnal"]]$cluster.nb`.
 
-`r if(isResults == TRUE) {"\\begin{comment}"}` No clustering results.
-`r if(isResults == TRUE) {"\\end{comment}"}`
+#### Cluster profile
 
-### ICL
+<p style="color:grey">
+*Overview of cluster's expression profiles. Boxplot are colored acording to  biological  factors*.
+</p>
 
-*Integrated Completed Likelihood (ICL) plotted versus number of clusters.The ICL is the criterion used to select the number of clusters. The number of clusters (K) that minmizes the ICL is the best number of clusters.*
-
-```{r coseq-icl, echo=FALSE, eval=isResults}
+```{r coseq-boxplots,  eval=isResults}
 plot.coseq.res <- plotCoExpression(dataset.SE)
-par(mar = c(4, 4, .5, .1))
-plot.coseq.res$ICL 
-```
 
-### probapost_boxplots
-
-*Barplots giving a quality control of each cluster. In green: number of* `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` *that are member of a cluster with a high confidance (Max Conditional Probability  > 0.8). In purple:  number of* `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` *that are member of a cluster with a low confidance (Max Conditional Probability < 0.8). A high proportion of green observations may indicate that the clustering is not reliable and can't be exploited.*
-
-```{r coseq-probapost, echo=FALSE, eval=isResults}
-par(mar = c(4, 4, .5, .1))
-plot.coseq.res$probapost_barplots 
-```
-
-### boxplots
-
-*Overview of cluster's expression profiles. Boxplot are colored acording to  biological  factors*
-
-```{r coseq-boxplots, echo=FALSE, eval=isResults}
 par(mar = c(4, 4, .5, .1))
 plot.coseq.res$boxplots + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
 ```
 
-### Cluster composition:
+`r if(length(RFLOMICS::getCoexpSettings(dataset.SE)$gene.list.names) == 1 || RFLOMICS::getCoexpSettings(dataset.SE)$merge.type != "union") {"\\begin{comment}"}`
 
-```{r coseq-clusterComposition, echo=FALSE, eval=isResults}
+#### Cluster composition:
+
+```{r coseq-clusterComposition,  eval=isResults}
 par(mar = c(4, 4, .5, .1))
 plotCoseqContrasts(dataset.SE)
 ```
 
+`r if(length(RFLOMICS::getCoexpSettings(dataset.SE)$gene.list.names) == 1 || RFLOMICS::getCoexpSettings(dataset.SE)$merge.type != "union") {"\\end{comment}"}`
 
-```{r,echo = FALSE, eval=isResults}
+#### ICL (QC)
+
+<p style="color:grey">
+*Integrated Completed Likelihood (ICL) plotted versus number of clusters.The ICL is the criterion used to select the number of clusters. The number of clusters (K) that minmizes the ICL is the best number of clusters.*
+</p>
+
+```{r coseq-icl,  eval=isResults}
+par(mar = c(4, 4, .5, .1))
+plot.coseq.res$ICL 
+```
+
+#### probapost (QC)
+
+<p style="color:grey">
+*Barplots giving a quality control of each cluster. In green: number of* `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` *that are member of a cluster with a high confidance (Max Conditional Probability  > 0.8). In purple:  number of* `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` *that are member of a cluster with a low confidance (Max Conditional Probability < 0.8). A high proportion of green observations may indicate that the clustering is not reliable and can't be exploited.*
+</p>
+
+```{r coseq-probapost,  eval=isResults}
+par(mar = c(4, 4, .5, .1))
+plot.coseq.res$probapost_barplots 
+```
+
+
+```{r, eval=isResults}
 
 cosRes <- metadata(dataset.SE)$CoExpAnal$coseqResults@allResults
 tab.clusters <- as.data.frame(cosRes[[which(names(cosRes) == names(metadata(dataset.SE)$CoExpAnal$cluster.nb))]])
@@ -93,4 +145,4 @@ write.table(tab.clusters,
 
 ```
 
-## {-}
+### {-}

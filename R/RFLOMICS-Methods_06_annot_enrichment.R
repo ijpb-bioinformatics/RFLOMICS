@@ -279,11 +279,16 @@ setMethod(
         } else {
             dt_res <- as.data.frame(do.call("rbind", overview_list))
             if (!any(is.na(dt_res[, -1]))) {
-                dt_res <- dt_res %>%
-                    mutate(Contrast = rownames(.)) %>%
+              if(from == "DiffExp"){
+                dt_res <- 
+                  dt_res %>% mutate(Contrast = rownames(.)) %>%
                     relocate(Contrast)
-                
-                EnrichAnal[["summary"]] <- dt_res
+              }else{
+                dt_res <- 
+                  dt_res %>% mutate(Cluster = rownames(.)) %>%
+                  relocate(Cluster)
+              }
+              EnrichAnal[["summary"]] <- dt_res
             }
         }
         
@@ -1093,9 +1098,6 @@ setMethod(
             toReturn <- metadata(object)[[from]][[database]]$summary
             if (!is.null(contrastName)) {
                 toReturn <- toReturn[which(toReturn$Contrast == contrastName),]
-            }
-            if (!is.null(toReturn) && from == "CoExpEnrichAnal") {
-                colnames(toReturn)[1] <- "Cluster"
             }
             return(toReturn)
         } else {

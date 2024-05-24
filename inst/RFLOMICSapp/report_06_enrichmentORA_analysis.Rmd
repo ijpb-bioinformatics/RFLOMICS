@@ -1,0 +1,31 @@
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+<br>
+
+## `r paste0("6.", num, " ", data)` {.tabset .tabset-fade .tabset-pills}
+
+* **M&M**
+
+The The **Overrepresentation analysis (ORA)** was performed using the version 
+(`r packageVersion("clusterProfiler")`) of **clusterProfiler** R-package,
+based on following databases:
+
+
+```{r, results ='asis'}
+
+out <- NULL
+for(ontology in names(annot.list[[data]])){
+  
+  out <- c(out, knitr::knit_child(paste0(
+    path.package("RFLOMICS"),"/RFLOMICSapp/",
+    "report_06_enrichmentORA_per_domain.Rmd"), quiet=TRUE))
+}
+knitr::asis_output(out)
+
+```
+
+## {-}

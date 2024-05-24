@@ -1,8 +1,9 @@
-# Experimental design
+
+# 1 Loaded Data
 
 <br>
 
-* **User-provided experimental design file:**
+* **Experimental design:**
 
 ```{r design, out.width = "70%", fig.align='left'}
 
@@ -10,9 +11,9 @@ bioFact   <- RFLOMICS::getBioFactors(rflomics.MAE)
 batchFact <- RFLOMICS::getBatchFactors(rflomics.MAE)
 metaFact  <- RFLOMICS::getMetaFactors(rflomics.MAE)
 
-DT::datatable(getDesignMat(rflomics.MAE)[c(bioFact, batchFact, metaFact)], 
-              options = list(rownames = FALSE, pageLength = 6, scrollX = T, dom = 'tip'),
-              class = 'cell-border stripe')
+DT::datatable(getDesignMat(rflomics.MAE)[c("samples", bioFact, batchFact, metaFact)], 
+              options = list(pageLength = 6, scrollX = T, dom = 'tip'),
+              rownames = FALSE, class = 'cell-border stripe')
 
               # caption = htmltools::tags$caption(style = 'caption-side: top;
               #                                   text-align: left;
@@ -25,23 +26,23 @@ DT::datatable(getDesignMat(rflomics.MAE)[c(bioFact, batchFact, metaFact)],
 
 * **Dataset(s) overview:**
 
-```{r data.over.view, fig.show = "hold", out.width = "50%", fig.cap="*fig.left: Overview of the input omic data. Each color represents a distinct dataset, with their respective samples on the x-axis and the number of features on the y-axis. It illustrates the samples overlap across dataset. fig.right: Number of Datasets per Condition. Each axis represents a distinct biological factor, and each cell value signifies the count of datasets associated with that specific condition.*", fig.align='left'}
+```{r data.over.view, fig.show = "hold", out.width = "90%", fig.cap=paste0("<p style=\"color:grey\">","*Overview of the input omic data. Each color represents a distinct dataset, with their respective samples on the x-axis and the number of features on the y-axis. It illustrates the samples overlap across dataset.*", "</p>"), fig.align='left'}
 
 raw.rflomics.MAE <- subRflomicsMAE(rflomics.MAE, omicNames = paste0(getDatasetNames(rflomics.MAE), ".raw"))
 names(raw.rflomics.MAE) <- getDatasetNames(rflomics.MAE)
 plotDataOverview(object = raw.rflomics.MAE)
-plotConditionsOverview(object = raw.rflomics.MAE)
-
+#plotConditionsOverview(object = raw.rflomics.MAE)
+#fig.left: Overview of the input omic data. Each color represents a distinct dataset, with their respective samples on the x-axis and the number of features on the y-axis. It illustrates the samples overlap across dataset. fig.right: Number of Datasets per Condition. Each axis represents a distinct biological factor, and each cell value signifies the count of datasets associated with that specific condition.
 ```
 
 <br>
 <br>
 
-# Statistical settings:
+# 2 Statistical setting
 
 <br>
 
-* **Factor(s) setting summary: Types of factors and modality of reference**
+* **Types of factors and modality of reference:**
 
 ```{r factors}
 
@@ -69,6 +70,7 @@ DT::datatable(df , rownames = FALSE , class = 'cell-border stripe',
 <br>
 
 * **The selected model formula:**
+*The contrasts are a statistical translation of biological questions*
 
 ```
 `r RFLOMICS::getModelFormula(rflomics.MAE)`
@@ -76,15 +78,14 @@ DT::datatable(df , rownames = FALSE , class = 'cell-border stripe',
 
 <br>
 
-* **The selected contrasts:**
+* **The selected contrasts (hypothesis):**
 
 ```{r contrastSel, results="asis"}
 
 df <- getSelectedContrasts(rflomics.MAE)[,c("groupComparison", "contrastName", "type")]
-names(df) <- c("Comparison", "Contrasts", "Type")
+names(df) <- c("Comparison", "Contrast_names", "Type")
 DT::datatable(df, rownames = FALSE,
               options = list( pageLength = 6, scrollX = F, dom = 'tip'),
               class = 'cell-border stripe')
 ```
-
 
