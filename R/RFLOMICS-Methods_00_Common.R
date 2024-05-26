@@ -558,11 +558,9 @@ setMethod(
                         ...) {
     extract.list <- list()
     
-    for (data in getDatasetNames(object)) {
-      if (is.null(object[[data]]))
-        next
-      if (length(object[[data]]@metadata[[from]]) == 0)
-        next
+    omicNames <- getAnalyzedDatasetNames(object, "CoExpAnal")
+    
+    for (data in omicNames) {
       
       # for each database
       databases <- names(object[[data]]@metadata[[from]])
@@ -580,16 +578,21 @@ setMethod(
             names(object[[data]]@metadata[[from]][[database]]$enrichResult[[name]])
           
           for (dom in domains) {
-            cprRes              <-
+            cprRes <-
               object[[data]]@metadata[[from]][[database]]$enrichResult[[name]][[dom]]
-            cprRes              <-
+            
+            if(is.null(cprRes)) next
+            
+            cprRes <-
               cprRes@result[cprRes@result$p.adjust < cprRes@pvalueCutoff, ]
+            
+            if(nrow(cprRes) == 0) next
+            
             cprRes$contrastName <- name
             cprRes$dataset      <- data
             
             extract.list[[database]][[dom]] <-
               rbind(extract.list[[database]][[dom]], cprRes)
-            
           }
         }
       }

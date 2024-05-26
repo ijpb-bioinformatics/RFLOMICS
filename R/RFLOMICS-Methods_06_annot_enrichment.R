@@ -1091,13 +1091,17 @@ setMethod(
                           contrastName = NULL) {
         
         from <- .determineFromEnrich(from)
+        listnames <- 
+          switch (from,
+                  "DiffExpEnrichAnal" = "Contrast",
+                  "CoExpEnrichAnal" = "Cluster")
         
         # cat("|From: ", from, "\n")
         
         if (!is.null(database)) {
             toReturn <- metadata(object)[[from]][[database]]$summary
             if (!is.null(contrastName)) {
-                toReturn <- toReturn[which(toReturn$Contrast == contrastName),]
+                toReturn <- toReturn[which(toReturn[[listnames]] == contrastName),]
             }
             return(toReturn)
         } else {
@@ -1106,7 +1110,7 @@ setMethod(
                 FUN = function(ontres) {
                     interRes <- metadata(object)[[from]][[ontres]]$summary
                     if (!is.null(contrastName)) {
-                        interRes <- interRes[which(interRes$Contrast == contrastName),]
+                        interRes <- interRes[which(interRes[[listnames]] == contrastName),]
                     }
                     interRes
                 }
