@@ -104,6 +104,9 @@ for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
       paste0("\n*Please click on the arrows to scroll down the results and click on the figure to zoom*\n"))
   
   index <- names(sumORA.ont)[stringr::str_detect(names(sumORA.ont), ontology)]
+  for(i in index){
+    sumORA.ont[[i]] <- as.numeric(sumORA.ont[[i]])
+  }
   listnames <- dplyr::filter(sumORA.ont, rowSums(dplyr::across(index)) != 0)[[1]]
   
   for (listname  in listnames){

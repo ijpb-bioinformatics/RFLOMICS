@@ -654,13 +654,20 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         }
         else{
           
-          subMAE <- subRflomicsMAE(session$userData$FlomicsMultiAssay, dataset)
-          
           # 1rst panel
           tabPanel.list <- list(
             tabPanel(
               title = "Summary",
               renderPlot({
+                # get rflomicsMAE object with only 1 
+                subMAE <- 
+                  subRflomicsMAE(session$userData$FlomicsMultiAssay, dataset)
+                
+                subMAE <- 
+                  setValidContrasts(
+                    subMAE, omicName = dataset, 
+                    contrastList = getSelectedContrasts(subMAE[[dataset]]))
+                
                 getDiffAnalysesSummary(subMAE, plot = TRUE)
               })
             ))
@@ -689,7 +696,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                 renderPlot({
                   upset(data = DEF_selected, 
                         sets = colnames(DEF_selected), 
-                        order.by = "degree")})
+                        order.by = "freq")})
               )
             ), tabPanel.list)
           }

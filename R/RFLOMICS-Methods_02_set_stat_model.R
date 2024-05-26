@@ -361,9 +361,10 @@ setMethod(f          = "generateContrastMatrix",
 #' @aliases setValidContrasts
 setMethod(f          = "setValidContrasts",
           signature  = "RflomicsMAE",
-          definition <- function(object, omicName, contrastList=NULL){
+          definition <- function(object, omicName=NULL, contrastList=NULL){
             
-            setValidContrasts(object[[omicName]], contrastList = contrastList)
+            object[[omicName]] <- 
+              setValidContrasts(object[[omicName]], contrastList = contrastList)
             
             return(object)
           })
