@@ -108,22 +108,22 @@ The effect of data filtering or sample removing step can be explored thanks to m
 
 For RNAseq data, low expressed genes are filtered so that only genes whose cpm expression is greater than **"CPM cutoff"** in x samples are kept. The value of x is given by **"Filtering strategy"** (NbOfsample_over_cpm <= NbConditions). By default the data are filtered based on NbCondition strategy with CPM cutoff equal to 5. In this example, there are 9 conditions. So, the number of genes with a CPM less than 5 in at least 9 samples are removed.
 
-```{r,eval=FALSE}
+```{r}
 # geneToKeep <- counts[rowSums(edgeR::cpm(counts) >= CPM_Cutoff) >= x, ]
 ```
 
 To correct for differences in sequencing depths (library size), RFlomics proposes one method for normalization, **"TMM method"** from edgeR package.
 
-```{r,eval=FALSE}
+```{r}
 # dge <- edgeR::DGEList(counts=counts, group=groups)
 # dge <- edgeR::calcNormFactors(dge, method="TMM")
 ```
 
-For RNAses data the QC graphs are:
+For RNAseq data the QC graphs are:
 
 - The library size distribution which
-- Data Summary: 
-- Distribution: 
+- Data Summary 
+- Distribution
 - Distribution density
 - Principal component analysis
 
@@ -132,23 +132,20 @@ For RNAses data the QC graphs are:
 ## Differential expression analysis
 
 In this tab panel, we can run the differential expression analysis. The analysis is run by contrast.  
-For RNAseq data, the **glmFit()** function from the **edgeR** package is used whereas for proteomic and metabolomic data, the **lmFit()** function from **limma** packages is used. The ability to run analysis on a cluster is offered by sliding the
-cluster button (see RFLOMICS-configure-cluster-access vignette)
+For RNAseq data, the **glmFit()** function from the **edgeR** package is used whereas for proteomic and metabolomic data, the **lmFit()** function from **limma** packages is used. The ability to run analysis on a cluster is offered by sliding the cluster button (see RFLOMICS-configure-cluster-access vignette)
 
 
 Results will appear in two components: a scrolling menu will give the results of the analysis by contrat and, 
 at the bottom of the panel, the intersecting sets of the lists of DEG is given thanks to the **UpSetR()** function.  
 
-Each results has to bee validated:
+Each results has to be validated:
 
 - You **have to** to check the Pvalue distribution for each contrast and validate it (**ok checkbox**). 
-  + If the distribution is uniform: it is ok. a few genes are DE and the FDR will find them.
+  + If the distribution is uniform: it is ok. A few genes are DE and the FDR will find them.
   + If the distribution as a peak near 0 and then is uniform: it is also ok. The higher the peak, the higher
 the number of DE genes. FDR correction can be applied.
   + If the distribution has 2 peaks one near 0 and one near 1 or just one peak near 1, it is not a good news! 
   You have to understand what's happened.
-
-![Pvalue-Distrib](Images/Pvalue_distrib.png){width=80%}
 
 - You can filter differentially expressed genes/proteins/metabolites either by fold change (**|FC|**) or 
 by False Discovery Rate (BH) cut-off. Graphs will be automatically updated.
@@ -193,93 +190,54 @@ The ability to run the clustering analysis on a cluster is offered by sliding th
 
 You can chose between several domains, depending on several parameters: 
 
-* custom: preferred option. A second panel of settings will ask for an annotation file (tabulated, at least two columns, one for the name of the gene, the other for the name or id of the annotation term) and a third panel will allow the user to indicate which columns indicates what. You can have as many domains/ontology as you want, just indicate the columns name that differentiate them in the right area;
-* GO (or GO:BP, GO:CC, GO:MF if only one GO domain is of interest). The user will have to chose a database library (org.*.db) installed on the libPath and the keytype of the entities (to make the connection with the annotation).  
-* KEGG: In the second setting panel, enter the three letters to identify the organism and the keytype of the entities. It requires to have an online connection. 
+* custom: preferred option. It requires an annotation file (tabulated, at least two columns, one for the name of the gene, the other for the name or id of the annotation term). A second panel will allow the user to indicate which columns indicates what. You can have as many domains/ontology as you want, you just need to indicate the columns name that differentiate them in the right area;
+* GO (or GO:BP, GO:CC, GO:MF if only one GO domain is of interest). The user will have to chose a database library ([org.*.db](https://www.bioconductor.org/packages/release/BiocViews.html#___OrgDb)) installed on the libPath and the keytype of the entities (identifier to make the connection with the annotation). 
+* KEGG: In the setting panel, enter the three letters to identify the organism and the keytype of the entities. It requires to have an online connection. 
 
 Once everything is set and the analysis is conducted, several panels are displayed to show the results. 
 
-* Overview: shows a table with all results for all lists analyzed, for all domains (i.e. the number of terms found enriched). The light blue line indicates the current enrichment. 
-* Result Table: Details of the term for the current list. You can change the domain at the bottom.
-* DotPlot: shows the first XX terms of a specified domain ordered by adjusted p-values. 
-* Heatplot: shows the first XX terms (by adjusted pvalues), the involved genes in a heatmap. Colors are set according to the log2FC if the list is based on a differential analysis results or left gray if it is from coseq analysis. 
-* cnetplot: shows the first XX terms (by adjusted pvalues) in beige nodes and the involved genes in the form of a network. Colors are set according to the log2FC if the list is based on a differential analysis results or left gray if it is from coseq analysis. 
-
-<p style='text-align: justify;'>For most of the results, you can adjust the number of terms to plot and search for an expression to retrieve specific enriched terms. 
-
 ![Results of the analysis for multiple lists](Images/06_ORAAnal.png){width=80%}
-
-
-# Integration
-
- Once at least two lists of DE genes are validated in the differential analysis tabs, the Integration step will appear in the side bar menu. Three sub menus are available.  
 
 ## Dataset analysis summary 
 
  This panel summarizes the effects of the filtering steps on the selected datasets and the results of the differential analyses. The first row shows how many samples and entities are left in each table. The integration will be performed on these datasets. 
 The second row shows the number of DE entities for each selected contrast and for each table, with the distinction between up-regulated and down-regulated entities.  
 
+
+
+# Integration
+
+ Once at least two tables have passed the pre-processing step, the Integration tab will appear in the side bar menu. Two sub menus are available. For each of them, you will have to run a preprocessing before accessing to the integration panel: select the datatables you want to integrate together and the filtering strategy for each data. A filtering is strongly advised when having large data or unbalanced number of features between them. 
+ 
+ You can filter according to the DE entities found in the differential analysis, or based on the variation coefficient, taking a certain number of variables that have the largest coefficient. For this example, we chose to keep only 500 features from the RNAseq data, based on the variation coefficient.
+ 
+ RnaSeq data (counts transcriptomics) will be transformed before the integration. This is done with the **voom** transformation from the **limma** R package.   
+
+ Batch effects are removed before applying the function, using **removebatcheffect** from **limma**.
+
+![Integration data preparation](Images/07_prepData2.png){width=80%}
+
 ## MOFA
 
- This integration analysis is performed using the **MOFA2** R-package. It is an unsupervised method that searches for latent factors to decompose the variance of the data, similarly to a PCA, but applied to a multi-dataset situation. The interpretation of the results is also very similar to those of a PCA: the most interesting factors are the one explaining more variance, whether it's on several dataset or just one table. It also gives weights to the features of each table, for each factor. This is interesting in case a factor can be **a posteriori** linked to a covariate (in our case, the temperature seems linked to the first factor, the features used to build this factor are to be considered very relevant in the analysis).  
+ This integration analysis is performed using the **MOFA2** R-package. It is an unsupervised method that searches for latent factors to decompose the variance of the data, similarly to a PCA, but applied to a multi-dataset situation. The interpretation of the results is also very similar to those of a PCA: the most interesting factors are the one explaining more variance, whether it's on several dataset or just one table. It also gives weights to the features of each table, for each factor. This is interesting in case a factor can be **a posteriori** linked to a covariate (in the case displayed on the figure, the temperature seems linked to the first factor, the features used to build this factor are to be considered very relevant in the analysis).  
 
-![MOFA results on the ecoseed datasets](Images/MOFA_temperaturelinked.png){width=80%}
+![MOFA results on the ecoseed datasets](Images/07_MOFA.png){width=80%}
 
-
- MOFA allows for an unbalanced design, so it can be used even if some samples were deleted in the previous steps.  
-
- The user can select which tables they want to integrate, then the lists of contrasts they want to select the DE entities from. The union or the intersection of these lists can then be used for the analysis.  
-
- As of now, the function used in this step only takes gaussian data. The RNASeq data, given in the form of counts, have to be transformed to fit the process. This is done with the **voom** transformation from the **limma** R package.   
-
- As recommended by MOFA FAQ, batch effects are removed before applying the function, using **removebatcheffect** from **limma**. See [MOFA-FAQ](https://biofam.github.io/MOFA2/faq.html). For now, only two batch effects can be removed.  
-
- The user can chose to scale or not each tables, with the scale views argument, then set the number of factors to be computed and finally the maximum iterations for the MOFA run. We recommend that the user do not change the number of iterations.  
-
- Once everything is set, you can run the analysis by clicking on the run button. 
-Several figure are provided by the interface once the analysis is done:  
-
-* Overview: gives an overview of the data, with the number of samples and the number of entities selected for the analysis. This can be a good step to check if the number of features in each table is in the same range. 
-* Factors Correlation: this is an important graph to check the validity of the results. It presents the correlation between all factors. If a correlation is greater than 0.5 (except for the diagonal), then the results cannot be trusted. It can be because of an inadequate normalization step. You can also check here if the number of factors you asked for has been computed. In some cases, when the user asks for a two great number of factors, MOFA removes the factors that explain 0% of variance in all tables.
-* Explained variance: in this panel, two graphs are displayed
-  * The first one shows the total explained variance for each table. 
-  * The second one is the decomposition of the first for each factors. You can see here which factors are specific to a datatable and which are using features from all the tables.
-* Weights plot and Weights table: can be used to check the important features used to build each factor. 
-* Factor plot: in this panel, the samples are displayed according to their factor score. Several options are offered to the user to modify the graph and check for any association between a factor and a covariate. 
-* Heatmap: Can only be displayed for each dataset and each factor. Allow to represent the original data or the factor-weight combination (denoise set to TRUE) of the most important features (weight wise) used to built a factor. Metadata can be used to annotate the heatamp.
-* Network: not available yet! 
+ The user can chose to scale or not each tables, with the scale views argument, then set the number of factors to be computed and finally the maximum iterations for the MOFA run. We recommend that the user do not change the number of iterations.  Once everything is set, you can run the analysis by clicking on the run button. 
+ 
+Several figure are provided by the interface once the analysis is done.
 
 ## MixOmics
 
- This integration analysis is performed using the **MixOmics** R-package. It offers many possibilities of analyses. In RFLOMICS, we focused on the supervised analyses using the functions block.(s)plda from the package. 
+ This integration analysis is performed using the **MixOmics** R-package. In RFLOMICS, we focused on the supervised analyses using the functions block.(s)plda (also called DIABLO) from the package. MixOmics does not work on unbalanced design. Only complete cases will be used for the analysis. The user can select all biological factors as response variables. The meta and  batch factors are not available.
 
- 
-MixOmics does not work on unbalanced design. Only complete cases will be used for the analysis. 
- 
-![MixOmics Settings](Images/MixOmics_Settings.png){scale=80%}
-
-The user can chose the blocks they want to integrate. Even if the interface requires two validated differential analyses, using only one block will work. It will use either plsda or splsda functions from MixOmics. 
-
-The user can select all biological factors as response variables. The meta and  batch factors are not available.
-
-Using Sparse Analysis will set the "s" in the function names. It this case, the tuning cases argument will be considered and passed to tune.splsda or tune.block.splsda: it determines the number of number of variables to be tested: mixOmics splsda or block.splsda requires the argument test.keepX, which is a vector of number of variables to keep (eg : c(10, 50, 100)). Models using these number of features are then adjusted and the best model, according to the response variable, is selected and given to the user. 
+Using Sparse Analysis will set the "s" in the function names. It this case, the tuning cases argument will be considered and passed to tune.splsda or tune.block.splsda: it determines the number of number of variables to be tested: mixOmics block.splsda requires the argument test.keepX, which is a vector of number of variables to keep (eg : c(10, 50, 100)). Models using these number of features are then adjusted and the best model, according to the response variable, is selected and given to the user. 
 
 In RFLOMICS, we chose to only ask for a number of cases. This number of cases is used to determine the keep.X, using a span of nfeatures/number of cases.
 
  Once everything is set, you can run the analysis by clicking on the run button. 
-Several figures are provided by the interface once the analysis is done, for each selected response variable:  
+Several figures are provided by the interface once the analysis is done, for each selected response variable.  
 
-* Overview: in this panel, a description of the datatables is presented, with the number of individuals and features available. If tuning has been set, the optimal number of features for each component and each dataset is available in this panel. 
-* Explained variance: for each component, displays the origin of the explained variance and the cumulative explained variance for each table. 
-* Individuals: from the mixOmics::plotIndiv() function, display for each table the coordinates of the individuals.
-* Features: from the mixOmics::plotVar() function, display for each table the coordinates of the features on the correlation circle. The interpretation is the same as a PCA correlation circle.
-* Loadings: weight of each feature in the components. Allows to select the most important features for the selected response variable. 
-* Networks: from the mixOmics::network() function, for a specified absolute correlation threshold, draw the correlation network for the selected features. It has the advantage of being a multi-omics correlation network.
-* CircosPlot: only available if sparse is activated. From the circosPlot function, another representation of network, all features are dislayed as a circos and only correlation over the absolute threshold are displayed. 
-* CimPlot: only available if sparse is activated. From the CimPlot function, heatmap of the original data for selected features, compenent per component. 
-
-![MixOmics Settings](Images/MixOmics_features_select.png){width=80%} 
-
-![MixOmics Settings](Images/MixOmics_loadings.png){width=80%}
+![MixOmics Settings](Images/07_mixOmics.png){width=80%} 
 
 
