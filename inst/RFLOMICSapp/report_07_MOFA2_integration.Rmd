@@ -76,11 +76,15 @@ mat_cor <- mat_cor - diag(mat_cor)
 * Number of computed factors: `r MOFARes@dimensions$K` 
 * Is there a correlation >0.5 between two factors? `r ifelse(any(mat_cor>0.5), "YES, be careful, the results are unreliable.", "No. Results are reliable.")`
 
+The correlation between factor is an indicator to judge the quality of your results. Factors are supposed to be orthogonal (correlation is theoratically 0 between two different ones), however, in some cases (wrong pre-processing or two many factors) it can happen that there is a correlation >0.5 between factors. 
+
 ```{r MOFA2_factor_cor, fig.width=4.5, fig.height = 4, fig.align="center"}
 MOFA2::plot_factor_cor(MOFARes)
 ```
 
 ### Explained Variance
+
+These two graphs represent the cumulative explained variance per dataset and its decomposition by factor and dataset. This is the amount of variance within the dataset that is explained by the model (factors). The second graph is read line by line, each line describing the percentage of variance explained by a factor for each table. For two tables X and Y, it is interpreted as follows: 'Factor k explains xx% of the total variance of dataset X and yy% of the total variance of dataset Y.'
 
 ```{r explained_variance, fig.width = 10, fig.height = 4, fig.align = "center"}
 # compute both per factor and per table by default.
