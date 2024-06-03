@@ -1318,7 +1318,7 @@
 .outMOFAexplainedVar <- function(resMOFA) {
     mofaText <- paste0("These two graphs represent the cumulative explained variance per dataset and its decomposition by factor and dataset.",
                        " This is the amount of variance within the dataset that is explained by the model (factors).",
-                       " The second graph is interprated as follows: 'Factor k explains xx% of the total variance of dataset X and yy% of the total variance of dataset Y.'"
+                       " The second graph is interpreted as follows: 'Factor k explains xx% of the total variance of dataset X and yy% of the total variance of dataset Y.'"
     )
     
     tagList(
