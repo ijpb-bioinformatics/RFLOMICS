@@ -15,15 +15,22 @@ MOFAset <- RFLOMICS::getMOFASettings(rflomics.MAE)
 
 ```{r}
 fig_width <- 15
-n_lines <- ceiling(length(MOFA2::views_names(MOFARes))/2)
-fig_height <- n_lines*4.5
+nDat <- length(MOFA2::views_names(MOFARes))
+n_lines <- ceiling(nDat/2)
+fig_height <- n_lines*5.5
+```
+
+```{r}
+VarExp <- MOFA2::get_variance_explained(MOFARes)$r2_per_factor$group1
+FactNum <- apply(VarExp, 1, FUN = function(vect) any(vect > 5)) # Percentage
+nMOFAFactors <- MOFARes@dimensions$K
 ```
 
 ## Settings
 
 MOFA2  R package was used to perform data unsupervised integration, on <span style="color:blue">`r paste(MOFA2::views_names(MOFARes), collapse = ", ")`</span> datatables.
 
-Features selection: 
+<ins>Variable selection: </ins>
 
 ```{r MOFA2_selection, results="asis"}
 listSel <- NULL
@@ -52,17 +59,18 @@ rm(listSel, listSel2)
 ```
 
 This leads to the following analysis setting: 
-```{r MOFA2_data_overview, fig.width=6.5, fig.height = 5, fig.align="center"}
+```{r MOFA2_data_overview, fig.width=6.5, fig.height = 1.5*nDat, fig.align="center"}
 MOFA2::plot_data_overview(MOFARes)
 ```
 
-* Options for the run:
+<ins>Run information: </ins>
+
+* Options:
   * Scale views: `r MOFAset$scale_views` 
   * Number of factors: `r MOFAset$num_factors`. Obtained number of factors: `r MOFA2::get_dimensions(MOFARes)$K`
   * Number of iterations: `r MOFAset$maxiter` 
 * RNASeq data were transformed using <span style="color:DarkOrchid">voom</span> transformation from limma package 
 * Batch effects `r paste(RFLOMICS::getBatchFactors(rflomics.MAE), collapse = ", ")`  were corrected using <span style="color:DarkOrchid">removebatcheffect</span> function from limma package.
-
 
 ##  Results
 
@@ -73,18 +81,20 @@ mat_cor <- stats::cor(MOFA2::get_factors(MOFARes)[[1]])
 mat_cor <- mat_cor - diag(mat_cor)
 ```
 
-* Number of computed factors: `r MOFARes@dimensions$K` 
+* Number of computed factors: `r nMOFAFactors` 
 * Is there a correlation >0.5 between two factors? `r ifelse(any(mat_cor>0.5), "YES, be careful, the results are unreliable.", "No. Results are reliable.")`
 
-The correlation between factor is an indicator to judge the quality of your results. Factors are supposed to be orthogonal (correlation is theoratically 0 between two different ones), however, in some cases (wrong pre-processing or two many factors) it can happen that there is a correlation >0.5 between factors. 
+The correlation between factor is an indicator to judge the quality of your results. Factors are supposed to be orthogonal (correlation is theoretically 0 between two different ones), however, in some cases (wrong pre-processing or two many factors) it can happen that there is a correlation >0.5 between factors. 
 
-```{r MOFA2_factor_cor, fig.width=4.5, fig.height = 4, fig.align="center"}
+```{r MOFA2_factor_cor, fig.width = min(nMOFAFactors+0.5, 5), fig.height = min(nMOFAFactors, 5), fig.align="center"}
 MOFA2::plot_factor_cor(MOFARes)
 ```
 
 ### Explained Variance
 
 These two graphs represent the cumulative explained variance per dataset and its decomposition by factor and dataset. This is the amount of variance within the dataset that is explained by the model (factors). The second graph is read line by line, each line describing the percentage of variance explained by a factor for each table. For two tables X and Y, it is interpreted as follows: 'Factor k explains xx% of the total variance of dataset X and yy% of the total variance of dataset Y.'
+
+In the rest of the report, only <span style="color:blue">`r sum(FactNum)` </span> will be shown in the figure: this is the number of factor representing at least 5\% of explained variance in any table. 
 
 ```{r explained_variance, fig.width = 10, fig.height = 4, fig.align = "center"}
 # compute both per factor and per table by default.
@@ -98,12 +108,7 @@ ggpubr::ggarrange(g1, g2, ncol = 2)
 
 ### Weights of the factors explaining the most variance {.tabset}
 
-The following image shows the weights of the features for each table and each factors for all factors that explain at least 5\% of the variance in any table. 
-
-```{r}
-VarExp = MOFA2::get_variance_explained(MOFARes)$r2_per_factor$group1
-FactNum = apply(VarExp, 1, FUN = function(vect) any(vect > 5)) # Percentage
-```
+The following image shows the weights and their sign (positive or negative) of the *15 first features*, for each table and each factors for the first `r sum(FactNum)` factors. 
 
 ```{r, fig.height = fig_height, fig.width=fig_width, fig.align = "center"}
 ggplot_list <- list()
@@ -114,7 +119,7 @@ for (i in which(FactNum)) {
         ggplot_sublist[[length(ggplot_sublist) + 1]] <- MOFA2::plot_top_weights(MOFARes,
                                                                                 view = j,
                                                                                 factors = i,
-                                                                                nfeatures = 10, 
+                                                                                nfeatures = 15, 
                                                                                 scale = TRUE) + 
             ggplot2::ggtitle(paste0(j, " - Factor ", i))
     }
@@ -168,7 +173,7 @@ ggplot_list[[5]]
 
 ### Heatmaps {.tabset}
 
-For all views, these heatmap show the 10 first features in term of weights for the factors explaining at least 5\% variance in any table.
+For all views, these heatmaps show the *15 first features* in terms of weights for the first `r sum(FactNum)` factors. These are the transformed and processed data passed to MOFA2, not the raw data or denoised data.
 
 ```{r, fig.width = 15, fig.height = 7, fig.show = "hold", include = FALSE, fig.keep = "none"}
 list_heat_views <- list()
@@ -181,7 +186,7 @@ for (fac in 1:MOFARes@dimensions$K) {
         list_heat_views[[fac]][[nam]] <- MOFA2::plot_data_heatmap(MOFARes, 
                                                                   view = nam, 
                                                                   factor = fac, 
-                                                                  features = 10, 
+                                                                  features = 15, 
                                                                   main = paste0(nam, " - Factor ", fac), 
                                                                   cellheight = 20, 
                                                                   cellwidth = 12)
