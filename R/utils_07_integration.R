@@ -482,3 +482,46 @@
     
     return(list_res)
 }
+
+
+# ---- MOFA relationship to factor ----
+
+#' @title Run test to compute relationship between MOFA2 factors and features
+#' @description 
+#' Run a kruskal.test between all factors and all biological and metadata 
+#' factors entered by the user in the interface. Is used inside the interface
+#' and the report. 
+#' @param mofaRes an object from a MOFA run. 
+#' @param method P value adjustment method. One of "BH", "Bon", etc. Same as 
+#' in p.adjust method. 
+#' @param ... Not in use at the moment. 
+#' @return A table or a graph. 
+#' @importFrom stats kruskal.test
+#' @importFrom MOFA2 get_factors
+#' @keywords internal
+#' @noRd
+
+.relationsMOFA <- function(mofaRes, method = "BH", ...){
+    factors   <- get_factors(mofaRes)
+    ExpDesign <- mofaRes@samples_metadata
+    ExpDesign$group  <- NULL
+    ExpDesign$sample <- NULL
+    
+    res_aov <- lapply(
+        seq_len(ncol(ExpDesign)),
+        FUN = function(i) {
+            p.adjust(unlist(lapply(seq_len(ncol(factors$group1)),
+                          FUN = function(j){
+                              kruskal.test(x = factors$group1[,j], 
+                                           g = ExpDesign[,i])$p.value
+                          })), method = method)
+        }
+    )
+    names(res_aov) <- colnames(ExpDesign)
+    
+    res_res <- data.frame(do.call("rbind", res_aov))
+    # colnames(res_res) <- gsub("Response ", "", colnames(res_res))
+    colnames(res_res) <- paste0("Factor ", seq_len(ncol(res_res)))
+    
+    return(res_res)
+}

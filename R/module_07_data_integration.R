@@ -1698,45 +1698,32 @@
 
 #' @noRd
 #' @keywords internal
-#' @importFrom stats kruskal.test
+#' @importFrom DT formatStyle datatable renderDataTable
 .outMOFARelations <- function(resMOFA) {
     
     mofaText <- paste0("Each of the cells is the pvalue result from a kruskal-wallis test between the factor and the response variable.",
-                       " <b>No correction is applied.</b>",
+                       " <b>Benjamini-Hochberg correction is applied in line (biological or metadata factor wise).</b>",
                        " This table is to help you detect a biological relation between a factor and a variable that you may have observed at the 'Factor Plots' panel. ")
-    
+    brks <- c(0.05, 0.1)
+    ResDF <- .relationsMOFA(mofaRes = resMOFA, 
+                            method = "BH")
     renderUI({
         verticalLayout(
             br(),
             div(class = "explain-p", HTML(mofaText)),
             hr(),
-            renderTable({
-                
-                factors   <- get_factors(resMOFA)
-                ExpDesign <- resMOFA@samples_metadata
-                ExpDesign$group  <- NULL
-                ExpDesign$sample <- NULL
-                
-                res_aov <- lapply(
-                    seq_len(ncol(ExpDesign)),
-                    FUN = function(i) {
-                        unlist(lapply(seq_len(ncol(factors$group1)),
-                                      FUN = function(j){
-                                          kruskal.test(x = factors$group1[,j], 
-                                                       g = ExpDesign[,i])$p.value
-                                      }))
-                    }
-                )
-                names(res_aov) <- colnames(ExpDesign)
-                
-                res_res <- do.call("rbind", res_aov)
-                # colnames(res_res) <- gsub("Response ", "", colnames(res_res))
-                colnames(res_res) <- paste0("Factor ", seq_len(ncol(res_res)))
-                
-                res_res
-                
-            }, striped = TRUE, rownames = TRUE)
-            
+            renderDataTable({
+                datatable(ResDF, class = 'cell-border stripe', 
+                          options = list(dom = 't'))  |>
+                    DT::formatStyle(
+                        columns = colnames(ResDF),
+                        backgroundColor = DT::styleInterval(brks, 
+                                                            c('forestgreen', 
+                                                              "yellow2",
+                                                              'white'))) |> 
+                    formatSignif(columns = seq_len(ncol(ResDF)), 
+                                 digits = 3)
+            }, options = list(pageLength = 15, lengthChange = FALSE))
         )})
 }
 
