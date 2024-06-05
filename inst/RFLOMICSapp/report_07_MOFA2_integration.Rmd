@@ -46,6 +46,12 @@ listSel2 <- lapply(names(listSel),  FUN = function(nam) {
                       " were processed in the multi-omics analysis, taking the ", 
                       ifelse(dat[2], "union", "intersection"), " of all contrasts lists.")
            },
+           "CV" = {
+               paste0("<span style=\"color:blue\">",
+                      MOFA2::get_dimensions(MOFARes)$D[[nam]], "</span> ",
+                      varNam, 
+                      " were selected based on the coefficient of variation.")
+           },
            "none" = paste0("No features selection was applied, all ",
                            varNam,
                            " were taken into account."))
@@ -94,7 +100,7 @@ MOFA2::plot_factor_cor(MOFARes)
 
 These two graphs represent the cumulative explained variance per dataset and its decomposition by factor and dataset. This is the amount of variance within the dataset that is explained by the model (factors). The second graph is read line by line, each line describing the percentage of variance explained by a factor for each table. For two tables X and Y, it is interpreted as follows: 'Factor k explains xx% of the total variance of dataset X and yy% of the total variance of dataset Y.'
 
-In the rest of the report, only <span style="color:blue">`r sum(FactNum)` </span> will be shown in the figure: this is the number of factor representing at least 5\% of explained variance in any table. 
+`r ifelse(sum(FactNum)>5, "In the rest of the report, only the first 5 factors will be shown.", paste0("In the rest of the report, <span style=\"color:blue\">", sum(FactNum), "</span> will be shown in the figure: this is the number of factor representing at least 5% of explained variance in any table."))`
 
 ```{r explained_variance, fig.width = 10, fig.height = 4, fig.align = "center"}
 # compute both per factor and per table by default.
@@ -110,72 +116,43 @@ ggpubr::ggarrange(g1, g2, ncol = 2)
 
 The following image shows the weights and their sign (positive or negative) of the *15 first features*, for each table and each factors for the first `r sum(FactNum)` factors. 
 
-```{r, fig.height = fig_height, fig.width=fig_width, fig.align = "center"}
-ggplot_list <- list()
+```{r, results="asis", fig.height = fig_height, fig.width=fig_width, fig.align = "center"}
+childTest <- NULL
+outMOFA <- NULL
+
 for (i in which(FactNum)) {
+    outMOFA <- c(outMOFA,
+                 paste0("\n#### Factor", i, " \n"))
     ggplot_sublist <- list()
+    
     for (j in MOFA2::views_names(MOFARes)) {
         
         ggplot_sublist[[length(ggplot_sublist) + 1]] <- MOFA2::plot_top_weights(MOFARes,
                                                                                 view = j,
                                                                                 factors = i,
-                                                                                nfeatures = 15, 
-                                                                                scale = TRUE) + 
+                                                                                nfeatures = 15,
+                                                                                scale = TRUE) +
             ggplot2::ggtitle(paste0(j, " - Factor ", i))
     }
-    ggplot_list[[length(ggplot_list) + 1]] <- ggpubr::ggarrange(plotlist = ggplot_sublist, 
-                                                        ncol = 2, nrow = n_lines)
+    
+    childTest <-  c(
+        "```{r, fig.width = fig_width, fig.height = fig_height}\n",
+        "ggpubr::ggarrange(plotlist = ggplot_sublist, 
+                ncol = 2, nrow = n_lines)",
+        "```\n")
+    outMOFA <- c(outMOFA, knitr::knit_child(text = childTest,
+                                            envir = environment(),
+                                            quiet = TRUE))
 }
+knitr::asis_output(outMOFA)
+
 ```
-
-#### Factor 1
-
-```{r MOFA2_weightfactors1, fig.width = fig_width, fig.height = fig_height}
-ggplot_list[[1]]
-```
-
-#### Factor 2
-
-```{r MOFA2_weightfactors2, fig.width = fig_width, fig.height = fig_height}
-ggplot_list[[2]]
-```
-
-`r if(sum(FactNum)<3) {"\\begin{comment}"}`
-
-#### Factor 3
-
-```{r MOFA2_weightfactors3, fig.width = fig_width, fig.height = fig_height}
-ggplot_list[[3]]
-```
-
-`r if(sum(FactNum)<3) {"\\end{comment}"}`
-
-
-`r if(sum(FactNum)<4) {"\\begin{comment}"}`
-
-#### Factor 4
-
-```{r MOFA2_weightfactors4, fig.width = fig_width, fig.height = fig_height}
-ggplot_list[[4]]
-```
-
-`r if(sum(FactNum)<4) {"\\end{comment}"}`
-
-`r if(sum(FactNum)<5) {"\\begin{comment}"}`
-
-#### Factor 5
-
-```{r MOFA2_weightfactors5, fig.width = fig_width, fig.height = fig_height}
-ggplot_list[[5]]
-```
-
-`r if(sum(FactNum)<5) {"\\end{comment}"}`
 
 ### Heatmaps {.tabset}
 
 For all views, these heatmaps show the *15 first features* in terms of weights for the first `r sum(FactNum)` factors. These are the transformed and processed data passed to MOFA2, not the raw data or denoised data.
 
-```{r, fig.width = 15, fig.height = 7, fig.show = "hold", include = FALSE, fig.keep = "none"}
+```{r, fig.width = 15, fig.height = 5.5*nDat, fig.show = "hold", include = FALSE, fig.keep = "none"}
 list_heat_views <- list()
 list_arrange <- list()
 for (fac in 1:MOFARes@dimensions$K) {
@@ -187,14 +164,12 @@ for (fac in 1:MOFARes@dimensions$K) {
                                                                   view = nam, 
                                                                   factor = fac, 
                                                                   features = 15, 
-                                                                  main = paste0(nam, " - Factor ", fac), 
-                                                                  cellheight = 20, 
-                                                                  cellwidth = 12)
+                                                                  main = paste0(nam, " - Factor ", fac))
         dev.off()
         invisible(file.remove("temp.png"))
     }
     list_arrange[[fac]] <- gridExtra::grid.arrange(grobs = lapply(list_heat_views[[fac]], FUN = function(object) object$gtable),
-                                                   ncol = 2, nrow = n_lines)
+                                                   ncol = 1)
 }
 dev.off()
 ```
@@ -242,7 +217,71 @@ ggpubr::as_ggplot(list_arrange[[5]])
 
 `r if(sum(FactNum)<5) {"\\end{comment}"}`
 
-# {.unlisted .unnumbered}
+### Correlation between factors and metadata 
+
+This table presents the adjusted pvalues from a kruskall-wallis test between 
+each factor and each biological or metadata factor entered in the design.
+Pvalues are corrected using Benjamini-Hochberg method row-wise.
+This allows to make the connection between MOFA2 results and prior information 
+on the datasets. 
+
+```{r}
+relationsDF <- RFLOMICS:::.relationsMOFA(mofaRes = MOFARes, method = "BH")
+namcol <- colnames(relationsDF)
+brks <- c(0.05, 0.1)
+```
+
+```{r, results="asis"}
+DT::datatable(relationsDF, 
+              class = 'cell-border stripe', 
+              options = list(dom = 't')) |>
+    DT::formatStyle(
+        columns = namcol,
+        backgroundColor = DT::styleInterval(brks, 
+                                            c('forestgreen',
+                                              "yellow2",
+                                              "white"))) |> 
+    DT::formatSignif(columns = seq_len(length(namcol)), 
+                     digits = 3)
+```
+
+<br>
+
+```{r, results="asis", fig.width = fig_width, fig.height = fig_height}
+cat('\n### {.unlisted .unnumbered .tabset} \n')
+cat("\n")
+
+childTest <- NULL
+outMOFA <- NULL
+
+for (i in seq_len(length(rownames(relationsDF)))) {
+    outMOFA <- c(outMOFA,
+             paste0("\n#### ", rownames(relationsDF)[i], " \n"))
+    
+    childTest <-  c("```{r, fig.width = fig_width, fig.height = fig_height}\n",
+                    "MOFA2::plot_factor(
+                    MOFARes,
+                    factors = seq_len(min(5, sum(FactNum))),
+                    color_by = rownames(relationsDF)[i],
+                    group_by = rownames(relationsDF)[i],
+                    shape_by = rownames(relationsDF)[i],
+                    legend = TRUE,
+                    add_violin = TRUE,
+                    violin_alpha = 0.25,
+                    add_boxplot = FALSE,
+                    boxplot_alpha = 0.25,
+                    dodge = TRUE,
+                    scale = FALSE,
+                    dot_size = 3
+                ) + 
+                theme(text = element_text(size = 15))\n", 
+                "```\n")
+    outMOFA <- c(outMOFA, knitr::knit_child(text = childTest, 
+                                    envir = environment(), 
+                                    quiet = TRUE))
+}
+knitr::asis_output(outMOFA)
+```
 
 ---
 
