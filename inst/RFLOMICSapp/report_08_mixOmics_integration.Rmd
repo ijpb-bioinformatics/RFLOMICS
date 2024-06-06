@@ -14,7 +14,8 @@ set_res  <- RFLOMICS::getMixOmicsSettings(rflomics.MAE)
 ncompDat <- min(Data_res$ncomp, 5)
 fig_height <- NULL
 fig_height <- ceiling(length(set_res$selectData)/2)*4.5
-fig_width <- 12
+fig_width <- 15
+nrow_plot <- ceiling(length(set_res$selectData)/2)
 ```
 
 ### Overview
@@ -42,7 +43,7 @@ if (is.list(Data_res$X)) {
     }
 }
 
-DT::datatable(t(df))
+DT::datatable(t(df), options = list(dom = 't'))
 ```
 
 ```{r mixOmics_varExp, fig.width = 12, fig.height = 5}
@@ -51,85 +52,51 @@ RFLOMICS:::plotMOVarExp(rflomics.MAE, selectedResponse = selectedResponse)
 
 ### Idividuals plots {.tabset}
 
-#### Comp 1 - 2
+```{r, results="asis", fig.height = fig_height, fig.width=fig_width, fig.align = "center"}
+childTest <- NULL
+outMixOmics <- NULL
 
-```{r mixOmics_plotInd12, fig.width = fig_width, fig.height = fig_height}
-mixOmics::plotIndiv(Data_res, comp = c(1,2), ellipse = FALSE, legend = TRUE)
+for (i in seq_len(ncompDat - 1)) {
+    outMixOmics <- c(outMixOmics,
+                 paste0("\n#### Comp ", i, " - ", i + 1, "\n"))
+    
+    childTest <-  c(
+        "```{r, fig.width = fig_width, fig.height = fig_height}\n",
+        "mixOmics::plotIndiv(Data_res, comp = c(i, i + 1), 
+                                  ellipse = FALSE, legend = TRUE)",
+        "```\n")
+    outMixOmics <- c(outMixOmics, knitr::knit_child(text = childTest,
+                                            envir = environment(),
+                                            quiet = TRUE))
+}
+knitr::asis_output(outMixOmics)
+
 ```
-
-#### Comp 2 - 3
-
-```{r mixOmics_plotInd23, fig.width = fig_width, fig.height = fig_height}
-mixOmics::plotIndiv(Data_res, comp = c(2,3), ellipse = FALSE, legend = TRUE)
-```
-
-`r if(ncompDat<4) {"\\begin{comment}"}`
-
-#### Comp 3 - 4
-
-```{r mixOmics_plotInd23, fig.width = fig_width, fig.height = fig_height}
-mixOmics::plotIndiv(Data_res, comp = c(3,4), ellipse = FALSE, legend = TRUE)
-```
-
-`r if(ncompDat<4) {"\\end{comment}"}`
-
-`r if(ncompDat<5) {"\\begin{comment}"}`
-
-#### Comp 4 - 5
-
-```{r mixOmics_plotInd23, fig.width = fig_width, fig.height = fig_height}
-mixOmics::plotIndiv(Data_res, comp = c(4,5), ellipse = FALSE, legend = TRUE)
-```
-
-`r if(ncompDat<5) {"\\end{comment}"}`
 
 ### Loadings {.tabset}
 
-#### Comp 1
+```{r, results="asis", fig.height = fig_height, fig.width=fig_width, fig.align = "center"}
+childTest <- NULL
+outMixOmics <- NULL
 
-```{r mixOmics_load1, fig.height = fig_height*0.75, fig.width = fig_width}
-mixOmics::plotLoadings(Data_res, 
-                       comp = 1,
-                       ndisplay = 10)
+for (i in seq_len(ncompDat)) {
+    outMixOmics <- c(outMixOmics,
+                 paste0("\n#### Comp ", i, "\n"))
+    
+    childTest <-  c(
+        "```{r, fig.width = fig_width, fig.height = fig_height}\n",
+        "mixOmics::plotLoadings(Data_res, 
+                       comp = i,
+                       ndisplay = 15, layout = c(nrow_plot, 2),
+                       size.name = 1.2, size.legend = 1.2) ",
+        "```\n")
+    outMixOmics <- c(outMixOmics, knitr::knit_child(text = childTest,
+                                            envir = environment(),
+                                            quiet = TRUE))
+}
+knitr::asis_output(outMixOmics)
+
 ```
-
-#### Comp 2
-
-```{r mixOmics_load2, fig.height = fig_height*0.75, fig.width = fig_width}
-mixOmics::plotLoadings(Data_res, 
-                       comp = 2,
-                       ndisplay = 10)
-```
-
-`r if(ncompDat<3) {"\\begin{comment}"}`
-
-#### Comp 3
-
-```{r mixOmics_plotInd23, fig.width = fig_width, fig.height = fig_height*0.75}
-mixOmics::plotLoadings(Data_res, comp = 3, ndisplay = 10)
-```
-
-`r if(ncompDat<3) {"\\end{comment}"}`
-
-`r if(ncompDat<4) {"\\begin{comment}"}`
-
-#### Comp 4
-
-```{r mixOmics_plotInd23, fig.width = fig_width, fig.height = fig_height*0.75}
-mixOmics::plotLoadings(Data_res, comp = 4, ndisplay = 10)
-```
-
-`r if(ncompDat<4) {"\\end{comment}"}`
-
-`r if(ncompDat<5) {"\\begin{comment}"}`
-
-#### Comp 5
-
-```{r mixOmics_plotInd23, fig.width = fig_width, fig.height = fig_height*0.75}
-mixOmics::plotLoadings(Data_res, comp = 5, ndisplay = 10)
-```
-
-`r if(ncompDat<5) {"\\end{comment}"}`
 
 ---
 
