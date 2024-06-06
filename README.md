@@ -112,10 +112,11 @@ binary and restart your session:
 ```
 echo "Sys.setenv(RETICULATE_PYTHON = \"path_to_python_bin\")" >> .Rprofile
 ```
+5. Install MOFA2 using `BiocManager::install("MOFA2")` in R. 
 
-You can check if mofapy is installed using `reticulate::py_config()` in R. 
-Your Python binary path and mofapy path should appear. If it's not the case, 
-something went wrong. 
+You can check your configuration using `reticulate::py_config()` in R. 
+Your Python binary path and mofapy2 path should appear after step 5. 
+If it's not the case, something went wrong. 
 
 
 ## Run Rflomics
