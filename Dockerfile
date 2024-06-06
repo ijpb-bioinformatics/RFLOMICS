@@ -38,7 +38,7 @@ WORKDIR /home
 
 # Clone rflomics
 
-RUN git clone --branch  sk8-test  https://forgemia.inra.fr/flomics/rflomics.git
+RUN git clone --branch  sk8_v3  https://forgemia.inra.fr/flomics/rflomics.git
 
 WORKDIR /home/rflomics
 
