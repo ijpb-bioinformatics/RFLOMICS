@@ -102,7 +102,7 @@ On windows, replace with `where python`. You should be able to see the path(s) w
 Python binaries are installed. You can have multiple python version installed at once.
 You have to make sure the one used by R is this correct one. 
 
-2. Install pip command (if not already done). You can use [this guide](https://phoenixnap.com/kb/install-pip-windows).
+2. Install pip command (if not already done). For windows users, you can use [this guide](https://phoenixnap.com/kb/install-pip-windows).
 3. Install mofapy 2: in a shell terminal, run `pip install mofapy2`.
 4. Set the value of the RETICULATE_PYTHON environment variable to a Python 
 binary and restart your session:
