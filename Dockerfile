@@ -1,4 +1,4 @@
-FROM rocker/r-ver:4.3.2
+FROM rocker/r-ver:4.4.0
 
 LABEL maintainer="ijpb-bioinfo-team@inrae.fr"
 LABEL version="0.1"
@@ -46,7 +46,7 @@ WORKDIR /home/rflomics
 RUN echo "local(options(shiny.port = 3838, shiny.host = '0.0.0.0'))" >> /usr/local/lib/R/etc/Rprofile.site
 
 # Install mofapy2 to use the MOFA2 package
-RUN pip install mofapy2==0.7.0
+RUN pip install mofapy2==0.7.1
 
 # set the path to write the R packages
 ENV RENV_PATHS_LIBRARY renv/library
