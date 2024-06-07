@@ -1,4 +1,4 @@
-## `r selectedResponse` 
+## Response Variable: `r selectedResponse` 
 
 ```{r setup, include = FALSE, hide = TRUE, eval = TRUE}
 explorDir <- paste0(outDir,"/","Integration/MixOmics/", selectedResponse, "/")
@@ -13,12 +13,15 @@ Data_res <- RFLOMICS::getMixOmics(rflomics.MAE, response = selectedResponse)
 set_res  <- RFLOMICS::getMixOmicsSettings(rflomics.MAE)
 ncompDat <- min(Data_res$ncomp, 5)
 fig_height <- NULL
-fig_height <- ceiling(length(set_res$selectData)/2)*4.5
+fig_height <- ceiling(length(set_res$selectData)/2)*5
 fig_width <- 15
 nrow_plot <- ceiling(length(set_res$selectData)/2)
 ```
 
 ### Overview
+
+This overview present the number of observations and the number of features per dataset.
+`r ifelse(set_res$sparsity, "As a sparse analysis was performed, you will find for each component and each table the best number of features associated.",  "")`
 
 ```{r mixOmics_overview}
 if (is.list(Data_res$X)) {
@@ -46,11 +49,25 @@ if (is.list(Data_res$X)) {
 DT::datatable(t(df), options = list(dom = 't'))
 ```
 
+#### Explained variance
+
+These graphs represent the explained variance for each datatable. 
+The graph on the left is the total of all component explained variance,
+the graph on the right is the decomposition and is read as: component x explains y% of data D and z% of dataset M.
+Keep in mind the purpose of (s)plsda is not the same as pca, it does not aim at capturing the most variance.
+
 ```{r mixOmics_varExp, fig.width = 12, fig.height = 5}
 RFLOMICS:::plotMOVarExp(rflomics.MAE, selectedResponse = selectedResponse)
 ```
 
 ### Idividuals plots {.tabset}
+
+These graphs represent the samples coordinates projected onto the first 
+<span style=color:blue>`r ncompDat`</span> components found by mixOmics.
+Samples are colored according to 
+<span style=color:blue>`r selectedResponse`</span>. 
+It is best when the samples are grouping into response modalities.
+If it is not the case, the analysis was maybe not successful.
 
 ```{r, results="asis", fig.height = fig_height, fig.width=fig_width, fig.align = "center"}
 childTest <- NULL
@@ -63,7 +80,11 @@ for (i in seq_len(ncompDat - 1)) {
     childTest <-  c(
         "```{r, fig.width = fig_width, fig.height = fig_height}\n",
         "mixOmics::plotIndiv(Data_res, comp = c(i, i + 1), 
-                                  ellipse = FALSE, legend = TRUE)",
+                             ellipse = FALSE, legend = TRUE,
+                             cex = 5,
+                             size.xlabel = ggplot2::rel(2),
+                             size.ylabel = ggplot2::rel(2),
+                             size.axis = ggplot2::rel(1.5))",
         "```\n")
     outMixOmics <- c(outMixOmics, knitr::knit_child(text = childTest,
                                             envir = environment(),
@@ -74,6 +95,14 @@ knitr::asis_output(outMixOmics)
 ```
 
 ### Loadings {.tabset}
+
+For each block (datatable), these graphs represent the 15 first features in 
+terms of loadings score (coefficients) for the first 
+<span style=color:blue>`r ncompDat`</span> components, by ascending order. 
+The higher (absolute) the score, the more important the variable is in the 
+component computation. 
+This means the highest-scores features also help the most to discriminate 
+between categories of the response variable.
 
 ```{r, results="asis", fig.height = fig_height, fig.width=fig_width, fig.align = "center"}
 childTest <- NULL
@@ -97,6 +126,8 @@ for (i in seq_len(ncompDat)) {
 knitr::asis_output(outMixOmics)
 
 ```
+
+### {.unlisted .unnumbered}
 
 ---
 
