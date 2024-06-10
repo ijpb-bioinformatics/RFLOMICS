@@ -50,7 +50,7 @@ for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
       paste0("\n#### From ",
              ifelse(annot == "DiffExpEnrichAnal", 
                     "differentially expressed ", "co-expressed "), 
-             RFLOMICS:::omicsDic(dataset.SE)[["variableName"]], " lists\n"),
+             variableName, " lists\n"),
       paste0("\n*Pvalue cut-off: ",
              dataset.SE@metadata[[annot]][[ontology]]$list_args$pvalueCutoff, 
              "*\n"))
@@ -61,60 +61,78 @@ for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
       paste0("\n* **Summary of the results for all the ",
              ifelse(annot == "DiffExpEnrichAnal", "contrasts:", "clusters:"),
              "**\n"))
-
+  
   # table
-  sumORA.ont <- RFLOMICS::sumORA(dataset.SE, from = annot, database = ontology)
-  
-  for(y in names(sumORA.ont)[-1]){
-    sumORA.ont[[y]] <- unlist(sumORA.ont[[y]])
-  }
-  
+  sumORA.ont <- sumORA(dataset.SE, from = annot, database = ontology)
+  index <- names(sumORA.ont)[-1]
   if("no-domain" %in% names(sumORA.ont)[-1]){
     names(sumORA.ont) <- 
       c(names(sumORA.ont)[1], ontology)
-  }else{
-    names(sumORA.ont) <- 
-      c(names(sumORA.ont)[1],
-        paste0(ontology, "(", names(sumORA.ont)[-1], ")"))
+    index <- ontology
   }
   
-  annotDir <- paste0(outDir,"/06-Enrichment_analysis/", data, "/", 
-                     ontology, "/", annot, "/")
-  dir.create(path=annotDir, recursive = TRUE, showWarnings = FALSE)
-  write.table(sumORA.ont, file=paste0(annotDir,"summay_stat.txt"),
-              sep="\t", quote=FALSE, col.names=T, row.names=F)
+  ## add tag to summary table 
+  if(annot == "DiffExpEnrichAnal"){
+    tag <- 
+      validContrasts[which(validContrasts$contrastName %in% rownames(sumORA.ont)),]$tag
+    sumORA.ont <- cbind(tag, sumORA.ont)
+  }
   
-  # sumORA.df[[x]] <- 
-  #   dplyr::filter(sumORA.df[[x]], 
-  #                 rowSums(dplyr::across(names(sumORA.df[[x]])[-1])) != 0)
+  write.table(sumORA.ont, file=paste0(annotDir[[data]][[annot]][[ontology]], 
+                                      "summay_stat.txt"),
+              sep="\t", quote=FALSE, col.names=T, row.names=F)
   
   DT.child <-  
     c("```{r}",
-    "DT::datatable(sumORA.ont, rownames = FALSE , class = 'cell-border stripe',
-                  options = list( pageLength = 6, scrollX = F, dom = 'tip'))",
-     "```")
+      "datatable(sumORA.ont, rownames = FALSE , class = 'cell-border stripe',
+                 options = list( pageLength = 6, scrollX = F, dom = 'tip'))",
+      "```")
+  out <- c(out, knit_child(text = DT.child, envir = environment(), quiet=TRUE))
   
-  out <- c(out, knitr::knit_child(text = DT.child, envir = environment(), quiet=TRUE))
+  # error messages
+  errorMessages <- 
+    metadata(dataset.SE)[[annot]][[ontology]]$error
   
+  text.help = ""
+  if(any(sumORA.ont == 0))
+    text.help <- c(
+      paste0("0: no significantly enriched ", variableName))
+  
+  if(length(errorMessages) != 0){
+    text.help <- 
+      paste0(text.help, "\n", "NA: \n", 
+             paste(unique(unlist(errorMessages)), collapse = "\n"))
+  }
+  
+  if(text.help != ""){
+    DT.child <-  
+      c("```",
+        text.help,
+        "```")
+    out <- c(out, knit_child(text = DT.child, envir = environment(), quiet=TRUE))
+    
+  }
   # Results per list
+  sumORA.ont <- 
+    sumORA.ont[rowSums(sumORA.ont[index], na.rm = T) != 0,]
+  
+  if(nrow(sumORA.ont) == 0) next
+  
   out <- 
     c(out, 
       paste0("\n* **Results per ",
              ifelse(annot == "DiffExpEnrichAnal", "contrast:", "cluster:"), "**\n"),
       paste0("\n*Please click on the arrows to scroll down the results and click on the figure to zoom*\n"))
   
-  index <- names(sumORA.ont)[stringr::str_detect(names(sumORA.ont), ontology)]
-  for(i in index){
-    sumORA.ont[[i]] <- as.numeric(sumORA.ont[[i]])
-  }
-  listnames <- dplyr::filter(sumORA.ont, rowSums(dplyr::across(index)) != 0)[[1]]
-  
-  for (listname  in listnames){
-    out <- c(out, knitr::knit_child(
+  for (listname  in rownames(sumORA.ont)){
+    tag <- NULL
+    if(annot == "DiffExpEnrichAnal")
+      tag <- sumORA.ont[which(sumORA.ont$Contrast == listname),]$tag
+    out <- c(out, knit_child(
       paste0(path.package("RFLOMICS"), "/RFLOMICSapp/",
              "report_06_enrichmentORA_per_list_CPR.Rmd"), quiet=TRUE))
   }
 }
-knitr::asis_output(out)
+asis_output(out)
 
 ```

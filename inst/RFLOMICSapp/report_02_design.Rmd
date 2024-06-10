@@ -7,11 +7,11 @@
 
 ```{r design, out.width = "70%", fig.align='left'}
 
-bioFact   <- RFLOMICS::getBioFactors(rflomics.MAE)
-batchFact <- RFLOMICS::getBatchFactors(rflomics.MAE)
-metaFact  <- RFLOMICS::getMetaFactors(rflomics.MAE)
+bioFact   <- getBioFactors(rflomics.MAE)
+batchFact <- getBatchFactors(rflomics.MAE)
+metaFact  <- getMetaFactors(rflomics.MAE)
 
-DT::datatable(getDesignMat(rflomics.MAE)[c("samples", bioFact, batchFact, metaFact)], 
+datatable(getDesignMat(rflomics.MAE)[c("samples", bioFact, batchFact, metaFact)], 
               options = list(pageLength = 6, scrollX = T, dom = 'tip'),
               rownames = FALSE, class = 'cell-border stripe')
 
@@ -57,7 +57,7 @@ df <- data.frame("Factor_names" = fact.names ,
            "Factor_type" = fact.types,
            "Factor_reference" = fact.ref)
 
-DT::datatable(df , rownames = FALSE , class = 'cell-border stripe',
+datatable(df , rownames = FALSE , class = 'cell-border stripe',
               options = list( pageLength = 6, scrollX = F, dom = 'tip'))
 
 # caption= htmltools::tags$caption(style = 'caption-side: top;
@@ -73,7 +73,7 @@ DT::datatable(df , rownames = FALSE , class = 'cell-border stripe',
 *The contrasts are a statistical translation of biological questions*
 
 ```
-`r RFLOMICS::getModelFormula(rflomics.MAE)`
+`r getModelFormula(rflomics.MAE)`
 ````
 
 <br>
@@ -82,9 +82,9 @@ DT::datatable(df , rownames = FALSE , class = 'cell-border stripe',
 
 ```{r contrastSel, results="asis"}
 
-df <- getSelectedContrasts(rflomics.MAE)[,c("groupComparison", "contrastName", "type")]
-names(df) <- c("Comparison", "Contrast_names", "Type")
-DT::datatable(df, rownames = FALSE,
+df <- getSelectedContrasts(rflomics.MAE)[,c("tag", "groupComparison", "contrastName", "type")]
+names(df) <- c("tag","Comparison", "Contrast_names", "Type")
+datatable(df, rownames = FALSE,
               options = list( pageLength = 6, scrollX = F, dom = 'tip'),
               class = 'cell-border stripe')
 ```

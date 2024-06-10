@@ -1,11 +1,10 @@
 ```{r }
 
-listnameDir <- paste0(outDir,"/06-Enrichment_analysis/", data, "/",  
-                      ontology, "/", annot, "/",
+listnameDir <- paste0(annotDir[[data]][[annot]][[ontology]],
                       RFLOMICS:::contrastName2contrastDir(listname),"/")
 dir.create(path=listnameDir, recursive = TRUE, showWarnings = FALSE)
 
-knitr::opts_chunk$set(
+opts_chunk$set(
   fig.path=listnameDir
 )
 
@@ -14,12 +13,14 @@ knitr::opts_chunk$set(
 ##### {.tabset}
 
 <details>
-<summary>**`r listname`**</summary>
+<summary>**`r paste0(ifelse(!is.null(tag), paste0("[",tag,"] "), ""), listname)`**</summary>
+
+<br>
 
 ```{r}
 
 enrichRes <- NULL
-enrichRes <- RFLOMICS::getEnrichRes(dataset.SE,
+enrichRes <- getEnrichRes(dataset.SE,
                                     from = annot, 
                                     database = ontology, 
                                     contrastName = listname)
@@ -35,68 +36,108 @@ if (annot == 'DiffExpEnrichAnal') {
 
 ###### Dotplot
 
-<br>
+```{r dotplot_CPR, results ='asis'}
 
-```{r dotplot_CPR, fig.width = 15, fig.height = 7, fig.show = "hold"}
-
+out <- NULL
 for (domain in names(enrichRes)) {
   
   dataPlot <-  enrichRes[[domain]]
-  if (nrow(dataPlot) > 0) {
-    p <- enrichplot::dotplot(dataPlot, showCategory = 15) + 
-      ggplot2::ggtitle(paste0(listname, "\nEnrichment analysis result on domain ", 
-                              domain, "\nFirst 15 enriched terms"))
-    print(p)
-  }else{print(paste0(listname, " - in domain: ", 
-                     domain, 
-                     " - There was no enriched term found in this setting."))
-  }
+  if (nrow(dataPlot) == 0) next
   
+  out <- c(out, paste0("\n* **", domain, ":**\n\n"))
+  
+  cmd <- paste0("p <- dotplot(dataPlot, showCategory = 15) +",
+                "ggtitle(paste0(listname, '\nDomain: ', domain, '\n(First 15 enriched terms)'));",
+                "print(p)")
+  
+  dotplot_CPR <-
+    c(paste0(
+      "```{r dotplot_CPR_",domain ,", fig.width = 15, fig.height = 7, fig.show = \"hold\"}"),
+      cmd,
+      "```")
+  
+  out <- 
+    c(out, 
+      knit_child(text = dotplot_CPR, envir = environment(), quiet=TRUE),
+      "\n<hr/>\n")
 }
+asis_output(out)
+
 ```
 
 ###### Heatplot
 
-```{r heatplot_CPR, fig.width = 15, fig.height = 7, fig.show = "hold"}
+```{r heatplot_CPR, results ='asis'}
+
+out <- NULL
 for (domain in names(enrichRes)) {
   
   dataPlot <-  enrichRes[[domain]]
-  if (nrow(dataPlot) > 0) {
-    p <-  enrichplot::heatplot(dataPlot, showCategory = 15, foldChange = log2FC_vect) + 
-      ggplot2::labs(fill="log2FC") + 
-      ggplot2::scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-      ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10)) + 
-      ggplot2::ggtitle(paste0(listname, 
-                              " - Enrichment analysis result on domain ", 
-                              domain, 
-                              "\nFirst 15 enriched terms"))
-    suppressMessages(print(p))# delete warnings for scale fill replacement
-  }else{print(paste0(listname, " - in domain: ", 
-                     domain, 
-                     " - There was no enriched term found in this setting."))}
+  if (nrow(dataPlot) == 0) next
+  
+  out <- c(out, paste0("\n* **", domain, ":**\n\n"))
+  
+  cmd <- paste0("p <-  heatplot(dataPlot, showCategory = 15, foldChange = log2FC_vect) + ",
+                "labs(fill=\"log2FC\") + ",
+                "scale_fill_gradient2(low = \"blue\", mid = \"white\", high = \"red\", midpoint = 0) +",
+                "theme(axis.text.y = element_text(size = 10)) + ",
+                "ggtitle(paste0(listname, '\nDomain: ', domain, '\n(First 15 enriched terms)'));",
+                "suppressMessages(print(p))# delete warnings for scale fill replacement")
+  
+  heatplot_CPR <- 
+    c(paste0(
+      "```{r heatplot_CPR_",domain ,", fig.width = 15, fig.height = 7, fig.show = \"hold\"}"),
+      cmd, 
+      "```")
+  
+  out <- 
+    c(out, 
+      knit_child(text = heatplot_CPR, envir = environment(), quiet=TRUE),
+      "\n<hr/>\n")
 }
+asis_output(out)
+
 ```
 
 ###### Cnetplot
 
-```{r CnetPlot_CPR, fig.width = 15, fig.height = 7, fig.show = "hold"}
+```{r CnetPlot_CPR, results ='asis'}
+
+out <- NULL
 for (domain in names(enrichRes)) {
+  
   dataPlot <-  enrichRes[[domain]]
-  if(nrow(dataPlot)>0){
-    p <- enrichplot::cnetplot(dataPlot, showCategory = 15, foldChange = log2FC_vect, node_label = "category") + 
-      ggplot2::guides(colour=ggplot2::guide_colourbar(title = "log2FC")) +
-      ggplot2::scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) + 
-      ggplot2::ggtitle(paste0(listname, " - Enrichment analysis result on domain ", domain, "\nFirst 15 enriched terms"))
-    suppressMessages(print(p)) # delete warnings for scale fill replacement
-  }else{print(paste0(listname, " - in domain: ", domain, " - There was no enriched term found in this setting."))}
+  if (nrow(dataPlot) == 0) next
+  
+  out <- c(out, paste0("\n* **", domain, ":**\n\n"))
+  
+  cmd <- paste0(
+    "p <- cnetplot(dataPlot, showCategory = 15, foldChange = log2FC_vect, node_label = \"category\") +", 
+    "guides(colour=guide_colourbar(title = \"log2FC\")) +",
+    "scale_fill_gradient2(low = \"blue\", mid = \"white\", high = \"red\", midpoint = 0) +", 
+    "ggtitle(paste0(listname, '\nDomain: ', domain, '\n(First 15 enriched terms)'));",
+    "suppressMessages(print(p)) # delete warnings for scale fill replacement")
+  
+  CnetPlot_CPR <-
+    c(paste0(
+      "```{r CnetPlot_CPR_",domain ,", fig.width = 15, fig.height = 7, fig.show = \"hold\"}"),
+      cmd,
+      "```")
+  
+  out <- 
+    c(out, 
+      knit_child(text = CnetPlot_CPR, envir = environment(), quiet=TRUE),
+      "\n<hr/>\n")
 }
+asis_output(out)
+
 ```
 
 
 ###### Table
 
 ```{r}
-knitr::opts_chunk$set(
+opts_chunk$set(
   fig.path=listnameDir
 )
 ```
@@ -105,31 +146,32 @@ knitr::opts_chunk$set(
 ```{r}
 dataPlot <- list()
 
-for (domain in names(RFLOMICS::getEnrichRes(dataset.SE,
+for (domain in names(getEnrichRes(dataset.SE,
                                             from = annot, 
                                             database = ontology, 
                                             contrastName = listname))) {
   if (length(domain) != 0) {
-    tmp <- RFLOMICS::getEnrichRes(dataset.SE,
+    tmp <- getEnrichRes(dataset.SE,
                                   from = annot, 
                                   database = ontology, 
                                   contrastName = listname,
                                   domain = domain)
     tmp@result$domain <- rep(domain, dim(tmp@result)[1])
-    dataPlot[[domain]] <- tmp@result[tmp@result$p.adjust < tmp@pvalueCutoff, ] |> 
-      dplyr::select(!c("geneID", "qvalue"))
+    dataPlot[[domain]] <- tmp@result[tmp@result$p.adjust < tmp@pvalueCutoff, ] 
+    dataPlot[[domain]][["geneID"]] <- NULL
+    dataPlot[[domain]][["qvalue"]] <- NULL
   }
 }
 
 # Bind results domain
 
 if (length(dataPlot) != 0) {
-  dataPlot.rbind <- purrr::reduce(dataPlot, rbind)
+  dataPlot.rbind <- Reduce(rbind, dataPlot)
   
   colKeep <- unlist(lapply(dataPlot.rbind, is.numeric))
   dataPlot.rbind[, colKeep] <- signif(dataPlot.rbind[, colKeep], 3)
   
-  DT::datatable(dataPlot.rbind, rownames = FALSE , class = 'cell-border stripe',
+  datatable(dataPlot.rbind, rownames = FALSE , class = 'cell-border stripe',
                 options = list( pageLength = 6, scrollX = F, lengthChange = F))
 }
 

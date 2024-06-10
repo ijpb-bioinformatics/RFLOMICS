@@ -94,13 +94,17 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     )
     
     local.rea.values$selectedContrasts <- 
-      getSelectedContrasts(session$userData$FlomicsMultiAssay[[dataset]]) %>%
-      mutate(tag = paste0("H", seq_len(nrow(.))))
+      getSelectedContrasts(session$userData$FlomicsMultiAssay[[dataset]])
     
     validate(
       need(nrow(local.rea.values$selectedContrasts) != 0, 
            message = "no contrast matches the sample selection")
     )
+    
+    contrastList <- local.rea.values$selectedContrasts$contrastName
+    names(contrastList) <- 
+      paste0("[",local.rea.values$selectedContrasts$tag, "] ",
+             local.rea.values$selectedContrasts$contrastName)
     
     ## getcontrast
     box(
@@ -116,7 +120,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                  inputId  = session$ns("contrastList"),
                  label    = .addBSpopify(label = 'Selected contrasts:', 
                                          content = "Contrasts to run diff analysis. If you want to test all contrasts, select 'All'"),
-                 choices  = local.rea.values$selectedContrasts$contrastName),
+                 choices  = contrastList),
                
                # method for Diff analysis
                selectInput(
@@ -618,7 +622,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
               solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, 
               status = ifelse(length(DEList) != 0, "success", "danger"),
               title = tags$h5(
-                paste0(vect["tag"], ": ", vect["contrastName"], " ", stat)),
+                paste0("[",vect["tag"], "] ", vect["contrastName"], " ", stat)),
               
               do.call(what = tabsetPanel, args = tabPanel.list)
             )
@@ -668,7 +672,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                     subMAE, omicName = dataset, 
                     contrastList = getSelectedContrasts(subMAE[[dataset]]))
                 
-                getDiffAnalysesSummary(subMAE, plot = TRUE)
+                getDiffAnalysesSummary(subMAE, plot = TRUE, interface = TRUE)
               })
             ))
           

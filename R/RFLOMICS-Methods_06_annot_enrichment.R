@@ -81,236 +81,247 @@
 #'                         from = "DiffExp", database = "KEGG")
 #' sumORA(MAEtest[["protetest"]], from = "DiffExp", database = "KEGG")
 setMethod(
-    f = "runAnnotationEnrichment",
-    signature = "RflomicsSE",
-    definition = function(object,
-                          nameList = NULL,
-                          list_args = list(
-                              pvalueCutoff = 0.05,
-                              qvalueCutoff = 1,
-                              minGSSize = 10,
-                              maxGSSize = 500,
-                              universe = names(object)
-                          ),
-                          from = "DiffExp",
-                          database = "custom",
-                          domain = "no-domain",
-                          col_term = "term",
-                          col_gene = "gene",
-                          col_name = "name",
-                          col_domain = NULL,
-                          annot = NULL) {
-        
-        if (is.null(metadata(object)$DiffExpAnal)) {
-            stop(
-                "There is no differential analysis. Please run a differential
-           analysis before running enrichment"
-            )
-        }
-        
-        # Where to store results or take results
-        from <- .determineFrom(from)
-        fromEnrich <- .determineFromEnrich(from)
-        
-        # make sure results slot is empty (or re-init)
-        metadata(object)[[fromEnrich]][[database]] <- EnrichAnal <- list()
-        
-        switch(from,
-               "DiffExp" = {
-                   contrasts <- NULL
-                   
-                   if (is.null(getValidContrasts(object))) {
-                       contrasts <- getSelectedContrasts(object)$contrastName
-                   } else {
-                       contrasts <- getValidContrasts(object)$contrastName
-                   }
-                   
-                   if (!is.null(nameList)) {
-                       contrasts <- intersect(contrasts, nameList)
-                       if(is.null(contrasts) || length(contrasts) == 0)
-                           stop("No selected contrasts.")
-                   }
-                   
-                   geneLists <-
-                       lapply(contrasts, function(contrastName) {
-                           row.names(metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]])
-                       })
-                   names(geneLists) <- contrasts
-                   
-               },
-               "CoExp" = {
-                   namesClust <- names(metadata(object)[["CoExpAnal"]][["clusters"]])
-                   if (!is.null(nameList))
-                       namesClust <- intersect(namesClust, nameList)
-                   
-                   geneLists <- lapply(namesClust, function(namClust) {
-                       metadata(object)[["CoExpAnal"]][["clusters"]][[namClust]]
-                   })
-                   names(geneLists) <- namesClust
-               },
-               {
-                   message(
-                       "Argument from is detected to be neither DiffExp nor CoExp,
-                     taking DiffExp results."
-                   )
-                   from <- "DiffExp"
+  f = "runAnnotationEnrichment",
+  signature = "RflomicsSE",
+  definition = function(object,
+                        nameList = NULL,
+                        list_args = list(
+                          pvalueCutoff = 0.05,
+                          qvalueCutoff = 1,
+                          minGSSize = 10,
+                          maxGSSize = 500,
+                          universe = names(object)
+                        ),
+                        from = "DiffExp",
+                        database = "custom",
+                        domain = "no-domain",
+                        col_term = "term",
+                        col_gene = "gene",
+                        col_name = "name",
+                        col_domain = NULL,
+                        annot = NULL) {
+    
+    if (length(metadata(object)[["DiffExpAnal"]]) == 0)
+      stop("There is no differential analysis. Please run a differential
+                 analysis before running enrichment")
+    
+    
+    # Where to store results or take results
+    from <- .determineFrom(from)
+    fromEnrich <- .determineFromEnrich(from)
+    
+    # make sure results slot is empty (or re-init)
+    metadata(object)[[fromEnrich]][[database]] <- EnrichAnal <- list()
+    
+    switch(from,
+           "DiffExp" = {
+             contrasts <- NULL
+             
+             if (is.null(getValidContrasts(object))) {
+               contrasts <- getSelectedContrasts(object)$contrastName
+             } else {
+               contrasts <- getValidContrasts(object)$contrastName
+             }
+             
+             if (!is.null(nameList)) {
+               contrasts <- intersect(contrasts, nameList)
+               if(is.null(contrasts) || length(contrasts) == 0)
+                 stop("No selected contrasts.")
+             }else{
+               nameList <- contrasts
+             }
+             
+             geneLists <-
+               lapply(contrasts, function(contrastName) {
+                 row.names(metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]])
                })
-        
-        # Domain
-        if (is.null(domain))
-            domain <- "no-domain"
-        if (database == "GO" && "ALL" %in% toupper(domain)) {
-            domain <- c("MF", "BP", "CC")
-        }
-        
-        # If custom, make sure the annotation file matches the requirements
-        if (database == "custom") {
-            if (is.null(annot)) {
-                stop("You need an annotation file for a custom enrichment")
-            } else if (length(intersect(c(col_term, col_gene), colnames(annot))) != 2)
-            {
-                stop(
-                    "The name of columns for gene and term names don't
-             match the ones of the annotation files"
-                )
-            }
-            if (!is.null(col_domain) &&
-                is.null(annot[[col_domain]])) {
-                stop(
-                    "The column you indicated for the domain in your annotation
-             file doesn't seem to exist."
-                )
-            } else if (!is.null(col_domain)) {
-                domain <- unique(annot[[col_domain]])
-                domain <- domain[!is.na(domain)]
-            }
-            annotation <- annot
-        }
-        
-        geneLists <- geneLists[lengths(geneLists) > 0]
-        
-        
-        
-        # for each list
-        results_list <-
-            lapply(
-                names(geneLists),
-                FUN = function(listname) {
-                    list_args$gene <- geneLists[[listname]]
-                    results_ont <- lapply(
-                        domain,
-                        FUN = function(dom) {
-                            switch(
-                                database,
-                                "GO" = {
-                                    func_to_use <- "enrichGO"
-                                    list_args$ont <- dom
-                                },
-                                "KEGG" = {
-                                    func_to_use <- "enrichKEGG"
-                                },
-                                "custom" = {
-                                    func_to_use <- "enricher"
-                                    
-                                    list_args$TERM2NAME <- NA
-                                    annotation2 <- annotation
-                                    
-                                    if (dom != "no-domain") {
-                                        annotation2 <- filter(annotation, get(col_domain) == dom)
-                                    }
-                                    
-                                    list_args$TERM2GENE <-
-                                        list("term" = annotation2[[col_term]],
-                                             "gene" = annotation2[[col_gene]])
-                                    
-                                    if (!is.null(annotation2[[col_name]])) {
-                                        tmp <- select(annotation2, all_of(c(col_term, col_name))) %>%
-                                            unique()
-                                        list_args$TERM2NAME <-
-                                            list("term" = tmp[[col_term]],
-                                                 "name" = tmp[[col_name]])
-                                    }
-                                }
-                            )
-                            res1 <- do.call(getFromNamespace(func_to_use, 
-                                                             ns = "clusterProfiler"),
-                                            list_args)
-                            # delete heavy slots
-                            if (!is.null(res1)) {
-                                
-                                slot(res1, name = "geneSets", 
-                                     check = FALSE) <- list("removed")
-                                slot(res1, name = "universe", 
-                                     check = FALSE) <- c("removed")
-                            }
-                            
-                            return(res1)
-                        }
-                    )
-                    names(results_ont) <- domain
-                    # results_ont <- Filter(Negate(is.null), results_ont)
-                    return(results_ont)
-                }
-            )
-        names(results_list) <- names(geneLists)
-        # map_error_list <- Filter(is.null, results_list)
-        # results_list <- Filter(Negate(is.null), results_list) ##
-        
-        overview_list <- list()
-        # term.list <- list()
-        for (listname in names(results_list)) {
-            # TODO why is it a for?!
-            
-            for (dom in names(results_list[[listname]])) {
-                if (!is.null(results_list[[listname]][[dom]])) {
-                    res <- results_list[[listname]][[dom]]@result
-                    res.n <-
-                        nrow(res[res$p.adjust < list_args$pvalueCutoff,])
-                    overview_list[[listname]][[dom]] <- res.n
-                    
-                } else {
-                    overview_list[[listname]][[dom]] <- "null results - no mapping?"
-                }
-            }
-        }
-        
-        if (length(overview_list) == 0) {
-            EnrichAnal[["summary"]] <- NULL
-        } else {
-            dt_res <- as.data.frame(do.call("rbind", overview_list))
-            if (!any(is.na(dt_res[, -1]))) {
-              if(from == "DiffExp"){
-                dt_res <- 
-                  dt_res %>% mutate(Contrast = rownames(.)) %>%
-                    relocate(Contrast)
-              }else{
-                dt_res <- 
-                  dt_res %>% mutate(Cluster = rownames(.)) %>%
-                  relocate(Cluster)
-              }
-              EnrichAnal[["summary"]] <- dt_res
-            }
-        }
-        
-        results_list <- Filter(Negate(is.null), results_list) ##
-        
-        EnrichAnal[["list_args"]] <-
-            list_args[names(list_args) %in%
-                          c("universe",
-                            "keyType",
-                            "pvalueCutoff",
-                            "qvalueCutoff",
-                            "OrgDb",
-                            "organism")]
-        EnrichAnal[["list_args"]] <- c(EnrichAnal[["list_args"]],
-                                       list("domain" = domain))
-        EnrichAnal[["enrichResult"]] <- results_list
-        
-        # Store last results
-        metadata(object)[[fromEnrich]][[database]] <- EnrichAnal
-        
-        return(object)
+             names(geneLists) <- contrasts
+             
+           },
+           "CoExp" = {
+             
+             if (length(metadata(object)[["CoExpAnal"]]) == 0)
+               stop("There is no co-expression analysis.")
+             
+             namesClust <- names(metadata(object)[["CoExpAnal"]][["clusters"]])
+             if (!is.null(nameList)){
+               namesClust <- intersect(namesClust, nameList)
+             }else{
+               nameList <- namesClust
+             }
+             
+             geneLists <- lapply(namesClust, function(namClust) {
+               metadata(object)[["CoExpAnal"]][["clusters"]][[namClust]]
+             })
+             names(geneLists) <- namesClust
+           },
+           {
+             message(
+               "Argument from is detected to be neither DiffExp nor CoExp,
+                     taking DiffExp results."
+             )
+             from <- "DiffExp"
+           })
+    
+    
+    # Domain
+    if (is.null(domain))
+      domain <- "no-domain"
+    if (database == "GO" && "ALL" %in% toupper(domain)) {
+      domain <- c("MF", "BP", "CC")
     }
+    
+    # If custom, make sure the annotation file matches the requirements
+    if (database == "custom") {
+      if (is.null(annot)) {
+        stop("You need an annotation file for a custom enrichment")
+      } else if (length(intersect(c(col_term, col_gene), colnames(annot))) != 2)
+      {
+        stop(
+          "The name of columns for gene and term names don't
+             match the ones of the annotation files"
+        )
+      }
+      if (!is.null(col_domain) &&
+          is.null(annot[[col_domain]])) {
+        stop(
+          "The column you indicated for the domain in your annotation
+             file doesn't seem to exist."
+        )
+      } else if (!is.null(col_domain)) {
+        domain <- unique(annot[[col_domain]])
+        domain <- domain[!is.na(domain)]
+      }
+      annotation <- annot
+    }
+    
+    switch(
+      database,
+      "GO" = { func_to_use <- "enrichGO"},
+      "KEGG" = { func_to_use <- "enrichKEGG"},
+      "custom" = { func_to_use <- "enricher"}
+    )
+    
+    geneLists <- geneLists[lengths(geneLists) > 0]
+    
+    #-----
+    # for each list
+    results_list <- list()
+    overview_list <- list()
+    errorMessages <- list()
+    for(listname in names(geneLists)){
+      
+      list_args$gene <- geneLists[[listname]]
+      
+      for(dom in domain){
+        
+        switch(
+          database,
+          "GO" = { list_args$ont <- dom },
+          "custom" = {
+
+            list_args$TERM2NAME <- NA
+            annotation2 <- annotation
+            
+            if (dom != "no-domain") {
+              annotation2 <- filter(annotation, get(col_domain) == dom)
+            }
+            
+            list_args$TERM2GENE <-
+              list("term" = annotation2[[col_term]],
+                   "gene" = annotation2[[col_gene]])
+            
+            if (!is.null(annotation2[[col_name]])) {
+              tmp <- select(annotation2, all_of(c(col_term, col_name))) %>%
+                unique()
+              list_args$TERM2NAME <-
+                list("term" = tmp[[col_term]],
+                     "name" = tmp[[col_name]])
+            }
+            
+          }
+        )
+        
+        # run clusterPorfileR
+        catchRes <- .tryCatch_rflomics(
+          do.call(getFromNamespace(func_to_use, ns = "clusterProfiler"),
+                  list_args))
+        
+        # delete heavy slots
+        if(!is.null(catchRes$result)) {
+          
+          res1 <- catchRes$result
+          slot(res1, name = "geneSets", 
+               check = FALSE) <- list("removed")
+          slot(res1, name = "universe", 
+               check = FALSE) <- c("removed")
+          
+          res   <- res1@result
+          res.n <- nrow(res[res$p.adjust < list_args$pvalueCutoff,])
+          
+          results_list[[listname]][[dom]]  <- res1
+          overview_list[[listname]][[dom]] <- res.n
+          
+        }else{
+          errorMessages[[listname]][[dom]] <- 
+                c(catchRes$message, 
+                  catchRes$warning, 
+                  catchRes$error)
+          overview_list[[listname]][[dom]] <- NA
+          results_list[[listname]][[dom]]  <- NULL
+        }
+      }
+    }
+    
+    # generate summay
+    if (length(overview_list) == 0) {
+      
+      EnrichAnal[["summary"]] <- NULL
+    } else {
+      
+      dt_res <- as.data.frame(do.call("rbind", overview_list))
+      for(y in names(dt_res)){
+        dt_res[[y]] <- unlist(dt_res[[y]])
+      }
+      
+      if (any(!is.na(dt_res))){
+        if(from == "DiffExp"){
+          dt_res <- 
+            dt_res %>% mutate(Contrast = rownames(.)) %>%
+            relocate(Contrast)
+        }else{
+          dt_res <- 
+            dt_res %>% mutate(Cluster = rownames(.)) %>%
+            relocate(Cluster)
+        }
+        EnrichAnal[["summary"]] <- dt_res
+      }
+    }
+    
+    EnrichAnal[["error"]] <- .CPR_message_processing(errorMessages)
+    
+    results_list <- Filter(Negate(is.null), results_list)
+    
+    storedParam <- 
+      c("universe", "keyType", "pvalueCutoff", 
+        "qvalueCutoff", "OrgDb", "organism")
+    
+    EnrichAnal[["list_args"]] <-
+      list_args[names(list_args) %in% storedParam]
+    
+    if(!is.null(annot))
+      EnrichAnal[["list_args"]][["annot"]] <- annot
+    
+    EnrichAnal[["list_args"]] <- 
+      c(EnrichAnal[["list_args"]], list("domain" = domain))
+    
+    EnrichAnal[["enrichResult"]] <- results_list
+    
+    # Store last results
+    metadata(object)[[fromEnrich]][[database]] <- EnrichAnal
+    
+    return(object)
+  }
 )
 
 #' @rdname runAnnotationEnrichment
@@ -318,43 +329,43 @@ setMethod(
 #' @title runAnnotationEnrichment
 #' @exportMethod runAnnotationEnrichment
 setMethod(
-    f = "runAnnotationEnrichment",
-    signature = "RflomicsMAE",
-    definition = function(object,
-                          SE.name,
-                          nameList = NULL,
-                          list_args = list(
-                              pvalueCutoff = 0.05,
-                              qvalueCutoff = 1,
-                              minGSSize = 10,
-                              maxGSSize = 500,
-                              universe = names(object)
-                          ),
-                          from = "DiffExp",
-                          database = "custom",
-                          domain = "no-domain",
-                          col_term = "term",
-                          col_gene = "gene",
-                          col_name = "name",
-                          col_domain = NULL,
-                          annot = NULL) {
-        object[[SE.name]] <-
-            runAnnotationEnrichment(
-                object = object[[SE.name]],
-                nameList = nameList,
-                list_args = list_args,
-                from = from,
-                database = database,
-                domain = domain,
-                col_term = col_term,
-                col_gene = col_gene,
-                col_domain = col_domain,
-                annot = annot
-            )
-        
-        return(object)
-        
-    }
+  f = "runAnnotationEnrichment",
+  signature = "RflomicsMAE",
+  definition = function(object,
+                        SE.name,
+                        nameList = NULL,
+                        list_args = list(
+                          pvalueCutoff = 0.05,
+                          qvalueCutoff = 1,
+                          minGSSize = 10,
+                          maxGSSize = 500,
+                          universe = names(object)
+                        ),
+                        from = "DiffExp",
+                        database = "custom",
+                        domain = "no-domain",
+                        col_term = "term",
+                        col_gene = "gene",
+                        col_name = "name",
+                        col_domain = NULL,
+                        annot = NULL) {
+    object[[SE.name]] <-
+      runAnnotationEnrichment(
+        object = object[[SE.name]],
+        nameList = nameList,
+        list_args = list_args,
+        from = from,
+        database = database,
+        domain = domain,
+        col_term = col_term,
+        col_gene = col_gene,
+        col_domain = col_domain,
+        annot = annot
+      )
+    
+    return(object)
+    
+  }
 )
 
 
@@ -417,57 +428,57 @@ setMethod(
 #'           contrastName = "cluster.4", from = "Coexp")
 #'
 setMethod(
-    f = "plotKEGG",
-    signature = "RflomicsSE",
-    definition = function(object,
-                          contrastName,
-                          pathway_id = NULL,
-                          species = "ath",
-                          gene_idtype = "kegg",
-                          from = "DiffExp",
-                          ...) {
-        from <- .determineFromEnrich(from)
-        
-        log2FC_vect <- NULL
-        switch(from,
-               "DiffExpEnrichAnal" = {
-                   obj <- metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]]
-                   log2FC_vect <- obj[["logFC"]]
-                   names(log2FC_vect) <- rownames(obj)
-                   
-                   .see_pathview(
-                       gene.data = log2FC_vect,
-                       pathway.id = pathway_id,
-                       species = species,
-                       gene.idtype = gene_idtype,
-                       map.symbol = FALSE,
-                       same.layer = FALSE,
-                       low = list(gene = "blue"),
-                       mid = list(gene = "gray"),
-                       high = list(gene = "red"),
-                       na.col = "transparent"
-                   )
-               },
-               "CoExpEnrichAnal" = {
-                   entities <- getClusterEntities(object, contrastName)
-                   log2FC_vect <- rep(1, length(entities))
-                   names(log2FC_vect) <- entities
-                   
-                   .see_pathview(
-                       gene.data = log2FC_vect,
-                       pathway.id = pathway_id,
-                       species = species,
-                       gene.idtype = gene_idtype,
-                       plot.col.key = FALSE,
-                       map.symbol = FALSE,
-                       same.layer = FALSE,
-                       high = list(gene = "antiquewhite3"),
-                       na.col = "transparent"
-                   )
-               }) # end switch
-        
-        return()
-    }
+  f = "plotKEGG",
+  signature = "RflomicsSE",
+  definition = function(object,
+                        contrastName,
+                        pathway_id = NULL,
+                        species = "ath",
+                        gene_idtype = "kegg",
+                        from = "DiffExp",
+                        ...) {
+    from <- .determineFromEnrich(from)
+    
+    log2FC_vect <- NULL
+    switch(from,
+           "DiffExpEnrichAnal" = {
+             obj <- metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]]
+             log2FC_vect <- obj[["logFC"]]
+             names(log2FC_vect) <- rownames(obj)
+             
+             .see_pathview(
+               gene.data = log2FC_vect,
+               pathway.id = pathway_id,
+               species = species,
+               gene.idtype = gene_idtype,
+               map.symbol = FALSE,
+               same.layer = FALSE,
+               low = list(gene = "blue"),
+               mid = list(gene = "gray"),
+               high = list(gene = "red"),
+               na.col = "transparent"
+             )
+           },
+           "CoExpEnrichAnal" = {
+             entities <- getClusterEntities(object, contrastName)
+             log2FC_vect <- rep(1, length(entities))
+             names(log2FC_vect) <- entities
+             
+             .see_pathview(
+               gene.data = log2FC_vect,
+               pathway.id = pathway_id,
+               species = species,
+               gene.idtype = gene_idtype,
+               plot.col.key = FALSE,
+               map.symbol = FALSE,
+               same.layer = FALSE,
+               high = list(gene = "antiquewhite3"),
+               na.col = "transparent"
+             )
+           }) # end switch
+    
+    return()
+  }
 )
 
 #' @title plotClusterProfiler
@@ -520,154 +531,154 @@ setMethod(
 #'         domain = "no-domain")
 #'
 setMethod(
-    f = "plotClusterProfiler",
-    signature = "RflomicsSE",
-    definition = function(object,
-                          contrastName,
-                          database,
-                          domain = "no-domain",
-                          from = "DiffExp",
-                          plotType = "dotplot",
-                          showCategory = 15,
-                          searchExpr = "",
-                          nodeLabel = "all",
-                          p.adj.cutoff = NULL,
-                          ...) {
-        
-        from <- .determineFromEnrich(from)
-        
-        log2FC_vect <- NULL
-        switch(from,
-               "DiffExpEnrichAnal" = {
-                   dataPlot <- getEnrichRes(
-                       object,
-                       contrastName = contrastName,
-                       database = database,
-                       from = from
-                   )
-                   inter <-
-                       metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]]
-                   log2FC_vect <- inter[["logFC"]]
-                   names(log2FC_vect) <- rownames(inter)
-                   
-                   if (is.null(p.adj.cutoff)) {
-                       p.adj.cutoff <- getEnrichPvalue(object, from = from,
-                                                       database = database)
-                   }
-               },
-               "CoExpEnrichAnal" = {
-                   dataPlot <- getEnrichRes(
-                       object,
-                       contrastName = contrastName,
-                       database = database,
-                       from = from
-                   )
-                   if (is.null(p.adj.cutoff)) {
-                       p.adj.cutoff <- getEnrichPvalue(object, from = from,
-                                                       database = database)
-                   }
-               },
-               {
-                   message(
-                       "Argument from is detected to be neither DiffExp
+  f = "plotClusterProfiler",
+  signature = "RflomicsSE",
+  definition = function(object,
+                        contrastName,
+                        database,
+                        domain = "no-domain",
+                        from = "DiffExp",
+                        plotType = "dotplot",
+                        showCategory = 15,
+                        searchExpr = "",
+                        nodeLabel = "all",
+                        p.adj.cutoff = NULL,
+                        ...) {
+    
+    from <- .determineFromEnrich(from)
+    
+    log2FC_vect <- NULL
+    switch(from,
+           "DiffExpEnrichAnal" = {
+             dataPlot <- getEnrichRes(
+               object,
+               contrastName = contrastName,
+               database = database,
+               from = from
+             )
+             inter <-
+               metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]]
+             log2FC_vect <- inter[["logFC"]]
+             names(log2FC_vect) <- rownames(inter)
+             
+             if (is.null(p.adj.cutoff)) {
+               p.adj.cutoff <- getEnrichPvalue(object, from = from,
+                                               database = database)
+             }
+           },
+           "CoExpEnrichAnal" = {
+             dataPlot <- getEnrichRes(
+               object,
+               contrastName = contrastName,
+               database = database,
+               from = from
+             )
+             if (is.null(p.adj.cutoff)) {
+               p.adj.cutoff <- getEnrichPvalue(object, from = from,
+                                               database = database)
+             }
+           },
+           {
+             message(
+               "Argument from is detected to be neither DiffExp
                      nor CoExp, taking DiffExp results."
-                   )
-                   from <- "DiffExpEnrichAnal"
-                   dataPlot <-
-                       getEnrichRes(
-                           object,
-                           contrastName = contrastName,
-                           database = database,
-                           from = from
-                       )
-                   inter <-
-                       metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]]
-                   log2FC_vect <- inter[["logFC"]]
-                   names(log2FC_vect) <- rownames(inter)
-                   
-                   if (is.null(p.adj.cutoff)) {
-                       p.adj.cutoff <- getEnrichPvalue(object, from = from,
-                                                       database = database)
-                   }
-                   
-               })
-        
-        if (database == "GO") {
-            if (is.null(domain)) {
-                stop("database is GO, non null domain (BP, CC or MF) is expected.")
-            } else {
-                dataPlot <- dataPlot[[domain]]
-            }
-        } else if (database == "custom" || database == "KEGG") {
-            if (is.null(domain)) {
-                domain <- "no-domain"
-            }
-            
-            if (!domain %in% names(dataPlot)) {
-                stop("domain is expected to be one of ",
-                     paste(names(dataPlot), collapse = ","))
-            } else {
-                dataPlot <- dataPlot[[domain]]
-            }
-        }
-        
-        # Select categories to show
-        dataTab <-
-            dataPlot@result[which(dataPlot@result$p.adjust < p.adj.cutoff),]
-        Categories <- dataTab$Description
-        if (searchExpr != "") {
-            Categories <-
-                Categories[grep(toupper(searchExpr), toupper(Categories))]
-        }
-        NbtoPlot <- min(length(Categories), showCategory)
-        if (NbtoPlot == 0)
-            stop("There is no terms to show")
-        
-        Categories <- Categories[seq_len(NbtoPlot)]
-        
-        # Create the plot
-        plotType <- tolower(plotType)
-        returnplot <- NULL
-        
-        returnplot <-  switch(
-            plotType,
-            "cnetplot" = {
-                cnetplot(
-                    dataPlot,
-                    showCategory = Categories,
-                    color.params = list(foldChange = log2FC_vect),
-                    node_label = nodeLabel,
-                    ...) +
-                    guides(colour = guide_colourbar(title = "log2FC")) 
-            },
-            "heatplot" = {
-                outgg <- heatplot(dataPlot,
-                                  showCategory = Categories,
-                                  foldChange = log2FC_vect,
-                                  ...) 
-                outgg$scales$scales <- list()
-                outgg + labs(fill = "log2FC") +
-                    scale_fill_gradient2(
-                        low = "blue",
-                        mid = "white",
-                        high = "red",
-                        midpoint = 0
-                    ) +
-                    theme(axis.text.y = element_text(size = 10))
-            },
-            {
-                tryCatch(
-                    dotplot(dataPlot,
-                            showCategory = Categories,
-                            ...),
-                    error = function(e)
-                        e,
-                    warnings = function(w)
-                        w
-                )
-            })
-        return(returnplot)
+             )
+             from <- "DiffExpEnrichAnal"
+             dataPlot <-
+               getEnrichRes(
+                 object,
+                 contrastName = contrastName,
+                 database = database,
+                 from = from
+               )
+             inter <-
+               metadata(object)$DiffExpAnal[["TopDEF"]][[contrastName]]
+             log2FC_vect <- inter[["logFC"]]
+             names(log2FC_vect) <- rownames(inter)
+             
+             if (is.null(p.adj.cutoff)) {
+               p.adj.cutoff <- getEnrichPvalue(object, from = from,
+                                               database = database)
+             }
+             
+           })
+    
+    if (database == "GO") {
+      if (is.null(domain)) {
+        stop("database is GO, non null domain (BP, CC or MF) is expected.")
+      } else {
+        dataPlot <- dataPlot[[domain]]
+      }
+    } else if (database == "custom" || database == "KEGG") {
+      if (is.null(domain)) {
+        domain <- "no-domain"
+      }
+      
+      if (!domain %in% names(dataPlot)) {
+        stop("domain is expected to be one of ",
+             paste(names(dataPlot), collapse = ","))
+      } else {
+        dataPlot <- dataPlot[[domain]]
+      }
     }
+    
+    # Select categories to show
+    dataTab <-
+      dataPlot@result[which(dataPlot@result$p.adjust < p.adj.cutoff),]
+    Categories <- dataTab$Description
+    if (searchExpr != "") {
+      Categories <-
+        Categories[grep(toupper(searchExpr), toupper(Categories))]
+    }
+    NbtoPlot <- min(length(Categories), showCategory)
+    if (NbtoPlot == 0)
+      stop("There is no terms to show")
+    
+    Categories <- Categories[seq_len(NbtoPlot)]
+    
+    # Create the plot
+    plotType <- tolower(plotType)
+    returnplot <- NULL
+    
+    returnplot <-  switch(
+      plotType,
+      "cnetplot" = {
+        cnetplot(
+          dataPlot,
+          showCategory = Categories,
+          color.params = list(foldChange = log2FC_vect),
+          node_label = nodeLabel,
+          ...) +
+          guides(colour = guide_colourbar(title = "log2FC")) 
+      },
+      "heatplot" = {
+        outgg <- heatplot(dataPlot,
+                          showCategory = Categories,
+                          foldChange = log2FC_vect,
+                          ...) 
+        outgg$scales$scales <- list()
+        outgg + labs(fill = "log2FC") +
+          scale_fill_gradient2(
+            low = "blue",
+            mid = "white",
+            high = "red",
+            midpoint = 0
+          ) +
+          theme(axis.text.y = element_text(size = 10))
+      },
+      {
+        tryCatch(
+          dotplot(dataPlot,
+                  showCategory = Categories,
+                  ...),
+          error = function(e)
+            e,
+          warnings = function(w)
+            w
+        )
+      })
+    return(returnplot)
+  }
 )
 
 
@@ -714,252 +725,252 @@ setMethod(
 #'                database = "KEGG", matrixType = "FC")
 #'
 setMethod(
-    f = "plotEnrichComp",
-    signature = "RflomicsSE",
-    definition = function(object,
-                          from = "DiffExp",
-                          database = NULL,
-                          domain = "no-domain",
-                          matrixType = "FC",
-                          nClust = NULL,
-                          ...) {
+  f = "plotEnrichComp",
+  signature = "RflomicsSE",
+  definition = function(object,
+                        from = "DiffExp",
+                        database = NULL,
+                        domain = "no-domain",
+                        matrixType = "FC",
+                        nClust = NULL,
+                        ...) {
+    
+    
+    allData <- switch(
+      toupper(from),
+      "DIFFEXPENRICHANAL" = {
+        getEnrichRes(object, from = "DiffExpEnrichAnal", 
+                     database = database)
+      },
+      "COEXPENRICHANAL"   = {
         
-        
-        allData <- switch(
-            toupper(from),
-            "DIFFEXPENRICHANAL" = {
-                getEnrichRes(object, from = "DiffExpEnrichAnal", 
-                             database = database)
-            },
-            "COEXPENRICHANAL"   = {
-                
-                getEnrichRes(object, from = "CoExpEnrichAnal", 
-                             database = database)
-            },
-            {
-                message(
-                    "Argument from is detected to be neither DiffExp nor CoExp,
+        getEnrichRes(object, from = "CoExpEnrichAnal", 
+                     database = database)
+      },
+      {
+        message(
+          "Argument from is detected to be neither DiffExp nor CoExp,
                      taking DiffExp results."
-                )
-                allData <- getEnrichRes(object, from = "DiffExpEnrichAnal", 
-                                        database = database)
-            }
         )
-        
-        if (length(allData) == 0) {
-            stop("The selected database ",
-                 database,
-                 " does not seem to exist in the object.")
-        }
-        
-        allData <- allData[lengths(allData) > 0]
-        if (length(allData) == 0) {
-            stop("It seems there is no results here.")
-        }
-        
-        pvalThresh <- allData[[1]][[1]]@pvalueCutoff
-        
-        domainPoss <- unique(unlist(lapply(allData, names)))
-        if (missing(domain) || is.null(domain))
-            domain <- domainPoss
-        if (any(!domain %in% domainPoss)) {
-            stop("Trying to select a domain that does not exist in the object.")
-        }
-        
-        extract <-
-            do.call("rbind", lapply(
-                seq_len(length(allData)),
-                FUN = function(i) {
-                    allData[[i]] <- Filter(Negate(is.null), allData[[i]])
-                    if (domain %in% names(allData[[i]])) {
-                        cprRes <- allData[[i]][[domain]]
-                        selectterms <- cprRes@result$p.adjust < cprRes@pvalueCutoff
-                        nterms <- sum(selectterms)
-                        if (nterms > 0) {
-                            cprRes <- cprRes@result[selectterms, ]
-                            cprRes$contrastName <- names(allData)[i]
-                            cprRes$domain <- domain
-                            return(cprRes)
-                        }}
-                }
-            ))
-        
-        toKeep <- names(which(table(extract$ID) > 1))
-        if (length(toKeep) == 0)
-            stop("There is no common terms to show.")
-        extract <- extract[extract$ID %in% toKeep, ]
-        
-        # handling description and ID
-        extract$Description <- switch(database,
-                                      "KEGG" = {
-                                          gsub(" - .*", "", extract$Description)
-                                      },
-                                      {
-                                          # if there is duplication in description
-                                          # not necessarily duplicated in the ID
-                                          # should not be grouped in the heatmap
-                                          if (sum(duplicated(extract$Description)) > 0) {
-                                              if (!identical(extract$Description,
-                                                             extract$ID)) {
-                                                  posDup <-
-                                                      unique(which(
-                                                          duplicated(extract$Description),
-                                                          duplicated(extract$Description, fromLast = TRUE)
-                                                      ))
-                                                  extract$Description[posDup] <-
-                                                      paste0("(",
-                                                             extract$ID[posDup],
-                                                             ")",
-                                                             "\n",
-                                                             extract$Description[posDup])
-                                                  extract$Description
-                                              } else{
-                                                  extract$Description
-                                              }
-                                              
-                                          } else {
-                                              extract$Description
-                                          }
-                                      })
-        
-        extract$Description <-
-            str_wrap(extract$Description, width = 20)
-        extract$contrastName <-
-            str_wrap(extract$contrastName, width = 30)
-        
-        extract$GeneRatio <- as.numeric(vapply(
-            extract$GeneRatio,
-            FUN = function(x)
-                eval(parse(text = x)),
-            FUN.VALUE = 1
-        ))
-        extract$BgRatio <- as.numeric(vapply(
-            extract$BgRatio,
-            FUN = function(x)
-                eval(parse(text = x)),
-            FUN.VALUE = 1
-        ))
-        extract$FC <- extract$GeneRatio / extract$BgRatio
-        
-        dat <- switch(
-            matrixType,
-            "GeneRatio" = {
-                inter <- recast(extract[, c("Description", "contrastName", "GeneRatio")],
-                                Description ~ contrastName,
-                                measure.var = "GeneRatio")
-                rownames(inter) <- inter$Description
-                inter <- inter[, colnames(inter) != "ID"]
-                inter[is.na(inter)] <- 0
-                inter
-            },
-            "p.adjust" = {
-                inter <- recast(extract[, c("Description", "contrastName", "p.adjust")],
-                                Description ~ contrastName,
-                                measure.var = "p.adjust")
-                rownames(inter) <- inter$Description
-                inter <- inter[, colnames(inter) != "Description"]
-                inter[is.na(inter)] <- 1
-                inter
-            },
-            "presence" = {
-                inter <- recast(extract[, c("Description", "contrastName", "p.adjust")],
-                                Description ~ contrastName,
-                                measure.var = "p.adjust")
-                rownames(inter) <- inter$Description
-                inter <-
-                    inter <- inter[, colnames(inter) != "Description"]
-                inter[!is.na(inter)] <- 1
-                inter[is.na(inter)]  <- 0
-                inter
-            },
-            "FC" = {
-                inter <- recast(extract[, c("Description", "contrastName", "FC")],
-                                Description ~ contrastName,
-                                measure.var = "FC")
-                rownames(inter) <- inter$Description
-                inter <- inter[, colnames(inter) != "Description"]
-                inter[is.na(inter)] <- 0
-                inter
-            },
-            "log2FC" = {
-                inter <- recast(extract[, c("Description", "contrastName", "FC")],
-                                Description ~ contrastName,
-                                measure.var = "FC")
-                rownames(inter) <- inter$Description
-                inter <- inter[, colnames(inter) != "Description"]
-                inter <- log2(inter)
-                inter[is.infinite(as.matrix(inter))] <- 0
-                # means FC is 0, shouldn't happen much...
-                inter[is.na(inter)] <- 0
-                # means it's not significant and not in the matrix.
-                inter
-            }
-        )
-        
-        if (nrow(dat) > 1) {
-            switch(matrixType,
-                   "presence" = {
-                       hcPlot <- hclust(dist(dat, method = "binary"),
-                                        method = "complete")
-                       hcCol <-
-                           hclust(dist(t(dat), method = "binary"),
-                                  method = "complete")
-                   },
-                   {
-                       hcPlot <- hclust(dist(inter, method = "euclidean"),
-                                        method = "complete")
-                       hcCol <-
-                           hclust(dist(t(inter), method = "euclidean"),
-                                  method = "complete")
-                   })
-        } else {
-            hcPlot <- FALSE
-        }
-        
-        colors <- switch(
-            matrixType,
-            "presence"   = {
-                structure(c("white", "firebrick"), names = c("0", "1"))
-            },
-            "GeneRatio"  = {
-                colorRamp2(c(0, max(dat)), c("white", "firebrick"))
-            },
-            "p.adjust"   = {
-                colorRamp2(c(0, pvalThresh, 1),
-                           c("firebrick", "white", "white"))
-            },
-            "FC"         = {
-                colorRamp2(c(0, max(dat)), c("white", "firebrick"))
-            },
-            "log2FC"     = {
-                colorRamp2(c(-max(abs(dat)), 0, max(abs(dat))),
-                           c("blue", "white", "firebrick"))
-            }
-        )
-        
-        ht_opt(DENDROGRAM_PADDING = unit(0.1, "cm"))
-        
-        suppressWarnings(
-            Heatmap(
-                dat,
-                col = colors,
-                name = matrixType,
-                cluster_columns = hcCol,
-                show_column_dend = FALSE,
-                cluster_rows = hcPlot,
-                row_names_side = "left",
-                column_names_rot = 30,
-                rect_gp = gpar(col = "gray50", lwd = 0.5),
-                width =  ncol(dat) * 5,
-                height = nrow(dat) * 5,
-                heatmap_legend_param = list(direction = "horizontal"),
-                border = TRUE,
-                column_names_gp = gpar(fontsize = 10),
-                row_names_gp = gpar(fontsize = 10)
-            )
-        )
-        
+        allData <- getEnrichRes(object, from = "DiffExpEnrichAnal", 
+                                database = database)
+      }
+    )
+    
+    if (length(allData) == 0) {
+      stop("The selected database ",
+           database,
+           " does not seem to exist in the object.")
     }
+    
+    allData <- allData[lengths(allData) > 0]
+    if (length(allData) == 0) {
+      stop("It seems there is no results here.")
+    }
+    
+    pvalThresh <- allData[[1]][[1]]@pvalueCutoff
+    
+    domainPoss <- unique(unlist(lapply(allData, names)))
+    if (missing(domain) || is.null(domain))
+      domain <- domainPoss
+    if (any(!domain %in% domainPoss)) {
+      stop("Trying to select a domain that does not exist in the object.")
+    }
+    
+    extract <-
+      do.call("rbind", lapply(
+        seq_len(length(allData)),
+        FUN = function(i) {
+          allData[[i]] <- Filter(Negate(is.null), allData[[i]])
+          if (domain %in% names(allData[[i]])) {
+            cprRes <- allData[[i]][[domain]]
+            selectterms <- cprRes@result$p.adjust < cprRes@pvalueCutoff
+            nterms <- sum(selectterms)
+            if (nterms > 0) {
+              cprRes <- cprRes@result[selectterms, ]
+              cprRes$contrastName <- names(allData)[i]
+              cprRes$domain <- domain
+              return(cprRes)
+            }}
+        }
+      ))
+    
+    toKeep <- names(which(table(extract$ID) > 1))
+    if (length(toKeep) == 0)
+      stop("There is no common terms to show.")
+    extract <- extract[extract$ID %in% toKeep, ]
+    
+    # handling description and ID
+    extract$Description <- switch(database,
+                                  "KEGG" = {
+                                    gsub(" - .*", "", extract$Description)
+                                  },
+                                  {
+                                    # if there is duplication in description
+                                    # not necessarily duplicated in the ID
+                                    # should not be grouped in the heatmap
+                                    if (sum(duplicated(extract$Description)) > 0) {
+                                      if (!identical(extract$Description,
+                                                     extract$ID)) {
+                                        posDup <-
+                                          unique(which(
+                                            duplicated(extract$Description),
+                                            duplicated(extract$Description, fromLast = TRUE)
+                                          ))
+                                        extract$Description[posDup] <-
+                                          paste0("(",
+                                                 extract$ID[posDup],
+                                                 ")",
+                                                 "\n",
+                                                 extract$Description[posDup])
+                                        extract$Description
+                                      } else{
+                                        extract$Description
+                                      }
+                                      
+                                    } else {
+                                      extract$Description
+                                    }
+                                  })
+    
+    extract$Description <-
+      str_wrap(extract$Description, width = 20)
+    extract$contrastName <-
+      str_wrap(extract$contrastName, width = 30)
+    
+    extract$GeneRatio <- as.numeric(vapply(
+      extract$GeneRatio,
+      FUN = function(x)
+        eval(parse(text = x)),
+      FUN.VALUE = 1
+    ))
+    extract$BgRatio <- as.numeric(vapply(
+      extract$BgRatio,
+      FUN = function(x)
+        eval(parse(text = x)),
+      FUN.VALUE = 1
+    ))
+    extract$FC <- extract$GeneRatio / extract$BgRatio
+    
+    dat <- switch(
+      matrixType,
+      "GeneRatio" = {
+        inter <- recast(extract[, c("Description", "contrastName", "GeneRatio")],
+                        Description ~ contrastName,
+                        measure.var = "GeneRatio")
+        rownames(inter) <- inter$Description
+        inter <- inter[, colnames(inter) != "ID"]
+        inter[is.na(inter)] <- 0
+        inter
+      },
+      "p.adjust" = {
+        inter <- recast(extract[, c("Description", "contrastName", "p.adjust")],
+                        Description ~ contrastName,
+                        measure.var = "p.adjust")
+        rownames(inter) <- inter$Description
+        inter <- inter[, colnames(inter) != "Description"]
+        inter[is.na(inter)] <- 1
+        inter
+      },
+      "presence" = {
+        inter <- recast(extract[, c("Description", "contrastName", "p.adjust")],
+                        Description ~ contrastName,
+                        measure.var = "p.adjust")
+        rownames(inter) <- inter$Description
+        inter <-
+          inter <- inter[, colnames(inter) != "Description"]
+        inter[!is.na(inter)] <- 1
+        inter[is.na(inter)]  <- 0
+        inter
+      },
+      "FC" = {
+        inter <- recast(extract[, c("Description", "contrastName", "FC")],
+                        Description ~ contrastName,
+                        measure.var = "FC")
+        rownames(inter) <- inter$Description
+        inter <- inter[, colnames(inter) != "Description"]
+        inter[is.na(inter)] <- 0
+        inter
+      },
+      "log2FC" = {
+        inter <- recast(extract[, c("Description", "contrastName", "FC")],
+                        Description ~ contrastName,
+                        measure.var = "FC")
+        rownames(inter) <- inter$Description
+        inter <- inter[, colnames(inter) != "Description"]
+        inter <- log2(inter)
+        inter[is.infinite(as.matrix(inter))] <- 0
+        # means FC is 0, shouldn't happen much...
+        inter[is.na(inter)] <- 0
+        # means it's not significant and not in the matrix.
+        inter
+      }
+    )
+    
+    if (nrow(dat) > 1) {
+      switch(matrixType,
+             "presence" = {
+               hcPlot <- hclust(dist(dat, method = "binary"),
+                                method = "complete")
+               hcCol <-
+                 hclust(dist(t(dat), method = "binary"),
+                        method = "complete")
+             },
+             {
+               hcPlot <- hclust(dist(inter, method = "euclidean"),
+                                method = "complete")
+               hcCol <-
+                 hclust(dist(t(inter), method = "euclidean"),
+                        method = "complete")
+             })
+    } else {
+      hcPlot <- FALSE
+    }
+    
+    colors <- switch(
+      matrixType,
+      "presence"   = {
+        structure(c("white", "firebrick"), names = c("0", "1"))
+      },
+      "GeneRatio"  = {
+        colorRamp2(c(0, max(dat)), c("white", "firebrick"))
+      },
+      "p.adjust"   = {
+        colorRamp2(c(0, pvalThresh, 1),
+                   c("firebrick", "white", "white"))
+      },
+      "FC"         = {
+        colorRamp2(c(0, max(dat)), c("white", "firebrick"))
+      },
+      "log2FC"     = {
+        colorRamp2(c(-max(abs(dat)), 0, max(abs(dat))),
+                   c("blue", "white", "firebrick"))
+      }
+    )
+    
+    ht_opt(DENDROGRAM_PADDING = unit(0.1, "cm"))
+    
+    suppressWarnings(
+      Heatmap(
+        dat,
+        col = colors,
+        name = matrixType,
+        cluster_columns = hcCol,
+        show_column_dend = FALSE,
+        cluster_rows = hcPlot,
+        row_names_side = "left",
+        column_names_rot = 30,
+        rect_gp = gpar(col = "gray50", lwd = 0.5),
+        width =  ncol(dat) * 5,
+        height = nrow(dat) * 5,
+        heatmap_legend_param = list(direction = "horizontal"),
+        border = TRUE,
+        column_names_gp = gpar(fontsize = 10),
+        row_names_gp = gpar(fontsize = 10)
+      )
+    )
+    
+  }
 )
 
 
@@ -997,62 +1008,62 @@ setMethod(
 #' getEnrichRes(MAEtest[["protetest"]],
 #'               from = "diffexp", database = "KEGG")
 setMethod(
-    f = "getEnrichRes",
-    signature = "RflomicsSE",
-    definition = function(object,
-                          contrastName = NULL,
-                          from = "DiffExpEnrichAnal",
-                          database = "GO",
-                          domain = NULL) {
-        from <- .determineFromEnrich(from)
-        
-        res_return <- .getEnrichResIntSE(
-            object,
-            contrastName = contrastName,
-            from = from,
-            database = database
-        )
-        
-        if (!is.null(domain) && !is.null(contrastName)) {
-            return(res_return[[domain]])
-        } else {
-            return(res_return)
-        }
+  f = "getEnrichRes",
+  signature = "RflomicsSE",
+  definition = function(object,
+                        contrastName = NULL,
+                        from = "DiffExpEnrichAnal",
+                        database = "GO",
+                        domain = NULL) {
+    from <- .determineFromEnrich(from)
+    
+    res_return <- .getEnrichResIntSE(
+      object,
+      contrastName = contrastName,
+      from = from,
+      database = database
+    )
+    
+    if (!is.null(domain) && !is.null(contrastName)) {
+      return(res_return[[domain]])
+    } else {
+      return(res_return)
     }
+  }
 )
 
 #' @rdname getEnrichRes
 #' @aliases getEnrichRes
 #' @exportMethod getEnrichRes
 setMethod(
-    f = "getEnrichRes",
-    signature = "RflomicsMAE",
-    definition = function(object,
-                          experiment,
-                          contrastName = NULL,
-                          from = "DiffExpEnrichAnal",
-                          database = "GO",
-                          domain = NULL) {
-        if (missing(experiment)) {
-            stop("Please indicate from which data you want to extract
+  f = "getEnrichRes",
+  signature = "RflomicsMAE",
+  definition = function(object,
+                        experiment,
+                        contrastName = NULL,
+                        from = "DiffExpEnrichAnal",
+                        database = "GO",
+                        domain = NULL) {
+    if (missing(experiment)) {
+      stop("Please indicate from which data you want to extract
            the enrichment results.")
-        }
-        
-        from <- .determineFromEnrich(from)
-        
-        res_return <- .getEnrichResIntSE(
-            object[[experiment]],
-            contrastName = contrastName,
-            from = from,
-            database = database
-        )
-        
-        if (!is.null(domain) && !is.null(contrastName)) {
-            return(res_return[[domain]])
-        } else {
-            return(res_return)
-        }
     }
+    
+    from <- .determineFromEnrich(from)
+    
+    res_return <- .getEnrichResIntSE(
+      object[[experiment]],
+      contrastName = contrastName,
+      from = from,
+      database = database
+    )
+    
+    if (!is.null(domain) && !is.null(contrastName)) {
+      return(res_return[[domain]])
+    } else {
+      return(res_return)
+    }
+  }
 )
 
 # ---- Get summary from ORA : ----
@@ -1083,42 +1094,42 @@ setMethod(
 #' sumORA(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
 #'
 setMethod(
-    f = "sumORA",
-    signature = "RflomicsSE",
-    definition = function(object,
-                          from = "DiffExpEnrichAnal",
-                          database = NULL,
-                          contrastName = NULL) {
-        
-        from <- .determineFromEnrich(from)
-        listnames <- 
-          switch (from,
-                  "DiffExpEnrichAnal" = "Contrast",
-                  "CoExpEnrichAnal" = "Cluster")
-        
-        # cat("|From: ", from, "\n")
-        
-        if (!is.null(database)) {
-            toReturn <- metadata(object)[[from]][[database]]$summary
-            if (!is.null(contrastName)) {
-                toReturn <- toReturn[which(toReturn[[listnames]] == contrastName),]
-            }
-            return(toReturn)
-        } else {
-            list_res <- lapply(
-                names(metadata(object)[[from]]),
-                FUN = function(ontres) {
-                    interRes <- metadata(object)[[from]][[ontres]]$summary
-                    if (!is.null(contrastName)) {
-                        interRes <- interRes[which(interRes[[listnames]] == contrastName),]
-                    }
-                    interRes
-                }
-            )
-            names(list_res) <- names(metadata(object)[[from]])
-            return(list_res)
+  f = "sumORA",
+  signature = "RflomicsSE",
+  definition = function(object,
+                        from = "DiffExpEnrichAnal",
+                        database = NULL,
+                        contrastName = NULL) {
+    
+    from <- .determineFromEnrich(from)
+    listnames <- 
+      switch (from,
+              "DiffExpEnrichAnal" = "Contrast",
+              "CoExpEnrichAnal" = "Cluster")
+    
+    # cat("|From: ", from, "\n")
+    
+    if (!is.null(database)) {
+      toReturn <- metadata(object)[[from]][[database]]$summary
+      if (!is.null(contrastName)) {
+        toReturn <- toReturn[which(toReturn[[listnames]] == contrastName),]
+      }
+      return(toReturn)
+    } else {
+      list_res <- lapply(
+        names(metadata(object)[[from]]),
+        FUN = function(ontres) {
+          interRes <- metadata(object)[[from]][[ontres]]$summary
+          if (!is.null(contrastName)) {
+            interRes <- interRes[which(interRes[[listnames]] == contrastName),]
+          }
+          interRes
         }
+      )
+      names(list_res) <- names(metadata(object)[[from]])
+      return(list_res)
     }
+  }
 )
 
 
@@ -1147,71 +1158,26 @@ setMethod(
 #' getEnrichPvalue(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
 #'
 setMethod(
-    f = "getEnrichPvalue",
-    signature = "RflomicsSE",
-    definition = function(object,
-                          from = "DiffExpEnrichAnal",
-                          database = "GO") {
-        from <- .determineFromEnrich(from)
-        
-        if (!database  %in% c("GO", "KEGG", "custom")) {
-            stop(database,
-                 " is not a valid value.
+  f = "getEnrichPvalue",
+  signature = "RflomicsSE",
+  definition = function(object,
+                        from = "DiffExpEnrichAnal",
+                        database = "GO") {
+    from <- .determineFromEnrich(from)
+    
+    if (!database  %in% c("GO", "KEGG", "custom")) {
+      stop(database,
+           " is not a valid value.
            Choose one of GO, KEGG or custom.")
-        }
-        pvalCutoff <-
-            metadata(object)[[from]][[database]]$list_args$pvalueCutoff
-        if (is.null(pvalCutoff)) {
-            stop("P-value not found (returns NULL)")
-        }
-        
-        return(pvalCutoff)
-        
     }
+    pvalCutoff <-
+      metadata(object)[[from]][[database]]$list_args$pvalueCutoff
+    if (is.null(pvalCutoff)) {
+      stop("P-value not found (returns NULL)")
+    }
+    
+    return(pvalCutoff)
+    
+  }
 )
 
-
-#' 
-#' # ---- Reset enrichment results ----
-#' #
-#' #' @title Set enrichment results to null
-#' #' Users should not have to use this method. It is mainly planned for the
-#' #' interface code.
-#' #' @param object a RflomicsSE object
-#' #' @param from where to search for the results (either coexp or diffExp)
-#' #' @param database which database (GO, KEGG, custom...)
-#' #' @return an RflomicsSE object with NULL value in the
-#' #' enrichment results.
-#' #' @exportMethod setEnrichNull
-#' #' @rdname setEnrichNull
-#' #' @aliases setEnrichNull
-#' #' @examples
-#' #' # Generate RflomicsMAE for example
-#' #' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
-#' #' # Run KEGG annotation on differential analysis results
-#' #' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
-#' #'                         list_args = list(organism = "ath",
-#' #'                                          keyType = "kegg",
-#' #'                                          pvalueCutoff = 0.1),
-#' #'                         from = "DiffExp", database = "KEGG")
-#' #' # Search for the pvalue cutoff:
-#' #' setEnrichNull(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
-#' #'
-#' setMethod(
-#'     f = "setEnrichNull",
-#'     signature = "RflomicsSE",
-#'     definition = function(object,
-#'                           from = "DiffExp",
-#'                           database = NULL) {
-#'         from <- .determineFromEnrich(from)
-#'         
-#'         if (is.null(database)) {
-#'             metadata(object)[[from]] <- NULL
-#'         } else {
-#'             metadata(object)[[from]][[database]] <- NULL
-#'         }
-#'         
-#'         return(object)
-#'         
-#'     }
-#' )

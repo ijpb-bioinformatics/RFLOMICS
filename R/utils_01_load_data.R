@@ -9,6 +9,7 @@
 #' @importFrom purrr reduce
 #' @importFrom tidyr unite
 #' @importFrom tidyselect where all_of
+#' @importFrom devtools session_info
 #' @importFrom magrittr "%>%" 
 
 # ----  RflomicsMAE CLASS ----
@@ -223,6 +224,7 @@ createRflomicsMAE <- function(projectName=NULL, omicsData=NULL,
     # tag as raw data (le temps de trouver une solution pour 
     # ne pas faire co-exister les raw et les process)
     names(RfMAE) <- paste(names(RfMAE), "raw", sep = ".")
+    
     return(RfMAE)
 }
 
@@ -283,7 +285,10 @@ RflomicsMAE <- function(experiments = ExperimentList(),
       list("omicList"            = omicList,
            "projectName"         = projectName,
            "design"              = design,
-           "IntegrationAnalysis" = IntegrationAnalysis)
+           "IntegrationAnalysis" = IntegrationAnalysis,
+           "sessionInfo"         = session_info(),
+           "date"                = format(Sys.time(), '%d %B %Y'),
+           "rflomicsVersion"     = packageVersion('RFLOMICS'))
     
     return(rflomicsMAE)
 }

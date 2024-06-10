@@ -70,4 +70,5 @@ Imports:
     tibble,
     tidyselect,
     UpSetR,
+    devtools,
     utils

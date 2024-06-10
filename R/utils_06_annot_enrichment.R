@@ -15,22 +15,22 @@
 # how-to-get-pathview-plot-displayed-directly-rather-than-saving-as-a-file-in-r
 # It deletes every file created by pathview
 .see_pathview <- function(...) {
-    if (!exists("bods")) {
-        data(bods, package = "pathview")
-    }
-    msg <- capture.output(pathview(...), type = "message")
-    msg <- grep("image file", msg, value = TRUE)
-    filename <- sapply(strsplit(msg, " "), function(x)
-        x[length(x)])
-    if (length(filename) > 0) {
-        img <- readPNG(filename)
-        grid.raster(img)
-        nam <- str_split(filename, "[.]")
-        invisible(file.remove(filename))
-        invisible(file.remove(paste0(nam[[1]][1], ".xml")))
-        invisible(file.remove(paste0(nam[[1]][1], ".png")))
-    }
-    return()
+  if (!exists("bods")) {
+    data(bods, package = "pathview")
+  }
+  msg <- capture.output(pathview(...), type = "message")
+  msg <- grep("image file", msg, value = TRUE)
+  filename <- sapply(strsplit(msg, " "), function(x)
+    x[length(x)])
+  if (length(filename) > 0) {
+    img <- readPNG(filename)
+    grid.raster(img)
+    nam <- str_split(filename, "[.]")
+    invisible(file.remove(filename))
+    invisible(file.remove(paste0(nam[[1]][1], ".xml")))
+    invisible(file.remove(paste0(nam[[1]][1], ".png")))
+  }
+  return()
 }
 
 # ----- Enrichment results ----
@@ -49,14 +49,14 @@
                                contrastName,
                                from,
                                database) {
-    if (is.null(contrastName)) {
-        toret <- metadata(object)[[from]][[database]][["enrichResult"]]
-    } else {
-        toret <-
-            metadata(object)[[from]][[database]]$enrichResult[[contrastName]]
-    }
-    
-    return(toret)
+  if (is.null(contrastName)) {
+    toret <- metadata(object)[[from]][[database]][["enrichResult"]]
+  } else {
+    toret <-
+      metadata(object)[[from]][[database]]$enrichResult[[contrastName]]
+  }
+  
+  return(toret)
 }
 
 #' @title Determine the origin of from argument
@@ -69,28 +69,28 @@
 #' @keywords internal
 #'
 .determineFrom <- function(from) {
-    searchFrom <-
-        as.character(c(1, 2)[c(grepl("DIFFEXP", toupper(from)),
-                               grepl("COEXP", toupper(from)))])
-    if (length(searchFrom) < 1)
-        stop(from, " doesn't exist")
-    
-    from <- switch(searchFrom,
-                   "1" = {
-                       "DiffExp"
-                   },
-                   "2" = {
-                       "CoExp"
-                   },
-                   {
-                       message(
-                           "Argument from is detected to be neither
+  searchFrom <-
+    as.character(c(1, 2)[c(grepl("DIFFEXP", toupper(from)),
+                           grepl("COEXP", toupper(from)))])
+  if (length(searchFrom) < 1)
+    stop(from, " doesn't exist")
+  
+  from <- switch(searchFrom,
+                 "1" = {
+                   "DiffExp"
+                 },
+                 "2" = {
+                   "CoExp"
+                 },
+                 {
+                   message(
+                     "Argument from is detected to be neither
                           DiffExp nor CoExp, taking DiffExp results."
-                       )
-                       "DiffExp"
-                   })
-    
-    return(from)
+                   )
+                   "DiffExp"
+                 })
+  
+  return(from)
 }
 
 #' @title Get a particular enrichment result
@@ -103,28 +103,28 @@
 #' @keywords internal
 #'
 .determineFromEnrich  <- function(from) {
-    searchFrom <-
-        as.character(c(1, 2)[c(grepl("DIFFEXP", toupper(from)),
-                               grepl("COEXP", toupper(from)))])
-    if (length(searchFrom) < 1)
-        stop(from, " doesn't exist")
-    
-    from <- switch(searchFrom,
-                   "1" = {
-                       "DiffExpEnrichAnal"
-                   },
-                   "2" = {
-                       "CoExpEnrichAnal"
-                   },
-                   {
-                       message(
-                           "Argument from is detected to be neither
+  searchFrom <-
+    as.character(c(1, 2)[c(grepl("DIFFEXP", toupper(from)),
+                           grepl("COEXP", toupper(from)))])
+  if (length(searchFrom) < 1)
+    stop(from, " doesn't exist")
+  
+  from <- switch(searchFrom,
+                 "1" = {
+                   "DiffExpEnrichAnal"
+                 },
+                 "2" = {
+                   "CoExpEnrichAnal"
+                 },
+                 {
+                   message(
+                     "Argument from is detected to be neither
                           DiffExp nor CoExp, taking DiffExp results."
-                       )
-                       "DiffExpEnrichAnal"
-                   })
-    
-    return(from)
+                   )
+                   "DiffExpEnrichAnal"
+                 })
+  
+  return(from)
 }
 
 # ---- Valid URL ----
@@ -141,13 +141,51 @@
 #' @keywords internal
 
 .validUrl <- function(url, timeout=2){
-    con <- url(url)
-    check <- suppressWarnings(try(
-        open.connection(con, 
-                        open = "rt",
-                        timeout = timeout),
-        silent = TRUE)[1])
-    suppressWarnings(try(close.connection(con), silent = TRUE))
-    
-    return(ifelse(is.null(check), TRUE, FALSE))
+  con <- url(url)
+  check <- suppressWarnings(try(
+    open.connection(con, 
+                    open = "rt",
+                    timeout = timeout),
+    silent = TRUE)[1])
+  suppressWarnings(try(close.connection(con), silent = TRUE))
+  
+  return(ifelse(is.null(check), TRUE, FALSE))
 }
+
+# ---- .CPR_message_processing ----
+
+#' @title CPR message processing
+#' @description
+#' CPR message processing
+#'
+#' @param messagelist list of message clusterProfileR output
+#' @return messagelist
+#' @importFrom stringr str_detect
+#' @importFrom htmltools HTML
+#' @noRd
+#' @keywords internal
+.CPR_message_processing <- function(messagelist){
+  
+  Expected_input_gene_ID <- NULL
+  for(list in names(messagelist)){
+    for(dom in names(messagelist[[list]])){
+      
+      if(str_detect(messagelist[[list]][[dom]][1], "Reading KEGG annotation online"))
+        messagelist[[list]][[dom]] <- messagelist[[list]][[dom]][-1]
+      
+      if(str_detect(messagelist[[list]][[dom]][1], "No gene can be mapped")){
+        
+        if(is.null(Expected_input_gene_ID) &&
+           str_detect(messagelist[[list]][[dom]][2], "Expected input gene ID")){
+          Expected_input_gene_ID <- messagelist[[list]][[dom]][2]
+        }
+        messagelist[[list]][[dom]] <- 
+          c(messagelist[[list]][[dom]][1], Expected_input_gene_ID)
+      }
+      
+      messagelist[[list]][[dom]] <- HTML(paste(messagelist[[list]][[dom]], collapse = "\n"))
+    }
+  }
+  return(messagelist)
+}
+

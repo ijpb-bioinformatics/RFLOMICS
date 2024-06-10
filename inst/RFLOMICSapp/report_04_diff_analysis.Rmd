@@ -4,20 +4,19 @@
 
 ```{r}
 # create export data
-anaDiffDir <- paste0(outDir,"/04-Diff_Expression_results/", data, "/")
-dir.create(path = anaDiffDir, recursive = TRUE, showWarnings = FALSE)
-
-knitr::opts_chunk$set(
-  fig.path=anaDiffDir
+opts_chunk$set(
+  fig.path=diffDir[[data]]
 )
 
-dataset.SE <- getRflomicsSE(rflomics.MAE, data)
-omicsType <- getOmicsTypes(dataset.SE)
+dataset.SE     <- getRflomicsSE(rflomics.MAE, data)
+validContrasts <- getValidContrasts(dataset.SE)
+omicsType      <- getOmicsTypes(dataset.SE)
+variableName   <- RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]
 ```
 
 <!-- ## Summary table of differential expression analysis -->
 
-* **M&M**
+* **Methods:**
 
 `r if(omicsType != "RNAseq") {"\\begin{comment}"}`
 
@@ -37,9 +36,9 @@ In a second time, contrasts.fit was used and empirical bayes statistics were obt
 
 `r if(omicsType == "RNAseq") {"\\end{comment}"}`
 
-P-values of differential expressed `r RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]` were adjusted according 
-to the **`r RFLOMICS::getDiffSettings(dataset.SE)$p.adj.method`** procedure with a **cutoff** set to **`r RFLOMICS::getDiffSettings(dataset.SE)$p.adj.cutoff`**.
-**LogFC cut-off** was set to **`r RFLOMICS::getDiffSettings(dataset.SE)$abs.logFC.cutoff`**.
+P-values of differential expressed `r variableName` were adjusted according 
+to the **`r getDiffSettings(dataset.SE)$p.adj.method`** procedure with a **cutoff** set to **`r getDiffSettings(dataset.SE)$p.adj.cutoff`**.
+**LogFC cut-off** was set to **`r getDiffSettings(dataset.SE)$abs.logFC.cutoff`**.
 
 <br>
 
@@ -49,17 +48,18 @@ to the **`r RFLOMICS::getDiffSettings(dataset.SE)$p.adj.method`** procedure with
 
 #### Intersection
 
-```{r Upset_plot, fig.show = "hold", out.width = "80%", fig.cap=paste0("<p style=\"color:grey\">","*fig: This **UpSetR** plot gives the number of common and specific differential expressed ",RFLOMICS:::omicsDic(dataset.SE)[["variableName"]]," per contrasts.*", "</p>")}
+```{r Upset_plot, fig.show = "hold", out.width = "80%", fig.cap=paste0("<p style=\"color:grey\">","*fig: This **UpSetR** plot gives the number of common and specific differential expressed ",variableName," per contrasts.*", "</p>")}
 
 DEF_mat <- as.data.frame(dataset.SE@metadata$DiffExpAnal[["mergeDEF"]])
+DEF_mat <- DEF_mat[c("DEF", validContrasts$contrastName)]
 
-write.table(DEF_mat, file=paste0(anaDiffDir,"/","Matrice_of_DE_", RFLOMICS:::omicsDic(dataset.SE)[["variableName"]],"_per_Constrast.txt"), sep="\t",quote=FALSE,col.names=TRUE,row.names=FALSE)
+write.table(DEF_mat, file=paste0(diffDir[[data]],"/","Matrice_of_DE_", variableName,"_per_Constrast.txt"), sep="\t",quote=FALSE,col.names=TRUE,row.names=FALSE)
 
 names(DEF_mat) <- 
-  c(names(DEF_mat)[1], paste0("H", seq_len(ncol(DEF_mat)-1)))
+  c(names(DEF_mat)[1], validContrasts$tag)
 
 if(dim(DEF_mat)[2] > 2){
-  UpSetR::upset(DEF_mat, sets = (names(DEF_mat[,-1])), order.by = "freq") 
+  upset(DEF_mat, sets = (names(DEF_mat[,-1])), order.by = "freq") 
 }
 
 ```
@@ -76,24 +76,38 @@ for (i  in  1:nrow(tmpRes[["contrasts"]])){
   contrastName <- tmpRes[["contrasts"]][i,]$contrastName
   stats <- tmpRes[["stats"]][contrastName,]
   DE[i] <- stats[["All"]]
-  DEup[i] <- paste(stats[["Up"]]," (",round(stats[["Up"]]/stats[["All"]],2)*100," %)",sep="")
-  DEdown[i] <- paste(stats[["Down"]]," (",round(stats[["Down"]]/stats[["All"]],2)*100," %)",sep="")
+  DEup[i] <- 
+    paste(stats[["Up"]]," (",round(stats[["Up"]]/stats[["All"]],2)*100," %)",sep="")
+  DEdown[i] <- 
+    paste(stats[["Down"]]," (",round(stats[["Down"]]/stats[["All"]],2)*100," %)",sep="")
 }
 
-tmpRes[["contrasts"]]$tag <- paste0("H", seq_len(nrow(tmpRes[["contrasts"]])))
-
-# kableExtra::kable_styling(knitr::kable(dplyr::bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")], data.frame("DE.Tot"=DE,"DE.Up"=DEup,"DE.Down"=DEdown)), row.names=FALSE, caption=NULL, format="html"), font_size=12)
-
-stat_summary <- dplyr::bind_cols(tmpRes[["contrasts"]][,c("tag","contrastName")],
+stat_summary <- cbind(tmpRes[["contrasts"]][,c("tag","contrastName")],
                        data.frame("DE.Tot"=DE,"DE.Up"=DEup,"DE.Down"=DEdown))
 
-write.table(stat_summary, file=paste0(anaDiffDir,"summay_stat.txt"),
+write.table(stat_summary, file=paste0(diffDir[[data]],"summay_stat.txt"),
               sep="\t", quote=FALSE, col.names=T, row.names=F)
 
-DT::datatable(stat_summary, rownames = FALSE , class = 'cell-border stripe',
+noValidContrasts <- 
+  setdiff(stat_summary$contrastName, validContrasts$contrastName)
+
+if(length(noValidContrasts) !=0){
+  
+  datatable(stat_summary, rownames = FALSE , class = 'cell-border stripe',
+              options = list( pageLength = 6, scrollX = F, dom = 'tip')) |>
+  formatStyle(
+      "contrastName", target = 'row', 
+      color = styleEqual(noValidContrasts, 'red')
+    )
+}else{
+  datatable(stat_summary, rownames = FALSE , class = 'cell-border stripe',
               options = list( pageLength = 6, scrollX = F, dom = 'tip'))
+}
+
 
 ```
+
+`r if(length(noValidContrasts) !=0) {"<p style=\"color:red;\">*Red: No differentially expressed features or contrasts not validated by the user.*</p>"}`
 
 ### {-}
 
@@ -111,11 +125,11 @@ for (contrast  in  getValidContrasts(dataset.SE)$contrastName) {
 #for (contrast  in  getSelectedContrasts(dataset.SE)$contrastName) {
   
   tag <- stat_summary[which(stat_summary$contrastName == contrast),]$tag
-  out <- c(out, knitr::knit_child(
+  out <- c(out, knit_child(
     paste0(path.package("RFLOMICS"),"/RFLOMICSapp/",
            "report_04_diff_analysis_per_contrast.Rmd"), quiet=TRUE)) 
 }
 
-knitr::asis_output(out)
+asis_output(out)
 ```
 

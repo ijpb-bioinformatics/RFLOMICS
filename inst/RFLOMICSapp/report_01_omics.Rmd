@@ -1,11 +1,71 @@
 
 
 ```{r}
-analyzedDatasetNames <- RFLOMICS::getAnalyzedDatasetNames(rflomics.MAE)
+analyzedDatasetNames <- getAnalyzedDatasetNames(rflomics.MAE)
 analysisTypes <- names(analyzedDatasetNames)
 data.coExp <- unique(c(unlist(analyzedDatasetNames[["DiffExpEnrichAnal"]]),
                        unlist(analyzedDatasetNames[["CoExpEnrichAnal"]])))
 ```
+
+
+
+```{r}
+# create export data
+explorDir <- list()
+diffDir   <- list()
+coexpDir  <- list()
+annotDir  <- list()
+
+for(analysisType in names(analyzedDatasetNames)){
+  
+  if(!analysisType %in% c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
+    
+    for(dataset in analyzedDatasetNames[[analysisType]]){
+      
+      if (analysisType == "DataProcessing"){
+        explorDir[[dataset]] <- 
+          paste0(outDir,"/", dataset, "/Exploratory_analysis/")
+        
+        dir.create(path = explorDir[[dataset]],
+                   recursive = TRUE, showWarnings = FALSE)
+      }
+      
+      if (analysisType == "DiffExpAnal"){
+        diffDir[[dataset]] <-
+          paste0(outDir, "/", dataset,"/DiffExpression_analysis/")
+        
+        dir.create(path = diffDir[[dataset]],
+                   recursive = TRUE, showWarnings = FALSE)
+      }
+      
+      if (analysisType == "CoExpAnal"){
+        coexpDir[[dataset]] <-
+          paste0(outDir, "/", dataset, "/CoExpression_analysis/")
+        
+        dir.create(path = coexpDir[[dataset]],
+                   recursive = TRUE, showWarnings = FALSE)
+      }
+    }
+  }else{
+    
+    for(database in names(analyzedDatasetNames[[analysisType]])){
+      
+      for(dataset in analyzedDatasetNames[[analysisType]][[database]]){
+        
+        annotDir[[dataset]][[analysisType]][[database]] <-
+          paste0(outDir, "/", dataset, "/Enrichment_analysis/",
+                 analysisType, "/", database, "/")
+        
+        dir.create(path = annotDir[[dataset]][[analysisType]][[database]],
+                   recursive = TRUE, showWarnings = FALSE)
+      }
+    }
+  }
+}
+
+
+```
+
 
 <br>
 <br>
@@ -26,12 +86,12 @@ out <- NULL
 num <- 0
 for (data in analyzedDatasetNames[["DataProcessing"]]){
   num <- num + 1
-  out <- c(out, knitr::knit_child(
+  out <- c(out, knit_child(
     paste0(path.package("RFLOMICS"),"/RFLOMICSapp/",
            "report_03_data_explor.Rmd") , quiet=TRUE))
 }
 
-knitr::asis_output(out)
+asis_output(out)
 ```
 
 <br>
@@ -46,26 +106,19 @@ The strategy for differential expression analysis was adapted from @Lambert2020t
 
 `r if(!"DiffExpAnal" %in% analysisTypes) {"<p style=\"color:orange\">Differential analysis has not been performed on this data.</p>"}`
 
-
-```{r}
-
-```
-
 ```{r, eval=("DiffExpAnal" %in% analysisTypes)}
-# create export data
-dir.create(path = paste0(outDir,"/04-Diff_Expression_results/"), 
-           recursive = TRUE, showWarnings = FALSE)
-
-knitr::opts_chunk$set( 
-  fig.path=paste0(outDir,"/04-Diff_Expression_results/") 
-  )
+opts_chunk$set( 
+  fig.path=paste0(outDir, "/Analysis_summary/") 
+)
 ```
 
 
 ```{r diffAnalysesSummary, results='asis', eval=("DiffExpAnal" %in% analysisTypes), fig.cap=paste0("<p style=\"color:grey\">","*fig: ???.*", "</p>")}
 
 cat("## 4.1 Summary\n")
-getDiffAnalysesSummary(rflomics.MAE, plot = TRUE)
+getDiffAnalysesSummary(rflomics.MAE, plot = TRUE, 
+                       nbMaxLabel = 0,
+                       interface = TRUE)
 cat("\n<br>\n")
 ```
 
@@ -73,14 +126,14 @@ cat("\n<br>\n")
 ```{r, results='asis', eval=("DiffExpAnal" %in% analysisTypes)}
 out <- NULL
 num <- 1
-for (data in  analyzedDatasetNames[["DiffExpAnal"]]){
+for (data in analyzedDatasetNames[["DiffExpAnal"]]){
   num <- num + 1
-  out <- c(out, knitr::knit_child(
+  out <- c(out, knit_child(
     paste0(path.package("RFLOMICS"),"/RFLOMICSapp/",
            "report_04_diff_analysis.Rmd"), quiet=TRUE))  
 }
 
-knitr::asis_output(out)
+asis_output(out)
 ```
 
 <br>
@@ -96,11 +149,8 @@ The co-expression analysis strategy was adapted from @Lambert2020ta and tailored
 `r if(!"CoExpAnal" %in% analysisTypes) {"<p style=\"color:orange\">Co-expression analysis has not been performed on this data.</p>"}`
 
 ```{r}
-dir.create(path=paste0(outDir,"/05-Coexpression_analysis/"), 
-           recursive = TRUE, showWarnings = FALSE)
-
-knitr::opts_chunk$set(
-  fig.path=paste0(outDir,"/05-Coexpression_analysis/")
+opts_chunk$set( 
+  fig.path=paste0(outDir, "/Analysis_summary/") 
 )
 ```
 
@@ -118,12 +168,12 @@ out <- NULL
 num <- 1
 for (data in  analyzedDatasetNames[["CoExpAnal"]]){
   num <- num + 1
-  out <- c(out, knitr::knit_child(
+  out <- c(out, knit_child(
     paste0(path.package("RFLOMICS"), "/RFLOMICSapp/",
            "report_05_coexp_analysis.Rmd"), quiet=TRUE))  
 }
 
-knitr::asis_output(out)
+asis_output(out)
 ```
 
 <br>
@@ -144,11 +194,8 @@ This approach facilitates the interpretation of complex genomic data.
 `r if(!"DiffExpEnrichAnal" %in% analysisTypes) {"<p style=\"color:orange\">Enrichment analysis has not been performed on this data.</p>"}`
 
 ```{r}
-dir.create(path=paste0(outDir,"/06-Enrichment_analysis/"), 
-           recursive = TRUE, showWarnings = FALSE)
-
-knitr::opts_chunk$set(
-  fig.path=paste0(outDir,"/06-Enrichment_analysis/")
+opts_chunk$set( 
+  fig.path=paste0(outDir, "/Analysis_summary/") 
 )
 ```
 
@@ -185,9 +232,9 @@ for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
   for (ontology in  names(annot.p)){
     
     ontology.title <- switch (ontology,
-      "GO" = {"Gene Ontology database"},
-      "KEGG" = {"KEGG database"},
-      "custom" = {"Custom annotation"}
+                              "GO" = {"Gene Ontology database"},
+                              "KEGG" = {"KEGG database"},
+                              "custom" = {"Custom annotation"}
     )
     
     if("no-domain" %in% names(annot.p[[ontology]])){
@@ -224,11 +271,11 @@ out <- NULL
 num <- 1
 for (data in  data.coExp){
   num <- num + 1
-  out <- c(out, knitr::knit_child(
+  out <- c(out, knit_child(
     paste0(path.package("RFLOMICS"),"/RFLOMICSapp/",
            "report_06_enrichmentORA_analysis.Rmd"), quiet=TRUE))
 }
 
-knitr::asis_output(out)
+asis_output(out)
 
 ```

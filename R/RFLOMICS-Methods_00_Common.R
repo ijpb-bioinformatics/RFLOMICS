@@ -69,6 +69,8 @@ setMethod(
       list(
         FEdata = file.path(tmpDir, RDataName),
         title  = paste0(projectName, " project"),
+        rflomicsVersion = object@metadata$rflomicsVersion,
+        date = object@metadata$date,
         outDir = tmpDir
       )
     
@@ -472,7 +474,9 @@ setMethod(
   f          = "getDiffAnalysesSummary",
   signature  = "RflomicsMAE",
   definition = function(object, plot = FALSE, 
-                        ylabelLength = 30) {
+                        ylabelLength = 30,
+                        nbMaxLabel = 20,
+                        interface = FALSE) {
     # DataProcessing
     
     omicNames <- getAnalyzedDatasetNames(object, "DiffExpAnal")
@@ -481,13 +485,8 @@ setMethod(
     for (dataset in omicNames) {
       
       Validcontrasts <- getValidContrasts(object[[dataset]])$contrastName
-      
-      if (is.null(Validcontrasts) || length(Validcontrasts) == 0){
-        
-        Validcontrasts <- getSelectedContrasts(object[[dataset]])$contrastName
-        if (is.null(Validcontrasts) || length(Validcontrasts) == 0)
-            next
-      }
+      if (is.null(Validcontrasts) || length(Validcontrasts) == 0)
+          next
       
       p.adj <- getDiffSettings(object[[dataset]])$p.adj.cutoff
       logFC <- getDiffSettings(object[[dataset]])$abs.logFC.cutoff
@@ -502,6 +501,7 @@ setMethod(
     if (length(df.list) == 0)
       return(NULL)
     
+    
     df <- reduce(df.list, rbind) |>
       melt(id = c("dataset", "settings", "contrasts", "All"), value.name = "Up_Down") |>
       filter(All != 0, !is.na(All)) |>
@@ -510,12 +510,26 @@ setMethod(
     if (isFALSE(plot))
       return(df)
     
-    df$tabel <- 
-      lapply(df$contrasts, function(x){
-        vec <- seq(1, stringr::str_length(x), ylabelLength)
-        stringr::str_sub(x, vec, vec+ylabelLength-1) %>% 
-          paste(., collapse = "\n")
-        }) %>% unlist()
+    # For the interface, the labels (contrastNames) were replaced 
+    # by tags if they exceed nbMaxLabel to simplify the figures.
+    if(isTRUE(interface) && length(unique(df$contrasts)) > nbMaxLabel){
+      
+      contrast.df <- getSelectedContrasts(object)
+      df$tabel <- lapply(df$contrasts, function(x){
+        contrast.df[contrastName == x,]$tag
+      }) %>% unlist
+        
+    }else{
+      
+      df$tabel <- 
+        lapply(df$contrasts, function(x){
+          vec <- seq(1, stringr::str_length(x), ylabelLength)
+          stringr::str_sub(x, vec, vec+ylabelLength-1) %>% 
+            paste(., collapse = "\n")
+        }) |> unlist()
+    }
+    
+    df$tabel <- factor(df$tabel, levels = unique(df$tabel))
     
     p <- ggplot(data = df, aes(y = tabel, x = percent, fill = variable)) +
       geom_col() +
@@ -558,7 +572,7 @@ setMethod(
                         ...) {
     extract.list <- list()
     
-    omicNames <- getAnalyzedDatasetNames(object, "CoExpAnal")
+    omicNames <- unique(unlist(getAnalyzedDatasetNames(object, from)))
     
     for (data in omicNames) {
       

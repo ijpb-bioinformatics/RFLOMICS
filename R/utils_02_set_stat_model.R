@@ -211,6 +211,13 @@ getPossibleContrasts <- function(
   # choose the contrasts and rbind data frames of contrasts
   #selectedContrasts <- returnSelectedContrasts(listOfContrastsDF)
   
+  tag <- 0
+  for(C_type in names(listOfContrastsDF)){
+    listOfContrastsDF[[C_type]]$tag <- 
+      paste0("H", (tag+1):(nrow(listOfContrastsDF[[C_type]])+tag))
+    tag <- nrow(listOfContrastsDF[[C_type]])+tag
+  }
+  
   return(listOfContrastsDF)
   
 }

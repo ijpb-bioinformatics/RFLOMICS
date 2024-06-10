@@ -3,21 +3,19 @@
 ## `r paste0("3.",num, " ", data)` 
 
 ```{r }
-# create export data
-explorDir <- paste0(outDir,"/03-Exploratory_analysis/", data, "/")
-dir.create(path = explorDir, recursive = TRUE, showWarnings = FALSE)
 
-knitr::opts_chunk$set(
-  fig.path=explorDir
+opts_chunk$set(
+  fig.path=explorDir[[data]]
 )
 ```
 
 ```{r}
 dataset.raw.SE <- getRflomicsSE(rflomics.MAE, paste0(data,".raw")) 
 dataset.SE     <- getRflomicsSE(rflomics.MAE, data)
+variableName   <- RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]
 ```
 
-* **Completness**
+* **Completness:**
 
 `r if(length(colnames(dataset.raw.SE)) - length(colnames(dataset.SE)) == 0) {"\\begin{comment}"}`
 
@@ -32,11 +30,11 @@ plotExpDesignCompleteness(dataset.SE)
 
 <br>
 
-* **M&M**
+* **Methods:**
 
-```{r M_M_03_rna, results='asis', eval=(RFLOMICS::getOmicsTypes(dataset.SE) == "RNAseq")}
+```{r M_M_03_rna, results='asis', eval=(getOmicsTypes(dataset.SE) == "RNAseq")}
 
-settings <- RFLOMICS::getFilterSettings(dataset.SE)
+settings <- getFilterSettings(dataset.SE)
 
 filtering <- paste0(
   "By default unexpressed genes were removed (", 
@@ -44,7 +42,7 @@ filtering <- paste0(
   " The low counts genes with a ", settings$method, 
   " lower to ", settings$cpmCutoff, " (CMP cutoff)",
   " in at least \"", settings$filterStrategy, "\" (filter strategy)",
-  " were filtered out (",length(RFLOMICS::getFilteredFeatures(dataset.SE)),
+  " were filtered out (",length(getFilteredFeatures(dataset.SE)),
   " transcript)."
 )
 
@@ -56,21 +54,21 @@ cat("\n", filtering, " ", Normalisation, "\n")
 ```
 
 
-```{r M_M_03_prot, results='asis',  eval=(RFLOMICS::getOmicsTypes(dataset.SE) != "RNAseq")}
+```{r M_M_03_prot, results='asis',  eval=(getOmicsTypes(dataset.SE) != "RNAseq")}
 
 Transformation <- ""
-if(RFLOMICS::getTransSettings(dataset.SE)$method != "none"){
+if(getTransSettings(dataset.SE)$method != "none"){
   Transformation <- paste0(
     "The data were transformed using **",
-    RFLOMICS::getTransSettings(dataset.SE)$method,"**.")
+    getTransSettings(dataset.SE)$method,"**.")
 }else{
   Transformation <- "The data are not transformed."
 }
     
 Normalisation <- ""
-if(RFLOMICS::getNormSettings(dataset.SE)$method != "none"){
+if(getNormSettings(dataset.SE)$method != "none"){
   Normalisation <- paste0(
-    "The **", RFLOMICS::getNormSettings(dataset.SE)$method, 
+    "The **", getNormSettings(dataset.SE)$method, 
     "** method was applied to normalise data.")
 }else{
   Normalisation <- "The data are not normalised."
@@ -85,7 +83,7 @@ cat("\n", Transformation, " ", Normalisation, "\n")
 
 ### {.tabset}
 
-* **Quality control**
+* **Quality control:**
 
 #### Distribution (boxplot):
 
@@ -106,11 +104,11 @@ plotDataDistribution(dataset.SE, plot = "density", raw = FALSE)
 
 <!-- Histograms of the library size before/after pre-processing -->
 
-`r if(RFLOMICS::getOmicsTypes(dataset.raw.SE) != "RNAseq") {"\\begin{comment}"}`
+`r if(getOmicsTypes(dataset.raw.SE) != "RNAseq") {"\\begin{comment}"}`
 
 #### Library sizes:
 
-```{r Library_size_barplot, fig.show = "hold", out.width = "50%", eval=(RFLOMICS::getOmicsTypes(dataset.raw.SE) == "RNAseq"), fig.cap=paste0("<p style=\"color:grey\">","*fig: ???*", "</p>")}
+```{r Library_size_barplot, fig.show = "hold", out.width = "50%", eval=(getOmicsTypes(dataset.raw.SE) == "RNAseq"), fig.cap=paste0("<p style=\"color:grey\">","*fig: ???*", "</p>")}
 
 plotLibrarySize(dataset.raw.SE, raw = TRUE)
 plotLibrarySize(dataset.SE)
@@ -120,30 +118,32 @@ plotLibrarySize(dataset.SE)
 ```{r export,echo = FALSE}
 
 write.table(metadata(dataset.SE)$DataProcessing$rowSumsZero,
-            file = paste0(explorDir,"Table_of_non_expressed_", RFLOMICS:::omicsDic(dataset.SE)[["variableName"]],".txt"),
+            file = paste0(explorDir[[data]],"Table_of_non_expressed_", 
+                          variableName,".txt"),
             sep ="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
 
 write.table(getFilteredFeatures(dataset.SE),
-            file = paste0(explorDir,"Table_of_low_expressed_", RFLOMICS:::omicsDic(dataset.SE)[["variableName"]],".txt"),
+            file = paste0(explorDir[[data]],"Table_of_low_expressed_", 
+                          variableName,".txt"),
             sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
 
 ```
 
-`r if(RFLOMICS::getOmicsTypes(dataset.raw.SE) != "RNAseq") {"\\end{comment}"}`
+`r if(getOmicsTypes(dataset.raw.SE) != "RNAseq") {"\\end{comment}"}`
 
 #### PCA
 
 ```{r PCA_1_2, echo=FALSE , fig.show="hold", out.width = "50%", fig.cap=paste0("<p style=\"color:grey\">","*fig: ???*", "</p>")}
 
-RFLOMICS::plotOmicsPCA(dataset.raw.SE, raw="raw", axes=c(1, 2), groupColor="groups")
-RFLOMICS::plotOmicsPCA(dataset.SE, raw="norm", axes=c(1, 2), groupColor="groups")
+plotOmicsPCA(dataset.raw.SE, raw="raw", axes=c(1, 2), groupColor="groups")
+plotOmicsPCA(dataset.SE, raw="norm", axes=c(1, 2), groupColor="groups")
 
 ```
 
 ```{r PCA_1_3, echo=FALSE , fig.show="hold", out.width = "50%", fig.cap=paste0("<p style=\"color:grey\">","*fig: ???*", "</p>")}
 
-RFLOMICS::plotOmicsPCA(dataset.raw.SE, raw="raw", axes=c(1, 3), groupColor="groups")
-RFLOMICS::plotOmicsPCA(dataset.SE, raw="norm", axes=c(1, 3), groupColor="groups")
+plotOmicsPCA(dataset.raw.SE, raw="raw", axes=c(1, 3), groupColor="groups")
+plotOmicsPCA(dataset.SE, raw="norm", axes=c(1, 3), groupColor="groups")
 ```
 
 ### {-}

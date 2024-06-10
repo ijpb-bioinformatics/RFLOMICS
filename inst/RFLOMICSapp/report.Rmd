@@ -1,7 +1,7 @@
 ---
 title: "`r params$title`"
-author: "Analysis were performed by the RFLOMICS package (cite)"
-date: "`r Sys.setlocale('LC_TIME', 'C'); format(Sys.time(), '%d %B %Y - %H:%M')`"
+author: "Analysis were performed by the RFLOMICS package (`r params$rflomicsVersion`)"
+date: "on `r params$date`"
 bibliography: bibliography.bib
 output: 
   html_document:
@@ -17,19 +17,29 @@ params:
   outDir: NA
   FEdata: NA
   title: NA
+  rflomicsVersion: NA
+  date: NA
 ---
 
 
 ```{r , include=FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE, error = TRUE)
+opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE, error = TRUE)
 options(knitr.duplicate.label = "allow")
 ```
 
 ```{r library}
-#library(knitr)
+library(knitr)
 library(RFLOMICS)
+
+library(enrichplot)
+library(UpSetR)
+library(ggplot2)
+
+library(DT)
+library(htmltools)
 ```
 
+`r if(params$rflomicsVersion != packageVersion('RFLOMICS')) {"<p style=\"color:red;font-weight:bold;\">Warning: the version of rflomics used to generate the analysis is different from the one used to generate the report. This may lead to errors due to significant changes in the functions.</p>"}`
 
 ```{r parameters, include=FALSE}
 
@@ -83,9 +93,9 @@ $('.zoomDiv').css({opacity: '0', width: '0%'});
 
 out <- NULL
 child <- paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_02_design.Rmd")
-out <- c(out, knitr::knit_child(child, quiet=TRUE))  
+out <- c(out, knit_child(child, quiet=TRUE))  
 
-knitr::asis_output(out)
+asis_output(out)
 
 ```
 
@@ -95,9 +105,9 @@ knitr::asis_output(out)
 
 out <- NULL
 child <- paste0(path.package("RFLOMICS"), "/RFLOMICSapp/","report_01_omics.Rmd") 
-out   <- c(out, knitr::knit_child(child, quiet=TRUE))  
+out   <- c(out, knit_child(child, quiet=TRUE))  
 
-knitr::asis_output(out)
+asis_output(out)
 
 ```
 
@@ -118,34 +128,34 @@ knitr::asis_output(out)
 
 out <- NULL
 
-out <- c(out, knitr::knit_child(paste0(path.package("RFLOMICS"), 
+out <- c(out, knit_child(paste0(path.package("RFLOMICS"), 
                                        "/RFLOMICSapp/","report_07_MOFA2_integration.Rmd"), quiet=TRUE))
 
-knitr::asis_output(out)
+asis_output(out)
 
 ```
 
 <!-- ## with MixOmics -->
 
-`r if(is.null(RFLOMICS::getMixOmics(rflomics.MAE))) {"\\begin{comment}"}`
+`r if(is.null(getMixOmics(rflomics.MAE))) {"\\begin{comment}"}`
 
 <br>
 <br>
 
 # 7.2 MixOmics Integration
 
-`r if(is.null(RFLOMICS::getMixOmics(rflomics.MAE))) {"\\end{comment}"}`
+`r if(is.null(getMixOmics(rflomics.MAE))) {"\\end{comment}"}`
 
 ```{r, eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE))}
 MOres <- NULL
 funcMixo <- NULL
-MOres <- RFLOMICS::getMixOmicsSettings(rflomics.MAE)
+MOres <- getMixOmicsSettings(rflomics.MAE)
 funcMixo <- ifelse(MOres$sparsity, "splsda",  "plsda")
 funcMixo <- ifelse(length(MOres$selectData) > 1, paste0("block.", funcMixo), funcMixo)
 ```
 
 ```{r , eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE)) }
-htmltools::HTML(paste0("MixOmics analyses were performed on <span style=\"color:blue\">",  
+HTML(paste0("MixOmics analyses were performed on <span style=\"color:blue\">",  
                        paste(MOres$selectData, collapse = ", "), 
                        "</span> datatables with function  <span style=\"color:DarkOrchid\">", 
                        funcMixo, 
@@ -185,7 +195,7 @@ rm(listSel, listSel2)
 ```{r mixOmics, eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE)) }
 
 if (MOres$sparsity) {
-    htmltools::HTML(paste0("Sparse analysis was performed on these data with <span style=\"color:blue\">",  
+    HTML(paste0("Sparse analysis was performed on these data with <span style=\"color:blue\">",  
                            MOres$cases_to_try, 
                            "</span> sets of features tested for each datatable."))
 }
@@ -197,10 +207,10 @@ for (selectedResponse in MOres$selectedResponse) {
                    "/RFLOMICSapp/",
                    "report_08_mixOmics_integration.Rmd") 
   
-  out <- c(out, knitr::knit_child(child, quiet = TRUE))  
+  out <- c(out, knit_child(child, quiet = TRUE))  
 }
 
-knitr::asis_output(out)
+asis_output(out)
 
 ```
 
@@ -209,14 +219,16 @@ knitr::asis_output(out)
 
 # R Session
 
-See **session_info.txt** files in the results directory.
+This information session corresponds to the system/environment used during the analysis.
+
+<details>
+<summary>Click here</summary>
 
 ```{r session}
-writeLines(capture.output(devtools::session_info()),  
-           paste0(outDir,"/","session_info.txt"))
+rflomics.MAE@metadata$sessionInfo
 ```
+</details>
 
-<br>
 <br>
 
 # Bibliographie

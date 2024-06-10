@@ -150,5 +150,42 @@
     }
 }
 
+# ---- tryCatch_rflomics - catch error, warning et message : -----
+
+#' @title catch error, warning et message and results
+#'
+#' @param f function and his parameters
+#' @return list. with 4 elements : message, warning, error and results
+#' @noRd
+#' @keywords internal
+.tryCatch_rflomics <- function(f) {
+  message_capture <- character()
+  warning_capture <- character()
+  
+  result <- tryCatch({
+    withCallingHandlers({
+      output <- f
+      list(result = output, messages = message_capture, warnings = warning_capture, error = NULL)
+    }, message = function(m) {
+      message_capture <<- c(message_capture, m$message)
+      invokeRestart("muffleMessage")
+    }, warning = function(w) {
+      warning_capture <<- c(warning_capture, w$message)
+      invokeRestart("muffleWarning")
+    })
+  }, error = function(e) {
+    list(result = NULL, messages = NULL, warnings = NULL, error = e$message)
+  })
+  
+  # Inclure les messages et avertissements capturés dans le résultat
+  if (length(message_capture) > 0) {
+    result$messages <- message_capture
+  }
+  if (length(warning_capture) > 0) {
+    result$warnings <- warning_capture
+  }
+  
+  return(result)
+}
 
 

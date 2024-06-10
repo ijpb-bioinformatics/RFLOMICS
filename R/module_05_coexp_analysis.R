@@ -80,7 +80,9 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
         
         ##-> retrieve DEG lists and DEG valid lists
         ListNames.diff        <- getValidContrasts(SE.filtered)$contrastName
-        names(ListNames.diff) <- getValidContrasts(SE.filtered)$contrastName
+        names(ListNames.diff) <- 
+          paste0("[",getValidContrasts(SE.filtered)$tag, "] ",
+                 getValidContrasts(SE.filtered)$contrastName)
         
         ##-> option
         switch(getOmicsTypes(SE.filtered),

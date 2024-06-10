@@ -116,9 +116,10 @@ setMethod(f          = "generateExpressionContrast",
             factorBio <- getBioFactors(object)
             ExpDesign <- getDesignMat(object)
             
-            Contrasts.List  <-  .getExpressionContrastF(ExpDesign, 
-                                                        factorBio, 
-                                                        modelFormula=modelFormula)
+            Contrasts.List  <-  
+              .getExpressionContrastF(ExpDesign,  
+                                      factorBio,
+                                      modelFormula=modelFormula)
             
             return(Contrasts.List)
           })

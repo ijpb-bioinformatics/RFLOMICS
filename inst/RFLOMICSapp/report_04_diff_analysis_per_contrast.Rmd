@@ -1,18 +1,18 @@
 ### {.tabset}
 
 <details>
-<summary>**`r contrast`**</summary>
+<summary>**`r paste0("[",tag,"] ",contrast)`**</summary>
 
 ```{r }
 
 # Create a directory to store the results by contrast
 contrastDir <- 
-  paste0(anaDiffDir,"/",  tag, "_", 
+  paste0(diffDir[[data]],"/",  tag, "_", 
          RFLOMICS:::contrastName2contrastDir(contrast),"/")
                       
 dir.create(path=contrastDir, recursive = TRUE, showWarnings = FALSE)
 
-knitr::opts_chunk$set(
+opts_chunk$set(
   fig.path=contrastDir
 )
 
@@ -34,19 +34,19 @@ diff.plots$Pvalue.hist
 
 #### MA plot
 
-```{r MA-plot, out.width = "60%", fig.cap=paste0("<p style=\"color:grey\">","*fig: Expect a majority of ", RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]," around 0. The red points are the ", RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]," significantly over-expressed in the left factor's modality in the contrast expression whereas blue points are ",RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]," significantly under-expressed in the rigth factor's modality in the contrast expression. Only the top 20 ", RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]," DE are labeled.*", "</p>")}
+```{r MA-plot, out.width = "60%", fig.cap=paste0("<p style=\"color:grey\">","*fig: Expect a majority of ", variableName," around 0. The red points are the ", variableName," significantly over-expressed in the left factor's modality in the contrast expression whereas blue points are ",variableName," significantly under-expressed in the rigth factor's modality in the contrast expression. Only the top 20 ", variableName," DE are labeled.*", "</p>")}
 diff.plots$MA.plot
 ```
 
 #### VolcanoPlot
 
-```{r Volcano-plot, out.width = "60%", fig.cap=paste0("<p style=\"color:grey\">","*fig: Red points are ", RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]," of interest displaying both large magnitude log-fold-changes (x axis) and high statistical significance (y axis). Only the top 20 ",RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]," DE are labeled.*", "</p>")}
+```{r Volcano-plot, out.width = "60%", fig.cap=paste0("<p style=\"color:grey\">","*fig: Red points are ", variableName," of interest displaying both large magnitude log-fold-changes (x axis) and high statistical significance (y axis). Only the top 20 ",variableName," DE are labeled.*", "</p>")}
 diff.plots$Volcano.plot
 ```
 
 #### Heatmap:
 
-```{r heatmap-plot, out.width = "60%", fig.cap=paste0("<p style=\"color:grey\">","*fig: Heatmap was performed on DE ", RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]," expression data table which has been transformed by: ", getTransSettings(dataset.SE)$method," method and normalized by: ", getNormSettings(dataset.SE)$method," method. Clustering was independently performed on samples (row) and centered ", RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]," (column) using euclidian distance and complete aggregation method*", "</p>")}
+```{r heatmap-plot, out.width = "60%", fig.cap=paste0("<p style=\"color:grey\">","*fig: Heatmap was performed on DE ", variableName," expression data table which has been transformed by: ", getTransSettings(dataset.SE)$method," method and normalized by: ", getNormSettings(dataset.SE)$method," method. Clustering was independently performed on samples (row) and centered ", variableName," (column) using euclidian distance and complete aggregation method*", "</p>")}
 plotHeatmapDesign(object = dataset.SE, contrastName = contrast)
 ```
 
@@ -56,12 +56,12 @@ plotHeatmapDesign(object = dataset.SE, contrastName = contrast)
 
 resTable <- metadata(dataset.SE)$DiffExpAnal[["TopDEF"]][[contrast]]
 newDataset.SE <- dataset.SE[rownames(dataset.SE) %in% row.names(resTable)]
-newDataset.SE <- RFLOMICS::runOmicsPCA(newDataset.SE)  
+newDataset.SE <- runOmicsPCA(newDataset.SE)  
 
-RFLOMICS::plotOmicsPCA(newDataset.SE,
+plotOmicsPCA(newDataset.SE,
                   raw = "norm",
                   axes=c(1, 2), groupColor="groups")
-RFLOMICS::plotOmicsPCA(newDataset.SE,
+plotOmicsPCA(newDataset.SE,
                   raw = "norm",
                   axes=c(1, 3), groupColor="groups")
 ```
@@ -70,7 +70,7 @@ RFLOMICS::plotOmicsPCA(newDataset.SE,
 #### Table of DE
 
 * results of the differential expression/abundance statistical analysis:
-  + `r RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]` ID
+  + `r variableName` ID
   + logFC: log2 fold change
   + Abundance: mean expression/abundance for the factor's modality
   + t: t-statistic (limma-lmFit, prot/metabo)
@@ -83,42 +83,25 @@ RFLOMICS::plotOmicsPCA(newDataset.SE,
 ```{r table , eval = evalExport, fig.cap=paste0("<p style=\"color:grey\">","tab: ???", "</p>")}
 df <- signif(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],3)
 
-DT::datatable(df, rownames = TRUE , class = 'cell-border stripe',
+datatable(df, rownames = TRUE , class = 'cell-border stripe',
               options = list(pageLength = 6, scrollX = F, lengthChange = F)) |> 
-  DT::formatStyle(
+  formatStyle(
       'logFC',
-      color = DT::styleInterval(c(0), c('red', 'green'))
+      color = styleInterval(c(0), c('red', 'green'))
     )
 
-# reactable::reactable(signif(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],3),
-#           showSortable = TRUE,
-#           bordered = TRUE,
-#           defaultPageSize = 6, searchable = TRUE, paginationType = "simple",
-#           columns = list(
-#             logFC = reactable::colDef(
-#                 style = function(value) {
-#                     color <- if (value >= 0) {
-#                       "#C7DCA7"
-#                     } else if (value < 0) {
-#                       "#FFC5C5"
-#                     }
-#                     list(fontWeight = 600, color = color)
-#                 }
-#               )
-#             )
-#           )
 ```
 
 
 ```{r , eval = evalExport}
 write.table(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]],
-             file=paste0(contrastDir,"Table_of_DE_", RFLOMICS:::omicsDic(dataset.SE)[["variableName"]],"_pvalmax_",
+             file=paste0(contrastDir,"Table_of_DE_", variableName,"_pvalmax_",
                          dataset.SE@metadata[["DiffExpAnal"]][["p.adj.cutoff"]],"_FCmin_",
                          dataset.SE@metadata[["DiffExpAnal"]][["abs.logFC.cutoff"]],".txt"),
              sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
  
  write.table(dataset.SE@metadata[["DiffExpAnal"]][["DEF"]][[contrast]],
-             file=paste0(contrastDir,"Table_of_non_filtering_", RFLOMICS:::omicsDic(dataset.SE)[["variableName"]],".txt"),
+             file=paste0(contrastDir,"Table_of_non_filtering_", variableName,".txt"),
              sep="\t",quote=FALSE,col.names=TRUE,row.names=TRUE)
 ```
 
