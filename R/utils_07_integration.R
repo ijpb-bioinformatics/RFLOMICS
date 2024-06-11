@@ -55,7 +55,8 @@
     SEobject@metadata[["correction_batch_method"]] <-
         "limma (removeBatchEffect)"
     
-    assay(SEobject) <- rbeRes
+    assay(SEobject) <- t(scale(t(rbeRes), center = TRUE, scale = FALSE))
+    # assay(SEobject) <- rbeRes
     
     return(SEobject)
 }
