@@ -1,7 +1,7 @@
 ---
 title: "`r params$title`"
-author: "Analysis were performed by the RFLOMICS package (`r params$rflomicsVersion`)"
-date: "on `r params$date`"
+author: "Analysis were performed with the RFLOMICS package (`r params$rflomicsVersion`)"
+date: "`r params$date`"
 bibliography: bibliography.bib
 output: 
   html_document:
@@ -21,13 +21,7 @@ params:
   date: NA
 ---
 
-
-```{r , include=FALSE}
-opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE, error = TRUE)
-options(knitr.duplicate.label = "allow")
-```
-
-```{r library}
+```{r library, include = FALSE}
 library(knitr)
 library(RFLOMICS)
 
@@ -35,8 +29,15 @@ library(enrichplot)
 library(UpSetR)
 library(ggplot2)
 
+library(dplyr)
+
 library(DT)
 library(htmltools)
+```
+
+```{r , include=FALSE}
+opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE, error = TRUE)
+options(knitr.duplicate.label = "allow")
 ```
 
 `r if(params$rflomicsVersion != packageVersion('RFLOMICS')) {"<p style=\"color:red;font-weight:bold;\">Warning: the version of rflomics used to generate the analysis is different from the one used to generate the report. This may lead to errors due to significant changes in the functions.</p>"}`
@@ -125,6 +126,11 @@ asis_output(out)
 `r if(is.null(getMOFA(rflomics.MAE))) {"\\end{comment}"}`
 
 ```{r MOFA2, eval = !is.null(getMOFA(rflomics.MAE)), hide = is.null(getMOFA(rflomics.MAE)) }
+library(MOFA2)
+```
+
+
+```{r MOFA2, eval = !is.null(getMOFA(rflomics.MAE)), hide = is.null(getMOFA(rflomics.MAE)) }
 
 out <- NULL
 
@@ -147,6 +153,7 @@ asis_output(out)
 `r if(is.null(getMixOmics(rflomics.MAE))) {"\\end{comment}"}`
 
 ```{r, eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE))}
+library(mixOmics)
 MOres <- NULL
 funcMixo <- NULL
 MOres <- getMixOmicsSettings(rflomics.MAE)

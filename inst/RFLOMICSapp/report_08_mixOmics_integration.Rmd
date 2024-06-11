@@ -9,8 +9,8 @@ knitr::opts_chunk$set(fig.path = explorDir)
 
 ```{r}
 Data_res <- set_res <- NULL
-Data_res <- RFLOMICS::getMixOmics(rflomics.MAE, response = selectedResponse)
-set_res  <- RFLOMICS::getMixOmicsSettings(rflomics.MAE)
+Data_res <- getMixOmics(rflomics.MAE, response = selectedResponse)
+set_res  <- getMixOmicsSettings(rflomics.MAE)
 ncompDat <- min(Data_res$ncomp, 5)
 fig_height <- NULL
 fig_height <- ceiling(length(set_res$selectData)/2)*5
@@ -46,7 +46,7 @@ if (is.list(Data_res$X)) {
     }
 }
 
-DT::datatable(t(df), options = list(dom = 't'))
+datatable(t(df), options = list(dom = 't'))
 ```
 
 #### Explained variance
@@ -137,7 +137,7 @@ knitr::asis_output(outMixOmics)
 loads <- do.call("rbind", lapply(names(Data_res$loadings), FUN = function(nam){
     df <- data.frame(Data_res$loadings[[nam]])
     df$Table <- nam
-    dplyr::relocate(df, Table)
+    relocate(df, Table)
 }
 ))
 
@@ -148,7 +148,7 @@ write.table(loads,
 inds <- do.call("rbind", lapply(names(Data_res$variates), FUN = function(nam){
     df <- data.frame(Data_res$variates[[nam]])
     df$Table <- nam
-    dplyr::relocate(df, Table)
+    relocate(df, Table)
 }
 ))
 
