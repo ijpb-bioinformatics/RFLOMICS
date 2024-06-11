@@ -14,6 +14,12 @@
 #' @param ... other arguments to pass into the render function.
 #' @return An html report or archive (tar.gz)
 #' @importFrom rmarkdown render
+#' @importFrom ggpubr as_ggplot 
+#' @importFrom ggplot2 rel
+#' @importFrom gridExtra grid.arrange
+#' @importFrom dplyr relocate
+#' @importFrom DT datatable formatStyle formatSignif
+#' @importFrom stats cor
 #' @exportMethod generateReport
 #' @rdname generateReport
 #' @aliases generateReport
