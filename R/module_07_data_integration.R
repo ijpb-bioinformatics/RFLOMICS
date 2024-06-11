@@ -1735,8 +1735,8 @@
     box(
         title = span(tagList(
             icon('chart-line'),
-            "   ",
-            a("mixOmics", href = "http://mixomics.org/"),
+            "mixOmics",
+            # a("mixOmics", href = "http://mixomics.org/"),
             tags$small("")
         )),
         solidHeader = TRUE,
@@ -1783,8 +1783,8 @@
         title =
             span(tagList(
                 icon('chart-line'),
-                "   ",
-                a("MOFA+", href = "https://biofam.github.io/MOFA2/"),
+                "MOFA+",
+                # a("MOFA+", href = "https://biofam.github.io/MOFA2/"),
                 tags$small("")
             )),
         solidHeader = TRUE,

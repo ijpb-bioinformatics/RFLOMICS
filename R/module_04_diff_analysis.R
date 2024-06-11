@@ -61,7 +61,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                     "metabolomics" = MethodList[2])
   
   output$instruction <- renderUI({
-    box(title = span(tagList(icon("cogs"), "  ",  a(names(method), href="https://bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf"), tags$small("(Scroll down for instructions)")  )),
+    box(title = span( 
+        tagList(icon("cogs"), names(method),
+                             # a(names(method), href="https://bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf"),
+                             tags$small("(Scroll down for instructions)")  )),
         solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
         p("Differential expression analysis is performed for each contrast. 
           There are just two options to set (the adjusted-pvalue cut-off and the |logFC| cut-off).

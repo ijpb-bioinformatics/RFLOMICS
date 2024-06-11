@@ -21,17 +21,17 @@
     box(
       title = span(tagList(
         icon("chart-pie"),
-        " ",
-        a(
-          "ClusterProfiler/",
-          href = "https://bioconductor.org/packages/release/bioc/
-                    vignettes/clusterProfiler/inst/doc/clusterProfiler.html"
-        ),
-        a(
-          "Pathview",
-          href = "https://bioconductor.org/packages/devel/bioc/
-                    vignettes/pathview/inst/doc/pathview.pdf"
-        ),
+        "Over Representation analysis (ClusterProfiler/Pathview)",
+        # a(
+        #   "ClusterProfiler/",
+        #   href = "https://bioconductor.org/packages/release/bioc/
+        #             vignettes/clusterProfiler/inst/doc/clusterProfiler.html"
+        # ),
+        # a(
+        #   "Pathview",
+        #   href = "https://bioconductor.org/packages/devel/bioc/
+        #             vignettes/pathview/inst/doc/pathview.pdf"
+        # ),
         "   " ,
         tags$small("(Scroll down for instructions)")
       )),

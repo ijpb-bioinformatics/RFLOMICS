@@ -7,8 +7,8 @@ CoSeqAnalysisUI <- function(id){
         
         fluidRow(
             box(title = span(
-                tagList(icon('chart-line'), "   ",
-                        a("CoSeq", href="https://www.bioconductor.org/packages/release/bioc/vignettes/coseq/inst/doc/coseq.html"), 
+                tagList(icon('chart-line'), "CoExpression analysis (using Coseq)",
+                        # a("CoSeq", href="https://www.bioconductor.org/packages/release/bioc/vignettes/coseq/inst/doc/coseq.html"), 
                         tags$small("(Scroll down for instructions)")  )),
                 solidHeader = TRUE, status = "warning", width = 12, 
                 collapsible = TRUE, collapsed = TRUE,
