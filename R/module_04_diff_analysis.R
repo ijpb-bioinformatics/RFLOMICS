@@ -61,7 +61,10 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                     "metabolomics" = MethodList[2])
   
   output$instruction <- renderUI({
-    box(title = span(tagList(icon("cogs"), "  ",  a(names(method), href="https://bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf"), tags$small("(Scroll down for instructions)")  )),
+    box(title = span( 
+        tagList(icon("cogs"), names(method),
+                             # a(names(method), href="https://bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf"),
+                             tags$small("(Scroll down for instructions)")  )),
         solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
         p("Differential expression analysis is performed for each contrast. 
           There are just two options to set (the adjusted-pvalue cut-off and the |logFC| cut-off).
@@ -255,8 +258,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     # Run the analysis only if the 'diff' object is empty
     if(length(metadata(dataset.SE)$DiffExpAnal) == 0){
       
-      message("# 4- Diff Analysis... ", dataset)
-      message("#    => Filter Diff Analysis...")
+      message("[RFLOMICS] # 4- Differential Analysis... ", dataset)
+      message("[RFLOMICS] #    => Filtering differential analysis...")
       
       # run diff analysis with selected method
       dataset.SE <- runDiffAnalysis(
@@ -270,7 +273,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     }
     else{
       # If the differential analysis has already run, do not run it again
-      message("#    => Filter Diff Analysis...")
+      message("[RFLOMICS] #    => Filtering differential analysis...")
       ### adj_pvalue filtering by calling the RundDiffAnalysis method without filtering
       dataset.SE <- filterDiffAnalysis(
         object        = dataset.SE,

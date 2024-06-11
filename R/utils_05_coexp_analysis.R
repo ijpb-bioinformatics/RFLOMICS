@@ -299,7 +299,7 @@
     
     CoExpAnal <- list()
     
-    if (cmd) message("#     => error management ")
+    if (cmd) message("[RFLOMICS] #     => error management ")
     
     # Create a table of jobs summary
     error.list <- unlist(lapply(coseq.res.list, function(x){
@@ -307,7 +307,7 @@
     }))
     
     nK_success <- table(error.list)["success"]
-    if (cmd) message("#     => nbr of success jobs: ", nK_success)
+    if (cmd) message("[RFLOMICS] #     => nbr of success jobs: ", nK_success)
     
     K.list <- rep(paste0("K=", K), each = replicates)
     
@@ -322,7 +322,7 @@
     # If they are at least the half of K which succeed, valid results
     if(nK_success !=0 ){
         
-        if (cmd) message("#     => process results ")
+        if (cmd) message("[RFLOMICS] #     => process results ")
         # Generate the list of results
         coseq.res.list[["value"]] <- list()
         for(x in names(coseq.res.list)){
@@ -406,7 +406,7 @@
     CoExpAnal <- list()
     
     # error managment
-    if (cmd) message("#     => error management: level 1 ")
+    if (cmd) message("[RFLOMICS] #     => error management: level 1 ")
     coseq.error.management <- .coseq.error.manage(coseq.res.list = coseq.res.list, 
                                                   K = K, 
                                                   replicates = replicates,
@@ -429,7 +429,7 @@
             CoExpAnal[["warning"]] <- coseq.res.list$warning
             
             if (cmd) { 
-                message("#     => Number of clusters: ", 
+                message("[RFLOMICS] #     => Number of clusters: ", 
                         max(unique(clusters(CoExpAnal$coseqResults))))
             }
         }

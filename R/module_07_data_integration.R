@@ -256,7 +256,7 @@
         #-----------------------#
         
         # MAE to mixOmics object (list)
-        message("# 8- prepare data for integration with ", method)
+        message("[RFLOMICS] # 8- prepare data for integration with ", method)
         local.rea.values$preparedObject <-  prepareForIntegration(
             object           = MAE.red,
             omicsNames       = input$selectData,
@@ -266,7 +266,7 @@
             cmd              = TRUE,
             silent           = TRUE
         )
-        message("#   => Ready for integration")
+        message("[RFLOMICS] #   => Ready for integration")
         
         #---- progress bar ----#
         progress$inc(1, detail = paste("All done", 100, "%", sep = ""))
@@ -342,7 +342,7 @@
                             })
         
         # Run the analysis
-        message("# 8- integration Analysis with ", method)
+        message("[RFLOMICS] # 8- integration Analysis with ", method)
         tryRomics <- NULL
         tryRomics <-  tryCatch(
             expr    = do.call(
@@ -1735,8 +1735,8 @@
     box(
         title = span(tagList(
             icon('chart-line'),
-            "   ",
-            a("mixOmics", href = "http://mixomics.org/"),
+            "mixOmics",
+            # a("mixOmics", href = "http://mixomics.org/"),
             tags$small("")
         )),
         solidHeader = TRUE,
@@ -1783,8 +1783,8 @@
         title =
             span(tagList(
                 icon('chart-line'),
-                "   ",
-                a("MOFA+", href = "https://biofam.github.io/MOFA2/"),
+                "MOFA+",
+                # a("MOFA+", href = "https://biofam.github.io/MOFA2/"),
                 tags$small("")
             )),
         solidHeader = TRUE,

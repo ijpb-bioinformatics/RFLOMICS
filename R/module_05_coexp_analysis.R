@@ -7,8 +7,8 @@ CoSeqAnalysisUI <- function(id){
         
         fluidRow(
             box(title = span(
-                tagList(icon('chart-line'), "   ",
-                        a("CoSeq", href="https://www.bioconductor.org/packages/release/bioc/vignettes/coseq/inst/doc/coseq.html"), 
+                tagList(icon('chart-line'), "CoExpression analysis (using Coseq)",
+                        # a("CoSeq", href="https://www.bioconductor.org/packages/release/bioc/vignettes/coseq/inst/doc/coseq.html"), 
                         tags$small("(Scroll down for instructions)")  )),
                 solidHeader = TRUE, status = "warning", width = 12, 
                 collapsible = TRUE, collapsed = TRUE,
@@ -314,7 +314,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
         progress$inc(1/2, detail = "In progress")
         #----------------------#
         
-        message("# 9- CoExpression analysis... ", dataset )
+        message("[RFLOMICS] # 9- CoExpression analysis... ", dataset )
         
         dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
         # run coseq

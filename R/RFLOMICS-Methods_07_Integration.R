@@ -65,7 +65,7 @@ setMethod(
         }
         
         if (cmd)
-            message("#     => Preparing for multi-omics analysis")
+            message("[RFLOMICS] #     => Preparing for multi-omics analysis")
         
         objectfilt <- filterFeatures(object = object,
                                      selOpt = selOpt,
@@ -85,7 +85,7 @@ setMethod(
         )
         
         if (cmd)
-            message("#     => run data integration")
+            message("[RFLOMICS] #     => run data integration")
         object <- runOmicsIntegration(
             object = object,
             preparedObject = preparedObject,
@@ -228,7 +228,7 @@ setMethod(
         commonVarNames <- sum(duplicated(unlist(rownames(object))))
         if (commonVarNames > 0) {
             if (cmd) {
-                message("#   => Duplicated features names across tables,
+                message("[RFLOMICS] #   => Duplicated features names across tables,
                 changing names for integration")
             }
             
@@ -264,7 +264,7 @@ setMethod(
             )
             
             if (cmd) {
-                message("#   => Done replacing features names")
+                message("[RFLOMICS] #   => Done replacing features names")
             }
         }
         
@@ -544,7 +544,7 @@ setMethod(
             object <- setMOFA(object, NULL)
             
             if (cmd)
-                message("#     => Running MOFA analysis")
+                message("[RFLOMICS] #     => Running MOFA analysis")
             
             MOFA_run <- .runMOFAAnalysis(
                 object = preparedObject,
@@ -573,7 +573,7 @@ setMethod(
             object <- setMixOmics(object, NULL)
             
             if (cmd)
-                message("#     => Running mixOmics analysis")
+                message("[RFLOMICS] #     => Running mixOmics analysis")
             
             if (is.null(selectedResponse))
                 selectedResponse <- getBioFactors(object)

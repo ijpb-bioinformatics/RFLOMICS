@@ -578,7 +578,7 @@ QCNormalizationTab <-
         resetRflomicsMAE(session$userData$FlomicsMultiAssay,
                          multiAnalyses = c("IntegrationAnalysis"))
       
-      message("# 3  => Data processing: ", dataset)
+      message("[RFLOMICS] # 3  => Data processing: ", dataset)
       
       session$userData$FlomicsMultiAssay <-
         runDataProcessing(

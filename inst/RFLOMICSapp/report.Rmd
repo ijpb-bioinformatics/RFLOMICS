@@ -125,7 +125,7 @@ asis_output(out)
 
 `r if(is.null(getMOFA(rflomics.MAE))) {"\\end{comment}"}`
 
-```{r MOFA2, eval = !is.null(getMOFA(rflomics.MAE)), hide = is.null(getMOFA(rflomics.MAE)) }
+```{r , eval = !is.null(getMOFA(rflomics.MAE)), hide = is.null(getMOFA(rflomics.MAE)) }
 library(MOFA2)
 ```
 

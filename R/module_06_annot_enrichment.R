@@ -21,17 +21,17 @@
     box(
       title = span(tagList(
         icon("chart-pie"),
-        " ",
-        a(
-          "ClusterProfiler/",
-          href = "https://bioconductor.org/packages/release/bioc/
-                    vignettes/clusterProfiler/inst/doc/clusterProfiler.html"
-        ),
-        a(
-          "Pathview",
-          href = "https://bioconductor.org/packages/devel/bioc/
-                    vignettes/pathview/inst/doc/pathview.pdf"
-        ),
+        "Over Representation analysis (ClusterProfiler/Pathview)",
+        # a(
+        #   "ClusterProfiler/",
+        #   href = "https://bioconductor.org/packages/release/bioc/
+        #             vignettes/clusterProfiler/inst/doc/clusterProfiler.html"
+        # ),
+        # a(
+        #   "Pathview",
+        #   href = "https://bioconductor.org/packages/devel/bioc/
+        #             vignettes/pathview/inst/doc/pathview.pdf"
+        # ),
         "   " ,
         tags$small("(Scroll down for instructions)")
       )),
@@ -283,19 +283,19 @@
     
   })
   
-  ### use example
-  observeEvent(input$useExampleFile, {
-    filePath <- "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt"
-    
-    local.rea.values$dataPathAnnot <- NULL
-    local.rea.values$dataPathAnnot <-
-      paste0(system.file(package = "RFLOMICS"),
-             filePath)
-    output$selectColumnsCustom <- .annotExFileColumns(session,
-                                                      local.rea.values,
-                                                      dataset)
-    
-  })
+  # ### use example
+  # observeEvent(input$useExampleFile, {
+  #   filePath <- "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt"
+  #   
+  #   local.rea.values$dataPathAnnot <- NULL
+  #   local.rea.values$dataPathAnnot <-
+  #     paste0(system.file(package = "RFLOMICS"),
+  #            filePath)
+  #   output$selectColumnsCustom <- .annotExFileColumns(session,
+  #                                                     local.rea.values,
+  #                                                     dataset)
+  #   
+  # })
   
   # SERVEUR
   callModule(
@@ -595,7 +595,7 @@
       messList <- switch(listSource,
                          "DiffExpEnrichAnal" = "differential expression",
                          "CoExpEnrichAnal" = "co-expression clusters")
-      message("# 11- ",
+      message("[RFLOMICS] # 11- ",
               database,
               " Enrichment Analysis of ",
               messList ,
@@ -801,30 +801,30 @@
         )
       ),
       
-      if (rea.values$exampleData && 
-          getOmicsTypes(session$userData$FlomicsMultiAssay[[dataset]]) != 
-          "metabolomics") {
-        popify(
-          bsButton(
-            inputId = ns("useExampleFile"),
-            label = HTML("Annotation for<br/>used example"),
-            style = "primary",
-            size = "default",
-            type = "action"
-          ),
-          title = "Use example file for ecoseed data",
-          content = paste0("<p> You are conducting an analysis using the ",
-                           "example dataset ecoseed. You can ",
-                           "run an annotation enrichment ",
-                           "using the example annotation file, ",
-                           "which is an ",
-                           "extract of GO terms for Arabidopsis thaliana",
-                           " genes from plant ensembl, using TAIR ids"
-          ),
-          placement = "top",
-          trigger = "hover"
-        )
-      },
+      # if (rea.values$exampleData && 
+      #     getOmicsTypes(session$userData$FlomicsMultiAssay[[dataset]]) != 
+      #     "metabolomics") {
+      #   popify(
+      #     bsButton(
+      #       inputId = ns("useExampleFile"),
+      #       label = HTML("Annotation for<br/>used example"),
+      #       style = "primary",
+      #       size = "default",
+      #       type = "action"
+      #     ),
+      #     title = "Use example file for ecoseed data",
+      #     content = paste0("<p> You are conducting an analysis using the ",
+      #                      "example dataset ecoseed. You can ",
+      #                      "run an annotation enrichment ",
+      #                      "using the example annotation file, ",
+      #                      "which is an ",
+      #                      "extract of GO terms for Arabidopsis thaliana",
+      #                      " genes from plant ensembl, using TAIR ids"
+      #     ),
+      #     placement = "top",
+      #     trigger = "hover"
+      #   )
+      # },
       
       uiOutput(ns("selectColumnsCustom")),
       
