@@ -13,9 +13,9 @@ MAE <- generateExample(
 
 MAE0 <- MAE
 
-protMat <- RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
-metMat  <- RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"))
-condMat <- RFLOMICS::readExpDesign(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
+protMat <- readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
+metMat  <- readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"))
+condMat <- readExpDesign(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
 
 condMat$Repeat      <- factor(condMat$Repeat, levels = c("rep1", "rep2", "rep3"))
 condMat$imbibition  <- factor(condMat$imbibition, levels = c("DS", "EI", "LI"))
@@ -72,16 +72,16 @@ test_that("Equivalence", {
         })
     names(variableList) <- selectedData
     
-    MAE2 <- RFLOMICS::prepareForIntegration(object           = MAE,
-                                            omicsNames       = selectedData,
-                                            variableLists    = variableList,
-                                            method           = "MOFA", 
-                                            transformData    = TRUE
+    MAE2 <- prepareForIntegration(object           = MAE,
+                                  omicsNames       = selectedData,
+                                  variableLists    = variableList,
+                                  method           = "MOFA", 
+                                  transformData    = TRUE
     )
     
     # ---- Equivalence after preparation : ----
     expect(is(MAE2, "MOFA"), failure_message = "Prepared MAE is not a MOFA object")
-    expect_equal(MOFA2::get_dimensions(MAE2)$D, lengths(variableList))
+    expect_equal(get_dimensions(MAE2)$D, lengths(variableList))
     
     protMat4 <- protMat3[variableList[["protetest"]],]
     protRes <- MAE2@data$protetest$group1
@@ -105,12 +105,12 @@ test_that("Equivalence", {
     
     # ---- Equivalence on results: ----
     
-    MAE3 <- RFLOMICS::runOmicsIntegration(MAE, preparedObject = MAE2, 
-                                          method = "MOFA", scale_views = TRUE, maxiter = 1000)
+    MAE3 <- runOmicsIntegration(MAE, preparedObject = MAE2, 
+                                method = "MOFA", scale_views = TRUE, maxiter = 1000)
     
     # equivalence
-    mofaobject <- MOFA2::create_mofa(data = list("protetest" = protMat4, "metatest" = metMat4), 
-                                     extract_metadata = TRUE)
+    mofaobject <- create_mofa(data = list("protetest" = protMat4, "metatest" = metMat4), 
+                              extract_metadata = TRUE)
     data_opts  <- get_default_data_options(mofaobject)
     model_opts <- get_default_model_options(mofaobject)
     train_opts <- get_default_training_options(mofaobject)
@@ -140,5 +140,4 @@ test_that("Equivalence", {
     expect_equal(resRFLOMICSW, resEquivalenceW)
     expect_equal(resRFLOMICS, resEquivalence, tolerance = 10^-5)
 })
-
 
