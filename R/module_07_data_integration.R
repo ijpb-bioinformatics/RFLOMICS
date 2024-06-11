@@ -1698,7 +1698,7 @@
 
 #' @noRd
 #' @keywords internal
-#' @importFrom DT formatStyle datatable renderDataTable
+#' @importFrom DT formatStyle datatable renderDataTable styleInterval
 .outMOFARelations <- function(resMOFA) {
     
     mofaText <- paste0("Each of the cells is the pvalue result from a kruskal-wallis test between the factor and the response variable.",
@@ -1715,12 +1715,12 @@
             renderDataTable({
                 datatable(ResDF, class = 'cell-border stripe', 
                           options = list(dom = 't'))  |>
-                    DT::formatStyle(
+                    formatStyle(
                         columns = colnames(ResDF),
-                        backgroundColor = DT::styleInterval(brks, 
-                                                            c('forestgreen', 
-                                                              "yellow2",
-                                                              'white'))) |> 
+                        backgroundColor = styleInterval(brks, 
+                                                        c('forestgreen', 
+                                                          "yellow2",
+                                                          'white'))) |> 
                     formatSignif(columns = seq_len(ncol(ResDF)), 
                                  digits = 3)
             }, options = list(pageLength = 15, lengthChange = FALSE))
