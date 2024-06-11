@@ -281,13 +281,18 @@ RflomicsMAE <- function(experiments = ExperimentList(),
     for(slot in c("ExperimentList", "colData", "sampleMap", "drops")) {
         slot(rflomicsMAE, slot) <- slot(MAE, slot)
     }
+    
+    Sys.setlocale('LC_TIME', 'C') # change for english
+    date <- format(Sys.time(), '%d %B %Y - %H:%M')
+    Sys.setlocale('LC_TIME') # return to default system time
+    
     rflomicsMAE@metadata <- 
       list("omicList"            = omicList,
            "projectName"         = projectName,
            "design"              = design,
            "IntegrationAnalysis" = IntegrationAnalysis,
            "sessionInfo"         = session_info(),
-           "date"                = format(Sys.time(), '%d %B %Y'),
+           "date"                = date,
            "rflomicsVersion"     = packageVersion('RFLOMICS'))
     
     return(rflomicsMAE)
