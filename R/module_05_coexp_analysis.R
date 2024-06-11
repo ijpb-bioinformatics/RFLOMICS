@@ -314,7 +314,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
         progress$inc(1/2, detail = "In progress")
         #----------------------#
         
-        message("# 9- CoExpression analysis... ", dataset )
+        message("[RFLOMICS] # 9- CoExpression analysis... ", dataset )
         
         dataset.SE <- session$userData$FlomicsMultiAssay[[dataset]]
         # run coseq

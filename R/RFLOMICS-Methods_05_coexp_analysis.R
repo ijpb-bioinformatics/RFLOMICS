@@ -194,8 +194,8 @@ setMethod(f = "runCoExpression",
                      
                      # Print the selected GaussianModel
                      if (cmd) {
-                       message("Use ", GaussianModel)
-                       message("Scale each protein (center = TRUE, scale = TRUE)")
+                       message("[RFLOMICS] # Use ", GaussianModel)
+                       message("[RFLOMICS] # Scale each protein (center = TRUE, scale = TRUE)")
                      } 
                      CoExpAnal[["transformation.prot"]] <- "scaleProt"
                      counts[] <- t(apply(counts,1,function(x){scale(x, center = TRUE, scale = TRUE) }))
@@ -211,8 +211,8 @@ setMethod(f = "runCoExpression",
                      
                      # Print the selected GaussianModel
                      if (cmd) {
-                       message("Use ", GaussianModel)
-                       message("Scale each metabolite (center = TRUE, scale = TRUE)")
+                       message("[RFLOMICS] # Use ", GaussianModel)
+                       message("[RFLOMICS] # Scale each metabolite (center = TRUE, scale = TRUE)")
                      } 
                      CoExpAnal[["transformation.metabo"]] <- "scaleMetabo"
                      counts[] <- t(apply(counts,1,function(x){ scale(x, center = TRUE, scale = TRUE) }))
@@ -228,7 +228,7 @@ setMethod(f = "runCoExpression",
             
             # run coseq : on local machine or remote cluster
             
-            if (cmd) message("#     => coseq... ")
+            if (cmd) message("[RFLOMICS] #     => coseq... ")
             
             
             counts <- counts[, match(rownames(Groups), colnames(counts))]

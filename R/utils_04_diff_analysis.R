@@ -36,13 +36,13 @@
                    norm.factors = norm.factors)
     
     # Run the model
-    if (cmd) message("[cmd] dge <- edgeR::estimateGLMCommonDisp(dge, design=model_matrix)")
+    if (cmd) message("[RFLOMICS] [cmd] dge <- edgeR::estimateGLMCommonDisp(dge, design=model_matrix)")
     dge <- estimateGLMCommonDisp(dge, design=model_matrix)
-    if (cmd) message("[cmd] dge <- edgeR::estimateGLMTrendedDisp(dge, design=model_matrix)")
+    if (cmd) message("[RFLOMICS] [cmd] dge <- edgeR::estimateGLMTrendedDisp(dge, design=model_matrix)")
     dge <- estimateGLMTrendedDisp(dge, design=model_matrix)
-    if (cmd) message("[cmd] dge <- edgeR::estimateGLMTagwiseDisp(dge, design=model_matrix)")
+    if (cmd) message("[RFLOMICS] [cmd] dge <- edgeR::estimateGLMTagwiseDisp(dge, design=model_matrix)")
     dge <- estimateGLMTagwiseDisp(dge, design=model_matrix)
-    if (cmd) message("[cmd] fit.f <- edgeR::glmFit(dge,design=model_matrix)")
+    if (cmd) message("[RFLOMICS] [cmd] fit.f <- edgeR::glmFit(dge,design=model_matrix)")
     fit.f <- glmFit(dge,design=model_matrix)
     
     
@@ -76,7 +76,7 @@
         
     }
     else{
-        if(cmd) message("[cmd] apply model to each contrast")
+        if(cmd) message("[RFLOMICS] [cmd] apply model to each contrast")
         ResGlm <-  lapply(Contrasts.Sel$contrast, function(x){
             .tryRflomics(glmLRT(fit.f, contrast = unlist(Contrasts.Coeff[x,])))
         })
@@ -196,7 +196,7 @@
         
     }
     else{
-        if(cmd) message("[cmd] fit contrasts")
+        if(cmd) message("[RFLOMICS] [cmd] fit contrasts")
         ResGlm <-  lapply(Contrasts.Sel$contrast, function(x){
             .tryRflomics(contrasts.fit(fit, contrasts  = as.vector(unlist(Contrasts.Coeff[x,]))))
         })

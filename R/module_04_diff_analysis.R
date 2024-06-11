@@ -255,8 +255,8 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     # Run the analysis only if the 'diff' object is empty
     if(length(metadata(dataset.SE)$DiffExpAnal) == 0){
       
-      message("# 4- Diff Analysis... ", dataset)
-      message("#    => Filter Diff Analysis...")
+      message("[RFLOMICS] # 4- Differential Analysis... ", dataset)
+      message("[RFLOMICS] #    => Filtering differential analysis...")
       
       # run diff analysis with selected method
       dataset.SE <- runDiffAnalysis(
@@ -270,7 +270,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     }
     else{
       # If the differential analysis has already run, do not run it again
-      message("#    => Filter Diff Analysis...")
+      message("[RFLOMICS] #    => Filtering differential analysis...")
       ### adj_pvalue filtering by calling the RundDiffAnalysis method without filtering
       dataset.SE <- filterDiffAnalysis(
         object        = dataset.SE,

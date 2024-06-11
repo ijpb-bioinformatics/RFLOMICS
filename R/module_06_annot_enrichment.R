@@ -595,7 +595,7 @@
       messList <- switch(listSource,
                          "DiffExpEnrichAnal" = "differential expression",
                          "CoExpEnrichAnal" = "co-expression clusters")
-      message("# 11- ",
+      message("[RFLOMICS] # 11- ",
               database,
               " Enrichment Analysis of ",
               messList ,

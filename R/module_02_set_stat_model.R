@@ -70,8 +70,8 @@
         datasetNames = getDatasetNames(session$userData$FlomicsMultiAssay),
         multiAnalyses = c("IntegrationAnalysis"))
     
-    message("# 2- Statistical setting...")
-    message("#    => model formula: ", input$model.formulae)
+    message("[RFLOMICS] # 2- Statistical setting...")
+    message("[RFLOMICS] #    => model formula: ", input$model.formulae)
     
     # => Set the model formulae
     session$userData$FlomicsMultiAssay <- setModelFormula(session$userData$FlomicsMultiAssay, input$model.formulae)
@@ -157,7 +157,7 @@
       
     }) %>% reduce(rbind)
     
-    message("#    => selected contrasts: ", nrow(contrast.sel.vec))
+    message("[RFLOMICS] #    => selected contrasts: ", nrow(contrast.sel.vec))
     
     # check if user has selected the contrasts to test
     if(nrow(contrast.sel.vec) == 0){
