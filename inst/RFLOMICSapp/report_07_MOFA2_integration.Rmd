@@ -264,7 +264,7 @@ for (i in seq_len(length(rownames(relationsDF)))) {
     outMOFA <- c(outMOFA,
              paste0("\n#### ", rownames(relationsDF)[i], " \n"))
     
-    childTest <-  c("```{r, fig.width = fig_width, fig.height = fig_height}\n",
+    childTest <-  c("```{r, fig.width = 15, fig.height = 5.5}\n",
                     "MOFA2::plot_factor(
                     MOFARes,
                     factors = seq_len(min(5, sum(FactNum))),
