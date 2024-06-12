@@ -1,4 +1,4 @@
-## Response Variable: `r selectedResponse` 
+### Response Variable: `r selectedResponse` 
 
 ```{r setup, include = FALSE, hide = TRUE, eval = TRUE}
 explorDir <- paste0(outDir,"/","Integration/MixOmics/", selectedResponse, "/")
@@ -18,7 +18,7 @@ fig_width <- 15
 nrow_plot <- ceiling(length(set_res$selectData)/2)
 ```
 
-### Overview
+#### Overview
 
 This overview present the number of observations and the number of features per dataset.
 `r ifelse(set_res$sparsity, "As a sparse analysis was performed, you will find for each component and each table the best number of features associated.",  "")`
@@ -60,7 +60,7 @@ Keep in mind the purpose of (s)plsda is not the same as pca, it does not aim at 
 RFLOMICS:::plotMOVarExp(rflomics.MAE, selectedResponse = selectedResponse)
 ```
 
-### Idividuals plots {.tabset}
+#### Idividuals plots {.tabset}
 
 These graphs represent the samples coordinates projected onto the first 
 <span style=color:blue>`r ncompDat`</span> components found by mixOmics.
@@ -75,7 +75,7 @@ outMixOmics <- NULL
 
 for (i in seq_len(ncompDat - 1)) {
     outMixOmics <- c(outMixOmics,
-                 paste0("\n#### Comp ", i, " - ", i + 1, "\n"))
+                 paste0("\n##### Comp ", i, " - ", i + 1, "\n"))
     
     childTest <-  c(
         "```{r, fig.width = fig_width, fig.height = fig_height}\n",
@@ -94,7 +94,7 @@ knitr::asis_output(outMixOmics)
 
 ```
 
-### Loadings {.tabset}
+#### Loadings {.tabset}
 
 For each block (datatable), these graphs represent the 15 first features in 
 terms of loadings score (coefficients) for the first 
@@ -110,7 +110,7 @@ outMixOmics <- NULL
 
 for (i in seq_len(ncompDat)) {
     outMixOmics <- c(outMixOmics,
-                 paste0("\n#### Comp ", i, "\n"))
+                 paste0("\n##### Comp ", i, "\n"))
     
     childTest <-  c(
         "```{r, fig.width = fig_width, fig.height = fig_height}\n",
@@ -127,7 +127,7 @@ knitr::asis_output(outMixOmics)
 
 ```
 
-### {.unlisted .unnumbered}
+#### {.unlisted .unnumbered}
 
 ---
 

@@ -114,23 +114,35 @@ asis_output(out)
 
 <!-- data integration  -->
 
+```{r, include=FALSE}
+condMulti <- length(getAnalyzedDatasetNames(rflomics.MAE)$DataProcessing) > 1
+condMOFA <- !is.null(getMOFA(rflomics.MAE))
+condMO <- !is.null(getMixOmics(rflomics.MAE))
+condres <- (condMulti && condMOFA) || (condMulti && condMO)
+```
+
+
+`r if(!condMulti) {"\\begin{comment}"}`
+# 7 - Multi-Omics data integration
+`r if(!condMulti) {"\\end{comment}"}`
+
+`r if(condMulti && !(condres)) {"<p style=\"color:orange\"> No multi-omics integration analysis was performed on these data.</p>"}` 
+<br>
+
 <!-- ## with MOFA -->
+`r if(!condres) {"\\begin{comment}"}`
+## 7.1 - MOFA2 Integration
 
-`r if(is.null(getMOFA(rflomics.MAE))) {"\\begin{comment}"}`
+`r if(!condMOFA) {"<p style=\"color:orange\"> Integration analysis using MOFA2 was not performed on these data.</p>"}` 
 
-<br>
-<br>
+`r if(!condres) {"\\end{comment}"}`
 
-# 7.1 MOFA2 Integration
-
-`r if(is.null(getMOFA(rflomics.MAE))) {"\\end{comment}"}`
-
-```{r , eval = !is.null(getMOFA(rflomics.MAE)), hide = is.null(getMOFA(rflomics.MAE)) }
+```{r , eval = condMOFA, hide = !condMOFA}
 library(MOFA2)
 ```
 
 
-```{r MOFA2, eval = !is.null(getMOFA(rflomics.MAE)), hide = is.null(getMOFA(rflomics.MAE)) }
+```{r MOFA2, eval = condMOFA, hide = !condMOFA }
 
 out <- NULL
 
@@ -143,16 +155,16 @@ asis_output(out)
 
 <!-- ## with MixOmics -->
 
-`r if(is.null(getMixOmics(rflomics.MAE))) {"\\begin{comment}"}`
-
-<br>
 <br>
 
-# 7.2 MixOmics Integration
+`r if(!condres) {"\\begin{comment}"}`
+## 7.2 - MixOmics Integration
 
-`r if(is.null(getMixOmics(rflomics.MAE))) {"\\end{comment}"}`
+`r if(!condMO) {"<p style=\"color:orange\"> Integration analysis using mixOmics was not performed on these data.</p>"}` 
 
-```{r, eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE))}
+`r if(!condres) {"\\end{comment}"}`
+
+```{r, eval = condMO, hide = !condMO}
 library(mixOmics)
 MOres <- NULL
 funcMixo <- NULL
@@ -161,7 +173,7 @@ funcMixo <- ifelse(MOres$sparsity, "splsda",  "plsda")
 funcMixo <- ifelse(length(MOres$selectData) > 1, paste0("block.", funcMixo), funcMixo)
 ```
 
-```{r , eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE)) }
+```{r , eval = condMO, hide = !condMO }
 HTML(paste0("MixOmics analyses were performed on <span style=\"color:blue\">",  
                        paste(MOres$selectData, collapse = ", "), 
                        "</span> datatables with function  <span style=\"color:DarkOrchid\">", 
@@ -172,7 +184,7 @@ HTML(paste0("MixOmics analyses were performed on <span style=\"color:blue\">",
                        MOres$scale_views, "."))
 ```
 
-```{r , eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE)), results="asis"}
+```{r , eval = condMO, hide = !condMO, results="asis"}
 listSel <- NULL
 listSel <- MOres$selectionMethod
 
@@ -199,7 +211,7 @@ rm(listSel, listSel2)
 ```
 
 
-```{r mixOmics, eval = !is.null(getMixOmics(rflomics.MAE)), hide = is.null(getMixOmics(rflomics.MAE)) }
+```{r mixOmics, eval = condMO, hide = !condMO }
 
 if (MOres$sparsity) {
     HTML(paste0("Sparse analysis was performed on these data with <span style=\"color:blue\">",  
@@ -232,7 +244,7 @@ This information session corresponds to the system/environment used during the a
 <summary>Click here</summary>
 
 ```{r session}
-rflomics.MAE@metadata$sessionInfo
+metadata(rflomics.MAE)$sessionInfo
 ```
 </details>
 

@@ -32,7 +32,7 @@ FactNum <- apply(VarExp, 1, FUN = function(vect) any(vect > 5)) # Percentage
 nMOFAFactors <- MOFARes@dimensions$K
 ```
 
-## Settings
+### Settings
 
 MOFA2  R package was used to perform data unsupervised integration, on <span style="color:blue">`r paste(MOFA2::views_names(MOFARes), collapse = ", ")`</span> datatables.
 
@@ -84,9 +84,9 @@ plot_data_overview(MOFARes)
 * RNASeq data were transformed using <span style="color:DarkOrchid">voom</span> transformation from limma package 
 * Batch effects `r paste(RFLOMICS::getBatchFactors(rflomics.MAE), collapse = ", ")`  were corrected using <span style="color:DarkOrchid">removebatcheffect</span> function from limma package.
 
-##  Results
+###  Results
 
-### Correlation between factors
+#### Correlation between factors
 
 ```{r}
 mat_cor <- stats::cor(get_factors(MOFARes)[[1]])
@@ -102,7 +102,7 @@ The correlation between factor is an indicator to judge the quality of your resu
 plot_factor_cor(MOFARes)
 ```
 
-### Explained Variance
+#### Explained Variance
 
 These two graphs represent the cumulative explained variance per dataset and its decomposition by factor and dataset. This is the amount of variance within the dataset that is explained by the model (factors). The second graph is read line by line, each line describing the percentage of variance explained by a factor for each table. For two tables X and Y, it is interpreted as follows: 'Factor k explains xx% of the total variance of dataset X and yy% of the total variance of dataset Y.'
 
@@ -118,7 +118,7 @@ g2 <- plot_variance_explained(MOFARes, x = "view", y = "factor") +
 ggpubr::ggarrange(g1, g2, ncol = 2)
 ```
 
-### Weights of the factors explaining the most variance {.tabset}
+#### Weights of the factors explaining the most variance {.tabset}
 
 The following image shows the weights and their sign (positive or negative) of the *15 first features*, for each table and each factors for the first `r sum(FactNum)` factors. 
 
@@ -128,7 +128,7 @@ outMOFA <- NULL
 
 for (i in which(FactNum)) {
     outMOFA <- c(outMOFA,
-                 paste0("\n#### Factor", i, " \n"))
+                 paste0("\n##### Factor", i, " \n"))
     ggplot_sublist <- list()
     
     for (j in views_names(MOFARes)) {
@@ -154,7 +154,7 @@ knitr::asis_output(outMOFA)
 
 ```
 
-### Heatmaps {.tabset}
+#### Heatmaps {.tabset}
 
 For all views, these heatmaps show the *15 first features* in terms of weights for the first `r sum(FactNum)` factors. These are the transformed and processed data passed to MOFA2, not the raw data or denoised data.
 
@@ -180,13 +180,13 @@ for (fac in seq_len(MOFARes@dimensions$K)) {
 dev.off()
 ```
 
-#### Factor 1
+##### Factor 1
 
 ```{r MOFA2_heatmap1, fig.width = fig_width, fig.height = fig_height*1.5}
 ggpubr::as_ggplot(list_arrange[[1]])
 ```
 
-#### Factor 2
+##### Factor 2
 
 ```{r MOFA2_heatmap2, fig.width = fig_width, fig.height = fig_height*1.5}
 ggpubr::as_ggplot(list_arrange[[2]])
@@ -194,7 +194,7 @@ ggpubr::as_ggplot(list_arrange[[2]])
 
 `r if(sum(FactNum)<3) {"\\begin{comment}"}`
 
-#### Factor 3
+##### Factor 3
 
 ```{r MOFA2_heatmap3, fig.width = fig_width, fig.height = fig_height*1.5}
 ggpubr::as_ggplot(list_arrange[[3]])
@@ -205,7 +205,7 @@ ggpubr::as_ggplot(list_arrange[[3]])
 
 `r if(sum(FactNum)<4) {"\\begin{comment}"}`
 
-#### Factor 4
+##### Factor 4
 
 ```{r MOFA2_heatmap3, fig.width = fig_width, fig.height = fig_height*1.5}
 ggpubr::as_ggplot(list_arrange[[4]])
@@ -215,7 +215,7 @@ ggpubr::as_ggplot(list_arrange[[4]])
 
 `r if(sum(FactNum)<5) {"\\begin{comment}"}`
 
-#### Factor 5
+##### Factor 5
 
 ```{r MOFA2_heatmap3, fig.width = fig_width, fig.height = fig_height*1.5}
 ggpubr::as_ggplot(list_arrange[[5]])
@@ -223,7 +223,7 @@ ggpubr::as_ggplot(list_arrange[[5]])
 
 `r if(sum(FactNum)<5) {"\\end{comment}"}`
 
-### Correlation between factors and metadata 
+#### Correlation between factors and metadata 
 
 This table presents the adjusted pvalues from a kruskall-wallis test between 
 each factor and each biological or metadata factor entered in the design.
@@ -254,7 +254,7 @@ DT::datatable(relationsDF,
 <br>
 
 ```{r, results="asis", fig.width = fig_width, fig.height = fig_height}
-cat('\n### {.unlisted .unnumbered .tabset} \n')
+cat('\n#### {.unlisted .unnumbered .tabset} \n')
 cat("\n")
 
 childTest <- NULL
@@ -262,7 +262,7 @@ outMOFA <- NULL
 
 for (i in seq_len(length(rownames(relationsDF)))) {
     outMOFA <- c(outMOFA,
-             paste0("\n#### ", rownames(relationsDF)[i], " \n"))
+             paste0("\n##### ", rownames(relationsDF)[i], " \n"))
     
     childTest <-  c("```{r, fig.width = 15, fig.height = 5.5}\n",
                     "MOFA2::plot_factor(
