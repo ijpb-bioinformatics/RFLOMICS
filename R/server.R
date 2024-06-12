@@ -46,7 +46,7 @@ rflomicsServer <- function(input, output, session) {
     tagList(
       sidebarMenu(id="tabs",
                   menuItem(text = "Welcome", tabName = "coverPage", icon = icon('dna'), selected = TRUE),
-                  menuItem(text = "Glossary page", tabName = "GlossaryPage", icon = icon("address-book")),
+                  # menuItem(text = "Glossary page", tabName = "GlossaryPage", icon = icon("address-book")),
                   menuItem(text = "Load Data", tabName = "importData", icon = icon('download')),
                   menuItemOutput(outputId = "SetUpModelMenu"),
                   menuItemOutput(outputId = "omics"),
@@ -164,10 +164,10 @@ rflomicsServer <- function(input, output, session) {
         ),
         #### Cover Page        ####
         ###########################
-        tabItem(tabName = "GlossaryPage",
-                GlossaryPageUI()
-                
-        ),
+        # tabItem(tabName = "GlossaryPage",
+        #         GlossaryPageUI()
+        #         
+        # ),
         #### Import data       ####
         ###########################
         tabItem(tabName = "importData",
