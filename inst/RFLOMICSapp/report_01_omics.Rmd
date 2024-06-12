@@ -71,7 +71,7 @@ for(analysisType in names(analyzedDatasetNames)){
 <br>
 
 <!-- Data pre-processing -->
-# 3 Data pre-processing
+# 3 - Data pre-processing
 
 This pre-processing step aims to reduce noise and enhance statistical power. It also aims to reduce the technical variability between samples by normalizing them, and stabilizing the variance through data transformation, necessary to meet the assumptions of statistical models. The methods are adapted to the type of omics.
 
@@ -98,7 +98,7 @@ asis_output(out)
 <br>
 
 <!-- differential expression analysis -->
-# 4 Differential expression analysis
+# 4 - Differential expression analysis
 
 The goal of Differential Expression Analysis is to identify omics features (transcripts, proteins or metabolites) that exhibit significant differences in expression levels across various experimental conditions or groups. allowing researchers to understand the biological mechanisms underlying those differences.
 
@@ -140,7 +140,7 @@ asis_output(out)
 <br>
 
 <!-- co-expression analysis -->
-# 5 Co-expression analysis
+# 5 - Co-expression analysis
 
 Co-expression analysis enables the identification of gene sets with correlated expression levels, suggesting similar regulation or interactions in common biological pathways. For this step, we have adopted an approach based on mixture models. This method is implemented in the **coseq** R package (ref).
 
@@ -180,7 +180,7 @@ asis_output(out)
 <br>
 
 <!-- enrichement analysis on DE G/P/M lists with clusterprofiler -->
-# 6 Enrichment analysis
+# 6 - Enrichment analysis
 
 Enrichment analysis, particularly through methods like 
 **Overrepresentation Analysis (ORA)** (Boyle et al. 2004) such as 
