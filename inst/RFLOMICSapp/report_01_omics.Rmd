@@ -70,6 +70,8 @@ for(analysisType in names(analyzedDatasetNames)){
 <br>
 <br>
 
+---
+
 <!-- Data pre-processing -->
 # 3 - Data pre-processing
 
@@ -96,6 +98,8 @@ asis_output(out)
 
 <br>
 <br>
+
+---
 
 <!-- differential expression analysis -->
 # 4 - Differential expression analysis
@@ -139,6 +143,8 @@ asis_output(out)
 <br>
 <br>
 
+---
+
 <!-- co-expression analysis -->
 # 5 - Co-expression analysis
 
@@ -178,6 +184,8 @@ asis_output(out)
 
 <br>
 <br>
+
+---
 
 <!-- enrichement analysis on DE G/P/M lists with clusterprofiler -->
 # 6 - Enrichment analysis

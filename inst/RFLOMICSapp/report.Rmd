@@ -122,6 +122,8 @@ condres <- (condMulti && condMOFA) || (condMulti && condMO)
 ```
 
 
+---
+
 `r if(!condMulti) {"\\begin{comment}"}`
 # 7 - Multi-Omics data integration
 `r if(!condMulti) {"\\end{comment}"}`

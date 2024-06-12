@@ -1,5 +1,5 @@
 
-# 1 Loaded Data
+# 1 - Loaded Data
 
 <br>
 
@@ -38,7 +38,9 @@ plotDataOverview(object = raw.rflomics.MAE)
 <br>
 <br>
 
-# 2 Statistical setting
+---
+
+# 2 - Statistical setting
 
 <br>
 
