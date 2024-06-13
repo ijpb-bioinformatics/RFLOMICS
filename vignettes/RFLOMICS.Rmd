@@ -14,9 +14,14 @@ vignette: >
  
 
 abstract: > 
-   This document will go through a multi-omics data analysis with the RFLOMICS package. 
-    It will be shown how to set up the statistical framework of the designed protocol: ie translate biological condition comparisons into contrasts, perform quality controls and statistical analysis of each omics dataset: ie. find differentially expressed genes/proteins/metabolites (DEF) per contrasts, identify clusters of co-expressed genes and perform a gene set enrichment analysis from lists of DEF or from clusters of co-expressed genes/proteins/metabolites. 
-   
+  This document will go through single and multi-omics data analysis with the RFLOMICS package. 
+  In a first part, it will be shown how to set up the statistical framework of the designed protocol: ie translate
+  biological condition comparisons into contrasts, perform quality controls, data pre-processing and statistical
+  analysis of each omics dataset: ie. find differentially expressed genes/proteins/metabolites (DEF) per contrasts,
+  identify clusters of co-expressed genes and perform a gene set enrichment analysis of the lists of DEF or clusters
+  of co-expressed genes/proteins/metabolites. In a second part, the vignette will show how to simultaneously
+  identify key variables (genes/proteins/metabolites) and maximizes the correlation between the different omics
+  datasets to explain the outcome of one the biological factor.
 ---
 
 
@@ -55,6 +60,8 @@ As soon as this file is loaded, we can define the type (Biological factor : Bio;
 * *It is required to have minimum 1 biological factor (maximum 3 biological factors) and 1 batch factor. The order of the columns does not matter.*
 
 * *It possible to exclude samples from design. These samples will be excluded from the analysis even if they are present in the omics dataset matrix.*
+
+* *It is possible to choose the order of interest for factor modalities* 
 
 ## Load Omics data
 
@@ -112,20 +119,21 @@ For RNAseq data, low expressed genes are filtered so that only genes whose cpm e
 # geneToKeep <- counts[rowSums(edgeR::cpm(counts) >= CPM_Cutoff) >= x, ]
 ```
 
-To correct for differences in sequencing depths (library size), RFlomics proposes one method for normalization, **"TMM method"** from edgeR package.
+To correct for differences in sequencing depths (library size), Rflomics proposes one method for normalization, **"TMM method"** from edgeR package.
 
 ```{r}
 # dge <- edgeR::DGEList(counts=counts, group=groups)
 # dge <- edgeR::calcNormFactors(dge, method="TMM")
 ```
 
-For RNAseq data the QC graphs are:
+For RNAseq data the QC graphs are drawn before and after the filtering and normalization steps. 
+The following graphs are displayed:
 
-- The library size distribution which
-- Data Summary 
-- Distribution
-- Distribution density
-- Principal component analysis
+- The log2(count) distribution per sample: Expect aligned medians. Samples with shifted median may be outliers.
+- The library size distribution which is the distribution of the total number of reads per sample.
+- The density distribution of log2(count) per sample: Expect a unimodal gaussian density distribution.
+- An interactive Principal Component Analysis allowing to color samples by any factor of the design to 
+decode the main sources of variation in the data.
 
 ![ ](Images/03_DataProcess.png){width=80%}
 
@@ -157,8 +165,7 @@ to the co-expression analysis or to the annotation enrichment step.
  
 ## Coexpression analysis
 
-* In this tab panel, choice is given to merge (**union**) or intersect  (**intersection**) the lists of differentially expressed 
-genes/proteins/metabolites associated to contrasts.
+* In this tab panel, choice is given to merge (**union**) or intersect  (**intersection**) the lists of differentially expressed genes/proteins/metabolites associated to contrasts.
 
 * Co-expression analysis is done using to the **coseq** package with a set of optimal parameters.
 
