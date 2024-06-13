@@ -32,7 +32,6 @@ Imports:
     vroom,
     AnnotationDbi,
     circlize,
-    clustermq,
     clusterProfiler,
     ComplexHeatmap,
     coseq,

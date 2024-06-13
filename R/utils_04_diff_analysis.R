@@ -15,7 +15,7 @@
 #' @importFrom stats model.matrix as.formula 
 #' @importFrom edgeR DGEList estimateGLMCommonDisp estimateGLMTrendedDisp 
 #' estimateGLMTagwiseDisp glmFit glmLRT topTags
-#' @importFrom clustermq Q 
+#  @importFrom clustermq Q
 #' @importFrom dplyr filter rename
 #' @noRd
 #'

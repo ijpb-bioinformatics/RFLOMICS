@@ -231,7 +231,7 @@
 #' @param param.list list of coseq parameters
 #' @return coseqResults
 #' @importFrom coseq coseq
-#' @importFrom clustermq Q_rows 
+#  @importFrom clustermq Q_rows 
 #' @importFrom dplyr group_by summarise mutate filter n
 #' @keywords internal
 #' @noRd
