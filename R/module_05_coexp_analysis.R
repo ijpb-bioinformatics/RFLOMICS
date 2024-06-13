@@ -40,11 +40,11 @@ CoSeqAnalysisUI <- function(id){
               successful if there is at least a result for more than the
               half of K. In case of unsuccessful results, a detailed table 
               of errors will appear."),
-            h4(tags$span("Cluster option", style = "color:orange")),
-            p("If you have a cluster account, you can configure a remote 
-              access to it
-              (", a("see config_file", href="install_clustermq.txt"),")",
-              "and speed up results obtention."),
+            # h4(tags$span("Cluster option", style = "color:orange")),
+            # p("If you have a cluster account, you can configure a remote 
+            #   access to it
+            #   (", a("see config_file", href="install_clustermq.txt"),")",
+            #   "and speed up results obtention."),
                 ))),
         ### parametres for Co-Exp
         fluidRow(
@@ -200,16 +200,25 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                 ),
                 fluidRow(
                     column(8,
-                           sliderInput(session$ns("K.values"), label = .addBSpopify(label = 'K ranges:', content = "K=number of clusters"), min=2, max=30, value=c(2,7), step=1)),
+                           sliderInput(session$ns("K.values"), 
+                                       label = .addBSpopify(label = 'K ranges:', 
+                                                            content = "K=number of clusters"), 
+                                       min=2, max=30, value=c(2,7), step=1)),
                     column(4,
-                           numericInput(inputId = session$ns("iter"), label=.addBSpopify(label = 'Iteration:', content = "Number of replicates"), value=5, min = 5, max=20, step = 5))
+                           numericInput(inputId = session$ns("iter"), 
+                                        label=.addBSpopify(label = 'Iteration:', 
+                                                           content = "Number of replicates"),
+                                        value=5, min = 5, max=20, step = 5))
                 ),
                 hr(),
                 fluidRow(
                     
-                    column(8,
-                           materialSwitch(inputId = session$ns("clustermqCoseq"), label = .addBSpopify(label = 'use remote cluster', content = "send calculation to the cluster"), value = FALSE, status = "success")
-                    ),
+                    # column(8,
+                    #        materialSwitch(inputId = session$ns("clustermqCoseq"), 
+                    #                       label = .addBSpopify(label = 'use remote cluster', 
+                    #                                            content = "send calculation to the cluster"), 
+                    #                       value = FALSE, status = "success")
+                    # ),
                     column(4, actionButton(session$ns("runCoSeq"),"Run", class = "butt")))
             ))
     })
@@ -232,14 +241,16 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
     })
     
     # update K value (min max)
-    observeEvent( c(input$K.values, input$clustermqCoseq, input$iter) ,{
+    observeEvent( c(input$K.values, 
+                    # input$clustermqCoseq,
+                    input$iter) ,{
         
         min <- input$K.values[1]
         max <- input$K.values[2]
         
-        if(input$clustermqCoseq == FALSE && input$iter > 5){
-            if ((max - min) > 5) {max <- min + 5}
-        }
+        # if(input$clustermqCoseq == FALSE && input$iter > 5){
+        #     if ((max - min) > 5) {max <- min + 5}
+        # }
         
         # Control the value, min, max, and step.
         # Step size is 2 when input value is even; 1 when value is odd.
@@ -288,7 +299,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                            transformation = input$transfo,
                            normFactors    = input$norm,
                            GaussianModel  = input$GaussianModel, 
-                           clustermq      = input$clustermqCoseq,
+                           # clustermq      = input$clustermqCoseq,
                            scale          = input$scale)
         
         if(check_run_coseq_execution(
@@ -328,7 +339,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                                       scale = input$scale,
                                       normFactors = input$norm,
                                       GaussianModel = input$GaussianModel, 
-                                      clustermq = input$clustermqCoseq, 
+                                      # clustermq = input$clustermqCoseq, 
                                       cmd = TRUE, silent = FALSE)
         
         session$userData$FlomicsMultiAssay[[dataset]] <- dataset.SE

@@ -145,11 +145,11 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                  value=local.rea.values$abs.logFC.cutoff, min=0, max=100, 0.01),
                
                # use of cluster. need setting step
-               materialSwitch(
-                 inputId = session$ns("clustermq"),
-                 label=.addBSpopify(label = 'use remote Cluster:', 
-                                    content = "send calculation to the cluster"),
-                 value = FALSE, status = "success"),
+               # materialSwitch(
+               #   inputId = session$ns("clustermq"),
+               #   label=.addBSpopify(label = 'use remote Cluster:', 
+               #                      content = "send calculation to the cluster"),
+               #   value = FALSE, status = "success"),
                
                actionButton(inputId = session$ns("runAnaDiff"),
                             label = "Run", class = "butt")#,
@@ -206,7 +206,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     
     # list of chosen parameters
     param.list <- list(method        = input$AnaDiffMethod,
-                       clustermq     = input$clustermq,
+                       # clustermq     = input$clustermq,
                        p.adj.method  = "BH",
                        p.adj.cutoff  = input$p.adj.cutoff, 
                        abs.logFC.cutoff   = input$abs.logFC.cutoff)
@@ -266,7 +266,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         object        = dataset.SE,
         p.adj.method  = "BH",
         method        = input$AnaDiffMethod,
-        clustermq     = input$clustermq,
+        # clustermq     = input$clustermq,
         p.adj.cutoff  = input$p.adj.cutoff, 
         logFC.cutoff  = input$abs.logFC.cutoff,
         cmd           = TRUE)
