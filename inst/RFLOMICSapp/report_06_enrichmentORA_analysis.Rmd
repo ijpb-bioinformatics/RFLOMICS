@@ -22,7 +22,7 @@ variableName   <- RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]
 validContrasts <- getValidContrasts(dataset.SE)
 
 out <- NULL
-for(ontology in names(annot.list[[data]])){
+for (ontology in names(annot.list[[data]])){
   
   out <- c(out, knit_child(paste0(
     path.package("RFLOMICS"),"/RFLOMICSapp/",

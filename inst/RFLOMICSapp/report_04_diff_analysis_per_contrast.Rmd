@@ -17,8 +17,8 @@ opts_chunk$set(
 )
 
 dataset.SE <- getRflomicsSE(rflomics.MAE, data)
-evalPCA <- dim(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]])[1] > 1
-evalExport <-  dim(dataset.SE@metadata[["DiffExpAnal"]][["TopDEF"]][[contrast]])[1] > 0
+evalPCA <- dim(metadata(dataset.SE)[["DiffExpAnal"]][["TopDEF"]][[contrast]])[1] > 1
+evalExport <-  dim(metadata(dataset.SE)[["DiffExpAnal"]][["TopDEF"]][[contrast]])[1] > 0
 ```
 
 
@@ -28,25 +28,25 @@ diff.plots <- plotDiffAnalysis(dataset.SE, contrastName=contrast)
 
 #### Pvalues distribution
 
-```{r pvDistrib-plot, out.width = "60%", fig.cap=paste0("<p style=\"color:grey\">","*fig: Distribution of non-adjusted p-values. The most desirable shape is a peak of p-values at 0 following by a uniform distribution.*", "</p>")}
+```{r pvDistrib-plot, out.width = "100%", fig.cap=paste0("<p style=\"color:grey\">","*fig: Distribution of non-adjusted p-values. The most desirable shape is a peak of p-values at 0 following by a uniform distribution.*", "</p>")}
 diff.plots$Pvalue.hist
 ```
 
 #### MA plot
 
-```{r MA-plot, out.width = "60%", fig.cap=paste0("<p style=\"color:grey\">","*fig: Expect a majority of ", variableName," around 0. The red points are the ", variableName," significantly over-expressed in the left factor's modality in the contrast expression whereas blue points are ",variableName," significantly under-expressed in the rigth factor's modality in the contrast expression. Only the top 20 ", variableName," DE are labeled.*", "</p>")}
+```{r MA-plot, out.width = "100%", fig.cap=paste0("<p style=\"color:grey\">","*fig: Expect a majority of ", variableName," around 0. The red points are the ", variableName," significantly over-expressed in the left factor's modality in the contrast expression whereas blue points are ",variableName," significantly under-expressed in the rigth factor's modality in the contrast expression. Only the top 20 ", variableName," DE are labeled.*", "</p>")}
 diff.plots$MA.plot
 ```
 
 #### VolcanoPlot
 
-```{r Volcano-plot, out.width = "60%", fig.cap=paste0("<p style=\"color:grey\">","*fig: Red points are ", variableName," of interest displaying both large magnitude log-fold-changes (x axis) and high statistical significance (y axis). Only the top 20 ",variableName," DE are labeled.*", "</p>")}
+```{r Volcano-plot, out.width = "100%", fig.cap=paste0("<p style=\"color:grey\">","*fig: Red points are ", variableName," of interest displaying both large magnitude log-fold-changes (x axis) and high statistical significance (y axis). Only the top 20 ",variableName," DE are labeled.*", "</p>")}
 diff.plots$Volcano.plot
 ```
 
-#### Heatmap:
+#### Heatmap
 
-```{r heatmap-plot, out.width = "60%", fig.cap=paste0("<p style=\"color:grey\">","*fig: Heatmap was performed on DE ", variableName," expression data table which has been transformed by: ", getTransSettings(dataset.SE)$method," method and normalized by: ", getNormSettings(dataset.SE)$method," method. Clustering was independently performed on samples (row) and centered ", variableName," (column) using euclidian distance and complete aggregation method*", "</p>")}
+```{r heatmap-plot, out.width = "100%", fig.cap=paste0("<p style=\"color:grey\">","*fig: Heatmap was performed on DE ", variableName," expression data table which has been transformed by: ", getTransSettings(dataset.SE)$method," method and normalized by: ", getNormSettings(dataset.SE)$method," method. Clustering was independently performed on samples (row) and centered ", variableName," (column) using euclidian distance and complete aggregation method*", "</p>")}
 plotHeatmapDesign(object = dataset.SE, contrastName = contrast)
 ```
 

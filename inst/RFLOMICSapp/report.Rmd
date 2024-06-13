@@ -122,9 +122,13 @@ condres <- (condMulti && condMOFA) || (condMulti && condMO)
 ```
 
 
----
+
+<br>
 
 `r if(!condMulti) {"\\begin{comment}"}`
+
+---
+
 # 7 - Multi-Omics data integration
 `r if(!condMulti) {"\\end{comment}"}`
 
@@ -238,6 +242,7 @@ asis_output(out)
 <br>
 <br>
 
+---
 # R Session
 
 This information session corresponds to the system/environment used during the analysis.

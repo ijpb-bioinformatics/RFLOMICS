@@ -48,7 +48,7 @@ to the **`r getDiffSettings(dataset.SE)$p.adj.method`** procedure with a **cutof
 
 #### Intersection
 
-```{r Upset_plot, fig.show = "hold", out.width = "80%", fig.cap=paste0("<p style=\"color:grey\">","*fig: This **UpSetR** plot gives the number of common and specific differential expressed ",variableName," per contrasts.*", "</p>")}
+```{r Upset_plot, fig.show = "hold", out.width = "100%", fig.cap=paste0("<p style=\"color:grey\">","*fig: This **UpSetR** plot gives the number of common and specific differential expressed ",variableName," per contrasts.*", "</p>")}
 
 DEF_mat <- as.data.frame(dataset.SE@metadata$DiffExpAnal[["mergeDEF"]])
 DEF_mat <- DEF_mat[c("DEF", validContrasts$contrastName)]

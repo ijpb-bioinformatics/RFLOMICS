@@ -12,22 +12,20 @@ ont.title <- switch (ontology,
 
 ```{r}
 
-MM.db <- switch (ontology,
-                 "GO" = {
-                   db <- dataset.SE@metadata[["DiffExpEnrichAnal"]][[ontology]]$list_args$OrgDb
-                   if(is.null(db))
-                     db <- dataset.SE@metadata[["CoExpEnrichAnal"]][[ontology]]$list_args$OrgDb
-                   paste0("Gene Ontology ([GO](https://geneontology.org/)). From ", db, 
-                          " annotation (", packageVersion(db),")",
-                          " **enrichGO()** function from ClusterProfilter was used.")
-                 },
-                 "KEGG" = {
-                   paste0("Kyoto Encyclopedia of Genes and Genomes ([KEGG](https://www.genome.jp/kegg/)).",
-                          " **enrichKEGG()** function from ClusterProfilter was used.")
-                 },
-                 "custom" = {
-                   paste0("Privided by user. File name: ????.",
-                          " **enricher()** function from ClusterProfilter was used.")}
+MM.db <- switch(ontology,
+                "GO" = {
+                    db <- getEnrichSettings(dataset.SE, from = annot, database = ontology)$OrgDb
+                    paste0("Gene Ontology ([GO](https://geneontology.org/)). From ", db, 
+                           " annotation (", packageVersion(db),")",
+                           " **enrichGO()** function from ClusterProfilter was used.")
+                },
+                "KEGG" = {
+                    paste0("Kyoto Encyclopedia of Genes and Genomes ([KEGG](https://www.genome.jp/kegg/)).",
+                           " **enrichKEGG()** function from ClusterProfilter was used.")
+                },
+                "custom" = {
+                    paste0("Provided by user. File name: ????.",
+                           " **enricher()** function from ClusterProfilter was used.")}
 )
 
 ```
@@ -39,9 +37,9 @@ MM.db <- switch (ontology,
 ```{r, results ='asis'}
 
 out <- NULL
-for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
+for (annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
   
-  if(!isTRUE(annot.list[[data]][[ontology]][[annot]]))
+  if (!isTRUE(annot.list[[data]][[ontology]][[annot]]))
     next
   
   # tabset for each list type
@@ -52,7 +50,7 @@ for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
                     "differentially expressed ", "co-expressed "), 
              variableName, " lists\n"),
       paste0("\n*Pvalue cut-off: ",
-             dataset.SE@metadata[[annot]][[ontology]]$list_args$pvalueCutoff, 
+             getEnrichPvalue(dataset.SE, from = annot, database = ontology),
              "*\n"))
   
   # summary
@@ -65,27 +63,27 @@ for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
   # table
   sumORA.ont <- sumORA(dataset.SE, from = annot, database = ontology)
   index <- names(sumORA.ont)[-1]
-  if("no-domain" %in% names(sumORA.ont)[-1]){
+  if ("no-domain" %in% names(sumORA.ont)[-1]) {
     names(sumORA.ont) <- 
       c(names(sumORA.ont)[1], ontology)
     index <- ontology
   }
   
   ## add tag to summary table 
-  if(annot == "DiffExpEnrichAnal"){
+  if (annot == "DiffExpEnrichAnal") {
     tag <- 
       validContrasts[which(validContrasts$contrastName %in% rownames(sumORA.ont)),]$tag
     sumORA.ont <- cbind(tag, sumORA.ont)
   }
   
-  write.table(sumORA.ont, file=paste0(annotDir[[data]][[annot]][[ontology]], 
+  write.table(sumORA.ont, file = paste0(annotDir[[data]][[annot]][[ontology]], 
                                       "summay_stat.txt"),
-              sep="\t", quote=FALSE, col.names=T, row.names=F)
+              sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
   
   DT.child <-  
     c("```{r}",
       "datatable(sumORA.ont, rownames = FALSE , class = 'cell-border stripe',
-                 options = list( pageLength = 6, scrollX = F, dom = 'tip'))",
+                 options = list(pageLength = 6, scrollX = FALSE, dom = 'tip'))",
       "```")
   out <- c(out, knit_child(text = DT.child, envir = environment(), quiet=TRUE))
   
@@ -114,7 +112,7 @@ for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
   }
   # Results per list
   sumORA.ont <- 
-    sumORA.ont[rowSums(sumORA.ont[index], na.rm = T) != 0,]
+    sumORA.ont[rowSums(sumORA.ont[index], na.rm = TRUE) != 0,]
   
   if(nrow(sumORA.ont) == 0) next
   
@@ -130,7 +128,7 @@ for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
       tag <- sumORA.ont[which(sumORA.ont$Contrast == listname),]$tag
     out <- c(out, knit_child(
       paste0(path.package("RFLOMICS"), "/RFLOMICSapp/",
-             "report_06_enrichmentORA_per_list_CPR.Rmd"), quiet=TRUE))
+             "report_06_enrichmentORA_per_list_CPR.Rmd"), quiet = TRUE))
   }
 }
 asis_output(out)

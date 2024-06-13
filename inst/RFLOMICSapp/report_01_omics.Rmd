@@ -16,9 +16,9 @@ diffDir   <- list()
 coexpDir  <- list()
 annotDir  <- list()
 
-for(analysisType in names(analyzedDatasetNames)){
+for (analysisType in names(analyzedDatasetNames)){
   
-  if(!analysisType %in% c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
+  if (!analysisType %in% c("DiffExpEnrichAnal", "CoExpEnrichAnal")) {
     
     for(dataset in analyzedDatasetNames[[analysisType]]){
       
@@ -48,9 +48,9 @@ for(analysisType in names(analyzedDatasetNames)){
     }
   }else{
     
-    for(database in names(analyzedDatasetNames[[analysisType]])){
+    for (database in names(analyzedDatasetNames[[analysisType]])) {
       
-      for(dataset in analyzedDatasetNames[[analysisType]][[database]]){
+      for (dataset in analyzedDatasetNames[[analysisType]][[database]]) {
         
         annotDir[[dataset]][[analysisType]][[database]] <-
           paste0(outDir, "/", dataset, "/Enrichment_analysis/",
@@ -134,7 +134,7 @@ for (data in analyzedDatasetNames[["DiffExpAnal"]]){
   num <- num + 1
   out <- c(out, knit_child(
     paste0(path.package("RFLOMICS"),"/RFLOMICSapp/",
-           "report_04_diff_analysis.Rmd"), quiet=TRUE))  
+           "report_04_diff_analysis.Rmd"), quiet = TRUE))  
 }
 
 asis_output(out)
@@ -208,13 +208,13 @@ opts_chunk$set(
 ```
 
 
-```{r annotAnalysesSummary, results='asis', eval=(length(data.coExp) != 0), fig.cap="*fig......*"}
+```{r annotAnalysesSummary, results='asis', eval=(length(data.coExp) != 0), fig.width = 15, fig.height = 7.5, fig.cap="*fig......*"}
 
 annot.list <- list()
-for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
-  for(db in names(analyzedDatasetNames[[annot]])){
+for (annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")) {
+  for (db in names(analyzedDatasetNames[[annot]])) {
     
-    for(data in analyzedDatasetNames[[annot]][[db]]){
+    for (data in analyzedDatasetNames[[annot]][[db]]) {
       
       annot.list[[data]][[db]][[annot]] <- TRUE
     }
@@ -223,9 +223,9 @@ for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
 
 cat("## 6.1 Summary {.tabset .tabset-fade .tabset-pills}\n")
 
-for(annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
+for (annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")) {
   
-  if(!annot %in% analysisTypes)
+  if (!annot %in% analysisTypes)
     next
   
   cat("### From", 
