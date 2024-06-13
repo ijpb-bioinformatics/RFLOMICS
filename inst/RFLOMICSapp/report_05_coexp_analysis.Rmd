@@ -140,8 +140,11 @@ plot.coseq.res$probapost_barplots
 ```{r, eval=isResults}
 
 cosRes <- metadata(dataset.SE)$CoExpAnal$coseqResults@allResults
-tab.clusters <- as.data.frame(cosRes[[which(names(cosRes) == names(metadata(dataset.SE)$CoExpAnal$cluster.nb))]])
-tab.clusters <- rownames_to_column(tab.clusters, var = "DEF")
+tab.clusters <- 
+  as.data.frame(cosRes[[which(names(cosRes) == names(metadata(dataset.SE)$CoExpAnal$cluster.nb))]])
+colNames <- names(tab.clusters)
+tab.clusters[["DEF"]] <- rownames(tab.clusters)
+tab.clusters[c("DEF",colNames)]
       
 write.table(tab.clusters,
              file=paste0(coexpDir[[data]],"Table_of_DE_", variableName,"_per_cluster",".txt"),

@@ -108,6 +108,8 @@ plotDataDistribution(dataset.SE, plot = "density", raw = FALSE)
 
 #### Library sizes:
 
+Expect equal library size after running the pre-processing step
+
 ```{r Library_size_barplot, fig.show = "hold", out.width = "50%", eval=(getOmicsTypes(dataset.raw.SE) == "RNAseq"), fig.cap=paste0("<p style=\"color:grey\">","*fig: ???*", "</p>")}
 
 plotLibrarySize(dataset.raw.SE, raw = TRUE)
@@ -132,6 +134,9 @@ write.table(getFilteredFeatures(dataset.SE),
 `r if(getOmicsTypes(dataset.raw.SE) != "RNAseq") {"\\end{comment}"}`
 
 #### PCA
+
+This figure represents a Principal Component Analysis (PCA) of the biological samples. It shows the percentage of variability explained by each principal axis, which aids in interpreting the relative importance of each biological factor.
+Outlier samples can be identified as they significantly influence the observed variability. Biological replicates should group together, forming overlapping ellipses, indicating consistency within groups. If not, this may indicate a batch effect, suggesting non-biological variations between the samples.
 
 ```{r PCA_1_2, echo=FALSE , fig.show="hold", out.width = "50%", fig.cap=paste0("<p style=\"color:grey\">","*fig: ???*", "</p>")}
 

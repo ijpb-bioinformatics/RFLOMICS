@@ -290,7 +290,8 @@ RflomicsMAE <- function(experiments = ExperimentList(),
            "projectName"         = projectName,
            "design"              = design,
            "IntegrationAnalysis" = IntegrationAnalysis,
-           "sessionInfo"         = .writeSessionInfo(),
+           "sessionInfo"         = sessionInfo(),
+           #"sessionInfo"         = .writeSessionInfo(),
            "date"                = date,
            "rflomicsVersion"     = packageVersion('RFLOMICS'))
     
