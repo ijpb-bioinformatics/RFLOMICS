@@ -58,6 +58,7 @@ Imports:
     purrr,
     RColorBrewer,
     reshape2,
+    reticulate,
     rmarkdown,
     S4Vectors,
     shiny,
@@ -69,5 +70,4 @@ Imports:
     tibble,
     tidyselect,
     UpSetR,
-    devtools,
     utils

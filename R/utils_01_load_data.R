@@ -9,7 +9,6 @@
 #' @importFrom purrr reduce
 #' @importFrom tidyr unite
 #' @importFrom tidyselect where all_of
-#' @importFrom devtools session_info
 #' @importFrom magrittr "%>%" 
 
 # ----  RflomicsMAE CLASS ----
@@ -292,7 +291,7 @@ RflomicsMAE <- function(experiments = ExperimentList(),
            "projectName"         = projectName,
            "design"              = design,
            "IntegrationAnalysis" = IntegrationAnalysis,
-           "sessionInfo"         = session_info(),
+           "sessionInfo"         = .writeSessionInfo(),
            "date"                = date,
            "rflomicsVersion"     = packageVersion('RFLOMICS'))
     
@@ -802,5 +801,36 @@ check_NA <- function(object) {
     return(exampleData)
 }
 
+## ---- writeSessionInfo ----
+#' writeSessionInfo
+#' 
+#' @return A list
+#' @keywords internal
+#' @importFrom reticulate py_config
+#' @noRd
+.writeSessionInfo <- function(){
 
-
+  x <- sessionInfo()
+  
+  mkLabel <- function(L, n, type) {
+    vers <- sapply(L[[n]], function(x) x[["Version"]])
+    pkg <- sapply(L[[n]], function(x) x[["Package"]])
+    data.frame( package=pkg, version=vers, type= type)
+  }
+  
+  pkg <- list()
+  
+  if (!is.null(x$otherPkgs)) {
+    pkg[[1]] <- mkLabel(x, "otherPkgs","attached")
+  }
+  if (!is.null(x$loadedOnly)) {
+    pkg[[2]] <- mkLabel(x, "loadedOnly","loadedOnly")
+  }
+  
+  return(list(
+  "Rsession.conf" = c("R version"=SIfile$R.version$version.string,
+                        "Platform"= SIfile$R.version$platform, 
+                        "OS"= SIfile$running), 
+  "pkg.tab" = do.call(rbind, pkg),
+  "python.conf" = reticulate::py_config()))
+}
