@@ -650,6 +650,14 @@ setGeneric(
     }
 )
 
+setGeneric(
+    name = "getEnrichSettings",
+    def  = function(object,
+                    from = "DiffExpEnrichAnal",
+                    database = "GO") {
+        standardGeneric("getEnrichSettings")
+    }
+)
 
 setGeneric(
     name = "sumORA",

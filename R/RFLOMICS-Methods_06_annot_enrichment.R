@@ -990,6 +990,7 @@ setMethod(
 #' @param database the database used for the enrichment (GO, KEGG or custom)
 #' @param domain the subonology or subdomain for the database (eg CC, MF or
 #' BP for GO.)
+#' @param ... Not in use at the moment
 #' @return enrichment results given in the form of lists of clusterprofiler
 #' results.
 #' @exportMethod getEnrichRes
@@ -1014,7 +1015,7 @@ setMethod(
                         contrastName = NULL,
                         from = "DiffExpEnrichAnal",
                         database = "GO",
-                        domain = NULL) {
+                        domain = NULL, ...) {
     from <- .determineFromEnrich(from)
     
     res_return <- .getEnrichResIntSE(
@@ -1043,7 +1044,8 @@ setMethod(
                         contrastName = NULL,
                         from = "DiffExpEnrichAnal",
                         database = "GO",
-                        domain = NULL) {
+                        domain = NULL, 
+                        ...) {
     if (missing(experiment)) {
       stop("Please indicate from which data you want to extract
            the enrichment results.")
@@ -1179,5 +1181,45 @@ setMethod(
     return(pvalCutoff)
     
   }
+)
+
+# ---- Get a enrichment arguments ----
+#
+#' @title Get the settings of an enrichment analysis
+#'
+#' @param object a RflomicsSE object
+#' @param from where to search for the results (either coexp or diffExp)
+#' @param database which database (GO, KEGG, custom...)
+#' @return a list with all settings
+#' @exportMethod getEnrichSettings
+#' @rdname getEnrichSettings
+#' @aliases getEnrichSettings
+#' @examples
+#' # Generate RflomicsMAE for example
+#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
+#' # Run KEGG annotation on differential analysis results
+#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
+#'                         list_args = list(organism = "ath",
+#'                                          keyType = "kegg",
+#'                                          pvalueCutoff = 0.1),
+#'                         from = "DiffExp", database = "KEGG")
+#' # Search for the pvalue cutoff:
+#' getEnrichSettings(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
+#'
+setMethod(
+    f = "getEnrichSettings",
+    signature = "RflomicsSE",
+    definition = function(object,
+                          from = "DiffExpEnrichAnal",
+                          database = "GO") {
+        from <- .determineFromEnrich(from)
+        
+        if (!database  %in% c("GO", "KEGG", "custom")) {
+            stop(database,
+                 " is not a valid value.
+           Choose one of GO, KEGG or custom.")
+        }
+        return(metadata(object)[[from]][[database]]$list_args)
+    }
 )
 
