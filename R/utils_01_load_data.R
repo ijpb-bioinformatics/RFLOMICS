@@ -248,6 +248,7 @@ createRflomicsMAE <- function(projectName=NULL, omicsData=NULL,
 #' Default is an empty list.
 #' @seealso \link{MultiAssayExperiment}
 #' @importFrom MultiAssayExperiment MultiAssayExperiment listToMap
+#' @importFrom devtools session_info
 #' @return An object of class \link{RflomicsMAE-class}
 #' @name RflomicsMAE
 #' @rdname RflomicsMAE
