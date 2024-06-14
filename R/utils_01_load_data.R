@@ -827,9 +827,9 @@ check_NA <- function(object) {
   }
   
   return(list(
-  "Rsession.conf" = c("R version"=SIfile$R.version$version.string,
-                        "Platform"= SIfile$R.version$platform, 
-                        "OS"= SIfile$running), 
+  "Rsession.conf" = c("R version"=x$R.version$version.string,
+                        "Platform"= x$R.version$platform, 
+                        "OS"= x$running), 
   "pkg.tab" = do.call(rbind, pkg),
   "python.conf" = reticulate::py_config()))
 }
