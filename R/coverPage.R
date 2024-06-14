@@ -12,26 +12,29 @@ coverPageUI <- function(){
              tags$div(style="text-align:justify",
                       p(tags$b("RFLOMICS")," is an R package and Shiny interface. 
                         It provides a guided, comprehensive, and reproducible analysis within a framework capable of handling multiple omics datasets. 
-                        The interface offers intriguing flexibility, allowing users to seamlessly navigate between result exploration and visualization."),
-                      p("RFLOMICS code source is available at : ", tags$a(href="https://forgemia.inra.fr/flomics/rflomics", "gitLab")),
-                      p("RFLOMICS user documentations are available at : ", tags$a(href="https://flomics.pages.mia.inra.fr/rflomics/index.html", "Vignette")),
+                        The interface offers great flexibility, allowing users to seamlessly navigate between result exploration and visualization."),
+                      p("RFLOMICS code source is available at: https://forgemia.inra.fr/flomics/rflomics"), 
+                        # tags$a(href="https://forgemia.inra.fr/flomics/rflomics", "gitLab")),
+                      p("RFLOMICS user documentations are available at: https://flomics.pages.mia.inra.fr/rflomics/index.html"), 
+                        # tags$a(href="https://flomics.pages.mia.inra.fr/rflomics/index.html", "Vignette")),
                       tags$hr(),
                       
                       h3(tags$span(tags$i("Features"), style = "color:orange")),
                       
-                      p("RFLOMICS supports up to three types of omics (", tags$a(href="https://flomics.pages.mia.inra.fr/rflomics/articles/RFLOMICS-input-data.html",
-                                                                                 "RNA-Seq, proteomics, and metabolomics"), 
-                      "), along with multiple datasets per omics type (up to 10). These datasets should be part of the same biological experiment."),
+                      p("RFLOMICS supports up to three types of omics (RNA-Seq, proteomics, and metabolomics),
+                        along with multiple datasets per omics type (up to 10). These datasets should be part of the same biological experiment."), 
+                        # tags$a(href="https://flomics.pages.mia.inra.fr/rflomics/articles/RFLOMICS-input-data.html",
+                      # ""),
                       tags$img(src = "/www/workflow.png", width = "600px", height = "400px" ),
                       
                       tags$hr(),
                       h3(tags$span(tags$i("Specifications"), style = "color:orange")),
                       tags$ul(
                         tags$li("Performs complete multi-omics project analysis,"),
-                        tags$li("Support multi-factorial experimental design,"),
+                        tags$li("Supports multi-factorial experimental design,"),
                         tags$li("Guarantees the relevance of the used methods,"),
                         tags$li("Reduces the analysis time on the unavoidable steps,"),
-                        tags$li("Ensure the reproducibility of omics analysis,"),
+                        tags$li("Ensures the reproducibility of omics analyses,"),
                         tags$li("Accessible via one and simple user-friendly interface")),
                       
                       tags$hr(),
@@ -44,7 +47,7 @@ coverPageUI <- function(){
                     germination and vigor. In particular, authors were interested in the influence of
                     temperature (high, medium and low) and imbibition (Dry: DI, early imbibition: EI and late
                     imbibition: LI) on gene's expression."),
-                        tags$li(tags$a(href="ecoseed-report.html","An example of report")),
+                        # tags$li(tags$a(href="ecoseed-report.html","An example of report")),
                       ),
                       tags$hr(),
                       h3(tags$span(tags$i("Contact and support"), style = "color:orange")),
