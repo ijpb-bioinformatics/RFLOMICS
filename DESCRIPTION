@@ -1,6 +1,6 @@
 Package: RFLOMICS
 Title: Interactive web application for Omics-data analysis
-Version: 0.0.0.9000
+Version: 1.0.0
 Authors@R: 
     c(
     person(given = "Nadia", family = "Bessoltane",email = "nadia.bessoltane@inrae.fr", role = c("aut", "cre")),
@@ -13,7 +13,7 @@ Description: R-package with shiny interface, provides a framework for the analys
 URL: https://forgemia.inra.fr/flomics/rflomics/
 BugReports: https://forgemia.inra.fr/flomics/rflomics/-/issues
 Depends: 
-    R (>= 4.3.0),
+    R (>= 4.4.0),
     SummarizedExperiment,
     MultiAssayExperiment,
     shinyBS,
