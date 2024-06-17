@@ -103,7 +103,9 @@
     })
     
     local.rea.values <- reactiveValues(runintegration = FALSE,
-                                       preparedObject = NULL)
+                                       preparedObject = NULL,
+                                       warnMess = NULL,
+                                       messMess = NULL)
     
     # if any preprocessing or validation of differential analysis is done
     observeEvent(rea.values$datasetProcess, {
@@ -243,7 +245,7 @@
         condition <- length(lowNbVarTab) == 0
         messCond <-  paste0("number of variables is lower than 5 in
                         this(these) table(s): ",
-                        lowNbVarTab)
+                            lowNbVarTab)
         if (!condition) {
             showModal(modalDialog(title = "ERROR: ", messCond))
         }
@@ -265,6 +267,7 @@
             method           = method,
             cmd              = TRUE
         )
+        
         message("[RFLOMICS] #   => Ready for integration")
         
         #---- progress bar ----#
@@ -341,41 +344,41 @@
         
         # Run the analysis
         message("[RFLOMICS] # 8- integration Analysis with ", method)
+        #---- progress bar ----#
+        progress$inc(1 / 2, detail = paste("Running ", 50, "%", sep = ""))
+        #----------------------#
         tryRomics <- NULL
-        tryRomics <-  tryCatch(
-            expr    = do.call(
+        # tryRomics <-  tryCatch(
+        #     expr    = do.call(
+        #         getFromNamespace("runOmicsIntegration", ns = "RFLOMICS"),
+        #         list_args), 
+        #     error   = function(err) err
+        # )
+        
+        tryRomics <- .tryCatch_rflomics({
+            do.call(
                 getFromNamespace("runOmicsIntegration", ns = "RFLOMICS"),
-                list_args), 
-            error   = function(err) err
+                list_args)}
         )
         
-        #errors
-        condition <- is(tryRomics, "RflomicsMAE") || !is(tryRomics, "simpleError")
+        # Errors
+        condition <- is(tryRomics$result, "RflomicsMAE")
         messCond <- "Something went wrong during the integration, 
         please try again with different parameters."
         if (!condition) {
             showModal(modalDialog(title = "ERROR: ", 
-                                  paste0(messCond, tryRomics$message)))
+                                  paste0(messCond, tryRomics$error)))
         }
-        validate(need(condition, paste0(messCond, tryRomics$message)))
+        validate(need(condition, paste0(messCond, tryRomics$error)))
         
-        switch(method, 
-               "MOFA" = {
-                   mess <- getMOFA(tryRomics, onlyResults = FALSE)$MOFA_messages
-                   condition <- length(mess) == 0
-                   if (!condition) {
-                       messCond <- paste(unlist(mess), collapse = "<br>")
-                       messCond <- gsub("prepare_mofa(.*)", "", messCond)
-                       showModal(modalDialog(title = "Warnings and messages from MOFA run: ", 
-                                             HTML(messCond)))
-                   }
-               },
-               "mixOmics" = {
-                   
-               })
-      
+        # Messages and warnings
+        local.rea.values$warnMess <- NULL
+        local.rea.values$messMess <- NULL
+        local.rea.values$warnMess <- tryRomics$warnings
+        local.rea.values$messMess <- tryRomics$messages
         
-        session$userData$FlomicsMultiAssay <- tryRomics
+        # Results
+        session$userData$FlomicsMultiAssay <- tryRomics$result
         rm(tryRomics)
         
         listSelection <- list()
@@ -463,6 +466,50 @@
                 Data_res <- getMixOmics(session$userData$FlomicsMultiAssay,
                                         response = Response)
                 
+                listTab <- list(
+                    tabPanel(
+                        "Overview", 
+                        .outMOOverview(Data_res, settings)),
+                    tabPanel(
+                        "Explained Variance",
+                        .outMOexplainedVar(session, Response)
+                    ),
+                    tabPanel(
+                        "Individuals",
+                        .outMOIndividuals(session, input, settings,
+                                          Response, Data_res)
+                    ),
+                    tabPanel(
+                        "Features",
+                        .outMOFeatures(session, input, settings,
+                                       Response, Data_res)
+                    ),
+                    tabPanel(
+                        "Loadings",
+                        .outMOLoadings(session, input, settings,
+                                       Response, Data_res)
+                    ),
+                    tabPanel(
+                        "Loadings-Dataframe",
+                        .outMOLoadingsTable(session, input,
+                                            Response, Data_res)
+                    ),
+                    tabPanel(
+                        "CimPlot",
+                        .outMOCimPlot(session, input, settings,
+                                      Response, Data_res)
+                    )
+                )
+                
+                if (!is.null(local.rea.values$warnMess) && 
+                    length(local.rea.values$warnMess) > 0) {
+                    listTab <- c(listTab, 
+                                 list(tabPanel(
+                                     "Warnings",
+                                     .outMOMessages(local.rea.values)
+                                 )))
+                }
+                
                 box(width = 14,
                     solidHeader = TRUE,
                     collapsible = TRUE,
@@ -470,40 +517,8 @@
                     status = "success",
                     title = Response,
                     
-                    tabsetPanel(
-                        tabPanel(
-                            "Overview", 
-                            .outMOOverview(Data_res, settings)),
-                        tabPanel(
-                            "Explained Variance",
-                            .outMOexplainedVar(session, Response)
-                        ),
-                        tabPanel(
-                            "Individuals",
-                            .outMOIndividuals(session, input, settings,
-                                              Response, Data_res)
-                        ),
-                        tabPanel(
-                            "Features",
-                            .outMOFeatures(session, input, settings,
-                                           Response, Data_res)
-                        ),
-                        tabPanel(
-                            "Loadings",
-                            .outMOLoadings(session, input, settings,
-                                           Response, Data_res)
-                        ),
-                        tabPanel(
-                            "Loadings-Dataframe",
-                            .outMOLoadingsTable(session, input,
-                                                Response, Data_res)
-                        ),
-                        tabPanel(
-                            "CimPlot",
-                            .outMOCimPlot(session, input, settings,
-                                          Response, Data_res)
-                        ),
-                    ) # tabsetpanel
+                    do.call(what = tabsetPanel, args = listTab)
+                    
                 ) #box
             }) # lapply
         }) #renderui
@@ -542,38 +557,44 @@
         
         resMOFA <- getMOFA(session$userData$FlomicsMultiAssay)
         
+        tabList <- list(
+            tabPanel("Factors Correlation",
+                     .outMOFAFactorsCor(resMOFA)),
+            tabPanel("Explained Variance",
+                     .outMOFAexplainedVar(resMOFA)),
+            tabPanel(
+                "Weights Plot",
+                .outMOFAWeightPlot(session, resMOFA, input)
+            ),
+            tabPanel(
+                "Weights table",
+                .outMOFAWeightTable(session, resMOFA, input)
+            ),
+            tabPanel(
+                "Factor Plots",
+                .outMOFAFactorsPlot(session, resMOFA, input)
+            ),
+            tabPanel("Relations",
+                     .outMOFARelations(resMOFA)),
+            tabPanel("Heatmap",
+                     .outMOFAHeatmap(session, resMOFA, input))
+        )
+        
+        if (!is.null(local.rea.values$warnMess) && 
+            length(local.rea.values$warnMess) > 0) {
+            tabList <- c(tabList, 
+                         list(tabPanel("Warnings",
+                                       .outMOFAmessages(local.rea.values))))
+        }
+        
         box(
             width = 14,
             solidHeader = TRUE,
             status = "success",
             title = "MOFA results",
             
-            tabsetPanel(
-                # tabPanel("Overview",
-                #          renderPlot(plot_data_overview(resMOFA) +
-                #                         ggtitle("Data Overview"))
-                # ),
-                tabPanel("Factors Correlation",
-                         .outMOFAFactorsCor(resMOFA)),
-                tabPanel("Explained Variance",
-                         .outMOFAexplainedVar(resMOFA)),
-                tabPanel(
-                    "Weights Plot",
-                    .outMOFAWeightPlot(session, resMOFA, input)
-                ),
-                tabPanel(
-                    "Weights table",
-                    .outMOFAWeightTable(session, resMOFA, input)
-                ),
-                tabPanel(
-                    "Factor Plots",
-                    .outMOFAFactorsPlot(session, resMOFA, input)
-                ),
-                tabPanel("Relations",
-                         .outMOFARelations(resMOFA)),
-                tabPanel("Heatmap",
-                         .outMOFAHeatmap(session, resMOFA, input)),
-            )# tabsetpanel
+            do.call(what = tabsetPanel, args = tabList)
+            
         )#box
     })
     
@@ -967,6 +988,23 @@
 
 
 # ---- Plots MixOmics ----
+
+#' @noRd
+#' @keywords internal
+.outMOMessages <- function(local.rea.values){
+    renderUI({
+        if (!is.null(local.rea.values$warnMess)) {
+            HTML(paste(
+                "<div style='border: 1px solid black; padding: 10px;
+                    background-color: #f0f0f0; font-style: italic;'>",
+                "MixOmics warnings:\n",
+                unique(unlist(local.rea.values$warnMess)),
+                "</div>"
+            ))
+        }
+    })
+}
+
 #' @noRd
 #' @keywords internal
 #' @importFrom DT datatable
@@ -1002,7 +1040,8 @@
             
             datatable(t(df), options = list(dom = 't'))
             
-        })))
+        }))
+    )
 }
 
 #' @noRd
@@ -1287,6 +1326,24 @@
 }
 
 # ---- Plots MOFA -----
+# 
+
+#' @noRd
+#' @keywords internal
+#' @importFrom MOFA2 get_factors
+.outMOFAmessages <- function(local.rea.values){
+    renderUI({
+        if (!is.null(local.rea.values$warnMess)) {
+            HTML(paste(
+                "<div style='border: 1px solid black; padding: 10px; background-color: #f0f0f0; font-style: italic;'>",
+                "MOFA2 warnings:\n",
+                unique(unlist(local.rea.values$warnMess)),
+                "</div>"
+            ))
+        }
+    })
+}
+
 #' @noRd
 #' @keywords internal
 #' @importFrom MOFA2 get_factors
@@ -1755,8 +1812,8 @@
             p("This module uses the mixOmics package, which is dedicated to the 
         integration of multiple datasets from the same experimental design 
         (same samples)."),
-        
-        p("A supervised analysis is performed using the block.(s)plsda function,
+            
+            p("A supervised analysis is performed using the block.(s)plsda function,
           based on the sparsity parameter, which is a linear discriminant 
           analysis adapted to multiple data: 
           axes, similar in interpretation to those in a PCA, 
@@ -1765,18 +1822,18 @@
           response modalities. 
           The weight of features (loadings) indicates their ability to
           seperate the groups of the response variable."),
-        
-        p("The use of multiple response variables in the same analysis 
+            
+            p("The use of multiple response variables in the same analysis 
           is not currently permitted. "),
-        
-        p("Sparse analysis allows you to select interesting 
+            
+            p("Sparse analysis allows you to select interesting 
           features that discriminate between response modalities, 
           but requires tuning, i.e. running several models to 
           find the best one. This may take some time. "),
-        
-        p("For more information, please visit the mixOmics website or 
+            
+            p("For more information, please visit the mixOmics website or 
           github vignette."),
-        
+            
         )
     )
 }
@@ -1807,14 +1864,14 @@
             p("Given a set of data, it calculates the best axes as a linear 
           combination of
          features (similar to those of a PCA). "), 
-         
-         p("It is based on the assumption that each dataset X can 
+            
+            p("It is based on the assumption that each dataset X can 
            be written as a linear model of the form: X = WF+e,
            where W is the weight matrix (different for each dataset), 
            F the factor coefficients (identical for each dataset) and 
            the unexplained part of the model (residuals). "), 
-         
-         p("Factors are constructed with each dataset, enabling the contribution 
+            
+            p("Factors are constructed with each dataset, enabling the contribution 
            of each dataset to the overall model to be explored.")
         ),
     )
