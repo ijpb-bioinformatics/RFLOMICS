@@ -263,8 +263,7 @@
             rnaSeq_transfo   = input$RNAseqTransfo,
             variableLists    = variableLists,
             method           = method,
-            cmd              = TRUE,
-            silent           = TRUE
+            cmd              = TRUE
         )
         message("[RFLOMICS] #   => Ready for integration")
         
@@ -312,8 +311,7 @@
             preparedObject = local.rea.values$preparedObject,
             method         = method,
             scale_views    = input$scale_views,
-            cmd = TRUE,
-            silent = TRUE
+            cmd = TRUE
         )
         
         list_args <- switch(method,
@@ -361,14 +359,21 @@
         }
         validate(need(condition, paste0(messCond, tryRomics$message)))
         
-        mess <- getMOFA(tryRomics, onlyResults = FALSE)$MOFA_messages
-        condition <- length(mess) == 0
-        if (!condition) {
-            messCond <- paste(unlist(mess), collapse = "<br>")
-            messCond <- gsub("prepare_mofa(.*)", "", messCond)
-            showModal(modalDialog(title = "Warnings and messages from MOFA run: ", 
-                                  HTML(messCond)))
-        }
+        switch(method, 
+               "MOFA" = {
+                   mess <- getMOFA(tryRomics, onlyResults = FALSE)$MOFA_messages
+                   condition <- length(mess) == 0
+                   if (!condition) {
+                       messCond <- paste(unlist(mess), collapse = "<br>")
+                       messCond <- gsub("prepare_mofa(.*)", "", messCond)
+                       showModal(modalDialog(title = "Warnings and messages from MOFA run: ", 
+                                             HTML(messCond)))
+                   }
+               },
+               "mixOmics" = {
+                   
+               })
+      
         
         session$userData$FlomicsMultiAssay <- tryRomics
         rm(tryRomics)

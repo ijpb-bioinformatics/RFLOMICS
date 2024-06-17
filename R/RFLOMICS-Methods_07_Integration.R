@@ -30,7 +30,6 @@
 #' @param link_response mixOmics parameter. Link between dataset and response.
 #' @param sparsity mixOmics parameter. If TRUE, uses block.splsda.
 #' @param cases_to_try used for tuning when sparse analysis is TRUE. 
-#' @param silent silence all functions. 
 #' @param cmd used in the interface, print cmd lines.
 #' @return a RflomicsMAE object. According to the method (MOFA or mixOmics),
 #' the correct slot of metadata has been filled with the results and the
@@ -57,7 +56,6 @@ setMethod(
                           link_response = 1,
                           sparsity = FALSE,
                           cases_to_try = 5,
-                          silent = TRUE,
                           cmd = FALSE,
                           ...) {
         if (any(!omicsNames %in% names(object))) {
@@ -80,8 +78,7 @@ setMethod(
             variableLists = variableLists,
             group = group,
             method = method,
-            cmd = cmd,
-            silent = silent
+            cmd = cmd
         )
         
         if (cmd)
@@ -99,7 +96,6 @@ setMethod(
             link_response = link_response,
             sparsity = sparsity,
             cases_to_try = cases_to_try,
-            silent = TRUE,
             cmd = FALSE
         )
         
@@ -133,7 +129,6 @@ setMethod(
 #' Transform the data with the transform and normalization method?
 #' Default is TRUE.
 #' @param cmd used in the interface. Print cmd lines.
-#' @param silent if TRUE, silence all functions.
 #' @return An untrained MOFA object or a list of dataset
 #' @exportMethod prepareForIntegration
 #' @rdname prepareForIntegration
@@ -162,8 +157,7 @@ setMethod(
                           group = NULL,
                           method = "MOFA",
                           transformData = TRUE,
-                          cmd = FALSE,
-                          silent = TRUE) {
+                          cmd = FALSE) {
         method <- switch(
             toupper(method),
             "MIXOMICS" = "MixOmics",
@@ -275,17 +269,11 @@ setMethod(
                                              getMetaFactors(object))]
         
         if (method == "MOFA") {
-            if (silent) {
-                MOFAObject <- suppressMessages(suppressWarnings(
-                    create_mofa(object,
-                                groups = group,
-                                extract_metadata = TRUE)
-                ))
-            } else {
-                MOFAObject <- create_mofa(object,
-                                          groups = group,
-                                          extract_metadata = TRUE)
-            }
+            
+            MOFAObject <- create_mofa(object,
+                                      groups = group,
+                                      extract_metadata = TRUE)
+            
             return(MOFAObject)
             
         } else if (method == "MixOmics") {
@@ -490,7 +478,6 @@ setMethod(
 #' block.plsda if FALSE or block.splsda if TRUE).
 #' @param cases_to_try integer. If sparsity is set to TRUE, then cases_to_try
 #' is used to determine the number of sets of variables to test for tuning.
-#' @param silent boolean. If TRUE, silence all functions.
 #' @param cmd boolean. Used in the interface. If TRUE, print cmd in the console.
 #' @param ... not in use at the moment
 #' @return a RflomicsMAE object with the correct metadata slot filled with the
@@ -528,7 +515,6 @@ setMethod(
                           link_response = 1,
                           sparsity = FALSE,
                           cases_to_try = 5,
-                          silent = TRUE,
                           cmd = FALSE,
                           ...) {
         method <- switch(
@@ -578,58 +564,29 @@ setMethod(
             if (is.null(selectedResponse))
                 selectedResponse <- getBioFactors(object)
             
-            if (silent) {
-                co <- capture.output({
-                    MixOmics_res <- lapply(
-                        selectedResponse,
-                        FUN = function(response_var) {
-                            res_mixOmics <- suppressWarnings(
-                                .runMixOmicsAnalysis(
-                                    object = preparedObject,
-                                    selectedResponse = response_var,
-                                    scale_views = scale_views,
-                                    ncomp = ncomp,
-                                    link_datasets = link_datasets,
-                                    link_response = link_response,
-                                    sparsity = sparsity,
-                                    cases_to_try = cases_to_try
-                                )
-                            )
-                            
-                            return(
-                                list(
-                                    "MixOmics_tuning_results" = res_mixOmics$tuning_res,
-                                    "MixOmics_results"        = res_mixOmics$analysis_res
-                                )
-                            )
-                        }
+            MixOmics_res <- lapply(
+                selectedResponse,
+                FUN = function(response_var) {
+                    res_mixOmics <- .runMixOmicsAnalysis(
+                        object = preparedObject,
+                        selectedResponse = response_var,
+                        scale_views = scale_views,
+                        ncomp = ncomp,
+                        link_datasets = link_datasets,
+                        link_response = link_response,
+                        sparsity = sparsity,
+                        cases_to_try = cases_to_try
                     )
-                })
-                
-            } else {
-                MixOmics_res <- lapply(
-                    selectedResponse,
-                    FUN = function(response_var) {
-                        res_mixOmics <- .runMixOmicsAnalysis(
-                            object = preparedObject,
-                            selectedResponse = response_var,
-                            scale_views = scale_views,
-                            ncomp = ncomp,
-                            link_datasets = link_datasets,
-                            link_response = link_response,
-                            sparsity = sparsity,
-                            cases_to_try = cases_to_try
+                    
+                    return(
+                        list(
+                            "MixOmics_tuning_results" = res_mixOmics$tuning_res,
+                            "MixOmics_results"        = res_mixOmics$analysis_res
                         )
-                        
-                        return(
-                            list(
-                                "MixOmics_tuning_results" = res_mixOmics$tuning_res,
-                                "MixOmics_results"        = res_mixOmics$analysis_res
-                            )
-                        )
-                    }
-                )
-            }
+                    )
+                }
+            )
+            
             
             names(MixOmics_res) <- selectedResponse
             MixOmics_res$settings <- list(

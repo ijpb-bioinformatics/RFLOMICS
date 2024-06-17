@@ -698,7 +698,6 @@ setGeneric(
                     link_response = 1,
                     sparsity = FALSE,
                     cases_to_try = 5,
-                    silent = TRUE,
                     cmd = FALSE,
                     ...) {
         standardGeneric("integrationWrapper")
@@ -716,7 +715,6 @@ setGeneric(
                     method = "MOFA",
                     transformData = TRUE,
                     cmd = FALSE,
-                    silent = TRUE,
                     ...) {
         standardGeneric("prepareForIntegration")
     }
@@ -737,7 +735,6 @@ setGeneric(
                     link_response = 1,
                     sparsity = FALSE,
                     cases_to_try = 5,
-                    silent = TRUE,
                     cmd = FALSE,
                     ...) {
         standardGeneric("runOmicsIntegration")
