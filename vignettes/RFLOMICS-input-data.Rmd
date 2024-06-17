@@ -99,7 +99,7 @@ DT::datatable(metaAbundance[1:10, 1:5])
 
 This file contains annotation about biological fonctions of genes/proteins/metabolites, or their implication in biological pathways. This annotation is needed to compute Over Representation Analysis (ORA). This file must contain at least 2 columns, names of features same as used in abundance matrix and term identifiants (ex. GO term accession : GO:0034599). It is possible to add 2 more informations, names of terms (ex. cellular response to oxidative stress) and domain of annotation in supplementary colomns (ex. biological_process).
 
-```{r, output="asis"}
+```{r, output="asis", eval=FALSE}
 
 # annot.genes.file <- file.path(path=path.package("RFLOMICS"), file="/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt")
 annot.genes.file <- file.path(paste0(system.file(package = "RFLOMICS"),
