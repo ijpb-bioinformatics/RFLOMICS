@@ -154,8 +154,8 @@
 
 #' @title catch error, warning et message and results
 #'
-#' @param f function and his parameters
-#' @return list. with 4 elements : message, warning, error and results
+#' @param f function and its parameters
+#' @return A list with 4 elements: message, warning, error and results
 #' @noRd
 #' @keywords internal
 .tryCatch_rflomics <- function(f) {
@@ -165,7 +165,8 @@
   result <- tryCatch({
     withCallingHandlers({
       output <- f
-      list(result = output, messages = message_capture, warnings = warning_capture, error = NULL)
+      list(result = output, messages = message_capture, 
+           warnings = warning_capture, error = NULL)
     }, message = function(m) {
       message_capture <<- c(message_capture, m$message)
       invokeRestart("muffleMessage")
