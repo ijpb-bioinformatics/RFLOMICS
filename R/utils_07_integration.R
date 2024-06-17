@@ -452,7 +452,7 @@
             ncomp = ncomp,
             scale = scale_views,
             test.keepX = test_keepX,
-            folds = min(floor(length(Y) / 2), table(Y) - 1) 
+            folds = min(table(Y) - 1, 10)  
         )
         if (length(object$blocks) > 1)
             list_tuning_args$design <- Design_mat
