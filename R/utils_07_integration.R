@@ -444,8 +444,6 @@
             }
         )
         
-        ResponseY <<- Y
-        
         list_tuning_args <- list(
             X = object$blocks,
             Y = Y,
