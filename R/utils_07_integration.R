@@ -444,13 +444,15 @@
             }
         )
         
+        ResponseY <<- Y
+        
         list_tuning_args <- list(
             X = object$blocks,
             Y = Y,
             ncomp = ncomp,
             scale = scale_views,
             test.keepX = test_keepX,
-            folds = min(floor(nrow(Y) / 2), 10) # TODO ???
+            folds = min(floor(length(Y) / 2), table(Y) - 1) 
         )
         if (length(object$blocks) > 1)
             list_tuning_args$design <- Design_mat
