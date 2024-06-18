@@ -190,3 +190,24 @@
 }
 
 
+# ---- get package version  -----
+
+#' @title get package version from info session stored in rflomicsMAE object
+#'
+#' @param rflomicsMAE rflomicsMAE object
+#' @param package package name
+#' @param info type of information about package (version, )
+#' @return value of information
+#' @noRd
+#' @keywords internal
+.getPackageInfo <- function(rflomicsMAE, package = NULL, info = "version") {
+
+  sessionInfo <- metadata(rflomicsMAE)[["sessionInfo"]][["pkg.tab"]]
+  
+  if(is.null(package)) return(NULL)
+  if(!info %in% c("version")) return(NULL)
+  
+  return(sessionInfo[[info]][sessionInfo[["package"]] == package])
+}
+
+
