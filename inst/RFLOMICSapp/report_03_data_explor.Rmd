@@ -48,7 +48,7 @@ filtering <- paste0(
 
 Normalisation <- paste0(
   "The **TMM (Trimmed Mean of M-values)** method from **edgeR** package (version ",
-  packageVersion("edgeR"), ") was applied to normalise the RNAseq libraries.")
+  RFLOMICS:::.getPackageInfo(rflomics.MAE, "edgeR"), ") was applied to normalise the RNAseq libraries.")
 
 cat("\n", filtering, " ", Normalisation, "\n")
 ```
@@ -76,6 +76,20 @@ if(getNormSettings(dataset.SE)$method != "none"){
 
 cat("\n", Transformation, " ", Normalisation, "\n")
 ```
+
+```{r write Processed_Data}
+
+processed.df <- getProcessedData(dataset.SE)
+processed.cn <- colnames(processed.df)
+processed.df[[variableName]] <- rownames(processed.df)
+processed.df <- processed.df[c(variableName, processed.cn)]
+
+write.table(x = processed.df,
+            file = paste0(explorDir[[data]],"Processed_Data_",
+                          data, ".txt"),
+            sep ="\t",quote=FALSE,col.names=TRUE,row.names=FALSE)
+```
+
 
 <br>
 
