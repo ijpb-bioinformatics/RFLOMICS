@@ -281,17 +281,14 @@ RflomicsMAE <- function(experiments = ExperimentList(),
         slot(rflomicsMAE, slot) <- slot(MAE, slot)
     }
     
-    Sys.setlocale('LC_TIME', 'C') # change for english
-    date <- format(Sys.time(), '%d %B %Y - %H:%M')
-    Sys.setlocale('LC_TIME') # return to default system time
+    # Sys.setlocale('LC_TIME', 'C') # change for english
+    # date <- format(Sys.time(), '%d %B %Y - %H:%M')
+    # Sys.setlocale('LC_TIME') # return to default system time
     
-    rflomicsMAE@metadata <- 
-      list("omicList"            = omicList,
-           "projectName"         = projectName,
-           "design"              = design,
-           "IntegrationAnalysis" = IntegrationAnalysis,
-           "date"                = date,
-           "rflomicsVersion"     = packageVersion('RFLOMICS'))
+    rflomicsMAE@metadata$omicList <- omicList
+    rflomicsMAE@metadata$projectName <- projectName
+    rflomicsMAE@metadata$design <- design
+    rflomicsMAE@metadata$IntegrationAnalysis <- IntegrationAnalysis
     
     return(rflomicsMAE)
 }
