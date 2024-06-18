@@ -67,7 +67,8 @@ setMethod(
                                    projectName, ".html"))
     
     # save FE rflomics.MAE in .Rdata and load it during report execution
-    rflomics.MAE <- object
+    sessionInfo.light <- .writeSessionInfo()
+    rflomics.MAE <- setElementToMetadata(object, "sessionInfo", sessionInfo.light)
     save(rflomics.MAE, file = file.path(tmpDir, RDataName))
     
     # Set up parameters to pass to Rmd document
@@ -857,6 +858,66 @@ setMethod(
       labs(x = "Conditions", y = "Expression profiles mean")
     
     return(p)
+    
+  }
+)
+
+
+## ---- set element to metadata slot in rflomicsSE/MAE ----
+#' @title setElementToMetadata
+#' @description set element to metadata slot
+#' @param object An object of class \link{RflomicsMAE}. 
+#' @param listName the name of list to add to metadata slot.
+#' @param listContent the list to add
+#' @return object An object of class \link{RflomicsMAE}.
+#' @exportMethod setElementToMetadata
+#' @rdname setElementToMetadata
+#' @aliases setElementToMetadata
+setMethod(
+  f = "setElementToMetadata",
+  signature = "RflomicsMAE",
+  definition = function(object, 
+                        listName = NULL,
+                        listContent = NULL,
+                        ...) {
+
+    if(is.null(listName)) 
+      warning("Argument listName is required")
+    if(is.null(listContent)) 
+      warning("Argument listContent is required")
+    
+    if(!is.null(metadata(object)[[listName]]))
+      warning(listName, "already exists. It will be overwritten by this operation.")
+      
+    metadata(object)[[listName]] <- listContent
+    
+    return(object)
+    
+  }
+)
+
+#' @param object An object of class \link{RflomicsSE}. 
+#' @return object An object of class \link{RflomicsSE}.
+setMethod(
+  f = "setElementToMetadata",
+  signature = "RflomicsSE",
+  definition = function(object, 
+                        listName = NULL,
+                        listContent = NULL,
+                        ...) {
+    
+    if(is.null(listName)) 
+      warning("Argument listName is required")
+    if(is.null(listContent)) 
+      warning("Argument listContent is required")
+    
+    if(!is.null(metadata(object)[[listName]]) ||
+       length(metadata(object)[[listName]]) != 0)
+      warning(listName, "already exists. It will be overwritten by this operation.")
+    
+    metadata(object)[[listName]] <- listContent
+    
+    return(object)
     
   }
 )

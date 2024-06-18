@@ -846,3 +846,12 @@ setGeneric(
     standardGeneric("getProcessedData")
   }
 )
+
+setGeneric(
+  name = "setElementToMetadata",
+  def  = function(object, 
+                  listName = NULL, 
+                  listContent = NULL, ...) {
+    standardGeneric("setElementToMetadata")
+  }
+)

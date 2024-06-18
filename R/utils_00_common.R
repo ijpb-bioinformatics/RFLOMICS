@@ -211,3 +211,37 @@
 }
 
 
+## ---- writeSessionInfo ----
+#' writeSessionInfo
+#' 
+#' @return A list
+#' @keywords internal
+#' @importFrom reticulate py_config
+#' @noRd
+.writeSessionInfo <- function(){
+  
+  x <- sessionInfo()
+  
+  mkLabel <- function(L, n, type) {
+    vers <- sapply(L[[n]], function(x) x[["Version"]])
+    pkg <- sapply(L[[n]], function(x) x[["Package"]])
+    data.frame( package=pkg, version=vers, type= type)
+  }
+  
+  pkg <- list()
+  
+  if (!is.null(x$otherPkgs)) {
+    pkg[[1]] <- mkLabel(x, "otherPkgs","attached")
+  }
+  if (!is.null(x$loadedOnly)) {
+    pkg[[2]] <- mkLabel(x, "loadedOnly","loadedOnly")
+  }
+  
+  return(list(
+    "Rsession.conf" = c("R version"=x$R.version$version.string,
+                        "Platform"= x$R.version$platform, 
+                        "OS"= x$running), 
+    "pkg.tab" = do.call(rbind, pkg),
+    "python.conf" = reticulate::py_config()))
+}
+
