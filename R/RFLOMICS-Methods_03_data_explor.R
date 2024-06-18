@@ -1169,3 +1169,86 @@ setMethod(f          = "runSampleFiltering",
           })
 
 
+# ------ get processed data -----
+
+#' @title getProcessedData
+#' @description This function get processed data (filtering, normalization and/or transformation).
+#' @param object An object of class \link{RflomicsSE} or class \link{RflomicsMAE}
+#' @return data.frame with processed data
+#' @aliases getProcessedData
+#' @exportMethod getProcessedData
+#' @seealso runDataProcessing
+#' @rdname getProcessedData
+#' @examples
+#' 
+#' # Set the data path
+#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
+#' 
+#' # Load the experimental design
+#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
+#' 
+#' # Set factor name, levels, level of reference and type
+#' facRef <- data.frame(factorName   = c("Repeat", "temperature" , "imbibition"), 
+#'                      factorRef = c("rep1", "Low", "DS"), 
+#'                      factorType = c("batch",  "Bio", "Bio"), 
+#'                      factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
+#' 
+#' # Load the omics data
+#' omicsData <- list( 
+#' readOmicsData(file = paste0( datPath, "transcriptome_ecoseed.txt")), 
+#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
+#'  
+#' # Instantiate an object of class RflomicsMAE 
+#' MAE <- createRflomicsMAE(projectName = "Tests", omicsData   = omicsData,
+#'                          omicsNames  = c("RNAtest.raw", "protetest.raw"),
+#'                          omicsTypes  = c("RNAseq","proteomics"),
+#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
+#' names(MAE) <- c("RNAtest.raw", "protetest.raw")
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- getPossibleContrasts(MAE, formula = formulae[[1]], 
+#'                                      typeContrast = "averaged", 
+#'                                      returnTable = TRUE)[c(1, 2, 3),]
+#' 
+#' # Run the data preprocessing and perform the differential analysis
+#' MAE <- runDataProcessing(MAE, SE.name = "RNAtest",  
+#'                          lowCountFiltering_strategy = "NbReplicates", 
+#'                          lowCountFiltering_CPM_Cutoff = 1, 
+#'                          normMethod = "TMM", 
+#'                          transformMethod = "log2") 
+#' processed.RNAtest.df 
+#' <- getProcessedData(MAE, SE.name = "RNAtest")
+
+
+setMethod(f          = "getProcessedData",
+          signature  = "RflomicsSE",
+          definition = function(object)
+          {
+            object2 <- .checkTransNorm(object, raw = FALSE)
+            pseudo <- assay(object2)
+            
+            return(data.frame(pseudo))
+          })
+
+#' @rdname getProcessedData
+#' @title getProcessedData
+#' @param SE.name the name of the data the normalization have to be applied to. 
+#' @aliases getProcessedData
+#' @exportMethod getProcessedData
+setMethod(f          = "getProcessedData",
+          signature  = "RflomicsMAE",
+          definition = function(object, SE.name){
+            
+            if (!SE.name %in% getDatasetNames(object)){
+              stop("SE name must be part of this list of names: ",
+                   getDatasetNames(object))
+            }
+            
+            pseudo <- getProcessedData(object[[SE.name]])
+            
+            return(pseudo)
+          })

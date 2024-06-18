@@ -838,3 +838,11 @@ setGeneric(
     standardGeneric("getAnalyzedDatasetNames")
   }
 )
+
+
+setGeneric(
+  name = "getProcessedData",
+  def  = function(object, SE.name, ...) {
+    standardGeneric("getProcessedData")
+  }
+)
