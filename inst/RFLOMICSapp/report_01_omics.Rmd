@@ -117,12 +117,24 @@ opts_chunk$set(
 ```
 
 
-```{r diffAnalysesSummary, results='asis', eval=("DiffExpAnal" %in% analysisTypes), fig.cap=paste0("<p style=\"color:grey\">","*fig: ???.*", "</p>")}
+```{r diffAnalysesSummary, results='asis', eval=("DiffExpAnal" %in% analysisTypes), fig.cap=paste0("<p style=\"color:grey\">","", "</p>")}
 
 cat("## 4.1 Summary\n")
 getDiffAnalysesSummary(rflomics.MAE, plot = TRUE, 
                        nbMaxLabel = 0,
-                       interface = TRUE)
+                       interface = TRUE) #+
+  # theme(
+  #   plot.caption =
+  #     element_textbox(
+  #       width = unit(1, "npc"),
+  #       hjust = 0, vjust = 1,
+  #       halign = 0, face = "italic", size = 10, colour = "grey50", margin = margin(t = 10)
+  #     )
+  # ) +
+  # labs(
+  #   title = "",
+  #   caption = ""
+  # )
 cat("\n<br>\n")
 ```
 
@@ -161,7 +173,7 @@ opts_chunk$set(
 ```
 
 
-```{r coExpAnalysesSummary, results='asis', eval=("CoExpAnal" %in% analysisTypes), fig.cap=paste0("<p style=\"color:grey\">","fig: ????", "</p>")}
+```{r coExpAnalysesSummary, results='asis', eval=("CoExpAnal" %in% analysisTypes), fig.cap=paste0("<p style=\"color:grey\">","", "</p>")}
 cat("## 5.1 Summary\n")
 getCoExpAnalysesSummary(rflomics.MAE, plot = TRUE)
 cat("\n")
@@ -207,8 +219,7 @@ opts_chunk$set(
 )
 ```
 
-
-```{r annotAnalysesSummary, results='asis', eval=(length(data.coExp) != 0), fig.width = 15, fig.height = 7.5, fig.cap="*fig......*"}
+```{r annotAnalysesSummary, results='asis', eval=(length(data.coExp) != 0), fig.width = 15, fig.height = 7.5, fig.cap=""}
 
 annot.list <- list()
 for (annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")) {

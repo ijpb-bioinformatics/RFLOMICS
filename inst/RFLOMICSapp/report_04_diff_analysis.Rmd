@@ -20,7 +20,7 @@ variableName   <- RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]
 
 `r if(omicsType != "RNAseq") {"\\begin{comment}"}`
 
-The **edgeR R-package** (version `r packageVersion("edgeR")`) (@robinson2010a) was used to performed the analysis. 
+The **edgeR R-package** (version `r RFLOMICS:::.getPackageInfo(rflomics.MAE, "edgeR")`) (@robinson2010a) was used to performed the analysis. 
 First, the parameters of the generalized linear model were estimate thanks to the 
 estimateGLMCommonDisp(), estimateGLMTrendedDisp(), estimateGLMTagwiseDisp() and glmFit() functions.
 Then, the likelihood ratio test(s) (LRT) were performed for each contrast thanks to the glmLRT() 
@@ -30,7 +30,7 @@ function.
 
 `r if(omicsType == "RNAseq") {"\\begin{comment}"}`
 
-The **limma R-package** (version `r packageVersion("limma")`) (ref) was used to performed the analysis.
+The **limma R-package** (version `r RFLOMICS:::.getPackageInfo(rflomics.MAE, "limma")`) (ref) was used to performed the analysis.
 First, the parameters of the linear model were estimated thanks to lmFit() function.
 In a second time, contrasts.fit was used and empirical bayes statistics were obtained thanks to the eBayes() functions.
 

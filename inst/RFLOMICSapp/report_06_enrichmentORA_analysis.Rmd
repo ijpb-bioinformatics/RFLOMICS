@@ -11,7 +11,7 @@ editor_options:
 * **Methods:**
 
 The The **Overrepresentation analysis (ORA)** was performed using the version 
-(`r packageVersion("clusterProfiler")`) of **clusterProfiler** R-package,
+(`r RFLOMICS:::.getPackageInfo(rflomics.MAE, "clusterProfiler")`) of **clusterProfiler** R-package,
 based on following databases:
 
 

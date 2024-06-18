@@ -12,25 +12,35 @@ ont.title <- switch (ontology,
 
 ```{r}
 
-MM.db <- switch(ontology,
-                "GO" = {
-                    db <- getEnrichSettings(dataset.SE, from = annot, database = ontology)$OrgDb
-                    paste0("Gene Ontology ([GO](https://geneontology.org/)). From ", db, 
-                           " annotation (", packageVersion(db),")",
-                           " **enrichGO()** function from ClusterProfilter was used.")
-                },
-                "KEGG" = {
-                    paste0("Kyoto Encyclopedia of Genes and Genomes ([KEGG](https://www.genome.jp/kegg/)).",
-                           " **enrichKEGG()** function from ClusterProfilter was used.")
-                },
-                "custom" = {
-                    paste0("Provided by user. File name: ????.",
-                           " **enricher()** function from ClusterProfilter was used.")}
-)
+MM.db <- 
+  switch(ontology,
+         "GO" = {
+           db <- 
+             getEnrichSettings(object   = dataset.SE, 
+                               from     = "DiffExpEnrichAnal", 
+                               database = "GO")$OrgDb
+           if(is.null(db))
+             db <- 
+               getEnrichSettings(object   = dataset.SE, 
+                                 from     = "CoExpEnrichAnal", 
+                                 database = "GO")$OrgDb
+           
+           paste0("Gene Ontology ([GO](https://geneontology.org/)) from **", db, 
+                  "** annotation (version ", RFLOMICS:::.getPackageInfo(rflomics.MAE, db),").",
+                  "\n**enrichGO()** function from **ClusterProfilter** was used.")
+         },
+         "KEGG" = {
+           paste0("Kyoto Encyclopedia of Genes and Genomes ([KEGG](https://www.genome.jp/kegg/)).",
+                  "\n**enrichKEGG()** function from ClusterProfilter was used.")
+         },
+         "custom" = {
+           paste0("Provided by user. File name: ????.",
+                  "\n**enricher()** function from ClusterProfilter was used.")}
+  )
 
 ```
 
-*`r MM.db`.*
+*`r MM.db`*
 
 <br>
 
@@ -77,7 +87,7 @@ for (annot in c("DiffExpEnrichAnal", "CoExpEnrichAnal")){
   }
   
   write.table(sumORA.ont, file = paste0(annotDir[[data]][[annot]][[ontology]], 
-                                      "summay_stat.txt"),
+                                        "summay_stat.txt"),
               sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
   
   DT.child <-  

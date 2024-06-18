@@ -46,8 +46,8 @@ for (domain in names(enrichRes)) {
   
   out <- c(out, paste0("\n* **", domain, ":**\n\n"))
   
-  cmd <- paste0("p <- dotplot(dataPlot, showCategory = 15) +",
-                "ggtitle(paste0(listname, '\nDomain: ', domain, '\n(First 15 enriched terms)'));",
+  cmd <- paste0("p <- dotplot(dataPlot, showCategory = 15) + ",
+                "ggtitle(paste0(listname, '\nDomain: ', domain, '\n(First 15 enriched terms)')); ",
                 "print(p)")
   
   dotplot_CPR <-

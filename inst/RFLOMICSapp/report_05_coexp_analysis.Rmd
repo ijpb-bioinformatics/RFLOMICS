@@ -22,7 +22,7 @@ isResults <- dataset.SE@metadata$CoExpAnal[["results"]]
 * **Methods:**
 
 The co-expression analysis was carried out using 
-**coseq R package** (version `r packageVersion("coseq")`) on 
+**coseq R package** (version `r RFLOMICS:::.getPackageInfo(rflomics.MAE, "coseq")`) on 
 **`r length(getDEList(dataset.SE, getCoexpSettings(dataset.SE)$gene.list.names, getCoexpSettings(dataset.SE)$merge.type))`
 `r variableName`** from
 the

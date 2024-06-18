@@ -24,15 +24,14 @@ params:
 ```{r library, include = FALSE}
 library(knitr)
 library(RFLOMICS)
-
 library(enrichplot)
 library(UpSetR)
 library(ggplot2)
-
-library(dplyr)
-
+#library(ggtext)
 library(DT)
 library(htmltools)
+
+library(dplyr)
 ```
 
 ```{r , include=FALSE}
