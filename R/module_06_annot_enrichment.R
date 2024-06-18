@@ -608,8 +608,6 @@
       
       rea.values[[dataset]][[fromAnnot]] <- FALSE
       
-      toto <<- session$userData$FlomicsMultiAssay
-      paramList <<- paramList
       # run annotation diff analysis
       #runRes <- tryCatch({
       paramList <- c(
