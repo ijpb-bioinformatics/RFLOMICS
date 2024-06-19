@@ -30,7 +30,18 @@ MM.db <-
                   "\n**enrichGO()** function from **ClusterProfilter** was used.")
          },
          "KEGG" = {
-           paste0("Kyoto Encyclopedia of Genes and Genomes ([KEGG](https://www.genome.jp/kegg/)).",
+           keggRelease <- 
+             getAnalysis(dataset.SE,
+                         name = "DiffExpEnrichAnal", 
+                         subName = "KEGG")[["list_args"]]$keggRelease
+           if(is.null(keggRelease))
+             keggRelease <- 
+               getAnalysis(dataset.SE,
+                           name = "CoExpEnrichAnal", 
+                           subName = "KEGG")[["list_args"]]$keggRelease
+           
+           paste0("Kyoto Encyclopedia of Genes and Genomes ",
+                  "([KEGG](https://www.genome.jp/kegg/)) (release ", keggRelease,").",
                   "\n**enrichKEGG()** function from ClusterProfilter was used.")
          },
          "custom" = {
