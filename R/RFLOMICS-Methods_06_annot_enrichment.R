@@ -309,6 +309,9 @@ setMethod(
     EnrichAnal[["list_args"]] <-
       list_args[names(list_args) %in% storedParam]
     
+    if(database == "KEGG")
+      EnrichAnal[["list_args"]][["keggRelease"]] <- .getKEGGRelease()
+    
     if(!is.null(annot))
       EnrichAnal[["list_args"]][["annot"]] <- annot
     
@@ -318,7 +321,13 @@ setMethod(
     EnrichAnal[["enrichResult"]] <- results_list
     
     # Store last results
-    metadata(object)[[fromEnrich]][[database]] <- EnrichAnal
+    #metadata(object)[[fromEnrich]][[database]] <- EnrichAnal
+    
+    object <- 
+      setElementToMetadata(object, 
+                           name = fromEnrich, 
+                           subName = database,
+                           content = EnrichAnal)
     
     return(object)
   }

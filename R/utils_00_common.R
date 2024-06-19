@@ -15,20 +15,20 @@
 #' @importFrom utils capture.output
 #'
 .doNotPlot <- function(expr) {
-    pdf(file = NULL)
-    out <- tryCatch(
-        {
-            capture.output(
-                suppressMessages(
-                    eval(expr)
-                )
-            )
-        },
-        error = function(e) e,
-        warning = function(w) w
-    )
-    dev.off()
-    return(out)
+  pdf(file = NULL)
+  out <- tryCatch(
+    {
+      capture.output(
+        suppressMessages(
+          eval(expr)
+        )
+      )
+    },
+    error = function(e) e,
+    warning = function(w) w
+  )
+  dev.off()
+  return(out)
 }
 
 
@@ -41,26 +41,26 @@
 #' @noRd
 #'
 .doNotSpeak <- function(expr) {
-    capture.output(out <- tryCatch({
-        eval(expr)},
-        error = function(e) e,
-        warning = function(w) w
-    ))
-    return(out)
+  capture.output(out <- tryCatch({
+    eval(expr)},
+    error = function(e) e,
+    warning = function(w) w
+  ))
+  return(out)
 }
 
 
 .addBSpopify <- function(label="", content="", title="", 
                          color="black", placement="right",
                          trigger = "click"){
-    
-    id <- paste0("id" , paste0(sample(letters, 4, replace = TRUE), 
-                               collapse = ""))
-    span(label,
-         popify(actionLink(id, icon("question-circle")), 
-                title = title, content = content,
-                trigger = trigger, placement = placement),
-         style = paste0("color:", color))
+  
+  id <- paste0("id" , paste0(sample(letters, 4, replace = TRUE), 
+                             collapse = ""))
+  span(label,
+       popify(actionLink(id, icon("question-circle")), 
+              title = title, content = content,
+              trigger = trigger, placement = placement),
+       style = paste0("color:", color))
 }
 
 # ---- INTERNAL FUNCTIONS ----
@@ -75,20 +75,20 @@
 #' @noRd
 #' @keywords internal
 .isContrastName <- function(object, contrastName) {
-    df_contrasts <- getSelectedContrasts(object)
-    
-    search_match <- lapply(contrastName, FUN = function(cn) {
-        grep(cn, df_contrasts$contrastName, fixed = TRUE)
-    })
-    search_success <- unlist(lapply(search_match, identical, integer(0))) 
-    # if TRUE, not a success at all.
-    
-    if (!any(search_success)) {
-        # Congratulations, it's a contrast name!
-        return(TRUE)
-    } else {
-        return(FALSE)
-    }
+  df_contrasts <- getSelectedContrasts(object)
+  
+  search_match <- lapply(contrastName, FUN = function(cn) {
+    grep(cn, df_contrasts$contrastName, fixed = TRUE)
+  })
+  search_success <- unlist(lapply(search_match, identical, integer(0))) 
+  # if TRUE, not a success at all.
+  
+  if (!any(search_success)) {
+    # Congratulations, it's a contrast name!
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
 }
 
 # ---- .getOrigin - get origin of a particular name ----
@@ -103,11 +103,11 @@
 #' @keywords internal
 
 .getOrigin <- function(object, name) {
-    
-    if (.isContrastName(object, name)) return("Contrast")
-    if (.isClusterName(object, name)) return("CoexCluster")
-    
-    return("NoOriginFound")
+  
+  if (.isContrastName(object, name)) return("Contrast")
+  if (.isClusterName(object, name)) return("CoexCluster")
+  
+  return("NoOriginFound")
 }
 
 # ---- isClusterName - Check if character vectors are tags Names : -----
@@ -123,31 +123,31 @@
 #' @importFrom coseq clusters
 #' @keywords internal
 .isClusterName <- function(object, clusterName) {
-    resClus <- object@metadata$CoExpAnal$coseqResults
-    
-    if (is.null(resClus)) {
-        warning("No coseq results in this object")
-        return(FALSE) 
-    }
-    
-    clusterPoss <- unique(clusters(resClus))
-    
-    if (is.integer(clusterName)){ 
-        clusterName <- paste("cluster", clusterName, sep = ".")
-    }
-    namesClust <- paste("cluster", clusterPoss, sep = ".")
-    
-    search_match <- unlist(lapply(clusterName, FUN = function(cn) {
-        grep(cn, namesClust, fixed = TRUE)
-    }))
-    search_success <- unlist(lapply(search_match, identical, integer(0))) 
-    # if TRUE, not a success at all.
-    
-    if (!any(search_success)) {
-        return(TRUE)
-    } else {
-        return(FALSE)
-    }
+  resClus <- object@metadata$CoExpAnal$coseqResults
+  
+  if (is.null(resClus)) {
+    warning("No coseq results in this object")
+    return(FALSE) 
+  }
+  
+  clusterPoss <- unique(clusters(resClus))
+  
+  if (is.integer(clusterName)){ 
+    clusterName <- paste("cluster", clusterName, sep = ".")
+  }
+  namesClust <- paste("cluster", clusterPoss, sep = ".")
+  
+  search_match <- unlist(lapply(clusterName, FUN = function(cn) {
+    grep(cn, namesClust, fixed = TRUE)
+  }))
+  search_success <- unlist(lapply(search_match, identical, integer(0))) 
+  # if TRUE, not a success at all.
+  
+  if (!any(search_success)) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
 }
 
 # ---- tryCatch_rflomics - catch error, warning et message : -----
@@ -201,7 +201,7 @@
 #' @noRd
 #' @keywords internal
 .getPackageInfo <- function(rflomicsMAE, package = NULL, info = "version") {
-
+  
   sessionInfo <- metadata(rflomicsMAE)[["sessionInfo"]][["pkg.tab"]]
   
   if(is.null(package)) return(NULL)
@@ -243,5 +243,111 @@
                         "OS"= x$running), 
     "pkg.tab" = do.call(rbind, pkg),
     "python.conf" = reticulate::py_config()))
+}
+
+## ---- getKEGGRelease ----
+#' getKEGGRelease
+#' 
+#' @return string
+#' @keywords internal
+#' @importFrom httr content GET
+#' @importFrom stringr str_extract 
+#' @noRd
+.getKEGGRelease <- function(){
+  
+  version <- NULL
+  url <- "https://rest.kegg.jp/info/kegg"
+  
+  try.res  <- .tryCatch_rflomics(GET(url))
+  response <-  try.res$result
+  
+  if(!is.null(response)){
+    
+    content <- content(response, "text")
+    
+    version <- str_extract(content, "Release \\d+\\.\\d+") |> 
+      str_remove(pattern = "Release ")
+  }
+  
+  if(!is.null(try.res$warnings))
+    message("warning: ", try.res$warnings)
+  
+  if(!is.null(try.res$error))
+    message("error: ", try.res$error)
+  
+  
+  return(version)
+}
+
+## ---- setElementToMetadata ----
+#' .setElementToMetadata
+#' 
+#' @param object An object of class \link{RflomicsSE} or
+#' \link{RflomicsMAE}. It is expected the SE object is produced by
+#' rflomics previous analyses, as it relies on their results.. 
+#' @param name the name of element to add to metadata slot.
+#' @param subName the name of sub element to add to metadata slot.
+#' @param content the content of element to add
+#' @return object An object of class \link{RflomicsSE} or
+#' \link{RflomicsMAE}.
+#' @keywords internal
+#' @noRd
+.setElementToMetadata <- function(object, 
+                                  name = NULL,
+                                  subName = NULL,
+                                  content = NULL){
+  
+  if(is.null(name)) 
+    warning("Argument name is required")
+  if(is.null(content)) 
+    warning("Argument content is required")
+  
+  if(!is.null(metadata(object)[[name]]))
+    warning(name, "already exists. It will be overwritten by this operation.")
+  
+  if(!is.null(subName)){
+    metadata(object)[[name]][[subName]] <- content
+  } else{
+    metadata(object)[[name]] <- content
+  }
+  
+  # to do
+  # Check the consistency of the object.
+  # checkRflomicsMAE(object)
+  
+  return(object)
+}
+
+
+## ---- getAnalysis ----
+#' getAnalysis
+#' 
+#' @param object An object of class \link{RflomicsSE} or
+#' \link{RflomicsMAE}. It is expected the SE object is produced by
+#' rflomics previous analyses, as it relies on their results.. 
+#' @param name the name of element to add to metadata slot.
+#' @param subName the name of sub element to add to metadata slot.
+#' @return list
+#' @keywords internal
+#' @noRd
+.getAnalysis <- function(object, 
+                         name = NULL,
+                         subName = NULL){
+  
+  results <- list()
+  
+  if(!name %in% names(metadata(object)))
+    stop("There are no analysis results with this name:", name)
+  
+  results <- metadata(object)[[name]]
+  
+  if(!is.null(subName)){
+    if(!subName %in% names(results))
+      stop("There are no analysis results with this name:", subName)
+    
+    results <- results[[subName]]
+  }
+  
+  return(results)
 }
 

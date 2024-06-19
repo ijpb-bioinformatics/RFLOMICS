@@ -850,8 +850,19 @@ setGeneric(
 setGeneric(
   name = "setElementToMetadata",
   def  = function(object, 
-                  listName = NULL, 
-                  listContent = NULL, ...) {
+                  name = NULL, 
+                  subName = NULL,
+                  content = NULL) {
     standardGeneric("setElementToMetadata")
+  }
+)
+
+
+setGeneric(
+  name = "getAnalysis",
+  def  = function(object,
+                  name = NULL, 
+                  subName = NULL) {
+    standardGeneric("getAnalysis")
   }
 )

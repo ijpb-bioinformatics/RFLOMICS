@@ -128,7 +128,7 @@ setMethod(
                         omicList       = list(),
                         design         = list(),
                         IntegrationAnalysis = list(),
-                        projectName    = NULL
+                        projectName    = character()
   ) {
     
     .Object <-  callNextMethod(.Object, ExperimentList = ExperimentList, 
@@ -145,7 +145,7 @@ setMethod(
            "design"              = design,
            "IntegrationAnalysis" = IntegrationAnalysis,
            "date"                = date,
-           "sessionInfo"         = NULL,
+           "sessionInfo"         = list(),
            "rflomicsVersion"     = packageVersion('RFLOMICS'))
     
     return(.Object)

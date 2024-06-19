@@ -68,7 +68,9 @@ setMethod(
     
     # save FE rflomics.MAE in .Rdata and load it during report execution
     sessionInfo.light <- .writeSessionInfo()
-    rflomics.MAE <- setElementToMetadata(object, "sessionInfo", sessionInfo.light)
+    rflomics.MAE <- setElementToMetadata(object, 
+                                         name = "sessionInfo", 
+                                         content = sessionInfo.light)
     save(rflomics.MAE, file = file.path(tmpDir, RDataName))
     
     # Set up parameters to pass to Rmd document
@@ -493,7 +495,7 @@ setMethod(
       
       Validcontrasts <- getValidContrasts(object[[dataset]])$contrastName
       if (is.null(Validcontrasts) || length(Validcontrasts) == 0)
-          next
+        next
       
       p.adj <- getDiffSettings(object[[dataset]])$p.adj.cutoff
       logFC <- getDiffSettings(object[[dataset]])$abs.logFC.cutoff
@@ -525,7 +527,7 @@ setMethod(
       df$tabel <- lapply(df$contrasts, function(x){
         contrast.df[contrastName == x,]$tag
       }) %>% unlist
-        
+      
     }else{
       
       df$tabel <- 
@@ -866,10 +868,14 @@ setMethod(
 ## ---- set element to metadata slot in rflomicsSE/MAE ----
 #' @title setElementToMetadata
 #' @description set element to metadata slot
-#' @param object An object of class \link{RflomicsMAE}. 
-#' @param listName the name of list to add to metadata slot.
-#' @param listContent the list to add
-#' @return object An object of class \link{RflomicsMAE}.
+#' @param object An object of class \link{RflomicsSE} or
+#' \link{RflomicsMAE}. It is expected the SE object is produced by
+#' rflomics previous analyses, as it relies on their results.. 
+#' @param name the name of element to add to metadata slot.
+#' @param subName the name of sub element to add to metadata slot.
+#' @param content the content of element to add
+#' @return An object of class \link{RflomicsSE} or
+#' \link{RflomicsMAE}.
 #' @exportMethod setElementToMetadata
 #' @rdname setElementToMetadata
 #' @aliases setElementToMetadata
@@ -877,47 +883,75 @@ setMethod(
   f = "setElementToMetadata",
   signature = "RflomicsMAE",
   definition = function(object, 
-                        listName = NULL,
-                        listContent = NULL,
-                        ...) {
-
-    if(is.null(listName)) 
-      warning("Argument listName is required")
-    if(is.null(listContent)) 
-      warning("Argument listContent is required")
+                        name = NULL,
+                        subName = NULL,
+                        content = NULL) {
     
-    if(!is.null(metadata(object)[[listName]]))
-      warning(listName, "already exists. It will be overwritten by this operation.")
-      
-    metadata(object)[[listName]] <- listContent
+    object <- 
+      .setElementToMetadata(object, name, subName, content)
     
     return(object)
-    
-  }
-)
+  })
 
-#' @param object An object of class \link{RflomicsSE}. 
-#' @return object An object of class \link{RflomicsSE}.
+#' @title setElementToMetadata
+#' @rdname setElementToMetadata
+#' @aliases setElementToMetadata
+#' @exportMethod setElementToMetadata
 setMethod(
   f = "setElementToMetadata",
   signature = "RflomicsSE",
   definition = function(object, 
-                        listName = NULL,
-                        listContent = NULL,
-                        ...) {
+                        name = NULL,
+                        subName = NULL,
+                        content = NULL) {
     
-    if(is.null(listName)) 
-      warning("Argument listName is required")
-    if(is.null(listContent)) 
-      warning("Argument listContent is required")
-    
-    if(!is.null(metadata(object)[[listName]]) ||
-       length(metadata(object)[[listName]]) != 0)
-      warning(listName, "already exists. It will be overwritten by this operation.")
-    
-    metadata(object)[[listName]] <- listContent
+    object <- 
+      .setElementToMetadata(object, name, subName, content)
     
     return(object)
-    
   }
 )
+
+## ---- get element from metadata slot from rflomicsSE/MAE ----
+#' @title getAnalysis
+#' @description get result from a specific analysis
+#' @param object An object of class \link{RflomicsSE} or
+#' \link{RflomicsMAE}. It is expected the SE object is produced by
+#' rflomics previous analyses, as it relies on their results.. 
+#' @param name the name of element to add to metadata slot.
+#' @param subName the name of sub element to add to metadata slot.
+#' @return list
+#' @exportMethod getAnalysis
+#' @rdname getAnalysis
+#' @aliases getAnalysis
+setMethod(
+  f = "getAnalysis",
+  signature = "RflomicsMAE",
+  definition = function(object, 
+                        name = NULL,
+                        subName = NULL) {
+    
+    results <- 
+      .getAnalysis(object, name, subName)
+    
+    return(results)
+  })
+
+#' @title getAnalysis
+#' @rdname getAnalysis
+#' @aliases getAnalysis
+#' @exportMethod getAnalysis
+setMethod(
+  f = "getAnalysis",
+  signature = "RflomicsSE",
+  definition = function(object, 
+                        name = NULL,
+                        subName = NULL) {
+    
+    results <- 
+      .getAnalysis(object, name, subName)
+    
+    return(results)
+  }
+)
+
