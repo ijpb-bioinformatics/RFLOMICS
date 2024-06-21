@@ -70,7 +70,7 @@
         datasetNames = getDatasetNames(session$userData$FlomicsMultiAssay),
         multiAnalyses = c("IntegrationAnalysis"))
     
-    message("[RFLOMICS] # 2- Statistical setting...")
+    message("[RFLOMICS] # 02- Statistical setting...")
     message("[RFLOMICS] #    => model formula: ", input$model.formulae)
     
     # => Set the model formulae

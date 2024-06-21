@@ -24,7 +24,7 @@
              session,
              rea.values,
              local.rea.values) {
-        message("[RFLOMICS] # 1- Load data: ", local.rea.values$projectName)
+        message("[RFLOMICS] # 01- Load data: ", local.rea.values$projectName)
         
         # create Rflomics object
         FlomicsMultiAssay.try <- tryCatch(

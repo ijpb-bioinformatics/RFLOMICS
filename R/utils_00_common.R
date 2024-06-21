@@ -302,9 +302,6 @@
   if(is.null(content)) 
     warning("Argument content is required")
   
-  if(!is.null(metadata(object)[[name]]))
-    warning(name, "already exists. It will be overwritten by this operation.")
-  
   if(!is.null(subName)){
     metadata(object)[[name]][[subName]] <- content
   } else{

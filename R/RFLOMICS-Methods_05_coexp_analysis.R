@@ -177,7 +177,7 @@ setMethod(f = "runCoExpression",
             # set default parameters based on data type
             param.list <- list("model" = model)
             
-            switch(object@metadata$omicType,
+            switch(getOmicsTypes(object),
                    
                    "RNAseq" = {
                      counts <- assay(object)[geneList,]
@@ -274,7 +274,11 @@ setMethod(f = "runCoExpression",
               CoExpAnal[["error"]]   <- coseq.res.list$error
             }
             
-            object@metadata$CoExpAnal <- CoExpAnal
+            
+            object <- 
+              setElementToMetadata(object, 
+                                   name = "CoExpAnal", 
+                                   content = CoExpAnal)
             return(object)
           })
 
@@ -638,9 +642,11 @@ setMethod(f = "plotCoseqContrasts",
               if(is.null(H) || length(H) < 2)
                 return(NULL)
               
+              CoExpAnal <- getAnalysis(object, name = "CoExpAnal")
+              
               # Gene's repartition by clusters
               coseq.res  <-
-                object@metadata$CoExpAnal[["coseqResults"]]
+                CoExpAnal[["coseqResults"]]
               genesByclusters <-
                 as.data.frame(ifelse(coseq.res@assays@data[[1]] > 0.8, 1, 0))
               genesByclusters <- rownames_to_column(genesByclusters, var = "DEF") 

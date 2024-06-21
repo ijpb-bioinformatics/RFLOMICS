@@ -595,7 +595,7 @@
       messList <- switch(listSource,
                          "DiffExpEnrichAnal" = "differential expression",
                          "CoExpEnrichAnal" = "co-expression clusters")
-      message("[RFLOMICS] # 11- ",
+      message("[RFLOMICS] # 06- ",
               database,
               " Enrichment Analysis of ",
               messList ,
@@ -653,8 +653,6 @@
       
       # rea.values[[datasetList]][[database]] <-
       #     unique(c(rea.values[[datasetList]][[database]], dataset))
-      
-      toto <<- session$userData$FlomicsMultiAssay
       
     }, ignoreInit = TRUE)
     

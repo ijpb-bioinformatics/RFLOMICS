@@ -141,6 +141,8 @@ setMethod(f         = "runDiffAnalysis",
                                 clustermq=FALSE,
                                 cmd = FALSE){
             
+            DiffExpAnal <- list()
+            
             modelFormula <- getModelFormula(object)
             if(length(modelFormula) == 0)
               stop("No model defined in the ", getDatasetNames(object), " object.")
@@ -177,14 +179,14 @@ setMethod(f         = "runDiffAnalysis",
             ## getcontrast
             object <- generateContrastMatrix(object, contrastList = contrastList)
             
-            object@metadata$DiffExpAnal <- list()
-            object@metadata$DiffExpAnal[["contrasts"]] <- contrastList
+            
+            DiffExpAnal[["contrasts"]] <- contrastList
             
             # remplacera à terme les lignes ci-dessus
-            object@metadata$DiffExpAnal[["setting"]][["method"]] <- method
-            object@metadata$DiffExpAnal[["setting"]][["p.adj.method"]] <- p.adj.method
-            object@metadata$DiffExpAnal[["setting"]][["p.adj.cutoff"]] <- p.adj.cutoff
-            object@metadata$DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- logFC.cutoff
+            DiffExpAnal[["setting"]][["method"]] <- method
+            DiffExpAnal[["setting"]][["p.adj.method"]] <- p.adj.method
+            DiffExpAnal[["setting"]][["p.adj.cutoff"]] <- p.adj.cutoff
+            DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- logFC.cutoff
             
             # transform and norm if needed
             if (method == "limmalmFit") {
@@ -232,21 +234,26 @@ setMethod(f         = "runDiffAnalysis",
             
             if (!is.null(ListRes$value)) {
               if (!is.null(ListRes$value[["RawDEFres"]])) {
-                object@metadata$DiffExpAnal[["results"]] <- TRUE
-                object@metadata$DiffExpAnal[["RawDEFres"]] <- ListRes$value[["RawDEFres"]]
-                object@metadata$DiffExpAnal[["DEF"]] <- ListRes$value[["TopDEF"]]
+                DiffExpAnal[["results"]] <- TRUE
+                DiffExpAnal[["RawDEFres"]] <- ListRes$value[["RawDEFres"]]
+                DiffExpAnal[["DEF"]] <- ListRes$value[["TopDEF"]]
               }else{
-                object@metadata$DiffExpAnal[["results"]]    <- FALSE
-                object@metadata$DiffExpAnal[["ErrorStats"]] <- ListRes$value[["ErrorTab"]]
+                DiffExpAnal[["results"]]    <- FALSE
+                DiffExpAnal[["ErrorStats"]] <- ListRes$value[["ErrorTab"]]
               }
             }else{
-              object@metadata$DiffExpAnal[["results"]]    <- FALSE
-              object@metadata$DiffExpAnal[["Error"]]      <- ListRes$error
-              object@metadata$DiffExpAnal[["ErrorStats"]] <- NULL
+              DiffExpAnal[["results"]]    <- FALSE
+              DiffExpAnal[["Error"]]      <- ListRes$error
+              DiffExpAnal[["ErrorStats"]] <- NULL
               
               
               #return(object)
             }
+            
+            object <- 
+              setElementToMetadata(object, 
+                                   name = "DiffExpAnal", 
+                                   content = DiffExpAnal)
             
             ## filtering
             object <-  filterDiffAnalysis(object = object, 
@@ -357,47 +364,54 @@ setMethod(f          = "filterDiffAnalysis",
                                  p.adj.cutoff = 0.05, 
                                  logFC.cutoff = 0){
             
-            if (is.null(object@metadata$DiffExpAnal[["RawDEFres"]])) {
+            DiffExpAnal <- getAnalysis(object, name = "DiffExpAnal")
+            
+            if (is.null(DiffExpAnal[["RawDEFres"]])) {
               stop("can't filter the DiffExpAnal object because it doesn't exist")
             }
             
             # remplacera à terme les lignes ci-dessus
-            metadata(object)$DiffExpAnal[["setting"]][["p.adj.cutoff"]] <- p.adj.cutoff
-            metadata(object)$DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- logFC.cutoff
+            DiffExpAnal[["setting"]][["p.adj.cutoff"]] <- p.adj.cutoff
+            DiffExpAnal[["setting"]][["abs.logFC.cutoff"]]  <- logFC.cutoff
             
             ## TopDEF: Top differential expressed features
-            DEF_filtred <- lapply(seq_len(length(object@metadata$DiffExpAnal[["DEF"]])), function(x){
-              res <- object@metadata$DiffExpAnal[["DEF"]][[x]]
+            DEF_filtred <- lapply(seq_len(length(DiffExpAnal[["DEF"]])), function(x){
+              res <- DiffExpAnal[["DEF"]][[x]]
               keep <- (res$Adj.pvalue < p.adj.cutoff) & (abs(res$logFC) > logFC.cutoff)
               res <- res[keep,]
               return(res)
             })
-            names(DEF_filtred) <- names(object@metadata$DiffExpAnal[["RawDEFres"]])
-            object@metadata$DiffExpAnal[["TopDEF"]] <- DEF_filtred
+            names(DEF_filtred) <- names(DiffExpAnal[["RawDEFres"]])
+            DiffExpAnal[["TopDEF"]] <- DEF_filtred
             
             ## stats
-            object@metadata$DiffExpAnal[["stats"]] <- sumDiffExp(object)
+            DiffExpAnal[["stats"]] <- sumDiffExp(object)
             
             ## merge results in bin matrix
             DEF_list <- list()
-            for (x in names(object@metadata$DiffExpAnal[["TopDEF"]])){
-              res <- object@metadata$DiffExpAnal[["TopDEF"]][[x]]
+            for (x in names(DiffExpAnal[["TopDEF"]])){
+              res <- DiffExpAnal[["TopDEF"]][[x]]
               tmp <- data.frame(DEF = rownames(res), bin = rep(1,length(rownames(res))))
               colnames(tmp) <- c("DEF", x)
               
               if(dim(tmp)[1] != 0){ DEF_list[[x]] <- tmp }
             }
             
-            object@metadata$DiffExpAnal[["mergeDEF"]] <- NULL
+            DiffExpAnal[["mergeDEF"]] <- NULL
             
             if (length(DEF_list) != 0) {
-              object@metadata$DiffExpAnal[["mergeDEF"]] <- DEF_list %>% 
+              DiffExpAnal[["mergeDEF"]] <- DEF_list %>% 
                 reduce(full_join, by="DEF") %>%
                 mutate_at(.vars = 2:(length(DEF_list)+1),
                           .funs = function(x){
                             if_else(is.na(x), 0, 1)}) %>%
                 as.data.frame()
             }
+            
+            object <- 
+              setElementToMetadata(object,
+                                   name = "DiffExpAnal", 
+                                   content = DiffExpAnal)
             
             return(object)
           })
@@ -464,8 +478,10 @@ setMethod(f="plotDiffAnalysis",
                                  typeofplots = c("MA.plot", "volcano", "histogram")){
             
             plots <- list()
+            DiffExpAnal <- 
+              getAnalysis(object, name = "DiffExpAnal")
             
-            resTable <- object@metadata$DiffExpAnal[["DEF"]][[contrastName]]
+            resTable <- DiffExpAnal[["DEF"]][[contrastName]]
             
             logFC.cutoff <- getDiffSettings(object)[["abs.logFC.cutoff"]]
             p.adj.cutoff <- getDiffSettings(object)[["p.adj.cutoff"]]
@@ -582,12 +598,14 @@ setMethod(f          = "plotHeatmapDesign",
                                 heatmapArgs = list()){
             
             Groups     <- getDesignMat(object)
+            DiffExpAnal <- 
+              getAnalysis(object, name = "DiffExpAnal")
             
-            if (is.null(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]])) {
+            if (is.null(DiffExpAnal[["TopDEF"]][[contrastName]])) {
               stop("no DE variables")
             }
             
-            resTable <- arrange(object@metadata$DiffExpAnal[["TopDEF"]][[contrastName]], Adj.pvalue)
+            resTable <- arrange(DiffExpAnal[["TopDEF"]][[contrastName]], Adj.pvalue)
             
             if (dim(resTable)[1] == 0) {
               stop("no differentially expressed variables...")

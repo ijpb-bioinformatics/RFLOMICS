@@ -258,7 +258,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
     # Run the analysis only if the 'diff' object is empty
     if(length(metadata(dataset.SE)$DiffExpAnal) == 0){
       
-      message("[RFLOMICS] # 4- Differential Analysis... ", dataset)
+      message("[RFLOMICS] # 04- Differential Analysis... ", dataset)
       message("[RFLOMICS] #    => Filtering differential analysis...")
       
       # run diff analysis with selected method
