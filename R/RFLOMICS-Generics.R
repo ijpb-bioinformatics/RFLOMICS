@@ -1,684 +1,689 @@
 #' @import methods
 
-setGeneric(
-    name = "getCoExpAnalysesSummary",
-    def  = function(object, ...) {
-        standardGeneric("getCoExpAnalysesSummary")
-    }
-)
-setGeneric(
-    name = "getAnnotAnalysesSummary",
-    def  = function(object,
-                    from       = "DiffExpEnrichAnal",
-                    matrixType = "presence",
-                    ...) {
-        standardGeneric("getAnnotAnalysesSummary")
-    }
-)
-setGeneric(
-    name = "getDiffAnalysesSummary",
-    def  = function(object, plot = FALSE, ...) {
-        standardGeneric("getDiffAnalysesSummary")
-    }
-)
-setGeneric(
-    name = "generateReport",
-    def  = function(object,
-                    fileName = NULL,
-                    archiveName = NULL,
-                    export = FALSE,
-                    tmpDir = getwd(),
-                    ...) {
-        standardGeneric("generateReport")
-    }
-)
-
-# ---- RflomicsMAE and RflomicsSE getteurs ----
+#---- 00 common methods ----
 
 setGeneric(
-    name = "getProjectName",
-    def  = function(object, omicNames = NULL, ...) {
-        standardGeneric("getProjectName")
-    }
-)
-setGeneric(
-    name = "subRflomicsMAE",
-    def  = function(object, omicNames = NULL, ...) {
-        standardGeneric("subRflomicsMAE")
-    }
+  name = "setElementToMetadata",
+  def  = function(object, 
+                  name = NULL, 
+                  subName = NULL,
+                  content = NULL) {
+    standardGeneric("setElementToMetadata")
+  }
 )
 
 setGeneric(
-    name = "getFactorNames",
-    def  = function(object) {
-        standardGeneric("getFactorNames")
-    }
+  name = "getAnalysis",
+  def  = function(object,
+                  name = NULL, 
+                  subName = NULL, ...) {
+    standardGeneric("getAnalysis")
+  }
 )
 
 setGeneric(
-    name = "getFactorTypes",
-    def  = function(object) {
-        standardGeneric("getFactorTypes")
-    }
+  name = "resetRflomicsMAE",
+  def  = function(object, 
+                  singleAnalyses = NULL, 
+                  multiAnalyses = NULL, 
+                  datasetNames = NULL, ...) {
+    standardGeneric("resetRflomicsMAE")
+  }
 )
 
 setGeneric(
-    name = "getBioFactors",
-    def  = function(object) {
-        standardGeneric("getBioFactors")
-    }
+  name = "getAnalyzedDatasetNames",
+  def  = function(object, analyses = NULL, ...) {
+    standardGeneric("getAnalyzedDatasetNames")
+  }
 )
 
 setGeneric(
-    name = "getBatchFactors",
-    def  = function(object) {
-        standardGeneric("getBatchFactors")
-    }
+  name = "generateReport",
+  def  = function(object,
+                  fileName = NULL,
+                  archiveName = NULL,
+                  export = FALSE,
+                  tmpDir = getwd(),
+                  ...) {
+    standardGeneric("generateReport")
+  }
+)
+
+#---- 01 load data ----
+
+setGeneric(
+  name = "plotDataOverview",
+  def  = function(object,
+                  omicNames = NULL,
+                  realSize = FALSE,
+                  ...) {
+    standardGeneric("plotDataOverview")
+  }
 )
 
 setGeneric(
-    name = "getMetaFactors",
-    def  = function(object) {
-        standardGeneric("getMetaFactors")
-    }
+  name = "getProjectName",
+  def  = function(object, omicNames = NULL, ...) {
+    standardGeneric("getProjectName")
+  }
+)
+setGeneric(
+  name = "subRflomicsMAE",
+  def  = function(object, omicNames = NULL, ...) {
+    standardGeneric("subRflomicsMAE")
+  }
 )
 
 setGeneric(
-    name = "getDesignMat",
-    def  = function(object) {
-        standardGeneric("getDesignMat")
-    }
+  name = "getFactorNames",
+  def  = function(object) {
+    standardGeneric("getFactorNames")
+  }
 )
 
 setGeneric(
-    name = "getDatasetNames",
-    def  = function(object) {
-        standardGeneric("getDatasetNames")
-    }
+  name = "getFactorTypes",
+  def  = function(object) {
+    standardGeneric("getFactorTypes")
+  }
 )
 
 setGeneric(
-    name = "getOmicsTypes",
-    def  = function(object) {
-        standardGeneric("getOmicsTypes")
-    }
+  name = "getBioFactors",
+  def  = function(object) {
+    standardGeneric("getBioFactors")
+  }
 )
 
 setGeneric(
-    name = "getRflomicsSE",
-    def  = function(object, datasetName = NULL, ...) {
-        standardGeneric("getRflomicsSE")
-    }
-)
-
-
-setGeneric(
-    name = "getFactorModalities",
-    def  = function(object, factorName, ...) {
-        standardGeneric("getFactorModalities")
-    }
-)
-# ---- 02 ----
-
-setGeneric(
-    name = "generateModelFormulae",
-    def  = function(object, ...) {
-        standardGeneric("generateModelFormulae")
-    }
-)
-setGeneric(
-    name = "setModelFormula",
-    def  = function(object, modelFormula = NULL, ...) {
-        standardGeneric("setModelFormula")
-    }
-)
-setGeneric(
-    name = "getModelFormula",
-    def  = function(object, ...) {
-        standardGeneric("getModelFormula")
-    }
-)
-setGeneric(
-    name = "generateExpressionContrast",
-    def  = function(object, ...) {
-        standardGeneric("generateExpressionContrast")
-    }
-)
-setGeneric(
-    name = "generateContrastMatrix",
-    def  = function(object, ...) {
-        standardGeneric("generateContrastMatrix")
-    }
-)
-setGeneric(
-    name = "setContrastList",
-    def  = function(object, contrastList = NULL, ...) {
-        standardGeneric("setContrastList")
-    }
-)
-setGeneric(
-    name = "setSelectedContrasts",
-    def  = function(object, contrastList = NULL, ...) {
-        standardGeneric("setSelectedContrasts")
-    }
+  name = "getBatchFactors",
+  def  = function(object) {
+    standardGeneric("getBatchFactors")
+  }
 )
 
 setGeneric(
-    name = "getSelectedContrasts",
-    def  = function(object, contrastList = NULL, ...) {
-        standardGeneric("getSelectedContrasts")
-    }
-)
-setGeneric(
-    name = "setValidContrasts",
-    def  = function(object, contrastList = NULL, ...) {
-        standardGeneric("setValidContrasts")
-    }
-)
-setGeneric(
-    name = "getValidContrasts",
-    def  = function(object, contrastList = NULL, ...) {
-        standardGeneric("getValidContrasts")
-    }
+  name = "getMetaFactors",
+  def  = function(object) {
+    standardGeneric("getMetaFactors")
+  }
 )
 
 setGeneric(
-    name = "plotConditionsOverview",
-    def  = function(object, omicNames = NULL, ...) {
-        standardGeneric("plotConditionsOverview")
-    }
+  name = "getDesignMat",
+  def  = function(object) {
+    standardGeneric("getDesignMat")
+  }
 )
 
 setGeneric(
-    name = "checkExpDesignCompleteness",
-    def  = function(object, sampleList = NULL, ...) {
-        standardGeneric("checkExpDesignCompleteness")
-    }
+  name = "getDatasetNames",
+  def  = function(object) {
+    standardGeneric("getDatasetNames")
+  }
 )
 
 setGeneric(
-    name = "plotExpDesignCompleteness",
-    def  = function(object, sampleList = NULL, ...) {
-        standardGeneric("plotExpDesignCompleteness")
-    }
+  name = "getOmicsTypes",
+  def  = function(object) {
+    standardGeneric("getOmicsTypes")
+  }
 )
 
-# ---- GET / SET ----
-
 setGeneric(
-    name = "getContrastMatrix",
-    def  = function(object, modelFormula, contrastList, ...) {
-        standardGeneric("getContrastMatrix")
-    }
+  name = "getRflomicsSE",
+  def  = function(object, datasetName = NULL, ...) {
+    standardGeneric("getRflomicsSE")
+  }
 )
 
 
 setGeneric(
-    name = "getExperimentNames",
-    def  = function(object) {
-        standardGeneric("getExperimentNames")
-    }
+  name = "getFactorModalities",
+  def  = function(object, factorName, ...) {
+    standardGeneric("getFactorModalities")
+  }
 )
 
 setGeneric(
-    name = "getExperimentTypes",
-    def  = function(object, experimentNames = NULL, ...) {
-        standardGeneric("getExperimentTypes")
-    }
-)
-
-# ---- plot ----
-
-setGeneric(
-    name = "plotDataOverview",
-    def  = function(object,
-                    omicNames = NULL,
-                    realSize = FALSE,
-                    ...) {
-        standardGeneric("plotDataOverview")
-    }
-)
-
-
-########### data Explore ###########
-
-# ---- PCA ----
-
-setGeneric(
-    name = "plotOmicsPCA",
-    def  = function(object,
-                    raw = c("raw", "norm"),
-                    axes = c(1, 2),
-                    groupColor = "groups",
-                    ...) {
-        standardGeneric("plotOmicsPCA")
-    }
+  name = "getExperimentNames",
+  def  = function(object) {
+    standardGeneric("getExperimentNames")
+  }
 )
 
 setGeneric(
-    name = "runOmicsPCA",
-    def  = function(object,
-                    ncomp = 5,
-                    raw = FALSE ,
-                    ...) {
-        standardGeneric("runOmicsPCA")
-    }
+  name = "getExperimentTypes",
+  def  = function(object, experimentNames = NULL, ...) {
+    standardGeneric("getExperimentTypes")
+  }
 )
 
-
-# ---- Transformation and normalization: ----
+#---- 02 stat setting ----
 
 setGeneric(
-    name = "runNormalization",
-    def  = function(object,
-                    normMethod = NULL,
-                    modifyAssay = FALSE,
-                    ...) {
-        standardGeneric("runNormalization")
-    }
+  name = "generateModelFormulae",
+  def  = function(object, ...) {
+    standardGeneric("generateModelFormulae")
+  }
 )
-
 setGeneric(
-    name = "runTransformData",
-    def  = function(object,
-                    transformMethod = NULL,
-                    modifyAssay = FALSE,
-                    ...) {
-        standardGeneric("runTransformData")
-    }
+  name = "setModelFormula",
+  def  = function(object, modelFormula = NULL, ...) {
+    standardGeneric("setModelFormula")
+  }
 )
-
 setGeneric(
-    name = "filterLowAbundance",
-    def  = function(object,
-                    filterMethod = "CPM",
-                    filterStrategy = "NbConditions",
-                    cpmCutoff = 5,
-                    ...) {
-        standardGeneric("filterLowAbundance")
-    }
+  name = "getModelFormula",
+  def  = function(object, ...) {
+    standardGeneric("getModelFormula")
+  }
 )
-
-
 setGeneric(
-    name = "runDataProcessing",
-    def  = function(object, ...) {
-        standardGeneric("runDataProcessing")
-    }
-)
-
-
-setGeneric(
-    name = "runSampleFiltering",
-    def  = function(object, samples = NULL, ...) {
-        standardGeneric("runSampleFiltering")
-    }
+  name = "generateExpressionContrast",
+  def  = function(object, contrastType=NULL, ...) {
+    standardGeneric("generateExpressionContrast")
+  }
 )
 
 setGeneric(
-    name = "getTransSettings",
-    def  = function(object, ...) {
-        standardGeneric("getTransSettings")
-    }
+  name = "setSelectedContrasts",
+  def  = function(object, contrastList = NULL, ...) {
+    standardGeneric("setSelectedContrasts")
+  }
 )
 
 setGeneric(
-    name = "getTransSettings",
-    def  = function(object, ...) {
-        standardGeneric("getTransSettings")
-    }
+  name = "getSelectedContrasts",
+  def  = function(object, contrastList = NULL, ...) {
+    standardGeneric("getSelectedContrasts")
+  }
+)
+setGeneric(
+  name = "setValidContrasts",
+  def  = function(object, contrastList = NULL, ...) {
+    standardGeneric("setValidContrasts")
+  }
+)
+setGeneric(
+  name = "getValidContrasts",
+  def  = function(object, contrastList = NULL, ...) {
+    standardGeneric("getValidContrasts")
+  }
+)
+
+
+#---- 03 data processing ----
+
+setGeneric(
+  name = "runNormalization",
+  def  = function(object,
+                  normMethod = NULL,
+                  modifyAssay = FALSE,
+                  ...) {
+    standardGeneric("runNormalization")
+  }
 )
 
 setGeneric(
-    name = "setTrans",
-    def  = function(object, ...) {
-        standardGeneric("setTrans")
-    }
+  name = "runTransformData",
+  def  = function(object,
+                  transformMethod = NULL,
+                  modifyAssay = FALSE,
+                  ...) {
+    standardGeneric("runTransformData")
+  }
 )
 
 setGeneric(
-    name = "getNormSettings",
-    def  = function(object, ...) {
-        standardGeneric("getNormSettings")
-    }
-)
-
-setGeneric(
-    name = "setNorm",
-    def  = function(object, ...) {
-        standardGeneric("setNorm")
-    }
-)
-
-setGeneric(
-    name = "getFilterSettings",
-    def  = function(object, ...) {
-        standardGeneric("getFilterSettings")
-    }
+  name = "filterLowAbundance",
+  def  = function(object,
+                  filterMethod = "CPM",
+                  filterStrategy = "NbConditions",
+                  cpmCutoff = 5,
+                  ...) {
+    standardGeneric("filterLowAbundance")
+  }
 )
 
 
 setGeneric(
-    name = "getFilteredFeatures",
-    def  = function(object, ...) {
-        standardGeneric("getFilteredFeatures")
-    }
+  name = "runDataProcessing",
+  def  = function(object, 
+                  samples=NULL, 
+                  lowCountFiltering_strategy = "NbReplicates", 
+                  lowCountFiltering_CPM_Cutoff = 1, 
+                  normMethod = "none", 
+                  transformMethod = "none", 
+                  ...) {
+    standardGeneric("runDataProcessing")
+  }
 )
 
 
 setGeneric(
-    name = "getCoeffNorm",
-    def  = function(object, ...) {
-        standardGeneric("getCoeffNorm")
-    }
+  name = "runSampleFiltering",
+  def  = function(object, samples = NULL, ...) {
+    standardGeneric("runSampleFiltering")
+  }
 )
 
 setGeneric(
-    name = "setCoeffNorm",
-    def  = function(object, ...) {
-        standardGeneric("setCoeffNorm")
-    }
-)
-
-
-################# Diff Analysis #################
-
-setGeneric(
-    name = "runDiffAnalysis",
-    def  = function(object,
-                    contrastList = NULL,
-                    p.adj.method = "BH",
-                    method = NULL,
-                    p.adj.cutoff = 0.05,
-                    logFC.cutoff = 0,
-                    clustermq = FALSE,
-                    ...) {
-        standardGeneric("runDiffAnalysis")
-    }
+  name = "getTransSettings",
+  def  = function(object, ...) {
+    standardGeneric("getTransSettings")
+  }
 )
 
 setGeneric(
-    name = "filterDiffAnalysis",
-    def  = function(object,
-                    p.adj.cutoff = NULL,
-                    logFC.cutoff = NULL,
-                    ...) {
-        standardGeneric("filterDiffAnalysis")
-    }
-)
-
-# ----GET/SET---------
-
-setGeneric(
-    name = "getDEList",
-    def  = function(object, contrasts = NULL, ...) {
-        standardGeneric("getDEList")
-    }
+  name = "getTransSettings",
+  def  = function(object, ...) {
+    standardGeneric("getTransSettings")
+  }
 )
 
 setGeneric(
-    name = "getDEMatrix",
-    def  = function(object, ...) {
-        standardGeneric("getDEMatrix")
-    }
+  name = "getNormSettings",
+  def  = function(object, ...) {
+    standardGeneric("getNormSettings")
+  }
 )
 
 setGeneric(
-    name = "getDiffSettings",
-    def  = function(object, ...) {
-        standardGeneric("getDiffSettings")
-    }
-)
-
-
-# ---- Plots ----
-
-setGeneric(
-    name = "plotDiffAnalysis",
-    def  = function(object,
-                    hypothesis,
-                    typeofplots = c("MA.plot", "volcano", "histogram"),
-                    ...) {
-        standardGeneric("plotDiffAnalysis")
-    }
-)
-
-setGeneric(
-    name = "plotHeatmapDesign",
-    def  = function(object,
-                    contrastName,
-                    splitFactor = "none",
-                    title = "",
-                    annotNames = NULL,
-                    modalities = NULL,
-                    drawArgs = list(),
-                    heatmapArgs = list(),
-                    ...) {
-        standardGeneric("plotHeatmapDesign")
-    }
+  name = "getFilterSettings",
+  def  = function(object, ...) {
+    standardGeneric("getFilterSettings")
+  }
 )
 
 
 setGeneric(
-    name = "plotBoxplotDE",
-    def  = function(object, ...) {
-        standardGeneric("plotBoxplotDE")
-    }
+  name = "getFilteredFeatures",
+  def  = function(object, ...) {
+    standardGeneric("getFilteredFeatures")
+  }
 )
 
 
-################# Coexp Analysis #################
+setGeneric(
+  name = "getCoeffNorm",
+  def  = function(object, ...) {
+    standardGeneric("getCoeffNorm")
+  }
+)
+
 
 setGeneric(
-    name = "runCoExpression",
-    def  = function(object,
-                    K = 2:20,
-                    replicates = 5,
-                    contrastNames = NULL,
-                    merge = "union",
-                    model = "Normal",
-                    GaussianModel = NULL,
-                    transformation = NULL,
-                    normFactors = NULL,
-                    clustermq = FALSE,
-                    meanFilterCutoff = NULL,
-                    scale = NULL,
-                    silent = TRUE,
-                    cmd = FALSE,
-                    ...) {
-        standardGeneric("runCoExpression")
-    }
+  name = "plotOmicsPCA",
+  def  = function(object,
+                  raw = c("raw", "norm"),
+                  axes = c(1, 2),
+                  groupColor = "groups",
+                  ...) {
+    standardGeneric("plotOmicsPCA")
+  }
+)
+
+setGeneric(
+  name = "runOmicsPCA",
+  def  = function(object,
+                  ncomp = 5,
+                  raw = FALSE ,
+                  ...) {
+    standardGeneric("runOmicsPCA")
+  }
+)
+
+
+setGeneric(
+  name = "plotDataDistribution",
+  def  = function(object,
+                  plot = "boxplot",
+                  raw = FALSE,
+                  ...) {
+    standardGeneric("plotDataDistribution")
+  }
+)
+
+setGeneric(
+  name = "plotLibrarySize",
+  def  = function(object, raw = FALSE, ...) {
+    standardGeneric("plotLibrarySize")
+  }
+)
+
+setGeneric(
+  name = "getProcessedData",
+  def  = function(object, SE.name, ...) {
+    standardGeneric("getProcessedData")
+  }
+)
+
+setGeneric(
+  name = "plotConditionsOverview",
+  def  = function(object, omicNames = NULL, ...) {
+    standardGeneric("plotConditionsOverview")
+  }
+)
+
+setGeneric(
+  name = "checkExpDesignCompleteness",
+  def  = function(object, sampleList = NULL, ...) {
+    standardGeneric("checkExpDesignCompleteness")
+  }
+)
+
+setGeneric(
+  name = "plotExpDesignCompleteness",
+  def  = function(object, sampleList = NULL, ...) {
+    standardGeneric("plotExpDesignCompleteness")
+  }
+)
+
+
+#---- 04 diff analysis ----
+
+setGeneric(
+  name = "runDiffAnalysis",
+  def  = function(object,
+                  contrastList = NULL,
+                  method = NULL,
+                  p.adj.method = "BH",
+                  p.adj.cutoff = 0.05,
+                  logFC.cutoff = 0,
+                  clustermq = FALSE,
+                  cmd = FALSE,
+                  ...) {
+    standardGeneric("runDiffAnalysis")
+  }
+)
+
+setGeneric(
+  name = "generateContrastMatrix",
+  def  = function(object, contrastList=NULL, ...) {
+    standardGeneric("generateContrastMatrix")
+  }
+)
+
+setGeneric(
+  name = "filterDiffAnalysis",
+  def  = function(object,
+                  p.adj.cutoff = NULL,
+                  logFC.cutoff = NULL,
+                  ...) {
+    standardGeneric("filterDiffAnalysis")
+  }
+)
+
+
+setGeneric(
+  name = "getDiffAnalysesSummary",
+  def  = function(object, plot = FALSE, ...) {
+    standardGeneric("getDiffAnalysesSummary")
+  }
+)
+
+## ----GET/SET---------
+
+setGeneric(
+  name = "getDEList",
+  def  = function(object, contrasts = NULL, ...) {
+    standardGeneric("getDEList")
+  }
+)
+
+setGeneric(
+  name = "getDEMatrix",
+  def  = function(object, ...) {
+    standardGeneric("getDEMatrix")
+  }
+)
+
+setGeneric(
+  name = "getDiffSettings",
+  def  = function(object, ...) {
+    standardGeneric("getDiffSettings")
+  }
+)
+
+
+## ---- Plots ----
+
+setGeneric(
+  name = "plotDiffAnalysis",
+  def  = function(object,
+                  hypothesis,
+                  typeofplots = c("MA.plot", "volcano", "histogram"),
+                  ...) {
+    standardGeneric("plotDiffAnalysis")
+  }
+)
+
+setGeneric(
+  name = "plotHeatmapDesign",
+  def  = function(object,
+                  contrastName,
+                  splitFactor = "none",
+                  title = "",
+                  annotNames = NULL,
+                  modalities = NULL,
+                  drawArgs = list(),
+                  heatmapArgs = list(),
+                  ...) {
+    standardGeneric("plotHeatmapDesign")
+  }
+)
+
+
+setGeneric(
+  name = "plotBoxplotDE",
+  def  = function(object, ...) {
+    standardGeneric("plotBoxplotDE")
+  }
+)
+
+
+#---- 05 co-expression ----
+
+setGeneric(
+  name = "runCoExpression",
+  def  = function(object,
+                  K = 2:20,
+                  replicates = 5,
+                  contrastNames = NULL,
+                  merge = "union",
+                  model = "Normal",
+                  GaussianModel = NULL,
+                  transformation = NULL,
+                  normFactors = NULL,
+                  clustermq = FALSE,
+                  meanFilterCutoff = NULL,
+                  scale = NULL,
+                  silent = TRUE,
+                  cmd = FALSE,
+                  ...) {
+    standardGeneric("runCoExpression")
+  }
 )
 
 # -------- Coexp plot --------#
 
 setGeneric(
-    name = "plotCoExpressionProfile",
-    def  = function(object, ...) {
-        standardGeneric("plotCoExpressionProfile")
-    }
+  name = "plotCoExpressionProfile",
+  def  = function(object, ...) {
+    standardGeneric("plotCoExpressionProfile")
+  }
 )
 
 
 setGeneric(
-    name = "plotCoExpression",
-    def  = function(object, ...) {
-        standardGeneric("plotCoExpression")
-    }
+  name = "plotCoExpression",
+  def  = function(object, ...) {
+    standardGeneric("plotCoExpression")
+  }
 )
 
 setGeneric(
-    name = "plotCoseqContrasts",
-    def  = function(object, ...) {
-        standardGeneric("plotCoseqContrasts")
-    }
-)
-
-
-# ---- Coexp GET/SET---------
-
-
-setGeneric(
-    name = "getCoexpSettings",
-    def  = function(object, ...) {
-        standardGeneric("getCoexpSettings")
-    }
-)
-
-setGeneric(
-    name = "getClusterEntities",
-    def  = function(object, ...) {
-        standardGeneric("getClusterEntities")
-    }
-)
-
-setGeneric(
-    name = "getCoseqClusters",
-    def  = function(object, ...) {
-        standardGeneric("getCoseqClusters")
-    }
+  name = "plotCoseqContrasts",
+  def  = function(object, ...) {
+    standardGeneric("plotCoseqContrasts")
+  }
 )
 
 
 setGeneric(
-    name = "plotDataDistribution",
-    def  = function(object,
-                    plot = "boxplot",
-                    raw = FALSE,
-                    ...) {
-        standardGeneric("plotDataDistribution")
-    }
+  name = "getCoexpSettings",
+  def  = function(object, ...) {
+    standardGeneric("getCoexpSettings")
+  }
 )
 
 setGeneric(
-    name = "plotLibrarySize",
-    def  = function(object, raw = FALSE, ...) {
-        standardGeneric("plotLibrarySize")
-    }
-)
-
-
-################# ANNOTATION #################
-
-setGeneric(
-    name = "runAnnotationEnrichment",
-    def  = function(object,
-                    nameList = NULL,
-                    list_args = list(
-                        pvalueCutoff = 0.05,
-                        qvalueCutoff = 1,
-                        # minGSSize = 10,
-                        minGSSize = 3,
-                        maxGSSize = 500,
-                        universe = names(object)
-                    ),
-                    from = "DiffExpAnal",
-                    database = "custom",
-                    domain = "no-domain",
-                    col_term = "term",
-                    col_gene = "gene",
-                    col_name = "name",
-                    col_domain = NULL,
-                    annot = NULL,
-                    ...) {
-        standardGeneric("runAnnotationEnrichment")
-    }
+  name = "getClusterEntities",
+  def  = function(object, ...) {
+    standardGeneric("getClusterEntities")
+  }
 )
 
 setGeneric(
-    name = "plotKEGG",
-    def  = function(object,
-                    contrastName,
-                    pathway_id = NULL,
-                    species = "ath",
-                    gene_idtype = "kegg",
-                    from = "DiffExpAnal",
-                    ...) {
-        standardGeneric("plotKEGG")
-    }
-)
-
-setGeneric(
-    name = "plotClusterProfiler",
-    def  = function(object,
-                    contrastName,
-                    database,
-                    domain = "no-domain",
-                    from = "DiffExp",
-                    plotType = "dotplot",
-                    showCategory = 15,
-                    searchExpr = "",
-                    nodeLabel = "all",
-                    p.adj.cutoff = NULL,
-                    ...) {
-        standardGeneric("plotClusterProfiler")
-    }
+  name = "getCoseqClusters",
+  def  = function(object, ...) {
+    standardGeneric("getCoseqClusters")
+  }
 )
 
 
 setGeneric(
-    name = "plotEnrichComp",
-    def = function(object,
-                   from = "DiffExp",
-                   database = NULL,
-                   domain = "no-domain",
-                   matrixType = "FC",
-                   nClust = NULL,
-                   ...) {
-        standardGeneric("plotEnrichComp")
-    }
-)
-setGeneric(
-    name = "getEnrichRes",
-    def  = function(object,
-                    contrastName = NULL,
-                    from = "DiffExpEnrichAnal",
-                    database = "GO",
-                    domain = NULL,
-                    ...) {
-        standardGeneric("getEnrichRes")
-    }
+  name = "getCoExpAnalysesSummary",
+  def  = function(object, ...) {
+    standardGeneric("getCoExpAnalysesSummary")
+  }
 )
 
+#---- 06 annoattion ----
 
 setGeneric(
-    name = "getEnrichPvalue",
-    def  = function(object,
-                    from = "DiffExpEnrichAnal",
-                    database = "GO") {
-        standardGeneric("getEnrichPvalue")
-    }
-)
-
-setGeneric(
-    name = "getEnrichSettings",
-    def  = function(object,
-                    from = "DiffExpEnrichAnal",
-                    database = "GO") {
-        standardGeneric("getEnrichSettings")
-    }
+  name = "runAnnotationEnrichment",
+  def  = function(object,
+                  nameList = NULL,
+                  list_args = list(
+                    pvalueCutoff = 0.05,
+                    qvalueCutoff = 1,
+                    # minGSSize = 10,
+                    minGSSize = 3,
+                    maxGSSize = 500,
+                    universe = names(object)
+                  ),
+                  from = "DiffExpAnal",
+                  database = "custom",
+                  domain = "no-domain",
+                  col_term = "term",
+                  col_gene = "gene",
+                  col_name = "name",
+                  col_domain = NULL,
+                  annot = NULL,
+                  ...) {
+    standardGeneric("runAnnotationEnrichment")
+  }
 )
 
 setGeneric(
-    name = "sumORA",
-    def  = function(object,
-                    from = "DiffExpEnrichAnal",
-                    database = NULL,
-                    contrastName = NULL) {
-        standardGeneric("sumORA")
-    }
+  name = "plotKEGG",
+  def  = function(object,
+                  contrastName,
+                  pathway_id = NULL,
+                  species = "ath",
+                  gene_idtype = "kegg",
+                  from = "DiffExpAnal",
+                  ...) {
+    standardGeneric("plotKEGG")
+  }
 )
 
-# setGeneric(
-#     name = "setEnrichNull",
-#     def = function(object,
-#                    from = "DiffExp",
-#                    database = NULL) {
-#         standardGeneric("setEnrichNull")
-#     }
-# )
+setGeneric(
+  name = "plotClusterProfiler",
+  def  = function(object,
+                  contrastName,
+                  database,
+                  domain = "no-domain",
+                  from = "DiffExp",
+                  plotType = "dotplot",
+                  showCategory = 15,
+                  searchExpr = "",
+                  nodeLabel = "all",
+                  p.adj.cutoff = NULL,
+                  ...) {
+    standardGeneric("plotClusterProfiler")
+  }
+)
 
-################# INTEGRATION #################
+
+setGeneric(
+  name = "plotEnrichComp",
+  def = function(object,
+                 from = "DiffExp",
+                 database = NULL,
+                 domain = "no-domain",
+                 matrixType = "FC",
+                 nClust = NULL,
+                 ...) {
+    standardGeneric("plotEnrichComp")
+  }
+)
+setGeneric(
+  name = "getEnrichRes",
+  def  = function(object,
+                  contrastName = NULL,
+                  from = "DiffExpEnrichAnal",
+                  database = "GO",
+                  domain = NULL,
+                  ...) {
+    standardGeneric("getEnrichRes")
+  }
+)
+
+
+setGeneric(
+  name = "getEnrichPvalue",
+  def  = function(object,
+                  from = "DiffExpEnrichAnal",
+                  database = "GO") {
+    standardGeneric("getEnrichPvalue")
+  }
+)
+
+setGeneric(
+  name = "getEnrichSettings",
+  def  = function(object,
+                  from = "DiffExpEnrichAnal",
+                  database = "GO") {
+    standardGeneric("getEnrichSettings")
+  }
+)
+
+setGeneric(
+  name = "sumORA",
+  def  = function(object,
+                  from = "DiffExpEnrichAnal",
+                  database = NULL,
+                  contrastName = NULL) {
+    standardGeneric("sumORA")
+  }
+)
+
+
+setGeneric(
+  name = "getAnnotAnalysesSummary",
+  def  = function(object,
+                  from       = "DiffExpEnrichAnal",
+                  matrixType = "presence",
+                  ...) {
+    standardGeneric("getAnnotAnalysesSummary")
+  }
+)
+
+#---- 07 intergration ----
 
 setGeneric(
     name = "integrationWrapper",
@@ -820,49 +825,7 @@ setGeneric(
     }
 )
 
-# ---- RESET ----
-
-setGeneric(
-    name = "resetRflomicsMAE",
-    def  = function(object, 
-                    singleAnalyses = NULL, 
-                    multiAnalyses = NULL, 
-                    datasetNames = NULL, ...) {
-        standardGeneric("resetRflomicsMAE")
-    }
-)
-
-setGeneric(
-  name = "getAnalyzedDatasetNames",
-  def  = function(object, analyses = NULL, ...) {
-    standardGeneric("getAnalyzedDatasetNames")
-  }
-)
 
 
-setGeneric(
-  name = "getProcessedData",
-  def  = function(object, SE.name, ...) {
-    standardGeneric("getProcessedData")
-  }
-)
-
-setGeneric(
-  name = "setElementToMetadata",
-  def  = function(object, 
-                  name = NULL, 
-                  subName = NULL,
-                  content = NULL) {
-    standardGeneric("setElementToMetadata")
-  }
-)
 
 
-setGeneric(
-  name = "getAnalysis",
-  def  = function(object,
-                  name = NULL, 
-                  subName = NULL) {
-    standardGeneric("getAnalysis")
-  }
-)

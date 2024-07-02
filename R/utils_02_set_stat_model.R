@@ -1,11 +1,14 @@
 ### ============================================================================
 ### [02_set_stat_model] function and internal function
 ### ----------------------------------------------------------------------------
+# C. Payasant-Le-roux, 
+# N. Bessoltane
+# D. Charif
 
-#' @importFrom stringr str_replace_all
+
 #' @importFrom magrittr "%>%" 
 #' @importFrom dplyr filter select mutate mutate_at
-#' 
+NULL
 
 # ---- .generateModelFormulae ----
 #' @title .generateModelFormulae
@@ -106,6 +109,7 @@ contrastName2contrastDir <- function(contrastName){
 #' @param returnTable return a dataTable with all contrasts information
 #' @return a character vector or a dataTable
 #' @rdname ContrastsSelection
+#' @importFrom dplyr filter
 #' @importFrom data.table rbindlist
 #' @export
 #'
@@ -772,6 +776,7 @@ getPossibleContrasts <- function(
 #' @param contrastList data.frame
 #' @noRd
 #' @return data.frame contrast
+#' @importFrom dplyr filter
 #' @keywords internal
 updateSelectedContrasts <- function(object, contrastList=NULL){
   

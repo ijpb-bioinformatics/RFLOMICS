@@ -5,24 +5,18 @@ library(RFLOMICS)
 
 # ---------------- RUN RFLOMICS ---------------
 
-## construct rflomics + PCA raw + check completness
-ExpDesign <- RFLOMICS::readExpDesign(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
-factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
-                        factorRef   = c("rep1",   "Low",          "DS"),
-                        factorType  = c("batch",  "Bio",          "Bio"),
-                        factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
+# load ecoseed data
+data(ecoseed)
 
-omicsData <- list(
-    RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-    RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
-    RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
+# create rflomicsMAE object with ecoseed data
+MAE <- RFLOMICS::createRflomicsMAE(
+  projectName = "Tests",
+  omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+  omicsNames  = c("RNAtest", "metatest", "protetest"),
+  omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+  ExpDesign   = ecoseed$design,
+  factorRef   = ecoseed$factorRef)
 
-MAE <- RFLOMICS::createRflomicsMAE(projectName = "Tests", 
-                                   omicsData   = omicsData,
-                                   omicsNames  = c("RNAtest.raw", "metatest.raw", "protetest.raw"),
-                                   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-                                   ExpDesign   = ExpDesign,
-                                   factorRef   = factorRef)
 
 formulae <- RFLOMICS::generateModelFormulae(object = MAE) 
 MAE <- RFLOMICS::setModelFormula(MAE, modelFormula = formulae[[1]])

@@ -1,31 +1,20 @@
-ExpDesign <- RFLOMICS::readExpDesign(
-  file = paste0(system.file(package = "RFLOMICS"), 
-                "/ExamplesFiles/ecoseed/condition.txt"))
-factorRef <- data.frame(
-  factorName  = c("Repeat", "temperature" , "imbibition"),
-  factorRef   = c("rep1",   "Low",          "DS"),
-  factorType  = c("batch",  "Bio",          "Bio"),
-  factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
+# load ecoseed data
+data(ecoseed)
 
-omicsData <- list(
-  RFLOMICS::readOmicsData(
-    file = paste0(system.file(package = "RFLOMICS"), 
-                  "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
-
-omicsNames  = c("protetest")
-omicsTypes  = c("proteomics")
-MAE <- RFLOMICS::createRflomicsMAE(projectName = "Tests",
-                                   omicsData   = omicsData,
-                                   omicsNames  = omicsNames,
-                                   omicsTypes  = omicsTypes,
-                                   ExpDesign   = ExpDesign,
-                                   factorRef   = factorRef)
+# create rflomicsMAE object with ecoseed data
+MAE <- RFLOMICS::createRflomicsMAE(
+  projectName = "Tests",
+  omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+  omicsNames  = c("RNAtest", "metatest", "protetest"),
+  omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+  ExpDesign   = ecoseed$design,
+  factorRef   = ecoseed$factorRef)
 
 formulae <- RFLOMICS::generateModelFormulae(MAE)
 MAE <- RFLOMICS::setModelFormula(MAE, modelFormula = formulae[[1]])
 
-Contrasts.List <- RFLOMICS::generateExpressionContrast(MAE)
-selectedContrasts <- Contrasts.List$simple[1:4,]
+selectedContrasts <- 
+  RFLOMICS::generateExpressionContrast(MAE, contrastType="simple")
 
 MAE <- setSelectedContrasts(MAE, contrastList = selectedContrasts)
 
@@ -58,4 +47,8 @@ MAE <- RFLOMICS::runAnnotationEnrichment(
                    keyType = "TAIR", 
                    pvalueCutoff = 0.05))
 
+# get name of performed analysis
+getAnalyzedDatasetNames(MAE)
+
+# generate report
 #generateReport(object = MAE, fileName = ecoseed_report.html)

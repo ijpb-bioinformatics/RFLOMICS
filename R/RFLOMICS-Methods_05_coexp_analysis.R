@@ -725,7 +725,7 @@ setMethod(f          = "plotCoseqContrasts",
 
 # ---- Get Co-exp setting ----
 #' @exportMethod getCoexpSettings
-#' @rdname RflomicsSE-accessors
+#' @rdname Rflomics-accessors
 setMethod(f          = "getCoexpSettings",
           signature  = "RflomicsSE",
           
@@ -733,7 +733,7 @@ setMethod(f          = "getCoexpSettings",
             return(object@metadata$CoExpAnal$setting)   
           })
 
-#' @rdname RflomicsMAE-accessors
+#' @rdname Rflomics-accessors
 #' @exportMethod getCoexpSettings
 setMethod(f          = "getCoexpSettings",
           signature  = "RflomicsMAE",
@@ -871,3 +871,74 @@ setMethod(
 )
 
 
+# ---- getCoExpAnalysesSummary ----
+#' @title getCoExpAnalysesSummary
+#' @description TODO
+#' @param object An object of class \link{RflomicsMAE}. 
+#' It is expected the SE object is produced by rflomics previous analyses, 
+#' as it relies on their results.
+#' @param omicNames the name of the experiment to summarize.
+#' @param ... Not in use at the moment
+#' @return A ggplot object
+#' @importFrom dplyr filter mutate rename full_join group_by
+#' @importFrom ggplot2 ggplot aes geom_line geom_point theme element_text 
+#' facet_grid labs vars
+#' @exportMethod getCoExpAnalysesSummary
+#' @rdname getCoExpAnalysesSummary
+#' @aliases getCoExpAnalysesSummary
+setMethod(
+  f = "getCoExpAnalysesSummary",
+  signature = "RflomicsMAE",
+  definition = function(object, omicNames = NULL,
+                        ...) {
+    mean.y_profiles.list <- list()
+    
+    if (is.null(omicNames))
+      omicNames <- getAnalyzedDatasetNames(object, "CoExpAnal")
+    
+    for (data in omicNames) {
+      
+      Groups     <- getDesignMat(object[[data]])
+      cluster.nb <-
+        object[[data]]@metadata$CoExpAnal$cluster.nb
+      coseq.res  <-
+        object[[data]]@metadata$CoExpAnal[["coseqResults"]]
+      
+      mean.y_profiles.list[[data]] <-
+        lapply(seq_len(cluster.nb), function(cluster) {
+          assays.data <- filter(as.data.frame(coseq.res@assays@data[[1]]),
+                                get(paste0("Cluster_", cluster)) > 0.8)
+          
+          y_profiles.gg <-
+            coseq.res@y_profiles[rownames(assays.data), ] %>%
+            data.frame() %>%
+            mutate(observations = rownames(.)) %>%
+            melt(id = "observations", value.name = "y_profiles") %>%
+            rename(samples = variable) %>%
+            full_join(Groups , by = "samples")
+          
+          y_profiles.gg %>% group_by(groups) %>%
+            summarise(mean = mean(y_profiles)) %>%
+            mutate(cluster = paste0("cluster.", cluster))
+          
+        }) %>% reduce(rbind) %>% mutate(dataset = data)
+      
+    } %>% reduce(rbind)
+    
+    mean.y_profiles.gg <- reduce(mean.y_profiles.list, rbind)
+    
+    if (nrow(mean.y_profiles.gg) == 0)
+      return(NULL)
+    
+    p <- ggplot(data = mean.y_profiles.gg, aes(x = groups, y = mean, group = 1)) +
+      geom_line(aes(color = as.factor(cluster))) + 
+      geom_point(aes(color = as.factor(cluster))) +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1),
+            legend.position = "none") +
+      facet_grid(cols = vars(cluster), rows = vars(dataset)) +
+      labs(x = "Conditions", y = "Expression profiles mean")
+    
+    return(p)
+    
+  }
+)

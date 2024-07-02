@@ -1,98 +1,57 @@
 ### ============================================================================
-### RflomicsSE object
+### [RFLOMICS CLASS] accessors and plots
 ### ----------------------------------------------------------------------------
+# N. Bessoltane, 
+# D. Charif
 
 #' @import methods
 
-#' @title \link{RflomicsSE-class} Class
-#' @description
-#' RflomicsSE is a class that extends the \link{SummarizedExperiment} by imposing a structure
-#' on the metadata slot. This class is used by the Rflomics analysis workflow to store the 
-#' experimental design, the settings and results of a single omic analysis. 
-#' The slot metadata is structured as follows:
-#' 
-#' \itemize{
-#'   \item omicType: the type of omics dataset
-#'   \item design: experimental design
-#'   \item DataProcessing: a list containing the data processing settings and results 
-#'   \item PCAlist: a list containing the PCA settings and results
-#'   \item DiffExpAnal: a list containing the Differential Analysis settings and results
-#'   \item CoExpAnal: a list containing the Coexpression Analysis settings and results
-#'   \item DiffExpEnrichAnal: a list containing the enrichment analysis of the list of DE features settings and results
-#'   \item CoExpEnrichAnal: a list containing the enrichment analysis of the list of co-expressed features settings and results
-#'  } 
-#' 
-#' @seealso \link{SummarizedExperiment}
-#' @seealso \link{RflomicsSE-accessors}
-#' @name RflomicsSE-class
-#' @rdname RflomicsSE-class
-#' @aliases RflomicsSE
-#' @exportClass RflomicsSE
-#' @return A \code{RflomicsSE} object.
-setClass(
-  Class    = "RflomicsSE",
-  contains = "SummarizedExperiment",
-)
+##==== RflomicsMAE Class ====
 
-#' @title initialize
-#' @description
-#' Constructor for the RflomicsSE class.
-#' @return An object of class \link{RflomicsSE-class}
-#' @seealso SummarizedExperiment
-#' @importFrom S4Vectors DataFrame
-#' @noRd
-setMethod(
-  f          = "initialize",
-  signature  = "RflomicsSE",
-  definition = function(.Object, 
-                        assays   = NULL,
-                        colData  = S4Vectors::DataFrame(),
-                        omicType = NULL,
-                        design   = list() , 
-                        DataProcessing = list() , 
-                        PCAlist        = list() , 
-                        DiffExpAnal    = list() ,      
-                        CoExpAnal      = list() , 
-                        DiffExpEnrichAnal = list() ,  
-                        CoExpEnrichAnal   = list()) {
-    
-    .Object <-  callNextMethod(.Object, assays = assays, colData = colData)
-    .Object@metadata <- list("omicType" = omicType , 
-                             "design"   = design , 
-                             "DataProcessing" = DataProcessing , 
-                             "PCAlist"        = PCAlist , 
-                             "DiffExpAnal"    = DiffExpAnal ,      
-                             "CoExpAnal"      = CoExpAnal , 
-                             "DiffExpEnrichAnal" = DiffExpEnrichAnal ,  
-                             "CoExpEnrichAnal"   = CoExpEnrichAnal)
-    
-    return(.Object)
-  }
-)
-
-
-### ============================================================================
-### RflomicsMAE object
-### ----------------------------------------------------------------------------
-
-#' @title \link{RflomicsMAE-class} Class
-#' @description
-#' RflomicsMAE is a class that extends the \link{MultiAssayExperiment}  class by imposing a structure
-#' to the metadata slot. This class is used by the Rflomics analysis workflow to store the 
-#' experimental design, the settings and results of a multi-omics integration analysis.  
-#' The slot metadata is structured as follows:
-#'  
-#'  \itemize{
-#'    \item omicList: Contains the list of omics datasets, with the type and name  
-#'    \item projectName: The project name
-#'    \item design: The experimental design 
-#'    \item IntegrationAnalysis: A list containing the multi-omics integration analysis settings and results.   
-#'  }
-#' 
-#' @seealso \link{MultiAssayExperiment}
-#' @seealso \link{RflomicsMAE-accessors}
 #' @name RflomicsMAE-class
 #' @rdname RflomicsMAE-class
+#' @title \link{RflomicsMAE} class
+#' @description
+#' RflomicsMAE is a class that extends the \link{MultiAssayExperiment}  
+#' class by imposing a structure to the metadata slot. This class is used by 
+#' the Rflomics analysis workflow to store the experimental design, the settings 
+#' and results of a multi-omics integration analysis.
+#' @param object An object of class \link{RflomicsMAE}
+#' @section Slots: 
+#'  \itemize{
+#'    \item ExperimentList:
+#'      \itemize{
+#'        \item A ExperimentList class object of \link{RflomicsSE} object 
+#'        for each assay dataset}
+#'      \item colData: see \code{\link{MultiAssayExperiment}}
+#'      \item sampleMap: see \code{\link{MultiAssayExperiment}}
+#'      
+#'    \item metadata:
+#'      \itemize{
+#'        \item projectName: string. Project name.
+#'        \item omicList: list. Contains the list of omics datasets, with the 
+#'        type and name.
+#'        \item design: The experimental design.
+#'        \item IntegrationAnalysis: A list containing the multi-omics 
+#'        integration analysis settings and results. 
+#'        \item design: The experimental design 
+#'        \item sessionInfo:
+#'        \item IntegrationAnalysis: A list containing the multi-omics 
+#'        integration analysis settings and results.
+#'        }
+#' }
+#' @section Consructor:
+#' \code{\link{createRflomicsMAE}}
+#' @section Accessors:
+#' @section Methods:
+#' \code{\link{Rflomics-accessors}}
+#' \code{\link{Rflomics-plot}}
+#' \code{\link{runDataProcessing}}
+#' \code{\link{runDataProcessing}}
+#' \code{\link{runDiffAnalysis}}
+#' \code{\link{runCoExpression}}
+#' \code{\link{runAnnotationEnrichment}}
+#' @seealso \code{\link{MultiAssayExperiment}}
 #' @aliases RflomicsMAE-class
 #' @return A \code{RflomicsMAE} object.
 #' @exportClass RflomicsMAE
@@ -151,3 +110,124 @@ setMethod(
     return(.Object)
   })
 
+##==== RflomicsSE Class ====
+
+#' @title \link{RflomicsSE-class} Class
+#' @name RflomicsSE-class
+#' @rdname RflomicsSE-class
+#' @description
+#' RflomicsSE is a class that extends the \link{SummarizedExperiment} by imposing a structure
+#' on the metadata slot. This class is used by the Rflomics analysis workflow to store the 
+#' experimental design, the settings and results of a single omic analysis. 
+#' The slot metadata is structured as follows:
+#' @param object An object of class \link{RflomicsSE}
+#' @section Slots: 
+#' See \link{SummarizedExperiment}
+#' 
+#' The slot metadata is structured as follows:
+#'  \itemize{
+#'    \item omicType: the type of omics dataset
+#'    \item design: experimental design
+#'    \item DataProcessing: a list containing the data processing settings and results 
+#'    \item PCAlist: a list containing the PCA settings and results
+#'    \item DiffExpAnal: a list containing the Differential Analysis settings and results
+#'    \item CoExpAnal: a list containing the Coexpression Analysis settings and results
+#'    \item DiffExpEnrichAnal: a list containing the enrichment analysis of the list of DE features settings and results
+#'    \item CoExpEnrichAnal: a list containing the enrichment analysis of the list of co-expressed features settings and results
+#'  }
+#' @section Accessors:
+#' @seealso \link{SummarizedExperiment}
+#' @aliases RflomicsSE
+#' @exportClass RflomicsSE
+#' @return A \code{RflomicsSE} object.
+setClass(
+  Class    = "RflomicsSE",
+  contains = "SummarizedExperiment",
+)
+
+#' @title initialize
+#' @description
+#' Constructor for the RflomicsSE class.
+#' @return An object of class \link{RflomicsSE-class}
+#' @seealso SummarizedExperiment
+#' @importFrom S4Vectors DataFrame
+#' @noRd
+setMethod(
+  f          = "initialize",
+  signature  = "RflomicsSE",
+  definition = function(.Object, 
+                        assays   = NULL,
+                        colData  = S4Vectors::DataFrame(),
+                        omicType = NULL,
+                        design   = list() , 
+                        DataProcessing = list() , 
+                        PCAlist        = list() , 
+                        DiffExpAnal    = list() ,      
+                        CoExpAnal      = list() , 
+                        DiffExpEnrichAnal = list() ,  
+                        CoExpEnrichAnal   = list()) {
+    
+    .Object <-  callNextMethod(.Object, assays = assays, colData = colData)
+    .Object@metadata <- list("omicType" = omicType , 
+                             "design"   = design , 
+                             "DataProcessing" = DataProcessing , 
+                             "PCAlist"        = PCAlist , 
+                             "DiffExpAnal"    = DiffExpAnal ,      
+                             "CoExpAnal"      = CoExpAnal , 
+                             "DiffExpEnrichAnal" = DiffExpEnrichAnal ,  
+                             "CoExpEnrichAnal"   = CoExpEnrichAnal)
+    
+    return(.Object)
+  }
+)
+
+##==== Rflomics-accessors ====
+
+#' @name Rflomics-accessors
+#' @title A group of functions to access and modify the metadata slot 
+#' of an object of class  \link{RflomicsMAE} or \link{RflomicsMAE}
+#' @description A set of getters and setters generic functions to access and 
+#' modify objects of the slot metadata of a \link{RflomicsMAE} object or 
+#' a \link{RflomicsMAE} object.
+#' 
+#' Getter methods:
+#' 
+#' \itemize{
+#'    \item subRflomics: Extract a subset of a RflomicsMAE object.
+#'    \item getCoexpSettings : Access to the co-expression analysis settings 
+#'    of a given omic dataset
+#' }
+#' 
+#' @param object An object of class \link{RflomicsSE} or 
+#' class \link{RflomicsMAE}
+#' @param SE.name SE.name the name of the dataset if the input object 
+#' is a \link{RflomicsMAE}
+#' @return See the itemized list in the description section for details
+#' @seealso \code{\link{createRflomicsMAE}}
+#' @seealso \code{\link{generateModelFormulae}}
+#' @seealso \code{\link{generateExpressionContrast}}
+#' @seealso \code{\link{runDataProcessing}}
+#' @seealso \code{\link{runDiffAnalysis}}
+#' @seealso \code{\link{runCoExpression}}
+#' @seealso \code{\link{runAnnotationEnrichment}}
+NULL
+
+##==== Rflomics-plots ====
+
+#' @name Rflomics-plots
+#' @title Visualization of results.
+#' @description 
+#' A collection of functions for plotting results from omic analysis steps.
+#' @param object an object of class \link{RflomicsSE} or 
+#' class \link{RflomicsMAE}
+#' @param SE.name the name of the dataset if the input object 
+#' is a \link{RflomicsMAE}
+#' @return plot
+#' @seealso \code{\link{createRflomicsMAE}}
+#' @seealso \code{\link{generateModelFormulae}}
+#' @seealso \code{\link{generateExpressionContrast}}
+#' @seealso \code{\link{runDataProcessing}}
+#' @seealso \code{\link{runDiffAnalysis}}
+#' @seealso \code{\link{runCoExpression}}
+#' @seealso \code{\link{runAnnotationEnrichment}}
+NULL
