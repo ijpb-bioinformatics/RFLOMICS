@@ -5,24 +5,17 @@ library(RFLOMICS)
 
 # ---- Create RflomicsMAE object ----
 
-## construct rflomics + PCA raw + check completness
-ExpDesign <- RFLOMICS::readExpDesign(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
-factorRef <- data.frame(factorName  = c("Repeat", "temperature" , "imbibition"),
-                        factorRef   = c("rep1",   "Low",          "DS"),
-                        factorType  = c("batch",  "Bio",          "Bio"),
-                        factorLevels= c("rep1,rep2,rep3", "Low,Medium,Elevated", "DS,EI,LI"))
+# load ecoseed data
+data(ecoseed)
 
-omicsData <- list(
-    RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")),
-    RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")), 
-    RFLOMICS::readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt")))
-
-MAE <- RFLOMICS::createRflomicsMAE(projectName = "Tests",
-                                   omicsData   = omicsData,
-                                   omicsNames  = c("RNAtest", "metatest", "protetest"),
-                                   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-                                   ExpDesign   = ExpDesign,
-                                   factorRef   = factorRef)
+# create rflomicsMAE object with ecoseed data
+MAE <- createRflomicsMAE(
+  projectName = "Tests",
+  omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+  omicsNames  = c("RNAtest", "metatest", "protetest"),
+  omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+  ExpDesign   = ecoseed$design,
+  factorRef   = ecoseed$factorRef)
 
 SE <- getRflomicsSE(MAE, "RNAtest.raw")
 
@@ -48,16 +41,16 @@ Contrasts.List <- RFLOMICS::generateExpressionContrast(MAE)
 
 
 ## choice of hypothesis
-selectedContrasts <- rbind(Contrasts.List$simple,
-                           Contrasts.List$averaged,
-                           Contrasts.List$interaction)
+selectedContrasts <- rbind(Contrasts.List$simple[1:3,],
+                           Contrasts.List$averaged[1:3,],
+                           Contrasts.List$interaction[1:3,])
 # selectedContrasts <- Contrasts.List$simple[1:4,]
 
-MAE <- setSelectedContrasts(MAE, contrastList = Contrasts.List$simple[1,])
+MAE <- setSelectedContrasts(MAE, contrastList = selectedContrasts)
 
 ## data processing
 sampleToKeep <- colnames(MAE[["protetest.raw"]])[-1]
-sampleToKeep <- colnames(MAE)[["protetest.raw"]][stringr::str_detect(colnames(MAE[["protetest.raw"]]), pattern = "DS")]
+#sampleToKeep <- colnames(MAE)[["protetest.raw"]][stringr::str_detect(colnames(MAE[["protetest.raw"]]), pattern = "DS")]
 MAE <- MAE |> 
     RFLOMICS::runDataProcessing(SE.name = "RNAtest"  , samples=NULL, lowCountFiltering_strategy="NbReplicates", lowCountFiltering_CPM_Cutoff=1, normMethod="TMM",transformMethod = "none") |>
     RFLOMICS::runDataProcessing(SE.name = "protetest", samples=NULL, normMethod="none", transformMethod="none") |>

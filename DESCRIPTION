@@ -71,4 +71,5 @@ Imports:
     tibble,
     tidyselect,
     UpSetR,
-    utils
+    utils,
+    httr

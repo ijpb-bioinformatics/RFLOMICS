@@ -38,48 +38,56 @@
 #' @rdname runAnnotationEnrichment
 #' @aliases runAnnotationEnrichment
 #' @examples
-#' # Generate RflomicsMAE for example
-#'  datPath <- paste0(system.file(package = "RFLOMICS"),
-#'                    "/ExamplesFiles/ecoseed/")
-#'
-#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
-#'facRef <- data.frame(
-#'                 factorName   = c("Repeat", "temperature" , "imbibition"),
-#'                 factorRef    = c("rep1",   "Low",          "DS"),
-#'                 factorType   = c("batch",  "Bio",          "Bio"),
-#'                 factorLevels = c("rep1,rep2,rep3",
-#'                                  "Low,Medium,Elevated",
-#'                                  "DS,EI,LI"))
-#'                        
-#' omicsData <- list(
-#'    readOmicsData(file = paste0(datPath, "transcriptome_ecoseed.txt")),
-#'    readOmicsData(file = paste0(datPath, "metabolome_ecoseed.txt")))
+#' # load ecoseed data
+#' data(ecoseed)
+#' 
+#' # create rflomicsMAE object with ecoseed data
+#' MAE <- RFLOMICS::createRflomicsMAE(
+#'   projectName = "Tests",
+#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
+#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+#'   ExpDesign   = ecoseed$design,
+#'   factorRef   = ecoseed$factorRef)
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- 
+#'    generateExpressionContrast(MAE, "averaged")
 #'    
-#' MAEtest <- createRflomicsMAE(projectName = "Tests",
-#'                              omicsData   = omicsData,
-#'                              omicsNames  = c("RNAtest",  "protetest"),
-#'                              omicsTypes  = c("RNAseq", "proteomics"),
-#'                              ExpDesign   = ExpDesign,
-#'                              factorRef   = facRef
-#'                              )
-#' names(MAEtest) <- c("RNAtest", "protetest")
+#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
+#' 
+#' # Run the data preprocessing and perform the differential analysis 
+#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
+#'                          transformMethod = "log2",
+#'                          normMethod = "median")
+#'  
+#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
+#'                        method = "limmalmFit", 
+#'                        contrastList = contrastList)
 #' 
 #' # Run GO annotation (enrichGO)
-#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
-#'                         list_args = list(OrgDb = "org.At.tair.db",
-#'                                          keyType = "TAIR",
-#'                                          pvalueCutoff = 0.05),
-#'                         from = "DiffExp", database = "GO",
-#'                         domain = "CC")
-#' getEnrichRes(MAEtest[["protetest"]])
+#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
+#'        list_args = list(OrgDb = "org.At.tair.db",
+#'        keyType = "TAIR",
+#'        pvalueCutoff = 0.05),
+#'        from = "DiffExp", database = "GO",
+#'        domain = "CC")
+#'        
+#' getEnrichRes(MAE[["protetest"]])
 #' 
 #' # Run KEGG annotation (enrichKEGG)
-#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
-#'                         list_args = list(organism = "ath",
-#'                                          keyType = "kegg",
-#'                                          pvalueCutoff = 0.05),
-#'                         from = "DiffExp", database = "KEGG")
-#' sumORA(MAEtest[["protetest"]], from = "DiffExp", database = "KEGG")
+#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
+#'        list_args = list(organism = "ath",
+#'        keyType = "kegg",
+#'        pvalueCutoff = 0.05),
+#'        from = "DiffExp", database = "KEGG")
+#'        
+#' sumORA(MAE[["protetest"]], from = "DiffExp", database = "KEGG")
+#' 
 setMethod(
   f = "runAnnotationEnrichment",
   signature = "RflomicsSE",
@@ -400,41 +408,47 @@ setMethod(
 #' @rdname plotKEGG
 #' @aliases plotKEGG
 #' @examples
-#' # Generate RflomicsMAE for example
-#'  datPath <- paste0(system.file(package = "RFLOMICS"),
-#'                    "/ExamplesFiles/ecoseed/")
-#'
-#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
-#'facRef <- data.frame(
-#'                 factorName   = c("Repeat", "temperature" , "imbibition"),
-#'                 factorRef    = c("rep1",   "Low",          "DS"),
-#'                 factorType   = c("batch",  "Bio",          "Bio"),
-#'                 factorLevels = c("rep1,rep2,rep3",
-#'                                  "Low,Medium,Elevated",
-#'                                  "DS,EI,LI"))
-#'                        
-#' omicsData <- list(
-#'    readOmicsData(file = paste0(datPath, "transcriptome_ecoseed.txt")),
-#'    readOmicsData(file = paste0(datPath, "metabolome_ecoseed.txt")))
+#' # load ecoseed data
+#' data(ecoseed)
+#' 
+#' # create rflomicsMAE object with ecoseed data
+#' MAE <- RFLOMICS::createRflomicsMAE(
+#'   projectName = "Tests",
+#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
+#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+#'   ExpDesign   = ecoseed$design,
+#'   factorRef   = ecoseed$factorRef)
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- 
+#'    generateExpressionContrast(MAE, "averaged")
 #'    
-#' MAEtest <- createRflomicsMAE(projectName = "Tests",
-#'                              omicsData   = omicsData,
-#'                              omicsNames  = c("RNAtest",  "protetest"),
-#'                              omicsTypes  = c("RNAseq", "proteomics"),
-#'                              ExpDesign   = ExpDesign,
-#'                              factorRef   = facRef
-#'                              )
-#' names(MAEtest) <- c("RNAtest", "protetest")
+#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
+#' 
+#' # Run the data preprocessing and perform the differential analysis 
+#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
+#'                          transformMethod = "log2",
+#'                          normMethod = "median")
+#'  
+#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
+#'                        method = "limmalmFit", 
+#'                        contrastList = contrastList)
+#' 
 #' 
 #' # Run KEGG annotation (enrichKEGG)
-#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
-#'                        list_args = list(organism = "ath",
-#'                        keyType = "kegg",
-#'                        pvalueCutoff = 0.05),
-#'                        from = "CoExp", database = "KEGG")
+#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
+#'        list_args = list(organism = "ath",
+#'        keyType = "kegg",
+#'        pvalueCutoff = 0.05),
+#'        from = "DiffExp", database = "KEGG")
 #'                        
-#' plotKEGG(MAEtest[["protetest"]], pathway_id = "ath00710", species = "ath",
-#'           contrastName = "cluster.4", from = "Coexp")
+#' #plotKEGG(MAE[["protetest"]], pathway_id = "ath00710", species = "ath",
+#' #           contrastName = "cluster.4", from = "Coexp")
 #'
 setMethod(
   f = "plotKEGG",
@@ -523,17 +537,49 @@ setMethod(
 #' @rdname plotClusterProfiler
 #' @aliases plotClusterProfiler
 #' @examples
-#' # Generate RflomicsMAE for example
-#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
-#' # Run KEGG annotation on differential analysis results
-#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
-#'                         list_args = list(organism = "ath",
-#'                                          keyType = "kegg",
-#'                                          pvalueCutoff = 0.05),
-#'                         from = "DiffExp", database = "KEGG")
+#' # load ecoseed data
+#' data(ecoseed)
+#' 
+#' # create rflomicsMAE object with ecoseed data
+#' MAE <- RFLOMICS::createRflomicsMAE(
+#'   projectName = "Tests",
+#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
+#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+#'   ExpDesign   = ecoseed$design,
+#'   factorRef   = ecoseed$factorRef)
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- 
+#'    generateExpressionContrast(MAE, "averaged")
+#'    
+#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
+#' 
+#' # Run the data preprocessing and perform the differential analysis 
+#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
+#'                          transformMethod = "log2",
+#'                          normMethod = "median")
+#'  
+#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
+#'                        method = "limmalmFit", 
+#'                        contrastList = contrastList)
+#'        
+#' getEnrichRes(MAE[["protetest"]])
+#' 
+#' # Run KEGG annotation (enrichKEGG)
+#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
+#'        list_args = list(organism = "ath",
+#'        keyType = "kegg",
+#'        pvalueCutoff = 0.05),
+#'        from = "DiffExp", database = "KEGG")
+#'        
 #'
 #' # From differential analysis proteins lists:
-#' plotClusterProfiler(MAEtest[["protetest"]],
+#' plotClusterProfiler(MAE[["protetest"]],
 #'         contrastName = "(temperatureElevated - temperatureMedium) in mean",
 #'         database = "KEGG", from = "DiffExp",
 #'         plotType = "heatplot", p.adj.cutoff = 0.05,
@@ -721,14 +767,44 @@ setMethod(
 #' @rdname plotEnrichComp
 #' @aliases plotEnrichComp
 #' @examples
-#' # Generate RflomicsMAE for example
-#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
-#' # Run KEGG annotation on differential analysis results
-#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
-#'                         list_args = list(organism = "ath",
-#'                                          keyType = "kegg",
-#'                                          pvalueCutoff = 0.1),
-#'                         from = "DiffExp", database = "KEGG")
+#' # load ecoseed data
+#' data(ecoseed)
+#' 
+#' # create rflomicsMAE object with ecoseed data
+#' MAE <- RFLOMICS::createRflomicsMAE(
+#'   projectName = "Tests",
+#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
+#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+#'   ExpDesign   = ecoseed$design,
+#'   factorRef   = ecoseed$factorRef)
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- 
+#'    generateExpressionContrast(MAE, "averaged")
+#'    
+#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
+#' 
+#' # Run the data preprocessing and perform the differential analysis 
+#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
+#'                          transformMethod = "log2",
+#'                          normMethod = "median")
+#'  
+#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
+#'                        method = "limmalmFit", 
+#'                        contrastList = contrastList)
+#' 
+#' # Run KEGG annotation (enrichKEGG)
+#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
+#'        list_args = list(organism = "ath",
+#'        keyType = "kegg",
+#'        pvalueCutoff = 0.05),
+#'        from = "DiffExp", database = "KEGG")
+#'        
 #'
 #' plotEnrichComp(MAEtest[["protetest"]], from = "DiffExp",
 #'                database = "KEGG", matrixType = "FC")
@@ -1006,17 +1082,48 @@ setMethod(
 #' @rdname getEnrichRes
 #' @aliases getEnrichRes
 #' @examples
-#' # Generate RflomicsMAE for example
-#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
-#' # Run KEGG annotation on differential analysis results
-#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
-#'                         list_args = list(organism = "ath",
-#'                                          keyType = "kegg",
-#'                                          pvalueCutoff = 0.1),
-#'                         from = "DiffExp", database = "KEGG")
+#' # load ecoseed data
+#' data(ecoseed)
+#' 
+#' # create rflomicsMAE object with ecoseed data
+#' MAE <- RFLOMICS::createRflomicsMAE(
+#'   projectName = "Tests",
+#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
+#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+#'   ExpDesign   = ecoseed$design,
+#'   factorRef   = ecoseed$factorRef)
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- 
+#'    generateExpressionContrast(MAE, "averaged")
+#'    
+#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
+#' 
+#' # Run the data preprocessing and perform the differential analysis 
+#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
+#'                          transformMethod = "log2",
+#'                          normMethod = "median")
+#'  
+#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
+#'                        method = "limmalmFit", 
+#'                        contrastList = contrastList)
+#' 
+#' # Run KEGG annotation (enrichKEGG)
+#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
+#'        list_args = list(organism = "ath",
+#'        keyType = "kegg",
+#'        pvalueCutoff = 0.05),
+#'        from = "DiffExp", database = "KEGG")
+#'        
 #' # Get all results from KEGG on differential expression lists:
-#' getEnrichRes(MAEtest[["protetest"]],
-#'               from = "diffexp", database = "KEGG")
+#' getEnrichRes(MAE[["protetest"]],
+#'              from = "diffexp", database = "KEGG")
+#'              
 setMethod(
   f = "getEnrichRes",
   signature = "RflomicsSE",
@@ -1093,16 +1200,46 @@ setMethod(
 #' @rdname sumORA
 #' @aliases sumORA
 #' @examples
-#' # Generate RflomicsMAE for example
-#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
-#' # Run KEGG annotation on differential analysis results
-#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
-#'                         list_args = list(organism = "ath",
-#'                                          keyType = "kegg",
-#'                                          pvalueCutoff = 0.1),
-#'                         from = "DiffExp", database = "KEGG")
+#' # load ecoseed data
+#' data(ecoseed)
+#' 
+#' # create rflomicsMAE object with ecoseed data
+#' MAE <- RFLOMICS::createRflomicsMAE(
+#'   projectName = "Tests",
+#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
+#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+#'   ExpDesign   = ecoseed$design,
+#'   factorRef   = ecoseed$factorRef)
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- 
+#'    generateExpressionContrast(MAE, "averaged")
+#'    
+#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
+#' 
+#' # Run the data preprocessing and perform the differential analysis 
+#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
+#'                          transformMethod = "log2",
+#'                          normMethod = "median")
+#'  
+#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
+#'                        method = "limmalmFit", 
+#'                        contrastList = contrastList)
+#' 
+#' # Run KEGG annotation (enrichKEGG)
+#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
+#'        list_args = list(organism = "ath",
+#'        keyType = "kegg",
+#'        pvalueCutoff = 0.05),
+#'        from = "DiffExp", database = "KEGG")
+#'                         
 #' # Search for the pvalue cutoff:
-#' sumORA(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
+#' sumORA(MAE[["protetest"]], from = "diffexp", database = "KEGG")
 #'
 setMethod(
   f = "sumORA",
@@ -1157,14 +1294,44 @@ setMethod(
 #' @rdname getEnrichPvalue
 #' @aliases getEnrichPvalue
 #' @examples
-#' # Generate RflomicsMAE for example
-#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
-#' # Run KEGG annotation on differential analysis results
-#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
-#'                         list_args = list(organism = "ath",
-#'                                          keyType = "kegg",
-#'                                          pvalueCutoff = 0.1),
-#'                         from = "DiffExp", database = "KEGG")
+#' # load ecoseed data
+#' data(ecoseed)
+#' 
+#' # create rflomicsMAE object with ecoseed data
+#' MAE <- RFLOMICS::createRflomicsMAE(
+#'   projectName = "Tests",
+#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
+#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+#'   ExpDesign   = ecoseed$design,
+#'   factorRef   = ecoseed$factorRef)
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- 
+#'    generateExpressionContrast(MAE, "averaged")
+#'    
+#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
+#' 
+#' # Run the data preprocessing and perform the differential analysis 
+#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
+#'                          transformMethod = "log2",
+#'                          normMethod = "median")
+#'  
+#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
+#'                        method = "limmalmFit", 
+#'                        contrastList = contrastList)
+#' 
+#' # Run KEGG annotation (enrichKEGG)
+#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
+#'        list_args = list(organism = "ath",
+#'        keyType = "kegg",
+#'        pvalueCutoff = 0.05),
+#'        from = "DiffExp", database = "KEGG")
+#'                         
 #' # Search for the pvalue cutoff:
 #' getEnrichPvalue(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
 #'
@@ -1204,14 +1371,44 @@ setMethod(
 #' @rdname getEnrichSettings
 #' @aliases getEnrichSettings
 #' @examples
-#' # Generate RflomicsMAE for example
-#' MAEtest <- generateExample(annotation = FALSE, integration = FALSE)
-#' # Run KEGG annotation on differential analysis results
-#' MAEtest[["protetest"]] <- runAnnotationEnrichment(MAEtest[["protetest"]],
-#'                         list_args = list(organism = "ath",
-#'                                          keyType = "kegg",
-#'                                          pvalueCutoff = 0.1),
-#'                         from = "DiffExp", database = "KEGG")
+#' # load ecoseed data
+#' data(ecoseed)
+#' 
+#' # create rflomicsMAE object with ecoseed data
+#' MAE <- RFLOMICS::createRflomicsMAE(
+#'   projectName = "Tests",
+#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
+#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+#'   ExpDesign   = ecoseed$design,
+#'   factorRef   = ecoseed$factorRef)
+#' 
+#' # Set the statistical model and contrasts to test
+#' formulae <- generateModelFormulae(MAE)
+#' MAE <- setModelFormula(MAE, formulae[[1]])  
+#' 
+#' # Get the contrasts List and choose the first 3 contrasts of type averaged
+#' contrastList <- 
+#'    generateExpressionContrast(MAE, "averaged")
+#'    
+#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
+#' 
+#' # Run the data preprocessing and perform the differential analysis 
+#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
+#'                          transformMethod = "log2",
+#'                          normMethod = "median")
+#'  
+#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
+#'                        method = "limmalmFit", 
+#'                        contrastList = contrastList)
+#' 
+#' # Run KEGG annotation (enrichKEGG)
+#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
+#'        list_args = list(organism = "ath",
+#'        keyType = "kegg",
+#'        pvalueCutoff = 0.05),
+#'        from = "DiffExp", database = "KEGG")
+#'                         
 #' # Search for the pvalue cutoff:
 #' getEnrichSettings(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
 #'
@@ -1232,3 +1429,242 @@ setMethod(
     }
 )
 
+# ---- getAnnotAnalysesSummary ----
+#' @title getAnnotAnalysesSummary
+#' @description TODO
+#' @param object An object of class \link{RflomicsMAE}. It is expected the SE 
+#' object is produced by rflomics previous analyses, as it relies on their 
+#' results.
+#' @param from indicates if the enrichment results are taken from differential 
+#' analysis results (DiffExpEnrichAnal) or from the co-expression analysis 
+#' results (CoExpEnrichAnal)
+#' @param matrixType Heatmap matrix to plot, one of GeneRatio, p.adjust 
+#' or presence.
+#' @param ... more arguments for ComplexHeatmap::Heatmap.
+#' @return A list of heatmaps, one for each ontology/domain.
+#' @importFrom reshape2 recast
+#' @importFrom circlize colorRamp2
+#' @importFrom ComplexHeatmap Heatmap ht_opt
+#' @importFrom stringr str_wrap
+#' @exportMethod getAnnotAnalysesSummary
+#' @rdname getAnnotAnalysesSummary
+#' @aliases getAnnotAnalysesSummary
+setMethod(
+  f = "getAnnotAnalysesSummary",
+  signature = "RflomicsMAE",
+  definition = function(object,
+                        from = "DiffExpEnrichAnal",
+                        matrixType = "presence",
+                        ...) {
+    extract.list <- list()
+    
+    omicNames <- unique(unlist(getAnalyzedDatasetNames(object, from)))
+    
+    for (data in omicNames) {
+      
+      # for each database
+      databases <- names(object[[data]]@metadata[[from]])
+      for (database in databases) {
+        if (is.null(object[[data]]@metadata[[from]][[database]]$enrichResult))
+          next
+        
+        clusterNames <-
+          names(object[[data]]@metadata[[from]][[database]]$enrichResult)
+        pvalThresh   <-
+          object[[data]]@metadata[[from]][[database]]$list_args$pvalueCutoff
+        
+        for (name in clusterNames) {
+          domains <-
+            names(object[[data]]@metadata[[from]][[database]]$enrichResult[[name]])
+          
+          for (dom in domains) {
+            cprRes <-
+              object[[data]]@metadata[[from]][[database]]$enrichResult[[name]][[dom]]
+            
+            if(is.null(cprRes)) next
+            
+            cprRes <-
+              cprRes@result[cprRes@result$p.adjust < cprRes@pvalueCutoff, ]
+            
+            if(nrow(cprRes) == 0) next
+            
+            cprRes$contrastName <- name
+            cprRes$dataset      <- data
+            
+            extract.list[[database]][[dom]] <-
+              rbind(extract.list[[database]][[dom]], cprRes)
+          }
+        }
+      }
+    }
+    
+    
+    p.list <- list()
+    
+    for (database in names(extract.list)) {
+      for (dom in names(extract.list[[database]])) {
+        extract <- extract.list[[database]][[dom]]
+        
+        extract$Description <-
+          str_wrap(extract$Description, width = 30)
+        extract$contrastName <-
+          str_wrap(extract$contrastName, width = 30)
+        
+        extract$GeneRatio <-
+          as.numeric(vapply(
+            extract$GeneRatio,
+            FUN = function(x)
+              eval(parse(text = x)),
+            FUN.VALUE = 1
+          ))
+        extract$BgRatio <-
+          as.numeric(vapply(
+            extract$BgRatio,
+            FUN = function(x)
+              eval(parse(text = x)),
+            FUN.VALUE = 1
+          ))
+        extract$FC <- extract$GeneRatio / extract$BgRatio
+        
+        extract$contrastNameLabel <- extract$contrastName
+        extract$contrastName <-
+          paste(extract$contrastName, extract$dataset, sep = "\n")
+        
+        split.df <- unique(extract[c("dataset", "contrastName", "contrastNameLabel")])
+        split <- split.df$dataset
+        names(split) <- split.df$contrastName
+        
+        if (nrow(extract) == 0)
+          next
+        
+        dat <- switch(
+          matrixType,
+          "GeneRatio" = {
+            inter <- recast(extract[, c("Description", "contrastName", "GeneRatio")],
+                            Description ~ contrastName,
+                            measure.var = "GeneRatio")
+            rownames(inter) <-
+              inter$Description
+            #inter <- inter[, colnames(inter) != "Description"]
+            inter <-
+              select(inter, -"Description")
+            inter[is.na(inter)] <- 0
+            inter
+          },
+          "p.adjust" = {
+            inter <-
+              recast(extract[, c("Description", "contrastName", "p.adjust")],
+                     Description ~ contrastName,
+                     measure.var = "p.adjust")
+            rownames(inter) <-
+              inter$Description
+            #inter <- inter[, colnames(inter) != "Description"]
+            inter <-
+              select(inter, -"Description")
+            inter[is.na(inter)] <- 1
+            inter
+          },
+          "presence" = {
+            inter <- recast(extract[, c("Description", "contrastName", "p.adjust")],
+                            Description ~ contrastName,
+                            measure.var = "p.adjust")
+            rownames(inter) <-
+              inter$Description
+            #inter <- inter[, colnames(inter) != "Description"]
+            inter <-
+              select(inter, -"Description")
+            inter[!is.na(inter)] <- 1
+            inter[is.na(inter)]  <- 0
+            inter
+          },
+          "FC" = {
+            inter <- recast(extract[, c("Description", "contrastName", "FC")],
+                            Description ~ contrastName,
+                            measure.var = "FC")
+            rownames(inter) <-
+              inter$Description
+            #inter <- inter[, colnames(inter) != "Description"]
+            inter <-
+              select(inter, -"Description")
+            inter[is.na(inter)] <- 0
+            inter
+          },
+          "log2FC" = {
+            inter <- recast(extract[, c("Description", "contrastName", "FC")],
+                            Description ~ contrastName,
+                            measure.var = "FC")
+            rownames(inter) <-
+              inter$Description
+            #inter <- inter[, colnames(inter) != "Description"]
+            inter <-
+              select(inter, -"Description")
+            inter <- log2(inter)
+            inter[is.infinite(as.matrix(inter))] <-
+              0
+            # means FC is 0, shouldn't happen much...
+            inter[is.na(inter)] <- 0
+            # means it's not significant and not in the matrix.
+            inter
+          }
+        )
+        
+        colors <- switch(
+          matrixType,
+          "presence"   = {
+            structure(c("white", "firebrick"), names = c("0", "1"))
+          },
+          "GeneRatio"  = {
+            colorRamp2(c(0, max(dat)), c("white", "firebrick"))
+          },
+          "p.adjust"   = {
+            colorRamp2(c(0, pvalThresh, 1),
+                       c("firebrick", "white", "white"))
+          },
+          "FC"         = {
+            colorRamp2(c(0, max(dat)), c("white", "firebrick"))
+          },
+          "log2FC"     = {
+            colorRamp2(c(-max(abs(
+              dat
+            )), 0, max(abs(
+              dat
+            ))),
+            c("blue", "white", "firebrick"))
+          }
+        )
+        
+        ht_opt(DENDROGRAM_PADDING = unit(0.1, "cm"))
+        
+        p.list[[database]][[dom]] <- suppressWarnings(
+          Heatmap(
+            t(dat),
+            col = colors,
+            name = matrixType,
+            row_split = split[names(dat)],
+            #cluster_columns = hcCol,
+            #cluster_rows = hcPlot,
+            show_column_dend = FALSE,
+            show_row_dend = FALSE,
+            row_names_side = "left",
+            #column_names_rot = 20,
+            row_labels = split.df[which(split.df$contrastName %in% names(dat)), ]$contrastNameLabel,
+            # column_names_rot = 0,
+            # column_names_centered = TRUE,
+            rect_gp = gpar(col = "gray80", lwd = 0.1),
+            width =  ncol(dat) * 5,
+            height = nrow(dat) * 5,
+            heatmap_legend_param = list(direction = "horizontal"),
+            border = TRUE,
+            column_names_gp = gpar(fontsize = 10),
+            row_names_gp = gpar(fontsize = 10)
+          )
+        )
+        
+        
+      }
+    }
+    if (length(p.list) == 0)
+      return(NULL)
+    return(p.list)
+  }
+)
