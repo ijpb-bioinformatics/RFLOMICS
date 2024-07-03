@@ -9,22 +9,28 @@
 #'
 #' @param object An object of class \link{RflomicsMAE}
 #' @param SEobject An object of class \link{RflomicsSE}
+#' @param cmd Interface parameter, if TRUE, print commands. 
+#' @param scale if TRUE, each feature is scaled to unit variance.
+#' Default is TRUE.
 #' @return An object of class \link{RflomicsSE}
 #' @importFrom limma removeBatchEffect
 #' @importFrom stats model.matrix as.formula
 #' @keywords internal
 #' @noRd
 #'
-.rbeFunction <- function(object, SEobject, cmd = FALSE) {
+.rbeFunction <- function(object, SEobject, cmd = FALSE, scale = TRUE) {
     assayTransform <- assay(SEobject)
+    assayTransform <- t(scale(t(assayTransform), 
+                              center = TRUE, 
+                              scale = scale))
     colBatch <- getBatchFactors(SEobject)
     
     if (cmd) {
         message(
-            "#     =>Correction for Batch: ",
+            "[RFLOMICS] #     =>Correction for Batch: ",
             paste(colBatch, collapse = " "),
             " in ",
-            SEobject@metadata$omicType
+            metadata(SEobject)$omicType
         )
     }
     
@@ -36,6 +42,7 @@
     colData <- getDesignMat(SEobject)
     designToPreserve <-
         model.matrix(as.formula(newFormula), data = colData)
+
     
     if (length(colBatch) == 1) {
         rbeRes <-
@@ -54,10 +61,9 @@
     
     SEobject@metadata[["correction_batch_method"]] <-
         "limma (removeBatchEffect)"
-    
-    assay(SEobject) <- t(scale(t(rbeRes), center = TRUE, scale = FALSE))
-    # assay(SEobject) <- rbeRes
-    
+
+    assay(SEobject) <- rbeRes
+  
     return(SEobject)
 }
 

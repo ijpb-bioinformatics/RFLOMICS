@@ -83,6 +83,7 @@ setMethod(
         
         if (cmd)
             message("[RFLOMICS] #     => run data integration")
+        
         object <- runOmicsIntegration(
             object = object,
             preparedObject = preparedObject,
