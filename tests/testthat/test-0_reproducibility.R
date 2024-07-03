@@ -10,14 +10,15 @@ data(ecoseed)
 
 # create rflomicsMAE object with ecoseed data
 MAE <- createRflomicsMAE(
-  projectName = "Tests",
-  omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
-  omicsNames  = c("RNAtest", "metatest", "protetest"),
-  omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-  ExpDesign   = ecoseed$design,
-  factorRef   = ecoseed$factorRef)
+    projectName = "Tests",
+    omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+    omicsNames  = c("RNAtest", "metatest", "protetest"),
+    omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+    ExpDesign   = ecoseed$design,
+    factorRef   = ecoseed$factorRef)
 
 SE <- getRflomicsSE(MAE, "RNAtest.raw")
+sampleToKeep <- colnames(MAE[["protetest.raw"]])[-1]
 
 # ---- check design ----
 
@@ -30,12 +31,12 @@ test_that("test if RflomicsMAE / RflomicsSE", {
 })
 
 ## choice of model formulae
-formulae <- RFLOMICS::generateModelFormulae(MAE)
+formulae <- generateModelFormulae(MAE)
 
-MAE <- RFLOMICS::setModelFormula(MAE, modelFormula = formulae[[1]])
+MAE <- setModelFormula(MAE, modelFormula = formulae[[1]])
 
 ## list of all hypothesis grouped by contarst type (run on MAE or SE)
-Contrasts.List <- RFLOMICS::generateExpressionContrast(MAE)
+Contrasts.List <- generateExpressionContrast(MAE)
 
 # utilisation en dehors de MAE ou SE
 
@@ -49,39 +50,69 @@ selectedContrasts <- rbind(Contrasts.List$simple[1:3,],
 MAE <- setSelectedContrasts(MAE, contrastList = selectedContrasts)
 
 ## data processing
-sampleToKeep <- colnames(MAE[["protetest.raw"]])[-1]
-#sampleToKeep <- colnames(MAE)[["protetest.raw"]][stringr::str_detect(colnames(MAE[["protetest.raw"]]), pattern = "DS")]
+## runDataProcessing uses the .raw names, not the SE name.
+## creates the non .raw SE inside the MAE.
+## Interface function, mostly
 MAE <- MAE |> 
-    RFLOMICS::runDataProcessing(SE.name = "RNAtest"  , samples=NULL, lowCountFiltering_strategy="NbReplicates", lowCountFiltering_CPM_Cutoff=1, normMethod="TMM",transformMethod = "none") |>
-    RFLOMICS::runDataProcessing(SE.name = "protetest", samples=NULL, normMethod="none", transformMethod="none") |>
-    RFLOMICS::runDataProcessing(SE.name = "metatest" , samples=NULL, normMethod=NULL, transformMethod="log2")
+    runDataProcessing(SE.name = "RNAtest", samples = sampleToKeep,
+                      lowCountFiltering_strategy = "NbReplicates", 
+                      lowCountFiltering_CPM_Cutoff = 1, 
+                      normMethod = "TMM",transformMethod = "none") |>
+    runDataProcessing(SE.name = "protetest", samples = NULL,
+                      normMethod = "none", transformMethod = "none") |>
+    runDataProcessing(SE.name = "metatest", samples = NULL, 
+                      normMethod = NULL, transformMethod = "log2")
 
 ## diff analysis
 MAE <- MAE |> 
-    RFLOMICS::runDiffAnalysis(SE.name = "RNAtest"  , p.adj.method="BH", method = "edgeRglmfit", p.adj.cutoff = 0.05, logFC.cutoff = 0) |>
-    RFLOMICS::runDiffAnalysis(SE.name = "protetest", p.adj.method="BH", method = "limmalmFit",  p.adj.cutoff = 0.05, logFC.cutoff = 0) |>
-    RFLOMICS::runDiffAnalysis(SE.name = "metatest" , p.adj.method="BH", method = "limmalmFit",  p.adj.cutoff = 0.05, logFC.cutoff = 0)
+    runDiffAnalysis(SE.name = "RNAtest", p.adj.method = "BH", 
+                    method = "edgeRglmfit", p.adj.cutoff = 0.05, 
+                    logFC.cutoff = 0) |>
+    runDiffAnalysis(SE.name = "protetest", p.adj.method = "BH", 
+                    method = "limmalmFit",  p.adj.cutoff = 0.05, 
+                    logFC.cutoff = 0) |>
+    runDiffAnalysis(SE.name = "metatest", p.adj.method = "BH", 
+                    method = "limmalmFit",  p.adj.cutoff = 0.05, 
+                    logFC.cutoff = 0)
 
 MAE[["RNAtest"]] <- 
-  setValidContrasts(MAE[["RNAtest"]], 
-                    contrastList = getSelectedContrasts(MAE[["RNAtest"]]))
+    setValidContrasts(MAE[["RNAtest"]], 
+                      contrastList = getSelectedContrasts(MAE[["RNAtest"]]))
 MAE[["protetest"]] <- 
-  setValidContrasts(MAE[["protetest"]], 
-                    contrastList = getSelectedContrasts(MAE[["protetest"]]))
+    setValidContrasts(MAE[["protetest"]], 
+                      contrastList = getSelectedContrasts(MAE[["protetest"]]))
 MAE[["metatest"]] <- 
-  setValidContrasts(MAE[["metatest"]], 
-                    contrastList = getSelectedContrasts(MAE[["metatest"]]))
+    setValidContrasts(MAE[["metatest"]], 
+                      contrastList = getSelectedContrasts(MAE[["metatest"]]))
 
 ## co expression
 MAE <- MAE |> 
-    #RFLOMICS::runCoExpression(SE.name = "RNAtest"  , contrastNames = "(temperatureMedium - temperatureLow) in imbibitionDS" , K = 2:10, replicates = 5, merge = "union", model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin", normFactors = "TMM") |>
-    RFLOMICS::runCoExpression(SE.name = "protetest", contrastNames = "(temperatureMedium - temperatureLow) in imbibitionDS" , K = 2:10, replicates = 5, merge = "union", model = "normal") #|>
-    #RFLOMICS::runCoExpression(SE.name = "metatest" , contrastNames = "(temperatureMedium - temperatureLow) in imbibitionDS" , K = 2:10, replicates = 5, merge = "union", model = "normal")
+    #runCoExpression(SE.name = "RNAtest", 
+    #contrastNames = "(temperatureMedium - temperatureLow) in imbibitionDS" , 
+    #K = 2:10, replicates = 5, merge = "union", model = "normal", 
+    #GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin",
+    # normFactors = "TMM") |>
+    runCoExpression(SE.name = "protetest", 
+                    contrastNames = "(temperatureMedium - temperatureLow) in imbibitionDS", 
+                    K = 2:10, replicates = 5, merge = "union", 
+                    model = "normal") #|>
+#runCoExpression(SE.name = "metatest", 
+#contrastNames = "(temperatureMedium - temperatureLow) in imbibitionDS" ,
+# K = 2:10, replicates = 5, merge = "union", model = "normal")
 
 ## Enrichment
-MAE <- MAE |> 
-    RFLOMICS::runAnnotationEnrichment(SE.name = "RNAtest", database = "GO", domain = c("BP", "MF", "CC"), list_args = list(OrgDb = "org.At.tair.db", keyType = "TAIR", pvalueCutoff = 0.05)) |>
-    RFLOMICS::runAnnotationEnrichment(SE.name = "protetest", database = "GO", domain = c("BP", "MF", "CC"), list_args = list(OrgDb = "org.At.tair.db", keyType = "TAIR", pvalueCutoff = 0.05))
+## Comment this when not locally used (need the org at tair package.)
+# MAE <- MAE |> 
+#     runAnnotationEnrichment(SE.name = "RNAtest", database = "GO",
+#                             domain = c("BP", "MF", "CC"), 
+#                             list_args = list(OrgDb = "org.At.tair.db", 
+#                                              keyType = "TAIR", 
+#                                              pvalueCutoff = 0.05)) |>
+#     runAnnotationEnrichment(SE.name = "protetest", database = "GO", 
+#                             domain = c("BP", "MF", "CC"), 
+#                             list_args = list(OrgDb = "org.At.tair.db", 
+#                                              keyType = "TAIR", 
+#                                              pvalueCutoff = 0.05))
 
 # ---- test accessors ----
 ## ---- Rflomics class ----
@@ -262,7 +293,8 @@ test_that("contrast", {
     expect_equal(MAE[["protetest"]]@metadata$design$Contrasts.Coeff, Contrasts.Coeff)
     expect_equal(MAE[["metatest"]]@metadata$design$Contrasts.Coeff, Contrasts.Coeff)
     
-    expect_equal(checkExpDesignCompleteness(MAE[["RNAtest"]])$messages, "The experimental design is complete but not balanced.")
+    expect_equal(checkExpDesignCompleteness(MAE[["RNAtest"]])$messages, 
+                 "The experimental design is complete but not balanced.")
     
     
 })

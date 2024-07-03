@@ -5,21 +5,49 @@ library(MOFA2)
 # ---- Construction of objects for the tests ----
 
 ## ---- Construction MAE RFLOMICS ready for integration analysis : ----
-MAE <- generateExample(
-    annotation = FALSE,
-    coexp = FALSE,
-    integration = FALSE
-) 
+data(ecoseed)
+# create rflomicsMAE object with ecoseed data
+MAE <- createRflomicsMAE(
+    projectName = "Tests",
+    omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+    omicsNames  = c("RNAtest", "metatest", "protetest"),
+    omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+    ExpDesign   = ecoseed$design,
+    factorRef   = ecoseed$factorRef)
+names(MAE) <- c("RNAtest", "metatest", "protetest")
+
+formulae <- generateModelFormulae( MAE) 
+MAE <- setModelFormula(MAE, formulae[[1]])
+
+contrastList <- generateExpressionContrast(object = MAE) |> 
+    purrr::reduce(rbind) |>
+    dplyr::filter(contrast %in% c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
+                                  "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS))/3",
+                                  "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" ))
+MAE <- MAE |>
+    setSelectedContrasts(contrastList) |>
+    runTransformData(SE.name = "metatest", transformMethod = "log2") |>
+    runNormalization(SE.name = "metatest", normMethod = "median")  |>
+    runDiffAnalysis(SE.name = "metatest", method = "limmalmFit")     |>
+    runNormalization(SE.name = "protetest", normMethod = "median")  |>
+    filterLowAbundance(SE.name = "RNAtest")                          |>
+    runNormalization(SE.name = "RNAtest", normMethod = "TMM")        |>
+    runDiffAnalysis(SE.name = "RNAtest", method = "edgeRglmfit")
 
 MAE0 <- MAE
 
-protMat <- readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
-metMat  <- readOmicsData(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"))
-condMat <- readExpDesign(file = paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
+# ---- Comparison data: ----
 
-condMat$Repeat      <- factor(condMat$Repeat, levels = c("rep1", "rep2", "rep3"))
-condMat$imbibition  <- factor(condMat$imbibition, levels = c("DS", "EI", "LI"))
-condMat$temperature <- factor(condMat$temperature, levels = c("Low", "Medium", "Elevated"))
+protMat <- ecoseed$protetest
+metMat <- ecoseed$metatest
+condMat <- ecoseed$design
+
+condMat$Repeat      <- factor(condMat$Repeat, 
+                              levels = c("rep1", "rep2", "rep3"))
+condMat$imbibition  <- factor(condMat$imbibition, 
+                              levels = c("DS", "EI", "LI"))
+condMat$temperature <- factor(condMat$temperature, 
+                              levels = c("Low", "Medium", "Elevated"))
 
 condMat$Repeat      <- relevel(condMat$Repeat, ref = "rep1")
 condMat$imbibition  <- relevel(condMat$imbibition, ref = "DS")
@@ -33,8 +61,38 @@ metMat  <- metMat[match(orderNames, colnames(metMat))]
 identical(orderNames, colnames(protMat), attrib.as.set = FALSE)
 identical(orderNames, colnames(metMat), attrib.as.set = FALSE)
 
-metMat2  <- apply(log2(metMat + 10^-10), 2, FUN = function(vect) vect/sum(vect^2))
+metMat2  <- apply(log2(metMat + 10^(-10)), 2, 
+                  FUN = function(vect) vect - median(vect))
 protMat2 <- apply(protMat, 2, FUN = function(vect) vect - median(vect))
+
+# Select data
+selectedData <- c("metatest", "protetest")
+selectMethod <- c("metatest" = "diff", "protetest" = "none")
+operation <- c("metatest" = "union", "protetest" = "union")
+
+variableList <- 
+    lapply(selectedData, function(set) {
+        switch(
+            selectMethod[[set]],
+            "diff"  = getDEList(
+                object = MAE[[set]],
+                contrasts = getSelectedContrasts(MAE)$contrastName,
+                operation = operation[[set]]
+            ),
+            "none"  = names(MAE[[set]])
+        )
+    })
+names(variableList) <- selectedData
+
+
+protMat2 <- protMat2[variableList[["protetest"]],]
+metMat2 <- metMat2[variableList[["metatest"]],]
+
+# Transform
+metMat3 <- t(scale(t(metMat2), center = TRUE, scale = TRUE))
+protMat3 <- t(scale(t(protMat2), center = TRUE, scale = TRUE))
+# protMat3 <- protMat2
+# metMat3 <- metMat2
 
 # from .rbeFunction
 colBatch <- getBatchFactors(MAE)
@@ -45,32 +103,14 @@ colData <- getDesignMat(MAE)
 designToPreserve <-
     model.matrix(as.formula(newFormula), data = colData)
 
-
-metMat3 <- limma::removeBatchEffect(metMat2, batch = colData[, colBatch],
+metMat4 <- limma::removeBatchEffect(metMat3, batch = colData[, colBatch],
                                     design = designToPreserve)
-protMat3 <- limma::removeBatchEffect(protMat2, batch = colData[, colBatch],
+protMat4 <- limma::removeBatchEffect(protMat3, batch = colData[, colBatch],
                                      design = designToPreserve)
 
 # ----- TESTS -----
 
 test_that("Equivalence", {
-    selectedData <- c("metatest", "protetest")
-    selectMethod <- c("metatest" = "diff", "protetest" = "none")
-    operation <- c("metatest" = "union", "protetest" = "union")
-    
-    variableList <- 
-        lapply(selectedData, function(set) {
-            switch(
-                selectMethod[[set]],
-                "diff"  = getDEList(
-                    object = MAE[[set]],
-                    contrasts = getSelectedContrasts(MAE),
-                    operation = operation[[set]]
-                ),
-                "none"  = names(MAE[[set]])
-            )
-        })
-    names(variableList) <- selectedData
     
     MAE2 <- prepareForIntegration(object           = MAE,
                                   omicsNames       = selectedData,
@@ -83,33 +123,37 @@ test_that("Equivalence", {
     expect(is(MAE2, "MOFA"), failure_message = "Prepared MAE is not a MOFA object")
     expect_equal(get_dimensions(MAE2)$D, lengths(variableList))
     
-    protMat4 <- protMat3[variableList[["protetest"]],]
     protRes <- MAE2@data$protetest$group1
     
     expect_equal(dim(protMat4), dim(protRes))
-    expect(identical(rownames(protMat4), rownames(protRes), attrib.as.set = FALSE), 
+    expect(identical(rownames(protMat4), rownames(protRes),
+                     attrib.as.set = FALSE), 
            failure_message = "proteins rownames are not identical")
-    expect(identical(colnames(protMat4), colnames(protRes), attrib.as.set = FALSE), 
+    expect(identical(colnames(protMat4), colnames(protRes),
+                     attrib.as.set = FALSE), 
            failure_message = "proteins colnames are not identical")
-    expect_identical(protMat4, protRes)
+    expect_identical(as.data.frame(protMat4), as.data.frame(protRes))
     
-    metMat4 <- metMat3[variableList[["metatest"]],]
     metaRes <- MAE2@data$metatest$group1
     
     expect_equal(dim(metMat4), dim(metaRes))
-    expect(identical(rownames(metMat4), rownames(metaRes), attrib.as.set = FALSE), 
+    expect(identical(rownames(metMat4), rownames(metaRes), 
+                     attrib.as.set = FALSE), 
            failure_message = "metabolites rownames are not identical")
-    expect(identical(colnames(metMat4), colnames(metaRes), attrib.as.set = FALSE), 
+    expect(identical(colnames(metMat4), colnames(metaRes),
+                     attrib.as.set = FALSE), 
            failure_message = "metabolites colnames are not identical")
-    expect_identical(metMat4, metaRes)
+    expect_identical(as.data.frame(metMat4), as.data.frame(metaRes))
     
     # ---- Equivalence on results: ----
     
     MAE3 <- runOmicsIntegration(MAE, preparedObject = MAE2, 
-                                method = "MOFA", scale_views = TRUE, maxiter = 1000)
+                                method = "MOFA", scale_views = TRUE, 
+                                maxiter = 1000, num_factors = 5)
     
     # equivalence
-    mofaobject <- create_mofa(data = list("protetest" = protMat4, "metatest" = metMat4), 
+    mofaobject <- create_mofa(data = list("protetest" = protMat4, 
+                                          "metatest" = metMat4), 
                               extract_metadata = TRUE)
     data_opts  <- get_default_data_options(mofaobject)
     model_opts <- get_default_model_options(mofaobject)
@@ -118,7 +162,7 @@ test_that("Equivalence", {
     data_opts$scale_views  <- TRUE
     train_opts$maxiter     <- 1000
     train_opts$verbose     <- FALSE
-    model_opts$num_factors <- 10
+    model_opts$num_factors <- 5
     MOFAObject.untrained <- prepare_mofa(
         object           = mofaobject,
         data_options     = data_opts,

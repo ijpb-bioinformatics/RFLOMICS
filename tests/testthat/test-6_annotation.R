@@ -1,11 +1,34 @@
 library(testthat)
 library(RFLOMICS)
 
-# ---- Construction MAE RFLOMICS ready for differential analysis : ----
-MAE <- generateExample(
-  annotation = FALSE,
-  integration = FALSE
-) 
+# ---- Construction MAE RFLOMICS ready for annotation analysis : ----
+data(ecoseed)
+# create rflomicsMAE object with ecoseed data
+MAE <- createRflomicsMAE(
+    projectName = "Tests",
+    omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+    omicsNames  = c("RNAtest", "metatest", "protetest"),
+    omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+    ExpDesign   = ecoseed$design,
+    factorRef   = ecoseed$factorRef)
+names(MAE) <- c("RNAtest", "metatest", "protetest")
+
+formulae <- generateModelFormulae( MAE) 
+MAE <- setModelFormula(MAE, formulae[[1]])
+
+contrastList <- generateExpressionContrast(object = MAE) |> 
+    purrr::reduce(rbind) |>
+    dplyr::filter(contrast %in% c("(temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS)",
+                                  "((temperatureLow_imbibitionEI - temperatureLow_imbibitionDS) + (temperatureMedium_imbibitionEI - temperatureMedium_imbibitionDS) + (temperatureElevated_imbibitionEI - temperatureElevated_imbibitionDS))/3",
+                                  "((temperatureElevated_imbibitionEI - temperatureLow_imbibitionEI) - (temperatureElevated_imbibitionDS - temperatureLow_imbibitionDS))" ))
+MAE <- MAE |>
+    setSelectedContrasts(contrastList) |>
+    filterLowAbundance(SE.name = "RNAtest")                          |>
+    runNormalization(SE.name = "RNAtest", normMethod = "TMM")        |>
+    runDiffAnalysis(SE.name = "RNAtest", method = "edgeRglmfit")     |>
+    runCoExpression(SE.name = "RNAtest",
+                    K = 2:12,
+                    replicates = 2) 
 
 # ---- Annotation test function - DiffExpEnrichment ----
 # 
