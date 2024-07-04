@@ -67,8 +67,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                              tags$small("(Scroll down for instructions)")  )),
         solidHeader = TRUE, status = "warning", width = 12, collapsible = TRUE, collapsed = TRUE,
         p("Differential expression analysis is performed for each contrast. 
-          There are just two options to set (the adjusted-pvalue cut-off and the |logFC| cut-off).
-          The results will appear in blocks with the contrast's name and statistics (one per contrast), each block offering a tab panel with several outputs:"),
+          There are just two options to set: the adjusted-pvalue cut-off and the |logFC| cut-off.
+          The results will appear in blocks with the contrast's name and statistics (one per contrast), 
+          each block offering a tab panel with several outputs:"),
         p("- The graph of Pvalue's distribution: Distribution of pvalue's which has to be check to validate results. The most desirable shape is a pick of p-values at 0 following by a uniform distribution. "),
         p("- The MA plot which gives the logFC across the mean of the expression/abundance"),
         p("- The Volcano plot: implemented in the EnhancedVolcano R-package (Blighe K, Rana S, Lewis M (2022). EnhancedVolcano: Publication-ready volcano plots with enhanced colouring and labeling R package version 1.12.0.))"),
@@ -122,26 +123,26 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                pickerInput(
                  inputId  = session$ns("contrastList"),
                  label    = .addBSpopify(label = 'Selected contrasts:', 
-                                         content = "Contrasts to run diff analysis. If you want to test all contrasts, select 'All'"),
+                                         content = "Contrasts/hypotheses on which to run the differential analysis. If you want to test all contrasts, select 'All'"),
                  choices  = contrastList),
                
                # method for Diff analysis
                selectInput(
                  inputId  = session$ns("AnaDiffMethod"),
                  label = .addBSpopify(label = 'Method:', 
-                                      content = "Differential analysis  method"),
+                                      content = "Differential analysis method. Fixed parameter."),
                  choices  = method,
                  selected = method),
                
                numericInput(
                  inputId = session$ns("p.adj.cutoff"), 
                  label=.addBSpopify(label = 'Adjusted pvalue cutoff:', 
-                                    content = "The adjusted p-value cut-off"),
+                                    content = "The adjusted p-value cut-off. Pvalues are adjusted using Benjamini-Hochberg method."),
                  value=local.rea.values$p.adj.cutoff, min=0, max=1, 0.01),
                numericInput(
                  inputId = session$ns("abs.logFC.cutoff"),
-                 label=.addBSpopify(label = '|logFC| cutoff:', 
-                                    content = "the absolute log FC cut-off"),
+                 label=.addBSpopify(label = '|log2FC| cutoff:', 
+                                    content = "The absolute log2 FC cut-off"),
                  value=local.rea.values$abs.logFC.cutoff, min=0, max=100, 0.01),
                
                # use of cluster. need setting step
@@ -397,9 +398,13 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
           tabPanel(
             title = "Pvalue's distribution", 
             tags$br(),
-            tags$i("You must have a look at to the distribution of non-adjusted p-values to validate
-                                         your analysis. The most desirable shape is a peak of p-values at 0 following by a uniform 
-                                         distribution"),
+            tags$i("You must have a look at the distribution of non-adjusted 
+            p-values to validate
+            your analysis. 
+            The most desirable shape is a peak of p-values at 0 followed 
+            by a uniform (flat) distribution. If there is a peak in 1, consider
+                   increasing the filtering threshold in the pre-processing 
+                   step."),
             tags$br(),tags$hr(),tags$br(),
             renderPlot({ diff.plots$Pvalue.hist })),
           
@@ -407,12 +412,20 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
           tabPanel(
             title = "MA plot", 
             tags$br(),
-            tags$i(paste0("Expect a majority of ", .omicsDic(dataset.SE)$variableName," around 0.",
-                          " The red points are the ", .omicsDic(dataset.SE)$variableName,
-                          " significantly over-expressed in the left factor's modality in the contrast expression whereas ",
-                          "blue points are ", .omicsDic(dataset.SE)$variableName, 
-                          " significantly under-expressed in the rigth factor's modality in the contrast expression.
-                                                Only the top 20 ", .omicsDic(dataset.SE)$variableName, " DE are labeled.")),
+            tags$i(paste0("It is expected that a majority of ", 
+                          .omicsDic(dataset.SE)$variableName,
+                          " gather around 0.",
+                          " The red dots are the ",
+                          .omicsDic(dataset.SE)$variableName,
+                          " significantly over-expressed in the left factor's 
+                          level(s) in the contrast expression whereas ",
+                          "blue dots are ", 
+                          .omicsDic(dataset.SE)$variableName, 
+                          " significantly under-expressed in the rigth factor's 
+                          level(s) in the contrast expression.
+                              Only the top 20 ",
+                          .omicsDic(dataset.SE)$variableName, 
+                          " DE are labeled.")),
             tags$br(),tags$hr(),tags$br(),
             renderPlot({ diff.plots$MA.plot })),
           
@@ -420,9 +433,13 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
           tabPanel(
             title = "Volcano plot", 
             tags$br(),
-            tags$i(paste0(" Red points are ",.omicsDic(dataset.SE)$variableName," of interest: ",
-                          "displaying both large magnitude log-fold-changes (x axis) and high statistical significance (y axis)",
-                          "Only the top 20 ", .omicsDic(dataset.SE)$variableName, " DE are labeled.")),
+            tags$i(paste0("Red dots are ",
+                          .omicsDic(dataset.SE)$variableName," of interest: ",
+                          "displaying both large magnitude log2-fold-changes 
+                          (x axis) and high statistical significance (y axis)",
+                          "Only the top 20 ", 
+                          .omicsDic(dataset.SE)$variableName, 
+                          " DE are labeled.")),
             tags$br(), tags$hr(), tags$br(),
             renderPlot({ diff.plots$Volcano.plot }, height = 600))
         )
@@ -436,7 +453,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
               tabPanel(
                 title = "PCA on DE",
                 tags$br(),
-                tags$i("PCA plot of the DE entities"),
+                tags$i("PCA plot of the differentially expressed entities. 
+                       It is expected that the separation between groups of 
+                       interest is better after the differential analysis."),
                 tags$br(), tags$hr(), tags$br(),
                 fluidRow(
                   column(
@@ -487,13 +506,13 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                   tags$ul(
                     tags$li(tags$i(paste0("row names: ",omicsDic(dataset.SE)$variableName," ID"))),
                     tags$li(tags$i("logFC: log2 fold change")),
-                    tags$li(tags$i("Abundance: mean expression/abundance for the factor's modality")),
-                    tags$li(tags$i("t: t-statistic (limma-lmFit, prot/metabo)")),
+                    tags$li(tags$i("Abundance: mean expression/abundance for the factor's levels")),
+                    tags$li(tags$i("t: t-statistic (limma-lmFit, proteomics/metabolomics only)")),
                     tags$li(tags$i("pvalue: p-values")),
                     tags$li(tags$i("Adj.value: adjusted p-value (BH)")),
-                    tags$li(tags$i("LR: likelihood ratio test (edgeR-glmLRT, RNAseq)")),
-                    tags$li(tags$i("B: log-odds that the prot/metabo is differentially expressed (limma-topTable)")),
-                    tags$li(tags$i("Regulation = Up (green) or Down (red) regulated"))
+                    tags$li(tags$i("LR: likelihood ratio test (edgeR-glmLRT, transcriptomics RNAseq only)")),
+                    tags$li(tags$i("B: log-odds that the proteomics/metabolomics is differentially expressed (limma-topTable)")),
+                    tags$li(tags$i("Regulation: Up (green) or Down (red) regulated"))
                   ),
                   tags$hr(), tags$br(),
                   ### DEF result table ###
@@ -518,14 +537,19 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                 tabPanel(
                   title = "Heatmap",
                   tags$br(),
-                  tags$i(tags$p(paste0("Heatmap is performed on DE ",.omicsDic(dataset.SE)$variableName,
+                  tags$i(tags$p(paste0("Heatmap is performed on DE ",
+                                       .omicsDic(dataset.SE)$variableName,
                                        " expression data table which has been",
-                                       " transformed by: ",getTransSettings(dataset.SE)$method, " method", 
-                                       " and normalized by: ", getNormSettings(dataset.SE)$method ,"  method."))),
+                                       " transformed by: ", 
+                                       getTransSettings(dataset.SE)$method, 
+                                       " method", 
+                                       " and normalized by: ",
+                                       getNormSettings(dataset.SE)$method ,
+                                       "  method."))),
                   tags$i(tags$p(paste0("Clustering is independently performed on samples (row) and centered ",
                                        .omicsDic(dataset.SE)$variableName,
                                        " (column) using euclidian distance and complete aggregation method."))),
-                  tags$i(tags$p(" You may separate the heatmap by modality of factor of interest (Levels radio buttons). You may
+                  tags$i(tags$p(" You can separate the heatmap by levels of factor of interest (Levels radio buttons). You may
                                          also add annotations to the heatmap by selecting biological/batch factors to display.")),
                   tags$br(), tags$hr(), tags$br(),
                   renderPlot({
@@ -577,8 +601,9 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
                 tabPanel(
                   title = "boxplot DE",
                   tags$br(),
-                  tags$i(paste0("Boxplot showing the expression/abundance profile of a selected DE ",.omicsDic(dataset.SE)$variableName),
-                         " colored by experimental factor's modality (see Levels radio buttons)."),
+                  tags$i(paste0("Boxplot showing the expression/abundance profile of a selected DE ",
+                                .omicsDic(dataset.SE)$variableName),
+                         " colored by experimental factor's levels (see Levels radio buttons)."),
                   tags$br(), tags$hr(), tags$br(),
                   fluidRow(
                     
@@ -657,7 +682,7 @@ DiffExpAnalysis <- function(input, output, session, dataset, rea.values){
         
         if(is.null(metadata(dataset.SE)$DiffExpAnal[["mergeDEF"]])){
           
-          "None of the contrasts yield results. No differentially expressed features!"
+          "None of the contrasts yield any results. No differentially expressed features!"
         }
         else{
           

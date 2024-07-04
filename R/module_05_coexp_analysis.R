@@ -23,7 +23,7 @@ CoSeqAnalysisUI <- function(id){
                 " or ",tags$b("intersection")," of your contrasts lists 
                 according to your biological question."),
               p("All the default parameters have been expertised according 
-                to each omic."),
+                to each omics."),
               p("It is then recommanded to do a ",tags$b("first run"),
                 " with a large number of K with few iterations.
             If there is a K (Kbest different from Kmin and Kmax) for which 
@@ -201,7 +201,7 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                 fluidRow(
                     column(8,
                            sliderInput(session$ns("K.values"), 
-                                       label = .addBSpopify(label = 'K ranges:', 
+                                       label = .addBSpopify(label = 'K range:', 
                                                             content = "K=number of clusters"), 
                                        min=2, max=30, value=c(2,7), step=1)),
                     column(4,
@@ -400,24 +400,23 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
             tabBox( id = "runClustering", width = 12,
                     
                     tabPanel("ICL",  
-                             br(),br(),
-                             tags$i("Integrated Completed Likelihood (ICL) plotted versus number of clusters. 
+                             br(),
+                             tags$i("Integrated Completed Likelihood (ICL) plotted versus the number of clusters. 
                                 The ICL is the criterion used to select the number of clusters. 
                                 The number of clusters (K) that minmizes the ICL is the best number of clusters."),
                              br(),hr(),br(),
                              renderPlot({ plot.coseq.res$ICL })),
                     tabPanel("probapost_barplots",
                              br(),
-                             br(),
                              tags$i(
                                  paste0(
                                      "Barplots giving a quality control of each cluster.",
                                      " In green: number of " ,
                                      .omicsDic(dataset.SE)$variableName,
-                                     " that are member of a cluster with a high confidance (Max Conditional Probability  > 0.8).",
+                                     " that are member of a cluster with a high confidence level (Max Conditional Probability  > 0.8).",
                                      " In purple:  number of ",
                                      .omicsDic(dataset.SE)$variableName,
-                                     " that are member of a cluster with a low confidance (Max Conditional Probability < 0.8).",
+                                     " that are member of a cluster with a low confidence level (Max Conditional Probability < 0.8).",
                                      " A high proportion of green observations may indicate that the clustering is not reliable and can't be exploited."
                                  )
                              ),
@@ -430,9 +429,9 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                     tabPanel(
                         "profiles",
                         br(),
-                        br(),
                         tags$i(
-                            "Overview of cluster's expression profiles. Boxplot are colored acording to  biological  factors"
+                            "Overview of cluster's expression profiles. 
+                            Boxplot are colored acording to biological factors"
                         ),
                         br(),
                         hr(),
@@ -456,9 +455,10 @@ CoSeqAnalysis <- function(input, output, session, dataset, rea.values){
                                         )
                                  ),
                                  column(9, 
-                                        br(),br(),
-                                        tags$i(tags$p("boxplots of expression/abundance profiles in each cluster colored by experimental factor's modality.")),
-                                        tags$i(tags$p("red line join the median of the expression/abundance profiles of each factor's modality")),
+                                        br(),
+                                        tags$i(tags$p("Boxplots of expression/abundance profiles in each cluster colored by experimental factor's levels.")),
+                                        tags$i(tags$p("The red line joins the medians of the expression/abundance profiles of each factor's levels,
+                                                      showing the median expression evolution.")),
                                         br(), hr(),br(),
                                         renderPlot({ 
                                             plotCoExpressionProfile(dataset.SE, input$selectCluster, condition=input$profile.condition, features=input$observations) }))

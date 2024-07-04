@@ -239,7 +239,7 @@
     ### for diff analysis results
     tabPanel.list <- list(
       tabPanel(
-        "Enrichment from differential expression analysis",
+        "Enrichment from differential expression analysis results",
         br(),
         .modRunEnrichmentUI(ns("DiffExpEnrichAnal"))
       )
@@ -250,7 +250,7 @@
       tabPanel.list <- c(tabPanel.list,
                          list(
                            tabPanel(
-                             "Enrichment from co-expression analysis",
+                             "Enrichment from co-expression analysis results",
                              br(),
                              .modRunEnrichmentUI(ns("CoExpEnrichAnal"))
                            )
@@ -1900,8 +1900,8 @@
     
     options(htmlwidgets.TOJSON_ARGS = list(na = 'string'))
     
-    text.help <- c(paste0("0: no significantly enriched ",
-                          omicsDic(dataset.SE)$variableName))
+    text.help <- c(paste0("0: no term was found significantly enriched for this ",
+                          omicsDic(dataset.SE)$variableName), " list")
     
     if(length(errorMessages) != 0){
       if(length(unique(unlist(errorMessages))) == 1){ 
@@ -1936,7 +1936,7 @@
       ))
     
     # summary enrichment plot
-    if(any(as.numeric(unlist(sORA[-1], recursive = TRUE)) > 0, na.rm = T))
+    if(any(as.numeric(unlist(sORA[-1], recursive = TRUE)) > 0, na.rm = TRUE))
       tabPanel.list <- 
       c(tabPanel.list,
         list(
@@ -1983,7 +1983,7 @@
           collapsible = FALSE,
           collapsed = FALSE,
           status = "warning",
-          title = "There is no result for enrichment analysis!",
+          title = "There is no result for this enrichment analysis!",
           
           if(length(errorMessages) != 0){
             

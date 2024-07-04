@@ -43,13 +43,13 @@
         title = "Select a model formula",
         
         tags$i("The proposed models are written based on selected
-                   biological and batch factors. We provide models with and 
-                   without integration(s). Only the two orders interaction 
+                   biological and batch factors, with and 
+                   without interaction(s). Only the two orders interaction 
                    terms between the biological factors are considered"),
         
         selectInput( inputId = session$ns("model.formulae"), label = "",
                      choices = rev(names(generateModelFormulae(session$userData$FlomicsMultiAssay))),
-                     selectize=FALSE,size=5),
+                     selectize = FALSE, size = 5),
         actionButton(session$ns("validModelFormula"),"Validate", class = "butt")
     )
   })
@@ -93,10 +93,10 @@
     box(width=12, status = "warning", solidHeader = TRUE, 
         title = "Select contrasts",
         
-        tags$i("The proposed contracts are computed according to the  
-                 selected model. For models without interactions, all 
-                 available contrasts are of the 'averaged' type. 
-                 We must choose the contrasts that 
+        tags$i("The proposed contrasts are computed according to the  
+                 selected model formula. For models without an interaction term,
+                 all available contrasts are of the 'averaged' type. 
+                 You must choose the contrasts that 
                  reflect the biological questions."),
         br(),
         column(
@@ -112,15 +112,17 @@
             
             pickerInput(
               inputId  = session$ns(paste0("ContrastType",contrastType)),
-              label    = tags$span(style="color: black;", paste0("Contrast type: ", contrastType)),
+              label    = tags$span(style = "color: black;", 
+                                   paste0("Contrast type: ", contrastType)),
               choices  = vect,
-              options  = list(`actions-box` = TRUE, size = 10, `selected-text-format` = "count > 3"),
+              options  = list(`actions-box` = TRUE, size = 10, 
+                              `selected-text-format` = "count > 3"),
               multiple = TRUE,
               selected = NULL)
           })
         ),
         br(),
-        actionButton(session$ns("validContrasts"),"Validate", class = "butt")
+        actionButton(session$ns("validContrasts"), "Validate", class = "butt")
     )
   })
   
@@ -153,7 +155,8 @@
     
     contrast.sel.vec <- lapply(names(local.rea.values$contrast), function(contrastType) {
       
-      filter(local.rea.values$contrast[[contrastType]], contrast %in% input[[paste0("ContrastType",contrastType)]])
+      filter(local.rea.values$contrast[[contrastType]], 
+             contrast %in% input[[paste0("ContrastType",contrastType)]])
       
     }) %>% reduce(rbind)
     
@@ -162,13 +165,13 @@
     # check if user has selected the contrasts to test
     if(nrow(contrast.sel.vec) == 0){
       
-      showModal(modalDialog(title = "Error message", "Please select the hypotheses to test."))
-      #rea.values$validate.status <- 1
+      showModal(modalDialog(title = "Error message", 
+                            "Please select at least one hypothesis to test."))
     }
     
     ## continue only if message is true
     validate({
-      need(nrow(contrast.sel.vec) != 0, message="ok")
+      need(nrow(contrast.sel.vec) != 0, message = "ok")
     })
     
     # define all the coefficients of selected contrasts and return a 

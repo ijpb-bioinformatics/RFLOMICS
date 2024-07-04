@@ -23,61 +23,67 @@ QCNormalizationTabUI <- function(id) {
       collapsible = TRUE,
       collapsed = TRUE,
       p(
-        "Very important and non trivial step which are crucial for 
-                single-omics analysis and also for the integration of different 
-                omics data. Default settings have been expertized"
+        "Very important and non trivial steps, crucial for 
+                single-omics analysis and for the integration of different 
+                omics data. Default settings have been expertized."
       ),
-      h4(tags$span("Explore:", style = "color:orange")),
+      h4(tags$span("Explore:", style = "color:orange;font-weight:bold")),
       p(
         "Identify the noise and the source of technical and biological
                 variability thanks to the",
         tags$b("PCA"),
-        ""
+        "."
       ),
-      h4(tags$span("Filter:", style = "color:orange")),
+      h4(tags$span("Filter:", style = "color:orange;font-weight:bold")),
       p(
-        "Remove outliers samples so as low expressed entities 
-                which introduce noise in the data"
+        "Remove outliers samples and low expressed entities 
+                which introduce noise in the data."
       ),
       h4(
-        tags$span("Transform and normalize:", style = "color:orange")
+        tags$span("Transform and normalize:", 
+                  style = "color:orange;font-weight:bold")
       ),
       p(
         "Transform data to linearize and make it more Gaussian-like 
-                and Normalize to identify and correct technical biases and 
+                and normalize to identify and correct technical biases and 
                 make the data comparable across samples. Depending on the 
                 omics type, the pre-processing steps will be different: "
       ),
-      h5(tags$span("RNAseq data:", style = "color:blue")),
+      h5(tags$span("Transcriptomics (RNAseq counts data):", 
+                   style = "color:blue")),
       p("", tags$b("Details on filtering step:"), ""),
       p("By default, non expressed/non detected genes are removed"),
       p(
         "By default, low expressed genes are removed according to 
                 their CPM. By default, genes with a cpm >= 1 in at least 
-                n Samples = min(NbReplicates) samples are kept."
+                min(NbReplicates) samples are kept. 
+        The cpm threshold can be changed."
       ),
       p(
-        "NB: you can choose the other strategy which is to remove 
-                genes according to a cpm >= 1 in at least n Samples = 
-                NbConditions cpm threshold could be changed"
+        "NB: you can choose the other strategy, which is to remove 
+                genes according to a cpm >= 1 in at least  
+                NbConditions samples. The cpm threshold can be changed."
       ),
       p("", tags$b("Details on normalization:"), ""),
       p(
-        "TMM from edgeR is the default method. It was found to be 
-                the best methods (Dillies et al., 2013)"
+        "TMM (from edgeR::calcnormfactors) is the default method.
+        It was found to be the best method (Dillies et al., 2013) for counts
+        RNA-seq data."
       ),
       h5(
-        tags$span("Proteomic and metabolomic data", style = "color:blue")
+        tags$span("Proteomics and metabolomics data", style = "color:blue")
       ),
       p("", tags$b("Details on transformation:"), ""),
       p(
-        "Log2 is the default method for proteomic and 
-                metabolomic data transformation (Efstathiou et al, 2017)"
+        "Log2 is the default method for proteomics and 
+                metabolomics data transformation (Efstathiou et al, 2017). 
+        A small quantity (10^-10) is added to the data before tranformation."
       ),
       p("", tags$b("Normalization:"), ""),
       p(
-        "Median is the the default method for proteomic and
-                metabolomic data normalization"
+        "Median is the the default method for proteomics and
+                metabolomics data normalization. All samples will have the same
+        median."
       )
     )
   ),
@@ -119,7 +125,7 @@ QCNormalizationTab <-
         colnames(session$userData$FlomicsMultiAssay[[paste0(dataset, ".raw")]])
       pickerInput(
         inputId  = session$ns("selectSamples"),
-        label    = .addBSpopify(label = 'Sample list:', 
+        label    = .addBSpopify(label = 'Samples list:', 
                                 content = "Select samples to include in further analyses"),
         choices  = sampleList,
         options  = list(
@@ -145,8 +151,8 @@ QCNormalizationTab <-
     output$paramUI <- renderUI({
       # setting for RNAseq
       paramRNAseq.list <- list(fluidRow(
-        column(12, h5(
-          .addBSpopify(label = 'Low count Filtering (CPM):', 
+        column(12, h4(
+          .addBSpopify(label = 'Low count filtering (CPM)', 
                        content = "Genes with low counts will be removed based on count per million (cpm), accounting for the library size")
         )),
         column(
@@ -154,7 +160,7 @@ QCNormalizationTab <-
           selectInput(
             inputId  = session$ns("Filter_Strategy"),
             label    = .addBSpopify(label = 'Strategy', 
-                                    content = "Choose the strategy to filter genes based on count per million (cpm). keep gene if the NbOfsample_over_cpm >= Strategy."),
+                                    content = "Choose the strategy to filter genes based on count per million (cpm). Keep genes if the NbOfsample_over_cpm >= Strategy."),
             choices  = c(
               "NbConditions" = "NbConditions",
               "NbReplicates" = "NbReplicates"
@@ -166,7 +172,7 @@ QCNormalizationTab <-
           12,
           numericInput(
             inputId = session$ns("FilterSeuil"),
-            label = .addBSpopify(label = 'CPM cut-off:', 
+            label = .addBSpopify(label = 'CPM cut-off', 
                                  content = "Choose the cpm cut-off"),
             value = 1,
             min = 1,
@@ -177,11 +183,11 @@ QCNormalizationTab <-
       ),
       fluidRow(column(
         12,
-        h5("Gene counts normalization:"),
+        h4("Gene counts normalization:"),
         selectInput(
           inputId  = session$ns("selectNormMethod"),
-          label    = .addBSpopify(label = 'method', 
-                                  content = "Normalization method"),
+          label    = .addBSpopify(label = 'Normalization method', 
+                                  content = "Normalization method, cannot be changed for counts data."),
           choices  =  list("TMM (edgeR)" = "TMM"),
           selected = "TMM"
         )
@@ -194,7 +200,7 @@ QCNormalizationTab <-
       paramProtMeta.list <- list(
         radioButtons(
           inputId  = session$ns("dataTransform"),
-          label    = .addBSpopify(label = 'Data transformation:', 
+          label    = .addBSpopify(label = 'Data transformation', 
                                   content = "Choose log2 transformation"),
           choices  = c("log2" = "log2", "none" = "none"),
           selected = "log2"
@@ -203,8 +209,8 @@ QCNormalizationTab <-
         
         radioButtons(
           inputId = session$ns("selectProtMetNormMethod"),
-          label    = .addBSpopify(label = 'Normalization method:', 
-                                  content = "Choose median normalization"),
+          label    = .addBSpopify(label = 'Normalization method', 
+                                  content = "Choose normalization method. In case of doubt, leave the default option (median)."),
           choices  =   c(
             "median" = "median",
             "totalSum" = "totalSum",
@@ -297,53 +303,49 @@ QCNormalizationTab <-
       
       tabPanel.default.list <- list(
         tabPanel(
-          "Distribution (boxplot)",
-          tags$br(),
+          "Distribution (boxplots)",
           tags$br(),
           tags$i(
-            "Expect aligned medians after running the 
-                        pre-processing step. Samples with shifted median may 
-                        be outliers."
+            "It is expected to observe aligned boxplots/medians after running 
+                        the pre-processing steps. Samples with shifted median may 
+                        be outliers. Consider removing them."
           ),
           tags$br(),
           tags$hr(),
-          tags$br(),
           uiOutput(session$ns("boxplotUI"))
         ),
         tabPanel(
           "Distribution (density)",
           tags$br(),
-          tags$br(),
           tags$i(
-            "Expect a gaussian density distribution after running 
-                        the pre-processing step.
+            "It is expected to have a gaussian-like density distribution 
+                      after running  the pre-processing steps.
                       If a second peak is observed at the beginning of the 
                       curve, this could indicate that the low, uninformative
-                      values, have not been correctly filtered. You may 
+                      values, have not been correctly filtered. 
+                      In this case, you may 
                       increase the filtering threshold."
           ),
           tags$br(),
           tags$hr(),
-          tags$br(),
           uiOutput(session$ns("CountDistUI"))
         ),
         tabPanel(
           "Principal component analysis",
           tags$br(),
-          tags$br(),
           tags$i(
-            "You may have a look to the percentage of variability 
-                        associated to each biological factor.
-               To do this, you can change the colour of samples according to 
-               experimental factor's modalities (Levels radio buttons).
+            "To observe the variability associated to each biological factor, 
+               you can change the colour of samples according to 
+               experimental factor's modalities (Levels button).
                It will help you to interpret the PCA axes. You may identify 
-               outliers samples that drives the variability.
-                Biological replicates have to group together with superposed 
-               ellipse. If not, it may indicate batch effect."
+               outliers samples that drives the variability. Consider removing
+               them from the analysis.
+               In the best case scenario, biological replicates have to group 
+               together with superposed ellipses. 
+            If not, it may indicate batch effect."
           ),
           tags$br(),
           tags$hr(),
-          tags$br(),
           uiOutput(session$ns("PCAcoordUI"))
         )
       )
@@ -357,14 +359,12 @@ QCNormalizationTab <-
             tabPanel(
               "Library size",
               tags$br(),
-              tags$br(),
               tags$i(
-                "Expect equal library size after running the
-                                             pre-processing step"
+                "It is expected that the library sizes are equals or at least 
+                close to each other after running the pre-processing steps."
               ),
               tags$br(),
               tags$hr(),
-              tags$br(),
               uiOutput(session$ns("LibSizeUI"))
             )
           ))
@@ -381,7 +381,7 @@ QCNormalizationTab <-
       # Exploratory of Biological and Technical variability
       box(
         width = 14,
-        title = "Exploratory of Biological and Technical variability",
+        title = "Exploratory of Biological and Technical Variability",
         solidHeader = TRUE,
         status = "warning",
         do.call(what = tabsetPanel, args = tabPanel.list)
@@ -512,10 +512,12 @@ QCNormalizationTab <-
     observeEvent(input$run, {
       # check if input$selectSamples is empty
       if (is.null(input$selectSamples)) {
-        showModal(modalDialog(title = "Error message", "please select samples."))
+        showModal(modalDialog(title = "Error message", 
+                              "Please select some samples to run the analysis."))
       }
       validate({
-        need(!is.null(input$selectSamples), message = "please select samples.")
+        need(!is.null(input$selectSamples), 
+             message = "Please select some samples to run the analysis.")
       })
       
       # check completeness for curent dataset

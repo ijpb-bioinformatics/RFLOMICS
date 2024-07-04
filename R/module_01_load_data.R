@@ -59,7 +59,7 @@
         
         # update rea values
         rea.values$datasetList <-
-          metadata(session$userData$FlomicsMultiAssay)$omicList
+            metadata(session$userData$FlomicsMultiAssay)$omicList
         rea.values$loadData    <- TRUE
         local.rea.values$plots <- TRUE
         
@@ -79,8 +79,8 @@
                         title = "Samples",
                         tags$br(),
                         tags$i(
-                            "Overview of the input omic data. Each color 
-                            represents distinct dataset, with their respective 
+                            "Overview of the input omics data. Each color 
+                            represents a distinct dataset, with its respective 
                             samples on the x-axis and the number of features 
                             on the y-axis. It illustrates the samples overlap 
                             across dataset."
@@ -95,7 +95,7 @@
                         tags$i(
                             "Number of Datasets per Condition. Each axis 
                             represents a distinct biological factor, and each 
-                            cell value signifies the count of datasets 
+                            cell value signifies the number of datasets 
                             associated with that specific condition."
                         ),
                         renderPlot(
@@ -157,22 +157,22 @@
             width = 12,
             actionButton(inputId = ns("loadData"), "Load Data", class = "butt"),
             popify(
-            actionButton(
-              inputId = ns("loadEcoseedData"),
-              label = "Load Ecoseed Data",
-              icon = icon("file-import")
-            ),
-              title = "Use example file for ecoseed data",
-              content = paste0("<p> This will load the example data: ",
-                               "the experimental design file and three differents",
-                               "type of omics dataset: ",
-                               "RNAseq, proteomics, and metabolomics. ",
-                               "Experimental factors settings will be defined:",
-                               "the factor name, type, and the reference modality."
-                              
-              ),
-              placement = "top",
-              trigger = "hover"
+                actionButton(
+                    inputId = ns("loadEcoseedData"),
+                    label = "Load Ecoseed Data",
+                    icon = icon("file-import")
+                ),
+                title = "Use example file for ecoseed data",
+                content = paste0("<p> This will load the example data: ",
+                                 "the experimental design file and three different",
+                                 " types of omics dataset: ",
+                                 "transcriptomics (RNASeq counts), proteomics, and metabolomics. ",
+                                 "Experimental factors settings will be automatically defined (",
+                                 "factor name, type, and the reference level)"
+                                 
+                ),
+                placement = "top",
+                trigger = "hover"
             )
         )),
         br(),
@@ -185,7 +185,7 @@
 .modLoadData <- function(input, output, session, rea.values) {
     omicTypes <- c(
         "None" = "none",
-        "Transcriptomics (count)" = "RNAseq",
+        "Transcriptomics (counts)" = "RNAseq",
         "Proteomics" = "proteomics",
         "Metabolomics" = "metabolomics"
     )
@@ -306,11 +306,11 @@
         # check project name
         if (input$projectName == "") {
             showModal(modalDialog(title = "Error message", 
-                                  "project name is required"))
+                                  "Project name is required"))
         }
         validate({
             need(input$projectName != "", 
-                 message = "project name is required")
+                 message = "Project name is required")
         })
         
         # check design input
@@ -428,8 +428,8 @@
             width = 12,
             background = "green",
             .addBSpopify(
-                tags$b("Select and order the modalities of each factor"),
-                "We can remove modalities and consequently the associated samples. Removing all modalities of a factor results in ignoring that factor.</p>"
+                tags$b("Select and order the levels of each factor"),
+                "You can remove levels and their associated samples. Deleting all levels of a factor results in ignoring that factor.</p>"
             ),
             fluidRow(lapply(names(ExpDesign), function(i) {
                 column(
@@ -487,7 +487,7 @@
             # Construct the form to set the reference factor level
             .addBSpopify(
                 tags$b("Set the reference and the type of each factor"),
-                "It is mandatory to have at least one biological factor and one batch factor. Rflomics accepts 2 batch factors and supports up to 3 biological factors. If we have more than 3 biological factors, the remainder must be defined as metadata factors."
+                "It is mandatory to have at least one biological factor and one batch factor. Rflomics accepts 2 batch factors and supports up to 3 biological factors. If you have more than 3 biological factors, the remainder must be defined as metadata factors."
             ),
             fluidRow(lapply(names(ExpDesign), function(i) {
                 column(
@@ -519,7 +519,7 @@
     output$LoadDataUI <- renderUI({
         box(
             width = 12,
-            title = "Load Omic Data",
+            title = "Load Omics Data",
             status = "warning",
             height = NULL,
             solidHeader = TRUE,
@@ -529,7 +529,7 @@
                     # omic type
                     selectInput(
                         inputId = session$ns('omicType1'),
-                        label = .addBSpopify(label = 'Omic type', 
+                        label = .addBSpopify(label = 'Omics type', 
                                              content = "Rflomics supports up to 3 types of omics and up to 10 datasets per omics type."),
                         choices = omicTypes,
                         selected = "none"
@@ -585,13 +585,13 @@
     
     # check number of factor bio
     if (!length(str_subset(dF.Type.dFac, "Bio")) %in% seq_len(3)) {
-        showModal(modalDialog(title = "Error message", "1 to 3 bio factor(s)"))
+        showModal(modalDialog(title = "Error message", "You need 1 to 3 biological factor(s)"))
     }
     
     # check number of factor batch
     if (!length(str_subset(dF.Type.dFac, "batch")) %in% c(1, 2)) {
         showModal(modalDialog(title = "Error message", 
-                              "at least 1 batch factor (max = 2)"))
+                              "You need at least 1 batch factor (max = 2)"))
     }
     
     validate({
@@ -656,7 +656,7 @@
             if (is.null(input[[paste0("data", k)]])) {
                 showModal(
                     modalDialog(title = "Error message",
-                                "omics dataset is required: dataset ", k)
+                                "Omics dataset is required: dataset ", k)
                 )
                 rea.values$validate.status <- 1
             }
@@ -702,17 +702,17 @@
     
     # check omicsData # no reason to check for null?
     if (is.null(omicsData)) {
-        showModal(modalDialog(title = "Error message", "Please load data"))
+        showModal(modalDialog(title = "Error message", "Please load at least one dataset"))
     }
     validate({
-        need(!is.null(omicsData), message = "Please load data")
+        need(!is.null(omicsData), message = "Please load at least one dataset")
     })
     
     if (length(omicsData) == 0) {
-        showModal(modalDialog(title = "Error message", "Please load data"))
+        showModal(modalDialog(title = "Error message", "Please load at least one dataset"))
     }
     validate({
-        need(length(omicsData) > 0, message = "Please load data")
+        need(length(omicsData) > 0, message = "Please load at least one dataset")
     })
     
     return(list(
@@ -759,43 +759,43 @@
 .generateExample <-
     function(what = c("design", "matrix", "annotation"),
              title = FALSE) {
-        switch (what,
-                "design" = {
-                    table <- data.frame(
-                        Sample   = c("indiv1", "indiv2", "indiv3"),
-                        Genotype = c("Mutant1", "Mutant2", "Mutant1"),
-                        Repeat   = c("rep1", "rep1", "rep2")
-                    )
-                    
-                    res <-
-                        c(
-                            paste0("<b>", paste(names(table), collapse = "\t"), 
-                                   "</b>"),
-                            unite(table, "collapse", colnames(table), sep =
-                                      " \t")$collapse
-                        ) |>
-                        paste(collapse = "<br>")
-                    res   <-
-                        paste0("Example:", "<pre>", res, "</pre>")
-                    title.res <- "File contining experimental information and conditions for each sample, in tab-separated values (tsv) format."
-                },
-                "matrix" = {
-                    table <- data.frame(
-                        Genes   = c("gene1", "gene2", "gene3"),
-                        Indiv1 = c(435, 400, 500),
-                        Indiv2   = c(30, 0, 23)
-                    )
-                    
-                    res <-
-                        c(
-                            paste0("<b>", paste(names(table), collapse = "\t"), "</b>"),
-                            unite(table, "collapse", colnames(table), sep =
-                                      "\t")$collapse
-                        ) |>
-                        paste(collapse = "<br>")
-                    res <- paste0("Example:", "<pre>", res, "</pre>")
-                    title.res <- "File containing experimental measurements (read count for transcripts, and abundance for proteins and metabolites)."
-                })
+        switch(what,
+               "design" = {
+                   table <- data.frame(
+                       Sample   = c("indiv1", "indiv2", "indiv3"),
+                       Genotype = c("Mutant1", "Mutant2", "Mutant1"),
+                       Repeat   = c("rep1", "rep1", "rep2")
+                   )
+                   
+                   res <-
+                       c(
+                           paste0("<b>", paste(names(table), collapse = "\t"), 
+                                  "</b>"),
+                           unite(table, "collapse", colnames(table), sep =
+                                     " \t")$collapse
+                       ) |>
+                       paste(collapse = "<br>")
+                   res   <-
+                       paste0("Example:", "<pre>", res, "</pre>")
+                   title.res <- "File containing experimental information and conditions for each samples, in tab-separated values (tsv) format."
+               },
+               "matrix" = {
+                   table <- data.frame(
+                       Genes   = c("gene1", "gene2", "gene3"),
+                       Indiv1 = c(435, 400, 500),
+                       Indiv2   = c(30, 0, 23)
+                   )
+                   
+                   res <-
+                       c(
+                           paste0("<b>", paste(names(table), collapse = "\t"), "</b>"),
+                           unite(table, "collapse", colnames(table), sep =
+                                     "\t")$collapse
+                       ) |>
+                       paste(collapse = "<br>")
+                   res <- paste0("Example:", "<pre>", res, "</pre>")
+                   title.res <- "File containing experimental measurements (read counts for transcripts, abundance for proteins and metabolites)."
+               })
         
         if (title == TRUE)
             return(title.res)

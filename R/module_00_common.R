@@ -11,7 +11,7 @@ UpdateRadioButtonsUI <- function(id) {
   
   tagList(
     radioButtons(inputId  = ns("Firstaxis"),
-                 label    = "Choice of PCs :",
+                 label    = "Choice of PCs:",
                  choices  = list(
                    "PC1" = 1,
                    "PC2" = 2,

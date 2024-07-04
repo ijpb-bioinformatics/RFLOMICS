@@ -11,8 +11,9 @@ coverPageUI <- function(){
       column(8,
              tags$div(style="text-align:justify",
                       p(tags$b("RFLOMICS")," is an R package and Shiny interface. 
-                        It provides a guided, comprehensive, and reproducible analysis within a framework capable of handling multiple omics datasets. 
-                        The interface offers great flexibility, allowing users to seamlessly navigate between result exploration and visualization."),
+                        It provides a guided, comprehensive, and reproducible analysis framework capable of handling multiple omics datasets. 
+                        The interface offers great flexibility, allowing users to navigate between results exploration and visualization and 
+                        between the different steps of the analyses."),
                       p("RFLOMICS code source is available at: https://forgemia.inra.fr/flomics/rflomics"), 
                         # tags$a(href="https://forgemia.inra.fr/flomics/rflomics", "gitLab")),
                       p("RFLOMICS user documentations are available at: https://flomics.pages.mia.inra.fr/rflomics/index.html"), 
@@ -21,8 +22,9 @@ coverPageUI <- function(){
                       
                       h3(tags$span(tags$i("Features"), style = "color:orange")),
                       
-                      p("RFLOMICS supports up to three types of omics (RNA-Seq, proteomics, and metabolomics),
-                        along with multiple datasets per omics type (up to 10). These datasets should be part of the same biological experiment."), 
+                      p("RFLOMICS currently supports three types of omics (transcriptomics (counts), proteomics, and metabolomics),
+                        along with multiple datasets per omics type (up to 10).
+                        These datasets should be part of the same biological experiment."), 
                         # tags$a(href="https://flomics.pages.mia.inra.fr/rflomics/articles/RFLOMICS-input-data.html",
                       # ""),
                       tags$img(src = "/www/workflow.png", width = "600px", height = "400px" ),
@@ -30,7 +32,7 @@ coverPageUI <- function(){
                       tags$hr(),
                       h3(tags$span(tags$i("Specifications"), style = "color:orange")),
                       tags$ul(
-                        tags$li("Performs complete multi-omics project analysis,"),
+                        tags$li("Performs complete single and multi-omics project analysis,"),
                         tags$li("Supports multi-factorial experimental design,"),
                         tags$li("Guarantees the relevance of the used methods,"),
                         tags$li("Reduces the analysis time on the unavoidable steps,"),
