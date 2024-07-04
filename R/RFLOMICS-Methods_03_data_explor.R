@@ -697,10 +697,37 @@ setMethod(f         = "checkExpDesignCompleteness",
 #' # See runDataProcessing for an example that includes getProcessedData
 setMethod(f          = "getProcessedData",
           signature  = "RflomicsSE",
-          definition = function(object)
+          definition = function(object, 
+                                NormTrans = TRUE)
           {
-            object2 <- .checkTransNorm(object, raw = FALSE)
-            pseudo <- assay(object2)
+            
+            dataType <- getOmicsTypes(object)
+            
+            switch(
+              dataType,
+              
+              "RNAseq" = {
+                # Filtering
+                filtering.res <- 
+                  getAnalysis(object, name = "DataProcessing", 
+                              subName = "Filtering")
+                
+                keepedFeatures <- 
+                  setdiff(rownames(object), 
+                          filtering.res$results$filteredFeatures)
+                
+                object <- object[keepedFeatures,]
+              },
+              {
+                # imputation if prot or meta
+              }
+            )
+            
+            # apply normalisation and/or tranformation coef on matrix
+            if(isTRUE(NormTrans))
+              object <- .checkTransNorm(object, raw = FALSE)
+            
+            pseudo <- assay(object)
             
             return(data.frame(pseudo))
           })
@@ -710,7 +737,8 @@ setMethod(f          = "getProcessedData",
 #' @exportMethod getProcessedData
 setMethod(f          = "getProcessedData",
           signature  = "RflomicsMAE",
-          definition = function(object, SE.name){
+          definition = function(object, SE.name,
+                                NormTrans = TRUE){
             
             if (!SE.name %in% getDatasetNames(object)){
               stop("SE name must be part of this list of names: ",

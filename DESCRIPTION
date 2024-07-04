@@ -21,7 +21,7 @@ Depends:
 biocViews: ShinyApps, DifferentialExpression, Metabolomics, Proteomics, Transcriptomics
 License: Artistic-2.0 
 Encoding: UTF-8
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Suggests: 
     testthat,
     BiocStyle,
