@@ -135,19 +135,7 @@ setMethod(
 #' @rdname prepareForIntegration
 #' @aliases prepareForIntegration
 #' @importFrom MOFA2 create_mofa
-#' @examples
-#' MAEtest <- generateExample(annotation = FALSE, coexp = FALSE,
-#'                            integration = FALSE)
-#' mofaObj <- prepareForIntegration(MAEtest,
-#'                 omicsNames = c("protetest", "metatest"),
-#'                 variableLists = rownames(MAEtest),
-#'                 method = "MOFA")
-#'
-#' mixOmicsList <- prepareForIntegration(MAEtest,
-#'                   omicsNames = c("protetest", "metatest"),
-#'                   variableLists = rownames(MAEtest),
-#'                   method = "mixOmics")
-#'
+#' @example inst/examples/prepareForIntegration.R
 setMethod(
     f = "prepareForIntegration",
     signature = "RflomicsMAE",
@@ -335,17 +323,8 @@ setMethod(
 #' @rdname filterFeatures
 #' @aliases filterFeatures
 #' @exportMethod filterFeatures
-#' @examples
-#' MAE <- generateExample(integration = FALSE, annotation = FALSE)
-#'
-#' selOpt = list("RNAtest" = c("cluster.1", "H3"), protetest = c("DE"))
-#' MAE1 <- filterFeatures(MAE, selOpt)
-#'
-#' selOpt2 = list("RNAtest" = c("cluster.2", "H2", "H1"), protetest = c("DE"))
-#' MAE2 <- filterFeatures(MAE, selOpt2,
-#' type = c("RNAtest" = "intersection",
-#' "protetest" = 'union'))
-#'
+#' @example inst/examples/filterFeatures.R
+#' 
 setMethod(
     f = "filterFeatures",
     signature = "RflomicsMAE",
@@ -486,20 +465,7 @@ setMethod(
 #' @rdname runOmicsIntegration
 #' @aliases runOmicsIntegration
 #' @exportMethod runOmicsIntegration
-#' @examples
-#' # Generate MAE for test:
-#' MAEtest <- generateExample(annotation = FALSE, coexp = FALSE,
-#'                            integration = FALSE)
-#'                            
-#' # Prepare mofa object:
-#' mofaObj <- prepareForIntegration(MAEtest,
-#'                 omicsNames = c("protetest", "metatest"),
-#'                 variableLists = rownames(MAEtest),
-#'                 method = "MOFA")
-#'
-#' # Perform integration:
-#' MAEtest <- runOmicsIntegration(MAEtest, mofaObj, method = "MOFA")
-#' MOFA2::plot_variance_explained(getMOFA(MAEtest))
+#' @example inst/examples/runOmicsIntegration.R
 #'
 setMethod(
     f = "runOmicsIntegration",
@@ -634,21 +600,8 @@ setMethod(
 #'
 #' @exportMethod getMixOmics
 #' @aliases getMixOmics
-#' @rdname methods-for-integration
-#' @examples
-#'
-#' MAEtest <- generateExample(annotation = FALSE, coexp = FALSE)
-#'
-#' # Access mixOmics results:
-#' getMixOmics(MAEtest, response = "temperature")
-#' getMixOmicsSettings(MAEtest)
-#' mixOmics::plotIndiv(getMixOmics(MAEtest, response = "imbibition"))
-#'
-#' # Access MOFA2 results:
-#' getMOFA(MAEtest)
-#' getMOFASettings(MAEtest)
-#' MOFA2::plot_variance_explained(getMOFA(MAEtest))
-#'
+#' @rdname runOmicsIntegration
+
 setMethod(
     f = "getMixOmics",
     signature = "RflomicsMAE",
@@ -673,8 +626,7 @@ setMethod(
     }
 )
 
-
-#' @rdname methods-for-integration
+#' @rdname runOmicsIntegration
 #' @exportMethod getMOFA
 #' @aliases getMOFA
 setMethod(
@@ -692,7 +644,7 @@ setMethod(
 # ---- Get integration setting ----
 
 #' @exportMethod getMOFASettings
-#' @rdname methods-for-integration
+#' @rdname runOmicsIntegration
 #' @aliases getMOFASettings
 setMethod(
     f = "getMOFASettings",
@@ -703,7 +655,7 @@ setMethod(
 )
 
 #' @exportMethod getMixOmicsSettings
-#' @rdname methods-for-integration
+#' @rdname runOmicsIntegration
 #' @aliases getMixOmicsSettings
 setMethod(
     f = "getMixOmicsSettings",
@@ -715,7 +667,7 @@ setMethod(
 
 # ---- Set Integration Results ----
 
-#' @rdname methods-for-integration
+#' @rdname runOmicsIntegration
 #' @aliases setMOFA
 #' @param results The MOFA or mixOmics results to set in the object. 
 #' If null, set to NULL.
@@ -729,7 +681,7 @@ setMethod(
     }
 )
 
-#' @rdname methods-for-integration
+#' @rdname runOmicsIntegration
 #' @exportMethod setMixOmics
 #' @aliases setMixOmics
 setMethod(
@@ -754,7 +706,7 @@ setMethod(
 #' @return sumMixOmics: A data frame or a list of dataframe
 #' (if selectedResponse is NULL) presenting the summary of mixOmics analyses.
 #'
-#' @rdname methods-for-integration
+#' @rdname runOmicsIntegration
 #' @aliases sumMixOmics
 #' @exportMethod sumMixOmics
 
