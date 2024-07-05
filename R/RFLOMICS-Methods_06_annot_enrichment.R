@@ -211,7 +211,7 @@ setMethod(
           }
         )
         
-        # run clusterPorfileR
+        # run clusterProfileR
         catchRes <- .tryCatch_rflomics(
           do.call(getFromNamespace(func_to_use, ns = "clusterProfiler"),
                   list_args))
@@ -643,6 +643,8 @@ setMethod(
                         nClust = NULL,
                         ...) {
     
+    from <- .determineFromEnrich(from)
+      
     allData <- switch(
       toupper(from),
       "DIFFEXPENRICHANAL" = {
