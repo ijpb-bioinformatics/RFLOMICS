@@ -22,7 +22,7 @@ isResults <- dataset.SE@metadata$CoExpAnal[["results"]]
 * **Methods:**
 
 The co-expression analysis was carried out using 
-**coseq R package** (version `r RFLOMICS:::.getPackageInfo(rflomics.MAE, "coseq")`) on 
+**coseq R package** (version `r RFLOMICS:::.getPackageInfo(rflomics.MAE, "coseq")`) [@coseq2018] on 
 **`r length(getDEList(dataset.SE, getCoexpSettings(dataset.SE)$gene.list.names, getCoexpSettings(dataset.SE)$merge.type))`
 `r variableName`** from
 the
@@ -93,7 +93,7 @@ Likelihood (ICL) criterion was
 #### Cluster profile
 
 <p style="color:grey">
-*Overview of cluster's expression profiles. Boxplot are colored acording to  biological  factors*.
+*Overview of cluster's expression profiles. Boxplots are colored according to  biological conditions*.
 </p>
 
 ```{r coseq-boxplots,  eval=isResults}
@@ -105,7 +105,11 @@ plot.coseq.res$boxplots + theme(axis.text.x = element_text(angle = 90, hjust = 1
 
 `r if(length(getCoexpSettings(dataset.SE)$gene.list.names) == 1 || getCoexpSettings(dataset.SE)$merge.type != "union") {"\\begin{comment}"}`
 
-#### Cluster composition:
+#### Cluster composition
+
+<p style="color:grey">
+*Cluster's composition by contrasts*.
+</p>
 
 ```{r coseq-clusterComposition,  eval=isResults}
 par(mar = c(4, 4, .5, .1))
@@ -117,7 +121,7 @@ plotCoseqContrasts(dataset.SE)
 #### ICL (QC)
 
 <p style="color:grey">
-*Integrated Completed Likelihood (ICL) plotted versus number of clusters.The ICL is the criterion used to select the number of clusters. The number of clusters (K) that minmizes the ICL is the best number of clusters.*
+*Integrated Completed Likelihood (ICL) plotted versus number of clusters. The ICL is the criterion used to select the number of clusters. The number of clusters (K) that minimizes the ICL is the best number of clusters.*
 </p>
 
 ```{r coseq-icl,  eval=isResults}

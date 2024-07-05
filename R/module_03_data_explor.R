@@ -336,7 +336,7 @@ QCNormalizationTab <-
           tags$i(
             "To observe the variability associated to each biological factor, 
                you can change the colour of samples according to 
-               experimental factor's modalities (Levels button).
+               experimental factor (Factor button).
                It will help you to interpret the PCA axes. You may identify 
                outliers samples that drives the variability. Consider removing
                them from the analysis.
@@ -461,7 +461,7 @@ QCNormalizationTab <-
           width = 6,
           radioButtons(
             inputId = session$ns("PCA.factor.condition"),
-            label = 'Levels:',
+            label = 'Factors:',
             choices = c("groups", choices),
             selected = "groups"
           )

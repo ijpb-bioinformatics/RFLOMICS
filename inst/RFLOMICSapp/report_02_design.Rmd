@@ -26,13 +26,13 @@ datatable(getDesignMat(rflomics.MAE)[c("samples", bioFact, batchFact, metaFact)]
 
 * **Dataset(s) overview:**
 
-```{r data.over.view, fig.show = "hold", out.width = "90%", fig.cap=paste0("<p style=\"color:grey\">","*Overview of the input omic data. Each color represents a distinct dataset, with their respective samples on the x-axis and the number of features on the y-axis. It illustrates the samples overlap across dataset.*", "</p>"), fig.align='left'}
+```{r data.over.view, fig.show = "hold", out.width = "90%", fig.cap=paste0("<p style=\"color:grey\">","*Overview of the input omics data. Each color represents a distinct dataset, with their respective samples on the x-axis and the number of features on the y-axis. It illustrates the samples overlap across dataset.*", "</p>"), fig.align='left'}
 
 raw.rflomics.MAE <- subRflomicsMAE(rflomics.MAE, omicNames = paste0(getDatasetNames(rflomics.MAE), ".raw"))
 names(raw.rflomics.MAE) <- getDatasetNames(rflomics.MAE)
 plotDataOverview(object = raw.rflomics.MAE)
 #plotConditionsOverview(object = raw.rflomics.MAE)
-#fig.left: Overview of the input omic data. Each color represents a distinct dataset, with their respective samples on the x-axis and the number of features on the y-axis. It illustrates the samples overlap across dataset. fig.right: Number of Datasets per Condition. Each axis represents a distinct biological factor, and each cell value signifies the count of datasets associated with that specific condition.
+#fig.left: Overview of the input omics data. Each color represents a distinct dataset, with their respective samples on the x-axis and the number of features on the y-axis. It illustrates the samples overlap across dataset. fig.right: Number of Datasets per Condition. Each axis represents a distinct biological factor, and each cell value signifies the count of datasets associated with that specific condition.
 ```
 
 <br>

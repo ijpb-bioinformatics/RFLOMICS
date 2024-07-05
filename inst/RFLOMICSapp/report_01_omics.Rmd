@@ -74,11 +74,12 @@ for (analysisType in names(analyzedDatasetNames)){
 <!-- Data pre-processing -->
 # 3 - Data pre-processing
 
-This pre-processing step aims to reduce noise and enhance statistical power. It also aims to reduce the technical variability between samples by normalizing them, and stabilizing the variance through data transformation, necessary to meet the assumptions of statistical models. The methods are adapted to the type of omics.
+Pre-processing step aims at filtering out features or outlier samples. It allows to normalize and/or transform raw data if necessary. The available methods are adapted to the type of omics.
 
-Additionally, this step includes a quality check to identify batch effects or outlier samples that may need to be removed. 
+Quality control plots are generated before and after data pre-processing to inspect the effect of the applied methods and 
+parameters on the data distribution, technical and biological variability.
 
-The pre-processing strategies are adapted from @Lambert2020ta for RNA-seq data and @efstathiou2017a for transcriptomics and proteomics data.
+The implemented pre-processing strategies are adapted from @Lambert2020ta for RNA-seq data and @efstathiou2017a for metabolomics and proteomics data.
 
 `r if(!"DataProcessing" %in% analysisTypes) {"<p style=\"color:orange\">Data pre-processing has not been performed on this data.</p>"}`
 
@@ -103,7 +104,7 @@ asis_output(out)
 <!-- differential expression analysis -->
 # 4 - Differential expression analysis
 
-The goal of Differential Expression Analysis is to identify omics features (transcripts, proteins or metabolites) that exhibit significant differences in expression levels across various experimental conditions or groups. allowing researchers to understand the biological mechanisms underlying those differences.
+The goal of Differential Expression Analysis is to identify omics features (transcripts, proteins or metabolites) that exhibit significant differences in expression levels across various experimental conditions or groups, allowing researchers to understand the biological mechanisms underlying those differences.
 
 The strategy for differential expression analysis was adapted from @Lambert2020ta for RNA-seq data and from @efstathiou2017a for transcriptomics and proteomics data.
 
@@ -159,7 +160,7 @@ asis_output(out)
 <!-- co-expression analysis -->
 # 5 - Co-expression analysis
 
-Co-expression analysis enables the identification of gene sets with correlated expression levels, suggesting similar regulation or interactions in common biological pathways. For this step, we have adopted an approach based on mixture models. This method is implemented in the **coseq** R package (ref).
+Co-expression analysis enables the identification of omics features (transcripts, proteins or metabolites) sets with correlated expression levels, suggesting similar regulation or interactions in common biological pathways. For this step, we adopted an approach based on gaussian mixture models. This method is implemented in the **coseq** R package [@coseq2018].
 
 The co-expression analysis strategy was adapted from @Lambert2020ta and tailored under the guidance of the coseq developer for metabolomic and proteomic data.
 
@@ -202,13 +203,9 @@ asis_output(out)
 # 6 - Enrichment analysis
 
 Enrichment analysis, particularly through methods like 
-**Overrepresentation Analysis (ORA)** (Boyle et al. 2004) such as 
-those used in **clusterProfiler R-package** (@wu-a2021a), is crucial 
-for identifying biological significance in omics data. ORA focuses 
-on feature sets—groups of features that share common biological functions or 
-pathways—allowing researchers to determine if these functions or pathways are 
-statistically enriched among a list of features of interest. 
-This approach facilitates the interpretation of complex genomic data.
+**Overrepresentation Analysis (ORA)** such as those used in **clusterProfiler R-package** [@wu-a2021a], is crucial 
+for identifying biological significance in omics data. ORA focuses on feature sets—groups of features that share common biological functions or pathways—allowing researchers to determine if these functions or pathways are 
+statistically enriched among a list of features of interest. This approach facilitates the interpretation of complex genomic data.
 
 `r if(!"DiffExpEnrichAnal" %in% analysisTypes) {"<p style=\"color:orange\">Enrichment analysis has not been performed on this data.</p>"}`
 

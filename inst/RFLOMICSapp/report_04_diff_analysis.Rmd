@@ -20,19 +20,16 @@ variableName   <- RFLOMICS:::.omicsDic(dataset.SE)[["variableName"]]
 
 `r if(omicsType != "RNAseq") {"\\begin{comment}"}`
 
-The **edgeR R-package** (version `r RFLOMICS:::.getPackageInfo(rflomics.MAE, "edgeR")`) (@robinson2010a) was used to performed the analysis. 
-First, the parameters of the generalized linear model were estimate thanks to the 
-estimateGLMCommonDisp(), estimateGLMTrendedDisp(), estimateGLMTagwiseDisp() and glmFit() functions.
-Then, the likelihood ratio test(s) (LRT) were performed for each contrast thanks to the glmLRT() 
-function.
+The **edgeR R-package** (version `r RFLOMICS:::.getPackageInfo(rflomics.MAE, "edgeR")`) [@robinson2010a] was used to perform the analysis. First, the parameters of the generalized linear model were estimate thanks to the <span style="color:DarkOrchid">estimateGLMCommonDisp</span>, <span style="color:DarkOrchid">estimateGLMTrendedDisp</span>, <span style="color:DarkOrchid">estimateGLMTagwiseDisp</span> and <span style="color:DarkOrchid">glmFit</span> functions. Then, likelihood ratio tests (LRT) were performed for each contrast thanks to the <span style="color:DarkOrchid">glmLRT</span> function to obtain statistics.
 
 `r if(omicsType != "RNAseq") {"\\end{comment}"}`
 
 `r if(omicsType == "RNAseq") {"\\begin{comment}"}`
 
-The **limma R-package** (version `r RFLOMICS:::.getPackageInfo(rflomics.MAE, "limma")`) (ref) was used to performed the analysis.
-First, the parameters of the linear model were estimated thanks to lmFit() function.
-In a second time, contrasts.fit was used and empirical bayes statistics were obtained thanks to the eBayes() functions.
+The **limma R-package** (version `r RFLOMICS:::.getPackageInfo(rflomics.MAE, "limma")`) [@limma2015a] was used to performed the analysis.
+First, the parameters of the linear model were estimated thanks to <span style="color:DarkOrchid">lmFit</span> function.
+In a second time, <span style="color:DarkOrchid">contrasts.fit</span> function was used to compute coefficients for each contrast  and 
+statistics were obtained thanks to the <span style="color:DarkOrchid">eBayes</span> function.
 
 `r if(omicsType == "RNAseq") {"\\end{comment}"}`
 
@@ -65,7 +62,7 @@ if(dim(DEF_mat)[2] > 2){
 ```
 
 #### Stat summary
-```{r , echo=FALSE, results="asis", fig.cap=paste0("<p style=\"color:grey\">","*tab: ???.*", "</p>")}
+```{r , echo=FALSE, results="asis", fig.cap=paste0("<p style=\"color:grey\">","*tab: Table summarising the number of DE features by contrast.*", "</p>")}
 
 tmpRes <- dataset.SE@metadata[["DiffExpAnal"]]
 DE <- vector()
