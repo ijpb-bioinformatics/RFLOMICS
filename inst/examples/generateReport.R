@@ -1,8 +1,9 @@
+library(RFLOMICS)
 # load ecoseed data
 data(ecoseed)
 
 # create rflomicsMAE object with ecoseed data
-MAE <- RFLOMICS::createRflomicsMAE(
+MAE <- createRflomicsMAE(
   projectName = "Tests",
   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
   omicsNames  = c("RNAtest", "metatest", "protetest"),
@@ -10,16 +11,16 @@ MAE <- RFLOMICS::createRflomicsMAE(
   ExpDesign   = ecoseed$design,
   factorRef   = ecoseed$factorRef)
 
-formulae <- RFLOMICS::generateModelFormulae(MAE)
-MAE <- RFLOMICS::setModelFormula(MAE, modelFormula = formulae[[1]])
+formulae <- generateModelFormulae(MAE)
+MAE <- setModelFormula(MAE, modelFormula = formulae[[1]])
 
 selectedContrasts <- 
-  RFLOMICS::generateExpressionContrast(MAE, contrastType="simple")
+  generateExpressionContrast(MAE, contrastType="simple")
 
 MAE <- setSelectedContrasts(MAE, contrastList = selectedContrasts)
 
 ## data processing
-MAE <- RFLOMICS::runDataProcessing(
+MAE <- runDataProcessing(
   object = MAE, 
   SE.name = "protetest", 
   samples=NULL, 
@@ -27,7 +28,7 @@ MAE <- RFLOMICS::runDataProcessing(
   transformMethod="none")
 
 ## diff analysis
-MAE <- RFLOMICS::runDiffAnalysis(
+MAE <- runDiffAnalysis(
   object = MAE, 
   SE.name = "protetest", 
   contrastList = 
@@ -38,7 +39,7 @@ MAE <- RFLOMICS::runDiffAnalysis(
   logFC.cutoff = 0)
 
 ## Enrichment
-MAE <- RFLOMICS::runAnnotationEnrichment(
+MAE <- runAnnotationEnrichment(
   object = MAE, 
   SE.name = "protetest", 
   database = "GO", 
