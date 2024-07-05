@@ -46,6 +46,9 @@ MAE <- filterDiffAnalysis(MAE, SE.name = "protetest",
 ## Get DE matrix from DiffExpAnalysis
 head(getDEMatrix(MAE[["protetest"]]))
 
+## Get union or intersection from list of contrasts
+getDEList(MAE[["protetest"]], contrasts = "(temperatureMedium - temperatureLow) in mean") 
+
 ## Get diff setting
 getDiffSettings(MAE[["protetest"]])
 
