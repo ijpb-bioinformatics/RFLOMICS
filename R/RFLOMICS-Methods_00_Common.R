@@ -81,11 +81,9 @@ setMethod(f = "resetRflomicsMAE",
             return(object)
           })
 
-
-
 # ---- getAnalyzedDatasetNames ----
 #' @name getAnalyzedDatasetNames
-#' @rdname Rflomics-accessors
+#' @rdname generateReport
 #' @description
 #' \itemize{
 #'    \item getAnalyzedDatasetNames: return a list of performed analysis names.}
@@ -188,7 +186,7 @@ setMethod(
 ## ---- get element from metadata slot from rflomicsSE/MAE ----
 
 #' @name getAnalysis
-#' @rdname Rflomics-accessors
+#' @rdname generateReport
 #' @description
 #' \itemize{
 #'    \item getAnalysis: return list of results from a specific analysis.}
@@ -217,7 +215,7 @@ setMethod(
   })
 
 #' @name getAnalysis
-#' @rdname Rflomics-accessors
+#' @rdname generateReport
 #' @exportMethod getAnalysis
 setMethod(
   f = "getAnalysis",
@@ -236,10 +234,12 @@ setMethod(
 
 # ---- generateReport ----
 #' @title Generate RFLOMICS rmarkdown report
+#' @name generateReport
 #' @description
 #' This function is used to generate a html report from a
 #' \link{RflomicsMAE} object or archive with results.
-#' @param object a \link{RflomicsMAE} produced by RFLOMICS.
+#' @param object a object of \link{RflomicsMAE} class or 
+#' \link{RflomicsMAE} class.
 #' @param fileName Name of the html report (default: date()_projectName.html).
 #' @param archiveName name of archive with all analysis results 
 #' (default: date()_projectName.tar.gz).

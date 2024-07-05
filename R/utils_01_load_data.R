@@ -17,15 +17,15 @@
 ## ---- createRflomicsMAE: create RflomicsMAE object from loaded data ----
 #' @title createRflomicsMAE
 #' @description This function is a constructor for the class \link{RflomicsMAE}.
-#' It initializes an object of class \link{RflomicsMAE} from a list of omics datasets
-#' imported by \link{readOmicsData}, a vector of dataset names, a vector of omics types, and 
-#' an experimental design
-#' 
+#' It initializes an object of class \link{RflomicsMAE} from a list of omics 
+#' datasets imported by \link{readOmicsData}, a vector of dataset names, 
+#' a vector of omics types, and an experimental design.
 #' @param projectName Project name
 #' @param omicsData list of omics dataset.
 #' @param omicsNames vector of dataset names.
 #' @param omicsTypes vector of dataset types: "RNAseq", "metabolomics", "proteomics"
-#' @param ExpDesign a data.frame imported by \link{readExpDesign} which describes the experimental design.
+#' @param ExpDesign a data.frame imported by \link{readExpDesign} which 
+#' describes the experimental design.
 #' @param factorRef a data.frame describing the experimental factors.
 #' \itemize{
 #' \item{factorName:}{factor names}
@@ -158,9 +158,12 @@ createRflomicsMAE <- function(projectName=NULL, omicsData=NULL,
   ExpDesign   <- mutate(ExpDesign, samples=row.names(ExpDesign)) |>
     unite("groups", all_of(factorBio), sep = "_", remove = FALSE)
   
-  order_levels      <- with(ExpDesign, do.call(order, ExpDesign[c(factorBio, factorBatch)]))
-  ExpDesign$samples <- factor(ExpDesign$samples, levels = unique(ExpDesign$samples[order_levels]))
-  ExpDesign$groups  <- factor(ExpDesign$groups,  levels = unique(ExpDesign$groups[order_levels]))
+  order_levels <- 
+    with(ExpDesign, do.call(order, ExpDesign[c(factorBio, factorBatch)]))
+  ExpDesign$samples <- 
+    factor(ExpDesign$samples, levels = unique(ExpDesign$samples[order_levels]))
+  ExpDesign$groups <- 
+    factor(ExpDesign$groups,  levels = unique(ExpDesign$groups[order_levels]))
   
   ## create SE object of each dataset
   SummarizedExperimentList <- list()

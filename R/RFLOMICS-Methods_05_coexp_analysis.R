@@ -1,7 +1,16 @@
+### ============================================================================
+### [05_co-exp_analysis] accessors and methods for RflomicsMAE and RflomicsSE classes
+### ----------------------------------------------------------------------------
+# D. Charif, 
+# N. Bessoltane, 
+# A. Hulot
 
-################################### CO-EXPRESSION #############################
+##==== STAT METHOD ====
+
+###==== METHOD runCoExpressions ====
 
 #' @title runCoExpression
+#' @name runCoExpression
 #' @description This method performs a co-expression/co-abundance analysis of 
 #' omic-data.
 #' @details For now, only the coseq function of the coseq package is used.
@@ -31,9 +40,10 @@
 #' \item{\code{plots:} }{The plots of \code{coseq} results}
 #' \item{\code{stats:} }{A tibble summarising failed jobs: reason, propoif any}
 #' }
-#' @param object An object of class \link{RflomicsSE}
-#' @param SE.name the name of the data to fetch in the object if the object 
-#' is a RflomicsMAE
+#' @param object An object of class \link{RflomicsSE} or 
+#' class \link{RflomicsMAE}
+#' @param SE.name SE.name the name of the dataset if the input object 
+#' is a \link{RflomicsMAE}
 #' @param contrastNames names of the contrasts from which the DE entities 
 #' have to be taken. Can be NULL, in that case every contrasts from the differential 
 #' analysis are taken into consideration.
@@ -68,56 +78,21 @@
 #' to co-expression analysis through differential analysis based on contrasts 
 #' inside GLM models. Plant Methods 16, 68 (2020).
 #' @exportMethod runCoExpression
-#' @seealso \code{\link[coseq]{coseq}}
 #' @rdname runCoExpression
-#' @aliases runCoExpression
+#' @section Accessors: 
+#' A set of getters and setters generic functions to access and 
+#' modify objects of the slot metadata of a \link{RflomicsMAE} object or 
+#' a \link{RflomicsMAE} object.
+#' @section Plots: 
+#' A collection of functions for plotting results from omic analysis steps.
 #' @importFrom dplyr filter
-#' @examples
-#' 
-#' # Set the data path
-#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
-#' 
-#' # Load the experimental design
-#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
-#' 
-#' # Set factor name, levels, level of reference and type
-#' facRef <- data.frame(factorName   = c("Repeat", "temperature" , "imbibition"), 
-#'                      factorRef = c("rep1", "Low", "DS"), 
-#'                      factorType = c("batch",  "Bio", "Bio"), 
-#'                      factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
-#' 
-#' # Load the omics data
-#' omicsData <- list( 
-#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
-#'  
-#' # Instantiate an object of class RflomicsMAE 
-#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
-#'                          omicsNames  = c("protetest"), omicsTypes  = c("proteomics"),
-#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
-#' names(MAE) <- c("protetest")
-#' 
-#' # Set the statistical model and contrasts to test
-#' formulae <- generateModelFormulae(MAE)
-#' MAE <- setModelFormula(MAE, formulae[[1]])  
-#' 
-#' # Get the contrasts List and choose the first 3 contrasts of type averaged
-#' contrastList <- getPossibleContrasts(MAE, 
-#' formula = formulae[[1]], 
-#'                                      typeContrast = "averaged", 
-#'                                      returnTable = TRUE)[c(1, 2, 3),]
-#' 
-#' # Run the data preprocessing and perform the differential analysis
-#'  MAE <- MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
-#'  runNormalization(SE.name = "protetest", normMethod = "median")    |> 
-#'  runDiffAnalysis(SE.name = "protetest",  
-#'                  method = "limmalmFit", contrastList = contrastList) |> 
-#'  runCoExpression(SE.name = "protetest", K = 2:5, replicates = 5, 
-#'                  contrastNames = contrastList$contrastName, merge = "union")
-#'  
-#'  getCoexpSettings(MAE[["protetest"]])
-#'  
-#'  clusters <- getCoseqClusters(MAE[["protetest"]])
-#'  
+#' @seealso \code{\link[coseq]{coseq}}
+#' @seealso \code{\link{createRflomicsMAE}}
+#' @seealso \code{\link{generateModelFormulae}}
+#' @seealso \code{\link{generateExpressionContrast}}
+#' @seealso \code{\link{runDataProcessing}}
+#' @seealso \code{\link{runDiffAnalysis}}
+#' @example inst/examples/runCoExpression.R
 setMethod(f = "runCoExpression",
           signature = "RflomicsSE",
           definition = function(object,
@@ -283,8 +258,7 @@ setMethod(f = "runCoExpression",
           })
 
 #' @rdname runCoExpression
-#' @aliases runCoExpression
-#' @title runCoExpression
+#' @name runCoExpression
 #' @exportMethod runCoExpression
 setMethod(f          = "runCoExpression",
           signature  = "RflomicsMAE",
@@ -320,57 +294,93 @@ setMethod(f          = "runCoExpression",
             
           })
 
-#' @title plotCoExpression
-#' 
-#' @param object An object of class \link{RflomicsSE}
-#' @return list plot of ICL, logLike and coseq object with min ICL
+
+
+##==== GRAPHICAL METHODS ====
+
+### ---- getCoExpAnalysesSummary ----
+
+#' @param omicNames the name of the experiment to summarize.
+#' @param ... Not in use at the moment
+#' @importFrom dplyr filter mutate rename full_join group_by
+#' @importFrom ggplot2 ggplot aes geom_line geom_point theme element_text 
+#' facet_grid labs vars
+#' @section Plots: 
+#' \itemize{
+#'    \item getCoExpAnalysesSummary: ...
+#' }
+#' @exportMethod getCoExpAnalysesSummary
+#' @rdname runCoExpression
+#' @name getCoExpAnalysesSummary
+setMethod(
+  f = "getCoExpAnalysesSummary",
+  signature = "RflomicsMAE",
+  definition = function(object, 
+                        omicNames = NULL,
+                        ...) {
+    mean.y_profiles.list <- list()
+    
+    if (is.null(omicNames))
+      omicNames <- getAnalyzedDatasetNames(object, "CoExpAnal")
+    
+    for (data in omicNames) {
+      
+      Groups     <- getDesignMat(object[[data]])
+      cluster.nb <-
+        object[[data]]@metadata$CoExpAnal$cluster.nb
+      coseq.res  <-
+        object[[data]]@metadata$CoExpAnal[["coseqResults"]]
+      
+      mean.y_profiles.list[[data]] <-
+        lapply(seq_len(cluster.nb), function(cluster) {
+          assays.data <- filter(as.data.frame(coseq.res@assays@data[[1]]),
+                                get(paste0("Cluster_", cluster)) > 0.8)
+          
+          y_profiles.gg <-
+            coseq.res@y_profiles[rownames(assays.data), ] %>%
+            data.frame() %>%
+            mutate(observations = rownames(.)) %>%
+            melt(id = "observations", value.name = "y_profiles") %>%
+            rename(samples = variable) %>%
+            full_join(Groups , by = "samples")
+          
+          y_profiles.gg %>% group_by(groups) %>%
+            summarise(mean = mean(y_profiles)) %>%
+            mutate(cluster = paste0("cluster.", cluster))
+          
+        }) %>% reduce(rbind) %>% mutate(dataset = data)
+      
+    } %>% reduce(rbind)
+    
+    mean.y_profiles.gg <- reduce(mean.y_profiles.list, rbind)
+    
+    if (nrow(mean.y_profiles.gg) == 0)
+      return(NULL)
+    
+    p <- ggplot(data = mean.y_profiles.gg, aes(x = groups, y = mean, group = 1)) +
+      geom_line(aes(color = as.factor(cluster))) + 
+      geom_point(aes(color = as.factor(cluster))) +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1),
+            legend.position = "none") +
+      facet_grid(cols = vars(cluster), rows = vars(dataset)) +
+      labs(x = "Conditions", y = "Expression profiles mean")
+    
+    return(p)
+    
+  }
+)
+
+### ---- plotCoExpression ----
+#' @name plotCoExpression
+#' @section Plots: 
+#' \itemize{
+#'    \item plotCoExpression: 
+#'    list plot of ICL, logLike and coseq object with min ICL
+#' }
 #' @importFrom coseq plot
 #' @importFrom ggplot2 ggplot aes geom_text geom_boxplot ylim xlab
 #' @exportMethod plotCoExpression
-#' @rdname plotCoExpression
-#' @aliases plotCoExpression
-#' @examples
-#' # Set the data path
-#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
-#' 
-#' # Load the experimental design
-#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
-#' 
-#' # Set factor name, levels, level of reference and type
-#' facRef <- data.frame(factorName   = c("Repeat", "temperature" , "imbibition"), 
-#'                      factorRef = c("rep1", "Low", "DS"), 
-#'                      factorType = c("batch",  "Bio", "Bio"), 
-#'                      factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
-#' 
-#' # Load the omics data
-#' omicsData <- list( 
-#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
-#'  
-#' # Instantiate an object of class RflomicsMAE 
-#' MAE <- createRflomicsMAE(projectName = "Tests", omicsData   = omicsData,
-#'                          omicsNames  = c("protetest"), omicsTypes  = c("proteomics"),
-#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
-#' names(MAE) <- c("protetest")
-#' 
-#' # Set the statistical model and contrasts to test
-#' formulae <- generateModelFormulae(MAE)
-#' MAE <- setModelFormula(MAE, formulae[[1]])  
-#' 
-#' # Get the contrasts List and choose the first 3 contrasts of type averaged
-#' contrastList <- getPossibleContrasts(MAE, formula = formulae[[1]], 
-#'                                     typeContrast = "averaged", 
-#'                                     returnTable = TRUE)[c(1, 2, 3),]
-#' 
-#' # Run the data preprocessing and perform the differential analysis
-#'  MAE <- MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
-#'  runNormalization(SE.name = "protetest", normMethod = "median")    |> 
-#'  runDiffAnalysis(SE.name = "protetest",  method = "limmalmFit", contrastList = contrastList) |> 
-#'  runCoExpression(SE.name = "protetest", K = 2:10, replicates = 5, 
-#'                  contrastNames = contrastList$contrastName, merge = "union") 
-#'  
-#'  plots.coexp <- plotCoExpression(MAE[["protetest"]])
-#'  plots.coexp[[6]]
-#'  
+#' @rdname runCoExpression
 setMethod(f="plotCoExpression",
           signature="RflomicsSE",
           definition <- function(object){
@@ -428,12 +438,8 @@ setMethod(f="plotCoExpression",
             return(c(plot.coseq.res, list("ICL" = ICL.p, "logLike" = logLike.p)))
           })
 
-#' @rdname plotCoExpression
-#' @aliases plotCoExpression
-#' @title plotCoExpression
-#' @param SE.name The name of the RflomicsSE to access.
+#' @rdname runCoExpression
 #' @exportMethod plotCoExpression
-#' @return A list of plots produced by coseq plot function.
 setMethod(f          = "plotCoExpression",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name){
@@ -441,67 +447,23 @@ setMethod(f          = "plotCoExpression",
             plotCoExpression(object[[SE.name]])
           })
 
+### ---- plotCoExpressionProfile ----
 
-
-#' @title plotCoExpressionProfile
-#'
-#' @param object An object of class \link{RflomicsSE}
-#' @param SE.name the name of the data to fetch in the object if the object 
-#' is a RflomicsMAE
 #' @param cluster cluster number
 #' @param condition Default is group. 
 #' @param features Default is NULL.
-#' @return a ggplot graph
+#' @section Plots: 
+#' \itemize{
+#'    \item plotCoExpressionProfile: 
+#'    ...
+#' }
 #' @exportMethod plotCoExpressionProfile
 #' @importFrom dplyr filter mutate rename full_join arrange group_by summarise
 #' @importFrom reshape2 melt 
 #' @importFrom ggplot2 ggplot aes geom_boxplot aes_string 
 #' theme element_text xlab ylab ggtitle geom_point geom_line
-#' @rdname plotCoExpressionProfile
-#' @aliases plotCoExpressionProfile
-#' @examples
-#' 
-#' # Set the data path
-#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
-#' 
-#' # Load the experimental design
-#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
-#' 
-#' # Set factor name, levels, level of reference and type
-#' facRef <- data.frame(factorName   = c("Repeat", "temperature" , "imbibition"), 
-#'                      factorRef = c("rep1", "Low", "DS"), 
-#'                      factorType = c("batch",  "Bio", "Bio"), 
-#'                      factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
-#' 
-#' # Load the omics data
-#' omicsData <- list( 
-#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
-#'  
-#' # Instantiate an object of class RflomicsMAE 
-#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
-#'                          omicsNames  = c("protetest"), omicsTypes  = c("proteomics"),
-#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
-#' names(MAE) <- c("protetest")
-#' 
-#' # Set the statistical model and contrasts to test
-#' formulae <- generateModelFormulae(MAE)
-#' MAE <- setModelFormula(MAE, formulae[[1]])  
-#' 
-#' # Get the contrasts List and choose the first 3 contrasts of type averaged
-#' contrastList <- getPossibleContrasts(MAE, formula = formulae[[1]],
-#'                                      typeContrast = "averaged", 
-#'                                      returnTable = TRUE)[c(1, 2, 3),]
-#' 
-#' # Run the data preprocessing and perform the differential analysis
-#'  MAE <- MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
-#'  runNormalization(SE.name = "protetest", normMethod = "median")    |> 
-#'  runDiffAnalysis(SE.name = "protetest",  method = "limmalmFit", contrastList = contrastList) |> 
-#'  runCoExpression(SE.name = "protetest", K = 2:10, replicates = 5, 
-#'                  contrastNames = contrastList$contrastName, merge = "union") 
-#'  
-#'  plotCoExpressionProfile(MAE[["protetest"]], cluster = 2)
-#'  
-
+#' @rdname runCoExpression
+#' @name plotCoExpressionProfile
 setMethod(f = "plotCoExpressionProfile",
           signature = "RflomicsSE",
           definition = function(object, cluster = 1, 
@@ -553,10 +515,9 @@ setMethod(f = "plotCoExpressionProfile",
             return(p)
           })
 
-#' @rdname plotCoExpressionProfile
-#' @title plotCoExpressionProfile
+#' @name plotCoExpressionProfile
+#' @rdname runCoExpression
 #' @exportMethod plotCoExpressionProfile
-#' @aliases plotCoExpressionProfile
 setMethod(f          = "plotCoExpressionProfile",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name, cluster = 1, 
@@ -569,15 +530,14 @@ setMethod(f          = "plotCoExpressionProfile",
             
           })
 
+### ---- plotCoseqContrasts ----
 
 
-#' @title plotCoseqContrasts
-#' This function describes the composition of clusters according to the 
-#' contrast to which the gene belongs
-#' @param object An object of class \link{RflomicsSE}
-#' @param SE.name the name of the data to fetch in the object if the object 
-#' is a RflomicsMAE
-#' @return a ggplot graph
+#' @section Plots: 
+#' \itemize{
+#'    \item plotCoseqContrasts: This function describes the composition of 
+#'    clusters according to the contrast to which the gene belongs
+#' }
 #' @export
 #' @exportMethod plotCoseqContrasts
 #' @importFrom dplyr filter select starts_with group_by count  ungroup mutate 
@@ -586,51 +546,8 @@ setMethod(f          = "plotCoExpressionProfile",
 #' @importFrom tidyr pivot_longer 
 #' @importFrom ggplot2 ggplot aes  geom_bar  coord_flip labs  
 #' scale_fill_discrete theme
-#' @rdname plotCoseqContrasts
-#' @aliases plotCoseqContrasts
-#' @examples
-#' 
-#' # Set the data path
-#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
-#' 
-#' # Load the experimental design
-#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
-#' 
-#' # Set factor name, levels, level of reference and type
-#' facRef <- data.frame(factorName   = c("Repeat", "temperature" , "imbibition"), 
-#'                      factorRef = c("rep1", "Low", "DS"), 
-#'                      factorType = c("batch",  "Bio", "Bio"),
-#'                      factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
-#' 
-#' # Load the omics data
-#' omicsData <- list( 
-#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
-#'  
-#' # Instantiate an object of class RflomicsMAE 
-#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
-#'                          omicsNames  = c("protetest"), omicsTypes  = c("proteomics"),
-#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
-#' names(MAE) <- c("protetest")
-#' 
-#' # Set the statistical model and contrasts to test
-#' formulae <- generateModelFormulae(MAE)
-#' MAE <- setModelFormula(MAE, formulae[[1]])  
-#' 
-#' # Get the contrasts List and choose the first 3 contrasts of type averaged
-#' contrastList <- getPossibleContrasts(MAE, formula = formulae[[1]],
-#'                                      typeContrast = "averaged",
-#'                                      returnTable = TRUE)[c(1, 2, 3),]
-#' 
-#' # Run the data preprocessing and perform the differential analysis
-#'  MAE <- MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
-#'  runNormalization(SE.name = "protetest", normMethod = "median")    |> 
-#'  runDiffAnalysis(SE.name = "protetest",  method = "limmalmFit", contrastList = contrastList) |> 
-#'  runCoExpression(SE.name = "protetest", K = 2:10, replicates = 5, 
-#'                  contrastNames = contrastList$contrastName, merge = "union") 
-#'  
-#'  plotCoseqContrasts(MAE[["protetest"]])
-
-
+#' @name plotCoseqContrasts
+#' @rdname runCoExpression
 setMethod(f = "plotCoseqContrasts",
           signature = "RflomicsSE",
           definition =
@@ -709,11 +626,9 @@ setMethod(f = "plotCoseqContrasts",
               return(p)
             })
 
-#' @rdname plotCoseqContrasts
-#' @param SE.name name of the RflomicsSE to access
-#' @title plotCoseqContrasts
+#' @rdname runCoExpression
+#' @name plotCoseqContrasts
 #' @exportMethod plotCoseqContrasts
-#' @aliases plotCoseqContrasts
 setMethod(f          = "plotCoseqContrasts",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name){
@@ -723,9 +638,18 @@ setMethod(f          = "plotCoseqContrasts",
           })
 
 
-# ---- Get Co-exp setting ----
+##==== ACCESSORS ====
+
+
+### ---- Get Co-exp setting ----
 #' @exportMethod getCoexpSettings
-#' @rdname Rflomics-accessors
+#' @section Accessors: 
+#' \itemize{
+#'    \item getCoexpSettings: Access to the co-expression analysis settings 
+#'    of a given omic dataset 
+#' }
+#' @name getCoexpSettings
+#' @rdname runCoExpression
 setMethod(f          = "getCoexpSettings",
           signature  = "RflomicsSE",
           
@@ -733,7 +657,7 @@ setMethod(f          = "getCoexpSettings",
             return(object@metadata$CoExpAnal$setting)   
           })
 
-#' @rdname Rflomics-accessors
+#' @rdname runCoExpression
 #' @exportMethod getCoexpSettings
 setMethod(f          = "getCoexpSettings",
           signature  = "RflomicsMAE",
@@ -741,56 +665,18 @@ setMethod(f          = "getCoexpSettings",
             getCoexpSettings(object = object[[SE.name]])
           })
 
-#' @title get members of a cluster
-#'
-#' @param object a RflomicsSE, produced by rflomics
-#' @param clusterName name of the cluster
-#' @return The list of entities inside this cluster.
+### ---- getClusterEntities ----
+
+#' @section Accessors: 
+#' \itemize{
+#'    \item getClusterEntities: get members of a cluster. 
+#'  return The list of entities inside this cluster.
+#' }
 #' @exportMethod getClusterEntities
+#' @param clusterName name of the cluster
 #' @importFrom coseq clusters
-#' @rdname getClusterEntities
-#' @aliases getClusterEntities
-#' @examples
-#' 
-#' # Set the data path
-#' datPath <- paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/")
-#' 
-#' # Load the experimental design
-#' ExpDesign <- readExpDesign(file = paste0(datPath, "condition.txt"))
-#' 
-#' # Set factor name, levels, level of reference and type
-#' facRef <- data.frame(factorName   = c("Repeat", "temperature" , "imbibition"), 
-#'                      factorRef = c("rep1", "Low", "DS"), 
-#'                      factorType = c("batch",  "Bio", "Bio"), 
-#'                      factorLevels = c("rep1,rep2,rep3","Low,Medium,Elevated","DS,EI,LI"))
-#' 
-#' # Load the omics data
-#' omicsData <- list( 
-#' readOmicsData(file = paste0(datPath, "proteome_ecoseed.txt")))
-#'  
-#' # Instantiate an object of class RflomicsMAE 
-#' MAE <- createRflomicsMAE( projectName = "Tests", omicsData   = omicsData,
-#'                          omicsNames  = c("protetest"), omicsTypes  = c("proteomics"),
-#'                          ExpDesign   = ExpDesign, factorRef   = facRef)
-#' names(MAE) <- c("protetest")
-#' 
-#' # Set the statistical model and contrasts to test
-#' formulae <- generateModelFormulae(MAE)
-#' MAE <- setModelFormula(MAE, formulae[[1]])  
-#' 
-#' # Get the contrasts List and choose the first 3 contrasts of type averaged
-#' contrastList <- getPossibleContrasts(MAE, formula = formulae[[1]], 
-#'                                      typeContrast = "averaged", 
-#'                                      returnTable = TRUE)[c(1, 2, 3),]
-#' 
-#' # Run the data preprocessing and perform the differential analysis
-#'  MAE <- MAE |>  runTransformData(SE.name = "protetest",  transformMethod = "log2") |>
-#'  runNormalization(SE.name = "protetest", normMethod = "median")    |> 
-#'  runDiffAnalysis(SE.name = "protetest",  method = "limmalmFit", contrastList = contrastList) |> 
-#'  runCoExpression(SE.name = "protetest", K = 2:10, replicates = 5, 
-#'                  contrastNames = contrastList$contrastName, merge = "union") 
-#'  
-#'  getClusterEntities(MAE[["protetest"]], clusterName = "cluster_1")
+#' @rdname runCoExpression
+#' @name getClusterEntities
 setMethod(
   f          = "getClusterEntities",
   signature  = "RflomicsSE",
@@ -809,17 +695,9 @@ setMethod(
   }
 )
 
-#' @title get members of a cluster
-#'
-#' @param object an oblject of class RflomicsMAE, produced by rflomics
-#' @param name name of the cluster
-#' @param SE.name the name of the data to fetch in the object if the object 
-#' is a RflomicsMAE
-#' @return The list of entities inside this cluster.
 #' @exportMethod getClusterEntities
-#' @importFrom coseq clusters
-#' @rdname getClusterEntities
-#' @aliases getClusterEntities
+#' @rdname runCoExpression
+#' @name getClusterEntities
 setMethod(
   f          = "getClusterEntities",
   signature  = "RflomicsMAE",
@@ -829,14 +707,16 @@ setMethod(
   }
 )
 
-#' @title get cluster
-#'
-#' @param object a RflomicsSE, produced by rflomics
-#' @return all clusters
+### ---- getCoseqClusters ----
+
+#' @section Accessors: 
+#' \itemize{
+#'    \item getCoseqClusters: get cluster. Return all clusters
+#' }
 #' @exportMethod getCoseqClusters
 #' @importFrom coseq clusters
-#' @rdname getCoseqClusters
-#' @aliases getCoseqClusters
+#' @rdname runCoExpression
+#' @name getCoseqClusters
 setMethod(
   f          = "getCoseqClusters",
   signature  = "RflomicsSE",
@@ -852,16 +732,10 @@ setMethod(
   }
 )
 
-#' @title get members of a cluster
-#'
-#' @param object an oblject of class RflomicsMAE, produced by rflomics
-#' @param SE.name the name of the data to fetch in the object if the object is 
-#' a RflomicsMAE
-#' @return all clusters
 #' @exportMethod getCoseqClusters
 #' @importFrom coseq clusters
-#' @rdname getCoseqClusters
-#' @aliases getCoseqClusters
+#' @rdname runCoExpression
+#' @name getCoseqClusters
 setMethod(
   f          = "getCoseqClusters",
   signature  = "RflomicsMAE",
@@ -870,75 +744,3 @@ setMethod(
   }
 )
 
-
-# ---- getCoExpAnalysesSummary ----
-#' @title getCoExpAnalysesSummary
-#' @description TODO
-#' @param object An object of class \link{RflomicsMAE}. 
-#' It is expected the SE object is produced by rflomics previous analyses, 
-#' as it relies on their results.
-#' @param omicNames the name of the experiment to summarize.
-#' @param ... Not in use at the moment
-#' @return A ggplot object
-#' @importFrom dplyr filter mutate rename full_join group_by
-#' @importFrom ggplot2 ggplot aes geom_line geom_point theme element_text 
-#' facet_grid labs vars
-#' @exportMethod getCoExpAnalysesSummary
-#' @rdname getCoExpAnalysesSummary
-#' @aliases getCoExpAnalysesSummary
-setMethod(
-  f = "getCoExpAnalysesSummary",
-  signature = "RflomicsMAE",
-  definition = function(object, omicNames = NULL,
-                        ...) {
-    mean.y_profiles.list <- list()
-    
-    if (is.null(omicNames))
-      omicNames <- getAnalyzedDatasetNames(object, "CoExpAnal")
-    
-    for (data in omicNames) {
-      
-      Groups     <- getDesignMat(object[[data]])
-      cluster.nb <-
-        object[[data]]@metadata$CoExpAnal$cluster.nb
-      coseq.res  <-
-        object[[data]]@metadata$CoExpAnal[["coseqResults"]]
-      
-      mean.y_profiles.list[[data]] <-
-        lapply(seq_len(cluster.nb), function(cluster) {
-          assays.data <- filter(as.data.frame(coseq.res@assays@data[[1]]),
-                                get(paste0("Cluster_", cluster)) > 0.8)
-          
-          y_profiles.gg <-
-            coseq.res@y_profiles[rownames(assays.data), ] %>%
-            data.frame() %>%
-            mutate(observations = rownames(.)) %>%
-            melt(id = "observations", value.name = "y_profiles") %>%
-            rename(samples = variable) %>%
-            full_join(Groups , by = "samples")
-          
-          y_profiles.gg %>% group_by(groups) %>%
-            summarise(mean = mean(y_profiles)) %>%
-            mutate(cluster = paste0("cluster.", cluster))
-          
-        }) %>% reduce(rbind) %>% mutate(dataset = data)
-      
-    } %>% reduce(rbind)
-    
-    mean.y_profiles.gg <- reduce(mean.y_profiles.list, rbind)
-    
-    if (nrow(mean.y_profiles.gg) == 0)
-      return(NULL)
-    
-    p <- ggplot(data = mean.y_profiles.gg, aes(x = groups, y = mean, group = 1)) +
-      geom_line(aes(color = as.factor(cluster))) + 
-      geom_point(aes(color = as.factor(cluster))) +
-      theme(axis.text.x = element_text(angle = 90, hjust = 1),
-            legend.position = "none") +
-      facet_grid(cols = vars(cluster), rows = vars(dataset)) +
-      labs(x = "Conditions", y = "Expression profiles mean")
-    
-    return(p)
-    
-  }
-)

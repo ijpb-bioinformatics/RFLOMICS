@@ -29,7 +29,8 @@
 #' @return An object of class \link{RflomicsSE} or class \link{RflomicsSE} 
 #' @exportMethod runDataProcessing
 #' @seealso 
-#' \link{checkExpDesignCompleteness} 
+#' \link{RflomicsMAE-class} 
+#' \link{RflomicsSE-class} 
 #' \link{getProcessedData} 
 #' \link{getTransSettings} 
 #' \link{getFilterSettings}
@@ -39,6 +40,8 @@
 #' \link{plotLibrarySize}
 #' \link{plotDataDistribution}
 #' \link{plotOmicsPCA}
+#' @section Accessors: 
+#' @section Plots: 
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. 
 #' DiCoExpress: a tool to process multifactorial
@@ -530,7 +533,7 @@ setMethod(f          = "runNormalization",
             return(object)
           })
 
-###==== runOmicsPCA ====
+### ==== runOmicsPCA ====
 
 #' @title runOmicsPCA
 #' @description 
@@ -601,7 +604,7 @@ setMethod(
 ## ---- checkExpDesignCompleteness ----
 
 #' @name checkExpDesignCompleteness
-#' @rdname Rflomics-accessors
+#' @rdname runDataProcessing
 #' @description
 #' \itemize{
 #'    \item checkExpDesignCompleteness: return a string with message.
@@ -667,7 +670,7 @@ setMethod(f         = "checkExpDesignCompleteness",
             return(output)
           })
 
-#' @rdname Rflomics-accessors
+#' @rdname runDataProcessing
 #' @param omicName the name of the data the normalization have to be applied to. 
 #' @exportMethod checkExpDesignCompleteness
 setMethod(f         = "checkExpDesignCompleteness",
@@ -685,10 +688,9 @@ setMethod(f         = "checkExpDesignCompleteness",
 
 ###==== getProcessedData ====
 
-#' @rdname Rflomics-accessors
+#' @rdname runDataProcessing
 #' @name getProcessedData
-#' @description 
-#' Getters and Setters for data processing analysis:
+#' @section Accessors: 
 #' \itemize{
 #'    \item getProcessedData: return a processed data matrix  
 #'    (filtering, normalization and/or transformation)}
@@ -732,7 +734,7 @@ setMethod(f          = "getProcessedData",
             return(data.frame(pseudo))
           })
 
-#' @rdname Rflomics-accessors
+#' @rdname runDataProcessing
 #' @name getProcessedData
 #' @exportMethod getProcessedData
 setMethod(f          = "getProcessedData",
@@ -753,9 +755,9 @@ setMethod(f          = "getProcessedData",
 ###==== getTransSettings ====
 
 # Get transformation parameters
-#' @rdname Rflomics-accessors
+#' @rdname runDataProcessing
 #' @name getTransSettings
-#' @description 
+#' @section Accessors: 
 #' \itemize{
 #'    \item getTransSettings: return a list of transformation settings 
 #'    of a given omic dataset}
@@ -769,7 +771,7 @@ setMethod(f          = "getTransSettings",
             return(object@metadata$DataProcessing$Transformation$setting)   
           })
 
-#' @rdname Rflomics-accessors
+#' @rdname runDataProcessing
 #' @name getTransSettings
 #' @exportMethod getTransSettings
 setMethod(f          = "getTransSettings",
@@ -781,9 +783,9 @@ setMethod(f          = "getTransSettings",
 ###==== getFilterSettings ====
 
 # Get filtering parameters
-#' @rdname Rflomics-accessors
+#' @rdname runDataProcessing
 #' @name getFilterSettings
-#' @description
+#' @section Accessors: 
 #' \itemize{
 #'    \item getFilterSettings: return a list the filtering settings of a given 
 #'    omic dataset}
@@ -797,7 +799,7 @@ setMethod(f          = "getFilterSettings",
             return(object@metadata$DataProcessing$Filtering$setting)   
           })
 
-#' @rdname Rflomics-accessors
+#' @rdname runDataProcessing
 #' @exportMethod getFilterSettings
 setMethod(f          = "getFilterSettings",
           signature  = "RflomicsMAE",
@@ -808,9 +810,9 @@ setMethod(f          = "getFilterSettings",
 ###==== getFilteredFeatures ====
 
 # Get filtred features
-#' @rdname Rflomics-accessors
+#' @rdname runDataProcessing
 #' @name getFilteredFeatures
-#' @description
+#' @section Accessors: 
 #' \itemize{
 #'    \item getFilteredFeatures: return a vector of filtered features of a given 
 #'    omic dataset}
@@ -824,7 +826,7 @@ setMethod(f          = "getFilteredFeatures",
             return(object@metadata$DataProcessing$Filtering$results$filteredFeatures)   
           })
 
-#' @rdname Rflomics-accessors
+#' @rdname runDataProcessing
 #' @exportMethod getFilteredFeatures 
 setMethod(f          = "getFilteredFeatures",
           signature  = "RflomicsMAE",
@@ -834,9 +836,9 @@ setMethod(f          = "getFilteredFeatures",
 
 ###==== getCoeffNorm ====
 
-#' @rdname Rflomics-accessors
+#' @rdname runDataProcessing
 #' @name getCoeffNorm
-#' @description
+#' @section Accessors: 
 #' \itemize{
 #'    \item getCoeffNorm: return a named vector with normalization coefficients 
 #'    of a given omic dataset}
@@ -850,7 +852,7 @@ setMethod(f          = "getCoeffNorm",
             return(metadata(object)[["DataProcessing"]][["Normalization"]][["results"]][["coefNorm"]])
           })
 
-#' @rdname Rflomics-accessors
+#' @rdname runDataProcessing
 #' @exportMethod getCoeffNorm 
 
 setMethod(f          = "getCoeffNorm",
@@ -862,9 +864,9 @@ setMethod(f          = "getCoeffNorm",
 ###==== getNormSettings ====
 # Get normalizationparameters
 
-#' @rdname Rflomics-accessors
+#' @rdname runDataProcessing
 #' @name getNormSettings
-#' @description
+#' @section Accessors: 
 #' \itemize{
 #'    \item getNormSettings: return a list of normalization settings 
 #'    of a given omic dataset}
@@ -877,7 +879,7 @@ setMethod(f          = "getNormSettings",
             return(object@metadata$DataProcessing$Normalization$setting)
           })
 
-#' @rdname Rflomics-accessors
+#' @rdname runDataProcessing
 #' @exportMethod getNormSettings
 setMethod(f          = "getNormSettings",
           signature  = "RflomicsMAE",
@@ -889,10 +891,9 @@ setMethod(f          = "getNormSettings",
 
 ###==== plotLibrarySize ====
 
-#' @rdname Rflomics-plots
+#' @rdname runDataProcessing
 #' @name plotLibrarySize
-#' @description
-#' Graphical functions for data processing analysis:
+#' @section Plots: 
 #' \itemize{
 #'    \item plotLibrarySize: return barplot of library size by sample.}
 #' @param raw a boolean 
@@ -950,7 +951,7 @@ setMethod(f          = "plotLibrarySize",
             
           })
 
-#' @rdname Rflomics-plots
+#' @rdname runDataProcessing
 #' @name plotLibrarySize
 #' @exportMethod plotLibrarySize
 setMethod(f          = "plotLibrarySize",
@@ -968,7 +969,7 @@ setMethod(f          = "plotLibrarySize",
 
 ###==== plotDataDistribution ====
 
-#' @rdname Rflomics-plots
+#' @rdname runDataProcessing
 #' @name plotDataDistribution
 #' @description
 #' \itemize{
@@ -1056,7 +1057,7 @@ setMethod(
   }
 )
 
-#' @rdname Rflomics-plots
+#' @rdname runDataProcessing
 #' @name plotDataDistribution
 #' @exportMethod plotDataDistribution
 setMethod(
@@ -1075,7 +1076,7 @@ setMethod(
 
 ### ---- plotOmicsPCA ----
 #' @name plotOmicsPCA
-#' @description 
+#' @section Plots: 
 #' \itemize{
 #'    \item plotOmicsPCA: 
 #' This function plot the factorial map from a PCA object stored
@@ -1091,7 +1092,7 @@ setMethod(
 #' @importFrom ggplot2 ggplot aes_string geom_point geom_text aes xlab ylab 
 #' geom_hline geom_vline geom_vline element_text ggtitle geom_polygon
 #' @exportMethod plotOmicsPCA
-#' @rdname Rflomics-plots
+#' @rdname runDataProcessing
 #' @examples
 #' # See runDataProcessing for an example that includes plotOmicsPCA
 setMethod(f = "plotOmicsPCA",
@@ -1205,7 +1206,7 @@ setMethod(f = "plotOmicsPCA",
             
           })
 
-#' @rdname Rflomics-plots
+#' @rdname runDataProcessing
 #' @name plotOmicsPCA
 #' @exportMethod plotOmicsPCA
 setMethod(
@@ -1223,7 +1224,7 @@ setMethod(
 
 ### ---- plotExpDesignCompleteness ----
 #' @name plotExpDesignCompleteness
-#' @description 
+#' @section Plots: 
 #' \itemize{
 #'    \item plotExpDesignCompleteness: 
 #' This method checks that experimental design constraints are satisfied and 
@@ -1234,7 +1235,7 @@ setMethod(
 #' RFLOMICS workflow.}
 #' @param sampleList list of samples to check.
 #' @exportMethod plotExpDesignCompleteness
-#' @rdname Rflomics-plots
+#' @rdname runDataProcessing
 #' @examples
 #' # See runDataProcessing for an example that includes plotExpDesignCompleteness
 setMethod(f         = "plotExpDesignCompleteness",
@@ -1255,13 +1256,12 @@ setMethod(f         = "plotExpDesignCompleteness",
             
             plot <- .plotExperimentalDesign(counts = group_count, 
                                             message= check$message)
-            
             return(plot)
           })
 
 #' @param omicName a character string with the name of the dataset
 #' @exportMethod plotExpDesignCompleteness
-#' @rdname Rflomics-plots
+#' @rdname runDataProcessing
 setMethod(f         = "plotExpDesignCompleteness",
           signature = "RflomicsMAE",
           definition <- function(object, omicName, sampleList=NULL){

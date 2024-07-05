@@ -385,6 +385,13 @@ setGeneric(
 #---- 04 diff analysis ----
 
 setGeneric(
+  name = "sumDiffExp",
+  def  = function(object, SE.name) {
+    standardGeneric("sumDiffExp")
+  }
+)
+
+setGeneric(
   name = "runDiffAnalysis",
   def  = function(object,
                   contrastList = NULL,

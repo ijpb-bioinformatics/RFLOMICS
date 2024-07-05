@@ -260,39 +260,6 @@
 }
 
 
-# ----- Get Summary for diffExpAnalysis : -----
-
-#' @title Get summary table from diffExpAnalysis analysis
-#'
-#' @param object a SE object (produced by Flomics) or a MAE
-#' @param SE.name The name of the RflomicsSE to access if object is RflomicsMAE.
-#' @return a table
-#' @importFrom dplyr filter
-#' @export
-sumDiffExp <- function(object, SE.name = NULL) {
-    if (is(object, "RflomicsMAE")) {
-        if (!is.null(SE.name)) {
-            object <- object[[SE.name]]
-        }
-    }
-    
-    pcut <- getDiffSettings(object)$p.adj.cutoff
-    lcut <- getDiffSettings(object)$abs.logFC.cutoff
-    
-    df_sim <- lapply(object@metadata$DiffExpAnal$DEF,
-                     FUN = function(tab) {
-                         tab <- tab %>%
-                             filter(Adj.pvalue < pcut) %>%
-                             filter(abs(logFC) > lcut)
-                         
-                         return(c("All" = nrow(tab),
-                                  "Up" = nrow(tab %>% filter(logFC > 0)),
-                                  "Down" = nrow(tab %>% filter(logFC < 0))
-                         ))
-                     }
-    )
-    return(do.call("rbind", df_sim))
-}
 
 ######### Plot functions for differential analysis #########
 

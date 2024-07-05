@@ -43,9 +43,10 @@
 #' @section Consructor:
 #' \code{\link{createRflomicsMAE}}
 #' @section Accessors:
+#' @section Plots:
 #' @section Methods:
-#' \code{\link{Rflomics-accessors}}
-#' \code{\link{Rflomics-plot}}
+#' \code{\link{generateModelFormulae}}
+#' \code{\link{generateExpressionContrast}}
 #' \code{\link{runDataProcessing}}
 #' \code{\link{runDataProcessing}}
 #' \code{\link{runDiffAnalysis}}
@@ -55,6 +56,7 @@
 #' @aliases RflomicsMAE-class
 #' @return A \code{RflomicsMAE} object.
 #' @exportClass RflomicsMAE
+#' @example inst/examples/loadData.R
 setClass(
   Class    = "RflomicsMAE",
   contains = "MultiAssayExperiment",
@@ -180,54 +182,3 @@ setMethod(
     return(.Object)
   }
 )
-
-##==== Rflomics-accessors ====
-
-#' @name Rflomics-accessors
-#' @title A group of functions to access and modify the metadata slot 
-#' of an object of class  \link{RflomicsMAE} or \link{RflomicsMAE}
-#' @description A set of getters and setters generic functions to access and 
-#' modify objects of the slot metadata of a \link{RflomicsMAE} object or 
-#' a \link{RflomicsMAE} object.
-#' 
-#' Getter methods:
-#' 
-#' \itemize{
-#'    \item subRflomics: Extract a subset of a RflomicsMAE object.
-#'    \item getCoexpSettings : Access to the co-expression analysis settings 
-#'    of a given omic dataset
-#' }
-#' 
-#' @param object An object of class \link{RflomicsSE} or 
-#' class \link{RflomicsMAE}
-#' @param SE.name SE.name the name of the dataset if the input object 
-#' is a \link{RflomicsMAE}
-#' @return See the itemized list in the description section for details
-#' @seealso \code{\link{createRflomicsMAE}}
-#' @seealso \code{\link{generateModelFormulae}}
-#' @seealso \code{\link{generateExpressionContrast}}
-#' @seealso \code{\link{runDataProcessing}}
-#' @seealso \code{\link{runDiffAnalysis}}
-#' @seealso \code{\link{runCoExpression}}
-#' @seealso \code{\link{runAnnotationEnrichment}}
-NULL
-
-##==== Rflomics-plots ====
-
-#' @name Rflomics-plots
-#' @title Visualization of results.
-#' @description 
-#' A collection of functions for plotting results from omic analysis steps.
-#' @param object an object of class \link{RflomicsSE} or 
-#' class \link{RflomicsMAE}
-#' @param SE.name the name of the dataset if the input object 
-#' is a \link{RflomicsMAE}
-#' @return plot
-#' @seealso \code{\link{createRflomicsMAE}}
-#' @seealso \code{\link{generateModelFormulae}}
-#' @seealso \code{\link{generateExpressionContrast}}
-#' @seealso \code{\link{runDataProcessing}}
-#' @seealso \code{\link{runDiffAnalysis}}
-#' @seealso \code{\link{runCoExpression}}
-#' @seealso \code{\link{runAnnotationEnrichment}}
-NULL

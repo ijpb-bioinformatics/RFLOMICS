@@ -1,14 +1,20 @@
-######################## ANNOTATION USING CLUSTERPROFILER ######################
+### ============================================================================
+### [06_annot_analysis] accessors and methods for RflomicsMAE and RflomicsSE classes
+### ----------------------------------------------------------------------------
+# A. Hulot
+
+##==== STAT METHOD ====
+
+###==== METHOD runAnnotationEnrichment using CLUSTERPROFILER ====
 
 #' @title runAnnotationEnrichment
 #' @description This function performs overrepresentation analysis (ORA) using
 #' clusterprofiler functions. It can be used with custom annotation file
 #' (via enricher), GO (enrichGO) or KEGG (enrichKEGG) annotations.
-#' @param object An object of class \link{RflomicsSE} or
-#' \link{RflomicsMAE}. It is expected the SE object is produced by
-#' rflomics previous analyses, as it relies on their results.
-#' @param SE.name name of the experiment to consider if object is a
-#' RflomicsMAE.
+#' @param object An object of class \link{RflomicsSE} or 
+#' class \link{RflomicsMAE}
+#' @param SE.name SE.name the name of the dataset if the input object 
+#' is a \link{RflomicsMAE}
 #' @param nameList name of contrasts (tags or names) from which to extract DE
 #' genes if from is DiffExpAnal.
 #' @param list_args list of arguments to pass to the enrichment function.
@@ -36,58 +42,14 @@
 #' @importFrom utils getFromNamespace
 #' @exportMethod runAnnotationEnrichment
 #' @rdname runAnnotationEnrichment
-#' @aliases runAnnotationEnrichment
-#' @examples
-#' # load ecoseed data
-#' data(ecoseed)
-#' 
-#' # create rflomicsMAE object with ecoseed data
-#' MAE <- RFLOMICS::createRflomicsMAE(
-#'   projectName = "Tests",
-#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
-#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
-#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-#'   ExpDesign   = ecoseed$design,
-#'   factorRef   = ecoseed$factorRef)
-#' 
-#' # Set the statistical model and contrasts to test
-#' formulae <- generateModelFormulae(MAE)
-#' MAE <- setModelFormula(MAE, formulae[[1]])  
-#' 
-#' # Get the contrasts List and choose the first 3 contrasts of type averaged
-#' contrastList <- 
-#'    generateExpressionContrast(MAE, "averaged")
-#'    
-#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
-#' 
-#' # Run the data preprocessing and perform the differential analysis 
-#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
-#'                          transformMethod = "log2",
-#'                          normMethod = "median")
-#'  
-#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
-#'                        method = "limmalmFit", 
-#'                        contrastList = contrastList)
-#' 
-#' # Run GO annotation (enrichGO)
-#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
-#'        list_args = list(OrgDb = "org.At.tair.db",
-#'        keyType = "TAIR",
-#'        pvalueCutoff = 0.05),
-#'        from = "DiffExp", database = "GO",
-#'        domain = "CC")
-#'        
-#' getEnrichRes(MAE[["protetest"]])
-#' 
-#' # Run KEGG annotation (enrichKEGG)
-#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
-#'        list_args = list(organism = "ath",
-#'        keyType = "kegg",
-#'        pvalueCutoff = 0.05),
-#'        from = "DiffExp", database = "KEGG")
-#'        
-#' sumORA(MAE[["protetest"]], from = "DiffExp", database = "KEGG")
-#' 
+#' @name runAnnotationEnrichment
+#' @section Accessors: 
+#' A set of getters and setters generic functions to access and 
+#' modify objects of the slot metadata of a \link{RflomicsMAE} object or 
+#' a \link{RflomicsMAE} object.
+#' @section Plots: 
+#' A collection of functions for plotting results from omic analysis steps.
+#' @example inst/examples/runAnnotationEnrichment.R
 setMethod(
   f = "runAnnotationEnrichment",
   signature = "RflomicsSE",
@@ -212,7 +174,6 @@ setMethod(
     
     geneLists <- geneLists[lengths(geneLists) > 0]
     
-    #-----
     # for each list
     results_list <- list()
     overview_list <- list()
@@ -342,8 +303,7 @@ setMethod(
 )
 
 #' @rdname runAnnotationEnrichment
-#' @aliases runAnnotationEnrichment
-#' @title runAnnotationEnrichment
+#' @name runAnnotationEnrichment
 #' @exportMethod runAnnotationEnrichment
 setMethod(
   f = "runAnnotationEnrichment",
@@ -385,14 +345,16 @@ setMethod(
   }
 )
 
+##==== GRAPHICAL METHOD ====
 
-#' @title plotKEGG
-#' @description Plot the KEGG pathway using the pathview package. It overlays
-#' the result of the differential analysis or the clusters entity on the
-#' image.
-#' @param object An object of class \link{RflomicsSE}.
-#' It is expected the SE object is produced by rflomics previous analyses,
-#' as it relies on their results.
+###==== plotKEGG ====
+
+#' @section Plots: 
+#' \itemize{
+#'    \item plotKEGG: Plot the KEGG pathway using the pathview package. 
+#'    It overlays the result of the differential analysis or the clusters 
+#'    entity on the image.
+#' }
 #' @param contrastName the name of the contrast to consider.
 #' For Co expression analysis,
 #' it is expected to be one of "cluster.1", "cluster.2", etc.
@@ -402,54 +364,10 @@ setMethod(
 #' @param from differential analysis (diffExp) or coexpression analysis (coexp)
 #' Used to link contrastName to the right metadata.
 #' @param ... Not in use at the moment
-#'
 #' @return Only displays the KEGG pathway, it does not return any object.
 #' @exportMethod plotKEGG
-#' @rdname plotKEGG
-#' @aliases plotKEGG
-#' @examples
-#' # load ecoseed data
-#' data(ecoseed)
-#' 
-#' # create rflomicsMAE object with ecoseed data
-#' MAE <- RFLOMICS::createRflomicsMAE(
-#'   projectName = "Tests",
-#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
-#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
-#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-#'   ExpDesign   = ecoseed$design,
-#'   factorRef   = ecoseed$factorRef)
-#' 
-#' # Set the statistical model and contrasts to test
-#' formulae <- generateModelFormulae(MAE)
-#' MAE <- setModelFormula(MAE, formulae[[1]])  
-#' 
-#' # Get the contrasts List and choose the first 3 contrasts of type averaged
-#' contrastList <- 
-#'    generateExpressionContrast(MAE, "averaged")
-#'    
-#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
-#' 
-#' # Run the data preprocessing and perform the differential analysis 
-#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
-#'                          transformMethod = "log2",
-#'                          normMethod = "median")
-#'  
-#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
-#'                        method = "limmalmFit", 
-#'                        contrastList = contrastList)
-#' 
-#' 
-#' # Run KEGG annotation (enrichKEGG)
-#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
-#'        list_args = list(organism = "ath",
-#'        keyType = "kegg",
-#'        pvalueCutoff = 0.05),
-#'        from = "DiffExp", database = "KEGG")
-#'                        
-#' #plotKEGG(MAE[["protetest"]], pathway_id = "ath00710", species = "ath",
-#' #           contrastName = "cluster.4", from = "Coexp")
-#'
+#' @rdname runAnnotationEnrichment
+#' @name plotKEGG
 setMethod(
   f = "plotKEGG",
   signature = "RflomicsSE",
@@ -504,12 +422,14 @@ setMethod(
   }
 )
 
-#' @title plotClusterProfiler
-#' @description Plot a dotplot, a cnetplot or an heatplot, using enrichplot
-#' package. It is a wrapper method destined for the RflomicsSE class.
-#' @param object An object of class \link{RflomicsSE}.
-#' It is expected the SE object is produced by rflomics previous analyses,
-#' as it relies on their results.
+###==== plotClusterProfiler ====
+
+#' @name plotClusterProfiler
+#' @section Plots: 
+#' \itemize{
+#'    \item plotClusterProfiler: Plot a dotplot, a cnetplot or an heatplot, using enrichplot
+#' package. It is a wrapper method destined for the RflomicsSE class..
+#' }
 #' @param contrastName the name of the contrast to consider.
 #' For Co expression analysis, it is expected to be one of
 #' "cluster.1", "cluster.2", etc.
@@ -528,63 +448,11 @@ setMethod(
 # Default is the one find in the clusterprofiler results in object.
 #' @param ... additionnal parameters for cnetplot, heatplot or
 #' enrichplot functions.
-#'
-#' @return A ggplot object.
 #' @importFrom enrichplot cnetplot heatplot dotplot set_enrichplot_color
 #' @importFrom ggplot2 scale_fill_gradient2 guide_colourbar
 #' @importFrom ggrepel geom_label_repel
 #' @exportMethod plotClusterProfiler
-#' @rdname plotClusterProfiler
-#' @aliases plotClusterProfiler
-#' @examples
-#' # load ecoseed data
-#' data(ecoseed)
-#' 
-#' # create rflomicsMAE object with ecoseed data
-#' MAE <- RFLOMICS::createRflomicsMAE(
-#'   projectName = "Tests",
-#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
-#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
-#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-#'   ExpDesign   = ecoseed$design,
-#'   factorRef   = ecoseed$factorRef)
-#' 
-#' # Set the statistical model and contrasts to test
-#' formulae <- generateModelFormulae(MAE)
-#' MAE <- setModelFormula(MAE, formulae[[1]])  
-#' 
-#' # Get the contrasts List and choose the first 3 contrasts of type averaged
-#' contrastList <- 
-#'    generateExpressionContrast(MAE, "averaged")
-#'    
-#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
-#' 
-#' # Run the data preprocessing and perform the differential analysis 
-#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
-#'                          transformMethod = "log2",
-#'                          normMethod = "median")
-#'  
-#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
-#'                        method = "limmalmFit", 
-#'                        contrastList = contrastList)
-#'        
-#' getEnrichRes(MAE[["protetest"]])
-#' 
-#' # Run KEGG annotation (enrichKEGG)
-#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
-#'        list_args = list(organism = "ath",
-#'        keyType = "kegg",
-#'        pvalueCutoff = 0.05),
-#'        from = "DiffExp", database = "KEGG")
-#'        
-#'
-#' # From differential analysis proteins lists:
-#' plotClusterProfiler(MAE[["protetest"]],
-#'         contrastName = "(temperatureElevated - temperatureMedium) in mean",
-#'         database = "KEGG", from = "DiffExp",
-#'         plotType = "heatplot", p.adj.cutoff = 0.05,
-#'         domain = "no-domain")
-#'
+#' @rdname runAnnotationEnrichment
 setMethod(
   f = "plotClusterProfiler",
   signature = "RflomicsSE",
@@ -737,14 +605,15 @@ setMethod(
 )
 
 
+###==== plotEnrichComp ====
 
-#' @title plotEnrichComp
-#' @description Plot an heatmap of all the enriched term found for a given
+#' @name plotEnrichComp
+#' @section Plots: 
+#' \itemize{
+#'    \item plotEnrichComp: plot an heatmap of all the enriched term found for a given
 #' database and a given source (differential analysis or coexpression clusters).
 #' Allow for the comparison of several enrichment results.
-#' @param object An object of class \link{RflomicsSE}.
-#' It is expected the SE object is produced by rflomics previous analyses,
-#' as it relies on their results.
+#' }
 #' @param from indicates if the enrichment results are taken from differential
 #' analysis results (DiffExpAnal) or from the co-expression analysis results
 #'  (CoExpAnal)
@@ -756,59 +625,13 @@ setMethod(
 #' @param nClust number of separate cluster to plot on the heatmap, based o
 #' n the clustering.
 #' @param ... more arguments for ComplexHeatmap::Heatmap.
-#' @return A complexHeatmap object.
-#'
 #' @importFrom reshape2 recast
 #' @importFrom circlize colorRamp2
 #' @importFrom ComplexHeatmap Heatmap ht_opt
 #' @importFrom stats hclust dist
 #' @importFrom stringr str_wrap
 #' @exportMethod plotEnrichComp
-#' @rdname plotEnrichComp
-#' @aliases plotEnrichComp
-#' @examples
-#' # load ecoseed data
-#' data(ecoseed)
-#' 
-#' # create rflomicsMAE object with ecoseed data
-#' MAE <- RFLOMICS::createRflomicsMAE(
-#'   projectName = "Tests",
-#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
-#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
-#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-#'   ExpDesign   = ecoseed$design,
-#'   factorRef   = ecoseed$factorRef)
-#' 
-#' # Set the statistical model and contrasts to test
-#' formulae <- generateModelFormulae(MAE)
-#' MAE <- setModelFormula(MAE, formulae[[1]])  
-#' 
-#' # Get the contrasts List and choose the first 3 contrasts of type averaged
-#' contrastList <- 
-#'    generateExpressionContrast(MAE, "averaged")
-#'    
-#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
-#' 
-#' # Run the data preprocessing and perform the differential analysis 
-#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
-#'                          transformMethod = "log2",
-#'                          normMethod = "median")
-#'  
-#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
-#'                        method = "limmalmFit", 
-#'                        contrastList = contrastList)
-#' 
-#' # Run KEGG annotation (enrichKEGG)
-#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
-#'        list_args = list(organism = "ath",
-#'        keyType = "kegg",
-#'        pvalueCutoff = 0.05),
-#'        from = "DiffExp", database = "KEGG")
-#'        
-#'
-#' plotEnrichComp(MAEtest[["protetest"]], from = "DiffExp",
-#'                database = "KEGG", matrixType = "FC")
-#'
+#' @rdname runAnnotationEnrichment
 setMethod(
   f = "plotEnrichComp",
   signature = "RflomicsSE",
@@ -819,7 +642,6 @@ setMethod(
                         matrixType = "FC",
                         nClust = NULL,
                         ...) {
-    
     
     allData <- switch(
       toupper(from),
@@ -1058,14 +880,15 @@ setMethod(
   }
 )
 
+##==== ACCESSORS ====
 
-# ---- Get a particular enrichment result ----
-#
-#' @title Get a particular enrichment result
-#'
-#' @param object a RflomicsSE object or a RflomicsMAE object. Should have at
-#' least results from an enrichment, on differential analysis or co expression
-#' clusters.
+### ---- Get a particular enrichment result ----
+#' @section Accessors: 
+#' \itemize{
+#'    \item getEnrichRes: get a particular enrichment result.
+#'    return enrichment results given in the form of lists of clusterprofiler
+#'    results.
+#' }
 #' @param contrastName the contrast or cluster name on which the enrichment
 #' was perform.
 #' @param experiment if the object is a RflomicsMAE, then experiment is the
@@ -1076,54 +899,9 @@ setMethod(
 #' @param domain the subonology or subdomain for the database (eg CC, MF or
 #' BP for GO.)
 #' @param ... Not in use at the moment
-#' @return enrichment results given in the form of lists of clusterprofiler
-#' results.
 #' @exportMethod getEnrichRes
-#' @rdname getEnrichRes
-#' @aliases getEnrichRes
-#' @examples
-#' # load ecoseed data
-#' data(ecoseed)
-#' 
-#' # create rflomicsMAE object with ecoseed data
-#' MAE <- RFLOMICS::createRflomicsMAE(
-#'   projectName = "Tests",
-#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
-#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
-#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-#'   ExpDesign   = ecoseed$design,
-#'   factorRef   = ecoseed$factorRef)
-#' 
-#' # Set the statistical model and contrasts to test
-#' formulae <- generateModelFormulae(MAE)
-#' MAE <- setModelFormula(MAE, formulae[[1]])  
-#' 
-#' # Get the contrasts List and choose the first 3 contrasts of type averaged
-#' contrastList <- 
-#'    generateExpressionContrast(MAE, "averaged")
-#'    
-#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
-#' 
-#' # Run the data preprocessing and perform the differential analysis 
-#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
-#'                          transformMethod = "log2",
-#'                          normMethod = "median")
-#'  
-#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
-#'                        method = "limmalmFit", 
-#'                        contrastList = contrastList)
-#' 
-#' # Run KEGG annotation (enrichKEGG)
-#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
-#'        list_args = list(organism = "ath",
-#'        keyType = "kegg",
-#'        pvalueCutoff = 0.05),
-#'        from = "DiffExp", database = "KEGG")
-#'        
-#' # Get all results from KEGG on differential expression lists:
-#' getEnrichRes(MAE[["protetest"]],
-#'              from = "diffexp", database = "KEGG")
-#'              
+#' @rdname runAnnotationEnrichment
+#' @name getEnrichRes
 setMethod(
   f = "getEnrichRes",
   signature = "RflomicsSE",
@@ -1149,8 +927,8 @@ setMethod(
   }
 )
 
-#' @rdname getEnrichRes
-#' @aliases getEnrichRes
+#' @rdname runAnnotationEnrichment
+#' @name getEnrichRes
 #' @exportMethod getEnrichRes
 setMethod(
   f = "getEnrichRes",
@@ -1184,12 +962,13 @@ setMethod(
   }
 )
 
-# ---- Get summary from ORA : ----
+### ---- Get summary from ORA : ----
 
-#' @title Get summary tables from ORA analyses -
-#' once an enrichment has been conducted.
-#'
-#' @param object a SE object (produced by Flomics)
+#' @section Accessors: 
+#' \itemize{
+#'    \item sumORA: Get summary tables from ORA analyses -
+#'    once an enrichment has been conducted.
+#' }
 #' @param database either NULL, GO, KEGG or custom.
 #' if NULL, all tables are returned in a list.
 #' @param from either DiffExpEnrichAnal or CoExpAnal.
@@ -1197,50 +976,8 @@ setMethod(
 #' the results from. If NULL, all results are returned.
 #' @return a list of tables or a table
 #' @exportMethod sumORA
-#' @rdname sumORA
-#' @aliases sumORA
-#' @examples
-#' # load ecoseed data
-#' data(ecoseed)
-#' 
-#' # create rflomicsMAE object with ecoseed data
-#' MAE <- RFLOMICS::createRflomicsMAE(
-#'   projectName = "Tests",
-#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
-#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
-#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-#'   ExpDesign   = ecoseed$design,
-#'   factorRef   = ecoseed$factorRef)
-#' 
-#' # Set the statistical model and contrasts to test
-#' formulae <- generateModelFormulae(MAE)
-#' MAE <- setModelFormula(MAE, formulae[[1]])  
-#' 
-#' # Get the contrasts List and choose the first 3 contrasts of type averaged
-#' contrastList <- 
-#'    generateExpressionContrast(MAE, "averaged")
-#'    
-#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
-#' 
-#' # Run the data preprocessing and perform the differential analysis 
-#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
-#'                          transformMethod = "log2",
-#'                          normMethod = "median")
-#'  
-#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
-#'                        method = "limmalmFit", 
-#'                        contrastList = contrastList)
-#' 
-#' # Run KEGG annotation (enrichKEGG)
-#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
-#'        list_args = list(organism = "ath",
-#'        keyType = "kegg",
-#'        pvalueCutoff = 0.05),
-#'        from = "DiffExp", database = "KEGG")
-#'                         
-#' # Search for the pvalue cutoff:
-#' sumORA(MAE[["protetest"]], from = "diffexp", database = "KEGG")
-#'
+#' @rdname runAnnotationEnrichment
+#' @name sumORA
 setMethod(
   f = "sumORA",
   signature = "RflomicsSE",
@@ -1282,59 +1019,19 @@ setMethod(
 
 
 
-# ---- Get a pvalue threshold used in enrichment analysis ----
-#
-#' @title Get the pvalue threshold used in enrichment analysis
-#'
-#' @param object a RflomicsSE object
+### ---- Get a pvalue threshold used in enrichment analysis ----
+
+#' @section Accessors: 
+#' \itemize{
+#'    \item getEnrichPvalue:
+#'    Get the pvalue threshold used in enrichment analysis.
+#' }
 #' @param from where to search for the results (either coexp or diffExp)
 #' @param database which database (GO, KEGG, custom...)
 #' @return the pvalue cutoff used for the analysis.
 #' @exportMethod getEnrichPvalue
-#' @rdname getEnrichPvalue
-#' @aliases getEnrichPvalue
-#' @examples
-#' # load ecoseed data
-#' data(ecoseed)
-#' 
-#' # create rflomicsMAE object with ecoseed data
-#' MAE <- RFLOMICS::createRflomicsMAE(
-#'   projectName = "Tests",
-#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
-#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
-#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-#'   ExpDesign   = ecoseed$design,
-#'   factorRef   = ecoseed$factorRef)
-#' 
-#' # Set the statistical model and contrasts to test
-#' formulae <- generateModelFormulae(MAE)
-#' MAE <- setModelFormula(MAE, formulae[[1]])  
-#' 
-#' # Get the contrasts List and choose the first 3 contrasts of type averaged
-#' contrastList <- 
-#'    generateExpressionContrast(MAE, "averaged")
-#'    
-#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
-#' 
-#' # Run the data preprocessing and perform the differential analysis 
-#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
-#'                          transformMethod = "log2",
-#'                          normMethod = "median")
-#'  
-#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
-#'                        method = "limmalmFit", 
-#'                        contrastList = contrastList)
-#' 
-#' # Run KEGG annotation (enrichKEGG)
-#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
-#'        list_args = list(organism = "ath",
-#'        keyType = "kegg",
-#'        pvalueCutoff = 0.05),
-#'        from = "DiffExp", database = "KEGG")
-#'                         
-#' # Search for the pvalue cutoff:
-#' getEnrichPvalue(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
-#'
+#' @rdname runAnnotationEnrichment
+#' @name getEnrichPvalue
 setMethod(
   f = "getEnrichPvalue",
   signature = "RflomicsSE",
@@ -1359,59 +1056,19 @@ setMethod(
   }
 )
 
-# ---- Get a enrichment arguments ----
-#
-#' @title Get the settings of an enrichment analysis
-#'
-#' @param object a RflomicsSE object
+### ---- Get a enrichment arguments ----
+
+#' @section Accessors: 
+#' \itemize{
+#'    \item getEnrichSettings:
+#'    get the settings of an enrichment analysis.
+#' }
 #' @param from where to search for the results (either coexp or diffExp)
 #' @param database which database (GO, KEGG, custom...)
 #' @return a list with all settings
 #' @exportMethod getEnrichSettings
-#' @rdname getEnrichSettings
-#' @aliases getEnrichSettings
-#' @examples
-#' # load ecoseed data
-#' data(ecoseed)
-#' 
-#' # create rflomicsMAE object with ecoseed data
-#' MAE <- RFLOMICS::createRflomicsMAE(
-#'   projectName = "Tests",
-#'   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
-#'   omicsNames  = c("RNAtest", "metatest", "protetest"),
-#'   omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-#'   ExpDesign   = ecoseed$design,
-#'   factorRef   = ecoseed$factorRef)
-#' 
-#' # Set the statistical model and contrasts to test
-#' formulae <- generateModelFormulae(MAE)
-#' MAE <- setModelFormula(MAE, formulae[[1]])  
-#' 
-#' # Get the contrasts List and choose the first 3 contrasts of type averaged
-#' contrastList <- 
-#'    generateExpressionContrast(MAE, "averaged")
-#'    
-#' MAE <- setSelectedContrasts(MAE, contrastList = contrastList[c(1, 2, 3),])
-#' 
-#' # Run the data preprocessing and perform the differential analysis 
-#' MAE <- runDataProcessing(MAE, SE.name = "protetest",  
-#'                          transformMethod = "log2",
-#'                          normMethod = "median")
-#'  
-#' MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
-#'                        method = "limmalmFit", 
-#'                        contrastList = contrastList)
-#' 
-#' # Run KEGG annotation (enrichKEGG)
-#' MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
-#'        list_args = list(organism = "ath",
-#'        keyType = "kegg",
-#'        pvalueCutoff = 0.05),
-#'        from = "DiffExp", database = "KEGG")
-#'                         
-#' # Search for the pvalue cutoff:
-#' getEnrichSettings(MAEtest[["protetest"]], from = "diffexp", database = "KEGG")
-#'
+#' @rdname runAnnotationEnrichment
+#' @name getEnrichSettings
 setMethod(
     f = "getEnrichSettings",
     signature = "RflomicsSE",
@@ -1429,26 +1086,26 @@ setMethod(
     }
 )
 
-# ---- getAnnotAnalysesSummary ----
-#' @title getAnnotAnalysesSummary
-#' @description TODO
-#' @param object An object of class \link{RflomicsMAE}. It is expected the SE 
-#' object is produced by rflomics previous analyses, as it relies on their 
-#' results.
+### ---- getAnnotAnalysesSummary ----
+
+#' @section Accessors: 
+#' \itemize{
+#'    \item getAnnotAnalysesSummary:
+#'    return A list of heatmaps, one for each ontology/domain.
+#' }
 #' @param from indicates if the enrichment results are taken from differential 
 #' analysis results (DiffExpEnrichAnal) or from the co-expression analysis 
 #' results (CoExpEnrichAnal)
 #' @param matrixType Heatmap matrix to plot, one of GeneRatio, p.adjust 
 #' or presence.
 #' @param ... more arguments for ComplexHeatmap::Heatmap.
-#' @return A list of heatmaps, one for each ontology/domain.
 #' @importFrom reshape2 recast
 #' @importFrom circlize colorRamp2
 #' @importFrom ComplexHeatmap Heatmap ht_opt
 #' @importFrom stringr str_wrap
 #' @exportMethod getAnnotAnalysesSummary
-#' @rdname getAnnotAnalysesSummary
-#' @aliases getAnnotAnalysesSummary
+#' @rdname runAnnotationEnrichment
+#' @name getAnnotAnalysesSummary
 setMethod(
   f = "getAnnotAnalysesSummary",
   signature = "RflomicsMAE",

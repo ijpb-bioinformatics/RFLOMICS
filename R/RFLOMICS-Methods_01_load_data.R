@@ -382,9 +382,9 @@ setMethod(f          = "subRflomicsMAE",
 # ---- PLOTS ----
 
 ## ---- plotDataOverview ----
-#' @rdname Rflomics-plots
+#' @rdname RflomicsMAE-class
 #' @name plotDataOverview
-#' @description 
+#' @section Plots:
 #' \itemize{
 #'    \item plotDataOverview:
 #' This function plot an overview of the loaded datasets displaying per sample 
@@ -450,9 +450,9 @@ setMethod(f         = "plotDataOverview",
 
 ## ---- plotConditionsOverview ----
 
-#' @rdname Rflomics-plots
+#' @rdname RflomicsMAE-class
 #' @name plotConditionsOverview
-#' @description 
+#' @section Plots:
 #' \itemize{
 #'    \item plotConditionsOverview:
 #' A complete design and at least one biological and one batch factors are 

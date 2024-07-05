@@ -25,8 +25,7 @@ MAE <- runDataProcessing(MAE, SE.name = "protetest",
                          normMethod = "median")
 
 MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
-                       method = "limmalmFit", 
-                       contrastList = contrastList)
+                       method = "limmalmFit")
 # or
 # MAE[["protetest"]] <- runDiffAnalysis(MAE[["protetest"]], 
 #                                       method = "limmalmFit", 

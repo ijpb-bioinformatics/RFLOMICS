@@ -212,7 +212,7 @@ setMethod(f          = "setSelectedContrasts",
           })
 
 # ---- getModelFormula : Get Model Formula : ----
-#' @rdname Rflomics-accessors
+#' @rdname generateModelFormulae
 #' @name getModelFormula
 #' @description
 #' \itemize{
@@ -227,7 +227,7 @@ setMethod(f          = "getModelFormula",
           })
 
 #' @exportMethod getModelFormula
-#' @rdname Rflomics-accessors
+#' @rdname generateModelFormulae
 setMethod(f          = "getModelFormula",
           signature  = "RflomicsSE",
           definition = function(object){
@@ -237,7 +237,7 @@ setMethod(f          = "getModelFormula",
 
 
 # ---- getSelectedContrasts : ----
-#' @rdname Rflomics-accessors
+#' @rdname generateExpressionContrast
 #' @name getSelectedContrasts
 #' @exportMethod getSelectedContrasts
 #' @description
@@ -252,7 +252,7 @@ setMethod(f          = "getSelectedContrasts",
           })
 
 
-#' @rdname Rflomics-accessors
+#' @rdname generateExpressionContrast
 #' @exportMethod getSelectedContrasts
 setMethod(f          = "getSelectedContrasts",
           signature  = "RflomicsSE",
