@@ -90,11 +90,3 @@ This file contains annotation about biological functions of genes/proteins/metab
 | AT3G00980      | GO:0006396        | RNA processing                            | biological_process |
 | AT3G00980      | GO:0005730        | nucleolus                                 | cellular_component |
 
-<!-- # ```{r annot, output="asis", eval=FALSE} -->
-<!-- # annot.genes <- file.path(paste0(system.file(package = "RFLOMICS"), -->
-<!-- #                                    "/data/AT_GOterm_EnsemblPlants.rda")) -->
-<!-- # load(file = annot.genes) -->
-<!-- #  -->
-<!-- # DT::datatable(AT_GOterm_EnsemblPlants[1:10,]) -->
-<!-- # ``` -->
-
