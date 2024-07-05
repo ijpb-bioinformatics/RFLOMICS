@@ -1,8 +1,9 @@
 # load ecoseed data
+library(RFLOMICS)
 data(ecoseed)
 
 # create rflomicsMAE object with ecoseed data
-MAE <- RFLOMICS::createRflomicsMAE(
+MAE <- createRflomicsMAE(
   projectName = "Tests",
   omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
   omicsNames  = c("RNAtest", "metatest", "protetest"),
@@ -35,22 +36,18 @@ MAE <- runDiffAnalysis(MAE, SE.name = "protetest",
 # for p-value and fold change.
 MAE <- filterDiffAnalysis(MAE, SE.name = "protetest",
                           p.adj.cutoff = 0.01,
-                          logFC.cutoff = 1)
+                          logFC.cutoff = 0)
 # or
 # MAE[["protetest"]] <- filterDiffAnalysis(MAE[["protetest"]], 
 #                                          p.adj.cutoff = 0.01, 
-#                                          logFC.cutoff = 1)
+#                                          logFC.cutoff = 0)
 
 # Access to the diff analysis settings
 ## Get DE matrix from DiffExpAnalysis
 head(getDEMatrix(MAE[["protetest"]]))
 
-## Get union or intersection from list of contrasts
-getDEList(MAE[["protetest"]], contrasts = ) 
-
 ## Get diff setting
 getDiffSettings(MAE[["protetest"]])
-
 
 # generate plot results of a differential analysis
 thiscontrast <- "(temperatureMedium - temperatureLow) in mean"
