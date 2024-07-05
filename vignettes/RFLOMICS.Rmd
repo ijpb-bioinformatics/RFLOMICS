@@ -391,6 +391,6 @@ Several figure are provided by the interface once the analysis is done.
 Several figures are provided by the interface once the analysis is done, for 
 each selected response variable.  
 
-![](Images/07_mixOmics.png){width=80%} 
+![](Images/07_mixOmics.png){width=100%} 
 
 
