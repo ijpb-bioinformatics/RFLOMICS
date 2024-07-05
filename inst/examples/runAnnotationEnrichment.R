@@ -1,14 +1,16 @@
 # load ecoseed data
+library(RFLOMICS)
 data(ecoseed)
 
 # create rflomicsMAE object with ecoseed data
-MAE <- RFLOMICS::createRflomicsMAE(
-  projectName = "Tests",
-  omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
-  omicsNames  = c("RNAtest", "metatest", "protetest"),
-  omicsTypes  = c("RNAseq","metabolomics","proteomics"),
-  ExpDesign   = ecoseed$design,
-  factorRef   = ecoseed$factorRef)
+MAE <- createRflomicsMAE(
+    projectName = "Tests",
+    omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+    omicsNames  = c("RNAtest", "metatest", "protetest"),
+    omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+    ExpDesign   = ecoseed$design,
+    factorRef   = ecoseed$factorRef)
+# names(MAE) <- c("RNAtest", "metatest", "protetest")
 
 # Set the statistical model and contrasts to test
 formulae <- generateModelFormulae(MAE)
@@ -24,18 +26,21 @@ MAE <- runDataProcessing(MAE, SE.name = "protetest",
                          transformMethod = "log2",
                          normMethod = "median")
 
-MAE <- runDiffAnalysis(MAE, SE.name = "protetest", 
+MAE <- runDiffAnalysis(MAE, 
+                       SE.name = "protetest", 
                        method = "limmalmFit")
 
 # Run GO annotation (enrichGO)
-MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
-                               list_args = list(OrgDb = "org.At.tair.db",
-                                                keyType = "TAIR",
-                                                pvalueCutoff = 0.05),
-                               from = "DiffExp", database = "GO",
-                               domain = "CC")
+# Not run: need org.At.tair.db package
+# MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
+#                                list_args = list(OrgDb = "org.At.tair.db",
+#                                                 keyType = "TAIR",
+#                                                 pvalueCutoff = 0.05),
+#                                from = "DiffExp", database = "GO",
+#                                domain = "CC")
 
 # Run KEGG annotation (enrichKEGG)
+# need internet connection
 MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
                                list_args = list(organism = "ath",
                                                 keyType = "kegg",
@@ -47,8 +52,9 @@ MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
 sumORA(MAE[["protetest"]], from = "DiffExp", database = "KEGG")
 
 # need internet connection
-#plotKEGG(MAE[["protetest"]], pathway_id = "ath00710", species = "ath",
-#         contrastName = "cluster.4", from = "Coexp")
+# pathview package
+plotKEGG(MAE[["protetest"]], pathway_id = "ath00710", species = "ath",
+         contrastName = "cluster.4", from = "Coexp")
 
 # From differential analysis proteins lists:
 plotClusterProfiler(MAE[["protetest"]],
@@ -57,7 +63,7 @@ plotClusterProfiler(MAE[["protetest"]],
                     plotType = "heatplot", p.adj.cutoff = 0.05,
                     domain = "no-domain")
 
-plotEnrichComp(MAEtest[["protetest"]], from = "DiffExp",
+plotEnrichComp(MAE[["protetest"]], from = "DiffExp",
                database = "KEGG", matrixType = "FC")
 
 # Get all results from KEGG on differential expression lists:
@@ -66,7 +72,7 @@ results <- getEnrichRes(MAE[["protetest"]],
 
 # Search for the pvalue cutoff:
 usedPvalue <- 
-  getEnrichPvalue(MAE[["protetest"]], from = "diffexp", database = "KEGG")
+    getEnrichPvalue(MAE[["protetest"]], from = "diffexp", database = "KEGG")
 settings <- 
-  getEnrichSettings(MAE[["protetest"]], from = "diffexp", database = "KEGG")
+    getEnrichSettings(MAE[["protetest"]], from = "diffexp", database = "KEGG")
 
