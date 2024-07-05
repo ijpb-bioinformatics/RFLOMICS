@@ -88,6 +88,8 @@ setMethod(f = "resetRflomicsMAE",
 #'    \item getAnalyzedDatasetNames: return a list of performed analysis names.}
 #' @param analyses vector of list of analysis name
 #' @exportMethod getAnalyzedDatasetNames
+#' @aliases getAnalyzedDatasetNames,RflomicsMAE-method
+#' @name getAnalyzedDatasetNames
 #' @examples
 #' # See generateReport for an example that includes getAnalyzedDatasetNames
 setMethod(
@@ -258,6 +260,8 @@ setMethod(
 #' @importFrom stats cor
 #' @exportMethod generateReport
 #' @rdname generateReport
+#' @name generateReport
+#' @aliases generateReport,RflomicsMAE-method
 #' @example inst/examples/generateReport.R
 setMethod(
   f          = "generateReport",

@@ -556,6 +556,8 @@ setMethod(f          = "runNormalization",
 ### ==== runOmicsPCA ====
 
 #' @title runOmicsPCA
+#' @name runOmicsPCA
+#' @aliases runOmicsPCA,RflomicsSE-method
 #' @description 
 #' \itemize{
 #' \item runOmicsPCA: 
@@ -580,8 +582,7 @@ setMethod(f          = "runNormalization",
 #' @return An object of class \link{RflomicsSE}
 #' @exportMethod runOmicsPCA
 #' @importFrom FactoMineR PCA
-#' @rdname runOmicsPCA
-#' @aliases runOmicsPCA,RflomicsSE-method
+#' @rdname runDataProcessing
 #'
 setMethod(
   f          = "runOmicsPCA",
@@ -600,8 +601,9 @@ setMethod(
   }
 )
 
-#' @rdname runOmicsPCA
+#' @rdname runDataProcessing
 #' @aliases runOmicsPCA,RflomicsMAE-method
+#' @name runOmicsPCA
 #' @title runOmicsPCA
 #' @param SE.name the name of the data the normalization have to be applied to.
 #' @exportMethod runOmicsPCA
@@ -1122,6 +1124,7 @@ setMethod(
 ### ---- plotOmicsPCA ----
 #' @name plotOmicsPCA
 #' @aliases plotOmicsPCA,RflomicsSE-method
+#' @rdname runDataProcessing
 #' @section Plots: 
 #' \itemize{
 #'    \item plotOmicsPCA: 
@@ -1138,7 +1141,6 @@ setMethod(
 #' @importFrom ggplot2 ggplot aes_string geom_point geom_text aes xlab ylab 
 #' geom_hline geom_vline geom_vline element_text ggtitle geom_polygon
 #' @exportMethod plotOmicsPCA
-#' @rdname runDataProcessing
 #' @examples
 #' # See runDataProcessing for an example that includes plotOmicsPCA
 setMethod(f = "plotOmicsPCA",
