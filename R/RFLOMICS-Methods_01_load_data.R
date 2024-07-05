@@ -17,6 +17,7 @@ NULL
 ## ---- getProjectName ----
 #' @rdname RflomicsMAE-class
 #' @name getProjectName
+#' @aliases getProjectName,RflomicsMAE-method
 #' @exportMethod getProjectName
 #' @section Accessors:
 #' \itemize{
@@ -30,6 +31,7 @@ setMethod(f          = "getProjectName",
 
 ## ---- getDesignMat:    get colData ----
 #' @name getDesignMat
+#' @aliases getDesignMat,RflomicsMAE-method
 #' @exportMethod getDesignMat
 #' @rdname RflomicsMAE-class
 #' @section Accessors:
@@ -42,8 +44,9 @@ setMethod(f          = "getDesignMat",
             return(as.data.frame(object@colData))
           })
 
-#' @name getDesignMat.RflomicsSE
+#' @name getDesignMat,RflomicsSE-method
 #' @exportMethod getDesignMat
+#' @aliases getDesignMat,RflomicsSE-method
 #' @rdname RflomicsSE-class
 #' @section Accessors:
 #' \itemize{
@@ -58,6 +61,7 @@ setMethod(f          = "getDesignMat",
 ## ---- getDatasetNames: get experiment names from RflomicsMAE object ----
 
 #' @name getDatasetNames
+#' @aliases getDatasetNames,RflomicsMAE-method
 #' @exportMethod getDatasetNames
 #' @rdname RflomicsMAE-class
 #' @section Accessors:
@@ -74,7 +78,8 @@ setMethod(f          = "getDatasetNames",
           })
 
 
-#' @name getDatasetNames.RflomicsSE
+#' @name getDatasetNames,RflomicsSE-method
+#' @aliases getDatasetNames,RflomicsSE-method
 #' @exportMethod getDatasetNames
 #' @rdname RflomicsSE-class
 #' @section Accessors:
@@ -91,6 +96,7 @@ setMethod(f          = "getDatasetNames",
 # get omics types of experiments from RflomicsMAE object
 
 #' @name getOmicsTypes
+#' @aliases getOmicsTypes,RflomicsMAE-method
 #' @exportMethod getOmicsTypes
 #' @rdname RflomicsMAE-class
 #' @section Accessors:
@@ -115,7 +121,8 @@ setMethod(f          = "getOmicsTypes",
           })
 
 
-#' @name getOmicsTypes.RflomicsSE
+#' @name getOmicsTypes,RflomicsSE-method
+#' @aliases getOmicsTypes,RflomicsSE-method
 #' @exportMethod getOmicsTypes
 #' @rdname RflomicsSE-class
 #' @section Accessors:
@@ -135,6 +142,7 @@ setMethod(f          = "getOmicsTypes",
 #' @name getFactorNames
 #' @exportMethod getFactorNames
 #' @rdname RflomicsMAE-class
+#' @aliases getFactorNames,RflomicsMAE-method
 #' @section Accessors:
 #' \itemize{
 #'    \item getFactorNames: return a vector with the experimental factor names.}
@@ -146,7 +154,8 @@ setMethod(f          = "getFactorNames",
           })
 
 
-#' @name getFactorNames.RflomicsSE
+#' @name getFactorNames,RflomicsSE-method
+#' @aliases getFactorNames,RflomicsSE-method
 #' @exportMethod getFactorNames
 #' @rdname RflomicsSE-class
 #' @section Accessors:
@@ -163,6 +172,7 @@ setMethod(f          = "getFactorNames",
 
 #' @name getFactorTypes
 #' @exportMethod getFactorTypes
+#' @aliases getFactorTypes,RflomicsMAE-method
 #' @rdname RflomicsMAE-class
 #' @section Accessors:
 #' \itemize{
@@ -176,8 +186,9 @@ setMethod(f          = "getFactorTypes",
           })
 
 
-#' @name getFactorTypes.RflomicsSE
+#' @name getFactorTypes,RflomicsSE-method
 #' @exportMethod getFactorTypes
+#' @aliases getFactorTypes,RflomicsSE-method
 #' @rdname RflomicsSE-class
 #' @section Accessors:
 #' \itemize{
@@ -195,6 +206,7 @@ setMethod(f          = "getFactorTypes",
 #' @name getBioFactors
 #' @exportMethod getBioFactors
 #' @rdname RflomicsMAE-class
+#' @aliases getBioFactors,RflomicsMAE-method
 #' @section Accessors:
 #' \itemize{
 #'    \item getBioFactors: return a vector with the biological factor names.}
@@ -209,8 +221,9 @@ setMethod(f          = "getBioFactors",
             return(res)
           })
 
-#' @name getBioFactors.RflomicsSE
+#' @name getBioFactors,RflomicsSE-method
 #' @exportMethod getBioFactors
+#' @aliases getBioFactors,RflomicsSE-method
 #' @rdname RflomicsSE-class
 #' @section Accessors:
 #' \itemize{
@@ -230,6 +243,7 @@ setMethod(f          = "getBioFactors",
 
 #' @name getBatchFactors
 #' @exportMethod getBatchFactors
+#' @aliases getBatchFactors,RflomicsMAE-method
 #' @rdname RflomicsMAE-class
 #' @section Accessors:
 #' \itemize{
@@ -246,8 +260,8 @@ setMethod(f          = "getBatchFactors",
           })
 
 
-#' @name getBatchFactors.RflomicsSE
-#' @exportMethod getBatchFactors
+#' @name getBatchFactors,RflomicsSE-method
+#' @aliases getBatchFactors,RflomicsSE-method
 #' @rdname RflomicsSE-class
 #' @section Accessors:
 #' \itemize{
@@ -266,6 +280,7 @@ setMethod(f          = "getBatchFactors",
 ## ---- getMetaFactors:  get meta Factor names ----
 
 #' @name getMetaFactors
+#' @aliases getMetaFactors,RflomicsMAE-method
 #' @exportMethod getMetaFactors
 #' @rdname RflomicsMAE-class
 #' @section Accessors:
@@ -283,7 +298,8 @@ setMethod(f          = "getMetaFactors",
           })
 
 
-#' @name getMetaFactors.RflomicsSE
+#' @name getMetaFactors,RflomicsSE-method
+#' @aliases getMetaFactors,RflomicsSE-method
 #' @exportMethod getMetaFactors
 #' @rdname RflomicsSE-class
 #' @section Accessors:
@@ -303,8 +319,10 @@ setMethod(f          = "getMetaFactors",
 ## ---- getRflomicsSE:   get RflomicsSE object of one omic dataset ----
 
 #' @name getRflomicsSE
+#' @aliases getRflomicsSE,RflomicsMAE-method
 #' @exportMethod getRflomicsSE
 #' @rdname RflomicsMAE-class
+#' @param datasetName the name of the RflomicsSE to retrieve
 #' @section Accessors:
 #' \itemize{
 #'    \item getRflomicsSE: return a \link{RflomicsSE} object with selected 
@@ -321,6 +339,7 @@ setMethod(f          = "getRflomicsSE",
 ## ---- getFactorModalities: ----
 
 #' @name getFactorModalities
+#' @aliases getFactorModalities,RflomicsMAE-method
 #' @exportMethod getFactorModalities
 #' @rdname RflomicsMAE-class
 #' @param factorName factor name
@@ -338,7 +357,8 @@ setMethod(f          = "getFactorModalities",
             return(levels(getDesignMat(object)[[factorName]]))
           })
 
-#' @name getFactorModalities.RflomicsSE
+#' @name getFactorModalities,RflomicsSE-method
+#' @aliases getFactorModalities,RflomicsSE-method
 #' @exportMethod getFactorModalities
 #' @rdname RflomicsSE-class
 #' @param factorName factor name
@@ -359,10 +379,11 @@ setMethod(f          = "getFactorModalities",
 ## ---- subRflomicsMAE:  subset a RflomicsMAE from ----
 
 #' @name subRflomicsMAE
+#' @aliases subRflomicsMAE,RflomicsMAE-method
 #' @rdname RflomicsMAE-class
 #' @section Accessors:
 #' \itemize{
-#'    \item subRflomicsMAE: return a \link{rflomicsMAE} object with selected 
+#'    \item subRflomicsMAE: return a \link{RflomicsMAE-class} object with selected 
 #'    datasets.}
 #' @param omicNames dataset name.
 #' @exportMethod subRflomicsMAE
@@ -383,6 +404,7 @@ setMethod(f          = "subRflomicsMAE",
 
 ## ---- plotDataOverview ----
 #' @rdname RflomicsMAE-class
+#' @aliases plotDataOverview,RflomicsMAE-method
 #' @name plotDataOverview
 #' @section Plots:
 #' \itemize{
@@ -451,6 +473,7 @@ setMethod(f         = "plotDataOverview",
 ## ---- plotConditionsOverview ----
 
 #' @rdname RflomicsMAE-class
+#' @aliases plotConditionsOverview,RflomicsMAE-method
 #' @name plotConditionsOverview
 #' @section Plots:
 #' \itemize{

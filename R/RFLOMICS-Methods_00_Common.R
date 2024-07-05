@@ -12,7 +12,7 @@
 #' @description
 #' resetRflomicsMAE allows for initializing the object or initializing a 
 #' selection of results.
-#' @param object An object of class \link{RflomicsMAE}
+#' @param object An object of class \link{RflomicsMAE-class}
 #' @param singleAnalyses vector of single omics analysis results names 
 #' (c("DataProcessing", "PCAlist", "DiffExpAnal", 
 #' "DiffExpEnrichAnal", "CoExpAnal", "CoExpEnrichAnal"))
@@ -20,7 +20,7 @@
 #' (c("IntegrationAnalysis"))
 #' @param datasetNames dataset name. 
 #' If dataset == NULL, all datasets will be reset
-#' @return An object of class \link{RflomicsMAE}
+#' @return An object of class \link{RflomicsMAE-class}
 #' @noRd
 #' @keywords internal
 setMethod(f = "resetRflomicsMAE", 
@@ -82,7 +82,6 @@ setMethod(f = "resetRflomicsMAE",
           })
 
 # ---- getAnalyzedDatasetNames ----
-#' @name getAnalyzedDatasetNames
 #' @rdname generateReport
 #' @description
 #' \itemize{
@@ -143,13 +142,13 @@ setMethod(
 #' @title setElementToMetadata
 #' @description set element to metadata slot
 #' @param object An object of class \link{RflomicsSE} or
-#' \link{RflomicsMAE}. It is expected the SE object is produced by
+#' \link{RflomicsMAE-class}. It is expected the SE object is produced by
 #' rflomics previous analyses, as it relies on their results.. 
 #' @param name the name of element to add to metadata slot.
 #' @param subName the name of sub element to add to metadata slot.
 #' @param content the content of element to add
 #' @return An object of class \link{RflomicsSE} or
-#' \link{RflomicsMAE}.
+#' \link{RflomicsMAE-class}.
 #' @keywords internal
 #' @noRd
 setMethod(
@@ -185,11 +184,14 @@ setMethod(
 
 ## ---- get element from metadata slot from rflomicsSE/MAE ----
 
+
+#' @aliases getAnalysis,RflomicsMAE-method
 #' @name getAnalysis
 #' @rdname generateReport
 #' @description
 #' \itemize{
 #'    \item getAnalysis: return list of results from a specific analysis.}
+#' @param SE.name name of the experiment where the metadata should be added.
 #' @param name the name of element to add to metadata slot.
 #' @param subName the name of sub element to add to metadata slot.
 #' @exportMethod getAnalysis
@@ -214,8 +216,9 @@ setMethod(
     return(results)
   })
 
-#' @name getAnalysis
 #' @rdname generateReport
+#' @aliases getAnalysis,RflomicsSE-method
+#' @name getAnalysis
 #' @exportMethod getAnalysis
 setMethod(
   f = "getAnalysis",
@@ -234,12 +237,11 @@ setMethod(
 
 # ---- generateReport ----
 #' @title Generate RFLOMICS rmarkdown report
-#' @name generateReport
 #' @description
 #' This function is used to generate a html report from a
-#' \link{RflomicsMAE} object or archive with results.
-#' @param object a object of \link{RflomicsMAE} class or 
-#' \link{RflomicsMAE} class.
+#' \link{RflomicsMAE-class} object or archive with results.
+#' @param object a object of \link{RflomicsSE} class or 
+#' \link{RflomicsMAE-class} class.
 #' @param fileName Name of the html report (default: date()_projectName.html).
 #' @param archiveName name of archive with all analysis results 
 #' (default: date()_projectName.tar.gz).

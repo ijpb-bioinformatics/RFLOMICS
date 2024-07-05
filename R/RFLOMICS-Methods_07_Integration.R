@@ -3,12 +3,12 @@
 # ---- Wrapper ----
 #' @title Wrapper for integration of omics data using RFLOMICS
 #' @description This function executes all the steps to ensure data integration
-#' from a \link{RflomicsMAE} object produced by FLOMICS. It encapsulates the
+#' from a \link{RflomicsMAE-class} object produced by FLOMICS. It encapsulates the
 #' three other functions: \code{\link{filterFeatures,RflomicsMAE-method}}, 
 #' \code{\link{prepareForIntegration,RflomicsMAE-method}}
 #' and \code{\link{runOmicsIntegration,RflomicsMAE-method}} otherwise necessary
 #' to complete the integration.
-#' @param object An object of class \link{RflomicsMAE}.
+#' @param object An object of class \link{RflomicsMAE-class}.
 #' It is expected the MAE object is produced by rflomics previous analyses,
 #' as it relies on their results.
 #' @param omicsNames vector of characters strings,
@@ -114,7 +114,7 @@ setMethod(
 #' This is the second step into the integration. It is usually preceded by
 #' \link{filterFeatures} to extract the correct variables,
 #'  and followed by \link{runOmicsIntegration}.
-#' @param object An object of class \link{RflomicsMAE}.
+#' @param object An object of class \link{RflomicsMAE-class}.
 #' It is expected the MAE object is produced by rflomics previous analyses,
 #' as it relies on their results.
 #' @param omicsNames vector of characters strings,
@@ -437,7 +437,7 @@ setMethod(
 #' @description Runs the integration according to the selected method (MOFA or
 #' mixOmics) and the settings given by the user. Requires to have the correct
 #' entry format in preparedObject before running.
-#' @param object An object of class \link{RflomicsMAE}.
+#' @param object An object of class \link{RflomicsMAE-class}.
 #' It is expected the MAE object is produced by rflomics previous analyses,
 #' as it relies on their results.
 #' @param preparedObject An untrained MOFA object or a list of dataset.
@@ -578,9 +578,9 @@ setMethod(
 #' @description
 #' These methods are used to directly access the results of multi-omics 
 #' analyses or their settings, usually stored in the metadata of the 
-#' \link{RflomicsMAE} object. Setters are also available.
+#' \link{RflomicsMAE-class} object. Setters are also available.
 #'
-#' @param object An object of class \link{RflomicsMAE}.
+#' @param object An object of class \link{RflomicsMAE-class}.
 #' It is expected the MAE object is produced by rflomics previous analyses,
 #' as it relies on their results.
 #' @param response a character giving the response variable to access
@@ -596,7 +596,7 @@ setMethod(
 #' Otherwise, it gives the particular mixOmics result.
 #' For MOFA, returns the untrained object and the trained object as a list.
 #'
-#' For setters: always returns a \link{RflomicsMAE} object.
+#' For setters: always returns a \link{RflomicsMAE-class} object.
 #'
 #' @exportMethod getMixOmics
 #' @aliases getMixOmics
@@ -769,12 +769,12 @@ setMethod(
 
 #' @title plotMOVarExp
 #'
-#' @param object An object of class \link{RflomicsMAE}
+#' @param object An object of class \link{RflomicsMAE-class}
 #' @param selectedResponse a character string of the response variable to
 #' consider
 #' @param mode Can be NULL (default), "cumulative" or "comp".
 #' Defines the type of graph to return
-#' @return An object of class \link{RflomicsMAE}
+#' @return An object of class \link{RflomicsMAE-class}
 #' @importFrom ggpubr ggarrange
 #' @keywords internal
 #' @noRd

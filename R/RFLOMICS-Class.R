@@ -10,22 +10,22 @@
 
 #' @name RflomicsMAE-class
 #' @rdname RflomicsMAE-class
-#' @title \link{RflomicsMAE} class
+#' @title RflomicsMAE class
 #' @description
 #' RflomicsMAE is a class that extends the \link{MultiAssayExperiment}  
 #' class by imposing a structure to the metadata slot. This class is used by 
 #' the Rflomics analysis workflow to store the experimental design, the settings 
 #' and results of a multi-omics integration analysis.
-#' @param object An object of class \link{RflomicsMAE}
+#' @param object An object of class \link{RflomicsMAE-class}
 #' @section Slots: 
 #'  \itemize{
 #'    \item ExperimentList:
 #'      \itemize{
 #'        \item A ExperimentList class object of \link{RflomicsSE} object 
-#'        for each assay dataset}
-#'      \item colData: see \code{\link{MultiAssayExperiment}}
-#'      \item sampleMap: see \code{\link{MultiAssayExperiment}}
-#'      
+#'        for each assay dataset
+#'        }
+#'    \item colData: see \code{\link{MultiAssayExperiment}}
+#'    \item sampleMap: see \code{\link{MultiAssayExperiment}}
 #'    \item metadata:
 #'      \itemize{
 #'        \item projectName: string. Project name.

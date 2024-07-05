@@ -12,6 +12,7 @@
 #' @title Data processing
 #' @rdname runDataProcessing
 #' @name runDataProcessing
+#' @aliases runDataProcessing,RflomicsSE-method
 #' @description
 #' These functions applied a data processing (filtering, normalization 
 #' and/or transformation, PCA) on RNAseq, proteomic, or metabolomic data.
@@ -20,11 +21,11 @@
 #' @param object An object of class \link{RflomicsSE} or class \link{RflomicsSE} 
 #' @param samples samples to keep.
 #' @param lowCountFiltering_strategy strategy of RNAseq low count filtering. 
-#' Mandatory for RNAseq data. Default value : "NbReplicates".
+#' Mandatory for RNAseq data. Default value: "NbReplicates".
 #' @param lowCountFiltering_CPM_Cutoff CPM cutoff for RNAseq low count filtering.
-#'  Mandatory for RNAseq data. Default value : 1.
-#' @param normMethod of normalisation. Mandatory for RNAseq data. 
-#' Default value : RNAseq = TMM.
+#'  Mandatory for RNAseq data. Default value: 1.
+#' @param normMethod of normalization. Mandatory for RNAseq data. 
+#' Default value: RNAseq = TMM.
 #' @param transformMethod method of transformation.
 #' @return An object of class \link{RflomicsSE} or class \link{RflomicsSE} 
 #' @exportMethod runDataProcessing
@@ -34,7 +35,7 @@
 #' \link{getProcessedData} 
 #' \link{getTransSettings} 
 #' \link{getFilterSettings}
-#' \link{getFiltredFeatures}
+#' \link{getFilteredFeatures}
 #' \link{getCoeffNorm}
 #' \link{getNormSettings}
 #' \link{plotLibrarySize}
@@ -49,7 +50,6 @@
 #' differential analysis based on contrasts inside GLM models. 
 #' Plant Methods 16, 68 (2020).
 #' 
-#' ref2
 #' @example inst/examples/runDataProcessing.R
 setMethod(f          = "runDataProcessing",
           signature  = "RflomicsSE",
@@ -127,8 +127,10 @@ setMethod(f          = "runDataProcessing",
 
 
 #' @rdname runDataProcessing
+#' @name runDataProcessing
+#' @aliases runDataProcessing,RflomicsMAE-method
 #' @param SE.name SE.name the name of the dataset if the input object 
-#' is a \link{RflomicsMAE}
+#' is a \link{RflomicsMAE-class}
 #' @exportMethod runDataProcessing
 setMethod(f          = "runDataProcessing",
           signature  = "RflomicsMAE",
@@ -180,24 +182,31 @@ setMethod(f          = "runDataProcessing",
 # Plutot qu'une fonction interface pour tous les omics ?
 # Pourquoi ne pas avoir utilisée directement la fonction de edgeR ?
 #' @rdname runDataProcessing
+#' @aliases filterLowAbundance,RflomicsSE-method
 #' @name filterLowAbundance
 #' @description 
 #' \itemize{
-#' \item{filterLowAbundance:}{ This function aims at removing transcript from the count data matrix of an omic of type "RNAseq".
-#' by applying filtering criterion described in reference.}
+#' \item filterLowAbundance:  This function aims at removing transcript from 
+#' the count data matrix of an omic of type "RNAseq".
+#' by applying filtering criterion described in reference. 
 #' }
 #' @param filterMethod The filtering model ("CPM")
-#' @param filterStrategy The filtering strategy ("NbConditions" or "NbReplicates")
+#' @param filterStrategy The filtering strategy 
+#' ("NbConditions" or "NbReplicates")
 #' @param cpmCutoff The CPM cutoff.
 #' @details
-#' filterLowAbundance(): By default, gene/transcript with 0 count are removed from the data. The function then
-#' computes the count per million or read (CPM) for each gene in each sample and gives by
-#' genes the number of sample(s) which are over the cpmCutoff (NbOfsample_over_cpm).
+#' filterLowAbundance(): By default, gene/transcript with 0 count 
+#' are removed from the data. The function then
+#' computes the count per million or read (CPM) for each gene 
+#' in each sample and gives by
+#' genes the number of sample(s) which are over the cpmCutoff 
+#' (NbOfsample_over_cpm).
 #' Then Two filtering strategies are proposed:
 #' \itemize{
-#' \item{NbConditions: }{keep gene if the NbOfsample_over_cpm >= NbConditions}
-#' \item{NbReplicates: }{keep gene if the NbOfsample_over_cpm >= min(NbReplicat)}
-#' \item{filterByExpr:} {the default filtering method implemented in the edgeR filterByExpr() function.}
+#' \item NbConditions:  keep gene if the NbOfsample_over_cpm >= NbConditions 
+#' \item NbReplicates:  keep gene if the NbOfsample_over_cpm >= min(NbReplicat) 
+#' \item filterByExpr: the default filtering method implemented 
+#' in the edgeR filterByExpr() function. 
 #' }
 #' @exportMethod filterLowAbundance
 #' @importFrom edgeR DGEList filterByExpr cpm
@@ -259,6 +268,7 @@ setMethod(f         = "filterLowAbundance",
 
 #' @rdname runDataProcessing
 #' @name filterLowAbundance
+#' @aliases filterLowAbundance,RflomicsMAE-method
 #' @exportMethod filterLowAbundance
 setMethod(f          = "filterLowAbundance",
           signature  = "RflomicsMAE",
@@ -285,10 +295,11 @@ setMethod(f          = "filterLowAbundance",
 
 #' @rdname runDataProcessing
 #' @name runSampleFiltering
+#' @aliases runSampleFiltering,RflomicsSE-method
 #' @description 
 #' \itemize{
-#' \item{runSampleFiltering:}
-#' { This function applied sample filtering on an dataset.}
+#' \item runSampleFiltering: 
+#'   This function applied sample filtering on an dataset. 
 #' }
 #' @exportMethod runSampleFiltering
 #' @importFrom dplyr filter
@@ -353,6 +364,7 @@ setMethod(f          = "runSampleFiltering",
 
 
 #' @rdname runDataProcessing
+#' @aliases runSampleFiltering,RflomicsMAE-method
 #' @exportMethod runSampleFiltering
 setMethod(f          = "runSampleFiltering",
           signature  = "RflomicsMAE",
@@ -370,12 +382,13 @@ setMethod(f          = "runSampleFiltering",
 
 #' @rdname runDataProcessing
 #' @name runTransformData
+#' @aliases runTransformData,RflomicsSE-method
 #' @description
 #' \itemize{
-#' \item{runTransformData:}
-#' { This function applied a transformation on dataset. The transformation 
+#' \item runTransformData: 
+#'    This function applied a transformation on dataset. The transformation 
 #' method is chosen according to dataset omic type 
-#' (RNaseq: none, metabolomics/proteomics: log2)}
+#' (RNaseq: none, metabolomics/proteomics: log2) 
 #' }
 #' @param transformMethod The transformation to store in the metadata or to 
 #' store and apply if modifyAssay is TRUE.
@@ -425,6 +438,7 @@ setMethod(f          = "runTransformData",
 
 #' @rdname runDataProcessing
 #' @name runTransformData
+#' @aliases runTransformData,RflomicsMAE-method
 #' @exportMethod runTransformData
 setMethod(f          = "runTransformData",
           signature  = "RflomicsMAE",
@@ -447,19 +461,24 @@ setMethod(f          = "runTransformData",
 
 #' @rdname runDataProcessing
 #' @name runNormalization
+#' @aliases runNormalization,RflomicsSE-method
 #' @description 
 #' \itemize{
-#' \item{runNormalization:}
-#' { This function applied a normalization on a dataset. 
+#' \item runNormalization: 
+#'  This function applied a normalization on a dataset. 
 #' The normalisation method is chosen according to dataset omic type 
-#' (RNAseq: TMM, metabolics/proteomics: median)}
+#' (RNAseq: TMM, metabolics/proteomics: median) 
 #' }
 #' @param normMethod Normalization method
-#' @param modifyAssay Does the normalization have to be applied or just stored for later? Recommended it stays FALSE.
+#' @param modifyAssay Does the normalization have to be applied or just 
+#' stored for later? Recommended it stays FALSE.
 #' @return An object of class \link{RflomicsSE}
-#' The applied normalization method and computed scaling factors (by samples) are stored as a named list
-#' ("normalization") of two elements (respectively "method" and "coefNorm") in the metadata slot of a
-#' given data set, stored itself in the ExperimentList slot of a \link{RflomicsSE} object.
+#' The applied normalization method and computed scaling factors 
+#' (by samples) are stored as a named list
+#' ("normalization") of two elements (respectively "method" and 
+#' "coefNorm") in the metadata slot of a
+#' given data set, stored itself in the ExperimentList slot of a 
+#' \link{RflomicsSE} object.
 #' @importFrom stats median
 #' @exportMethod runNormalization
 setMethod(f          = "runNormalization",
@@ -522,6 +541,7 @@ setMethod(f          = "runNormalization",
 
 #' @rdname runDataProcessing
 #' @name runNormalization
+#' @aliases runNormalization,RflomicsMAE-method
 #' @exportMethod runNormalization
 setMethod(f          = "runNormalization",
           signature  = "RflomicsMAE",
@@ -538,13 +558,13 @@ setMethod(f          = "runNormalization",
 #' @title runOmicsPCA
 #' @description 
 #' \itemize{
-#' \item{runOmicsPCA:}
-#' {This function performs a principal component analysis on omic 
+#' \item runOmicsPCA: 
+#'  This function performs a principal component analysis on omic 
 #' data stored in an object of class \link{RflomicsSE-class}
 #' Results are stored in the metadata slot of the same object. If a 
 #' "Normalization" slot is present in the metadata slot, then data are 
 #' normalized before running the PCA according to the indicated transform 
-#' method.}
+#' method. 
 #' }
 #' This function performs a principal component analysis on omic 
 #' data stored in an object of class \link{RflomicsSE-class}
@@ -561,7 +581,7 @@ setMethod(f          = "runNormalization",
 #' @exportMethod runOmicsPCA
 #' @importFrom FactoMineR PCA
 #' @rdname runOmicsPCA
-#' @aliases runOmicsPCA
+#' @aliases runOmicsPCA,RflomicsSE-method
 #'
 setMethod(
   f          = "runOmicsPCA",
@@ -581,7 +601,7 @@ setMethod(
 )
 
 #' @rdname runOmicsPCA
-#' @aliases runOmicsPCA
+#' @aliases runOmicsPCA,RflomicsMAE-method
 #' @title runOmicsPCA
 #' @param SE.name the name of the data the normalization have to be applied to.
 #' @exportMethod runOmicsPCA
@@ -604,6 +624,7 @@ setMethod(
 ## ---- checkExpDesignCompleteness ----
 
 #' @name checkExpDesignCompleteness
+#' @aliases checkExpDesignCompleteness,RflomicsSE-method
 #' @rdname runDataProcessing
 #' @description
 #' \itemize{
@@ -671,6 +692,8 @@ setMethod(f         = "checkExpDesignCompleteness",
           })
 
 #' @rdname runDataProcessing
+#' @name checkExpDesignCompleteness
+#' @aliases checkExpDesignCompleteness,RflomicsMAE-method
 #' @param omicName the name of the data the normalization have to be applied to. 
 #' @exportMethod checkExpDesignCompleteness
 setMethod(f         = "checkExpDesignCompleteness",
@@ -690,6 +713,9 @@ setMethod(f         = "checkExpDesignCompleteness",
 
 #' @rdname runDataProcessing
 #' @name getProcessedData
+#' @param NormTrans boolean. If TRUE, returned Data are normalized 
+#' and transformed.
+#' @aliases getProcessedData,RflomicsSE-method
 #' @section Accessors: 
 #' \itemize{
 #'    \item getProcessedData: return a processed data matrix  
@@ -736,6 +762,7 @@ setMethod(f          = "getProcessedData",
 
 #' @rdname runDataProcessing
 #' @name getProcessedData
+#' @aliases getProcessedData,RflomicsMAE-method
 #' @exportMethod getProcessedData
 setMethod(f          = "getProcessedData",
           signature  = "RflomicsMAE",
@@ -757,6 +784,7 @@ setMethod(f          = "getProcessedData",
 # Get transformation parameters
 #' @rdname runDataProcessing
 #' @name getTransSettings
+#' @aliases getTransSettings,RflomicsSE-method
 #' @section Accessors: 
 #' \itemize{
 #'    \item getTransSettings: return a list of transformation settings 
@@ -773,6 +801,7 @@ setMethod(f          = "getTransSettings",
 
 #' @rdname runDataProcessing
 #' @name getTransSettings
+#' @aliases getTransSettings,RflomicsMAE-method
 #' @exportMethod getTransSettings
 setMethod(f          = "getTransSettings",
           signature  = "RflomicsMAE",
@@ -785,6 +814,7 @@ setMethod(f          = "getTransSettings",
 # Get filtering parameters
 #' @rdname runDataProcessing
 #' @name getFilterSettings
+#' @aliases getFilterSettings,RflomicsSE-method
 #' @section Accessors: 
 #' \itemize{
 #'    \item getFilterSettings: return a list the filtering settings of a given 
@@ -800,6 +830,8 @@ setMethod(f          = "getFilterSettings",
           })
 
 #' @rdname runDataProcessing
+#' @name getFilterSettings
+#' @aliases getFilterSettings,RflomicsMAE-method
 #' @exportMethod getFilterSettings
 setMethod(f          = "getFilterSettings",
           signature  = "RflomicsMAE",
@@ -812,6 +844,7 @@ setMethod(f          = "getFilterSettings",
 # Get filtred features
 #' @rdname runDataProcessing
 #' @name getFilteredFeatures
+#' @aliases getFilteredFeatures,RflomicsSE-method
 #' @section Accessors: 
 #' \itemize{
 #'    \item getFilteredFeatures: return a vector of filtered features of a given 
@@ -828,6 +861,8 @@ setMethod(f          = "getFilteredFeatures",
 
 #' @rdname runDataProcessing
 #' @exportMethod getFilteredFeatures 
+#' @name getFilteredFeatures
+#' @aliases getFilteredFeatures,RflomicsMAE-method
 setMethod(f          = "getFilteredFeatures",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name){
@@ -838,6 +873,7 @@ setMethod(f          = "getFilteredFeatures",
 
 #' @rdname runDataProcessing
 #' @name getCoeffNorm
+#' @aliases getCoeffNorm,RflomicsSE-method
 #' @section Accessors: 
 #' \itemize{
 #'    \item getCoeffNorm: return a named vector with normalization coefficients 
@@ -853,6 +889,8 @@ setMethod(f          = "getCoeffNorm",
           })
 
 #' @rdname runDataProcessing
+#' @name getCoeffNorm
+#' @aliases getCoeffNorm,RflomicsMAE-method
 #' @exportMethod getCoeffNorm 
 
 setMethod(f          = "getCoeffNorm",
@@ -866,6 +904,7 @@ setMethod(f          = "getCoeffNorm",
 
 #' @rdname runDataProcessing
 #' @name getNormSettings
+#' @aliases getNormSettings,RflomicsSE-method
 #' @section Accessors: 
 #' \itemize{
 #'    \item getNormSettings: return a list of normalization settings 
@@ -880,6 +919,8 @@ setMethod(f          = "getNormSettings",
           })
 
 #' @rdname runDataProcessing
+#' @name getNormSettings
+#' @aliases getNormSettings,RflomicsMAE-method
 #' @exportMethod getNormSettings
 setMethod(f          = "getNormSettings",
           signature  = "RflomicsMAE",
@@ -893,6 +934,7 @@ setMethod(f          = "getNormSettings",
 
 #' @rdname runDataProcessing
 #' @name plotLibrarySize
+#' @aliases plotLibrarySize,RflomicsSE-method
 #' @section Plots: 
 #' \itemize{
 #'    \item plotLibrarySize: return barplot of library size by sample.}
@@ -953,6 +995,7 @@ setMethod(f          = "plotLibrarySize",
 
 #' @rdname runDataProcessing
 #' @name plotLibrarySize
+#' @aliases plotLibrarySize,RflomicsMAE-method
 #' @exportMethod plotLibrarySize
 setMethod(f          = "plotLibrarySize",
           signature  = "RflomicsMAE",
@@ -971,6 +1014,7 @@ setMethod(f          = "plotLibrarySize",
 
 #' @rdname runDataProcessing
 #' @name plotDataDistribution
+#' @aliases plotDataDistribution,RflomicsSE-method
 #' @description
 #' \itemize{
 #'    \item plotDataDistribution: return boxplot or density plot of expression
@@ -1059,6 +1103,7 @@ setMethod(
 
 #' @rdname runDataProcessing
 #' @name plotDataDistribution
+#' @aliases plotDataDistribution,RflomicsMAE-method
 #' @exportMethod plotDataDistribution
 setMethod(
   f = "plotDataDistribution",
@@ -1076,6 +1121,7 @@ setMethod(
 
 ### ---- plotOmicsPCA ----
 #' @name plotOmicsPCA
+#' @aliases plotOmicsPCA,RflomicsSE-method
 #' @section Plots: 
 #' \itemize{
 #'    \item plotOmicsPCA: 
@@ -1208,6 +1254,7 @@ setMethod(f = "plotOmicsPCA",
 
 #' @rdname runDataProcessing
 #' @name plotOmicsPCA
+#' @aliases plotOmicsPCA,RflomicsMAE-method
 #' @exportMethod plotOmicsPCA
 setMethod(
   f          = "plotOmicsPCA",
@@ -1224,6 +1271,7 @@ setMethod(
 
 ### ---- plotExpDesignCompleteness ----
 #' @name plotExpDesignCompleteness
+#' @aliases plotExpDesignCompleteness,RflomicsSE-method
 #' @section Plots: 
 #' \itemize{
 #'    \item plotExpDesignCompleteness: 
@@ -1261,6 +1309,7 @@ setMethod(f         = "plotExpDesignCompleteness",
 
 #' @param omicName a character string with the name of the dataset
 #' @exportMethod plotExpDesignCompleteness
+#' @aliases plotExpDesignCompleteness,RflomicsMAE-method
 #' @rdname runDataProcessing
 setMethod(f         = "plotExpDesignCompleteness",
           signature = "RflomicsMAE",

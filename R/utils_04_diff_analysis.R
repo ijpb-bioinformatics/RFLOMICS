@@ -3,7 +3,7 @@
 
 #' @title .edgeRAnaDiff
 #'
-#' @param object an object of class \link{RflomicsSE}]
+#' @param object an object of class \link{RflomicsSE}
 #' @param clustermq A boolean indicating if the constrasts have to be computed 
 #' in local or in a distant machine
 #' @param parallel boolean. Compute parallel differential analyses 

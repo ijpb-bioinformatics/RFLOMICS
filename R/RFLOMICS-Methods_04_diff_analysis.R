@@ -11,22 +11,23 @@
 
 #' @title Run Differential Expression Analysis
 #' @name runDiffAnalysis
+#' @aliases runDiffAnalysis,RflomicsSE-method
 #' @description This is an interface method which run a differential 
 #' analysis on omics datasets stored in an object of class 
-#' \link{RflomicsSE} or \link{RflomicsMAE}. According to the type 
+#' \link{RflomicsSE} or \link{RflomicsMAE-class}. According to the type 
 #' of omics and to a list of contrasts, a differential analysis  
 #' is performef for each contrasts.
 #' Two methods are available according to the type of object:
 #' \itemize{
-#' \item{For RNAseq data: }{the \code{glmFit} function/model of the 
-#' \code{edgeR} package} is applied.
-#' \item{For proteomic and metabolomic data: }{the \code{\link{lmFit}} 
-#' function/model of the \code{limma} package} is applied.
+#' \item For RNAseq data:  the \code{glmFit} function/model of the 
+#' \code{edgeR} package is applied.
+#' \item For proteomic and metabolomic data:  the \code{\link{lmFit}} 
+#' function/model of the \code{limma} package is applied.
 #' }
 #' @param object An object of class \link{RflomicsSE} or 
-#' class \link{RflomicsMAE}
+#' class \link{RflomicsMAE-class}
 #' @param SE.name SE.name the name of the dataset if the input object 
-#' is a \link{RflomicsMAE}
+#' is a \link{RflomicsMAE-class}
 #' @param method A character vector giving the name of the differential 
 #' analysis method to run. Either "edgeRglmfit" or "limmalmFit".
 #' @param contrastList data.frame of contrast from generateExpressionContrast().
@@ -44,32 +45,30 @@
 #' workflow (see the paper in reference).
 #' Functions and parameters used for proteomic and metabolomic data are those 
 #' recommended in the (Efstathiou *et al.*, 2017)
-#' @return A \link{RflomicsSE} or a \link{RflomicsMAE} object.
+#' @return A \link{RflomicsSE} or a \link{RflomicsMAE-class} object.
 #' All the results are stored as a named list \code{DiffExpAnal} 
 #' in the metadata slot of a given \link{RflomicsSE} object.
 #' Objects are:
 #' \itemize{
-#' \item{stats:}{ data.frame giving a summary of the differential 
+#'   \item stats: data.frame giving a summary of the differential 
 #'  statistical analysis results by contrast:
-#'  number of DE features, number of up and down regulated features}
-#' \item{setting: }{Parameters used for the differential analysis}
-#' \itemize{
-#' \item{method: }{ The method used for the differential analysis}
-#' \item{p.adj.method:}{ The applied p-value correction method}
-#' \item{p.adj.cutoff:}{ The cut-off applied for the adjusted p-value}
-#' \item{logFC.cutoff:}{ The absolute log FC cut-off}
-#' }
-#' \item{RawDEFres: }{a list giving for each contrast the raw results of 
-#'  the differential analysis method}
-#' \item{DEF: }{a list giving for each contrast a data.frame of non filtered 
-#'  differential expressed features with their statistics}
-#' \item{TopDEF: }{a list giving for each contrast a data.frame of 
+#'  number of DE features, number of up and down regulated features 
+#'   \item setting: Parameters used for the differential analysis 
+#'  \item method: The method used for the differential analysis 
+#'  \item p.adj.method: The applied p-value correction method 
+#'   \item p.adj.cutoff: The cut-off applied for the adjusted p-value 
+#'   \item logFC.cutoff: The absolute log FC cut-off 
+#'   \item RawDEFres: a list giving for each contrast the raw results of 
+#'  the differential analysis method
+#'   \item DEF: a list giving for each contrast a data.frame of non filtered 
+#'  differential expressed features with their statistics  
+#'   \item TopDEF: a list giving for each contrast a data.frame of 
 #'  differential expressed features ordered and filtered by p.adj.cutoff 
-#'  with their statistics}
-#' \item{mergeDEF: }{a data frame of 0/1 indicating for each features in row, 
-#'  if it is DE in a given contrasts in column}
-#' \item{contrasts: }{a data.table of the contrasts used for the differential 
-#'  analysis}
+#'  with their statistics
+#'  \item mergeDEF: a data frame of 0 and 1 indicating for each features in row, 
+#'  if it is DE in a given contrasts in column
+#'  \item contrasts: a data.table of the contrasts used for the differential 
+#'  analysis
 #' }
 #' @references
 #' Lambert, I., Paysant-Le Roux, C., Colella, S. et al. DiCoExpress: a tool 
@@ -225,6 +224,7 @@ setMethod(f         = "runDiffAnalysis",
           })
 
 #' @name runDiffAnalysis
+#' @aliases runDiffAnalysis,RflomicsMAE-method
 #' @rdname runDiffAnalysis
 #' @exportMethod runDiffAnalysis
 setMethod(f          = "runDiffAnalysis",
@@ -257,6 +257,7 @@ setMethod(f          = "runDiffAnalysis",
 
 #' @rdname runDiffAnalysis
 #' @name generateContrastMatrix
+#' @aliases generateContrastMatrix,RflomicsSE-method
 #' @description
 #' \itemize{
 #'    \item generateContrastMatrix: 
@@ -294,6 +295,7 @@ setMethod(f          = "generateContrastMatrix",
 
 #' @rdname runDiffAnalysis
 #' @name generateContrastMatrix
+#' @aliases generateContrastMatrix,RflomicsMAE-method
 #' @exportMethod generateContrastMatrix
 setMethod(f          = "generateContrastMatrix",
           signature  = "RflomicsMAE",
@@ -325,6 +327,7 @@ setMethod(f          = "generateContrastMatrix",
 
 #' @rdname runDiffAnalysis
 #' @name filterDiffAnalysis
+#' @aliases filterDiffAnalysis,RflomicsSE-method
 #' @description
 #' \itemize{
 #'    \item filterDiffAnalysis: The filterDiffAnalysis method allows 
@@ -398,7 +401,7 @@ setMethod(f          = "filterDiffAnalysis",
 
 #' @rdname runDiffAnalysis
 #' @name filterDiffAnalysis
-#' is a \link{RflomicsMAE}
+#' @aliases filterDiffAnalysis,RflomicsMAE-method
 #' @exportMethod filterDiffAnalysis
 setMethod(f          = "filterDiffAnalysis",
           signature  = "RflomicsMAE",
@@ -436,6 +439,7 @@ setMethod(f          = "filterDiffAnalysis",
 
 #' @rdname runDiffAnalysis
 #' @name setValidContrasts
+#' @aliases setValidContrasts,RflomicsSE-method
 #' @description
 #' \itemize{
 #'    \item setValidContrasts: Set the valid contrasts stored in \code{metadata} slot.}
@@ -452,6 +456,7 @@ setMethod(f          = "setValidContrasts",
 
 #' @rdname runDiffAnalysis
 #' @name setValidContrasts
+#' @aliases setValidContrasts,RflomicsMAE-method
 #' @param omicName a dataset name
 #' @exportMethod setValidContrasts
 setMethod(f          = "setValidContrasts",
@@ -469,6 +474,7 @@ setMethod(f          = "setValidContrasts",
 ###==== Method to plot results of a differential analysis ====
 
 #' @name plotDiffAnalysis
+#' @aliases plotDiffAnalysis,RflomicsSE-method
 #' @rdname runDiffAnalysis
 #' @section Plots:
 #' \itemize{
@@ -517,6 +523,7 @@ setMethod(f="plotDiffAnalysis",
 
 #' @rdname runDiffAnalysis
 #' @name plotDiffAnalysis
+#' @aliases plotDiffAnalysis,RflomicsMAE-method
 #' @exportMethod plotDiffAnalysis
 setMethod(f          = "plotDiffAnalysis",
           signature  = "RflomicsMAE",
@@ -533,6 +540,7 @@ setMethod(f          = "plotDiffAnalysis",
 ###==== Method to plot plotHeatmapDesign ====
 
 #' @name plotHeatmapDesign
+#' @aliases plotHeatmapDesign,RflomicsSE-method
 #' @rdname runDiffAnalysis
 #' @section Plots:
 #' \itemize{
@@ -696,6 +704,7 @@ setMethod(f          = "plotHeatmapDesign",
           })
 
 #' @name plotHeatmapDesign
+#' @aliases plotHeatmapDesign,RflomicsMAE-method
 #' @rdname runDiffAnalysis
 #' @exportMethod plotHeatmapDesign
 setMethod(f          = "plotHeatmapDesign",
@@ -723,6 +732,7 @@ setMethod(f          = "plotHeatmapDesign",
 ###==== Method to plot BoxplotDE ====
 
 #' @name plotBoxplotDE
+#' @aliases plotBoxplotDE,RflomicsSE-method
 #' @rdname runDiffAnalysis
 #' @section Plots:
 #' \itemize{
@@ -834,6 +844,7 @@ setMethod(f          = "plotBoxplotDE",
 
 #' @rdname runDiffAnalysis
 #' @name plotBoxplotDE
+#' @aliases plotBoxplotDE,RflomicsMAE-method
 #' @exportMethod plotBoxplotDE
 setMethod(f          = "plotBoxplotDE",
           signature  = "RflomicsMAE",
@@ -858,6 +869,7 @@ setMethod(f          = "plotBoxplotDE",
 
 #' @rdname runDiffAnalysis
 #' @name getDEMatrix
+#' @aliases getDEMatrix,RflomicsSE-method
 #' @section Accessors:
 #' \itemize{
 #'    \item getDEMatrix: return a matrix of experimental design.}
@@ -878,6 +890,7 @@ setMethod(f          = "getDEMatrix",
 
 #' @rdname runDiffAnalysis
 #' @name getDEMatrix
+#' @aliases getDEMatrix,RflomicsMAE-method
 #' @exportMethod getDEMatrix
 setMethod(f          = "getDEMatrix",
           signature  = "RflomicsMAE",
@@ -891,6 +904,7 @@ setMethod(f          = "getDEMatrix",
 
 #' @rdname runDiffAnalysis
 #' @name getDEList
+#' @aliases getDEList,RflomicsSE-method
 #' @section Accessors:
 #' \itemize{
 #'    \item getDEList: return a vector of union or intersection of differential
@@ -947,6 +961,7 @@ setMethod(f          = "getDEList",
 
 #' @rdname runDiffAnalysis
 #' @name getDEList
+#' @aliases getDEList,RflomicsMAE-method
 #' @exportMethod getDEList
 setMethod(f          = "getDEList",
           signature  = "RflomicsMAE",
@@ -961,6 +976,7 @@ setMethod(f          = "getDEList",
 ### ---- Get diff setting ----
 #' @rdname runDiffAnalysis
 #' @name getDiffSettings
+#' @aliases getDiffSettings,RflomicsSE-method
 #' @section Accessors:
 #' \itemize{
 #'    \item getDiffSettings: retrun a list of differential expression analysis 
@@ -977,6 +993,7 @@ setMethod(f          = "getDiffSettings",
 
 #' @rdname runDiffAnalysis
 #' @name getDiffSettings
+#' @aliases getDiffSettings,RflomicsMAE-method
 #' @exportMethod getDiffSettings
 setMethod(f          = "getDiffSettings",
           signature  = "RflomicsMAE",
@@ -989,6 +1006,7 @@ setMethod(f          = "getDiffSettings",
 
 #' @rdname runDiffAnalysis
 #' @name getValidContrasts
+#' @aliases getValidContrasts,RflomicsSE-method
 #' @section Accessors:
 #' \itemize{
 #'    \item getValidContrasts: return a data.frame of valided contrasts}
@@ -1001,6 +1019,8 @@ setMethod(f          = "getValidContrasts",
           })
 
 #' @rdname runDiffAnalysis
+#' @name getValidContrasts
+#' @aliases getValidContrasts,RflomicsMAE-method
 #' @param omicName a dataset name
 #' @exportMethod getValidContrasts
 setMethod(f          = "getValidContrasts",
@@ -1018,6 +1038,7 @@ setMethod(f          = "getValidContrasts",
 
 #' @rdname runDiffAnalysis
 #' @name sumDiffExp
+#' @aliases sumDiffExp,RflomicsSE-method
 #' @section Accessors:
 #' \itemize{
 #'    \item sumDiffExp: Get summary table from diffExpAnalysis analysis}
@@ -1046,6 +1067,7 @@ setMethod(f          = "sumDiffExp",
 
 #' @rdname runDiffAnalysis
 #' @name sumDiffExp
+#' @aliases sumDiffExp,RflomicsMAE-method
 #' @exportMethod sumDiffExp
 setMethod(f          = "sumDiffExp",
           signature  = "RflomicsMAE",
@@ -1058,10 +1080,14 @@ setMethod(f          = "sumDiffExp",
 
 ### ---- getDiffAnalysesSummary ----
 #' @name getDiffAnalysesSummary
+#' @aliases getDiffAnalysesSummary,RflomicsMAE-method
 #' @section Accessors:
 #' \itemize{
 #'    \item getDiffAnalysesSummary: ...}
 #' @param plot FALSE or TRUE
+#' @param ylabelLength max length of the labels (characters)
+#' @param nbMaxLabel number of labels to print
+#' @param interface boolean. Is this plot for the interace or commandline?
 #' @importFrom dplyr mutate
 #' @importFrom purrr reduce
 #' @importFrom reshape2 melt

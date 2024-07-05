@@ -12,9 +12,9 @@
 #' clusterprofiler functions. It can be used with custom annotation file
 #' (via enricher), GO (enrichGO) or KEGG (enrichKEGG) annotations.
 #' @param object An object of class \link{RflomicsSE} or 
-#' class \link{RflomicsMAE}
+#' class \link{RflomicsMAE-class}
 #' @param SE.name SE.name the name of the dataset if the input object 
-#' is a \link{RflomicsMAE}
+#' is a \link{RflomicsMAE-class}
 #' @param nameList name of contrasts (tags or names) from which to extract DE
 #' genes if from is DiffExpAnal.
 #' @param list_args list of arguments to pass to the enrichment function.
@@ -43,10 +43,11 @@
 #' @exportMethod runAnnotationEnrichment
 #' @rdname runAnnotationEnrichment
 #' @name runAnnotationEnrichment
+#' @aliases runAnnotationEnrichment,RflomicsSE-method
 #' @section Accessors: 
 #' A set of getters and setters generic functions to access and 
-#' modify objects of the slot metadata of a \link{RflomicsMAE} object or 
-#' a \link{RflomicsMAE} object.
+#' modify objects of the slot metadata of a \link{RflomicsMAE-class} object or 
+#' a \link{RflomicsMAE-class} object.
 #' @section Plots: 
 #' A collection of functions for plotting results from omic analysis steps.
 #' @example inst/examples/runAnnotationEnrichment.R
@@ -304,6 +305,7 @@ setMethod(
 
 #' @rdname runAnnotationEnrichment
 #' @name runAnnotationEnrichment
+#' @aliases runAnnotationEnrichment,RflomicsMAE-method
 #' @exportMethod runAnnotationEnrichment
 setMethod(
   f = "runAnnotationEnrichment",
@@ -368,6 +370,7 @@ setMethod(
 #' @exportMethod plotKEGG
 #' @rdname runAnnotationEnrichment
 #' @name plotKEGG
+#' @aliases plotKEGG,RflomicsSE-method
 setMethod(
   f = "plotKEGG",
   signature = "RflomicsSE",
@@ -424,7 +427,6 @@ setMethod(
 
 ###==== plotClusterProfiler ====
 
-#' @name plotClusterProfiler
 #' @section Plots: 
 #' \itemize{
 #'    \item plotClusterProfiler: Plot a dotplot, a cnetplot or an heatplot, using enrichplot
@@ -453,6 +455,8 @@ setMethod(
 #' @importFrom ggrepel geom_label_repel
 #' @exportMethod plotClusterProfiler
 #' @rdname runAnnotationEnrichment
+#' @name plotClusterProfiler
+#' @aliases plotClusterProfiler,RflomicsSE-method
 setMethod(
   f = "plotClusterProfiler",
   signature = "RflomicsSE",
@@ -607,7 +611,6 @@ setMethod(
 
 ###==== plotEnrichComp ====
 
-#' @name plotEnrichComp
 #' @section Plots: 
 #' \itemize{
 #'    \item plotEnrichComp: plot an heatmap of all the enriched term found for a given
@@ -632,6 +635,8 @@ setMethod(
 #' @importFrom stringr str_wrap
 #' @exportMethod plotEnrichComp
 #' @rdname runAnnotationEnrichment
+#' @name plotEnrichComp
+#' @aliases plotEnrichComp,RflomicsSE-method
 setMethod(
   f = "plotEnrichComp",
   signature = "RflomicsSE",
@@ -904,6 +909,7 @@ setMethod(
 #' @exportMethod getEnrichRes
 #' @rdname runAnnotationEnrichment
 #' @name getEnrichRes
+#' @aliases getEnrichRes,RflomicsSE-method
 setMethod(
   f = "getEnrichRes",
   signature = "RflomicsSE",
@@ -931,6 +937,7 @@ setMethod(
 
 #' @rdname runAnnotationEnrichment
 #' @name getEnrichRes
+#' @aliases getEnrichRes,RflomicsMAE-method
 #' @exportMethod getEnrichRes
 setMethod(
   f = "getEnrichRes",
@@ -980,6 +987,7 @@ setMethod(
 #' @exportMethod sumORA
 #' @rdname runAnnotationEnrichment
 #' @name sumORA
+#' @aliases sumORA,RflomicsSE-method
 setMethod(
   f = "sumORA",
   signature = "RflomicsSE",
@@ -1034,6 +1042,7 @@ setMethod(
 #' @exportMethod getEnrichPvalue
 #' @rdname runAnnotationEnrichment
 #' @name getEnrichPvalue
+#' @aliases getEnrichPvalue,RflomicsSE-method
 setMethod(
   f = "getEnrichPvalue",
   signature = "RflomicsSE",
@@ -1071,6 +1080,7 @@ setMethod(
 #' @exportMethod getEnrichSettings
 #' @rdname runAnnotationEnrichment
 #' @name getEnrichSettings
+#' @aliases getEnrichSettings,RflomicsSE-method
 setMethod(
     f = "getEnrichSettings",
     signature = "RflomicsSE",
@@ -1108,6 +1118,7 @@ setMethod(
 #' @exportMethod getAnnotAnalysesSummary
 #' @rdname runAnnotationEnrichment
 #' @name getAnnotAnalysesSummary
+#' @aliases getAnnotAnalysesSummary,RflomicsMAE-method
 setMethod(
   f = "getAnnotAnalysesSummary",
   signature = "RflomicsMAE",

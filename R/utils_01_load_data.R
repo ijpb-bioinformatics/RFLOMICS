@@ -16,24 +16,25 @@
 # ----  RflomicsMAE CLASS ----
 ## ---- createRflomicsMAE: create RflomicsMAE object from loaded data ----
 #' @title createRflomicsMAE
-#' @description This function is a constructor for the class \link{RflomicsMAE}.
-#' It initializes an object of class \link{RflomicsMAE} from a list of omics 
-#' datasets imported by \link{readOmicsData}, a vector of dataset names, 
+#' @description This function is a constructor for the class
+#'  \link{RflomicsMAE-class}.
+#' It initializes an object of class \link{RflomicsMAE-class}
+#' from a list of omics datasets, a vector of dataset names, 
 #' a vector of omics types, and an experimental design.
 #' @param projectName Project name
 #' @param omicsData list of omics dataset.
 #' @param omicsNames vector of dataset names.
-#' @param omicsTypes vector of dataset types: "RNAseq", "metabolomics", "proteomics"
-#' @param ExpDesign a data.frame imported by \link{readExpDesign} which 
-#' describes the experimental design.
+#' @param omicsTypes vector of dataset types: 
+#' "RNAseq", "metabolomics", "proteomics"
+#' @param ExpDesign a data.frame which describes the experimental design.
 #' @param factorRef a data.frame describing the experimental factors.
 #' \itemize{
-#' \item{factorName:}{factor names}
-#' \item{factorRef:}{factor references}
-#' \item{factorType:}{factor type : "Bio", "batch", "Meta"}
-#' \item{factorLevels:}{levels of each factor with "," separation.}
+#' \item factorName: factor names 
+#' \item factorRef: factor references 
+#' \item factorType: factor type : "Bio", "batch", "Meta" 
+#' \item factorLevels: levels of each factor with "," separation. 
 #' }
-#' @return An object of class \link{RflomicsMAE}
+#' @return An object of class \link{RflomicsMAE-class}
 #' @seealso \link{RflomicsMAE-class}
 #' @name createRflomicsMAE
 #' @rdname createRflomicsMAE
@@ -215,7 +216,7 @@ createRflomicsMAE <- function(projectName=NULL, omicsData=NULL,
 ## ---- RflomicsMAE: construct RflomicsMAE object ----
 #' @title RflomicsMAE 
 #' @description
-#'  \link{RflomicsMAE} constructor.
+#'  \link{RflomicsMAE-class} constructor.
 #' @param experiments same as in MultiAssayExperiments.
 #'  A list or experimentList of all combined experiments.
 #' @param colData same as in MultiAssayExperiments. 

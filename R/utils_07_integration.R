@@ -7,7 +7,7 @@
 
 #' @title .rbeFunction
 #'
-#' @param object An object of class \link{RflomicsMAE}
+#' @param object An object of class \link{RflomicsMAE-class}
 #' @param SEobject An object of class \link{RflomicsSE}
 #' @param cmd Interface parameter, if TRUE, print commands. 
 #' @param scale if TRUE, each feature is scaled to unit variance.
@@ -71,7 +71,7 @@
 
 #' @title Remove batch effect and transform rnaseq data
 #'
-#' @param object An object of class \link{RflomicsMAE}
+#' @param object An object of class \link{RflomicsMAE-class}
 #' @param SEname the name of the rnaseq data to transform.
 #' Supposed to be a RflomicsSE.
 #' @param correctBatch if TRUE, correction of batch effects.
@@ -143,10 +143,10 @@
 
 #' @title .rbeTransform
 #'
-#' @param object An object of class \link{RflomicsMAE}
+#' @param object An object of class \link{RflomicsMAE-class}
 #' @param SEname the name of the omics data to transform. No counts data.
 #' @param correctBatch if TRUE, correction of batch effects.
-#' @return An object of class \link{RflomicsMAE}
+#' @return An object of class \link{RflomicsMAE-class}
 #' @keywords internal
 #' @noRd
 #'

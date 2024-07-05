@@ -283,7 +283,7 @@
 #' .setElementToMetadata
 #' 
 #' @param object An object of class \link{RflomicsSE} or
-#' \link{RflomicsMAE}. It is expected the SE object is produced by
+#' \link{RflomicsMAE-class}. It is expected the SE object is produced by
 #' rflomics previous analyses, as it relies on their results.. 
 #' @param name the name of element to add to metadata slot.
 #' @param subName the name of sub element to add to metadata slot.
@@ -320,7 +320,7 @@
 #' getAnalysis
 #' 
 #' @param object An object of class \link{RflomicsSE} or
-#' \link{RflomicsMAE}. It is expected the SE object is produced by
+#' \link{RflomicsMAE-class}. It is expected the SE object is produced by
 #' rflomics previous analyses, as it relies on their results.. 
 #' @param name the name of element to add to metadata slot.
 #' @param subName the name of sub element to add to metadata slot.

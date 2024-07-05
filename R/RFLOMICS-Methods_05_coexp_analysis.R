@@ -11,6 +11,7 @@
 
 #' @title runCoExpression
 #' @name runCoExpression
+#' @aliases runCoExpression,RflomicsSE-method
 #' @description This method performs a co-expression/co-abundance analysis of 
 #' omic-data.
 #' @details For now, only the coseq function of the coseq package is used.
@@ -32,18 +33,18 @@
 #' The runCoExpression method return several results, for \link{coseq} 
 #' method, objects are:
 #' \itemize{
-#' \item{\code{setting:} }{co-expression analysis settings. See \code{getCoexpSetting}}
-#' \item{\code{results:} }{boolean indicating if the co-expression analysis succeed}
-#' \item{\code{coseqResults:} }{the raw results of \code{coseq}}
-#' \item{\code{clusters:} }{a List of clusters}
-#' \item{\code{cluster.nb:} }{The number of cluster}
-#' \item{\code{plots:} }{The plots of \code{coseq} results}
-#' \item{\code{stats:} }{A tibble summarising failed jobs: reason, propoif any}
+#' \item \code{setting:}  co-expression analysis settings. See \code{getCoexpSetting} 
+#' \item \code{results:}  boolean indicating if the co-expression analysis succeed 
+#' \item \code{coseqResults:} the raw results of \code{coseq} 
+#' \item \code{clusters:}  a List of clusters 
+#' \item \code{cluster.nb:}  The number of cluster 
+#' \item \code{plots:}  The plots of \code{coseq} results 
+#' \item \code{stats:}  A tibble summarising failed jobs: reason, propoif any 
 #' }
 #' @param object An object of class \link{RflomicsSE} or 
-#' class \link{RflomicsMAE}
+#' class \link{RflomicsMAE-class}
 #' @param SE.name SE.name the name of the dataset if the input object 
-#' is a \link{RflomicsMAE}
+#' is a \link{RflomicsMAE-class}
 #' @param contrastNames names of the contrasts from which the DE entities 
 #' have to be taken. Can be NULL, in that case every contrasts from the differential 
 #' analysis are taken into consideration.
@@ -81,8 +82,8 @@
 #' @rdname runCoExpression
 #' @section Accessors: 
 #' A set of getters and setters generic functions to access and 
-#' modify objects of the slot metadata of a \link{RflomicsMAE} object or 
-#' a \link{RflomicsMAE} object.
+#' modify objects of the slot metadata of a \link{RflomicsMAE-class} object or 
+#' a \link{RflomicsMAE-class} object.
 #' @section Plots: 
 #' A collection of functions for plotting results from omic analysis steps.
 #' @importFrom dplyr filter
@@ -259,6 +260,7 @@ setMethod(f = "runCoExpression",
 
 #' @rdname runCoExpression
 #' @name runCoExpression
+#' @aliases runCoExpression,RflomicsMAE-method
 #' @exportMethod runCoExpression
 setMethod(f          = "runCoExpression",
           signature  = "RflomicsMAE",
@@ -312,6 +314,7 @@ setMethod(f          = "runCoExpression",
 #' @exportMethod getCoExpAnalysesSummary
 #' @rdname runCoExpression
 #' @name getCoExpAnalysesSummary
+#' @aliases getCoExpAnalysesSummary,RflomicsMAE-method
 setMethod(
   f = "getCoExpAnalysesSummary",
   signature = "RflomicsMAE",
@@ -372,6 +375,7 @@ setMethod(
 
 ### ---- plotCoExpression ----
 #' @name plotCoExpression
+#' @aliases plotCoExpression,RflomicsSE-method
 #' @section Plots: 
 #' \itemize{
 #'    \item plotCoExpression: 
@@ -439,6 +443,8 @@ setMethod(f="plotCoExpression",
           })
 
 #' @rdname runCoExpression
+#' @name plotCoExpression
+#' @aliases plotCoExpression,RflomicsMAE-method
 #' @exportMethod plotCoExpression
 setMethod(f          = "plotCoExpression",
           signature  = "RflomicsMAE",
@@ -464,6 +470,7 @@ setMethod(f          = "plotCoExpression",
 #' theme element_text xlab ylab ggtitle geom_point geom_line
 #' @rdname runCoExpression
 #' @name plotCoExpressionProfile
+#' @aliases plotCoExpressionProfile,RflomicsSE-method
 setMethod(f = "plotCoExpressionProfile",
           signature = "RflomicsSE",
           definition = function(object, cluster = 1, 
@@ -516,6 +523,7 @@ setMethod(f = "plotCoExpressionProfile",
           })
 
 #' @name plotCoExpressionProfile
+#' @aliases plotCoExpressionProfile,RflomicsMAE-method
 #' @rdname runCoExpression
 #' @exportMethod plotCoExpressionProfile
 setMethod(f          = "plotCoExpressionProfile",
@@ -547,6 +555,7 @@ setMethod(f          = "plotCoExpressionProfile",
 #' @importFrom ggplot2 ggplot aes  geom_bar  coord_flip labs  
 #' scale_fill_discrete theme
 #' @name plotCoseqContrasts
+#' @aliases plotCoseqContrasts,RflomicsSE-method
 #' @rdname runCoExpression
 setMethod(f = "plotCoseqContrasts",
           signature = "RflomicsSE",
@@ -628,6 +637,7 @@ setMethod(f = "plotCoseqContrasts",
 
 #' @rdname runCoExpression
 #' @name plotCoseqContrasts
+#' @aliases plotCoseqContrasts,RflomicsMAE-method
 #' @exportMethod plotCoseqContrasts
 setMethod(f          = "plotCoseqContrasts",
           signature  = "RflomicsMAE",
@@ -649,6 +659,7 @@ setMethod(f          = "plotCoseqContrasts",
 #'    of a given omic dataset 
 #' }
 #' @name getCoexpSettings
+#' @aliases getCoexpSettings,RflomicsSE-method
 #' @rdname runCoExpression
 setMethod(f          = "getCoexpSettings",
           signature  = "RflomicsSE",
@@ -659,6 +670,8 @@ setMethod(f          = "getCoexpSettings",
 
 #' @rdname runCoExpression
 #' @exportMethod getCoexpSettings
+#' @name getCoexpSettings
+#' @aliases getCoexpSettings,RflomicsMAE-method
 setMethod(f          = "getCoexpSettings",
           signature  = "RflomicsMAE",
           definition = function(object, SE.name){
@@ -677,6 +690,7 @@ setMethod(f          = "getCoexpSettings",
 #' @importFrom coseq clusters
 #' @rdname runCoExpression
 #' @name getClusterEntities
+#' @aliases getClusterEntities,RflomicsSE-method
 setMethod(
   f          = "getClusterEntities",
   signature  = "RflomicsSE",
@@ -698,6 +712,7 @@ setMethod(
 #' @exportMethod getClusterEntities
 #' @rdname runCoExpression
 #' @name getClusterEntities
+#' @aliases getClusterEntities,RflomicsMAE-method
 setMethod(
   f          = "getClusterEntities",
   signature  = "RflomicsMAE",
@@ -717,6 +732,7 @@ setMethod(
 #' @importFrom coseq clusters
 #' @rdname runCoExpression
 #' @name getCoseqClusters
+#' @aliases getCoseqClusters,RflomicsSE-method
 setMethod(
   f          = "getCoseqClusters",
   signature  = "RflomicsSE",
@@ -736,6 +752,7 @@ setMethod(
 #' @importFrom coseq clusters
 #' @rdname runCoExpression
 #' @name getCoseqClusters
+#' @aliases getCoseqClusters,RflomicsMAE-method
 setMethod(
   f          = "getCoseqClusters",
   signature  = "RflomicsMAE",
