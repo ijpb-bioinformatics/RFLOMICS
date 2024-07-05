@@ -3,7 +3,18 @@ library(RFLOMICS)
 
 # ---- Construction MAE RFLOMICS ready for differential analysis : ----
 
-MAE <- generateExample(annotation = FALSE, coexp = FALSE, integration = FALSE)
+# load ecoseed data
+data(ecoseed)
+
+# create rflomicsMAE object with ecoseed data
+MAE <- createRflomicsMAE(
+    projectName = "Tests",
+    omicsData   = list(ecoseed$RNAtest, ecoseed$metatest, ecoseed$protetest),
+    omicsNames  = c("RNAtest", "metatest", "protetest"),
+    omicsTypes  = c("RNAseq","metabolomics","proteomics"),
+    ExpDesign   = ecoseed$design,
+    factorRef   = ecoseed$factorRef)
+names(MAE) <- c("RNAtest", "metatest", "protetest")
 
 # ----- TESTS -----
 
