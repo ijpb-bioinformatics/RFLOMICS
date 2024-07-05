@@ -1015,6 +1015,7 @@ setMethod(f          = "getValidContrasts",
 
 ### ----- Get Summary for diffExpAnalysis : -----
 
+
 #' @rdname runDiffAnalysis
 #' @name sumDiffExp
 #' @section Accessors:
@@ -1022,10 +1023,9 @@ setMethod(f          = "getValidContrasts",
 #'    \item sumDiffExp: Get summary table from diffExpAnalysis analysis}
 #' @exportMethod sumDiffExp
 #' @importFrom dplyr filter
-#' @export
 setMethod(f          = "sumDiffExp",
-          signature  = "RflomicsMAE",
-          definition = function(object, SE.name = NULL){
+          signature  = "RflomicsSE",
+          definition = function(object){
             
             pcut <- getDiffSettings(object)$p.adj.cutoff
             lcut <- getDiffSettings(object)$abs.logFC.cutoff
@@ -1042,6 +1042,18 @@ setMethod(f          = "sumDiffExp",
                                ))
                              })
             return(do.call("rbind", df_sim))
+          })
+
+#' @rdname runDiffAnalysis
+#' @name sumDiffExp
+#' @exportMethod sumDiffExp
+setMethod(f          = "sumDiffExp",
+          signature  = "RflomicsMAE",
+          definition = function(object, SE.name = NULL){
+            
+            res <- RflomicsMAE(object[[SE.name]])
+            
+            return(res)
           })
 
 ### ---- getDiffAnalysesSummary ----

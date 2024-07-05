@@ -7,11 +7,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r, echo = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   warning = FALSE,
   message = FALSE,
+  echo = FALSE,
   comment = "#>"
 )
 
@@ -34,12 +35,8 @@ This file is edited by the user and must contain a header with sensible column n
 It is advised that each factor's modality starts with a letter (for example, for a factor called Month, it is better to write M1 rather than 1).
 
 ```{r ImportDesign, output="asis"}
-# ExpDesign.file <- file.path(path=path.package("RFLOMICS"), 
-#                             file="/ExamplesFiles/ecoseed/condition.txt")
-ExpDesign.file <- file.path(paste0(system.file(package = "RFLOMICS"), "/ExamplesFiles/ecoseed/condition.txt"))
-ExpDesign      <- read.table(file = ExpDesign.file, header = TRUE, row.names = 1, sep = "\t")
-
-DT::datatable(ExpDesign)
+data(ecoseed)
+DT::datatable(ecoseed$design)
 ```
 
 ## Omic data file
@@ -54,13 +51,7 @@ The matrix-like file with abundance of omic data is needed. The first column ind
 For RNAseq data the values correspond to raw read counts per genes.
 
 ```{r RNAseq, output="asis"}
-
-# geneCount.file <- file.path(path = path.package("RFLOMICS"), 
-#                             file ="/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt")
-geneCount.file <- file.path(paste0(system.file(package = "RFLOMICS"),
-                                   "/ExamplesFiles/ecoseed/transcriptome_ecoseed.txt"))
-geneCount      <- read.table(file = geneCount.file, header = TRUE, row.names = 1, sep = "\t")
-
+geneCount  <- ecoseed$RNAtest
 DT::datatable(geneCount[1:10, 1:5])
 ```
 
@@ -71,12 +62,7 @@ For proteomic data the values correspond to intensity of proteins.
 
 
 ```{r Proteomics, output="asis"}
-# protAbundance.file <- file.path(path = path.package("RFLOMICS"), 
-#                                 file ="/ExamplesFiles/ecoseed/proteome_ecoseed.txt")
-protAbundance.file <- file.path(paste0(system.file(package = "RFLOMICS"),
-                                   "/ExamplesFiles/ecoseed/proteome_ecoseed.txt"))
-protAbundance <- read.table(file = protAbundance.file, header = TRUE, row.names = 1, sep = "\t")
-
+protAbundance <- ecoseed$protetest
 DT::datatable(protAbundance[1:10, 1:5])
 ```
 
@@ -86,12 +72,7 @@ DT::datatable(protAbundance[1:10, 1:5])
 For metabolomic data the values correspond to intensity of metabolites.
 
 ```{r Metabolomics, output="asis"}
-# metaAbundance.file <- file.path(path = path.package("RFLOMICS"), 
-#                                 file ="/ExamplesFiles/ecoseed/metabolome_ecoseed.txt")
-metaAbundance.file <- file.path(paste0(system.file(package = "RFLOMICS"),
-                                   "/ExamplesFiles/ecoseed/metabolome_ecoseed.txt"))
-metaAbundance <- read.table(file = metaAbundance.file, header = TRUE, row.names = 1, sep = "\t")
-
+metaAbundance <- ecoseed$metatest
 DT::datatable(metaAbundance[1:10, 1:5])
 ```
 
@@ -99,14 +80,11 @@ DT::datatable(metaAbundance[1:10, 1:5])
 
 This file contains annotation about biological fonctions of genes/proteins/metabolites, or their implication in biological pathways. This annotation is needed to compute Over Representation Analysis (ORA). This file must contain at least 2 columns, names of features same as used in abundance matrix and term identifiants (ex. GO term accession : GO:0034599). It is possible to add 2 more informations, names of terms (ex. cellular response to oxidative stress) and domain of annotation in supplementary colomns (ex. biological_process).
 
-```{r, output="asis", eval=FALSE}
+```{r annot, output="asis", eval=FALSE}
+annot.genes <- file.path(paste0(system.file(package = "RFLOMICS"),
+                                   "/data/AT_GOterm_EnsemblPlants.rda"))
+load(file = annot.genes)
 
-# annot.genes.file <- file.path(path=path.package("RFLOMICS"), file="/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt")
-annot.genes.file <- file.path(paste0(system.file(package = "RFLOMICS"),
-                                   "/ExamplesFiles/ecoseed/AT_GOterm_EnsemblPlants.txt"))
-annot.genes <- read.table(file = annot.genes.file, header = TRUE, sep="\t", )
-colnames(annot.genes) <- c("geneID", "Term", "Name", "Domain")
-
-DT::datatable(annot.genes[1:10,])
+DT::datatable(AT_GOterm_EnsemblPlants[1:10,])
 ```
 
