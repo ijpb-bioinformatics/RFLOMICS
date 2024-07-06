@@ -48,10 +48,10 @@ MAEtest <- runOmicsIntegration(MAEtest, preparedObject = mixObj,
 # Access mixOmics results:
 getMixOmics(MAEtest, response = "temperature")
 getMixOmicsSettings(MAEtest)
-mixOmics::plotIndiv(getMixOmics(MAEtest, response = "imbibition"))
+# mixOmics::plotIndiv(getMixOmics(MAEtest, response = "imbibition"))
 
 # Access MOFA2 results:
 getMOFA(MAEtest)
 getMOFASettings(MAEtest)
-MOFA2::plot_variance_explained(getMOFA(MAEtest))
+# MOFA2::plot_variance_explained(getMOFA(MAEtest))
 

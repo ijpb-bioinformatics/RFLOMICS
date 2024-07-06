@@ -14,7 +14,7 @@ MAE <- RFLOMICS::createRflomicsMAE(
 MultiAssayExperiment::upsetSamples(MAE)
 
 # generate data overview plot
-plotDataOverview(MAE)
+#plotDataOverview(MAE)
 
 # generate plot of coverage of condition by data
-plotConditionsOverview(MAE)
+#plotConditionsOverview(MAE)

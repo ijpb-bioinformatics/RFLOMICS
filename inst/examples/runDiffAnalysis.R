@@ -56,19 +56,19 @@ getDiffSettings(MAE[["protetest"]])
 thiscontrast <- "(temperatureMedium - temperatureLow) in mean"
 
 ## generate MAplot from diff analysis
-plotDiffAnalysis(MAE[["protetest"]], 
-                 contrastName = thiscontrast, 
-                 typeofplots = "MA.plot")
+# plotDiffAnalysis(MAE[["protetest"]], 
+#                  contrastName = thiscontrast, 
+#                  typeofplots = "MA.plot")
 
 ## plot the heatmap
-plotHeatmapDesign(MAE[["protetest"]], 
-                  contrastName = thiscontrast)
+# plotHeatmapDesign(MAE[["protetest"]], 
+#                   contrastName = thiscontrast)
 
 ## plot boxplot with feature expression
-plotBoxplotDE(MAE[["protetest"]], 
-              features = "AT1G47128", 
-              groupColor = "temperature")
-plotBoxplotDE(MAE[["protetest"]], 
-              features = "AT1G79550", 
-              groupColor = "imbibition")
+# plotBoxplotDE(MAE[["protetest"]], 
+#               features = "AT1G47128", 
+#               groupColor = "temperature")
+# plotBoxplotDE(MAE[["protetest"]], 
+#               features = "AT1G79550", 
+#               groupColor = "imbibition")
 

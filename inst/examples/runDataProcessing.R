@@ -52,17 +52,17 @@ MAE <- runDataProcessing(MAE, SE.name = "protetest",
                          normMethod = "median", 
                          transformMethod = "log2")
 
-plotExpDesignCompleteness(MAE[["RNAtest"]])
+# plotExpDesignCompleteness(MAE[["RNAtest"]])
 
 # plot Library Size
-plotDataDistribution(MAE[["RNAtest"]], raw=TRUE)
-plotDataDistribution(MAE[["RNAtest"]], raw=FALSE)
+# plotDataDistribution(MAE[["RNAtest"]], raw=TRUE)
+# plotDataDistribution(MAE[["RNAtest"]], raw=FALSE)
 
 # plot gene expression distribution
-plotDataDistribution(MAE[["RNAtest"]], raw=TRUE, plot = "boxplot")
-plotDataDistribution(MAE[["RNAtest"]], raw=FALSE, plot = "boxplot")
+# plotDataDistribution(MAE[["RNAtest"]], raw=TRUE, plot = "boxplot")
+# plotDataDistribution(MAE[["RNAtest"]], raw=FALSE, plot = "boxplot")
 
 # plot PCA 
-plotOmicsPCA(MAE[["RNAtest"]], raw="raw", groupColor = "imbibition")
-plotOmicsPCA(MAE[["RNAtest"]], raw="norm", groupColor = "imbibition")
+# plotOmicsPCA(MAE[["RNAtest"]], raw="raw", groupColor = "imbibition")
+# plotOmicsPCA(MAE[["RNAtest"]], raw="norm", groupColor = "imbibition")
 

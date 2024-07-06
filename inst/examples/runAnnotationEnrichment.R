@@ -53,18 +53,18 @@ sumORA(MAE[["protetest"]], from = "DiffExp", database = "KEGG")
 
 # need internet connection
 # pathview package
-plotKEGG(MAE[["protetest"]], pathway_id = "ath00710", species = "ath",
-         contrastName = "cluster.4", from = "Coexp")
+# plotKEGG(MAE[["protetest"]], pathway_id = "ath00710", species = "ath",
+#          contrastName = "cluster.4", from = "Coexp")
 
 # From differential analysis proteins lists:
-plotClusterProfiler(MAE[["protetest"]],
-                    contrastName = "(temperatureElevated - temperatureMedium) in mean",
-                    database = "KEGG", from = "DiffExp",
-                    plotType = "heatplot", p.adj.cutoff = 0.05,
-                    domain = "no-domain")
-
-plotEnrichComp(MAE[["protetest"]], from = "DiffExp",
-               database = "KEGG", matrixType = "FC")
+# plotClusterProfiler(MAE[["protetest"]],
+#                     contrastName = "(temperatureElevated - temperatureMedium) in mean",
+#                     database = "KEGG", from = "DiffExp",
+#                     plotType = "heatplot", p.adj.cutoff = 0.05,
+#                     domain = "no-domain")
+# 
+# plotEnrichComp(MAE[["protetest"]], from = "DiffExp",
+#                database = "KEGG", matrixType = "FC")
 
 # Get all results from KEGG on differential expression lists:
 results <- getEnrichRes(MAE[["protetest"]],
