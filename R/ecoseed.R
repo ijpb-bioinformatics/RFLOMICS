@@ -1,5 +1,9 @@
-#' @title ecoseed data
-#'
+### ============================================================================
+### [data] function and internal function
+### ----------------------------------------------------------------------------
+# D. Charif
+
+#' @title Ecoseed project data
 #' @description 
 #' The dataset ecoseed is a multi-omics dataset composed of three data matrices:
 #' transcriptomic, metabolomic and proteomic.

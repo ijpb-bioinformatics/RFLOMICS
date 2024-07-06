@@ -8,6 +8,7 @@ reference:
     contents:
       - runRFLOMICS
   - title: RFLOMICS Classes
+    desc: Exported classes and their accessors
     contents:
       - RflomicsMAE-class
       - RflomicsSE-class
@@ -58,10 +59,8 @@ navbar:
       text: Reference
       href: reference/index.html
     articles:
-      text: Vignettes
+      text: Manuals
       menu:
-      - text: RFLOMICS vignettes interface
-        href: articles/RFLOMICS-vignette-interface.html
       - text: RFLOMICS vignettes cmd line
         href: articles/RFLOMICS-cmd-line.html
       - text: RFLOMICS input data

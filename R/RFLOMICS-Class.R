@@ -10,7 +10,7 @@
 
 #' @name RflomicsMAE-class
 #' @rdname RflomicsMAE-class
-#' @title RflomicsMAE class
+#' @title RflomicsMAE Class
 #' @description
 #' RflomicsMAE is a class that extends the \link{MultiAssayExperiment}  
 #' class by imposing a structure to the metadata slot. This class is used by 
@@ -114,7 +114,7 @@ setMethod(
 
 ##==== RflomicsSE Class ====
 
-#' @title \link{RflomicsSE-class} Class
+#' @title RflomicsSE Class
 #' @name RflomicsSE-class
 #' @rdname RflomicsSE-class
 #' @description

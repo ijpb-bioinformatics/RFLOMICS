@@ -9,7 +9,7 @@
 NULL
 
 # ---- generateModelFormulae ----
-#' @title Generate statistical model formulae
+#' @title Statistical model formulae
 #' @name generateModelFormulae
 #' @aliases generateModelFormulae,RflomicsMAE-method
 #' @rdname generateModelFormulae
@@ -80,9 +80,9 @@ setMethod(f          = "setModelFormula",
           })
 
 # ---- generateExpressionContrast ----
+#' @title Contrast expressions
 #' @name generateExpressionContrast
 #' @aliases generateExpressionContrast,RflomicsSE-method
-#' @title Generate expression of contrasts
 #' @rdname generateExpressionContrast
 #' @description
 #' Generate expression of contrasts based on chosed model formula.

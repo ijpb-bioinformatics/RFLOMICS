@@ -9,7 +9,7 @@
 
 ###==== METHOD to perform differential analysis ====
 
-#' @title Run Differential Expression Analysis
+#' @title Run Differential Expression Analysis and process results
 #' @name runDiffAnalysis
 #' @aliases runDiffAnalysis,RflomicsSE-method
 #' @description This is an interface method which run a differential 

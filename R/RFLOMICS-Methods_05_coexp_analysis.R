@@ -9,7 +9,7 @@
 
 ###==== METHOD runCoExpressions ====
 
-#' @title runCoExpression
+#' @title Run CoExpression Analysis and process results
 #' @name runCoExpression
 #' @aliases runCoExpression,RflomicsSE-method
 #' @description This method performs a co-expression/co-abundance analysis of 

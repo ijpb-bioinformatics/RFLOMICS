@@ -1,3 +1,8 @@
+### ============================================================================
+### [07_data_analysis] function and internal function
+### ----------------------------------------------------------------------------
+# A. Hulot
+
 ### --- Global import ----
 #' @importFrom MOFA2 views_names get_factors plot_factor get_weights
 #' plot_weights plot_variance_explained plot_factor_cor

@@ -2,7 +2,7 @@
 title: "RFLOMICS-input-data"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{RFLOMICS-input-data}
+  %\VignetteIndexEntry{RFLOMICS input format}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

@@ -1,0 +1,34 @@
+---
+title: "RFLOMICS"
+output: 
+  BiocStyle::html_document:
+        toc: true
+        toc_depth : 2
+        number_sections: true
+package: RFLOMICS
+vignette: >
+  %\VignetteIndexEntry{RFLOMICS}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+ 
+ 
+abstract: > 
+  Ecoseed...
+---
+ 
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Create RFLOMICS object
+
+```{r, eval=FALSE}
+library(RFLOMICS)
+data("ecoseed")
+```
+
+It will come :)

@@ -15,7 +15,7 @@
 
 # ----  RflomicsMAE CLASS ----
 ## ---- createRflomicsMAE: create RflomicsMAE object from loaded data ----
-#' @title createRflomicsMAE
+#' @title RflomicsMAE class constructor
 #' @description This function is a constructor for the class
 #'  \link{RflomicsMAE-class}.
 #' It initializes an object of class \link{RflomicsMAE-class}

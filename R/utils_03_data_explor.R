@@ -1,3 +1,10 @@
+### ============================================================================
+### [03_data_processing] function and internal function
+### ----------------------------------------------------------------------------
+# N. Bessoltane
+# D. Charif
+# A. Hulot
+
 ######## INTERNAL - Transform the Data ###########
 
 # .applyTransformation: apply the transformation method stored in object@metadata[["transform_method"]] and modify the assay.

@@ -2,8 +2,7 @@
 ### [00_common] accessors and methods for RflomicsMAE and RflomicsSE classes
 ### ----------------------------------------------------------------------------
 # N. Bessoltane,
-# D. Charif,
-# A. Hulot
+# D. Charif
 
 #' @import methods
 
@@ -83,7 +82,7 @@ setMethod(f = "resetRflomicsMAE",
 
 
 # ---- generateReport ----
-#' @title Generate RFLOMICS rmarkdown report
+#' @title Generate RFLOMICS html report or archive
 #' @description
 #' This function is used to generate a html report from a
 #' \link{RflomicsMAE-class} object or archive with results.

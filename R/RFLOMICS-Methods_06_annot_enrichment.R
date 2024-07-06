@@ -1,13 +1,14 @@
 ### ============================================================================
 ### [06_annot_analysis] accessors and methods for RflomicsMAE and RflomicsSE classes
 ### ----------------------------------------------------------------------------
-# A. Hulot
+# A. Hulot,
+# N. Bessoltane
 
 ##==== STAT METHOD ====
 
 ###==== METHOD runAnnotationEnrichment using CLUSTERPROFILER ====
 
-#' @title runAnnotationEnrichment
+#' @title Run Gene Enrichment Analysis and process results
 #' @description This function performs overrepresentation analysis (ORA) using
 #' clusterprofiler functions. It can be used with custom annotation file
 #' (via enricher), GO (enrichGO) or KEGG (enrichKEGG) annotations.

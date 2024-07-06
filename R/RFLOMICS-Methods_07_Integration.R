@@ -1,3 +1,8 @@
+### ============================================================================
+### [07_data_integration] accessors and methods for RflomicsMAE and RflomicsSE classes
+### ----------------------------------------------------------------------------
+# A. Hulot
+
 ######################## METHODS FOR OMICS INTEGRATION ########################
 
 # ---- Wrapper ----

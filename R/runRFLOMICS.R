@@ -1,4 +1,9 @@
-#' @title runRFLOMICS
+### ============================================================================
+### run interface
+### ----------------------------------------------------------------------------
+# D. Charif
+
+#' @title Run RFLOMICS interface
 #' @description running this function will open the shiny application. 
 #' Run the shiny application
 #' @param ... More arguments to pass to shinyApp.

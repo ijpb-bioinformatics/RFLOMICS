@@ -9,7 +9,7 @@
 
 ###==== runDataProcessing ====
 
-#' @title Data processing
+#' @title Data Exploratory and processing
 #' @rdname runDataProcessing
 #' @name runDataProcessing
 #' @aliases runDataProcessing,RflomicsSE-method

@@ -1,3 +1,8 @@
+### ============================================================================
+### [06_annot_analysis] function and internal function
+### ----------------------------------------------------------------------------
+# A. Hulot
+
 ######## INTERNAL - ANNOTATION CLUSTERPROFILER #########
 
 #' @title see_pathview

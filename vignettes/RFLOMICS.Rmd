@@ -5,12 +5,12 @@ output:
         toc: true
         toc_depth : 2
         number_sections: true
+date: "`r format(Sys.time(), '%B %d, %Y')`"
 package: RFLOMICS
 vignette: >
   %\VignetteIndexEntry{RFLOMICS}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
- 
  
 abstract: > 
   This document will go through singles and multi-omics data analysis with the 
