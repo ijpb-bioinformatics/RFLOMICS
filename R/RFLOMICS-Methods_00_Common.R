@@ -81,161 +81,6 @@ setMethod(f = "resetRflomicsMAE",
             return(object)
           })
 
-# ---- getAnalyzedDatasetNames ----
-#' @rdname generateReport
-#' @description
-#' \itemize{
-#'    \item getAnalyzedDatasetNames: return a list of performed analysis names.}
-#' @param analyses vector of list of analysis name
-#' @exportMethod getAnalyzedDatasetNames
-#' @aliases getAnalyzedDatasetNames,RflomicsMAE-method
-#' @name getAnalyzedDatasetNames
-#' @examples
-#' # See generateReport for an example that includes getAnalyzedDatasetNames
-setMethod(
-  f          = "getAnalyzedDatasetNames",
-  signature  = "RflomicsMAE",
-  definition = function(object, analyses = NULL) {
-    
-    all.analyses <- c("DataProcessing",
-                      "DiffExpAnal", "DiffExpEnrichAnal", 
-                      "CoExpAnal", "CoExpEnrichAnal")
-    
-    if(is.null(analyses)) analyses <- all.analyses
-    
-    df.list <- list()
-    for (dataset in getDatasetNames(object)) {
-      
-      if(is.null(object[[dataset]])) next
-      
-      for(analysis in analyses){
-        
-        if(length(object[[dataset]]@metadata[[analysis]]) == 0)
-          next
-        
-        switch (analysis,
-                "DataProcessing" = {
-                  if(isTRUE(object[[dataset]]@metadata[[analysis]]$done))
-                    df.list[[analysis]] <- c(df.list[[analysis]], dataset)
-                },
-                "DiffExpAnal" = {
-                  if(!is.null(object[[dataset]]@metadata[[analysis]]$Validcontrasts))
-                    df.list[[analysis]] <- c(df.list[[analysis]], dataset)
-                },
-                "CoExpAnal" = {
-                  if(isTRUE(object[[dataset]]@metadata[[analysis]]$results))
-                    df.list[[analysis]] <- c(df.list[[analysis]], dataset)
-                },
-                {
-                  for(db in names(object[[dataset]]@metadata[[analysis]])){
-                    df.list[[analysis]][[db]] <- c(df.list[[analysis]][[db]], dataset)
-                  }
-                }
-        )
-      }
-    }
-    
-    if(length(df.list) == 0) return(NULL)
-    if(length(analyses) == 1) return(df.list[[1]])
-    return(df.list)
-  })
-
-## ---- set element to metadata slot in rflomicsSE/MAE ----
-#' @title setElementToMetadata
-#' @description set element to metadata slot
-#' @param object An object of class \link{RflomicsSE} or
-#' \link{RflomicsMAE-class}. It is expected the SE object is produced by
-#' rflomics previous analyses, as it relies on their results.. 
-#' @param name the name of element to add to metadata slot.
-#' @param subName the name of sub element to add to metadata slot.
-#' @param content the content of element to add
-#' @return An object of class \link{RflomicsSE} or
-#' \link{RflomicsMAE-class}.
-#' @keywords internal
-#' @noRd
-setMethod(
-  f = "setElementToMetadata",
-  signature = "RflomicsMAE",
-  definition = function(object, 
-                        name = NULL,
-                        subName = NULL,
-                        content = NULL) {
-    
-    object <- 
-      .setElementToMetadata(object, name, subName, content)
-    
-    return(object)
-  })
-
-#' @keywords internal
-#' @noRd
-setMethod(
-  f = "setElementToMetadata",
-  signature = "RflomicsSE",
-  definition = function(object, 
-                        name = NULL,
-                        subName = NULL,
-                        content = NULL) {
-    
-    object <- 
-      .setElementToMetadata(object, name, subName, content)
-    
-    return(object)
-  }
-)
-
-## ---- get element from metadata slot from rflomicsSE/MAE ----
-
-
-#' @aliases getAnalysis,RflomicsMAE-method
-#' @name getAnalysis
-#' @rdname generateReport
-#' @description
-#' \itemize{
-#'    \item getAnalysis: return list of results from a specific analysis.}
-#' @param SE.name name of the experiment where the metadata should be added.
-#' @param name the name of element to add to metadata slot.
-#' @param subName the name of sub element to add to metadata slot.
-#' @exportMethod getAnalysis
-setMethod(
-  f = "getAnalysis",
-  signature = "RflomicsMAE",
-  definition = function(object,
-                        SE.name = NULL,
-                        name    = NULL,
-                        subName = NULL){
-    
-    if(!is.null(SE.name)){
-      if(!SE.name %in% getDatasetNames(object))
-        stop(SE.name, " ?")
-
-      object <- object[[SE.name]]
-    }
-
-    results <- 
-      .getAnalysis(object, name, subName)
-    
-    return(results)
-  })
-
-#' @rdname generateReport
-#' @aliases getAnalysis,RflomicsSE-method
-#' @name getAnalysis
-#' @exportMethod getAnalysis
-setMethod(
-  f = "getAnalysis",
-  signature = "RflomicsSE",
-  definition = function(object, 
-                        name = NULL,
-                        subName = NULL) {
-    
-    results <- 
-      .getAnalysis(object, name, subName)
-    
-    return(results)
-  }
-)
-
 
 # ---- generateReport ----
 #' @title Generate RFLOMICS rmarkdown report
@@ -358,3 +203,164 @@ setMethod(
     
   }
 )
+
+## ---- get element from metadata slot from rflomicsSE/MAE ----
+
+#' @title Get results from RFLOMICS object
+#' @aliases getAnalysis,RflomicsMAE-method
+#' @name getAnalysis
+#' @rdname getAnalysis
+#' @description
+#' A short description...
+#' 
+#' \itemize{
+#'    \item getAnalysis: return list of results from a specific analysis.}
+#' @param SE.name name of the experiment where the metadata should be added.
+#' @param name the name of element to add to metadata slot.
+#' @param subName the name of sub element to add to metadata slot.
+#' @exportMethod getAnalysis
+setMethod(
+  f = "getAnalysis",
+  signature = "RflomicsMAE",
+  definition = function(object,
+                        SE.name = NULL,
+                        name    = NULL,
+                        subName = NULL){
+    
+    if(!is.null(SE.name)){
+      if(!SE.name %in% getDatasetNames(object))
+        stop(SE.name, " ?")
+      
+      object <- object[[SE.name]]
+    }
+    
+    results <- 
+      .getAnalysis(object, name, subName)
+    
+    return(results)
+  })
+
+#' @rdname getAnalysis
+#' @aliases getAnalysis,RflomicsSE-method
+#' @name getAnalysis
+#' @exportMethod getAnalysis
+setMethod(
+  f = "getAnalysis",
+  signature = "RflomicsSE",
+  definition = function(object, 
+                        name = NULL,
+                        subName = NULL) {
+    
+    results <- 
+      .getAnalysis(object, name, subName)
+    
+    return(results)
+  }
+)
+
+
+
+
+# ---- getAnalyzedDatasetNames ----
+#' @rdname getAnalysis
+#' @description
+#' \itemize{
+#'    \item getAnalyzedDatasetNames: return a list of performed analysis names.}
+#' @param analyses vector of list of analysis name
+#' @exportMethod getAnalyzedDatasetNames
+#' @aliases getAnalyzedDatasetNames,RflomicsMAE-method
+#' @name getAnalyzedDatasetNames
+#' @examples
+#' # See generateReport for an example that includes getAnalyzedDatasetNames
+setMethod(
+  f          = "getAnalyzedDatasetNames",
+  signature  = "RflomicsMAE",
+  definition = function(object, analyses = NULL) {
+    
+    all.analyses <- c("DataProcessing",
+                      "DiffExpAnal", "DiffExpEnrichAnal", 
+                      "CoExpAnal", "CoExpEnrichAnal")
+    
+    if(is.null(analyses)) analyses <- all.analyses
+    
+    df.list <- list()
+    for (dataset in getDatasetNames(object)) {
+      
+      if(is.null(object[[dataset]])) next
+      
+      for(analysis in analyses){
+        
+        if(length(object[[dataset]]@metadata[[analysis]]) == 0)
+          next
+        
+        switch (analysis,
+                "DataProcessing" = {
+                  if(isTRUE(object[[dataset]]@metadata[[analysis]]$done))
+                    df.list[[analysis]] <- c(df.list[[analysis]], dataset)
+                },
+                "DiffExpAnal" = {
+                  if(!is.null(object[[dataset]]@metadata[[analysis]]$Validcontrasts))
+                    df.list[[analysis]] <- c(df.list[[analysis]], dataset)
+                },
+                "CoExpAnal" = {
+                  if(isTRUE(object[[dataset]]@metadata[[analysis]]$results))
+                    df.list[[analysis]] <- c(df.list[[analysis]], dataset)
+                },
+                {
+                  for(db in names(object[[dataset]]@metadata[[analysis]])){
+                    df.list[[analysis]][[db]] <- c(df.list[[analysis]][[db]], dataset)
+                  }
+                }
+        )
+      }
+    }
+    
+    if(length(df.list) == 0) return(NULL)
+    if(length(analyses) == 1) return(df.list[[1]])
+    return(df.list)
+  })
+
+## ---- set element to metadata slot in rflomicsSE/MAE ----
+#' @title setElementToMetadata
+#' @description set element to metadata slot
+#' @param object An object of class \link{RflomicsSE} or
+#' \link{RflomicsMAE-class}. It is expected the SE object is produced by
+#' rflomics previous analyses, as it relies on their results.. 
+#' @param name the name of element to add to metadata slot.
+#' @param subName the name of sub element to add to metadata slot.
+#' @param content the content of element to add
+#' @return An object of class \link{RflomicsSE} or
+#' \link{RflomicsMAE-class}.
+#' @keywords internal
+#' @noRd
+setMethod(
+  f = "setElementToMetadata",
+  signature = "RflomicsMAE",
+  definition = function(object, 
+                        name = NULL,
+                        subName = NULL,
+                        content = NULL) {
+    
+    object <- 
+      .setElementToMetadata(object, name, subName, content)
+    
+    return(object)
+  })
+
+#' @keywords internal
+#' @noRd
+setMethod(
+  f = "setElementToMetadata",
+  signature = "RflomicsSE",
+  definition = function(object, 
+                        name = NULL,
+                        subName = NULL,
+                        content = NULL) {
+    
+    object <- 
+      .setElementToMetadata(object, name, subName, content)
+    
+    return(object)
+  }
+)
+

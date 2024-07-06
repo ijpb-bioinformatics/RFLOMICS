@@ -96,56 +96,6 @@ contrastName2contrastDir <- function(contrastName){
   return(tmp)
 }
 
-# ---- getPossibleContrasts !!!!!!!!!!!!!!!!!!!!!! ----
-#' @title Get selected contrasts for the differential analysis
-#'
-#' @param object a MAE object (produced by Flomics) or a summarized 
-#' experiment produced by Flomics after a differential analysis.
-#' @param formula The formula used to compute all possible contrasts. 
-#' Default is the formula found in the object. 
-#' @param typeContrast the type of contrast from which the possible 
-#' contrasts are extracted. Default is all contrasts types.
-#' @param modalities specific levels for the contrast selection
-#' @param returnTable return a dataTable with all contrasts information
-#' @return a character vector or a dataTable
-#' @rdname ContrastsSelection
-#' @importFrom dplyr filter
-#' @importFrom data.table rbindlist
-#' @export
-#'
-getPossibleContrasts <- function(
-    object, 
-    formula = object@metadata$design$Model.formula,
-    typeContrast = c("simple", "averaged", "interaction"),
-    modalities = NULL, returnTable = FALSE) {
-  if (is(object, "RflomicsSE") || is(object, "RflomicsMAE")) {
-    if (is.null(typeContrast)) typeContrast <- c("simple", "averaged", "interaction")
-    
-    allContrasts <- generateExpressionContrast(object = object)
-    allContrasts <- allContrasts[which(names(allContrasts) %in% typeContrast)]
-    allContrastsdt <- rbindlist(allContrasts, fill = TRUE)
-    
-    if (!is.null(modalities)) {
-      allVarMod <- lapply(getDesignMat(object), 
-                          FUN = function(vect) levels(factor(vect))[levels(factor(vect)) %in% modalities])
-      allVarMod <- Filter(length, allVarMod)
-      
-      allVarMod <- paste0(rep(names(allVarMod), times = lengths(allVarMod)), unlist(allVarMod))
-      
-      allContrastsdt <- allContrastsdt[grep(paste(allVarMod, collapse = "|"), allContrastsdt$contrastName), ]
-    }
-    
-    if (returnTable) {
-      return(allContrastsdt)
-    } else {
-      return(allContrastsdt$contrast)
-    }
-  } 
-  else {
-    stop("object is not a RflomicsMAE or a RflomicsSE.")
-  }
-}
-
 # ---- .getExpressionContrast : function generating contrast expression devlopped by CPL ----
 
 #' get contrast expression

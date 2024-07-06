@@ -7,8 +7,7 @@ reference:
   - title: RFLOMICS User Interface
     contents:
       - runRFLOMICS
-  - title: Classes
-    desc: Accessors
+  - title: RFLOMICS Classes
     contents:
       - RflomicsMAE-class
       - RflomicsSE-class
@@ -37,12 +36,15 @@ reference:
       - filterFeatures
       - prepareForIntegration
       - runOmicsIntegration
+  - title: Get Results
+    contents: 
+      - getAnalysis
   - title: Example Data
     contents: 
       - ecoseed
-  - title: Export Results (html/)
+  - title: Export Results
     contents: 
-      - getAnalyzedDatasetNames
+      - generateReport
 
 navbar:
   structure:
