@@ -4,7 +4,7 @@ The acquisition of **multi-omics data** in the context of **complex experimental
 
 **RFLOMICS** is an R package and Shiny interface that offers guided, comprehensive, and reproducible analysis within a framework designed to manage multiple omics datasets. The interface provides remarkable flexibility, enabling users to seamlessly navigate between result exploration and visualization.
 
-<img src="inst/RFLOMICSapp/www/workflow.png" align="center" width="600"/>
+<img src="man/figures/workflow.png" align="center" width="600"/>
 
 **Specifications:**
 

@@ -2,8 +2,48 @@ url: ~
 template:
   params:
     bootswatch: flatly
-  
-  
+
+reference:
+  - title: RFLOMICS User Interface
+    contents:
+      - runRFLOMICS
+  - title: Classes
+    desc: Accessors
+    contents:
+      - RflomicsMAE-class
+      - RflomicsSE-class
+  - title: Constructor
+    contents:
+      - createRflomicsMAE
+  - title: Statistical Setting
+    contents:   
+      - generateModelFormulae
+      - generateExpressionContrast
+  - title: Data Processing
+    contents:   
+      - runDataProcessing
+      - runOmicsPCA
+  - title: Differential expression analysis
+    contents: 
+      - runDiffAnalysis
+  - title: Co-Expression Analysis
+    contents: 
+      - runCoExpression
+  - title: Gene Enrichment Analysis
+    contents: 
+      - runAnnotationEnrichment      
+  - title: Data Integration
+    contents: 
+      - filterFeatures
+      - prepareForIntegration
+      - runOmicsIntegration
+  - title: Example Data
+    contents: 
+      - ecoseed
+  - title: Export Results (html/)
+    contents: 
+      - getAnalyzedDatasetNames
+
 navbar:
   structure:
     left: [intro, reference, articles, tutorials, news]
@@ -16,12 +56,14 @@ navbar:
       text: Reference
       href: reference/index.html
     articles:
-      text: Articles
+      text: Vignettes
       menu:
+      - text: RFLOMICS vignettes interface
+        href: articles/RFLOMICS-vignette-interface.html
+      - text: RFLOMICS vignettes cmd line
+        href: articles/RFLOMICS-cmd-line.html
       - text: RFLOMICS input data
         href: articles/RFLOMICS-input-data.html
-      - text: RFLOMICS remote computing
-        href: articles/RFLOMICS-configure-cluster-access.html
     gitlab:
       icon: fa-gitlab
       href: https://forgemia.inra.fr/flomics/rflomics
