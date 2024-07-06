@@ -1,8 +1,8 @@
 ---
-title: "RFLOMICS-input-data"
+title: "RFLOMICS input format"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{RFLOMICS input format}
+  %\VignetteIndexEntry{RFLOMICS-input-data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
