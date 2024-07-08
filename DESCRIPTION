@@ -10,7 +10,7 @@ Authors@R:
     person(given = "Gwendal", family = "Cueff", email = "gwendal.cueff@inrae.fr", role = c("aut"))
     )
 Description: R-package with shiny interface, provides a framework for the analysis of transcriptomics, proteomics and/or metabolomics data. The interface offers a guided experience for the user, from the definition of the experimental design to the integration of several omics table together. A report can be generated with all settings and analysis results.
-URL: https://github.com/RFLOMICS
+URL: https://github.com/RFLOMICS/RFLOMICS
 BugReports: https://github.com/RFLOMICS/RFLOMICS/issues
 Depends: 
     R (>= 4.4.0),
