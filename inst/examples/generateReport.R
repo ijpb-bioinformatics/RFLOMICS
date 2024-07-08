@@ -39,14 +39,14 @@ MAE <- runDiffAnalysis(
   logFC.cutoff = 0)
 
 ## Enrichment
-MAE <- runAnnotationEnrichment(
-  object = MAE, 
-  SE.name = "protetest", 
-  database = "GO", 
-  domain = c("MF"), 
-  list_args = list(OrgDb = "org.At.tair.db", 
-                   keyType = "TAIR", 
-                   pvalueCutoff = 0.05))
+# MAE <- runAnnotationEnrichment(
+#   object = MAE, 
+#   SE.name = "protetest", 
+#   database = "GO", 
+#   domain = c("MF"), 
+#   list_args = list(OrgDb = "org.At.tair.db", 
+#                    keyType = "TAIR", 
+#                    pvalueCutoff = 0.05))
 
 # get name of performed analysis
 getAnalyzedDatasetNames(MAE)
