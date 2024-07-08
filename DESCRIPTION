@@ -6,12 +6,12 @@ Authors@R:
     person(given = "Nadia", family = "Bessoltane",email = "nadia.bessoltane@inrae.fr", role = c("aut", "cre"), comment = c(ORCID="0000-0001-6931-2529")),
     person(given = "Delphine", family = "Charif", email = "delphine.charif@inrae.fr", role = c("aut"), comment = c(ORCID="0000-0002-1949-5969")),
     person(given = "Audrey", family = "Hulot", email = "audrey.hulot@inrae.fr", role = c("aut"), comment = c(ORCID = "0000-0002-9647-6470")),
-    person(given = "Christine", family = "Paysant-Leroux", email = "christine.paysant-le-roux@inrae.fr", role = c("aut")),
+    person(given = "Christine", family = "Paysant-Leroux", email = "christine.paysant-le-roux@inrae.fr", role = c("aut"), comment = c(ORCID = "0000-0003-2046-6492")),
     person(given = "Gwendal", family = "Cueff", email = "gwendal.cueff@inrae.fr", role = c("aut"))
     )
 Description: R-package with shiny interface, provides a framework for the analysis of transcriptomics, proteomics and/or metabolomics data. The interface offers a guided experience for the user, from the definition of the experimental design to the integration of several omics table together. A report can be generated with all settings and analysis results.
-URL: https://forgemia.inra.fr/flomics/rflomics/
-BugReports: https://forgemia.inra.fr/flomics/rflomics/-/issues
+URL: https://github.com/RFLOMICS
+BugReports: https://github.com/RFLOMICS/RFLOMICS/issues
 Depends: 
     R (>= 4.4.0),
     SummarizedExperiment,
