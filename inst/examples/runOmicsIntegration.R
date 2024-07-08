@@ -28,13 +28,13 @@ MAE <- MAE |>
 # Prepare mofa object:
 mofaObj <- prepareForIntegration(MAE,
                                  omicsNames = c("protetest", "metatest"),
-                                 variableLists = rownames(MAE),
+                                 variableLists = rownames(MAE), 
                                  method = "MOFA")
 
 # Perform integration:
 MAEtest <- runOmicsIntegration(MAE, 
                                preparedObject = mofaObj, 
-                               method = "MOFA")
+                               method = "MOFA", num_factors = 5)
 
 # Integration using MixOmics
 mixObj <- prepareForIntegration(MAE,
