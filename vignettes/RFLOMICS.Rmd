@@ -340,7 +340,7 @@ to show the results.
  
  Features are then centered before the integration.
 
-![](Images/07_prepData2.png){width=100%}
+![](Images/07_prepData.png){width=100%}
 
 ## MOFA
 
