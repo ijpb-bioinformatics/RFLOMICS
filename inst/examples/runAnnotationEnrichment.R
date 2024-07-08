@@ -41,15 +41,15 @@ MAE <- runDiffAnalysis(MAE,
 
 # Run KEGG annotation (enrichKEGG)
 # need internet connection
-MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
-                               list_args = list(organism = "ath",
-                                                keyType = "kegg",
-                                                pvalueCutoff = 0.05),
-                               from = "DiffExp", database = "KEGG")
+# MAE <- runAnnotationEnrichment(MAE, SE.name = "protetest",
+#                                list_args = list(organism = "ath",
+#                                                 keyType = "kegg",
+#                                                 pvalueCutoff = 0.05),
+#                                from = "DiffExp", database = "KEGG")
 
 
 # Search for the pvalue cutoff:
-sumORA(MAE[["protetest"]], from = "DiffExp", database = "KEGG")
+# sumORA(MAE[["protetest"]], from = "DiffExp", database = "KEGG")
 
 # need internet connection
 # pathview package
@@ -67,12 +67,12 @@ sumORA(MAE[["protetest"]], from = "DiffExp", database = "KEGG")
 #                database = "KEGG", matrixType = "FC")
 
 # Get all results from KEGG on differential expression lists:
-results <- getEnrichRes(MAE[["protetest"]],
-                        from = "diffexp", database = "KEGG")
+# results <- getEnrichRes(MAE[["protetest"]],
+#                         from = "diffexp", database = "KEGG")
 
 # Search for the pvalue cutoff:
-usedPvalue <- 
-    getEnrichPvalue(MAE[["protetest"]], from = "diffexp", database = "KEGG")
-settings <- 
-    getEnrichSettings(MAE[["protetest"]], from = "diffexp", database = "KEGG")
+# usedPvalue <- 
+#     getEnrichPvalue(MAE[["protetest"]], from = "diffexp", database = "KEGG")
+# settings <- 
+#     getEnrichSettings(MAE[["protetest"]], from = "diffexp", database = "KEGG")
 
