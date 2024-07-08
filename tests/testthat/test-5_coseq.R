@@ -1,5 +1,6 @@
 library(testthat)
 library(RFLOMICS)
+library(coseq)
 
 # ---- Construction of objects for the tests ----
 
@@ -90,14 +91,17 @@ test_that("Everything works as expected", {
 # ---- Tests seed -----
 
 test_that("Two runs, same results - seed is working - RNAseq", {
+    # 
+    # contrastNames <- c("(temperatureElevated - temperatureLow) in imbibitionDS",
+    #                     "(imbibitionEI - imbibitionDS) in mean")
+    MAE <- filterDiffAnalysis(MAE, SE.name = "RNAtest", logFC.cutoff = 2, p.adj.cutoff = 0.01)
     
-    contrastNames <- c("(temperatureMedium - temperatureLow) in imbibitionDS",
-                       "(temperatureElevated - temperatureLow) in imbibitionDS")
-    res1 <- runCoExpression(object = MAE, SE.name = "RNAtest", K = 2:10, replicates = 5, merge = "intersection", 
+    # getDEList(MAE[["RNAtest"]], contrasts = contrastNames, operation ="union") 
+    res1 <- runCoExpression(object = MAE, SE.name = "RNAtest", K = 2:10, replicates = 5, merge = "union", 
                             model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin", 
                             normFactors = "TMM", contrastNames = contrastNames)
     
-    res2 <- runCoExpression(object = MAE, SE.name = "RNAtest", K = 2:10, replicates = 5, merge = "intersection",
+    res2 <- runCoExpression(object = MAE, SE.name = "RNAtest", K = 2:10, replicates = 5, merge = "union",
                             model = "normal", GaussianModel = "Gaussian_pk_Lk_Ck", transformation = "arcsin",
                             normFactors = "TMM", contrastNames = contrastNames)
     
@@ -142,6 +146,10 @@ test_that("Two runs, same results - seed is working - proteomics", {
 ## ----- RNASeq -----
 
 test_that("Coseq on RNAseq equivalence", {
+    
+    MAE <- filterDiffAnalysis(MAE, SE.name = "RNAtest", 
+                              logFC.cutoff = 0, 
+                              p.adj.cutoff = 0.05)
     
     # Parameters for the three analyses
     merge = "intersection"
