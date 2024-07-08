@@ -59,7 +59,7 @@ clusterprofiler functions. It can be used with custom annotation file
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Run Gene Enrichment Analysis and process results</h1>
-    
+    <small class="dont-index">Source: <a href="https://github.com/RFLOMICS/RFLOMICS/blob/HEAD/R/RFLOMICS-Methods_06_annot_enrichment.R" class="external-link"><code>R/RFLOMICS-Methods_06_annot_enrichment.R</code></a></small>
     <div class="hidden name"><code>runAnnotationEnrichment.Rd</code></div>
     </div>
 
@@ -362,7 +362,7 @@ Allow for the comparison of several enrichment results.</p></li>
     <div id="ref-examples">
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># load ecoseed data</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://forgemia.inra.fr/flomics/rflomics/" class="external-link">RFLOMICS</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/RFLOMICS/RFLOMICS" class="external-link">RFLOMICS</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">ecoseed</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># create rflomicsMAE object with ecoseed data</span></span></span>
@@ -408,24 +408,15 @@ Allow for the comparison of several enrichment results.</p></li>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Run KEGG annotation (enrichKEGG)</span></span></span>
 <span class="r-in"><span><span class="co"># need internet connection</span></span></span>
-<span class="r-in"><span><span class="va">MAE</span> <span class="op">&lt;-</span> <span class="fu">runAnnotationEnrichment</span><span class="op">(</span><span class="va">MAE</span>, SE.name <span class="op">=</span> <span class="st">"protetest"</span>,</span></span>
-<span class="r-in"><span>                               list_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>organism <span class="op">=</span> <span class="st">"ath"</span>,</span></span>
-<span class="r-in"><span>                                                keyType <span class="op">=</span> <span class="st">"kegg"</span>,</span></span>
-<span class="r-in"><span>                                                pvalueCutoff <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                               from <span class="op">=</span> <span class="st">"DiffExp"</span>, database <span class="op">=</span> <span class="st">"KEGG"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> warning: </span>
+<span class="r-in"><span><span class="co"># MAE &lt;- runAnnotationEnrichment(MAE, SE.name = "protetest",</span></span></span>
+<span class="r-in"><span><span class="co">#                                list_args = list(organism = "ath",</span></span></span>
+<span class="r-in"><span><span class="co">#                                                 keyType = "kegg",</span></span></span>
+<span class="r-in"><span><span class="co">#                                                 pvalueCutoff = 0.05),</span></span></span>
+<span class="r-in"><span><span class="co">#                                from = "DiffExp", database = "KEGG")</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Search for the pvalue cutoff:</span></span></span>
-<span class="r-in"><span><span class="fu">sumORA</span><span class="op">(</span><span class="va">MAE</span><span class="op">[[</span><span class="st">"protetest"</span><span class="op">]</span><span class="op">]</span>, from <span class="op">=</span> <span class="st">"DiffExp"</span>, database <span class="op">=</span> <span class="st">"KEGG"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                            Contrast</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (temperatureMedium - temperatureLow) in mean           (temperatureMedium - temperatureLow) in mean</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (temperatureElevated - temperatureLow) in mean       (temperatureElevated - temperatureLow) in mean</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (temperatureElevated - temperatureMedium) in mean (temperatureElevated - temperatureMedium) in mean</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                   no-domain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (temperatureMedium - temperatureLow) in mean              5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (temperatureElevated - temperatureLow) in mean           31</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (temperatureElevated - temperatureMedium) in mean        23</span>
+<span class="r-in"><span><span class="co"># sumORA(MAE[["protetest"]], from = "DiffExp", database = "KEGG")</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># need internet connection</span></span></span>
 <span class="r-in"><span><span class="co"># pathview package</span></span></span>
@@ -443,14 +434,14 @@ Allow for the comparison of several enrichment results.</p></li>
 <span class="r-in"><span><span class="co">#                database = "KEGG", matrixType = "FC")</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get all results from KEGG on differential expression lists:</span></span></span>
-<span class="r-in"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu">getEnrichRes</span><span class="op">(</span><span class="va">MAE</span><span class="op">[[</span><span class="st">"protetest"</span><span class="op">]</span><span class="op">]</span>,</span></span>
-<span class="r-in"><span>                        from <span class="op">=</span> <span class="st">"diffexp"</span>, database <span class="op">=</span> <span class="st">"KEGG"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># results &lt;- getEnrichRes(MAE[["protetest"]],</span></span></span>
+<span class="r-in"><span><span class="co">#                         from = "diffexp", database = "KEGG")</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Search for the pvalue cutoff:</span></span></span>
-<span class="r-in"><span><span class="va">usedPvalue</span> <span class="op">&lt;-</span> </span></span>
-<span class="r-in"><span>    <span class="fu">getEnrichPvalue</span><span class="op">(</span><span class="va">MAE</span><span class="op">[[</span><span class="st">"protetest"</span><span class="op">]</span><span class="op">]</span>, from <span class="op">=</span> <span class="st">"diffexp"</span>, database <span class="op">=</span> <span class="st">"KEGG"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">settings</span> <span class="op">&lt;-</span> </span></span>
-<span class="r-in"><span>    <span class="fu">getEnrichSettings</span><span class="op">(</span><span class="va">MAE</span><span class="op">[[</span><span class="st">"protetest"</span><span class="op">]</span><span class="op">]</span>, from <span class="op">=</span> <span class="st">"diffexp"</span>, database <span class="op">=</span> <span class="st">"KEGG"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># usedPvalue &lt;- </span></span></span>
+<span class="r-in"><span><span class="co">#     getEnrichPvalue(MAE[["protetest"]], from = "diffexp", database = "KEGG")</span></span></span>
+<span class="r-in"><span><span class="co"># settings &lt;- </span></span></span>
+<span class="r-in"><span><span class="co">#     getEnrichSettings(MAE[["protetest"]], from = "diffexp", database = "KEGG")</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
