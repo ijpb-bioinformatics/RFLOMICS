@@ -102,6 +102,7 @@ setMethod(f = "resetRflomicsMAE",
 #' @importFrom dplyr relocate
 #' @importFrom DT datatable formatStyle formatSignif
 #' @importFrom stats cor
+#' @importFrom knitr knit_child asis_output
 #' @exportMethod generateReport
 #' @rdname generateReport
 #' @name generateReport
