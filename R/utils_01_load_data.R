@@ -413,7 +413,7 @@ readExpDesign <- function(file){
   # remove "_" from modality and factor names
   data <- vroom(file, delim = "\t", show_col_types = FALSE) %>%
     mutate(across(.cols = where(is.character), 
-                  ~str_remove_all(.x, pattern = "[.,;:#@!?()§$€%&<>|=+-/]"))) %>%
+                  ~str_remove_all(.x, pattern = "[.,;:#@!?()$%&<>|=+-/]"))) %>%
     mutate(across(.cols = where(is.character), 
                   ~str_remove_all(.x, pattern = "[\\]\\[\'\"\ ]"))) %>%
     mutate(across(.cols = where(is.character), 
@@ -421,7 +421,7 @@ readExpDesign <- function(file){
     mutate(across(.cols = c(-1), ~str_remove_all(.x, pattern = fixed("_")))) %>% 
     mutate(across(.cols = where(is.character), as.factor)) 
   
-  names(data)  <- str_remove_all(string = names(data), pattern = "[.,;:#@!?()§$€%&<>|=+-/\\]\\[\'\"\ _]") %>%
+  names(data)  <- str_remove_all(string = names(data), pattern = "[.,;:#@!?()$%&<>|=+-/\\]\\[\'\"\ _]") %>%
     str_remove_all(., pattern = fixed("\\"))
   
   # check if there is duplication in sample names
@@ -494,7 +494,7 @@ readOmicsData <- function(file){
   # read omics data and remove special characters
   data <- vroom(file, delim = "\t", show_col_types = FALSE)
   names(data)  <- str_remove_all(string = names(data), 
-                                 pattern = "[.,;:#@!?()§$€%&<>|=+-/\\]\\[\'\"\ ]") %>%
+                                 pattern = "[.,;:#@!?()$%&<>|=+-/\\]\\[\'\"\ ]") %>%
     str_remove_all(., pattern = fixed("\\"))
   
   # check if there is duplication in sample names
