@@ -91,9 +91,9 @@ test_that("Everything works as expected", {
 # ---- Tests seed -----
 
 test_that("Two runs, same results - seed is working - RNAseq", {
-    # 
-    # contrastNames <- c("(temperatureElevated - temperatureLow) in imbibitionDS",
-    #                     "(imbibitionEI - imbibitionDS) in mean")
+    
+    contrastNames <- c("(temperatureElevated - temperatureLow) in imbibitionDS",
+                        "(imbibitionEI - imbibitionDS) in mean")
     MAE <- filterDiffAnalysis(MAE, SE.name = "RNAtest", logFC.cutoff = 2, p.adj.cutoff = 0.01)
     
     # getDEList(MAE[["RNAtest"]], contrasts = contrastNames, operation ="union") 
