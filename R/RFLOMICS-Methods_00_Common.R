@@ -211,8 +211,8 @@ setMethod(
 #' @name getAnalysis
 #' @rdname getAnalysis
 #' @description
-#' A short description...
-#' 
+#' Get a specific analysis results from a Rflomcs MAE or a SE.
+#' @return The analysis metadata slot (a list of results)
 #' \itemize{
 #'    \item getAnalysis: return list of results from a specific analysis.}
 #' @param object The RflomicsMAE or RflomicsSE object from which to extract
