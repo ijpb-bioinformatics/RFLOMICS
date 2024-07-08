@@ -214,6 +214,8 @@ setMethod(
 #' 
 #' \itemize{
 #'    \item getAnalysis: return list of results from a specific analysis.}
+#' @param object The RflomicsMAE or RflomicsSE object from which to extract
+#' the analysis.
 #' @param SE.name name of the experiment where the metadata should be added.
 #' @param name the name of element to add to metadata slot.
 #' @param subName the name of sub element to add to metadata slot.
