@@ -1,3 +1,8 @@
+
+
+:warning: <span style="color:red"> **THIS PROJECT HAS BEEN MOVED TO GITHUB:
+[RFLOMICS](https://github.com/RFLOMICS/RFLOMICS)** </span> :warning:
+
 # RFLOMICS: R package and Shiny interface for Integrative analysis of omics data
 
 The acquisition of **multi-omics data** in the context of **complex experimental design** is a widely used practice to identify features (transcripts, proteins, metabolites,...) and decipher the biological processes they are involved in. The investigation of each omics layer is a good first step to explore and extract relevant biological variability. The statistical integration could then be restrained to pertinent omics levels and features. Such analysis of heterogeneous data remains a technical challenge with the needs of expertise methods and parameters to take into account data specificity. Furthermore, applying different statistical methods from several tools is also a technical challenge in term of data management. In this context, we developed RFLOMICS.
